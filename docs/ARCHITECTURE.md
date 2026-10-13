@@ -6,7 +6,7 @@
 > (regla permanente en CLAUDE.md: este doc se actualiza junto con WORKLOG.md).
 >
 > Última actualización: **2026-10-07** — hgcash desde el panel: credenciales cifradas
-> (panel > SSM, firma del webhook con cualquiera de los dos secretos) y reenvío de avisos
+> (panel > SSM, firma del webhook: solo el secreto del panel si hay uno (#216)) y reenvío de avisos
 > configurable (§5 AUTO-CARGA, §9). Antes: 2026-09-30 — lotes: tope del % en textos, `useHours` (bono
 > canjeado vence a las 24 h), resumen por lote (§2 NotifBatch). Antes: 2026-09-18 — bonos AUTOMÁTICOS en la carga con tope
 > (`resolveAutoBonus`, `src/utils/bonusCap.js`), registro manual sin bienvenida, ruleta
@@ -661,6 +661,10 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   `HGCASH_FANOUT_URL` (default autoreembolsos.com, 'off' apaga). Anti-círculo: lo que
   llega con `X-Forwarded-By` no se reenvía y nunca se manda a la URL propia. Stats por
   destino en memoria por instancia (`_hgcashFanoutStats`), visibles en la card.
+- **Webhook hgcash — secreto exclusivo (#216, 2026-10-13):** si hay secreto cargado en el panel,
+  `_hgcashWebhookSecrets()` devuelve SOLO ese: el `HGCASH_WEBHOOK_SECRET` de SSM deja de valer y
+  los avisos de la cuenta hgcash vieja se rechazan. Sin secreto en el panel vale el de SSM. ⚠️ Si
+  las dos cuentas comparten usuario/secreto de hgcash esto no alcanza (no hay filtro por CBU destino).
 - **Retiro self-service**: `POST /api/withdrawal/request` — exige phoneVerified, lock
   anti-doble, chequeo de saldo (UX), dedup 10min → crea PendingPayout
   (`deductAtPay:true`, SIN descontar) → mueve el chat a Pagos. El AGENTE confirma:
