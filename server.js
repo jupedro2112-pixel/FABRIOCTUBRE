@@ -10983,6 +10983,15 @@ async function getBonusCapConfig() {
 // #172 (réplica 2026-09-30): el % de un LOTE respeta el MISMO tope que el bono app:
 // min(carga, tope) × pct% + max(0, carga − tope) × min(pct, restPct)%. Ej.: lote 100%,
 // carga $30.000, tope $20.000 → $20.000 + $2.000 = $22.000. Lote 20% → 20% de todo.
+// #CAP: tope EFECTIVO para un bono/lote: el propio del lote (capARS / capExcessPct, copiados al
+// PromoBonus al activar) si lo tiene; si no, el global de bonusCap.
+function _loteCfgFor(src, globalCfg) {
+  const g = bonusCap.normalizeConfig(globalCfg || _bonusCapCfgCache);
+  const ownCap = src && src.capARS != null && Number.isFinite(Number(src.capARS));
+  const ownEx = src && src.capExcessPct != null && Number.isFinite(Number(src.capExcessPct));
+  if (!ownCap && !ownEx) return g;
+  return Object.assign({}, g, { enabled: true, capArs: ownCap ? Number(src.capARS) : g.capArs, restPct: ownEx ? Number(src.capExcessPct) : g.restPct, own: true });
+}
 function _loteBonusAmount(amount, pct, cfg) {
   const a = Math.max(0, Number(amount) || 0), p = Math.max(0, Number(pct) || 0);
   const c = bonusCap.normalizeConfig(cfg || _bonusCapCfgCache);
@@ -11064,7 +11073,7 @@ async function claimPromoBonusPercent(user, usedBy, amount) {
     ).lean();
     if (!upd) return { pct: 0, claimed: false };
     const pct = Number(b.percent) || 0;
-    return { pct, claimed: pct > 0, source: 'promo_bonus', label: `bono de carga${b.sourceRuleName ? ' "' + b.sourceRuleName + '"' : ''} (${pct}%)`,
+    return { pct, claimed: pct > 0, source: 'promo_bonus', capARS: b.capARS == null ? null : Number(b.capARS), capExcessPct: b.capExcessPct == null ? null : Number(b.capExcessPct), label: `bono de carga${b.sourceRuleName ? ' "' + b.sourceRuleName + '"' : ''} (${pct}%)`,
       // #173: cuánto salió por este bono (resumen por lote del panel).
       settle: (bonusAmt) => PromoBonus.updateOne({ id: b.id }, { $set: { usesCount: 1, usesTotalBonus: Number(bonusAmt) || 0 } }).catch(() => {}),
       revert: () => PromoBonus.updateOne({ id: b.id, status: 'used', usedBy: usedBy || 'auto' },
@@ -11086,10 +11095,10 @@ async function resolveAutoBonus(user, amount, usedBy) {
   const cfg = await getBonusCapConfig();
   // Lote: _loteBonusAmount (#172, mismo tope, mismo resultado que bonusWithCap);
   // el resto de las fuentes: bonusWithCap.
-  const bonus = c.source === 'promo_bonus' ? _loteBonusAmount(amount, c.pct, cfg) : bonusCap.bonusWithCap(amount, c.pct, cfg);
+  const bonus = c.source === 'promo_bonus' ? _loteBonusAmount(amount, c.pct, _loteCfgFor(c, cfg)) : bonusCap.bonusWithCap(amount, c.pct, cfg); // #CAP tope propio del lote
   if (!(bonus > 0)) { await c.revert(); return none; }
   if (c.settle) await c.settle(bonus);
-  return { pct: c.pct, bonus, source: c.source, label: c.label, claimed: true, rule: bonusCap.describeRule(c.pct, cfg), capTxt: _loteCapTxt(c.pct, cfg), revert: c.revert };
+  return { pct: c.pct, bonus, source: c.source, label: c.label, claimed: true, rule: bonusCap.describeRule(c.pct, cfg), capTxt: _loteCapTxt(c.pct, c.source === 'promo_bonus' ? _loteCfgFor(c, cfg) : cfg), revert: c.revert };
 }
 // Nota interna al agente cuando el bono salió AUTOMÁTICO (y si corrigió lo que
 // había puesto el agente, por qué).
@@ -19030,7 +19039,7 @@ app.get('/api/admin/promo-bonus', authMiddleware, adminMiddleware, async (req, r
         expiresAt: b.expiresAt,
         sourceRuleCode: b.sourceRuleCode,
         sourceRuleName: b.sourceRuleName,
-        capTxt: Number(b.percent) > 0 ? _loteCapTxt(b.percent, await getBonusCapConfig()) : '' // #172
+        capTxt: Number(b.percent) > 0 ? _loteCapTxt(b.percent, _loteCfgFor(b, await getBonusCapConfig())) : '' // #172
       }
     });
   } catch (err) {
@@ -19450,7 +19459,10 @@ async function _activateBatchPromoBonus(user, batch) {
     expiresAt: batch.mode === 'code'
       ? new Date(Date.now() + (Number(batch.useHours) > 0 ? Number(batch.useHours) : 24) * 3600 * 1000)
       : batch.expiresAt,
-    status: 'active'
+    status: 'active',
+    // #CAP tope propio del lote (null = global)
+    capARS: batch.capARS == null ? null : Number(batch.capARS),
+    capExcessPct: batch.capExcessPct == null ? null : Number(batch.capExcessPct)
   });
 }
 
@@ -19459,7 +19471,7 @@ function _giftLabelOf(batch) {
     return `regalo de $${Number(batch.amount).toLocaleString('es-AR')} en tu próxima carga`;
   }
   // #172: el % de lote se aplica solo (desde #210) → se aclara la regla del tope.
-  return `+${batch.amount}% EXTRA en tu próxima carga${_loteCapTxt(batch.amount)}`;
+  return `+${batch.amount}% EXTRA en tu próxima carga${_loteCapTxt(batch.amount, _loteCfgFor(batch))}`;
 }
 
 // Canje de un código de LOTE. Devuelve null si el código no corresponde a
@@ -19617,7 +19629,7 @@ async function _tryClaimNotifBatchCode(reqUser, attempt) {
   await _emitAdminOnlyChatNote(
     uDoc.id,
     uDoc.username,
-    `🎁 BONO DE LOTE PENDIENTE (+${batch.amount}% EXTRA${_loteCapTxt(batch.amount)}) — canjeó el código del lote de ${batch.sentBy}${batch.name ? ' ("' + batch.name + '")' : ''}.\n` +
+    `🎁 BONO DE LOTE PENDIENTE (+${batch.amount}% EXTRA${_loteCapTxt(batch.amount, _loteCfgFor(batch))}) — canjeó el código del lote de ${batch.sentBy}${batch.name ? ' ("' + batch.name + '")' : ''}.\n` +
     `👉 Se aplica AUTOMÁTICO en su PRÓXIMA CARGA (manual o hgcash). No hay que sumar nada a mano. Vence ${hastaFmt}.`
   ).catch(() => {});
 
@@ -19704,6 +19716,23 @@ app.post('/api/admin/notif-batches', authMiddleware, adminMiddleware, async (req
       useHours = Math.round(useHours);
     }
 
+    // #CAP TOPE PROPIO del % de este lote (sólo % automático). Vacío = usa el tope global.
+    // capARS 0 = sin tope. capExcessPct 0 = el excedente no recibe bono.
+    let capARS = null, capExcessPct = null;
+    if (giftType === 'percent') {
+      if (b.capARS != null && b.capARS !== '') {
+        const c = Math.round(Number(b.capARS));
+        if (!Number.isFinite(c) || c < 0 || c > 100000000) return res.status(400).json({ error: 'El tope del bono tiene que ser un monto entre 0 (sin tope) y 100.000.000.' });
+        capARS = c;
+      }
+      if (b.capExcessPct != null && b.capExcessPct !== '') {
+        const e = Math.round(Number(b.capExcessPct));
+        if (!Number.isFinite(e) || e < 0 || e > 200) return res.status(400).json({ error: 'El % sobre el excedente tiene que estar entre 0 y 200.' });
+        capExcessPct = e;
+      }
+      if (capExcessPct != null && capARS == null) capARS = (await getBonusCapConfig()).capArs; // % excedente sin tope propio → fija el global de hoy
+    }
+
     // Rollover del regalo de fichas (giftType fixed, cualquier modo — las
     // fichas SIEMPRE se acreditan solas: por código al canjear, por tiempo al
     // enviar). Se valida contra bonus.multipliers de 1girox (⚠️ NO los de
@@ -19774,7 +19803,7 @@ app.post('/api/admin/notif-batches', authMiddleware, adminMiddleware, async (req
       const sentAtP = new Date();
       const batchP = {
         id: uuidv4(),
-        name, mode: 'code', giftType, amount, rolloverX, code, validHours, useHours,
+        name, mode: 'code', giftType, amount, rolloverX, code, validHours, useHours, capARS, capExcessPct,
         sentAt: sentAtP, expiresAt: new Date(sentAtP.getTime() + validHours * 3600 * 1000),
         title: '', message,
         sentBy: req.user.username, sentByRole: req.user.role,
@@ -19809,7 +19838,7 @@ app.post('/api/admin/notif-batches', authMiddleware, adminMiddleware, async (req
     const expiresAt = new Date(sentAt.getTime() + validHours * 3600 * 1000);
     const batch = {
       id: uuidv4(),
-      name, mode, giftType, amount, rolloverX, code, validHours, useHours, sentAt, expiresAt,
+      name, mode, giftType, amount, rolloverX, code, validHours, useHours, sentAt, expiresAt, capARS, capExcessPct,
       title, message,
       sentBy: req.user.username, sentByRole: req.user.role,
       ...audience,
@@ -19865,7 +19894,7 @@ app.get('/api/admin/notif-batches', authMiddleware, adminMiddleware, async (req,
       { $limit: limit },
       { $project: {
         _id: 0, id: 1, name: 1, mode: 1, giftType: 1, amount: 1, code: 1,
-        validHours: 1, useHours: 1, sentAt: 1, expiresAt: 1, title: 1, message: 1,
+        validHours: 1, useHours: 1, capARS: 1, capExcessPct: 1, sentAt: 1, expiresAt: 1, title: 1, message: 1,
         sentBy: 1, sentByRole: 1,
         audienceType: 1, audienceDays: 1, audienceLimit: 1, sendDone: 1,
         isPublic: 1, maxClaims: 1,

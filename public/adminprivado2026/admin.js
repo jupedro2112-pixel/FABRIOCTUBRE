@@ -11418,6 +11418,23 @@ function updateGiftBatchTypeUI() {
     const tipo = (document.querySelector('input[name="giftBatchType"]:checked') || {}).value || 'percent';
     const wrap = document.getElementById('giftBatchRolloverWrap');
     if (wrap) wrap.style.display = (tipo === 'fixed') ? '' : 'none';
+    // #CAP tope propio del lote
+    const capW = document.getElementById('giftBatchCapWrap');
+    if (capW) capW.style.display = (tipo === 'percent' && true) ? 'flex' : 'none';
+    const capH = document.getElementById('giftBatchCapHint');
+    if (capH) {
+        const pctN = Number((document.getElementById('giftBatchAmount') || {}).value) || 0;
+        const capV = (document.getElementById('giftBatchCapARS') || {}).value;
+        const exV = (document.getElementById('giftBatchCapExcess') || {}).value;
+        if (capV === '' && exV === '') capH.textContent = 'Sin tope propio: rige el tope global de los bonos automáticos.';
+        else if (Number(capV) === 0) capH.textContent = 'Sin tope: el ' + (pctN || 'X') + '% se aplica sobre TODA la carga.';
+        else {
+            const cap = Number(capV) || 0, ex = exV === '' ? null : Number(exV);
+            const ej = cap * 2;
+            const bono = Math.round(cap * pctN / 100 + (ex == null ? 0 : (ej - cap) * ex / 100));
+            capH.textContent = 'Ej.: carga de $' + ej.toLocaleString('es-AR') + ' → ' + (pctN || 'X') + '% hasta $' + cap.toLocaleString('es-AR') + (ex == null ? ' + el % excedente global sobre el resto' : ' + ' + ex + '% sobre los $' + (ej - cap).toLocaleString('es-AR') + ' restantes = $' + bono.toLocaleString('es-AR') + ' de bono') + '.';
+        }
+    }
     // #173 (al cambiar el tipo también): horas para usar solo con código + %
     const uh = document.getElementById('giftBatchUseHoursWrap');
     const mode = document.querySelector('input[name="giftBatchMode"]:checked');
@@ -11551,8 +11568,21 @@ async function sendGiftBatch() {
     }
     const rolloverX = Number((document.getElementById('giftBatchRollover') || {}).value) || 0;
     const esFichas = giftType === 'fixed';
+    // #CAP tope propio del lote (vacío = global)
+    const capRaw = ((document.getElementById('giftBatchCapARS') || {}).value || '').trim();
+    const exRaw = ((document.getElementById('giftBatchCapExcess') || {}).value || '').trim();
+    const capARS = capRaw === '' ? null : Math.round(Number(capRaw));
+    const capExcessPct = exRaw === '' ? null : Math.round(Number(exRaw));
+    const _capApplies = !esFichas && true;
+    if (_capApplies) {
+        if (capARS != null && (!Number.isFinite(capARS) || capARS < 0)) { showToast('El tope del bono tiene que ser un monto ≥ 0 (0 = sin tope)', 'error'); return; }
+        if (capExcessPct != null && (!Number.isFinite(capExcessPct) || capExcessPct < 0 || capExcessPct > 200)) { showToast('El % sobre el excedente va de 0 a 200', 'error'); return; }
+    }
+    const capTxtLote = _capApplies
+        ? (capARS === 0 ? ' · SIN tope (el % sobre toda la carga)' : capARS != null ? (' · tope PROPIO: ' + amount + '% hasta $' + capARS.toLocaleString('es-AR') + (capExcessPct != null ? ' + ' + capExcessPct + '% sobre el resto' : ' + el % excedente global')) : (capExcessPct != null ? ' · tope global con ' + capExcessPct + '% sobre el resto' : ''))
+        : '';
     const regaloTxt = giftType === 'percent'
-        ? ('+' + amount + '% en próxima carga (se aplica SOLO al cargar, con el tope de bonos)')
+        ? ('+' + amount + '% en próxima carga (se aplica SOLO al cargar, con el tope de bonos)' + capTxtLote)
         : ('$' + amount.toLocaleString('es-AR') + ' en fichas — SE ACREDITAN SOLAS (rollover x' + rolloverX + ')');
     const modoTxt = mode === 'code' ? 'CON CÓDIGO (solo los del lote pueden canjearlo)' : ('POR TIEMPO (' + validHours + 'hs)');
     const audTxt = esPublico ? ('📣 CÓDIGO PÚBLICO — cualquier cliente registrado' + (audience.maxClaims ? ' (cupo ' + audience.maxClaims + ' canjes)' : ' (SIN cupo)')) :
@@ -11584,6 +11614,7 @@ async function sendGiftBatch() {
             method: 'POST',
             body: JSON.stringify({
                 mode, giftType, amount, validHours, message, rolloverX,
+                capARS: _capApplies ? capARS : null, capExcessPct: _capApplies ? capExcessPct : null, // #CAP
                 useHours: Number((document.getElementById('giftBatchUseHours') || {}).value) || 24, // #173
                 ...audience,
                 name: ((document.getElementById('giftBatchName') || {}).value || '').trim(),
@@ -11630,7 +11661,7 @@ async function loadNotifBatches() {
         box.innerHTML = rows.map((b) => {
             const fecha = new Date(b.sentAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const vencido = new Date(b.expiresAt).getTime() <= Date.now();
-            const regalo = b.giftType === 'percent' ? ('+' + b.amount + '%') : ('$' + Number(b.amount).toLocaleString('es-AR'));
+            const regalo = b.giftType === 'percent' ? ('+' + b.amount + '%' + (b.capARS != null ? (Number(b.capARS) === 0 ? ' · sin tope' : ' · tope $' + Number(b.capARS).toLocaleString('es-AR') + (b.capExcessPct != null ? ' +' + b.capExcessPct + '% resto' : '')) : '')) : ('$' + Number(b.amount).toLocaleString('es-AR'));
             const modo = b.mode === 'code' ? ('🔑 ' + escapeHtml(b.code || '')) : ('⏰ ' + b.validHours + 'hs');
             const aud = b.isPublic ? ('📣 código público' + (b.maxClaims ? ' (cupo ' + b.maxClaims + ')' : '')) :
                 b.audienceType === 'all' ? '🌍 todos' :
