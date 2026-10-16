@@ -923,7 +923,13 @@
                 #homePanelToggle .hpt-chevron { font-size:9px; }
             </style>
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
-            <div class="balance-strip"><span class="dash-balance-label">Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></div>
+            <div class="balance-strip">
+                <span class="bs-balance"><span class="dash-balance-label">Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
+                <!-- #262: Instalar app al lado del saldo, con IMPORTANTE en rojo -->
+                <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
+                    <span class="bs-install-t"><b>📲 Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
+                </button>
+            </div>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
             <div class="home-dash">
@@ -1059,16 +1065,15 @@
             </div>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
+            <!-- #262: una sola línea abajo: Referidos + ¿Cómo funciona? (Instalar app subió al lado del saldo) -->
             <div class="home-bottom-bar">
                 <button type="button" class="hb-btn hb-ref" onclick="VIP.ui.openReferralModal()" title="Invitá amigos y cobrá por su actividad">
                     <span class="hb-text"><b>Referidos</b><small>Invitá y cobrá todos los meses</small></span>
                 </button>
-                <button type="button" class="hb-btn hb-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
-                    <span class="hb-text"><b>Instalar app</b><small>Acceso directo y avisos</small></span>
+                <button type="button" class="hb-btn hb-how" onclick="var b=document.getElementById('infoBtn'); if(b) b.click();" title="Cómo funciona el servicio">
+                    <span class="hb-text"><b>¿Cómo funciona?</b><small>Reembolsos · plataformas · referidos</small></span>
                 </button>
             </div>
-            <!-- #225: "cómo funciona" separado del soporte, abajo del todo (abre Información del servicio). -->
-            <button type="button" class="home-how-btn" onclick="var b=document.getElementById('infoBtn'); if(b) b.click();">¿Cómo funciona el servicio? <span>Reembolsos · plataformas · referidos</span></button>
 
             <style>
                 @keyframes winners-pulse {

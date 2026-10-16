@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-16
 
+### 262. 📲 "Instalar app · IMPORTANTE" al lado del saldo; abajo Referidos + ¿Cómo funciona? en una línea — SW v155
+- **Owner:** "el instalar app ponelo al lado del saldo arriba, con IMPORTANTE en rojo; abajo armá una línea de las
+  dos que están para achicar la principal".
+- La franja del saldo pasa a dos columnas: "Tu saldo $X" y el botón `#homeInstallAppBtn` (mismo id →
+  `paintInstallButtons` le sigue escribiendo el subtítulo) con la etiqueta roja pulsante "IMPORTANTE". Abajo
+  queda una sola fila: "Referidos" + "¿Cómo funciona?" (el botón punteado aparte se eliminó).
+
 ### 261. 📱 Con la app instalada el casino va ADENTRO; en navegador, aparte. Carga rápida en formato CARGA, descartable — SW v154
 - **Owner:** "dejá el aparte sólo para la gente que no tiene la app (así no pierde el acceso); con la app
   instalada que sea adentro, más rápido, y si cierra vuelve a la principal; la carga rápida al probar sacala;

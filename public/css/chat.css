@@ -1587,3 +1587,15 @@ body.support-open .support-bubble { visibility: hidden; }
 .cl-plat { flex: 1; background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 8px; padding: 6px; font: 800 11px var(--dx-font); text-transform: uppercase; cursor: pointer; }
 .cl-plat.on { background: var(--dx-accent); color: #06070d; border-color: transparent; }
 .cl-btn { width: 100%; margin-top: 8px; background: linear-gradient(135deg, #00c853, #69f0ae); color: #052e16; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px; font: 900 11.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+
+/* ══ #262: saldo + Instalar app arriba; Referidos + ¿Cómo funciona? abajo en una línea ══ */
+.balance-strip { justify-content: space-between; gap: 8px; padding: 4px 6px 4px 12px; }
+.bs-balance { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bs-install { position: relative; display: flex; align-items: center; gap: 8px; background: linear-gradient(160deg, rgba(255,23,68,.14), rgba(255,107,107,.06)); border: 1px solid var(--dx-border-hi); border-radius: 10px; padding: 4px 10px; cursor: pointer; color: var(--dx-text); text-align: left; }
+.bs-install:disabled { opacity: .55; cursor: default; }
+.bs-install-t { display: flex; flex-direction: column; line-height: 1.05; }
+.bs-install-t b { font: 900 11px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; }
+.bs-install-t small { font: 600 8.5px var(--dx-font); color: var(--dx-muted); }
+.bs-imp { font: 900 8px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--dx-accent); border-radius: 4px; padding: 2px 6px; box-shadow: 0 2px 8px rgba(255,23,68,.4); animation: bsImp 2s ease-in-out infinite; }
+@keyframes bsImp { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+.hb-how { border-style: dashed; }
