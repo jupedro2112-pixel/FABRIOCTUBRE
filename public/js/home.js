@@ -111,6 +111,46 @@
             '<span class="st-note">sin salir de la app</span>';
     }
 
+    // ---------------- INFO DEL SERVICIO (#237): reseñas plegadas + niveles VIP ----------------
+    function toggleInfoReviews() {
+        const body = _el('infoReviewsBody'), ch = _el('infoReviewsChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+    }
+    function _ars(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+    function _arsShort(n) {
+        n = Number(n) || 0;
+        if (n >= 1e9) return '$' + (n / 1e9).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' mil M';
+        if (n >= 1e6) return '$' + (n / 1e6).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' M';
+        return _ars(n);
+    }
+    function renderVipDetail() {
+        const box = _el('infoVipDetail');
+        if (!box) return;
+        const v = VIP.state && VIP.state.vipStatus;
+        if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) { box.innerHTML = ''; return; }
+        const cur = v.level && v.level.idx;
+        const rows = v.levels.map(l =>
+            '<div class="vip-row' + (cur === l.idx ? ' is-cur' : '') + '">' +
+            '<span class="vip-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji || '') + ' ' + _esc(l.name) + '</span>' +
+            '<span class="vip-th">' + _arsShort(l.thresholdArs) + ' jugados</span>' +
+            '<span class="vip-bonus">+' + _arsShort(l.levelUpBonusArs) + '</span>' +
+            '<span class="vip-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% sem.</span>' +
+            '</div>').join('');
+        const mine = v.level
+            ? ('Tu nivel: <b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>' + (v.next ? ' · te faltan <b>' + _ars(v.faltaParaSubir) + '</b> jugados para ' + _esc(v.next.name) : ''))
+            : (v.next ? 'Todavía sin nivel: con <b>' + _arsShort(v.next.thresholdArs) + '</b> jugados llegás a ' + _esc(v.next.emoji + ' ' + v.next.name) + ' y cobrás <b>' + _arsShort(v.next.levelUpBonusArs) + '</b>.' : '');
+        box.innerHTML =
+            '<div class="info-vip-head">👑 Niveles VIP según lo que jugás</div>' +
+            '<p class="info-vip-p">Todo lo que apostás suma <b>para siempre</b> (nunca bajás). Al llegar a cada nivel cobrás un <b>bono en el momento</b> y desde ahí un <b>rakeback semanal</b>: un % de todo lo que apostaste en la semana, <b>ganes o pierdas</b>, que reclamás desde tu perfil.</p>' +
+            (mine ? '<p class="info-vip-mine">' + mine + '</p>' : '') +
+            '<div class="vip-row vip-row-h"><span>Nivel</span><span>Llegás con</span><span>Bono</span><span>Rakeback</span></div>' + rows;
+    }
+    // Cuando se abre "Información del servicio", refrescar el detalle VIP con lo último cargado.
+    try { document.addEventListener('click', (e) => { if (e.target && e.target.closest && e.target.closest('#infoBtn')) setTimeout(renderVipDetail, 60); }, true); } catch (_) {}
+
     // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
     function toggleAccess() {
         const body = _el('accessBody'), ch = _el('accessChevron');
@@ -391,6 +431,7 @@
         await loadPlatforms(true);
         renderPlatforms();
         renderHowItWorks();
+        try { renderVipDetail(); setTimeout(renderVipDetail, 4000); } catch (_) {}
     }
 
     // Enganches (una sola vez, al cargar el script):
@@ -430,6 +471,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail,
         get platformsData() { return _platforms; } };
 })();

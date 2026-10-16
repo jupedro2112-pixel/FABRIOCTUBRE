@@ -1782,8 +1782,18 @@
         <div class="modal-content" style="max-width: 600px; position: relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('infoModal')" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; z-index: 10;">✕</button>
             <div class="modal-header">
-                <h2>🎮 Información del Servicio</h2>
-                <p>Todos los beneficios de jugar en 1GIROX, explicados clarito</p>
+                <h2>Información del servicio</h2>
+                <p>Por qué elegirnos, explicado clarito</p>
+            </div>
+            <!-- #237: reseñas ARRIBA, plegadas (owner: "que no esté abierto así se ve todo lo otro"). reviews.js
+                 sigue renderizando dentro de #infoReviewsSection. -->
+            <div class="info-reviews-wrap" id="infoReviewsWrap">
+                <button type="button" class="info-reviews-head" onclick="VIP.home.toggleInfoReviews()">
+                    <span>⭐ Opiniones y dejá tu reseña</span><span class="info-reviews-chevron" id="infoReviewsChevron">▼</span>
+                </button>
+                <div id="infoReviewsBody" style="display:none;">
+                    <div id="infoReviewsSection"></div>
+                </div>
             </div>
             <!-- ⚠️ Mantener esto al día con la realidad del negocio: reembolsos por
                  RANGOS 3/6/10 (no los 20/10/5 viejos), niveles VIP con rakeback,
@@ -1827,10 +1837,11 @@
                     <div class="info-card-desc">Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</div>
                 </div>
             </div>
+            <!-- #237: niveles VIP según lo que jugás — detallado pero resumido (lo completa home.js con la
+                 escalera real de /api/vip/status). -->
+            <div class="info-vip" id="infoVipDetail"></div>
             <!-- Test de app + notificaciones. Render desde js/apptest.js -->
             <div id="infoDiagnostics"></div>
-            <!-- Reseñas: cómo reacciona la gente + dejar opinión. Render desde js/reviews.js -->
-            <div id="infoReviewsSection"></div>
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="closeInfoModal" class="btn btn-primary" style="width: 100%;">Entendido</button>
             </div>

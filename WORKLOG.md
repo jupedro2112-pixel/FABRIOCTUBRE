@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-16
 
+### 237. 👑 Info del servicio: niveles VIP detallados abajo, reseñas plegadas arriba, todo en una hoja — SW v133
+- **Owner:** "detallá cómo funcionan los niveles VIP según la carga en por qué elegirnos, abajo de los recuadros,
+  detallado pero resumido; centrá todo en una hoja principal; la parte de dejar tu reseña arriba con
+  deslizante pero cerrada al entrar así se ve todo lo otro".
+- **Modal Información del servicio:** arriba un plegable "⭐ Opiniones y dejá tu reseña" (cerrado; reviews.js
+  sigue renderizando en `#infoReviewsSection`, ahora adentro); después los recuadros; abajo **"👑 Niveles
+  VIP según lo que jugás"** (`VIP.home.renderVipDetail`, desde `VIP.state.vipStatus.levels` de
+  /api/vip/status): explicación en 2 líneas (acumulado de por vida, bono al llegar, rakeback semanal
+  gane o pierda), "Tu nivel / te faltan $X para el siguiente", y la tabla Nivel · Llegás con · Bono ·
+  Rakeback con la escalera real (montos abreviados: $15 M). Se refresca al abrir Info. Modal a 560 px,
+  texto alineado a la izquierda. Vacío si los niveles VIP están apagados en el panel.
+
 ### 236. 📱 Corrección: las pruebas de plataforma y Ganamos se abren SIEMPRE dentro de la app — SW v132
 - **Owner:** "no no, Google Chrome siempre NO: esas páginas de prueba para jugar siempre adentro de la app,
   sin salir". (El #235 las mandaba a Chrome: revertido.)
