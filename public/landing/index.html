@@ -318,13 +318,10 @@
       ctx.fillStyle = color || '#fff'; ctx.font = (mono ? '800 52px ui-monospace, Menlo, Consolas, monospace' : '800 40px Montserrat, system-ui, sans-serif');
       y = wrap(ctx, v || '—', pad, y, W - pad * 2, 58) + 26;
     }
+    // Solo lo que hay que guardar (owner): link de la app, usuario y clave.
+    row('Link de la app', baseUrl.replace(/^https?:\/\//, ''), '#d9b8ff', true);
     row('Usuario', result.username, '#fff', true);
     row('Clave', result.password, '#9ff0b8', true);
-    row('Entrá desde', baseUrl.replace(/^https?:\/\//, ''), '#d9b8ff', true);
-    var plats = (result.platforms || []).filter(function (p) { return p.created; }).map(function (p) { return p.name; });
-    if (plats.length) row('Tu usuario sirve en', plats.join(' y '), '#fff', false);
-    ctx.fillStyle = '#e3c6ff'; ctx.font = '700 28px Montserrat, system-ui, sans-serif';
-    y = wrap(ctx, 'Con este usuario y clave entrás a la app, cargás solo y elegís dónde jugar.', pad, y + 10, W - pad * 2, 38);
     ctx.fillStyle = '#8a7aa6'; ctx.font = '500 24px Montserrat, system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
     c.toBlob(function (blob) {

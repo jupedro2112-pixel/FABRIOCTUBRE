@@ -10965,6 +10965,16 @@ async function initializeData() {
     }
   } catch (e) { console.warn('[startup-migration] /sys_welcome:', e.message); }
 
+  // #228 (owner 2026-10-16): ruleta diaria con la app instalada, SOLO clientes activos de la semana,
+  // premios $5.000 / 100% / 50%. One-shot (flag): después se edita desde el panel → Ruleta diaria.
+  try {
+    if (!(await getConfig('migration_roulette_v3_done', false))) {
+      await Config.set('dailyRoulette', { enabled: true, requireAppInstalled: true, minCargas30d: 0, requireActiveWeek: true, prizes: ROULETTE_PRIZES_2026_10 }, 'startup-migration');
+      await Config.set('migration_roulette_v3_done', true, 'startup-migration');
+      console.log('✅ Ruleta diaria configurada (#228): app instalada + activo de la semana · $5.000 / 100% / 50%');
+    }
+  } catch (e) { console.warn('[startup-migration] ruleta v3:', e.message); }
+
   // Verificar/crear comandos de sistema (mensajes automáticos editables desde COMANDOS)
   const systemCmds = [
     {
@@ -18028,7 +18038,38 @@ const ROULETTE_PRIZES = [
   { id: 'c500',   type: 'cash', value: 500,   weight: 8,  emoji: '🥈', label: '$500', rolloverX: 0 },
   { id: 'none',   type: 'none', value: 0,     weight: 80, emoji: '😔', label: 'SIN PREMIO', rolloverX: 0 }
 ];
-const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, prizes: ROULETTE_PRIZES };
+// requireActiveWeek (#228, owner 2026-10-16): "solo si es cliente activo de la semana" → al menos
+// UNA carga real desde el lunes 00:00 (hora AR). Se combina con los otros gates.
+const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, requireActiveWeek: false, prizes: ROULETTE_PRIZES };
+// Premios pedidos por el owner (#228): $5.000 · 100% EXTRA · 50% EXTRA en la próxima carga.
+const ROULETTE_PRIZES_2026_10 = [
+  { id: 'c5000',  type: 'cash',    value: 5000, weight: 10, emoji: '💰', label: '$5.000', rolloverX: 0 },
+  { id: 'p100',   type: 'percent', value: 100,  weight: 30, emoji: '🎁', label: '100% EXTRA', rolloverX: 0 },
+  { id: 'p50',    type: 'percent', value: 50,   weight: 60, emoji: '🎉', label: '50% EXTRA', rolloverX: 0 }
+];
+// Lunes 00:00 hora Argentina (UTC-3) de la semana en curso.
+function _rouletteWeekStartART(now = new Date()) {
+  const art = new Date(now.getTime() - 3 * 3600 * 1000);
+  const dow = art.getUTCDay(); // 0 dom … 6 sáb
+  const back = (dow + 6) % 7;   // días desde el lunes
+  const mondayART = Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate() - back, 0, 0, 0);
+  return new Date(mondayART + 3 * 3600 * 1000); // de vuelta a UTC real
+}
+async function _rouletteIsActiveThisWeek(userId, username) {
+  try {
+    const since = _rouletteWeekStartART();
+    const count = await Transaction.countDocuments({
+      $or: [{ userId: userId }, { username: username }],
+      type: 'deposit',
+      'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] },
+      timestamp: { $gte: since }
+    });
+    return { active: count > 0, count, since };
+  } catch (e) {
+    logger.warn(`[roulette] chequeo activo de la semana falló: ${e.message}`);
+    return { active: true, count: null }; // fail-open
+  }
+}
 function _normalizeRoulettePrizes(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map((p, i) => {
@@ -18055,6 +18096,7 @@ async function getDailyRouletteConfig() {
           enabled: raw.enabled !== false,
           requireAppInstalled: raw.requireAppInstalled !== false,
           minCargas30d: Number.isFinite(min) ? Math.min(1000, Math.max(0, min)) : DAILY_ROULETTE_DEFAULT.minCargas30d,
+          requireActiveWeek: raw.requireActiveWeek === true,
           prizes
         };
       }
@@ -18107,6 +18149,7 @@ app.post('/api/admin/daily-roulette', authMiddleware, adminMiddleware, async (re
       enabled: body.enabled !== false,
       requireAppInstalled: body.requireAppInstalled !== false,
       minCargas30d: Number.isFinite(min) ? Math.min(1000, Math.max(0, min)) : DAILY_ROULETTE_DEFAULT.minCargas30d,
+      requireActiveWeek: body.requireActiveWeek === true,
       prizes
     };
     await Config.set('dailyRoulette', cfgOut, req.user.username);
@@ -18197,7 +18240,8 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
     const u = await User.findOne({ id: userId }, { fcmTokenContext: 1, fcmTokens: 1, dailyRoulettePendingPct: 1, dailyRoulettePendingLabel: 1 }).lean();
     const appOk = cfg.requireAppInstalled ? _rouletteHasAppInstalled(u) : true;
     const act = await _rouletteIsActiveClient(userId, username, cfg.minCargas30d);
-    const eligible = cfg.enabled && appOk && act.active;
+    const week = cfg.requireActiveWeek ? await _rouletteIsActiveThisWeek(userId, username) : { active: true };
+    const eligible = cfg.enabled && appOk && act.active && week.active;
     const spin = await DailyRouletteSpin.findOne({ userId, dateKey }).lean();
     res.json({
       success: true,
@@ -18205,6 +18249,8 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
       eligible,
       needsAppNotifs: !appOk,
       needsActive: appOk && !act.active, // app OK pero no llega a las cargas mínimas
+      needsActiveWeek: appOk && act.active && !week.active, // #228: sin carga esta semana
+      requireActiveWeek: cfg.requireActiveWeek === true,
       minCargas: cfg.minCargas30d,
       dateKey,
       // Premios con su probabilidad real (transparencia: la PWA los lista).
@@ -18520,6 +18566,13 @@ app.post('/api/roulette/spin', authMiddleware, async (req, res) => {
         needsActive: true,
         minCargas: cfg.minCargas30d
       });
+    }
+    // Gate #228: cliente activo DE LA SEMANA (al menos una carga desde el lunes).
+    if (cfg.requireActiveWeek) {
+      const week = await _rouletteIsActiveThisWeek(userId, username);
+      if (!week.active) {
+        return res.status(403).json({ error: 'La ruleta es para clientes que cargaron esta semana. Hacé una carga y volvé a girar.', needsActiveWeek: true });
+      }
     }
 
     // Pre-check: ya giró hoy? (el unique index igual cubre el race)

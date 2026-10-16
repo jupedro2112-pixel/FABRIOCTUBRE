@@ -2044,6 +2044,9 @@ document.addEventListener('change', function (ev) {
                         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;cursor:pointer;">
                             <input type="checkbox" id="drRequireApp" style="accent-color:#26e07f;"> <span>Exigir app instalada</span>
                         </label>
+                        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;" title="Al menos una carga real desde el lunes 00:00 (hora AR)">
+                            <input type="checkbox" id="drRequireWeek" style="accent-color:#26e07f;"> <span>Solo clientes activos de la SEMANA (cargaron desde el lunes)</span>
+                        </label>
                         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;">
                             Cargas mínimas en 30 días (más de): <input id="drMinCargas" type="number" min="0" max="1000" value="10" style="width:60px;background:rgba(0,0,0,0.45);border:1px solid rgba(38,224,127,0.40);color:#fff;padding:5px 7px;border-radius:6px;">
                         </label>

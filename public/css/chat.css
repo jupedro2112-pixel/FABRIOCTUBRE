@@ -1202,3 +1202,87 @@ body.wa-dark .support-head { background: #1f2c34; }
     animation: wdGlow 2.6s ease-in-out infinite;
 }
 @keyframes wdGlow { 0%,100% { box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 10px 26px rgba(0,230,118,.30); } 50% { box-shadow: 0 0 0 1px rgba(0,230,118,.6), 0 10px 34px rgba(0,230,118,.55); } }
+
+/* ══ #228: "Cobrá tu reembolso acá" remarcado (verde como Retirar), ruleta del home visible, info modal ══ */
+.dash-top .dash-refunds-title { display: block !important; font-size: 9.5px !important; margin: 0 0 4px !important; color: #69f0ae !important; letter-spacing: 1.4px; text-transform: uppercase; }
+.dash-top .dash-refunds-row .refund-btn {
+    background: linear-gradient(135deg, #00c853 0%, #00e676 55%, #69f0ae 100%) !important; color: #052e16 !important; border: 0 !important;
+    box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 6px 16px rgba(0,230,118,.28) !important; min-height: 34px;
+}
+.dash-top .dash-refunds-row .refund-label-full { color: #0b3d1d !important; font-weight: 900 !important; }
+.dash-top .dash-refunds-row .refund-amount { color: #052e16 !important; font-weight: 900 !important; }
+.dash-top .dash-refunds-row .refund-btn:disabled { filter: grayscale(.35) brightness(.85); }
+.dash-top .refund-tier { background: #06070d; color: #69f0ae; border-color: rgba(0,230,118,.6); }
+/* Ruleta diaria en el home (vuelve, #228): roulette.js la muestra solo si el cliente es elegible */
+#rouletteHomeCard { display: flex !important; flex: 0 0 auto !important; }
+#rouletteHomeCard[style*="display: none"] { display: none !important; }
+.dash-top .dash-roulette { background: linear-gradient(160deg, rgba(255,23,68,.18), rgba(255,107,107,.08)) !important; border: 1px solid var(--dx-border-hi) !important; border-radius: 8px !important; padding: 3px 8px !important; flex-direction: row !important; gap: 6px !important; }
+.dash-top .dash-roulette-avatar { width: 20px !important; height: 20px !important; font-size: 11px !important; }
+.dash-top .dash-roulette-label { display: none !important; }
+.dash-top .dash-roulette-sub { font-size: 9.5px !important; max-width: none !important; }
+/* Info del servicio: tarjetas anchas, badge NOVEDAD, puntos */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.info-card-wide { grid-column: 1 / -1; }
+.info-card-new { border-color: var(--dx-border-hi) !important; box-shadow: 0 0 22px rgba(255,23,68,.18); }
+.info-badge { display: inline-block; margin-left: 6px; background: var(--dx-accent); color: #06070d; font-size: 9px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; border-radius: 4px; padding: 2px 7px; vertical-align: middle; }
+.info-point { padding: 6px 0; border-bottom: 1px dashed var(--dx-border); line-height: 1.45; }
+.info-point:last-child { border-bottom: 0; }
+.info-card-desc b { color: var(--dx-text); }
+
+/* ══ #229: burbuja flotante de soporte (reemplaza la fila) + campana/fueguito como círculos ══ */
+.tb-circle-plain { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; min-width: 0; margin-top: 0;
+    background: var(--dx-glass) !important; border: 1px solid var(--dx-border) !important; color: var(--dx-cyan); font-size: 15px; padding: 0 !important; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,.45); transform: none !important; }
+.tb-circle-plain .fire-streak-badge { position: absolute; top: -4px; right: -4px; }
+.support-bubble {
+    position: fixed; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); z-index: 9000;
+    display: flex; align-items: center; gap: 0; touch-action: none; user-select: none; -webkit-user-select: none;
+    filter: drop-shadow(0 10px 24px rgba(255,23,68,.35));
+}
+.sb-main {
+    display: flex; align-items: center; gap: 9px; border: 0; cursor: pointer; color: #fff; text-align: left;
+    background: var(--dx-accent); border-radius: 999px; padding: 7px 14px 7px 7px; position: relative;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset; animation: sbPulse 2.4s ease-in-out infinite;
+}
+@keyframes sbPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,45,85,.45); } 50% { box-shadow: 0 0 0 10px rgba(255,45,85,0); } }
+.sb-avatar { position: relative; flex: 0 0 auto; width: 40px; height: 40px; }
+.sb-avatar img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #06070d; border: 2px solid rgba(255,255,255,.7); display: block; }
+.sb-dot { position: absolute; right: 0; bottom: 0; width: 11px; height: 11px; border-radius: 50%; background: #2ee66b; border: 2px solid #ff2d55; box-shadow: 0 0 8px #2ee66b; }
+.sb-text { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
+.sb-text b { font: 800 13px var(--dx-font); letter-spacing: .3px; text-transform: uppercase; white-space: nowrap; }
+.sb-text small { font: 600 10px var(--dx-font); opacity: .9; white-space: nowrap; }
+.sb-main .support-unread { position: absolute; top: -6px; left: 30px; margin: 0; }
+.sb-min { flex: 0 0 auto; width: 26px; height: 26px; margin-left: -8px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: #0b0d14; color: #fff; font: 900 15px/1 var(--dx-font); cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,.4); }
+.support-bubble.minimized .sb-text { display: none; }
+.support-bubble.minimized .sb-main { padding: 5px; }
+.support-bubble.minimized .sb-avatar { width: 46px; height: 46px; }
+.support-bubble.minimized .sb-avatar img { width: 46px; height: 46px; }
+.support-bubble.minimized .sb-main .support-unread { left: 36px; }
+body.support-open .support-bubble { visibility: hidden; }
+.support-head .theme-topbar-btn { margin-left: auto; margin-right: 6px; }
+.support-head .support-load-btn { margin-left: 0; }
+
+/* ══ #230: elegir plataforma ARRIBA del CBU — tarjeta seleccionable ══ */
+.plat-play-btn { position: relative; padding: 12px 10px 28px; }
+.plat-check { position: absolute; top: 7px; right: 9px; width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--dx-border); font-size: 11px; font-weight: 900; color: #06070d; display: inline-flex; align-items: center; justify-content: center; }
+.plat-play-btn.is-pref .plat-check { background: #2ee66b; border-color: #2ee66b; box-shadow: 0 0 10px rgba(46,230,107,.6); }
+.plat-play-btn.is-pref { border-color: var(--dx-border-hi); background: linear-gradient(160deg, rgba(255,23,68,.16), rgba(255,107,107,.08)); box-shadow: 0 0 22px rgba(255,23,68,.25); }
+.plat-enter { position: absolute; left: 50%; bottom: 7px; transform: translateX(-50%); font: 800 9.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 999px; padding: 3px 9px; background: rgba(0,0,0,.25); }
+.plat-fix { display: none; }
+
+/* ══ #231: fueguito RESUMIDO — racha + reclamar + premios, nada más ══ */
+.fire-compact .fire-info-row:not(.fire-streak-row) { display: none !important; }   /* "Último reclamo" */
+.fire-compact .fire-progress-container { display: none !important; }               /* barra 0/10 */
+.fire-compact #fireActivityCondition { display: none !important; }                 /* condición larga */
+.fire-compact { padding: 10px 12px !important; }
+.fire-streak-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 12px; background: var(--dx-glass); border: 1px solid var(--dx-border); margin-bottom: 8px; }
+.fire-streak-row span:first-child { font: 800 10px var(--dx-font); letter-spacing: 1.4px; text-transform: uppercase; color: var(--dx-muted); }
+.fire-streak-row #fireStreakModal { font-size: 28px !important; color: var(--dx-money) !important; font-family: var(--dx-font); }
+.fire-streak-row #fireStreakModal::after { content: ' días'; font-size: 11px; color: var(--dx-muted); font-weight: 700; }
+.fire-prizes-title { color: var(--dx-text) !important; font: 800 10px var(--dx-font) !important; letter-spacing: 1.4px; text-transform: uppercase; margin: 6px 0 4px !important; }
+#fireMilestonesMenu > div { padding: 6px 10px !important; margin: 3px 0 !important; border-radius: 9px !important; background: rgba(255,255,255,.04) !important; border: 1px solid var(--dx-border); font-size: 12px; }
+#fireCondition { font-size: 11.5px !important; margin: 8px 0 !important; }
+#fireModal .modal-actions { flex-direction: column; gap: 6px; }
+#fireModal #claimFireBtn { background: var(--dx-accent) !important; color: #06070d !important; font-weight: 900; padding: 13px; font-size: 13px; letter-spacing: .8px; }
+#fireModal #closeFireModal { padding: 8px; font-size: 11px; }
+.fire-compact-head h2 { font-size: 16px !important; }
+.fire-compact-head p { font-size: 11.5px !important; }

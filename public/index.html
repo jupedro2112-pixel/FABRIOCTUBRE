@@ -494,6 +494,10 @@
             <button type="button" class="tb-circle" id="headerInstallBtn" title="Cómo instalar la app" onclick="VIP.ui.installApp()">
                 <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M12 7v7M9.3 11.3 12 14l2.7-2.7M10 18.5h4"/></svg></span><span class="tb-circle-lbl">Instalar</span>
             </button>
+            <!-- #229: campanita y fueguito vienen de la vieja barra de soporte (ids históricos: los cablea
+                 app.js / fire.js / el inline de FCM, que reescribe el innerHTML de #notificationBtn). -->
+            <button class="tb-circle tb-circle-plain notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
+            <button class="tb-circle tb-circle-plain fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
             <button type="button" class="tb-circle" title="Cambiar mi contraseña" onclick="VIP.home.openChangePassword()">
                 <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="14" r="4.2"/><path d="M11 11 20.5 1.5M16 6l2.5 2.5M13.5 8.5 16 11"/></svg></span><span class="tb-circle-lbl">Clave</span>
             </button>
@@ -913,31 +917,6 @@
                 }
                 #homePanelToggle .hpt-chevron { font-size:9px; }
             </style>
-            <!-- ===== SOPORTE ARRIBA (#220): la cabecera del chat vive acá; tocarla abre el chat. ===== -->
-            <div class="chat-topbar support-bar" id="supportBar" title="Abrir el chat de soporte">
-                    <!-- El logo del chat es configurable desde el panel admin (Comunidad →
-                         "Logo del chat de soporte"); chat.js lo pisa al loguear. -->
-                    <!-- Logo default del soporte = 1GIROX (2026-08-05). Si en el panel
-                         (Comunidad → Logo del chat) hay uno cargado, chat.js lo pisa. -->
-                    <img class="chat-topbar-avatar" id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40" onclick="VIP.home.openSupport()">
-                    <div class="chat-topbar-info" onclick="VIP.home.openSupport()">
-                        <span class="chat-topbar-name">Soporte en vivo <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
-                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>En línea · te respondemos al toque</span>
-                    </div>
-                    <!-- Modo claro/oscuro A LA VISTA (owner 2026-08-03: en Configuración
-                         nadie lo encontraba). El ícono muestra a qué modo se cambia.
-                         Sincronizado con el switch de Configuración (app.js applyWaDark). -->
-                    <button class="theme-topbar-btn" id="themeToggleBtn" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">🌙</button>
-                    <!-- Campanita de notificaciones (movida del menú ☰, owner 2026-08-05):
-                         solo ícono; el estado lo pinta el FCM inline (_updateNotisButton):
-                         🔔 verde = activadas, 🔕 rojo = bloqueadas, 🔔 = tocá para activar. -->
-                    <button class="notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
-                    <!-- Fueguito (racha diaria): vive en la cabecera del chat, NO en la
-                         barra de escribir (la barra es 100% estilo WhatsApp). El click lo
-                         cablea app.js (#fireBtn) y fire.js actualiza #fireStreak. -->
-                    <button class="fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Abrir</button>
-                </div>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
             <div class="home-dash">
@@ -945,7 +924,7 @@
                     <!-- Ruleta diaria: render dinámico desde js/roulette.js -->
                     <div id="rouletteHomeCard" style="display:none;"></div>
                     <div class="dash-refunds">
-                        <div class="dash-refunds-title">🎁 REEMBOLSOS</div>
+                        <div class="dash-refunds-title">Cobrá tu reembolso acá</div>
                         <!-- 🪦 dailyRefundBtn eliminado (2026-08-07): el reembolso diario
                              se sacó del producto — quedan SEMANAL y MENSUAL, que se
                              reparten la fila a la mitad (flex:1 de .dash-refunds-row). -->
@@ -977,6 +956,18 @@
 
 
 
+                <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
+                     Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
+                <div class="home-card" id="platformsCard">
+                    <div class="home-card-title">¿Dónde querés jugar?</div>
+                    <p class="home-card-sub" id="platformsSub">Elegí Ganamos o Girox. Después mandá tu transferencia al CBU de abajo.</p>
+                    <div class="plat-play-row" id="platformsButtons"></div>
+                    <div class="plat-balance">
+                        <span class="dash-balance-label">💰 TU SALDO</span>
+                        <span class="dash-balance-amount" id="userBalance">$0</span>
+                    </div>
+                </div>
+
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
                 <div class="home-card al-card" id="autoLoadCard">
                     <div class="home-card-title">Cargá en 2 pasos <span class="hc-tag">automático</span></div>
@@ -1007,20 +998,6 @@
                     </div>
                     <div id="alCapturePreview" style="display:none;margin-top:8px;"></div>
                 </div>
-
-                <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
-                     Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
-                <div class="home-card" id="platformsCard">
-                    <div class="home-card-title">Elegí dónde jugar</div>
-                    <p class="home-card-sub" id="platformsSub">Tocá una para entrar con tu sesión iniciada. Fijala y tus cargas van directo ahí; si no, te preguntamos al cargar.</p>
-                    <div class="plat-play-row" id="platformsButtons"></div>
-                    <div class="plat-balance">
-                        <span class="dash-balance-label">💰 TU SALDO</span>
-                        <span class="dash-balance-amount" id="userBalance">$0</span>
-                    </div>
-                </div>
-
-
 
                 <!-- Soporte por Telegram, abajo de Jugá Aquí. 🪦 Acá también vivía el
                      botón "Canal Exclusivo" (communityChannelBtn): se ELIMINÓ porque
@@ -1118,6 +1095,16 @@
             <!-- Cabecera del chat, estilo WhatsApp: avatar + "Soporte" + estado.
                  Va DENTRO de .chat-container para que quede pegada arriba de los
                  mensajes y comparta el redondeo del contenedor. -->
+            <!-- ===== BURBUJA DE SOPORTE (#229): "que parezca un botón, un círculo que se mueva, que se pueda
+                 minimizar pero al principio quede abierto". Arrastrable (home.js), abre el chat. ===== -->
+            <div id="supportBubble" class="support-bubble expanded" role="button" aria-label="Soporte en vivo">
+                <button type="button" class="sb-main" onclick="VIP.home.openSupport()">
+                    <span class="sb-avatar"><img id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40"><i class="sb-dot"></i></span>
+                    <span class="sb-text"><b>Soporte en vivo aquí</b><small>Te respondemos al toque</small></span>
+                    <span id="supportUnread" class="support-unread" style="display:none;">0</span>
+                </button>
+                <button type="button" class="sb-min" onclick="VIP.home.toggleBubble(event)" title="Minimizar / abrir">–</button>
+            </div>
             <!-- ===== SOPORTE (#220): el chat de siempre, a pantalla completa. Se abre desde la
                  barra verde de arriba del home (VIP.home.openSupport). Los ids NO cambian:
                  chatMessages, typingIndicator, messageInput, attachBtn, fileInput, sendBtn, cbuChatBtn. ===== -->
@@ -1125,6 +1112,7 @@
                 <div class="support-head">
                     <button type="button" class="support-back" onclick="VIP.home.closeSupport()">‹ Volver</button>
                     <div class="support-head-title">Soporte en vivo<span class="support-head-sub">Cómo funciona · referidos · consultas</span></div>
+                    <button class="theme-topbar-btn" id="themeToggleBtn" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">🌙</button>
                     <button type="button" class="support-load-btn" onclick="VIP.home.closeSupport()" title="Volver al sistema de cargas">Cargar</button>
                 </div>
                 <div class="chat-container">
@@ -1721,13 +1709,16 @@
     <div id="fireModal" class="modal hidden" onclick="if(event.target === this) hideModal('fireModal')">
         <div class="modal-content" style="position: relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('fireModal')" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; z-index: 10; line-height: 1;">✕</button>
-            <div class="modal-header">
-                <h2>🔥 Racha Diaria - Fueguito</h2>
-                <p>Reclamá tu fueguito cada día para ganar recompensas!</p>
+            <!-- #231 (owner): "resumilo al máximo, todo en un lugar, sin vueltas". Se muestran SOLO la
+                 racha, el botón de reclamar y los premios; último reclamo, barra y condición larga quedan
+                 en el DOM (fire.js los escribe) pero ocultos por CSS (.fire-compact). -->
+            <div class="modal-header fire-compact-head">
+                <h2>🔥 Fueguito</h2>
+                <p>Entrá cada día y tocá reclamar. Al llegar a cada hito cobrás el premio.</p>
             </div>
-            <div class="fire-details">
-                <div class="fire-info-row">
-                    <span>Días consecutivos:</span>
+            <div class="fire-details fire-compact">
+                <div class="fire-info-row fire-streak-row">
+                    <span>Tu racha</span>
                     <span id="fireStreakModal" style="font-size: 24px; color: #ff4500; font-weight: bold;">0</span>
                 </div>
                 <div class="fire-info-row">
@@ -1756,7 +1747,7 @@
                 <div id="firePendingCashReward" style="display:none; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.4); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; text-align:center;"></div>
                 <!-- Menú de recompensas / milestones -->
                 <div style="margin-bottom: 10px;">
-                    <p style="color: #ff8c00; font-weight: bold; font-size: 13px; margin-bottom: 6px;">🏆 Recompensas disponibles:</p>
+                    <p class="fire-prizes-title" style="color: #ff8c00; font-weight: bold; font-size: 13px; margin-bottom: 6px;">Premios por racha</p>
                     <div id="fireMilestonesMenu">
                         <div style="padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">🔒 <strong>Día 10</strong>: $10.000 <span style="font-size:10px;color:#aaa;">(requiere actividad del mes)</span></div>
                         <div style="padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">🔒 <strong>Día 20</strong>: $50.000 <span style="font-size:10px;color:#aaa;">(requiere actividad del mes)</span></div>
@@ -1786,47 +1777,42 @@
                  RANGOS 3/6/10 (no los 20/10/5 viejos), niveles VIP con rakeback,
                  bono de instalación = 100% en la próxima carga (no $5.000). -->
             <div class="info-grid">
-                <div class="info-card">
-                    <div class="info-card-icon">🎰</div>
-                    <div class="info-card-title">Página CASINO</div>
-                    <div class="info-card-desc">Tocá "Página CASINO" (en el menú ☰ o el botón del inicio) y entrás al casino directo, con tu sesión YA INICIADA — sin usuario ni contraseña.</div>
+                <!-- #228 (owner): "¿por qué elegir Girox o Ganamos? servicio personalizado, beneficios,
+                     reembolsos como NOVEDAD por punto, ruleta diaria con la app". Los % salen de la
+                     config real (home.js completa infoWeeklyMax / infoMonthlyMax). -->
+                <div class="info-card info-card-wide">
+                    <div class="info-card-icon">💎</div>
+                    <div class="info-card-title">¿Por qué elegir Girox o Ganamos?</div>
+                    <div class="info-card-desc">Servicio <b>personalizado</b>: cargás solo en minutos, elegís en qué plataforma jugar con el mismo usuario y clave, retirás a tu CBU y tenés soporte en vivo 24 hs. Y lo más importante: <b>somos la plataforma mejor paga de internet</b>.</div>
+                </div>
+                <div class="info-card info-card-wide info-card-new">
+                    <div class="info-card-icon">💰</div>
+                    <div class="info-card-title">Reembolsos <span class="info-badge">Novedad</span></div>
+                    <div class="info-card-desc">
+                        <div class="info-point"><b>¿Te fue mal en la semana?</b> Volvé el <b>lunes o martes</b> y recuperá hasta el <b><span id="infoWeeklyMax">…</span>%</b> de lo que perdiste.</div>
+                        <div class="info-point"><b>¿Mes flojo?</b> Desde el <b>día 7</b> recuperás hasta el <b><span id="infoMonthlyMax">…</span>%</b> de la pérdida del mes.</div>
+                        <div class="info-point">Se calcula sobre lo que perdés <b>con tu plata</b> (los bonos no cuentan) y <b>se cobra solo</b> desde "Cobrá tu reembolso acá", sin pedirle a nadie.</div>
+                    </div>
                 </div>
                 <div class="info-card">
-                    <div class="info-card-icon">💰</div>
-                    <!-- Los % ya no van hardcodeados: los rangos son editables desde el
-                         panel y refunds.js actualiza estos textos con el tope real. -->
-                    <div class="info-card-title" id="infoRefundsTitle">Reembolsos por tus pérdidas</div>
-                    <div class="info-card-desc" id="infoRefundsDesc">Te devolvemos parte de lo que perdés: semanal (lun-mar) y mensual (desde el día 7). Cuanto mayor tu pérdida del período, mayor el porcentaje.</div>
+                    <div class="info-card-icon">🎰</div>
+                    <div class="info-card-title">Ruleta diaria</div>
+                    <div class="info-card-desc">Con la <b>app instalada</b> y una carga en la semana, girás <b>una vez por día</b>: podés ganar <b>$5.000</b>, un <b>100%</b> o un <b>50% extra</b> en tu próxima carga.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">🎮</div>
+                    <div class="info-card-title">Dos plataformas</div>
+                    <div class="info-card-desc">Girox y Ganamos con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">🤝</div>
+                    <div class="info-card-title">Referidos</div>
+                    <div class="info-card-desc">Invitá amigos con tu link y cobrá todos los meses un % de su actividad, de por vida.</div>
                 </div>
                 <div class="info-card">
                     <div class="info-card-icon">👑</div>
                     <div class="info-card-title">Niveles VIP</div>
-                    <div class="info-card-desc">Todo lo que apostás suma para siempre: subí de Bronce a Diamante y cobrá un bono en cada nivel nuevo. Tocá tu perfil para ver tu progreso.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">💸</div>
-                    <div class="info-card-title">Rakeback semanal</div>
-                    <div class="info-card-desc">Desde nivel Bronce: cada semana te devolvemos un % de TODO lo que apostaste, ganes o pierdas.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🎰</div>
-                    <div class="info-card-title">Ruleta Diaria</div>
-                    <div class="info-card-desc">1 giro gratis por día con la app instalada. Premios en fichas al instante.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🔥</div>
-                    <div class="info-card-title">Fueguito diario</div>
-                    <div class="info-card-desc">Entrá todos los días y mantené tu racha: los hitos pagan premios en efectivo a tu cuenta.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🤝</div>
-                    <div class="info-card-title">Referidos: 8% mensual</div>
-                    <div class="info-card-desc">Invitá amigos con tu código y cobrá todos los meses el 8% de su actividad, de por vida y sin límite.</div>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-icon">🎁</div>
-                    <div class="info-card-title">Bonos en tus cargas</div>
-                    <div class="info-card-desc">Promos con hasta 30% extra en tus cargas. Atención por chat 24/7 y retiros por transferencia.</div>
+                    <div class="info-card-desc">Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</div>
                 </div>
             </div>
             <!-- Test de app + notificaciones. Render desde js/apptest.js -->

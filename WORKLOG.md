@@ -8,6 +8,52 @@
 
 ## Sesión 2026-10-16
 
+### 231. 🔥 Fueguito resumido al máximo — SW v129
+- **Owner:** "resumilo al máximo, que entres y esté todo en un lugar, sin tantas vueltas".
+- Modal del fueguito: sólo **racha** (número grande), **botón Reclamar** (rojo, ancho) y la lista de
+  **premios por racha**, compactos. "Último reclamo", la barra 0/10 y la condición larga quedan en el DOM
+  (fire.js los sigue escribiendo) pero ocultos por CSS (`.fire-compact`). Sin cambios en fire.js.
+
+### 230. 🎮 "¿Dónde querés jugar?" ARRIBA del CBU: elegir primero, transferir después — SW v128
+- **Owner:** "la parte de elegir la plataforma ponela arriba de donde está el CBU: '¿dónde querés jugar?
+  Ganamos o Girox', que la gente elija y después vea el CBU para enviar".
+- Orden del home: círculos → reembolsos → **¿Dónde querés jugar?** → Cargá en 2 pasos (CBU → comprobante)
+  → Retirar → Referidos/Instalar → ¿Cómo funciona?. Tocar una plataforma = **elegirla** (queda fija:
+  `POST /api/platforms/preferred`, tilde verde, "Elegida · tus cargas van acá"); tocarla de nuevo o
+  "Entrar ›" la abre dentro de la app con sesión iniciada (`VIP.home.choosePlatform`). El texto guía:
+  "Elegiste X: tus cargas van ahí. Ahora transferí al CBU de abajo 👇". Sin elegir, al cargar se pregunta.
+
+### 229. 💬 Burbuja flotante "Soporte en vivo aquí" (chau fila) + campana y fueguito en los círculos — SW v127
+- **Owner:** "soporte en vivo parece un título; que sea un botón, un círculo que se mueva, sacá esa fila
+  para generar lugar; que se pueda minimizar pero al principio quede abierto".
+- `#supportBubble` (index.html, dentro de #chatScreen): pill roja pulsante con el logo (`#chatTopbarAvatar`,
+  lo pisa chat.js), punto verde, "Soporte en vivo aquí", contador de no leídos (`#supportUnread`) y botón
+  "–" que la minimiza a un círculo (sólo en la sesión: cada entrada arranca abierta). **Arrastrable**
+  (touch/mouse, `_initBubbleDrag` en home.js; un arrastre no abre el chat). Se esconde mientras el chat
+  está abierto. La fila `#supportBar` se eliminó. 🔔 `#notificationBtn` y 🔥 `#fireBtn` pasaron a la fila de
+  círculos de la cabecera (mismos ids: el inline de FCM y fire.js siguen funcionando); 🌙
+  `#themeToggleBtn` vive en la cabecera del panel de soporte.
+
+### 228. ℹ️ "Cómo funciona" con el contenido del owner + RULETA DIARIA activa (app + activo de la semana) + reembolsos verdes "Cobrá tu reembolso acá" + captura solo link/usuario/clave — SW v126, admin-sw v58
+- **Owner:** "¿por qué elegir Girox o Ganamos? servicio personalizado, beneficios; reembolsos: ¿te fue mal
+  en la semana? volvé los lunes y recuperá hasta un X%; en el mes lo mismo… marcalo como NOVEDAD por
+  punto, detallado y simple; poneme una ruleta diaria con la app instalada: $5.000, 100%, 50%, sólo si
+  es cliente activo de la semana; en la fila de reembolsos poné 'Cobrá tu reembolso acá' y remarcá
+  semanal/mensual como el retirar; lo que la gente guarda es SOLO el link de la app, usuario y clave".
+- **Info del servicio (modal):** "¿Por qué elegir Girox o Ganamos?" (servicio personalizado + "la plataforma
+  mejor paga de internet"), "Reembolsos · NOVEDAD" en 3 puntos con los % MÁXIMOS reales de la escalera
+  (`infoWeeklyMax`/`infoMonthlyMax`, los completa home.js — regla: ningún % hardcodeado; los 20%/3% que
+  dijo el owner se ajustan en Configuración → Rangos), "Ruleta diaria", "Dos plataformas", "Referidos",
+  "Niveles VIP". ⚠️ El reembolso DIARIO no existe desde 2026-08-07: no se promete.
+- **Ruleta diaria (back):** gate `requireActiveWeek` (una carga real desde el lunes 00:00 AR,
+  `_rouletteIsActiveThisWeek`); status `needsActiveWeek`; spin rebota con mensaje. **Migración one-shot**
+  (`migration_roulette_v3_done`): enabled, app instalada, minCargas30d 0, activo de la semana, premios
+  $5.000 (10) · 100% EXTRA (30) · 50% EXTRA (60) — sin "sin premio", como lo pidió; editable en el panel
+  (checkbox nuevo "Solo clientes activos de la SEMANA"). Sigue el candado de pushes de ruleta (#204).
+- **Home:** celda de la ruleta visible otra vez (sólo elegibles); fila "Cobrá tu reembolso acá" con
+  semanal/mensual VERDES con brillo. **Captura (app y landing):** sólo link, usuario y contraseña.
+- Back necesita redeploy (gate + migración).
+
 ### 227. 🟢 Retirar bien visible + carga en 2 pasos — SW v125
 - **Owner:** "dale más visión al retirar premio, lo veo escondido, otro color; al recuadro de cargas dale
   vuelta para que la gente entienda y no se pierda con todo".

@@ -155,57 +155,34 @@
         return { list, choice: !!(d && d.choiceEnabled && list.length >= 2) };
     }
 
+    // La captura lleva SOLO lo que el cliente tiene que guardar (owner #228): link de la
+    // app, su usuario y su contraseña. Nada de CBU ni pasos (eso cambia y vive en la app).
     function _drawCard() {
-        const W = 1080, H = 1600;
+        const W = 1080, H = 1080;
         const c = document.createElement('canvas');
         c.width = W; c.height = H;
         const ctx = c.getContext('2d');
         const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#1a0033'); grad.addColorStop(1, '#0a0015');
+        grad.addColorStop(0, '#141826'); grad.addColorStop(1, '#06070d');
         ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-        ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, W - 40, H - 40);
-
-        const pad = 70;
-        let y = 130;
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = '#ffd700'; ctx.font = '900 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('💳 CARGA AUTOMÁTICA', W / 2, y); y += 50;
-        ctx.fillStyle = '#b0b0b0'; ctx.font = '600 30px system-ui, sans-serif';
-        ctx.fillText('Guardá esta captura: son tus datos para cargar y entrar', W / 2, y); y += 70;
+        ctx.strokeStyle = '#ff2d55'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, W - 40, H - 40);
+        const pad = 90;
+        let y = 170;
+        ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff'; ctx.font = '900 60px Montserrat, system-ui, sans-serif';
+        ctx.fillText('MIS DATOS DE ACCESO', W / 2, y); y += 56;
+        ctx.fillStyle = '#9aa0b2'; ctx.font = '600 30px Montserrat, system-ui, sans-serif';
+        ctx.fillText('Guardá esta captura para entrar cuando quieras', W / 2, y); y += 120;
         ctx.textAlign = 'left';
-
-        function section(title) {
-            ctx.fillStyle = 'rgba(212,175,55,0.14)'; ctx.fillRect(pad - 20, y - 46, W - pad * 2 + 40, 64);
-            ctx.fillStyle = '#d4af37'; ctx.font = '900 34px system-ui, sans-serif'; ctx.fillText(title, pad, y); y += 60;
+        function row(label, value, color) {
+            ctx.fillStyle = '#9aa0b2'; ctx.font = '700 28px Montserrat, system-ui, sans-serif'; ctx.fillText(label.toUpperCase(), pad, y); y += 56;
+            ctx.fillStyle = color || '#fff'; ctx.font = '800 54px ui-monospace, Menlo, Consolas, monospace';
+            y = _wrap(ctx, value || '—', pad, y, W - pad * 2, 62) + 44;
         }
-        function row(label, value, color, mono) {
-            ctx.fillStyle = '#9a9a9a'; ctx.font = '600 26px system-ui, sans-serif'; ctx.fillText(label, pad, y); y += 44;
-            ctx.fillStyle = color || '#fff'; ctx.font = (mono ? '800 40px ui-monospace, Menlo, Consolas, monospace' : '800 38px system-ui, sans-serif');
-            y = _wrap(ctx, value || '—', pad, y, W - pad * 2, 48) + 14;
-        }
-
-        section('🏦 DATOS PARA TRANSFERIR');
-        row('Banco', _cbu && _cbu.bank);
-        row('Titular', _cbu && _cbu.titular);
-        row('CBU', _cbu && _cbu.number, '#ffd700', true);
-        y += 10;
-        section('🔐 TUS DATOS DE ACCESO');
-        row('Usuario', username(), '#fff', true);
+        row('Link de la app', appLink().replace(/^https?:\/\//, ''), '#ff6b6b');
+        row('Usuario', username(), '#ffffff');
         const pw = getPassword();
-        row('Contraseña', pw || '(no guardada — entrá de nuevo y volvé a generar la captura)', pw ? '#fff' : '#ff8a80', !!pw);
-        row('Link de la app', appLink(), '#8ab4ff', true);
-        y += 10;
-        section('✅ CÓMO CARGAR');
-        ctx.fillStyle = '#e0e0e0'; ctx.font = '600 29px system-ui, sans-serif';
-        y = _wrap(ctx, '1) Transferí al CBU de arriba.', pad, y, W - pad * 2, 40);
-        y = _wrap(ctx, '2) Mandanos la foto del comprobante por el chat de soporte de la app.', pad, y, W - pad * 2, 40);
-        const p = _platformsForCard();
-        if (p.choice) {
-            y = _wrap(ctx, '3) Cuando llegue la plata elegís dónde jugar: ' + p.list.map(x => (x.emoji || '') + ' ' + x.name).join(' / ') + '.', pad, y, W - pad * 2, 40);
-        } else {
-            y = _wrap(ctx, '3) La carga entra sola en tu cuenta.', pad, y, W - pad * 2, 40);
-        }
-        ctx.fillStyle = '#888'; ctx.font = '500 24px system-ui, sans-serif'; ctx.textAlign = 'center';
+        row('Contraseña', pw || '(no guardada — entrá y volvé a generar la captura)', pw ? '#ffd166' : '#ff8a80');
+        ctx.fillStyle = '#6f7790'; ctx.font = '500 24px Montserrat, system-ui, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('Generada el ' + new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
         return c;
     }

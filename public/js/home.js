@@ -36,6 +36,7 @@
         if (!p) return;
         p.classList.remove('hidden');
         document.body.classList.add('support-open');
+        try { const bb = _el('supportBubble'); if (bb) bb.style.visibility = 'hidden'; } catch (_) {}
         _open = true;
         _unread = 0;
         _paintBadge();
@@ -48,6 +49,7 @@
         if (!p) return;
         p.classList.add('hidden');
         document.body.classList.remove('support-open');
+        try { const bb = _el('supportBubble'); if (bb) bb.style.visibility = ''; } catch (_) {}
         _open = false;
         try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
     }
@@ -74,6 +76,57 @@
         if (!_open) { _unread++; _paintBadge(); }
     }
 
+    // ---------------- BURBUJA DE SOPORTE (#229) ----------------
+    // Arranca ABIERTA (expandida) en cada entrada; el cliente la puede minimizar a un círculo
+    // (sólo durante la sesión) y arrastrarla por la pantalla. Tocarla abre el chat.
+    let _bubbleMin = false;
+    function toggleBubble(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        const b = _el('supportBubble');
+        if (!b) return;
+        _bubbleMin = !_bubbleMin;
+        b.classList.toggle('expanded', !_bubbleMin);
+        b.classList.toggle('minimized', _bubbleMin);
+        const m = b.querySelector('.sb-min');
+        if (m) m.textContent = _bubbleMin ? '+' : '–';
+    }
+    function _initBubbleDrag() {
+        const b = _el('supportBubble');
+        if (!b || b.dataset.dragReady) return;
+        b.dataset.dragReady = '1';
+        let sx = 0, sy = 0, ox = 0, oy = 0, moved = false, dragging = false;
+        const onDown = (e) => {
+            const p = e.touches ? e.touches[0] : e;
+            dragging = true; moved = false; sx = p.clientX; sy = p.clientY;
+            const r = b.getBoundingClientRect(); ox = r.left; oy = r.top;
+        };
+        const onMove = (e) => {
+            if (!dragging) return;
+            const p = e.touches ? e.touches[0] : e;
+            const dx = p.clientX - sx, dy = p.clientY - sy;
+            if (!moved && Math.abs(dx) + Math.abs(dy) < 6) return;
+            moved = true;
+            const w = b.offsetWidth, hgt = b.offsetHeight;
+            const nx = Math.min(window.innerWidth - w - 4, Math.max(4, ox + dx));
+            const ny = Math.min(window.innerHeight - hgt - 4, Math.max(4, oy + dy));
+            b.style.left = nx + 'px'; b.style.top = ny + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto';
+            if (e.cancelable) e.preventDefault();
+        };
+        const onUp = () => {
+            if (!dragging) return;
+            dragging = false;
+            if (moved) { b.dataset.justDragged = '1'; setTimeout(() => { delete b.dataset.justDragged; }, 250); }
+        };
+        b.addEventListener('touchstart', onDown, { passive: true });
+        b.addEventListener('touchmove', onMove, { passive: false });
+        b.addEventListener('touchend', onUp);
+        b.addEventListener('mousedown', onDown);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+        // Un arrastre no debe abrir el chat.
+        b.addEventListener('click', (e) => { if (b.dataset.justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+    }
+
     // ---------------- PLATAFORMAS ----------------
     async function loadPlatforms(force) {
         if (!force && _platforms && (Date.now() - _platformsAt) < 60000) return _platforms;
@@ -87,20 +140,26 @@
         return _platforms;
     }
 
+    // #230 (owner): "¿dónde querés jugar? Ganamos o Girox, que la gente elija y después vea el CBU".
+    // Tocar la tarjeta = ELEGIR (queda fija: las cargas van ahí). "Entrar ›" abre la plataforma
+    // dentro de la app con la sesión iniciada.
     function _platBtn(p, preferred) {
         const label = _esc(p.name);
         const isPref = preferred === p.id;
-        const sub = p.connected ? 'Entrar con mi sesión' : 'Abrir ' + _esc(p.name);
-        const onclick = "VIP.home.playOn('" + _esc(p.id) + "')";
-        // Pill "Fijar": las cargas van directo a esta plataforma sin preguntar (#225).
-        const fix = isPref
-            ? '<span class="plat-fix on" onclick="event.stopPropagation();VIP.home.setPreferred(null)" title="Quitar la plataforma fija">★ Fija</span>'
-            : '<span class="plat-fix" onclick="event.stopPropagation();VIP.home.setPreferred(\'' + _esc(p.id) + '\')" title="Fijar: tus cargas van directo acá">☆ Fijar</span>';
+        const onSelect = "VIP.home.choosePlatform('" + _esc(p.id) + "')";
+        const onEnter = "event.stopPropagation();VIP.home.playOn('" + _esc(p.id) + "')";
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
-            '<button type="button" class="plat-play-btn' + (p.isDefault ? ' is-default' : '') + (isPref ? ' is-pref' : '') + '" onclick="' + onclick + '">' +
+            '<button type="button" class="plat-play-btn' + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
+            '<span class="plat-check">' + (isPref ? '✓' : '') + '</span>' +
             '<span class="plat-play-name">' + label + '</span>' +
-            '<span class="plat-play-sub">' + sub + '</span>' +
-            '</button>' + fix + '</div>';
+            '<span class="plat-play-sub">' + (isPref ? 'Elegida · tus cargas van acá' : 'Tocá para elegir') + '</span>' +
+            '<span class="plat-enter" onclick="' + onEnter + '">' + (p.connected ? 'Entrar ›' : 'Abrir ›') + '</span>' +
+            '</button></div>';
+    }
+    function choosePlatform(platformId) {
+        const cur = (_platforms && _platforms.preferredPlatform) || null;
+        if (cur === platformId) { playOn(platformId); return; } // ya elegida → entrar
+        setPreferred(platformId);
     }
 
     async function setPreferred(platformId) {
@@ -132,8 +191,8 @@
         if (sub) {
             const prefP = list.find(p => p.id === pref);
             sub.textContent = list.length >= 2
-                ? (prefP ? ('Plataforma fija: ' + prefP.name + '. Tus cargas van directo ahí. Tocá ★ para cambiarla.')
-                         : 'Tocá una para entrar con tu sesión iniciada. Fijala (☆) y tus cargas van directo ahí; si no, te preguntamos al cargar.')
+                ? (prefP ? ('Elegiste ' + prefP.name + ': tus cargas van ahí. Ahora transferí al CBU de abajo 👇')
+                         : ('Elegí ' + list.map(p => p.name).join(' o ') + '. Después mandá tu transferencia al CBU de abajo.'))
                 : 'Tocá para entrar con tu sesión iniciada.';
         }
     }
@@ -226,6 +285,16 @@
     function renderHowItWorks() {
         const ref = _el('hiwRefunds');
         const s = VIP.state && VIP.state.refundStatus;
+        // Modal "Información del servicio" (#228): % máximos reales de semanal y mensual.
+        try {
+            if (s && (s.tiersByPeriod || s.tiers)) {
+                const tbp = s.tiersByPeriod || { weekly: s.tiers, monthly: s.tiers };
+                const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0);
+                const w = _el('infoWeeklyMax'), m = _el('infoMonthlyMax');
+                if (w && mx(tbp.weekly)) w.textContent = mx(tbp.weekly);
+                if (m && mx(tbp.monthly)) m.textContent = mx(tbp.monthly);
+            }
+        } catch (_) {}
         if (ref) {
             if (s && (s.tiersByPeriod || s.tiers)) {
                 const tbp = s.tiersByPeriod || { weekly: s.tiers, monthly: s.tiers };
@@ -277,6 +346,7 @@
         // explicación completa además le llega por el chat (/sys_como_funciona).
         _inited = true;
         try { if (VIP.autoload) VIP.autoload.init(); } catch (_) {}
+        try { _initBubbleDrag(); } catch (_) {}
         await loadPlatforms(true);
         renderPlatforms();
         renderHowItWorks();
@@ -319,6 +389,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform,
         get platformsData() { return _platforms; } };
 })();
