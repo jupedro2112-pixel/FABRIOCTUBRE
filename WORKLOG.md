@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-16
 
+### 265. 📏 Círculos de la cabecera más chicos (26 px) — SW v158
+
 ### 264. 📏 Cabecera de círculos apenas más baja — SW v157
 - Padding 3 px, círculos 30 px, rótulos 7,5 px, menos separación con la franja del saldo. Nada cambia de tamaño abajo.
 

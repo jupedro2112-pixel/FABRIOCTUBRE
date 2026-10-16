@@ -1616,3 +1616,11 @@ body.support-open .support-bubble { visibility: hidden; }
 .tb-circle-plain { width: 30px; height: 30px; }
 .tb-circle-lbl { font-size: 7.5px; line-height: 1; }
 .balance-strip { margin-top: 2px; }
+
+/* ══ #265: círculos un poco más chicos ══ */
+.tb-circle-ico, .tb-circle-plain { width: 26px; height: 26px; }
+.tb-circle-ico svg { width: 13px; height: 13px; }
+.tb-circle-plain { font-size: 13px; }
+.tb-support img { width: 22px; height: 22px; }
+.tb-circle-lbl { font-size: 7px; }
+.tb-circle { min-width: 42px; }
