@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-16
 
+### 261. 📱 Con la app instalada el casino va ADENTRO; en navegador, aparte. Carga rápida en formato CARGA, descartable — SW v154
+- **Owner:** "dejá el aparte sólo para la gente que no tiene la app (así no pierde el acceso); con la app
+  instalada que sea adentro, más rápido, y si cierra vuelve a la principal; la carga rápida al probar sacala;
+  dejala pero que funcione como el soporte: que la puedan sacar y quede como botón arriba; y que arriba
+  aparezca el formato de carga automática, no formato de chat, para que no se pierdan".
+- `VIP.home.openPlatform(id, {test})`: **standalone** (app instalada) → recuadro embebido de siempre
+  (`enterCasino` con login por API; Ganamos su web; prueba = home pública sin carga rápida); **navegador** →
+  pestaña aparte `/jugar.html` con "‹ Volver a la app" (#260). Lo usan playOn / openInApp / switchPlatform.
+- **Carga rápida dentro del casino:** el botón flotante "CARGA RÁPIDA" ahora abre `#casinoLoadPanel` en
+  formato CARGA (① CBU con copiar + banco/titular, ② ¿dónde querés el saldo? con las plataformas (fija la
+  elegida), botón verde "📎 Cargar aquí · adjuntar comprobante" = selector de foto del chat, "volver a la
+  app"). Tiene ✕ (igual que la burbuja de soporte): se saca y queda el botón "💳 Carga rápida" en la barra
+  de arriba del casino para traerla de vuelta. El cajón de chat viejo queda en el código sin usarse.
+
 ### 260. 🪟 El casino se abre APARTE con barra "‹ Volver a la app" (/jugar.html) — SW v153
 - **Owner:** "que se abra aparte pero dejame arriba de esa página un 'volver a la página', ¿se puede?". Sobre
   la web oficial no se puede poner nada (otro dominio), así que se abre una PÁGINA NUESTRA en pestaña nueva:

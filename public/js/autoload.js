@@ -236,5 +236,6 @@
     // (también la usa el modal de acceso manual al casino).
     try { getPassword(); } catch (_) {}
 
-    VIP.autoload = { init, refresh, togglePassword, saveManualPassword, copy, sendReceipt, saveCapture, hidePreview, rememberPassword, forgetPassword, getPassword, appLink };
+    function getCbu() { return _cbu; }
+    VIP.autoload = { init, refresh, getCbu, togglePassword, saveManualPassword, copy, sendReceipt, saveCapture, hidePreview, rememberPassword, forgetPassword, getPassword, appLink };
 })();

@@ -1567,3 +1567,23 @@ body.support-open .support-bubble { visibility: hidden; }
 .home-bottom-bar { margin: 0 8px 3px; }
 .hb-btn { padding: 6px 10px; }
 .home-how-btn { padding: 5px 10px; margin-bottom: 4px; }
+
+/* ══ #261: carga rápida dentro del casino en formato CARGA, descartable ══ */
+.cq-x { position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; border-radius: 50%; background: #fff; color: #ff1744; border: 2px solid #ff1744; font: 900 11px/1 system-ui, sans-serif; cursor: pointer; z-index: 7; }
+.casino-quick-btn { margin-left: auto; background: var(--dx-accent); color: #06070d; border: 0; border-radius: 999px; padding: 6px 11px; font: 900 10.5px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.casino-load { position: absolute; z-index: 8; right: 12px; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); width: min(360px, calc(100vw - 24px)); background: #0b0d14; border: 1px solid var(--dx-border-hi); border-radius: 14px; padding: 10px 12px; box-shadow: 0 14px 44px rgba(0,0,0,.6); color: var(--dx-text); font-family: var(--dx-font); }
+.cl-head { display: flex; align-items: center; justify-content: space-between; font: 800 11px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 6px; }
+.cl-close { background: none; border: 1px solid var(--dx-border); color: var(--dx-text); border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+.cl-step { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid var(--dx-border); }
+.cl-step > b { flex: 0 0 20px; height: 20px; border-radius: 50%; background: var(--dx-accent); color: #06070d; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+.cl-step > div { flex: 1; min-width: 0; }
+.cl-t { font-weight: 800; font-size: 12px; margin-bottom: 3px; }
+.cl-cbu { display: flex; align-items: center; gap: 8px; }
+.cl-cbu .mono { flex: 1; font-weight: 800; font-size: 14px; color: var(--dx-money); overflow-wrap: anywhere; }
+.cl-copy { background: rgba(255,45,85,.08); color: var(--dx-cyan); border: 1px solid var(--dx-border); border-radius: 6px; padding: 4px 9px; font: 800 9.5px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; }
+.cl-meta { color: var(--dx-muted); font-size: 10px; margin-top: 3px; }
+.cl-meta a { color: var(--dx-cyan); font-weight: 700; }
+.cl-plats { display: flex; gap: 6px; }
+.cl-plat { flex: 1; background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 8px; padding: 6px; font: 800 11px var(--dx-font); text-transform: uppercase; cursor: pointer; }
+.cl-plat.on { background: var(--dx-accent); color: #06070d; border-color: transparent; }
+.cl-btn { width: 100%; margin-top: 8px; background: linear-gradient(135deg, #00c853, #69f0ae); color: #052e16; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px; font: 900 11.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }

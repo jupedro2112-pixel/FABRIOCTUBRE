@@ -121,8 +121,8 @@
         const test = !!(opts && opts.test);
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', name: platformId };
-        // #260: siempre aparte, en /jugar.html (prueba = home pública; normal = login por API).
-        openPlatformTab(p.id, { test });
+        // #261: con la app instalada → adentro (sin carga rápida si es prueba); en navegador → aparte.
+        openPlatform(p.id, { test });
     }
     function renderSupportTests() {
         const box = _el('supportTests');
@@ -504,8 +504,84 @@
         else location.href = wrapper; // pop-up bloqueado → misma pestaña ("Volver" trae de vuelta)
     }
 
-    // Entrar a una plataforma: ahora SIEMPRE aparte (#260).
-    function playOn(platformId) { openPlatformTab(platformId); return; }
+    // #261 (owner): APARTE sólo para quien NO tiene la app (navegador, así no pierde el acceso);
+    // con la app instalada (standalone) el casino va ADENTRO (más rápido, al cerrar vuelve al home).
+    function _isStandalone() {
+        try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (_) { return false; }
+    }
+    function openPlatform(platformId, opts) {
+        const test = !!(opts && opts.test);
+        if (!_isStandalone()) return openPlatformTab(platformId, { test });
+        const list = (_platforms && _platforms.platforms) || [];
+        const p = list.find(x => x.id === platformId) || { id: platformId, name: platformId, connected: platformId === 'girox' };
+        if (test) _embedExternal({ id: p.id, name: p.name, playUrl: p.playUrl || p.externalUrl, externalUrl: p.externalUrl });
+        else if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
+        else _embedExternal(p);
+        _setCasinoTestMode(test);
+        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); }, 60);
+    }
+    function playOn(platformId) { openPlatform(platformId); }
+
+    // ---- Carga rápida DENTRO del casino (#261): formato CARGA (no chat), descartable como el soporte ----
+    let _quickDismissed = false, _quickOpen = false;
+    function _setupCasinoQuick() {
+        const ov = _el('casinoOverlay');
+        if (!ov) return;
+        // El botón flotante de siempre ahora abre nuestro panel de carga (no el chat).
+        try { VIP.ui.toggleCasinoChat = function () { toggleCasinoLoad(); }; } catch (_) {}
+        const bubble = _el('casinoSupportBubble');
+        if (bubble && !bubble.dataset.quickReady) {
+            bubble.dataset.quickReady = '1';
+            const x = document.createElement('button');
+            x.type = 'button'; x.className = 'cq-x'; x.textContent = '✕'; x.title = 'Sacar (queda arriba)';
+            x.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); dismissCasinoQuick(); });
+            bubble.appendChild(x);
+        }
+        // Botón en la barra de arriba para traerlo de vuelta
+        const bar = _el('casinoTopBar');
+        if (bar && !_el('casinoQuickBtn')) {
+            const row = bar.querySelector('.casino-topbar-row');
+            if (row) row.insertAdjacentHTML('beforeend', '<button type="button" id="casinoQuickBtn" class="casino-quick-btn" style="display:none" onclick="VIP.home.restoreCasinoQuick()">💳 Carga rápida</button>');
+        }
+        if (bubble) bubble.style.display = _quickDismissed ? 'none' : '';
+        const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = _quickDismissed ? '' : 'none';
+    }
+    function dismissCasinoQuick() {
+        _quickDismissed = true; _quickOpen = false;
+        const b = _el('casinoSupportBubble'); if (b) b.style.display = 'none';
+        const p = _el('casinoLoadPanel'); if (p) p.style.display = 'none';
+        const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = '';
+    }
+    function restoreCasinoQuick() {
+        _quickDismissed = false;
+        const b = _el('casinoSupportBubble'); if (b) b.style.display = '';
+        const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = 'none';
+        toggleCasinoLoad(true);
+    }
+    function toggleCasinoLoad(force) {
+        const ov = _el('casinoOverlay'); if (!ov) return;
+        let p = _el('casinoLoadPanel');
+        if (!p) {
+            ov.insertAdjacentHTML('beforeend', '<div id="casinoLoadPanel" class="casino-load" style="display:none"></div>');
+            p = _el('casinoLoadPanel');
+        }
+        _quickOpen = typeof force === 'boolean' ? force : !_quickOpen;
+        if (!_quickOpen) { p.style.display = 'none'; return; }
+        const cbu = (VIP.autoload && VIP.autoload.getCbu && VIP.autoload.getCbu()) || null;
+        const list = (_platforms && _platforms.platforms) || [];
+        const pref = (_platforms && _platforms.preferredPlatform) || null;
+        p.innerHTML =
+            '<div class="cl-head"><span>💳 Carga automática</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
+            '<div class="cl-step"><b>1</b><div><div class="cl-t">Transferí a este CBU</div>' +
+            '<div class="cl-cbu"><span class="mono">' + _esc(cbu && cbu.number ? cbu.number : 'cargando…') + '</span>' +
+            (cbu && cbu.number ? '<button type="button" class="cl-copy" onclick="VIP.ui.copyText(\'' + _esc(cbu.number) + '\')">Copiar</button>' : '') + '</div>' +
+            (cbu ? '<div class="cl-meta">' + _esc(cbu.bank || '') + ' · ' + _esc(cbu.titular || '') + '</div>' : '') + '</div></div>' +
+            (list.length >= 2 ? '<div class="cl-step"><b>2</b><div><div class="cl-t">¿Dónde querés el saldo?</div><div class="cl-plats">' +
+                list.map(x => '<button type="button" class="cl-plat' + (x.id === pref ? ' on' : '') + '" onclick="VIP.home.setPreferred(\'' + _esc(x.id) + '\');setTimeout(function(){VIP.home.toggleCasinoLoad(true)},400)">' + _esc(x.name) + '</button>').join('') + '</div></div></div>' : '') +
+            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Cargar aquí · adjuntar comprobante</button>' +
+            '<div class="cl-meta" style="text-align:center">Se carga automáticamente · <a href="#" onclick="event.preventDefault();VIP.ui.closeCasinoFrame();">volver a la app</a></div>';
+        p.style.display = '';
+    }
     function _playOnEmbedded(platformId) {
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', externalUrl: null, name: platformId };
@@ -546,9 +622,7 @@
         ).join('');
     }
     function switchPlatform(platformId) {
-        // #260: los tabs del recuadro embebido (si alguien lo abre por otro camino) también van aparte.
-        try { VIP.ui.closeCasinoFrame(); } catch (_) {}
-        openPlatformTab(platformId);
+        openPlatform(platformId);
     }
     try {
         const _origShowFrame = VIP.ui && VIP.ui._showCasinoFrame;
@@ -689,6 +763,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
