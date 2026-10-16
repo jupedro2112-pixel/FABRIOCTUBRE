@@ -1462,3 +1462,8 @@ body.support-open .support-bubble { visibility: hidden; }
 .lr-text { line-height: 1; gap: 2px; }
 .lr-text b { font-size: 12px; }
 .lr-text small { font-size: 8.5px; }
+
+/* ══ #252: círculo "Soporte aquí" arriba (ícono de chat, sin logo) ══ */
+.tb-support .tb-circle-ico { position: relative; background: var(--dx-accent) !important; color: #06070d; border-color: transparent !important; }
+.tb-support .tb-circle-lbl { color: var(--dx-cyan); }
+.tb-support .support-unread { position: absolute; top: -5px; right: -5px; margin: 0; min-width: 16px; font-size: 9.5px; line-height: 14px; padding: 0 4px; }

@@ -75,7 +75,6 @@
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         const b = _el('supportBubble'); if (b) b.style.display = 'none';
         const h = _el('headerSupportBtn'); if (h) h.style.display = '';
-        try { const src = _el('chatTopbarAvatar') && _el('chatTopbarAvatar').src; const hi = _el('headerSupportImg'); if (src && hi) hi.src = src; } catch (_) {}
     }
 
     // Mensajes que llegan con el chat CERRADO → contador. La pregunta de

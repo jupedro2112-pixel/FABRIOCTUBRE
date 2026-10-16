@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 252. 💬 El círculo de arriba dice "Soporte aquí" con ícono de chat (chau logo de Girox) — SW v146
+- **Owner:** "cuando cierro el soporte queda arriba pero con el logo de Girox; quiero la foto de soporte, que
+  diga en texto SOPORTE AQUÍ".
+- `#headerSupportBtn` = círculo rojo con ícono de chat + rótulo "Soporte aquí" + contador; la burbuja flotante
+  también dice "Soporte aquí". Ya no se copia el logo del chat.
+
 ### 251. 💸 "Retirar premio" en una línea; fila de acciones a la mitad de alto — SW v145
 - **Owner:** "en retirar mi premio poné 'Retirar premio' en una línea y ese cuadrado con la mitad de altura, así
   entra todo en un lugar".
