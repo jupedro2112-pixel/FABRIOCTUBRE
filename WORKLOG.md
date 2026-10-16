@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-16
 
+### 235. 💬 Soporte RESUMIDO (atención automática corta) + "Pruebas de plataforma" con links a Girox/Ganamos que abren en Chrome — SW v131
+- **Owner:** "en el soporte borrá todo lo que es servicio y resumí; una atención automática que diga qué es
+  el servicio de forma resumida, que si tiene problemas con instalar la app o la ruleta consulte, y para
+  cargar que vuelva a cargas, envíe el comprobante al CBU y elija la plataforma; adentro poné pruebas de
+  plataforma con los 2 links, Ganamos y Girox, que se abran siempre en Google Chrome".
+- **Bienvenida (`/sys_welcome`):** texto corto nuevo (qué somos en una línea con `{plataformas}`, cómo
+  cargar en 3 pasos, "¿problemas con la app o la ruleta? consultá acá"). `/sys_como_funciona` queda VACÍO
+  (no se manda). **Migración al boot** pisa los textos largos guardados (#221/#222) por los cortos; un texto
+  editado a mano distinto no se toca. Editables en COMANDOS.
+- **Pruebas de plataforma:** franja `#supportTests` debajo de la cabecera del chat con un botón por
+  plataforma (Girox → `playUrl` del adaptador = GIROX_PLAY_URL; Ganamos → su link externo) que abre en
+  **Google Chrome**: Android por `intent://…;package=com.android.chrome` (fallback a la URL), iPhone por
+  `googlechromes://` (si no está Chrome, Safari a los 1,2 s). `GET /api/platforms` suma `playUrl`.
+- Back necesita redeploy (bienvenida + migración + playUrl).
+
 ### 234. 👀 /l/demo: vista previa de la landing en producción (no crea cuentas)
 - `GET /l/demo` (o `/landing?c=demo`) renderiza la landing con código DEMO sin campaña ni cookie; el
   navegador simula el paso 2 (usuario derivado del nombre + PIN al azar, plataformas reales de

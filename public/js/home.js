@@ -76,6 +76,39 @@
         if (!_open) { _unread++; _paintBadge(); }
     }
 
+    // ---------------- PRUEBAS DE PLATAFORMA (#235): links que abren en Google Chrome ----------------
+    // Android: intent:// con package de Chrome (si no está, cae a la URL normal). iPhone: esquema
+    // googlechromes:// (si Chrome no está instalado, a los 1,2 s abre en Safari).
+    function openInChrome(url) {
+        if (!url) return;
+        const ua = navigator.userAgent || '';
+        try {
+            const u = new URL(url);
+            if (/Android/i.test(ua)) {
+                location.href = 'intent://' + u.host + u.pathname + u.search + u.hash + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
+                return;
+            }
+            if (/iPhone|iPad|iPod/i.test(ua)) {
+                const t = setTimeout(() => { window.open(url, '_blank', 'noopener'); }, 1200);
+                window.addEventListener('pagehide', () => clearTimeout(t), { once: true });
+                location.href = (u.protocol === 'https:' ? 'googlechromes://' : 'googlechrome://') + u.host + u.pathname + u.search + u.hash;
+                return;
+            }
+        } catch (_) {}
+        const w = window.open(url, '_blank', 'noopener');
+        if (!w) location.href = url;
+    }
+    function renderSupportTests() {
+        const box = _el('supportTests');
+        if (!box) return;
+        const list = (_platforms && _platforms.platforms) || [];
+        const items = list.filter(p => p.playUrl || p.externalUrl);
+        if (!items.length) { box.innerHTML = ''; return; }
+        box.innerHTML = '<span class="st-label">Pruebas de plataforma</span>' +
+            items.map(p => '<button type="button" class="st-btn" onclick="VIP.home.openInChrome(\'' + _esc(p.playUrl || p.externalUrl) + '\')">' + _esc(p.name) + ' ›</button>').join('') +
+            '<span class="st-note">se abren en Google Chrome</span>';
+    }
+
     // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
     function toggleAccess() {
         const body = _el('accessBody'), ch = _el('accessChevron');
@@ -197,6 +230,7 @@
         } else {
             box.innerHTML = list.map(p => _platBtn(p, list.length >= 2 ? pref : null)).join('');
         }
+        try { renderSupportTests(); } catch (_) {}
         const sub = _el('platformsSub');
         if (sub) {
             const prefP = list.find(p => p.id === pref);
@@ -399,6 +433,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInChrome, renderSupportTests,
         get platformsData() { return _platforms; } };
 })();
