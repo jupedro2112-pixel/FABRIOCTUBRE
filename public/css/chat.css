@@ -1418,3 +1418,15 @@ body.support-open .support-bubble { visibility: hidden; }
 .refund-simple .btn-primary { background: #00a884 !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; padding: 13px !important; font: 800 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; box-shadow: none !important; clip-path: none; }
 .refund-simple .btn-primary:disabled { background: #cfd8dc !important; color: #607d8b !important; }
 .refund-simple .btn-secondary { background: #f0f2f5 !important; color: #54656f !important; border: 0 !important; border-radius: 999px !important; padding: 10px !important; font-size: 13px; }
+
+/* ══ #245: "Probá las plataformas" mejor presentado + modo prueba sin la carga rápida ══ */
+.support-tests { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 12px; }
+.st-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.st-note { margin-left: 0; }
+.st-row { display: flex; gap: 8px; }
+.st-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 10px; border-radius: 12px; clip-path: var(--dx-cut-sm); background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); box-shadow: none; font-size: 12px; }
+.st-btn.st-ganamos { background: linear-gradient(160deg, #3b1670, #5b21b6); border-color: rgba(177,77,255,.6); color: #fff; }
+.st-btn.st-girox { background: linear-gradient(160deg, rgba(255,23,68,.18), rgba(255,107,107,.08)); border-color: var(--dx-border-hi); }
+.st-logo { width: 22px; height: 22px; border-radius: 6px; object-fit: cover; background: #fff; }
+/* Modo prueba: sin burbuja ni cajón de "Carga rápida" dentro del casino */
+#casinoOverlay.casino-test #casinoSupportBubble, #casinoOverlay.casino-test #casinoChatDrawer { display: none !important; }

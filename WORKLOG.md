@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 245. 🧪 "Probá las plataformas" mejor presentado + modo prueba SIN la carga rápida — SW v139
+- **Owner:** "las pruebas de plataforma dentro del soporte ponelas mejor; cuando entran a ver la plataforma
+  mandalos solo a la página principal, sin el chat de carga rápida: no quiero que funcione ahí porque la
+  página puede ponerse lenta".
+- Franja del soporte: título "Probá las plataformas · Solo para mirar · sin salir de la app" y dos botones con
+  logo (Girox rojo, Ganamos violeta). Abren con `VIP.home.openInApp(id, {test:true})` → el overlay del casino
+  recibe la clase `casino-test`, que oculta la burbuja y el cajón "Carga rápida" (y desmonta el chat si estaba
+  mudado). Desde "¿Dónde querés jugar?" y los tabs del casino se abre como siempre, con carga rápida.
+
 ### 244. 🎁 Fila de reembolsos sin recortes + modal de reembolso SIMPLE (estilo cambio de clave) — SW v138
 - **Owner:** "el reembolso de la página principal se ve cortado el margen; adentro del semanal y mensual
   hacelo simple, con la letra y el fondo del cambio de clave, sin tanto relleno pero que se entienda".

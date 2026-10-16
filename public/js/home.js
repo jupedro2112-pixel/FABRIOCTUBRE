@@ -103,11 +103,23 @@
             try { renderCasinoTabs(); } catch (_) {}
         } catch (e) { VIP.ui.showToast('No se pudo abrir ' + (p.name || ''), 'error'); }
     }
-    function openInApp(platformId) {
+    // #245: modo PRUEBA (desde "Probá las plataformas" del soporte) = sólo la página de la plataforma,
+    // SIN la burbuja/chat "Carga rápida" de adentro del casino (el owner: la página puede ponerse lenta).
+    function _setCasinoTestMode(on) {
+        try {
+            const ov = _el('casinoOverlay');
+            if (ov) ov.classList.toggle('casino-test', !!on);
+            if (on) { try { if (VIP.ui._casinoChatUnmount) VIP.ui._casinoChatUnmount(); } catch (_) {} }
+        } catch (_) {}
+    }
+    function openInApp(platformId, opts) {
+        const test = !!(opts && opts.test);
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', name: platformId };
-        if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} return; }
-        _embedExternal(p);
+        if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
+        else _embedExternal(p);
+        _setCasinoTestMode(test);
+        setTimeout(() => _setCasinoTestMode(test), 50); // por si el overlay se creó recién
     }
     function renderSupportTests() {
         const box = _el('supportTests');
@@ -115,9 +127,11 @@
         const list = (_platforms && _platforms.platforms) || [];
         const items = list.filter(p => p.connected || p.playUrl || p.externalUrl);
         if (!items.length) { box.innerHTML = ''; return; }
-        box.innerHTML = '<span class="st-label">Pruebas de plataforma</span>' +
-            items.map(p => '<button type="button" class="st-btn" onclick="VIP.home.openInApp(\'' + _esc(p.id) + '\')">' + _esc(p.name) + ' ›</button>').join('') +
-            '<span class="st-note">sin salir de la app</span>';
+        box.innerHTML = '<div class="st-head"><span class="st-label">Probá las plataformas</span><span class="st-note">Solo para mirar · sin salir de la app</span></div>' +
+            '<div class="st-row">' + items.map(p =>
+                '<button type="button" class="st-btn st-' + _esc(p.id) + '" onclick="VIP.home.openInApp(\'' + _esc(p.id) + '\', {test:true})">' +
+                (p.logoUrl ? '<img class="st-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '') +
+                '<span>' + _esc(p.name) + '</span></button>').join('') + '</div>';
     }
 
     // ---------------- INFO DEL SERVICIO (#237): reseñas plegadas + niveles VIP ----------------
