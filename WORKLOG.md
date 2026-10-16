@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 246. 🧪 Prueba = página principal de cada casino; burbuja con ícono de chat y la ✕ adentro — SW v140
+- **Owner:** "que entre a la página principal de cada casino"; "en la burbuja cambiá el logo por un ícono de
+  soporte chat y la X dejala más adentro del círculo, que se entienda que es para sacarlo de la vista".
+- Modo prueba (`openInApp(id, {test:true})`): para TODAS las plataformas embebe la home pública
+  (`playUrl` = GIROX_PLAY_URL para Girox, link externo para Ganamos), sin SSO ni carga rápida. Desde
+  "¿Dónde querés jugar?" sigue entrando logueado.
+- Burbuja: ícono SVG de chat sobre fondo del acento (el `<img id="chatTopbarAvatar">` queda oculto para no
+  romper chat.js); la ✕ es un botoncito blanco con borde rojo superpuesto arriba a la derecha del círculo.
+
 ### 245. 🧪 "Probá las plataformas" mejor presentado + modo prueba SIN la carga rápida — SW v139
 - **Owner:** "las pruebas de plataforma dentro del soporte ponelas mejor; cuando entran a ver la plataforma
   mandalos solo a la página principal, sin el chat de carga rápida: no quiero que funcione ahí porque la

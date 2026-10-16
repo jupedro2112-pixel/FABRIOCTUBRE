@@ -1119,11 +1119,16 @@
             <!-- #243: compacta — sólo la foto con "Soporte en vivo"; ✕ la saca y pasa al círculo de arriba (al lado del fueguito). -->
             <div id="supportBubble" class="support-bubble compact" role="button" aria-label="Soporte en vivo">
                 <button type="button" class="sb-main" onclick="VIP.home.openSupport()">
-                    <span class="sb-avatar"><img id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40"><i class="sb-dot"></i></span>
+                    <!-- #246: ícono de CHAT de soporte (el logo queda oculto: chat.js le sigue poniendo src a #chatTopbarAvatar) -->
+                    <span class="sb-avatar">
+                        <img id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="" width="40" height="40" style="display:none;">
+                        <svg class="sb-ico" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></svg>
+                        <i class="sb-dot"></i>
+                    </span>
                     <span class="sb-cap">Soporte en vivo</span>
                     <span id="supportUnread" class="support-unread" style="display:none;">0</span>
                 </button>
-                <button type="button" class="sb-min" onclick="VIP.home.dismissBubble(event)" title="Sacar (queda arriba, al lado del fueguito)">✕</button>
+                <button type="button" class="sb-min" onclick="VIP.home.dismissBubble(event)" title="Sacar de la vista (queda arriba, al lado del fueguito)" aria-label="Sacar de la vista">✕</button>
             </div>
             <!-- ===== SOPORTE (#220): el chat de siempre, a pantalla completa. Se abre desde la
                  barra verde de arriba del home (VIP.home.openSupport). Los ids NO cambian:

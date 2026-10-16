@@ -1430,3 +1430,10 @@ body.support-open .support-bubble { visibility: hidden; }
 .st-logo { width: 22px; height: 22px; border-radius: 6px; object-fit: cover; background: #fff; }
 /* Modo prueba: sin burbuja ni cajón de "Carga rápida" dentro del casino */
 #casinoOverlay.casino-test #casinoSupportBubble, #casinoOverlay.casino-test #casinoChatDrawer { display: none !important; }
+
+/* ══ #246: burbuja con ícono de chat y la X adentro del círculo ══ */
+.support-bubble.compact { position: fixed; }
+.support-bubble.compact .sb-avatar { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(6,7,13,.35); border: 2px solid rgba(255,255,255,.75); color: #fff; }
+.support-bubble.compact .sb-ico { display: block; }
+.support-bubble.compact .sb-min { position: absolute; top: -2px; right: -2px; width: 20px; height: 20px; margin: 0; font-size: 11px; line-height: 1; border-radius: 50%; background: #fff; color: #ff1744; border: 2px solid #ff1744; box-shadow: 0 2px 6px rgba(0,0,0,.45); z-index: 2; }
+.support-bubble.compact .sb-main .support-unread { top: auto; bottom: -4px; right: -4px; }

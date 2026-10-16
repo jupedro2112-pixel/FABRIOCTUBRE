@@ -116,7 +116,11 @@
         const test = !!(opts && opts.test);
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', name: platformId };
-        if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
+        if (test) {
+            // #246 (owner): "que entre a la página principal de cada casino" → la home pública de la
+            // plataforma (playUrl / link externo), sin login único.
+            _embedExternal({ id: p.id, name: p.name, playUrl: p.playUrl || p.externalUrl, externalUrl: p.externalUrl });
+        } else if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
         else _embedExternal(p);
         _setCasinoTestMode(test);
         setTimeout(() => _setCasinoTestMode(test), 50); // por si el overlay se creó recién
