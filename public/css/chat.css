@@ -1608,3 +1608,11 @@ body.support-open .support-bubble { visibility: hidden; }
 .bs-install-t b { font-size: 9.5px; }
 .bs-install-t small { font-size: 7.5px; }
 .bs-imp { font-size: 7px; padding: 1px 5px; }
+
+/* ══ #264: cabecera de círculos apenas más baja (mismo tamaño de todo) ══ */
+.header.header-toolbar.tb-circles { padding: 3px 6px 2px; padding-top: max(3px, env(safe-area-inset-top, 3px)); }
+.tb-circle { gap: 1px; }
+.tb-circle-ico { width: 30px; height: 30px; }
+.tb-circle-plain { width: 30px; height: 30px; }
+.tb-circle-lbl { font-size: 7.5px; line-height: 1; }
+.balance-strip { margin-top: 2px; }

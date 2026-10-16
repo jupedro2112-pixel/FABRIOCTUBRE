@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-16
 
+### 264. 📏 Cabecera de círculos apenas más baja — SW v157
+- Padding 3 px, círculos 30 px, rótulos 7,5 px, menos separación con la franja del saldo. Nada cambia de tamaño abajo.
+
 ### 263. 📏 Franja del saldo a la mitad de alto + verificación integral del front — SW v156
 - **Owner:** "tu saldo reducilo a la mitad, achicá la letra y la altura sin que afecte cómo se ve, y una vez que
   subas todo fijate que no se haya roto nada".
