@@ -322,9 +322,10 @@ const CSP_HEADER_VALUE = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://cdn.jsdelivr.net https://unpkg.com https://connect.facebook.net",
   "script-src-elem 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://cdn.jsdelivr.net https://unpkg.com https://connect.facebook.net",
-  "style-src 'self' 'unsafe-inline'",
+  // #223: Montserrat (tema futurista de la PWA) desde Google Fonts.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
-  "font-src 'self'",
+  "font-src 'self' https://fonts.gstatic.com",
   "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://fcm.googleapis.com https://firebaseinstallations.googleapis.com https://www.facebook.com https://connect.facebook.net",
   // `frame-src` incluye el casino: el botón CASINO lo abre EMBEBIDO en un recuadro
   // dentro de la PWA (el jugador no sale del sitio). Sin esto, el navegador bloquea

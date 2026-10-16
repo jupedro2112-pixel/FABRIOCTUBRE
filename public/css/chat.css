@@ -917,3 +917,142 @@ body.wa-dark .support-head { background: #1f2c34; }
 .support-panel .cbu-chat-btn { display: none !important; }
 .support-load-btn { margin-left: auto; background: var(--pr-gold-grad); color: #1a1407; border: 0; border-radius: 999px; padding: 7px 13px; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
 .support-head-title { flex: 1; min-width: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   #223 — TEMA "DIAMANTE / FUTURISTA" (owner: "parece un word; quiero algo
+   profesional, diamantado, futurista, buena definición tipo NIKE.com / 1win").
+   Pisa al bloque premium serif de arriba: tipografía geométrica pesada
+   (Montserrat, fallback system-ui), vidrio esmerilado, acentos cian/violeta,
+   cortes diamantados en las esquinas, brillos sutiles. Va al FINAL a propósito.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --dx-font: 'Montserrat', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --dx-bg: #06070d;
+    --dx-glass: linear-gradient(160deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.025) 60%, rgba(0,229,255,.04) 100%);
+    --dx-border: rgba(255,255,255,.10);
+    --dx-border-hi: rgba(0,229,255,.55);
+    --dx-cyan: #00e5ff;
+    --dx-violet: #7c4dff;
+    --dx-accent: linear-gradient(135deg, #00e5ff 0%, #4f8cff 55%, #7c4dff 100%);
+    --dx-money: #ffd166;
+    --dx-text: #f4f6fb;
+    --dx-muted: #8f98ad;
+    --dx-cut: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+    --dx-cut-sm: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+    /* re-mapeo del tema anterior para lo que todavía lee --pr-* */
+    --pr-gold: var(--dx-cyan);
+    --pr-gold-soft: var(--dx-border);
+    --pr-gold-grad: var(--dx-accent);
+    --pr-text: var(--dx-text);
+    --pr-muted: var(--dx-muted);
+    --pr-serif: var(--dx-font);
+    --pr-card: var(--dx-glass);
+}
+.chat-screen {
+    font-family: var(--dx-font);
+    background:
+        radial-gradient(900px 500px at 85% -10%, rgba(124,77,255,.28), transparent 60%),
+        radial-gradient(700px 420px at -10% 30%, rgba(0,229,255,.18), transparent 60%),
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 100% 36px,
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 36px 100%,
+        var(--dx-bg) !important;
+}
+.chat-screen button, .chat-screen input, .chat-screen a { font-family: var(--dx-font); }
+/* Cabecera */
+.header.header-toolbar.tb-circles {
+    background: rgba(6,7,13,.75) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--dx-border) !important;
+}
+.tb-circle { color: var(--dx-text); }
+.tb-circle-ico {
+    background: var(--dx-glass); border: 1px solid var(--dx-border); color: var(--dx-cyan);
+    box-shadow: 0 0 0 1px rgba(0,229,255,.08), 0 8px 20px rgba(0,0,0,.45);
+}
+.tb-circle:active .tb-circle-ico { border-color: var(--dx-border-hi); box-shadow: 0 0 18px rgba(0,229,255,.35); }
+.tb-circle-lbl { color: var(--dx-muted); font-weight: 700; letter-spacing: .9px; font-size: 9px; }
+/* Barra de soporte */
+.support-bar, .support-bar.chat-topbar {
+    background: rgba(255,255,255,.04) !important; border-bottom: 1px solid var(--dx-border); backdrop-filter: blur(10px);
+}
+.support-bar .chat-topbar-avatar { border: 1px solid var(--dx-border-hi); background: #0a0c16; box-shadow: 0 0 14px rgba(0,229,255,.25); }
+.support-bar .chat-topbar-name { font-family: var(--dx-font); font-weight: 800; font-size: 14px; letter-spacing: .3px; text-transform: uppercase; color: var(--dx-text); }
+.support-bar .chat-topbar-status { color: var(--dx-muted); font-size: 10.5px; }
+.support-bar .chat-topbar-dot { background: var(--dx-cyan); box-shadow: 0 0 8px var(--dx-cyan); }
+.support-open-btn, .support-load-btn, .casino-back {
+    background: var(--dx-accent); color: #06070d; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm);
+    font-weight: 800; letter-spacing: .8px; text-transform: uppercase; font-size: 10.5px; padding: 9px 13px;
+    box-shadow: 0 6px 18px rgba(0,229,255,.25);
+}
+.support-head { background: rgba(6,7,13,.92); border-bottom: 1px solid var(--dx-border); }
+.support-back { border: 1px solid var(--dx-border); color: var(--dx-text); border-radius: 10px; background: rgba(255,255,255,.05); }
+/* Tarjetas de vidrio con corte diamantado */
+.home-card {
+    background: var(--dx-glass); border: 1px solid var(--dx-border); border-radius: 0; clip-path: var(--dx-cut);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); padding: 12px 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 30px rgba(0,0,0,.45); position: relative;
+}
+.home-card::before {
+    content: ''; position: absolute; left: 0; top: 0; width: 46px; height: 2px;
+    background: var(--dx-accent); box-shadow: 0 0 12px rgba(0,229,255,.6);
+}
+.home-card-title {
+    font-family: var(--dx-font); font-size: 13px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--dx-text); margin: 2px 0 8px;
+}
+.hc-tag { background: var(--dx-accent); color: #06070d; font-size: 8.5px; letter-spacing: 1.2px; border-radius: 4px; clip-path: none; padding: 3px 8px; }
+.home-card-sub { color: var(--dx-muted); font-size: 11px; }
+/* Carga */
+.al-line { border-bottom: 1px solid var(--dx-border); padding: 8px 0; }
+.al-k { color: var(--dx-muted); font-size: 9px; letter-spacing: 1.4px; }
+.al-v { font-size: 15px; font-weight: 800; color: var(--dx-text); }
+.al-v.gold { color: var(--dx-money); text-shadow: 0 0 14px rgba(255,209,102,.25); }
+.al-copy, .al-eye {
+    border: 1px solid var(--dx-border); color: var(--dx-cyan); border-radius: 6px; clip-path: none;
+    background: rgba(0,229,255,.06); font-size: 9.5px; letter-spacing: 1px; padding: 5px 10px;
+}
+.al-copy:active, .al-eye:active { background: rgba(0,229,255,.18); }
+.al-meta { color: var(--dx-muted); font-size: 10.5px; }
+.al-chip { background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); border-radius: 8px; }
+.al-btn { border-radius: 10px; clip-path: var(--dx-cut-sm); font-size: 11.5px; letter-spacing: 1px; font-weight: 800; padding: 12px 12px; }
+.al-btn.receipt { background: var(--dx-accent); color: #06070d; box-shadow: 0 8px 22px rgba(0,229,255,.28); }
+.al-btn.capture { background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border-hi); }
+/* Reembolsos + usuario */
+.dash-top {
+    background: var(--dx-glass) !important; border: 1px solid var(--dx-border) !important; border-radius: 0 !important;
+    clip-path: var(--dx-cut); backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,.45) !important;
+}
+.dash-top .dash-refunds-title { font-family: var(--dx-font) !important; color: var(--dx-text) !important; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
+.dash-top .refund-btn { background: rgba(255,255,255,.04) !important; border: 1px solid var(--dx-border) !important; border-radius: 8px !important; }
+.dash-top .refund-btn .refund-amount { color: var(--dx-money) !important; font-weight: 800; }
+.dash-top .dash-user, .dash-top .dash-roulette { background: rgba(255,255,255,.04) !important; border: 1px solid var(--dx-border) !important; border-radius: 8px !important; }
+.dash-top .dash-user-avatar, .dash-top .dash-roulette-avatar { background: var(--dx-accent) !important; color: #06070d; }
+.dash-top .dash-user-label, .dash-top .dash-roulette-label { color: var(--dx-cyan) !important; letter-spacing: 1px; }
+/* Plataformas */
+.plat-play-btn {
+    background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); border-radius: 0; clip-path: var(--dx-cut-sm);
+    padding: 13px 10px; position: relative; overflow: hidden;
+}
+.plat-play-btn::after { content: ''; position: absolute; inset: auto 0 0 0; height: 2px; background: var(--dx-accent); opacity: .7; }
+.plat-play-btn.is-default { background: linear-gradient(160deg, rgba(0,229,255,.12), rgba(124,77,255,.10)); border-color: var(--dx-border-hi); box-shadow: 0 0 22px rgba(0,229,255,.18); }
+.plat-play-name { font-family: var(--dx-font); font-weight: 800; font-size: 15px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dx-text); }
+.plat-play-sub { color: var(--dx-muted); font-size: 9px; letter-spacing: 1px; }
+.plat-balance { background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); border-radius: 8px; }
+.plat-balance .dash-balance-label { color: var(--dx-muted) !important; letter-spacing: 1.2px; }
+.plat-balance .dash-balance-amount { color: var(--dx-money) !important; font-family: var(--dx-font); font-weight: 800; font-size: 17px; }
+/* Retirar + barra inferior */
+.withdraw-row-btn {
+    background: linear-gradient(135deg, #ff3d71, #c81d5c) !important; border: 0 !important; border-radius: 10px !important; clip-path: var(--dx-cut-sm);
+    letter-spacing: 1.2px !important; font-weight: 800 !important; box-shadow: 0 8px 22px rgba(255,61,113,.3) !important;
+}
+.hb-btn, .hb-ref, .hb-install { background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); border-radius: 0; clip-path: var(--dx-cut-sm); backdrop-filter: blur(12px); }
+.hb-install { border-color: var(--dx-border-hi); background: linear-gradient(160deg, rgba(0,229,255,.10), rgba(124,77,255,.08)); }
+.hb-text b { font-family: var(--dx-font); font-weight: 800; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--dx-text); }
+.hb-text small { color: var(--dx-muted); }
+/* Barra dentro del casino */
+.casino-topbar { background: rgba(6,7,13,.92); border-bottom: 1px solid var(--dx-border); backdrop-filter: blur(12px); }
+.casino-topbar-title { font-family: var(--dx-font); color: var(--dx-text); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+.casino-plat-tab { background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; font-size: 11px; }
+.casino-plat-tab.active { background: var(--dx-accent); color: #06070d; border-color: transparent; box-shadow: 0 0 16px rgba(0,229,255,.35); }
+/* Botones de plataforma del chat (¿dónde querés jugar?) */
+.plat-btn { background: var(--dx-accent); color: #06070d; border-radius: 10px; clip-path: var(--dx-cut-sm); font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+.plat-btn.plat-link { background: linear-gradient(135deg, #7c4dff, #b388ff); }

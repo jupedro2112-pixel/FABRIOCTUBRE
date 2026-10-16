@@ -858,7 +858,9 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo
-  sin CBU (bienvenida sin CBU suelto). Estilo premium negro/dorado al final de chat.css (`--pr-*`).
+  sin CBU (bienvenida sin CBU suelto). Estilo premium negro/dorado al final de chat.css (`--pr-*`),
+  pisado por el **tema diamante/futurista #223** (`--dx-*`: vidrio, cian/violeta, clip-path, Montserrat
+  vía Google Fonts → CSP style-src/font-src ampliadas en server.js).
   **#221:** "¿Cómo funciona?" iba ARRIBA plegado (quitado en #222); abajo del botón RETIRAR está `.home-bottom-bar`
   (REFERIDOS | INSTALAR APP). El cartel del bono por instalar la app se eliminó de la PWA y el
   bono está APAGADO por flag (`Config['installBonusEnabled']`, panel → COMANDOS). La explicación

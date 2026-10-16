@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-16
 
+### 223. 🔷 Tema "diamante / futurista" de la PWA (estilo NIKE.com / 1win) — chau serif — SW v121
+- **Owner:** "parece un word; quiero algo profesional, diamantado, futurista, con buena definición tipo
+  NIKE.com o 1win, estilos modernos".
+- **Qué cambió (`public/css/chat.css`, bloque #223 al final, pisa al premium serif del #222 vía las
+  mismas variables `--pr-*` re-mapeadas a `--dx-*`):** fondo negro azulado con grilla fina y glows
+  cian/violeta; tarjetas de VIDRIO esmerilado (backdrop-filter) con esquinas cortadas en diamante
+  (`clip-path`) y una línea de acento arriba; tipografía **Montserrat** 700/800/900 (link de Google
+  Fonts en index.html, fallback system-ui) en mayúsculas espaciadas; acento degradado cian→violeta
+  para las acciones principales (enviar comprobante, soporte en vivo, cargar, tabs del casino,
+  botones de plataforma del chat), vidrio con borde cian para las secundarias; montos en ámbar
+  (`--dx-money`); retirar en magenta. Sin serif, sin dorado.
+- **CSP (server.js):** `style-src` suma `https://fonts.googleapis.com` y `font-src` suma
+  `https://fonts.gstatic.com` (sin esto la fuente quedaba bloqueada). **Back necesita redeploy** por
+  la CSP; la PWA toma el tema con el SW v121.
+- **Nota:** el chat de soporte sigue con la estética WhatsApp (pedido histórico del owner); el tema
+  aplica al home, cabecera, barra de soporte, casino y botones de plataforma.
+
 ### 222. 💎 Home PREMIUM en una sola pantalla: cabecera de círculos sin menú desplegable, carga compacta (solo CBU), plataformas con "ver con mi sesión", barra del casino "Volver al menú de cargas", chat = soporte en vivo sin CBU — SW v120
 - **Owner (ráfaga de pedidos):** sacar el menú desplegable de arriba; todo el servicio en la pantalla
   principal sin deslizar para abajo; arriba círculos con Canal de Telegram, Info, Código, Instalar app
