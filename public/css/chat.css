@@ -1304,3 +1304,6 @@ body.support-open .support-bubble { visibility: hidden; }
 .st-label { font: 800 9.5px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; color: var(--dx-muted); margin-right: 2px; }
 .st-btn { background: var(--dx-accent); color: #06070d; border: 0; border-radius: 999px; padding: 6px 12px; font: 800 11px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 12px rgba(255,23,68,.25); }
 .st-note { font: 600 9px var(--dx-font); color: var(--dx-muted); margin-left: auto; }
+
+/* #236: el casino embebido cubre la burbuja de soporte (z 99999 > 9000): nada que hacer; nota de pruebas */
+.st-note { opacity: .8; }

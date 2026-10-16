@@ -76,37 +76,39 @@
         if (!_open) { _unread++; _paintBadge(); }
     }
 
-    // ---------------- PRUEBAS DE PLATAFORMA (#235): links que abren en Google Chrome ----------------
-    // Android: intent:// con package de Chrome (si no está, cae a la URL normal). iPhone: esquema
-    // googlechromes:// (si Chrome no está instalado, a los 1,2 s abre en Safari).
-    function openInChrome(url) {
-        if (!url) return;
-        const ua = navigator.userAgent || '';
+    // ---------------- PRUEBAS DE PLATAFORMA (#235/#236): SIEMPRE dentro de la app ----------------
+    // (owner: "esas páginas de prueba para jugar siempre adentro de la app, sin salir").
+    // Plataforma con API → casino embebido con SSO (enterCasino). Sin API (Ganamos hoy) → su web
+    // en el MISMO recuadro embebido (sin login automático hasta conectar la API).
+    function _embedExternal(p) {
+        const url = p && (p.playUrl || p.externalUrl);
+        if (!url) { VIP.ui.showToast((p && p.name || 'Esa plataforma') + ' todavía no está disponible.', 'info'); return; }
         try {
-            const u = new URL(url);
-            if (/Android/i.test(ua)) {
-                location.href = 'intent://' + u.host + u.pathname + u.search + u.hash + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
-                return;
-            }
-            if (/iPhone|iPad|iPod/i.test(ua)) {
-                const t = setTimeout(() => { window.open(url, '_blank', 'noopener'); }, 1200);
-                window.addEventListener('pagehide', () => clearTimeout(t), { once: true });
-                location.href = (u.protocol === 'https:' ? 'googlechromes://' : 'googlechrome://') + u.host + u.pathname + u.search + u.hash;
-                return;
-            }
-        } catch (_) {}
-        const w = window.open(url, '_blank', 'noopener');
-        if (!w) location.href = url;
+            VIP.ui._casinoPlatform = p.id;
+            VIP.ui._showCasinoFrame();
+            VIP.ui._casinoOpen = true;
+            const f = _el('casinoFrame');
+            if (f) f.src = url; // el 'load' del iframe esconde "Entrando…" y muestra el recuadro
+            clearTimeout(VIP.ui._casinoWatchdog);
+            VIP.ui._casinoWatchdog = setTimeout(() => { if (VIP.ui._casinoOpen && VIP.ui._casinoFrameStuck) VIP.ui._casinoFrameStuck(); }, 15000);
+            try { renderCasinoTabs(); } catch (_) {}
+        } catch (e) { VIP.ui.showToast('No se pudo abrir ' + (p.name || ''), 'error'); }
+    }
+    function openInApp(platformId) {
+        const list = (_platforms && _platforms.platforms) || [];
+        const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', name: platformId };
+        if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} return; }
+        _embedExternal(p);
     }
     function renderSupportTests() {
         const box = _el('supportTests');
         if (!box) return;
         const list = (_platforms && _platforms.platforms) || [];
-        const items = list.filter(p => p.playUrl || p.externalUrl);
+        const items = list.filter(p => p.connected || p.playUrl || p.externalUrl);
         if (!items.length) { box.innerHTML = ''; return; }
         box.innerHTML = '<span class="st-label">Pruebas de plataforma</span>' +
-            items.map(p => '<button type="button" class="st-btn" onclick="VIP.home.openInChrome(\'' + _esc(p.playUrl || p.externalUrl) + '\')">' + _esc(p.name) + ' ›</button>').join('') +
-            '<span class="st-note">se abren en Google Chrome</span>';
+            items.map(p => '<button type="button" class="st-btn" onclick="VIP.home.openInApp(\'' + _esc(p.id) + '\')">' + _esc(p.name) + ' ›</button>').join('') +
+            '<span class="st-note">sin salir de la app</span>';
     }
 
     // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
@@ -249,13 +251,8 @@
             try { VIP.ui.enterCasino(p.id); } catch (e) { VIP.ui.showToast('No se pudo abrir el casino', 'error'); }
             return;
         }
-        if (p.externalUrl) {
-            // Dentro del gesto del usuario → el bloqueador de pop-ups lo deja pasar.
-            const w = window.open(p.externalUrl, '_blank', 'noopener');
-            if (!w) location.href = p.externalUrl;
-            return;
-        }
-        VIP.ui.showToast((p.name || 'Esa plataforma') + ' todavía no está disponible. Escribinos por soporte.', 'info');
+        // #236: sin API también se abre DENTRO de la app (recuadro embebido), nunca afuera.
+        _embedExternal(p);
     }
 
     // ---------------- CASINO: barra superior con las plataformas (#222) ----------------
@@ -433,6 +430,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInChrome, renderSupportTests,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests,
         get platformsData() { return _platforms; } };
 })();

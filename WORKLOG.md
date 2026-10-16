@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 236. 📱 Corrección: las pruebas de plataforma y Ganamos se abren SIEMPRE dentro de la app — SW v132
+- **Owner:** "no no, Google Chrome siempre NO: esas páginas de prueba para jugar siempre adentro de la app,
+  sin salir". (El #235 las mandaba a Chrome: revertido.)
+- `VIP.home.openInApp(id)`: plataforma con API → casino embebido con SSO (`enterCasino`); sin API (Ganamos)
+  → su web en el MISMO recuadro embebido (`_embedExternal`: `_showCasinoFrame` + `src` del iframe, con el
+  vigilante de 15 s que ofrece "abrir aparte" si la web no deja embeberse). `playOn` ya no usa
+  `window.open`. La franja "Pruebas de plataforma" dice "sin salir de la app". `openInChrome` eliminado de
+  la app (en la LANDING sigue el escape a Chrome desde Instagram, que es otro caso).
+
 ### 235. 💬 Soporte RESUMIDO (atención automática corta) + "Pruebas de plataforma" con links a Girox/Ganamos que abren en Chrome — SW v131
 - **Owner:** "en el soporte borrá todo lo que es servicio y resumí; una atención automática que diga qué es
   el servicio de forma resumida, que si tiene problemas con instalar la app o la ruleta consulte, y para
