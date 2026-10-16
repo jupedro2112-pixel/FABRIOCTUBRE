@@ -244,6 +244,15 @@
     }
   }
 
+  // ── modo DEMO (/l/demo): se ve todo el recorrido sin crear cuentas ──
+  var DEMO = campaign === 'DEMO';
+  if (DEMO) {
+    var bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:60;background:#ffb300;color:#1a0c2e;font:800 12px ' + 'Montserrat,system-ui,sans-serif' + ';text-align:center;padding:6px 10px;letter-spacing:.3px;';
+    bar.textContent = 'VISTA PREVIA · no crea cuentas · el link real es /l/TU-CÓDIGO-DE-PAUTA';
+    document.body.appendChild(bar); document.body.style.paddingTop = '44px';
+  }
+
   // ── paso 1: crear cuenta ──
   var result = null;
   $('form').addEventListener('submit', function (ev) {
@@ -251,6 +260,15 @@
     var name = $('name').value.trim();
     var err = $('err'); err.style.display = 'none';
     if (name.length < 2) { err.textContent = 'Ingresá tu nombre.'; err.style.display = 'block'; return; }
+    if (DEMO) {
+      var base = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || 'gx';
+      var plats = (info && info.platforms) || [{ id: 'girox', name: 'Girox', connected: true }];
+      result = { success: true, accessUrl: baseUrl, username: base + String(Math.floor(100 + Math.random() * 900)), password: String(Math.floor(100000 + Math.random() * 900000)),
+        platforms: plats.map(function (p) { return { id: p.id, name: p.name, created: !!p.connected }; }) };
+      var b1 = $('go'); b1.disabled = true; b1.textContent = 'Creando tu cuenta…';
+      setTimeout(showStep2, 900);
+      return;
+    }
     if (!campaign) { err.textContent = 'Este link de registro no es válido. Pedí uno nuevo.'; err.style.display = 'block'; return; }
     var btn = $('go'); btn.disabled = true; btn.textContent = 'Creando tu cuenta…';
     var utm = { source: qs.get('utm_source'), medium: qs.get('utm_medium'), campaign: qs.get('utm_campaign'), content: qs.get('utm_content'), term: qs.get('utm_term') };

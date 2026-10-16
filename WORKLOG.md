@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 234. 👀 /l/demo: vista previa de la landing en producción (no crea cuentas)
+- `GET /l/demo` (o `/landing?c=demo`) renderiza la landing con código DEMO sin campaña ni cookie; el
+  navegador simula el paso 2 (usuario derivado del nombre + PIN al azar, plataformas reales de
+  /api/landing/info) y "Continuar" lleva a la home de la app. El POST real rechaza DEMO (campaña
+  inexistente) → nunca se crea una cuenta. Banner amarillo "VISTA PREVIA" arriba.
+
 ### 233. 🔒 "Guardá tu acceso a la app" plegable debajo de reembolsos (con la captura adentro) — SW v130
 - **Owner:** "el guardá tu acceso de la app por seguridad ponelo abajo del reembolso semanal y mensual, que se
   pueda expandir y ahí mismo capturar la pantalla".

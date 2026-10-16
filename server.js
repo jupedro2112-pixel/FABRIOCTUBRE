@@ -1084,6 +1084,15 @@ async function landingPageHandler(req, res, next) {
     const candidate = String(req.params.code || req.query.c || '').trim();
     if (!/^[A-Za-z0-9_-]{3,40}$/.test(candidate)) return next();
     const normalizedCode = candidate.toUpperCase();
+    // /l/demo (#234): VISTA PREVIA del diseño en producción, sin campaña: el paso 2 se simula en el
+    // navegador y el POST /api/landing/signup rechaza el código DEMO (no se crea ninguna cuenta).
+    if (normalizedCode === 'DEMO') {
+      const html = renderLandingHtml('DEMO');
+      if (!html) return res.status(500).send('Error loading page');
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return res.send(html);
+    }
     let campaign = await Campaign.findOne({ code: normalizedCode, isActive: true }).lean();
     if (!campaign) {
       const slug = _slugifyPublisher(candidate);
