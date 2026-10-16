@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-16
 
+### 244. 🎁 Fila de reembolsos sin recortes + modal de reembolso SIMPLE (estilo cambio de clave) — SW v138
+- **Owner:** "el reembolso de la página principal se ve cortado el margen; adentro del semanal y mensual
+  hacelo simple, con la letra y el fondo del cambio de clave, sin tanto relleno pero que se entienda".
+- **Fila:** el recorte venía del `clip-path` diamantado de `.dash-top` (cortaba el brillo verde y la
+  etiqueta del % sobre cada botón). Se quita el clip-path en esa fila, `overflow: visible` en la fila y
+  los botones, padding 7×8 y la etiqueta del % un poco más afuera.
+- **Modal `#refundModal` (`.refund-simple`):** tarjeta BLANCA con tipografía del sistema (igual que
+  `#changePasswordModal`): título + período, "Perdiste con tu plata $X", "Te devolvemos $Y" en verde grande,
+  aviso de disponibilidad (amarillo claro) y texto extra, botón verde "Cobrar reembolso" y "Cerrar".
+  `refundCurrentBalance` y `refundMovementsTitle` quedan ocultos (refunds.js los sigue escribiendo).
+
 ### 243. 💬 Burbuja de soporte compacta: foto + "Soporte en vivo", se saca y queda arriba al lado del fueguito — SW v137
 - **Owner:** "achicá el soporte en vivo: sólo la foto con 'soporte en vivo', sacá el texto; que se pueda sacar y
   cuando lo sacás que quede al lado del fueguito arriba".

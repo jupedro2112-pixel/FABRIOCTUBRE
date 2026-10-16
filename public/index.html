@@ -1678,50 +1678,27 @@
     </div>
 
     <!-- Modal Reembolso -->
-    <div id="refundModal" class="modal hidden" onclick="if(event.target===this)hideModal('refundModal')">
-        <div class="modal-content" style="max-width: 500px; position: relative;" onclick="event.stopPropagation()">
-            <button onclick="hideModal('refundModal')" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: #888; font-size: 22px; cursor: pointer; z-index: 10; line-height: 1;">✕</button>
+    <!-- #244 (owner): "adentro del reembolso semanal y mensual hacelo simple, con el estilo de letra y fondo
+         del cambio de clave, sin tanto relleno pero que se entienda". Mismos ids: refunds.js los sigue llenando
+         (refundCurrentBalance y refundMovementsTitle quedan ocultos). -->
+    <div id="refundModal" class="modal hidden refund-simple" onclick="if(event.target===this)hideModal('refundModal')">
+        <div class="modal-content" style="max-width: 420px; position: relative;" onclick="event.stopPropagation()">
+            <button onclick="hideModal('refundModal')" class="rs-close" aria-label="Cerrar">✕</button>
             <div class="modal-header">
-                <h2 id="refundModalTitle">🎁 Reembolso</h2>
+                <h2 id="refundModalTitle">Reembolso</h2>
+                <p><span id="refundPeriod">-</span></p>
             </div>
-            <div class="refund-details">
-                <!-- Balance actual -->
-                <div class="refund-info-row" style="background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-                    <span style="font-weight: bold; color: #00ff88;">💰 Tu Balance Actual:</span>
-                    <span id="refundCurrentBalance" style="font-weight: bold; color: #00ff88; font-size: 18px;">$0</span>
-                </div>
-                
-                <!-- Período del reembolso -->
-                <div style="background: rgba(100,149,237,0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(100,149,237,0.3);">
-                    <span style="color: #6495ed; font-size: 12px;">📅 Período: </span>
-                    <span id="refundPeriod" style="color: #fff; font-size: 12px;">-</span>
-                </div>
-                
-                <!-- Movimientos del período -->
-                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px;">
-                    <p id="refundMovementsTitle" style="color: #aaa; font-size: 11px; margin-bottom: 8px; text-align: center;">📊 BASE DEL REEMBOLSO</p>
-                    <p style="color: #ffd700; font-size: 12px; font-weight: bold; margin-bottom: 8px; text-align: center; line-height: 1.5;">🎯 El reembolso es sobre tu <strong>NETWIN</strong> — lo que REALMENTE perdiste jugando (apostado − ganado).<br><span style="color:#ff9900;font-weight:normal;font-size:11px;">NO se calcula sobre lo que cargaste, sino sobre tu pérdida real en el juego.</span></p>
-                    <div class="refund-info-row">
-                        <span>🎮 Tu NETWIN del período (pérdida real):</span>
-                        <span id="refundNetAmount" style="color: #ff6b6b;">$0</span>
-                    </div>
-                </div>
-                
-                <!-- Reembolso -->
-                <div class="refund-info-row highlight" style="background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(255,215,0,0.2)); padding: 15px; border-radius: 10px; border: 1px solid rgba(212,175,55,0.5);">
-                    <span style="color: #ffd700; font-weight: bold;">🎁 Reembolso a recibir:</span>
-                    <span id="refundAmount" style="color: #ffd700; font-size: 20px; font-weight: bold;">$0</span>
-                </div>
-                
-                <!-- Info de disponibilidad (solo para semanal y mensual) -->
-                <div id="refundAvailabilityInfo" style="margin-top: 10px; padding: 10px; border-radius: 8px; display: none;"></div>
-                
-                <!-- Info adicional -->
-                <div id="refundExtraInfo" style="margin-top: 10px; font-size: 11px; color: #888; text-align: center;"></div>
+            <div class="refund-details rs-body">
+                <div class="rs-line"><span>Perdiste con tu plata</span><b id="refundNetAmount">$0</b></div>
+                <div class="rs-main"><span>Te devolvemos</span><b id="refundAmount">$0</b></div>
+                <div id="refundAvailabilityInfo" style="display:none;"></div>
+                <div id="refundExtraInfo"></div>
+                <span id="refundCurrentBalance" style="display:none;">$0</span>
+                <span id="refundMovementsTitle" style="display:none;"></span>
             </div>
             <div class="refund-timer-modal" id="refundTimerModal"></div>
             <div class="modal-actions">
-                <button id="claimRefundBtn" class="btn btn-primary">🎁 Reclamar Reembolso</button>
+                <button id="claimRefundBtn" class="btn btn-primary">Cobrar reembolso</button>
                 <button id="closeRefundModal" class="btn btn-secondary">Cerrar</button>
             </div>
         </div>

@@ -1392,3 +1392,29 @@ body.support-open .support-bubble { visibility: hidden; }
 .tb-support img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
 .tb-support { border-color: var(--dx-border-hi) !important; }
 .tb-support .support-unread { position: absolute; top: -5px; right: -5px; margin: 0; min-width: 16px; font-size: 9.5px; line-height: 14px; padding: 0 4px; }
+
+/* ══ #244: fila de reembolsos sin recortes + modal de reembolso simple (estilo cambio de clave) ══ */
+.dash-top { clip-path: none !important; overflow: visible !important; padding: 7px 8px !important; margin-top: 4px; }
+.dash-top .dash-refunds, .dash-top .dash-refunds-row, .dash-top .dash-refunds-row .refund-btn { overflow: visible !important; }
+.dash-top .dash-refunds-row { padding-top: 4px; }
+.dash-top .refund-tier { top: -8px; right: -4px; }
+.refund-simple .modal-content { background: #ffffff !important; border: none !important; border-radius: 14px !important; box-shadow: 0 12px 40px rgba(0,0,0,.4) !important; color: #111b21; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; padding: 22px 20px; }
+.refund-simple .modal-header { margin-bottom: 12px; }
+.refund-simple .modal-header h2 { color: #111b21 !important; font: 800 18px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; margin: 0 0 4px; }
+.refund-simple .modal-header p { color: #667781 !important; font-size: 13px; margin: 0; }
+.refund-simple .rs-close { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: #8696a0; font-size: 20px; cursor: pointer; }
+.refund-simple .rs-body { background: none !important; border: 0 !important; padding: 0 !important; display: flex; flex-direction: column; gap: 8px; }
+.refund-simple .rs-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #f0f2f5; border-radius: 10px; padding: 10px 12px; color: #54656f; font-size: 13px; }
+.refund-simple .rs-line b { color: #111b21; font-size: 15px; font-variant-numeric: tabular-nums; }
+.refund-simple .rs-main { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #e7fbf3; border: 1px solid #b9ecd8; border-radius: 12px; padding: 12px 14px; color: #0b6b4f; font-size: 13px; font-weight: 700; }
+.refund-simple .rs-main b { color: #00a884; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.refund-simple #refundAvailabilityInfo { background: #fff8e1 !important; border: 1px solid #ffe08a !important; border-radius: 10px; padding: 9px 12px !important; color: #6b5300 !important; font-size: 12.5px; line-height: 1.4; margin: 0 !important; }
+.refund-simple #refundAvailabilityInfo * { color: inherit !important; }
+.refund-simple #refundExtraInfo { color: #667781 !important; font-size: 12px; text-align: left !important; line-height: 1.4; margin: 0 !important; }
+.refund-simple #refundExtraInfo:empty { display: none; }
+.refund-simple .refund-timer-modal { color: #667781; font-size: 12px; margin-top: 6px; }
+.refund-simple .refund-timer-modal:empty { display: none; }
+.refund-simple .modal-actions { flex-direction: column; gap: 8px; margin-top: 14px; }
+.refund-simple .btn-primary { background: #00a884 !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; padding: 13px !important; font: 800 14px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; box-shadow: none !important; clip-path: none; }
+.refund-simple .btn-primary:disabled { background: #cfd8dc !important; color: #607d8b !important; }
+.refund-simple .btn-secondary { background: #f0f2f5 !important; color: #54656f !important; border: 0 !important; border-radius: 999px !important; padding: 10px !important; font-size: 13px; }
