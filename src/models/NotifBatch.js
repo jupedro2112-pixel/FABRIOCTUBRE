@@ -82,6 +82,11 @@ const notifBatchSchema = new mongoose.Schema({
   audienceType: { type: String, enum: ['list', 'inactive', 'all', 'public'], default: 'list' },
   audienceDays: { type: Number, default: null },
   audienceLimit: { type: Number, default: null },
+  // #190 rangos de inactivos: "entre X y Y días" / "entre fecha y fecha" + texto legible.
+  audienceDaysMax: { type: Number, default: null },
+  dateFrom: { type: String, default: null },
+  dateTo: { type: String, default: null },
+  audienceLabel: { type: String, default: '' },
 
   // false hasta que TODOS los recipients tengan delivery final. El motor
   // (_processNotifBatchQueue, cron en server.js) retoma los lotes con
