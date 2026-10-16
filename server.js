@@ -6208,6 +6208,17 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
     };
 
     if (welcomeContent) await createSystemMessage(welcomeContent, true); // null = /sys_welcome vaciado
+    // #221: explicación completa del servicio (editable en COMANDOS; vacío = no se manda).
+    try {
+      let plataformasTxt = '🎰 Girox';
+      try {
+        const _pl = await platforms.listEnabled();
+        if (_pl.length) plataformasTxt = _pl.map((p) => `${p.emoji} ${p.name}`).join(' y ');
+      } catch (_) {}
+      const howContent = await renderSystemCommand('/sys_como_funciona', null,
+        { username, cbu: cbuNumber, escalera: await buildEscaleraText(), plataformas: plataformasTxt });
+      if (howContent) await createSystemMessage(howContent, false);
+    } catch (e) { logger.warn(`[welcome] /sys_como_funciona: ${e.message}`); }
     if (cbuNumber && cbuNumber !== 'No disponible') {
       await createSystemMessage(cbuNumber, false);
     }
@@ -9125,7 +9136,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         if (!installDisabled) { // null = comando vaciado a propósito → no enviar
         const installContent = (installCmd && installCmd.response)
           ? installCmd.response.replace(/\{amount\}/g, amount).replace(/\{balance\}/g, newBalance !== null ? newBalance : 'actualizándose')
-          : `🎁━━━━━━━━━━━━━━━🎁\n📲 INSTALÁ LA APP\n   Y GANÁ $5.000 🎁\n🎁━━━━━━━━━━━━━━━🎁\n\n¿Todavía no instalaste la app? ¡Hacelo ahora y reclamá tu BONO DE $5.000! 🤑\n\n✅ Te avisamos al toque de tus bonos y reembolsos\n✅ Entrás más rápido y no perdés tu cuenta\n\n📲 Tocá "📱 Instalar App" o, en el menú del navegador, elegí "Agregar a pantalla de inicio".\n\n🎁 Una vez instalada, abrí la app y tocá el botón "🎁 Reclamar $5.000" que vas a ver arriba del chat. ¡El bono se acredita al instante!`;
+          : `📲 INSTALÁ LA APP\n\n¿Todavía no instalaste la app? Hacelo ahora:\n✅ Te avisamos al toque de tus cargas, reembolsos y bonos\n✅ Entrás más rápido y no perdés tu cuenta\n\n📲 Tocá el botón "INSTALAR APP" de abajo o, en el menú del navegador, elegí "Agregar a pantalla de inicio".`;
 
         const installMessage = await Message.create({
           id: uuidv4(),
@@ -10748,6 +10759,17 @@ async function initializeData() {
     console.log('✅ Configuración CBU por defecto creada');
   }
 
+  // Migración idempotente (#221, owner 2026-10-16 "limpiame todo lo que es regalos por instalar
+  // la app"): si /sys_install_app guardado todavía promete el regalo ($5.000 / "GANÁ"), se pisa
+  // con el texto neutro. Un texto editado a mano sin esas frases no se toca.
+  try {
+    const r = await Command.updateMany(
+      { name: '/sys_install_app', response: { $regex: /\$5\.000|GANÁ|BONO DE|Reclamar \$/i } },
+      { $set: { response: "📲 INSTALÁ LA APP\n\n¿Todavía no instalaste la app? Hacelo ahora:\n✅ Te avisamos al toque de tus cargas, reembolsos y bonos\n✅ Entrás más rápido y no perdés tu cuenta\n\n📲 Tocá el botón \"INSTALAR APP\" de abajo o, en el menú del navegador, elegí \"Agregar a pantalla de inicio\"." } }
+    );
+    if (r && r.modifiedCount) console.log(`✅ /sys_install_app: texto con regalo reemplazado por el neutro (${r.modifiedCount})`);
+  } catch (e) { console.warn('[startup-migration] /sys_install_app:', e.message); }
+
   // Verificar/crear comandos de sistema (mensajes automáticos editables desde COMANDOS)
   const systemCmds = [
     {
@@ -10804,13 +10826,22 @@ async function initializeData() {
       name: '/sys_install_app',
       description: 'Mensaje "instalá la app" que se envía tras un depósito si el usuario no tiene la app instalada. Variables: ${amount}, ${balance}',
       type: 'message',
-      response: '🎁━━━━━━━━━━━━━━━🎁\n📲 INSTALÁ LA APP\n   Y GANÁ $5.000 🎁\n🎁━━━━━━━━━━━━━━━🎁\n\n¿Todavía no instalaste la app? ¡Hacelo ahora y reclamá tu BONO DE $5.000! 🤑\n\n✅ Te avisamos al toque de tus bonos y reembolsos\n✅ Entrás más rápido y no perdés tu cuenta\n\n📲 Tocá "📱 Instalar App" o, en el menú del navegador, elegí "Agregar a pantalla de inicio".\n\n🎁 Una vez instalada, abrí la app y tocá el botón "🎁 Reclamar $5.000" que vas a ver arriba del chat. ¡El bono se acredita al instante!'
+      response: '📲 INSTALÁ LA APP\n\n¿Todavía no instalaste la app? Hacelo ahora:\n✅ Te avisamos al toque de tus cargas, reembolsos y bonos\n✅ Entrás más rápido y no perdés tu cuenta\n\n📲 Tocá el botón "INSTALAR APP" de abajo o, en el menú del navegador, elegí "Agregar a pantalla de inicio".'
     },
     {
       name: '/sys_welcome',
       description: 'Mensaje de bienvenida que se envía cuando el usuario ingresa por primera vez (cada 24h). Variables: {username}, {cbu}, {escalera} (se reemplaza sola por los rangos de reembolso vigentes del panel)',
       type: 'message',
       response: '🎉 ¡Bienvenido a la Sala de Juegos, {username}!\n\n🎁 Beneficios exclusivos:\n{escalera}\n• Fueguito diario con recompensas\n• Atención 24/7\n\n💬 Escribe aquí para hablar con un agente.\n\nLink de pagina: https://1girox.com/\n\nCBU activo: {cbu}'
+    },
+    {
+      // #221 (owner 2026-10-16): la explicación completa vive en el CHAT de soporte, no en la
+      // home (que queda limpia para convertir). Se manda junto con la bienvenida (misma
+      // ventana de 24 h). {plataformas} = las habilitadas en Configuración → Plataformas.
+      name: '/sys_como_funciona',
+      description: 'Explicación de cómo funciona el servicio, enviada al chat junto con la bienvenida. Variables: {username}, {cbu}, {escalera} (rangos de reembolso vigentes), {plataformas} (plataformas habilitadas). Vacío = no se envía.',
+      type: 'message',
+      response: 'ℹ️ ¿CÓMO FUNCIONA?\n\n1️⃣ CARGÁS SOLO: transferí al CBU {cbu} (o al alias que ves en la app) y mandanos la foto del comprobante por este chat. La carga entra automática, sin esperar a nadie.\n\n2️⃣ ELEGÍS DÓNDE JUGAR: tenés {plataformas}. Cuando llega tu transferencia te preguntamos en cuál querés el saldo.\n\n3️⃣ REEMBOLSOS por lo que perdés con tu plata (los bonos no cuentan), se cobran solos desde la app:\n{escalera}\n\n4️⃣ RETIRÁS desde el botón rojo "RETIRAR MI PREMIO": te lo pagamos a tu CBU.\n\n🤝 Invitá amigos desde REFERIDOS y cobrá todos los meses por su actividad.\n📲 Instalá la app para no perder tu acceso y recibir avisos.\n\n💬 Cualquier duda, escribinos acá.'
     },
     {
       name: '/sys_cbu',
@@ -11398,12 +11429,20 @@ async function getInstallBonusPct() {
   } catch (_) { /* fallback */ }
   return INSTALL_BONUS_PCT_DEFAULT;
 }
+// ON/OFF del bono por instalar la app (owner 2026-10-16, #221): APAGADO por default. Con
+// el flag en false el status dice eligible:false/disabled:true (la PWA no muestra nada),
+// el claim rebota (DISABLED) y la carga NO manda el cartel de "instalá la app" con regalo.
+// Los clientes que YA reclamaron conservan su % pendiente (resolveAutoBonus lo honra).
+async function getInstallBonusEnabled() {
+  try { const v = await getConfig('installBonusEnabled', null); if (v === true || v === false) return v; } catch (_) {}
+  return false;
+}
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), cap: await getBonusCapConfig(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -11424,13 +11463,21 @@ app.post('/api/admin/bonus-cap', authMiddleware, adminMiddleware, async (req, re
 app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general puede cambiar el % del bono.' });
-    const pct = Number(req.body && req.body.pct);
-    if (!Number.isFinite(pct) || pct < 0 || pct > 500) {
-      return res.status(400).json({ error: 'El % tiene que ser un número entre 0 y 500.' });
+    // enabled (on/off) es opcional: un panel viejo manda sólo pct.
+    if (req.body && typeof req.body.enabled === 'boolean') {
+      await Config.set('installBonusEnabled', req.body.enabled, req.user.username);
+      logger.info(`[install-bonus] bono por instalar la app ${req.body.enabled ? 'ACTIVADO' : 'APAGADO'} por ${req.user.username}`);
     }
-    await Config.set('installBonusPct', Math.round(pct), req.user.username);
-    logger.info(`[install-bonus] % del bono cambiado a ${Math.round(pct)}% por ${req.user.username}`);
-    res.json({ success: true, pct: Math.round(pct) });
+    const pctRaw = req.body && req.body.pct;
+    if (pctRaw != null && pctRaw !== '') {
+      const pct = Number(pctRaw);
+      if (!Number.isFinite(pct) || pct < 0 || pct > 500) {
+        return res.status(400).json({ error: 'El % tiene que ser un número entre 0 y 500.' });
+      }
+      await Config.set('installBonusPct', Math.round(pct), req.user.username);
+      logger.info(`[install-bonus] % del bono cambiado a ${Math.round(pct)}% por ${req.user.username}`);
+    }
+    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -11602,6 +11649,11 @@ app.get('/api/install-bonus/status', authMiddleware, async (req, res) => {
     const user = await User.findOne({ id: req.user.userId }).lean();
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     const pct = await getInstallBonusPct();
+    if (!(await getInstallBonusEnabled())) {
+      // Bono APAGADO (#221): sin cartel, sin botón. Lo ya reclamado sigue pendiente hasta usarse.
+      return res.json({ claimed: user.installBonusClaimed === true, eligible: false, ineligible: 'disabled', disabled: true,
+        bonusStatus: user.firstChargeBonusStatus || 'none', bonusType: 'first_charge_100', pct, bannerTitle: '', bannerNote: '', buttonLabel: '', amount: 0 });
+    }
     const vars = { pct, username: user.username };
     // Cartel: comando vaciado → texto por defecto (acá "vacío" no es "no mostrar",
     // el cartel siempre necesita un título).
@@ -11635,6 +11687,9 @@ app.post('/api/install-bonus/claim', authMiddleware, async (req, res) => {
   try {
     const user = await User.findOne({ id: req.user.userId });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!(await getInstallBonusEnabled())) {
+      return res.status(400).json({ error: 'El bono por instalar la app no está activo.', code: 'DISABLED' });
+    }
 
     // Validación server-side de "app instalada": exige un token FCM en
     // contexto standalone. El flag req.body.standalone era falsificable

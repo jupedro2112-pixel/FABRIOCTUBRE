@@ -758,3 +758,25 @@ body.wa-dark .support-head { background: #1f2c34; }
 .hiw-step { display: flex; gap: 8px; align-items: flex-start; margin: 5px 0; }
 .hiw-step b.n { flex: 0 0 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; background: #d4af37; color: #1a0033; border-radius: 50%; font-size: 12px; }
 .hiw-ladder { display: block; color: #cfcfcf; font-size: 11.5px; margin-top: 3px; }
+
+/* ── #221: home más limpia — cómo funciona plegado arriba, barra inferior referidos/instalar ── */
+.hiw-card { padding: 8px 12px; cursor: pointer; }
+.hiw-card .home-card-title { font-size: 12.5px; }
+.hiw-sub { font-weight: 600; font-size: 10px; color: #cfcfcf; letter-spacing: 0; }
+.hiw-card .hiw-body { cursor: auto; margin-top: 8px; }
+.home-bottom-bar {
+    display: flex; gap: 8px; margin: 0 8px 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.hb-btn {
+    flex: 1; display: flex; align-items: center; gap: 9px; min-width: 0;
+    border: 0; border-radius: 12px; padding: 11px 12px; cursor: pointer; color: #fff; text-align: left;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35);
+}
+.hb-btn:active { transform: scale(.98); }
+.hb-ref { background: linear-gradient(135deg, #6a0dad, #9b30ff); border: 1px solid #c9a0ff; }
+.hb-install { background: linear-gradient(135deg, #0f8a2f, #1fb954); border: 1px solid #7dffb0; }
+.hb-icon { font-size: 24px; line-height: 1; flex: 0 0 auto; }
+.hb-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.hb-text b { font-size: 13.5px; font-weight: 900; letter-spacing: .4px; }
+.hb-text small { font-size: 9.5px; opacity: .9; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

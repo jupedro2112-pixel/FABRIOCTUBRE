@@ -34,7 +34,7 @@ try {
 // ============================================
 // CONFIGURACIÓN DE CACHÉ
 // ============================================
-const CACHE_VERSION = 'v118'; // v118: HOME 2.0 — carga automática al frente (CBU/alias/datos de acceso/captura), chat como SOPORTE arriba, plataformas para elegir dónde jugar, cómo funciona el servicio, reembolsos compactos // v117: multi-plataforma — botones "¿dónde querés jugar?" (Girox / Ganamos) y link externo en los mensajes de sistema // v116: Información del Servicio y mini-tarjeta muestran el % vigente del bono por instalar la app (chau 100% fijo)
+const CACHE_VERSION = 'v119'; // v119: home limpia — chau bono por instalar la app, cómo funciona plegado arriba, barra inferior REFERIDOS / INSTALAR APP, explicación completa en el chat // v118: HOME 2.0 — carga automática al frente (CBU/alias/datos de acceso/captura), chat como SOPORTE arriba, plataformas para elegir dónde jugar, cómo funciona el servicio, reembolsos compactos // v117: multi-plataforma — botones "¿dónde querés jugar?" (Girox / Ganamos) y link externo en los mensajes de sistema // v116: Información del Servicio y mini-tarjeta muestran el % vigente del bono por instalar la app (chau 100% fijo)
 // v115: // v115: ruleta diaria con premios en % y tabla de probabilidades + bonos pendientes se aplican solos en la carga + sin bono de bienvenida para registros manuales
 // v114: // v114: el cartel del bono por instalar la app toma el % y los textos del server (editables en COMANDOS) — chau 100% fijo
 // v113: // v113: REEMBOLSO ACUMULATIVO de por vida en el perfil (tarjeta + reclamar + actualizar) — ESPEC-REEMBOLSO-1GIROX

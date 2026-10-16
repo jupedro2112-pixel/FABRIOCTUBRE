@@ -8,6 +8,43 @@
 
 ## Sesión 2026-10-16
 
+### 221. 🧹 Home limpia para convertir: chau bono por instalar la app, "cómo funciona" plegado arriba, barra inferior REFERIDOS / INSTALAR APP, explicación completa en el chat — SW v119, admin-sw v57
+- **Owner:** "limpiame todo lo que es regalos por instalar la app y todo lo que opaque la página; dejar
+  el reembolso minimizado; que en el chat esté explicado bien todo; un sistema óptimo para convertir
+  pauta, todo unificado pero sin tanta información"; "abajo (donde estaba la barra de escribir) poné el
+  sistema de referidos y del lado derecho INSTALAR APP bien predominante"; "el cómo funciona ponelo
+  arriba con el mismo deslizante pero oculto: si quieren verlo que lo abran"; "Girox abre la página ya
+  configurada (API vieja)" → el botón Girox sigue abriendo el casino embebido por SSO de siempre.
+- **Bono por instalar la app → APAGADO (flag, no borrado):** `Config['installBonusEnabled']` (default
+  **false**, `getInstallBonusEnabled()`). Con false: `GET /api/install-bonus/status` devuelve
+  `eligible:false, disabled:true` (la PWA no muestra nada), `POST /api/install-bonus/claim` → 400
+  `DISABLED`. Los clientes que YA reclamaron conservan su % pendiente (`resolveAutoBonus` lo sigue
+  honrando). Panel → COMANDOS → card "Bonos automáticos en la carga": checkbox **"Bono por instalar la
+  app ACTIVO"** (`GET/POST /api/admin/install-bonus-config` leen/aceptan `enabled`; pct opcional).
+  **PWA:** eliminado el cartel dorado `#installBonusBanner` (+ aviso de registro directo) y las dos
+  tarjetas "Bono por instalar la app" / "Bono X% con la app" del modal Información del servicio
+  (`installbonus.js` queda, pero sin cartel su `init` no hace nada).
+  **Mensaje "instalá la app" tras la carga** (`/sys_install_app`, manual y seed): texto NEUTRO sin
+  regalo (ya no promete $5.000 ni "reclamá tu bono") + **migración al boot**: si el guardado todavía
+  dice "$5.000"/"GANÁ"/"BONO DE" se pisa con el neutro (un texto editado a mano sin eso no se toca).
+- **Home (index.html):** header → barra Soporte → **"ℹ️ ¿CÓMO FUNCIONA?" plegada** (misma tarjeta
+  del #220, ahora arriba de los reembolsos, cerrada por default, se abre tocando la cabecera o "Ver ▼";
+  sin memoria en localStorage) → reembolsos compactos → "💳 CARGÁ ACÁ" (textos más cortos) →
+  plataformas → promos → RETIRAR → **barra inferior** `.home-bottom-bar`: 🤝 **REFERIDOS**
+  (`VIP.ui.openReferralModal`) a la izquierda y 📲 **INSTALAR APP** (`VIP.ui.installApp`, sin regalo) a la
+  derecha, grandes.
+- **Chat = explicación completa:** comando nuevo **`/sys_como_funciona`** (editable en COMANDOS;
+  variables `{username}`, `{cbu}`, `{escalera}`, `{plataformas}` = habilitadas en Configuración →
+  Plataformas) que se manda junto con la bienvenida (`POST /api/messages/welcome`, misma ventana de
+  24 h): cómo cargar solo, elegir plataforma, reembolsos con la escalera real, retirar, referidos,
+  instalar la app, soporte. Vacío = no se manda.
+- **Validado:** `node --check` OK (server.js, home.js, admin.js, SWs); index.html balanceado (422/422).
+  **Back necesita redeploy** (flag + comando nuevo + migración). PROBAR: (1) PWA: sin cartel dorado,
+  "¿Cómo funciona?" cerrado arriba, barra inferior con los dos botones; (2) usuario nuevo → al chat
+  llegan bienvenida + "¿CÓMO FUNCIONA?" con las 2 plataformas y la escalera; (3) panel → COMANDOS →
+  checkbox apagado; activarlo → la PWA vuelve a mostrar el cartel (si se quisiera); (4) carga manual →
+  el mensaje "instalá la app" sale sin regalo; (5) botón Girox → casino embebido de siempre.
+
 ### 220. 🏠 HOME 2.0 de la PWA: carga automática al frente (CBU/alias/usuario/contraseña/link + captura), chat como SOPORTE arriba, plataformas para elegir dónde jugar, "cómo funciona" automático, reembolsos compactos — SW v118
 - **Owner:** "una forma automática de carga cuando la gente entre y se vaya la parte del chat; el chat
   que quede como soporte en la parte superior; reembolsos semanales y mensuales más resumidos y

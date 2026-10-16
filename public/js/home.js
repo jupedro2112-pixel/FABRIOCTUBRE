@@ -182,8 +182,7 @@
         if (!body) return;
         const hidden = body.style.display === 'none';
         body.style.display = hidden ? '' : 'none';
-        if (btn) btn.textContent = hidden ? 'Ocultar ▲' : 'Ver cómo funciona ▼';
-        try { localStorage.setItem('vip_hiw_collapsed', hidden ? '0' : '1'); } catch (_) {}
+        if (btn) btn.textContent = hidden ? 'Ocultar ▲' : 'Ver ▼';
     }
 
     // ---------------- INIT ----------------
@@ -194,18 +193,9 @@
             const hp = _el('homePanel'); if (hp) { hp.classList.remove('collapsed'); hp.style.maxHeight = 'none'; }
             const tg = _el('homePanelToggle'); if (tg) tg.style.display = 'none';
         } catch (_) {}
-        if (!_inited) {
-            _inited = true;
-            // "Cómo funciona" arranca ABIERTO (el owner quiere que se explique al entrar);
-            // si el cliente lo cerró una vez, se respeta.
-            try {
-                if (localStorage.getItem('vip_hiw_collapsed') === '1') {
-                    const body = _el('hiwBody'); const btn = _el('hiwToggle');
-                    if (body) body.style.display = 'none';
-                    if (btn) btn.textContent = 'Ver cómo funciona ▼';
-                }
-            } catch (_) {}
-        }
+        // "Cómo funciona" vive arriba PLEGADO (#221): quien quiere leerlo lo abre; la
+        // explicación completa además le llega por el chat (/sys_como_funciona).
+        _inited = true;
         try { if (VIP.autoload) VIP.autoload.init(); } catch (_) {}
         await loadPlatforms(true);
         renderPlatforms();

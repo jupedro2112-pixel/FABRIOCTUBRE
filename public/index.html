@@ -937,6 +937,19 @@
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
             <div class="home-dash">
+                <!-- ===== CÓMO FUNCIONA (#221): arriba, deslizante CERRADO (owner: "si la gente quiere ver cómo funciona que abra"). Reembolsos y plataformas los completa js/home.js ===== -->
+                <div class="home-card hiw-card" id="howItWorksCard" onclick="if(event.target===this||event.target.closest('.hiw-head'))VIP.home.toggleHow()">
+                    <div class="hiw-head">
+                        <div class="home-card-title" style="margin:0;">ℹ️ ¿CÓMO FUNCIONA? <span class="hiw-sub">Cargás solo · elegís dónde jugar · reembolsos</span></div>
+                        <button type="button" class="hiw-toggle" id="hiwToggle" onclick="VIP.home.toggleHow()">Ver ▼</button>
+                    </div>
+                    <div class="hiw-body" id="hiwBody" style="display:none;">
+                        <div class="hiw-step"><b class="n">1</b><span><b>Cargás solo:</b> transferí al CBU o alias de arriba y mandanos la foto del comprobante por el chat de soporte (botón 📎). La carga entra automática, sin esperar a nadie.</span></div>
+                        <div class="hiw-step"><b class="n">2</b><span id="hiwPlatforms"><b>🎮 Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</span></div>
+                        <div class="hiw-step"><b class="n">3</b><span id="hiwRefunds"><b>🎁 Reembolsos</b> semanales y mensuales según lo que perdiste con tu plata.</span></div>
+                        <div class="hiw-step"><b class="n">4</b><span><b>💸 Retirás</b> desde el botón rojo de abajo: te lo pagamos a tu CBU. <b>¿Dudas?</b> El chat de soporte está arriba 👆.</span></div>
+                    </div>
+                </div>
                 <div class="dash-top">
                     <!-- Ruleta diaria: render dinámico desde js/roulette.js -->
                     <div id="rouletteHomeCard" style="display:none;"></div>
@@ -974,7 +987,7 @@
                 <!-- ===== CARGA AUTOMÁTICA (#220): lo primero que ve el cliente. Lo completa js/autoload.js ===== -->
                 <div class="home-card" id="autoLoadCard">
                     <div class="home-card-title">💳 CARGÁ ACÁ — es automático</div>
-                    <p class="home-card-sub">Transferí al CBU o alias, mandanos el comprobante y la carga entra sola.</p>
+                    <p class="home-card-sub">Transferí, mandá el comprobante y la carga entra sola.</p>
                     <div class="al-grid">
                         <div class="al-field wide">
                             <span class="al-label">🔢 CBU vigente</span>
@@ -1013,7 +1026,7 @@
                         <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">📎 Ya transferí: enviar comprobante</button>
                         <button type="button" class="al-btn capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Guardar captura con mis datos</button>
                     </div>
-                    <div class="al-hint">💡 Tocá "Guardar captura" y guardá la imagen en tu teléfono: tiene el CBU, tu usuario, tu contraseña y el link de la app para que nunca pierdas el acceso.</div>
+                    <div class="al-hint">💡 Guardá la captura: tiene el CBU, tu usuario, tu contraseña y el link de la app, así nunca perdés el acceso.</div>
                     <div id="alCapturePreview" style="display:none;margin-top:10px;"></div>
                 </div>
 
@@ -1029,19 +1042,7 @@
                     </div>
                 </div>
 
-                <!-- ===== CÓMO FUNCIONA (#220): explicación automática al entrar. Reembolsos y plataformas los completa js/home.js ===== -->
-                <div class="home-card" id="howItWorksCard">
-                    <div class="hiw-head">
-                        <div class="home-card-title" style="margin:0;">ℹ️ CÓMO FUNCIONA</div>
-                        <button type="button" class="hiw-toggle" id="hiwToggle" onclick="VIP.home.toggleHow()">Ocultar ▲</button>
-                    </div>
-                    <div class="hiw-body" id="hiwBody">
-                        <div class="hiw-step"><b class="n">1</b><span><b>Cargás solo:</b> transferí al CBU o alias de arriba y mandanos la foto del comprobante por el chat de soporte (botón 📎). La carga entra automática, sin esperar a nadie.</span></div>
-                        <div class="hiw-step"><b class="n">2</b><span id="hiwPlatforms"><b>🎮 Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</span></div>
-                        <div class="hiw-step"><b class="n">3</b><span id="hiwRefunds"><b>🎁 Reembolsos</b> semanales y mensuales según lo que perdiste con tu plata.</span></div>
-                        <div class="hiw-step"><b class="n">4</b><span><b>💸 Retirás</b> desde el botón rojo de abajo: te lo pagamos a tu CBU. <b>¿Dudas?</b> El chat de soporte está arriba 👆.</span></div>
-                    </div>
-                </div>
+
 
                 <!-- Soporte por Telegram, abajo de Jugá Aquí. 🪦 Acá también vivía el
                      botón "Canal Exclusivo" (communityChannelBtn): se ELIMINÓ porque
@@ -1053,27 +1054,6 @@
                      en el menú ☰ — "Soporte 24/7"). -->
             </div>
             <!-- ===== /DASHBOARD ===== -->
-            <!-- Cartel del bono por instalar la app: visible hasta que se reclama -->
-            <div id="installBonusBanner" style="display:none; background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%); color: #000; padding: 11px 14px; border-radius: 12px; margin: 8px 8px 0; box-shadow: 0 4px 18px rgba(212,175,55,0.55); border: 2px solid #ffd700;">
-                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                    <span style="font-size: 26px;">🎁</span>
-                    <div style="flex: 1; min-width: 110px;">
-                        <!-- El % y los textos los manda el server (/api/install-bonus/status):
-                             % editable en COMANDOS, textos en /sys_install_bonus_banner*. -->
-                        <strong id="installBonusTitle" style="font-size: 14px; display: block;">¡Bono en tu próxima carga!</strong>
-                        <span style="font-size: 11px; opacity: 0.8;">Por instalar la app. Reclamalo desde la app instalada.</span>
-                    </div>
-                    <button id="installBonusClaimBtn" style="background: #000; color: #ffd700; border: none; border-radius: 9px; padding: 9px 15px; font-weight: 800; font-size: 13px; cursor: pointer; flex-shrink: 0;">🎁 Reclamar mi bono</button>
-                </div>
-                <!-- Aviso para usuarios sin pauta (registro directo): el bono
-                     es para probar la página y no es retirable hasta ser usuario
-                     activo. installbonus.js lo muestra/oculta según
-                     VIP.state.currentUser.acquisitionCampaign. -->
-                <div id="installBonusDirectNotice" style="display:none; margin-top:10px; padding:8px 11px; background:rgba(0,0,0,0.12); border:1px solid rgba(0,0,0,0.28); border-radius:9px; font-size:11px; line-height:1.4; color:#1a0033; font-weight:600;">
-                    ⚠️ Es por <strong>única vez</strong>. Cuando vayas a cargar, avisale al agente que tenés el bono y te lo aplica en el momento.
-                </div>
-            </div>
-
             <!-- Cartel de bonificación vigente (bono de carga activado por
                  una notificación). Render dinámico desde js/promobonus.js. -->
             <div id="promoBonusCard" style="display:none;"></div>
@@ -1096,6 +1076,16 @@
             <!-- Retirar mi premio: queda FUERA de #homePanel, así sigue
                  visible aunque se oculte el menú. -->
             <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">💸 RETIRAR MI PREMIO</button>
+            <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
+                 Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
+            <div class="home-bottom-bar">
+                <button type="button" class="hb-btn hb-ref" onclick="VIP.ui.openReferralModal()" title="Invitá amigos y cobrá por su actividad">
+                    <span class="hb-icon">🤝</span><span class="hb-text"><b>REFERIDOS</b><small>Invitá y cobrá todos los meses</small></span>
+                </button>
+                <button type="button" class="hb-btn hb-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
+                    <span class="hb-icon">📲</span><span class="hb-text"><b>INSTALAR APP</b><small>Avisos al toque y acceso directo</small></span>
+                </button>
+            </div>
 
             <style>
                 @keyframes winners-pulse {
@@ -1853,11 +1843,6 @@
                     <div class="info-card-desc">Invitá amigos con tu código y cobrá todos los meses el 8% de su actividad, de por vida y sin límite.</div>
                 </div>
                 <div class="info-card">
-                    <div class="info-card-icon">📲</div>
-                    <div class="info-card-title">Bono por instalar la app</div>
-                    <div class="info-card-desc js-install-bonus-desc">Instalá la app, reclamá el bono y tu próxima carga suma un <span class="js-install-bonus-pct">…</span>% extra de regalo, por única vez.</div>
-                </div>
-                <div class="info-card">
                     <div class="info-card-icon">🎁</div>
                     <div class="info-card-title">Bonos en tus cargas</div>
                     <div class="info-card-desc">Promos con hasta 30% extra en tus cargas. Atención por chat 24/7 y retiros por transferencia.</div>
@@ -1896,11 +1881,6 @@
                     <div style="font-size:22px; line-height:1;">👑</div>
                     <div style="color:#00ff88; font-weight:700; font-size:11px; margin:3px 0 2px;">Niveles VIP</div>
                     <div style="color:#b0b0b0; font-size:9.5px; line-height:1.3;">Subí de nivel jugando y cobrá bonos + rakeback semanal.</div>
-                </div>
-                <div style="background:linear-gradient(135deg,rgba(0,255,136,0.10),rgba(0,204,106,0.10)); border:1px solid rgba(0,255,136,0.55); border-radius:9px; padding:8px 6px; text-align:center;">
-                    <div style="font-size:22px; line-height:1;">📲</div>
-                    <div style="color:#00ff88; font-weight:700; font-size:11px; margin:3px 0 2px;">Bono <span class="js-install-bonus-pct">…</span>% con la app</div>
-                    <div style="color:#b0b0b0; font-size:9.5px; line-height:1.3;">Instalá la app y tu próxima carga suma un <span class="js-install-bonus-pct">…</span>% extra.</div>
                 </div>
                 <div style="background:linear-gradient(135deg,rgba(0,255,136,0.10),rgba(0,204,106,0.10)); border:1px solid rgba(0,255,136,0.55); border-radius:9px; padding:8px 6px; text-align:center;">
                     <div style="font-size:22px; line-height:1;">🎰</div>

@@ -855,6 +855,10 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   y `VIP.chat.addMessageToChat` (no leídos; una pregunta platform_choice abre el chat solo).
   `#homePanelToggle` quedó oculto. ⚠️ Mover `chatMessages`/`messageInput`/`attachBtn` de lugar
   rompe el cableado de app.js/chat.js: dejarlos dentro de `#supportPanel`.
+  **#221:** "¿Cómo funciona?" va ARRIBA plegado; abajo del botón RETIRAR está `.home-bottom-bar`
+  (REFERIDOS | INSTALAR APP). El cartel del bono por instalar la app se eliminó de la PWA y el
+  bono está APAGADO por flag (`Config['installBonusEnabled']`, panel → COMANDOS). La explicación
+  completa del servicio la manda el chat (`/sys_como_funciona`, junto con la bienvenida).
 - **Header del chatScreen** (2026-08-03): [botón Información | menú hamburguesa ☰].
   TODAS las acciones (referidos, soporte con ícono de auricular, notificaciones,
   instalar app, canal, configuración, logout) viven en el desplegable `#mainMenu`

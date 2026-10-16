@@ -155,6 +155,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   acoplada a `USERS_LIST_FIELDS` del backend (columna nueva ⇒ sumar campo al select).
   Detalle completo de trampas en `docs/ARCHITECTURE.md` §7.
 
+- **Bono por instalar la app APAGADO por flag (#221, 2026-10-16):** `Config['installBonusEnabled']`
+  (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El
+  cartel dorado y las tarjetas del modal Info se ELIMINARON de la PWA. `/sys_install_app` es neutro
+  (sin regalo) y una migración al boot pisa el texto viejo con "$5.000".
 - **HOME 2.0 de la PWA (#220, 2026-10-16):** el chat ya no es la pantalla principal: vive en
   `#supportPanel` (overlay) y se abre desde la barra "💬 Soporte" de arriba; el home muestra la
   carga automática (`js/autoload.js`), las plataformas y "cómo funciona" (`js/home.js`). Los ids

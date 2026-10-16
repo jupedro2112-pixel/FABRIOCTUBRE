@@ -5729,7 +5729,10 @@ async function loadInstallBonusPct() {
         const msg = document.getElementById('installBonusPctMsg');
         if (input) { input.value = j.pct; input.disabled = !j.canEdit; }
         if (btn) btn.style.display = j.canEdit ? '' : 'none';
-        if (msg) msg.textContent = j.canEdit ? `Vigente: ${j.pct}%` : `Vigente: ${j.pct}% (solo el admin general lo cambia)`;
+        const enChk = document.getElementById('installBonusEnabledChk');
+        if (enChk) { enChk.checked = j.enabled === true; enChk.disabled = !j.canEdit; }
+        const estado = j.enabled === true ? 'ACTIVO' : 'APAGADO (la app no muestra el cartel; lo ya reclamado se honra)';
+        if (msg) msg.textContent = j.canEdit ? `${estado} · ${j.pct}%` : `${estado} · ${j.pct}% (solo el admin general lo cambia)`;
         // Tope de los bonos automáticos
         const cap = j.cap || {};
         const cEn = document.getElementById('bonusCapEnabled');
@@ -5767,13 +5770,15 @@ async function saveInstallBonusPct() {
     const msg = document.getElementById('installBonusPctMsg');
     const pct = Number(input && input.value);
     if (!Number.isFinite(pct) || pct < 0 || pct > 500) { showToast('El % tiene que ser un número entre 0 y 500', 'error'); return; }
-    if (!confirm(`¿Dejar el bono por instalar la app en ${pct}%?\n\nAplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.`)) return;
+    const enChk = document.getElementById('installBonusEnabledChk');
+    const enabled = enChk ? enChk.checked : undefined;
+    if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
     try {
-        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct }) });
+        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled }) });
         const j = await r.json();
         if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
-        if (msg) msg.textContent = `Vigente: ${j.pct}%`;
-        showToast(`Bono por instalar la app: ${j.pct}%`, 'success');
+        if (msg) msg.textContent = `${j.enabled ? 'ACTIVO' : 'APAGADO'} · ${j.pct}%`;
+        showToast(`Bono por instalar la app: ${j.enabled ? 'ACTIVO' : 'APAGADO'} · ${j.pct}%`, 'success');
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
 window.saveInstallBonusPct = saveInstallBonusPct;

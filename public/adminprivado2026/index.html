@@ -604,6 +604,7 @@ document.addEventListener('change', function (ev) {
                                 mensajes automáticos lo leen por la variable <code>{pct}</code>; queda <b>congelado</b> en cada cliente al reclamar.
                             </p>
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                                <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" id="installBonusEnabledChk" style="width:auto;"> Bono por instalar la app ACTIVO</label>
                                 <label style="margin:0;">% del bono:</label>
                                 <input type="number" id="installBonusPctInput" min="0" max="500" step="1" style="width:90px;">
                                 <button class="btn-primary btn-small" id="installBonusPctSaveBtn" onclick="saveInstallBonusPct()">
