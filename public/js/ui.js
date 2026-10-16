@@ -577,15 +577,9 @@ VIP.ui = (function () {
             // #249: en Android dentro del navegador de Instagram/Facebook/TikTok no existe el
             // prompt nativo. Se abre ESTA página en Google Chrome (intent://), donde el botón
             // instala con un toque. Es el único caso en que la app manda a Chrome (owner).
-            const inApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|Line\/|Snapchat/i.test(ua);
-            if (isAndroid && inApp) {
-                try {
-                    const u = new URL(location.href);
-                    showToast('Te abrimos en Google Chrome para instalar la app con un toque', 'info');
-                    location.href = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
-                    return;
-                } catch (_) { /* sigue con las instrucciones */ }
-            }
+            // #259 (owner): en Android sin prompt nativo (otro navegador, Instagram, o Chrome sin
+            // ofrecerlo) se muestra la info con un BOTÓN "Apretá acá para abrir en Google Chrome"
+            // (intent:// que abre esta misma dirección en Chrome; ahí el botón instala directo).
             if (isIOS)          showInstallInstructions('ios');
             else if (isAndroid) showInstallInstructions('android');
             else if (isWindows) showInstallInstructions('windows');
@@ -655,13 +649,26 @@ VIP.ui = (function () {
                 'Presioná <strong>"Agregar"</strong>'
             ];
         } else if (platform === 'android') {
-            title = '📱 Instalar en Android';
-            note  = '⚠️ <strong>Solo funciona desde Google Chrome.</strong>';
+            title = '📱 Instalar la app en Android';
+            // Link de acceso directo a ESTA dirección en Google Chrome (intent://): si Chrome no está
+            // abierto lo abre; si no está instalado cae a la misma URL (S.browser_fallback_url).
+            let chromeHref = location.href;
+            try {
+                const u = new URL(location.href);
+                chromeHref = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
+            } catch (_) {}
+            const isChrome = /Chrome\//.test(navigator.userAgent) && !/EdgA|OPR|SamsungBrowser|Instagram|FBAN|FBAV|FB_IAB/i.test(navigator.userAgent);
+            note = '<div style="margin:0 0 12px;">' +
+                '<p style="color:#fff;margin:0 0 10px;">' + (isChrome
+                    ? 'Estás en Chrome pero todavía no te ofrece instalar. Abrí este link de acceso directo en <strong>Google Chrome</strong> y tocá <strong>Instalar app</strong>:'
+                    : 'Para instalar de forma directa, abrí este link de acceso directo en <strong>Google Chrome</strong>:') + '</p>' +
+                '<a href="' + chromeHref + '" style="display:block;text-align:center;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;font-weight:900;border-radius:12px;padding:14px;text-decoration:none;font-size:15px;box-shadow:0 6px 18px rgba(26,115,232,.4);">👉 Apretá acá para abrir en Google Chrome</a>' +
+                '<button type="button" onclick="VIP.ui.copyText(location.href)" style="display:block;width:100%;margin-top:8px;background:none;border:1px solid rgba(255,255,255,.3);color:#ddd;border-radius:10px;padding:9px;font-size:12px;cursor:pointer;">📋 Copiar el link para pegarlo en Chrome</button>' +
+                '</div><p style="color:#aaa;font-size:12px;margin:0 0 6px;">Si Chrome no te muestra "Instalar app" solo, hacelo a mano:</p>';
             steps = [
-                'Abrí esta página en <strong>Google Chrome</strong>',
-                'Tocá el ícono <strong>⋮</strong> (tres puntos) en la esquina superior derecha',
-                'Seleccioná <strong>"Agregar a pantalla de inicio"</strong> o <strong>"Instalar app"</strong>',
-                'Presioná <strong>"Agregar"</strong> o <strong>"Instalar"</strong>'
+                'Tocá el ícono <strong>⋮</strong> (tres puntos) arriba a la derecha',
+                'Seleccioná <strong>"Instalar app"</strong> o <strong>"Agregar a pantalla de inicio"</strong>',
+                'Presioná <strong>"Instalar"</strong>'
             ];
         } else if (platform === 'windows') {
             title = '💻 Instalar en Windows (PC)';

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-16
 
+### 259. 📲 Instalar en Android sin prompt: info con botón "Apretá acá para abrir en Google Chrome" — SW v152
+- **Owner:** "si es Android que instale directo; si está en otro navegador, en la info generá un link de acceso
+  directo y decile 'abrí este link en Google Chrome para instalar de forma directa' con un botón 'apretá
+  acá para abrir en Google Chrome'; que detecte todo; si es iPhone que le explique".
+- Android con prompt nativo → instala directo (igual). Android SIN prompt (otro navegador, Instagram/Facebook,
+  o Chrome que todavía no lo ofrece) → ya no redirige solo: muestra la info con un botón azul grande
+  "👉 Apretá acá para abrir en Google Chrome" (`intent://` a la misma dirección; si Chrome no está abierto
+  lo abre, si no está instalado cae a la URL) + "Copiar el link" + los pasos manuales de Chrome. iPhone →
+  explicación de Safari (igual).
+
 ### 258. 📐 Home en una pantalla: todo más compacto, saldo arriba debajo de los círculos — SW v151
 - **Owner (capturas):** "unificá más para que entre la carga en la principal sin bajar; achicá lo que sea sin
   sacarle estética; el saldo arriba, debajo del menú de canal/info".
