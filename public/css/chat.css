@@ -1178,3 +1178,27 @@ body.wa-dark .support-head { background: #1f2c34; }
 /* #226: el link de la app en su propia línea, completo (no se corta) */
 .al-chip-link { flex: 1 0 100%; }
 .al-chip-link .mono { max-width: none; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: 11.5px; }
+
+/* ══ #227: carga en 2 pasos (claridad) + RETIRAR bien visible ══ */
+.al-step { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--dx-border); }
+.al-step:last-of-type { border-bottom: 0; }
+.al-n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--dx-accent); color: #06070d; font-weight: 900; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(255,23,68,.35); margin-top: 1px; }
+.al-step-body { flex: 1; min-width: 0; }
+.al-step-t { font-weight: 800; font-size: 12.5px; letter-spacing: .3px; color: var(--dx-text); margin-bottom: 5px; }
+.al-cbu { display: flex; align-items: center; gap: 8px; }
+.al-cbu .mono { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.al-step .al-btn.receipt { width: 100%; flex: none; padding: 12px; font-size: 12px; }
+.al-step .al-meta { padding: 4px 0 0; }
+.al-access-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--dx-border); }
+.al-access-head span { color: var(--dx-muted); font-size: 9.5px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
+.al-link-btn { background: none; border: 1px solid var(--dx-border); color: var(--dx-text); border-radius: 6px; padding: 4px 9px; font: 800 9.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+.al-access { margin-top: 6px; }
+/* Retirar mi premio: verde dinero, grande y con brillo (owner: "lo veo escondido") */
+.withdraw-row-btn {
+    background: linear-gradient(135deg, #00c853 0%, #00e676 55%, #69f0ae 100%) !important; color: #052e16 !important;
+    border: 0 !important; border-radius: 12px !important; clip-path: var(--dx-cut-sm);
+    margin: 6px 8px !important; padding: 13px 14px !important; font-size: 13px !important; font-weight: 900 !important; letter-spacing: 1.4px !important;
+    box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 10px 26px rgba(0,230,118,.35) !important;
+    animation: wdGlow 2.6s ease-in-out infinite;
+}
+@keyframes wdGlow { 0%,100% { box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 10px 26px rgba(0,230,118,.30); } 50% { box-shadow: 0 0 0 1px rgba(0,230,118,.6), 0 10px 34px rgba(0,230,118,.55); } }

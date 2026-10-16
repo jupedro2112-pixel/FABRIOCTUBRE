@@ -979,17 +979,31 @@
 
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
                 <div class="home-card al-card" id="autoLoadCard">
-                    <div class="home-card-title">Cargá acá <span class="hc-tag">automático</span></div>
-                    <div class="al-line"><span class="al-k">CBU</span><span id="alCbu" class="al-v mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">Copiar</button></div>
-                    <div class="al-meta"><span id="alBank">…</span><span class="al-dot">·</span><span id="alTitular">…</span></div>
+                    <div class="home-card-title">Cargá en 2 pasos <span class="hc-tag">automático</span></div>
+                    <!-- PASO 1: transferir -->
+                    <div class="al-step">
+                        <span class="al-n">1</span>
+                        <div class="al-step-body">
+                            <div class="al-step-t">Transferí a este CBU</div>
+                            <div class="al-cbu"><span id="alCbu" class="mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">Copiar</button></div>
+                            <div class="al-meta"><span id="alBank">…</span><span class="al-dot">·</span><span id="alTitular">…</span></div>
+                        </div>
+                    </div>
+                    <!-- PASO 2: comprobante -->
+                    <div class="al-step">
+                        <span class="al-n">2</span>
+                        <div class="al-step-body">
+                            <div class="al-step-t">Mandá la foto del comprobante</div>
+                            <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">Enviar comprobante</button>
+                            <div class="al-meta">La carga entra sola en minutos.</div>
+                        </div>
+                    </div>
+                    <!-- Datos de acceso (secundario) -->
+                    <div class="al-access-head"><span>Tus datos de acceso</span><button type="button" class="al-link-btn" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()" title="Guardá una imagen con el CBU, tu usuario, tu clave y el link de la app">Guardar captura</button></div>
                     <div class="al-access">
                         <span class="al-chip"><span class="al-k">Usuario</span><span id="alUser" class="mono">—</span></span>
                         <span class="al-chip"><span class="al-k">Clave</span><span id="alPassword" class="mono">—</span><button type="button" class="al-eye" id="alPwToggle" onclick="VIP.autoload.togglePassword()" title="Ver / ocultar">ver</button></span>
                         <span class="al-chip al-chip-link"><span class="al-k">App</span><span id="alLink" class="mono">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alLink')">Copiar</button></span>
-                    </div>
-                    <div class="al-actions">
-                        <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">Enviar comprobante</button>
-                        <button type="button" class="al-btn capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()" title="Guardá una imagen con el CBU, tu usuario, tu clave y el link de la app">Guardar captura</button>
                     </div>
                     <div id="alCapturePreview" style="display:none;margin-top:8px;"></div>
                 </div>

@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 227. 🟢 Retirar bien visible + carga en 2 pasos — SW v125
+- **Owner:** "dale más visión al retirar premio, lo veo escondido, otro color; al recuadro de cargas dale
+  vuelta para que la gente entienda y no se pierda con todo".
+- **Carga:** tarjeta "Cargá en 2 pasos": ① Transferí a este CBU (CBU grande + copiar, banco·titular),
+  ② Mandá la foto del comprobante (botón rojo ancho + "la carga entra sola en minutos"). Los datos de
+  acceso (usuario/clave/app + Guardar captura) quedan como bloque SECUNDARIO abajo, separados por línea
+  punteada. Mismos ids (autoload.js no cambia).
+- **Retirar mi premio:** verde dinero degradado, texto oscuro, más alto, borde cortado y brillo pulsante.
+
 ### 226. 🔑 Cambio de clave propagado a TODAS las plataformas + link de la app completo — SW v124
 - **Owner:** "si la clave se edita arriba (llave) que se cambie en Ganamos, en Girox y en la página de
   cargas, así la gente no se marea; el link de la app se ve cortado".
