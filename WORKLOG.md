@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-16
 
+### 254. ℹ️ Info del servicio: app+notificaciones en una línea arriba, título chico, Ruleta diaria plegada en vez de VIP — SW v148
+- **Owner:** "poné arriba lo de notificaciones y app en una línea; el título más chico; eso arriba de reseñas sin
+  ocupar tanto; la parte de niveles VIP reemplazala por la ruleta diaria y sacá el recuadro de ruleta".
+- `#infoDiagnostics` (apptest.js) pasa arriba del todo con CSS compacto (sin el h3, las dos filas en una línea);
+  título de 13 px sin subtítulo; el plegable VIP se reemplaza por "🎰 Ruleta diaria" (texto + botón "Girar la
+  ruleta" que abre `VIP.roulette.open`); el recuadro de ruleta del grid se quitó. `#infoVipDetail` queda
+  oculto (los niveles viven en la tarjeta del home, #253).
+
 ### 253. 👑 Barra de progreso de nivel VIP en el home, plegable, con la escalera que se desbloquea — SW v147
 - **Owner:** "abajo de guardar el ingreso poné una barra de progreso de nivel, que se pueda maximizar para ver cómo
   avanza; que cada nivel que llegue se desbloquee lo que le corresponde".

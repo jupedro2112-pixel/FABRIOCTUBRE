@@ -1491,3 +1491,17 @@ body.support-open .support-bubble { visibility: hidden; }
 .vip-lvl-name { font-weight: 800; }
 .vip-lvl-th { color: var(--dx-muted); }
 .vip-lvl-win { color: var(--dx-money); font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ══ #254: Info del servicio — título chico, app+notis en una línea arriba, ruleta plegada ══ */
+.info-head-sm { margin-bottom: 8px; }
+.info-head-sm h2 { font-size: 13px !important; letter-spacing: 1.2px; }
+.info-diag-top { margin: 0 0 10px; }
+.info-diag-top > div { margin-top: 0 !important; border-top: 0 !important; padding-top: 0 !important; }
+.info-diag-top h3 { display: none !important; }
+.info-diag-top > div > div { flex-direction: row !important; flex-wrap: wrap; gap: 6px !important; }
+.info-diag-top > div > div > * { flex: 1 1 140px; min-width: 0; font-size: 11px !important; padding: 6px 8px !important; }
+.info-diag-top > div > div + div { font-size: 10.5px !important; margin-top: 5px !important; }
+.info-roulette { padding: 0 10px 10px; }
+.info-roulette p { margin: 0 0 8px; color: var(--dx-muted); font-size: 12px; line-height: 1.45; }
+.info-roulette p b { color: var(--dx-text); }
+.info-roulette-btn { width: 100%; background: var(--dx-accent); color: #06070d; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px; font: 900 12px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 18px rgba(255,23,68,.28); }

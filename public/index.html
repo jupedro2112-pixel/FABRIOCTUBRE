@@ -1780,10 +1780,11 @@
     <div id="infoModal" class="modal hidden" onclick="if(event.target === this) hideModal('infoModal')">
         <div class="modal-content" style="max-width: 600px; position: relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('infoModal')" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; z-index: 10;">✕</button>
-            <div class="modal-header">
+            <div class="modal-header info-head-sm">
                 <h2>Información del servicio</h2>
-                <p>Por qué elegirnos, explicado clarito</p>
             </div>
+            <!-- #254: estado de app + notificaciones ARRIBA, en una línea (lo pinta js/apptest.js) -->
+            <div id="infoDiagnostics" class="info-diag-top"></div>
             <!-- #237: reseñas ARRIBA, plegadas (owner: "que no esté abierto así se ve todo lo otro"). reviews.js
                  sigue renderizando dentro de #infoReviewsSection. -->
             <div class="info-reviews-wrap" id="infoReviewsWrap">
@@ -1794,15 +1795,19 @@
                     <div id="infoReviewsSection"></div>
                 </div>
             </div>
-            <!-- #250: niveles VIP debajo de reseñas, plegados, mismo formato (lo completa home.js con la escalera real) -->
-            <div class="info-reviews-wrap" id="infoVipWrap">
-                <button type="button" class="info-reviews-head" onclick="VIP.home.toggleInfoVip()">
-                    <span>👑 Niveles VIP según lo que jugás</span><span class="info-reviews-chevron" id="infoVipChevron">▼</span>
+            <!-- #254: Ruleta diaria plegada (los niveles VIP viven en la tarjeta del home) -->
+            <div class="info-reviews-wrap" id="infoRouletteWrap">
+                <button type="button" class="info-reviews-head" onclick="VIP.home.toggleInfoRoulette()">
+                    <span>🎰 Ruleta diaria</span><span class="info-reviews-chevron" id="infoRouletteChevron">▼</span>
                 </button>
-                <div id="infoVipBody" style="display:none;">
-                    <div class="info-vip info-vip-inner" id="infoVipDetail"></div>
+                <div id="infoRouletteBody" style="display:none;">
+                    <div class="info-roulette">
+                        <p>Con la <b>app instalada</b> y una carga en la semana, girás <b>una vez por día</b>. Podés ganar <b>$5.000</b>, un <b>100%</b> o un <b>50% extra</b> en tu próxima carga.</p>
+                        <button type="button" class="info-roulette-btn" onclick="hideModal('infoModal'); if(window.VIP&&VIP.roulette&&VIP.roulette.open)VIP.roulette.open();">Girar la ruleta</button>
+                    </div>
                 </div>
             </div>
+            <div id="infoVipDetail" style="display:none;"></div>
             <!-- ⚠️ Mantener esto al día con la realidad del negocio: reembolsos por
                  RANGOS 3/6/10 (no los 20/10/5 viejos), niveles VIP con rakeback,
                  bono de instalación = 100% en la próxima carga (no $5.000). -->
@@ -1825,11 +1830,6 @@
                     </div>
                 </div>
                 <div class="info-card">
-                    <div class="info-card-icon">🎰</div>
-                    <div class="info-card-title">Ruleta diaria</div>
-                    <div class="info-card-desc">Con la <b>app instalada</b> y una carga en la semana, girás <b>una vez por día</b>: podés ganar <b>$5.000</b>, un <b>100%</b> o un <b>50% extra</b> en tu próxima carga.</div>
-                </div>
-                <div class="info-card">
                     <div class="info-card-icon">🎮</div>
                     <div class="info-card-title">Dos plataformas</div>
                     <div class="info-card-desc">Girox y Ganamos con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.</div>
@@ -1845,8 +1845,6 @@
                     <div class="info-card-desc">Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</div>
                 </div>
             </div>
-            <!-- Test de app + notificaciones. Render desde js/apptest.js -->
-            <div id="infoDiagnostics"></div>
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="closeInfoModal" class="btn btn-primary" style="width: 100%;">Entendido</button>
             </div>

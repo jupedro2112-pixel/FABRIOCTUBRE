@@ -190,6 +190,13 @@
         body.style.display = open ? '' : 'none';
         if (ch) ch.textContent = open ? '▲' : '▼';
     }
+    function toggleInfoRoulette() {
+        const body = _el('infoRouletteBody'), ch = _el('infoRouletteChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+    }
     function toggleInfoVip() {
         const body = _el('infoVipBody'), ch = _el('infoVipChevron');
         if (!body) return;
@@ -628,6 +635,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
