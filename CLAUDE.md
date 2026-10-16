@@ -155,6 +155,11 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   acoplada a `USERS_LIST_FIELDS` del backend (columna nueva ⇒ sumar campo al select).
   Detalle completo de trampas en `docs/ARCHITECTURE.md` §7.
 
+- **HOME 2.0 de la PWA (#220, 2026-10-16):** el chat ya no es la pantalla principal: vive en
+  `#supportPanel` (overlay) y se abre desde la barra "💬 Soporte" de arriba; el home muestra la
+  carga automática (`js/autoload.js`), las plataformas y "cómo funciona" (`js/home.js`). Los ids
+  del chat (`chatMessages`, `messageInput`, `attachBtn`…) siguen siendo los mismos: no moverlos.
+
 - **Multi-plataforma (#219, 2026-10-16):** con 2+ plataformas habilitadas en Configuración →
   "Plataformas de juego", la auto-carga hgcash **pregunta al cliente dónde jugar** (botones en el
   chat) y deja el movimiento en `awaiting_platform`; elige / el agente elige / timeout → se carga en

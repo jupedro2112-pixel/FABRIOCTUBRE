@@ -843,6 +843,18 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   stale-while-revalidate (deploy llega en la SIGUIENTE carga sin bumpear versión),
   `/app.js` y manifest network-first, API/socket nunca. `user-sw.js` es un stub de
   auto-desregistro (no volver a registrarlo).
+- **HOME 2.0 (#220, 2026-10-16):** la pantalla principal ya NO es el chat. Orden: header → barra
+  de SOPORTE (`#supportBar`, la vieja `.chat-topbar`, abre `#supportPanel` = el chat a pantalla
+  completa con los MISMOS ids) → `#homePanel`: `.dash-top` compacta (reembolsos + usuario) →
+  `#autoLoadCard` (carga automática: CBU/alias/banco/titular, usuario, contraseña guardada en el
+  dispositivo, link de la app, "enviar comprobante" = attachBtn del chat, "guardar captura" = canvas
+  → share/descarga; `js/autoload.js`) → `#platformsCard` (botones por plataforma de /api/platforms,
+  Girox por SSO embebido y Ganamos por link mientras no tenga API; reemplaza al botón "PÁGINA CASINO
+  AQUÍ") → `#howItWorksCard` (4 pasos, escalera real de reembolsos, plataformas) → carteles de
+  bonos. `js/home.js` (VIP.home) envuelve `VIP.ui.showChatScreen` (init), `VIP.refunds.updateRefundButtons`
+  y `VIP.chat.addMessageToChat` (no leídos; una pregunta platform_choice abre el chat solo).
+  `#homePanelToggle` quedó oculto. ⚠️ Mover `chatMessages`/`messageInput`/`attachBtn` de lugar
+  rompe el cableado de app.js/chat.js: dejarlos dentro de `#supportPanel`.
 - **Header del chatScreen** (2026-08-03): [botón Información | menú hamburguesa ☰].
   TODAS las acciones (referidos, soporte con ícono de auricular, notificaciones,
   instalar app, canal, configuración, logout) viven en el desplegable `#mainMenu`

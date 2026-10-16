@@ -387,6 +387,7 @@ VIP.auth = (function () {
                 // manual al casino, que ahora es sólo el camino de RESPALDO (si el
                 // login único falla). El camino normal es VIP.ui.enterCasino().
                 VIP.state.sessionPassword = password;
+                try { if (VIP.autoload) VIP.autoload.rememberPassword(password); } catch (_) {}
 
                 // El `jugayganaToken` que guardábamos acá ya no existe: el backend dejó
                 // de emitirlo. Se limpia por si quedó de una sesión anterior en un
@@ -578,6 +579,7 @@ VIP.auth = (function () {
         VIP.state.currentToken = null;
         VIP.state.currentUser = null;
         VIP.state.sessionPassword = '';
+        try { if (VIP.autoload) VIP.autoload.forgetPassword(); } catch (_) {}
         localStorage.removeItem('userToken');
         // El fcmToken local también se borra para que la sesión siguiente
         // (otro usuario en el mismo dispositivo) registre uno fresco asociado
@@ -982,6 +984,7 @@ VIP.auth = (function () {
                 VIP.state.passwordChangePending = false;
                 // Actualizar contraseña en memoria de sesión para el modal de plataforma
                 VIP.state.sessionPassword = newPassword;
+                try { if (VIP.autoload) VIP.autoload.rememberPassword(newPassword); } catch (_) {}
                 // Reflejar el teléfono verificado en el estado local para no volver a pedirlo.
                 if (data && data.phoneVerified && data.phone && VIP.state.currentUser) {
                     VIP.state.currentUser.phone = data.phone;
@@ -1168,6 +1171,7 @@ VIP.auth = (function () {
             // verificación de teléfono pendiente.
             VIP.state.passwordChangePending = false;
             VIP.state.sessionPassword = _vipChangePwdPending.newPassword;
+            try { if (VIP.autoload) VIP.autoload.rememberPassword(_vipChangePwdPending.newPassword); } catch (_) {}
             if (VIP.state.currentUser) {
                 VIP.state.currentUser.phone = _vipChangePwdPending.phone;
                 VIP.state.currentUser.phoneVerified = false;

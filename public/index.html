@@ -746,7 +746,22 @@
                 /* Estados del botón de notificaciones dentro del menú. */
                 .main-menu .notification-btn.active .menu-item-label::after { content:' ✓'; color:#00ff88; }
                 .main-menu .notification-btn.blocked { opacity:.6; }
-                .home-dash { max-width:680px; margin:10px auto 4px; padding:0 8px; display:flex; flex-direction:column; gap:10px; }
+                .home-dash { max-width:680px; margin:8px auto 4px; padding:0 8px; display:flex; flex-direction:column; gap:9px; }
+                /* HOME 2.0 (#220): la fila de reembolsos + usuario queda COMPACTA (pedido del
+                   owner: "achicar y formato más resumido"); el protagonista es la carga. */
+                .dash-top { padding:5px; gap:5px; border-radius:11px; }
+                .dash-top .dash-refunds { padding:4px 5px 5px; }
+                .dash-top .dash-refunds-title { font-size:9.5px; margin-bottom:3px; }
+                .dash-top .dash-refunds-row .refund-btn { padding:4px 4px 5px; min-height:0; }
+                .dash-top .dash-refunds-row .refund-label-full { font-size:8.5px; line-height:1.1; }
+                .dash-top .dash-refunds-row .refund-label-full br { display:none; }
+                .dash-top .refund-amount { font-size:11px; }
+                .dash-top .refund-timer { font-size:7.5px; }
+                .dash-top .dash-user, .dash-top .dash-roulette { padding:5px 4px; gap:2px; }
+                .dash-top .dash-user { flex:0 0 76px; }
+                .dash-top .dash-user-avatar, .dash-top .dash-roulette-avatar { width:26px; height:26px; font-size:14px; }
+                .dash-top .dash-user-cta { display:none; }
+                #homePanelToggle { display:none !important; }
                 .dash-top {
                     display:flex; flex-wrap:wrap; gap:7px; align-items:stretch;
                     background:linear-gradient(135deg,#d4af37 0%,#ffd700 50%,#d4af37 100%);
@@ -894,6 +909,31 @@
                 }
                 #homePanelToggle .hpt-chevron { font-size:9px; }
             </style>
+            <!-- ===== SOPORTE ARRIBA (#220): la cabecera del chat vive acá; tocarla abre el chat. ===== -->
+            <div class="chat-topbar support-bar" id="supportBar" title="Abrir el chat de soporte">
+                    <!-- El logo del chat es configurable desde el panel admin (Comunidad →
+                         "Logo del chat de soporte"); chat.js lo pisa al loguear. -->
+                    <!-- Logo default del soporte = 1GIROX (2026-08-05). Si en el panel
+                         (Comunidad → Logo del chat) hay uno cargado, chat.js lo pisa. -->
+                    <img class="chat-topbar-avatar" id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40" onclick="VIP.home.openSupport()">
+                    <div class="chat-topbar-info" onclick="VIP.home.openSupport()">
+                        <span class="chat-topbar-name">💬 Soporte <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
+                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>en línea</span>
+                    </div>
+                    <!-- Modo claro/oscuro A LA VISTA (owner 2026-08-03: en Configuración
+                         nadie lo encontraba). El ícono muestra a qué modo se cambia.
+                         Sincronizado con el switch de Configuración (app.js applyWaDark). -->
+                    <button class="theme-topbar-btn" id="themeToggleBtn" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">🌙</button>
+                    <!-- Campanita de notificaciones (movida del menú ☰, owner 2026-08-05):
+                         solo ícono; el estado lo pinta el FCM inline (_updateNotisButton):
+                         🔔 verde = activadas, 🔕 rojo = bloqueadas, 🔔 = tocá para activar. -->
+                    <button class="notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
+                    <!-- Fueguito (racha diaria): vive en la cabecera del chat, NO en la
+                         barra de escribir (la barra es 100% estilo WhatsApp). El click lo
+                         cablea app.js (#fireBtn) y fire.js actualiza #fireStreak. -->
+                    <button class="fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
+                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Abrir chat ›</button>
+                </div>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
             <div class="home-dash">
@@ -931,12 +971,75 @@
                     </div>
                 </div>
 
-                <!-- Jugá Aquí + saldo del jugador -->
-                <div class="dash-play">
-                    <button id="plataformaBtn" class="dash-play-btn" title="Ir al Casino" onclick="VIP.ui.enterCasino()">🎰 PÁGINA CASINO AQUÍ</button>
-                    <div class="dash-balance">
+                <!-- ===== CARGA AUTOMÁTICA (#220): lo primero que ve el cliente. Lo completa js/autoload.js ===== -->
+                <div class="home-card" id="autoLoadCard">
+                    <div class="home-card-title">💳 CARGÁ ACÁ — es automático</div>
+                    <p class="home-card-sub">Transferí al CBU o alias, mandanos el comprobante y la carga entra sola.</p>
+                    <div class="al-grid">
+                        <div class="al-field wide">
+                            <span class="al-label">🔢 CBU vigente</span>
+                            <div class="al-value"><span id="alCbu" class="mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">📋 Copiar</button></div>
+                        </div>
+                        <div class="al-field wide">
+                            <span class="al-label">📱 Alias</span>
+                            <div class="al-value"><span id="alAlias" class="mono green">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alAlias')">📋 Copiar</button></div>
+                        </div>
+                        <div class="al-field">
+                            <span class="al-label">🏦 Banco</span>
+                            <div class="al-value"><span id="alBank">cargando…</span></div>
+                        </div>
+                        <div class="al-field">
+                            <span class="al-label">👤 Titular</span>
+                            <div class="al-value"><span id="alTitular">cargando…</span></div>
+                        </div>
+                        <div class="al-field">
+                            <span class="al-label">🔐 Tu usuario</span>
+                            <div class="al-value"><span id="alUser" class="mono">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alUser')">📋</button></div>
+                        </div>
+                        <div class="al-field">
+                            <span class="al-label">🔑 Tu contraseña</span>
+                            <div class="al-value"><span id="alPassword" class="mono">—</span><button type="button" class="al-eye" id="alPwToggle" onclick="VIP.autoload.togglePassword()" title="Ver / ocultar">👁</button></div>
+                            <div class="al-manual" id="alPwManual" style="display:none;">
+                                <input type="password" id="alPwInput" placeholder="Escribila para guardarla acá" autocomplete="off" onkeydown="if(event.key==='Enter')VIP.autoload.saveManualPassword()">
+                                <button type="button" onclick="VIP.autoload.saveManualPassword()">Guardar</button>
+                            </div>
+                        </div>
+                        <div class="al-field wide">
+                            <span class="al-label">🔗 Link de la app</span>
+                            <div class="al-value"><span id="alLink" class="mono blue">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alLink')">📋 Copiar</button></div>
+                        </div>
+                    </div>
+                    <div class="al-actions">
+                        <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">📎 Ya transferí: enviar comprobante</button>
+                        <button type="button" class="al-btn capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Guardar captura con mis datos</button>
+                    </div>
+                    <div class="al-hint">💡 Tocá "Guardar captura" y guardá la imagen en tu teléfono: tiene el CBU, tu usuario, tu contraseña y el link de la app para que nunca pierdas el acceso.</div>
+                    <div id="alCapturePreview" style="display:none;margin-top:10px;"></div>
+                </div>
+
+                <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
+                     Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
+                <div class="home-card" id="platformsCard">
+                    <div class="home-card-title">🎮 ¿DÓNDE QUERÉS JUGAR?</div>
+                    <p class="home-card-sub" id="platformsSub">Después de cargar, elegí tu plataforma.</p>
+                    <div class="plat-play-row" id="platformsButtons"></div>
+                    <div class="plat-balance">
                         <span class="dash-balance-label">💰 TU SALDO</span>
                         <span class="dash-balance-amount" id="userBalance">$0</span>
+                    </div>
+                </div>
+
+                <!-- ===== CÓMO FUNCIONA (#220): explicación automática al entrar. Reembolsos y plataformas los completa js/home.js ===== -->
+                <div class="home-card" id="howItWorksCard">
+                    <div class="hiw-head">
+                        <div class="home-card-title" style="margin:0;">ℹ️ CÓMO FUNCIONA</div>
+                        <button type="button" class="hiw-toggle" id="hiwToggle" onclick="VIP.home.toggleHow()">Ocultar ▲</button>
+                    </div>
+                    <div class="hiw-body" id="hiwBody">
+                        <div class="hiw-step"><b class="n">1</b><span><b>Cargás solo:</b> transferí al CBU o alias de arriba y mandanos la foto del comprobante por el chat de soporte (botón 📎). La carga entra automática, sin esperar a nadie.</span></div>
+                        <div class="hiw-step"><b class="n">2</b><span id="hiwPlatforms"><b>🎮 Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</span></div>
+                        <div class="hiw-step"><b class="n">3</b><span id="hiwRefunds"><b>🎁 Reembolsos</b> semanales y mensuales según lo que perdiste con tu plata.</span></div>
+                        <div class="hiw-step"><b class="n">4</b><span><b>💸 Retirás</b> desde el botón rojo de abajo: te lo pagamos a tu CBU. <b>¿Dudas?</b> El chat de soporte está arriba 👆.</span></div>
                     </div>
                 </div>
 
@@ -1045,37 +1148,21 @@
             <!-- Cabecera del chat, estilo WhatsApp: avatar + "Soporte" + estado.
                  Va DENTRO de .chat-container para que quede pegada arriba de los
                  mensajes y comparta el redondeo del contenedor. -->
-            <div class="chat-container">
-                <div class="chat-topbar">
-                    <!-- El logo del chat es configurable desde el panel admin (Comunidad →
-                         "Logo del chat de soporte"); chat.js lo pisa al loguear. -->
-                    <!-- Logo default del soporte = 1GIROX (2026-08-05). Si en el panel
-                         (Comunidad → Logo del chat) hay uno cargado, chat.js lo pisa. -->
-                    <img class="chat-topbar-avatar" id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Cargas 1Girox" width="40" height="40">
-                    <div class="chat-topbar-info">
-                        <span class="chat-topbar-name">Cargas 1Girox</span>
-                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>en línea</span>
-                    </div>
-                    <!-- Modo claro/oscuro A LA VISTA (owner 2026-08-03: en Configuración
-                         nadie lo encontraba). El ícono muestra a qué modo se cambia.
-                         Sincronizado con el switch de Configuración (app.js applyWaDark). -->
-                    <button class="theme-topbar-btn" id="themeToggleBtn" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">🌙</button>
-                    <!-- Campanita de notificaciones (movida del menú ☰, owner 2026-08-05):
-                         solo ícono; el estado lo pinta el FCM inline (_updateNotisButton):
-                         🔔 verde = activadas, 🔕 rojo = bloqueadas, 🔔 = tocá para activar. -->
-                    <button class="notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
-                    <!-- Fueguito (racha diaria): vive en la cabecera del chat, NO en la
-                         barra de escribir (la barra es 100% estilo WhatsApp). El click lo
-                         cablea app.js (#fireBtn) y fire.js actualiza #fireStreak. -->
-                    <button class="fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
+            <!-- ===== SOPORTE (#220): el chat de siempre, a pantalla completa. Se abre desde la
+                 barra verde de arriba del home (VIP.home.openSupport). Los ids NO cambian:
+                 chatMessages, typingIndicator, messageInput, attachBtn, fileInput, sendBtn, cbuChatBtn. ===== -->
+            <div id="supportPanel" class="support-panel hidden">
+                <div class="support-head">
+                    <button type="button" class="support-back" onclick="VIP.home.closeSupport()">‹ Volver</button>
+                    <div class="support-head-title">💬 Soporte<span class="support-head-sub">Escribinos o mandá tu comprobante por acá</span></div>
                 </div>
-                <div class="chat-messages" id="chatMessages">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
                     <!-- Messages will be loaded here -->
                 </div>
                 <!-- Indicador "Escribiendo..." -->
                 <div id="typingIndicator" style="display: none; padding: 8px 15px; color: #667781; font-size: 12px; font-style: italic; text-align: left;"></div>
             </div>
-        </section>
 
         <!-- Chat Input -->
         <div class="chat-input-container">
@@ -1100,7 +1187,7 @@
                     <span class="wa-btn-label">CBU</span>
                 </button>
                 <input type="file" id="fileInput" accept="image/*,video/*" style="display: none;">
-                <textarea id="messageInput" placeholder="Mensaje" rows="1"></textarea>
+                <textarea id="messageInput" placeholder="Escribile a soporte…" rows="1"></textarea>
                 <!-- Cámara idéntica a la de WhatsApp: mandar foto / comprobante -->
                 <button class="wa-icon-btn attach-btn" id="attachBtn" title="Enviar foto o comprobante" aria-label="Enviar foto">
                     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1118,6 +1205,8 @@
                 </button>
             </div>
         </div>
+            </div><!-- /supportPanel -->
+        </section>
 
       <!-- menu deslizante eliminado: todo va en una sola pagina -->
     </div>
@@ -2224,6 +2313,8 @@
     <script src="/js/promobonus.js"></script>
     <script src="/js/notifications.js"></script>
     <script src="/js/ui.js"></script>
+    <script src="/js/autoload.js"></script>
+    <script src="/js/home.js"></script>
     <script src="/js/withdraw.js"></script>
     <script src="/js/installbonus.js"></script>
     <script src="/js/notifsurvey.js"></script>

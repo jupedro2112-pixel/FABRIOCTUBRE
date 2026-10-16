@@ -1,0 +1,254 @@
+// =====================================================================
+// CARGA AUTOMÁTICA — tarjeta "💳 CARGÁ ACÁ" del home (2026-10-16, WORKLOG #220)
+//
+// Pedido del owner: el CHAT pasa a ser SOPORTE (arriba) y la carga tiene su propio
+// lugar en el home, con todo lo que el cliente necesita a la vista al entrar:
+//   • CBU vigente, alias, banco y titular (GET /api/config/cbu — sin spamear el chat
+//     como hace el botón CBU de la barra).
+//   • Sus datos de acceso: usuario, contraseña (la que usó al entrar, guardada en ESTE
+//     dispositivo) y el link de la app.
+//   • "📸 Guardar captura": arma una imagen con todos esos datos y la comparte/descarga
+//     para que el cliente la guarde en el teléfono y no pierda su acceso.
+//   • "📎 Enviar comprobante": abre la cámara/galería del chat (mismo flujo de siempre →
+//     la auto-carga hgcash matchea el comprobante y, si hay 2 plataformas, le pregunta
+//     dónde jugar).
+// La tarjeta vive en #autoLoadCard (index.html); acá sólo se completan los datos.
+// =====================================================================
+(function () {
+    'use strict';
+    window.VIP = window.VIP || {};
+
+    const PW_KEY = 'vip_access_pw'; // contraseña del cliente guardada en SU dispositivo (base64)
+    let _cbu = null;
+    let _pwVisible = false;
+    let _lastBlobUrl = null;
+    let _loading = null;
+
+    // ---- contraseña: memoria de sesión + persistencia local ----
+    function _decode(s) { try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; } }
+    function _encode(s) { try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; } }
+
+    function rememberPassword(pw) {
+        if (!pw) return;
+        VIP.state.sessionPassword = pw;
+        try { localStorage.setItem(PW_KEY, _encode(pw)); } catch (_) {}
+    }
+    function forgetPassword() {
+        try { localStorage.removeItem(PW_KEY); } catch (_) {}
+    }
+    function getPassword() {
+        if (VIP.state && VIP.state.sessionPassword) return VIP.state.sessionPassword;
+        let saved = '';
+        try { saved = _decode(localStorage.getItem(PW_KEY) || ''); } catch (_) {}
+        if (saved && VIP.state) VIP.state.sessionPassword = saved;
+        return saved;
+    }
+
+    function appLink() {
+        const base = window.__VIP_PUBLIC_BASE_URL__;
+        if (base && !/PLACEHOLDER/.test(base) && /^https?:\/\//.test(base)) return base.replace(/\/+$/, '');
+        return (location.origin || '').replace(/\/+$/, '');
+    }
+    function username() {
+        return (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '';
+    }
+    function _el(id) { return document.getElementById(id); }
+    function _set(id, v) { const e = _el(id); if (e) e.textContent = v == null || v === '' ? '—' : String(v); }
+
+    async function _loadCbu() {
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/config/cbu', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            if (!r.ok) return null;
+            return await r.json();
+        } catch (_) { return null; }
+    }
+
+    function _renderPassword() {
+        const pw = getPassword();
+        const span = _el('alPassword');
+        const toggle = _el('alPwToggle');
+        const manual = _el('alPwManual');
+        if (span) span.textContent = pw ? (_pwVisible ? pw : '••••••••') : '—';
+        if (toggle) { toggle.textContent = _pwVisible ? '🙈' : '👁'; toggle.style.display = pw ? '' : 'none'; }
+        if (manual) manual.style.display = pw ? 'none' : '';
+    }
+
+    // Completa la tarjeta del home. Se llama al entrar (VIP.home.init) y cuando
+    // cambia algo (login, contraseña nueva).
+    async function init() {
+        const card = _el('autoLoadCard');
+        if (!card) return;
+        if (!VIP.state || !VIP.state.currentToken) return;
+        _pwVisible = false;
+        _set('alUser', username());
+        _set('alLink', appLink());
+        _renderPassword();
+        if (!_cbu) ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'cargando…'));
+        if (!_loading) _loading = _loadCbu().finally(() => { _loading = null; });
+        const cbu = await _loading;
+        if (cbu) _cbu = cbu;
+        if (_cbu) {
+            _set('alBank', _cbu.bank); _set('alTitular', _cbu.titular); _set('alCbu', _cbu.number); _set('alAlias', _cbu.alias);
+        } else {
+            ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'no disponible'));
+        }
+    }
+
+    function refresh() { _cbu = null; return init(); }
+
+    function togglePassword() {
+        if (!getPassword()) return;
+        _pwVisible = !_pwVisible;
+        _renderPassword();
+    }
+
+    function saveManualPassword() {
+        const i = _el('alPwInput');
+        const v = i && i.value.trim();
+        if (!v) return;
+        rememberPassword(v);
+        if (i) i.value = '';
+        _pwVisible = true;
+        _renderPassword();
+        VIP.ui.showToast('Contraseña guardada en este dispositivo', 'success');
+    }
+
+    function copy(id) {
+        const e = _el(id);
+        if (!e) return;
+        VIP.ui.copyText(e.textContent || '');
+    }
+
+    function sendReceipt() {
+        // Abre el selector de foto del chat: el comprobante viaja por el chat de
+        // soporte y la auto-carga hgcash lo matchea.
+        const a = _el('attachBtn');
+        if (a) a.click();
+        VIP.ui.showToast('📎 Elegí la foto del comprobante: la carga entra sola.', 'info');
+        // Pixel: el cliente va a depositar.
+        try { if (VIP.pixel && VIP.pixel.enabled) VIP.pixel.track('InitiateCheckout', { content_name: 'autoload_receipt' }); } catch (_) {}
+    }
+
+    // ---- captura ----
+    function _wrap(ctx, text, x, y, maxW, lineH) {
+        const words = String(text || '').split(' ');
+        let line = '';
+        for (const w of words) {
+            const test = line ? line + ' ' + w : w;
+            if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, x, y); y += lineH; line = w; }
+            else line = test;
+        }
+        if (line) ctx.fillText(line, x, y);
+        return y + lineH;
+    }
+
+    function _platformsForCard() {
+        const d = (VIP.home && VIP.home.platformsData) || null;
+        const list = (d && d.platforms) || [];
+        return { list, choice: !!(d && d.choiceEnabled && list.length >= 2) };
+    }
+
+    function _drawCard() {
+        const W = 1080, H = 1600;
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const ctx = c.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#1a0033'); grad.addColorStop(1, '#0a0015');
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, W - 40, H - 40);
+
+        const pad = 70;
+        let y = 130;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#ffd700'; ctx.font = '900 56px system-ui, -apple-system, Segoe UI, Roboto, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('💳 CARGA AUTOMÁTICA', W / 2, y); y += 50;
+        ctx.fillStyle = '#b0b0b0'; ctx.font = '600 30px system-ui, sans-serif';
+        ctx.fillText('Guardá esta captura: son tus datos para cargar y entrar', W / 2, y); y += 70;
+        ctx.textAlign = 'left';
+
+        function section(title) {
+            ctx.fillStyle = 'rgba(212,175,55,0.14)'; ctx.fillRect(pad - 20, y - 46, W - pad * 2 + 40, 64);
+            ctx.fillStyle = '#d4af37'; ctx.font = '900 34px system-ui, sans-serif'; ctx.fillText(title, pad, y); y += 60;
+        }
+        function row(label, value, color, mono) {
+            ctx.fillStyle = '#9a9a9a'; ctx.font = '600 26px system-ui, sans-serif'; ctx.fillText(label, pad, y); y += 44;
+            ctx.fillStyle = color || '#fff'; ctx.font = (mono ? '800 40px ui-monospace, Menlo, Consolas, monospace' : '800 38px system-ui, sans-serif');
+            y = _wrap(ctx, value || '—', pad, y, W - pad * 2, 48) + 14;
+        }
+
+        section('🏦 DATOS PARA TRANSFERIR');
+        row('Banco', _cbu && _cbu.bank);
+        row('Titular', _cbu && _cbu.titular);
+        row('CBU', _cbu && _cbu.number, '#ffd700', true);
+        row('Alias', _cbu && _cbu.alias, '#00ff88', true);
+        y += 10;
+        section('🔐 TUS DATOS DE ACCESO');
+        row('Usuario', username(), '#fff', true);
+        const pw = getPassword();
+        row('Contraseña', pw || '(no guardada — entrá de nuevo y volvé a generar la captura)', pw ? '#fff' : '#ff8a80', !!pw);
+        row('Link de la app', appLink(), '#8ab4ff', true);
+        y += 10;
+        section('✅ CÓMO CARGAR');
+        ctx.fillStyle = '#e0e0e0'; ctx.font = '600 29px system-ui, sans-serif';
+        y = _wrap(ctx, '1) Transferí al CBU o alias de arriba.', pad, y, W - pad * 2, 40);
+        y = _wrap(ctx, '2) Mandanos la foto del comprobante por el chat de soporte de la app.', pad, y, W - pad * 2, 40);
+        const p = _platformsForCard();
+        if (p.choice) {
+            y = _wrap(ctx, '3) Cuando llegue la plata elegís dónde jugar: ' + p.list.map(x => (x.emoji || '') + ' ' + x.name).join(' / ') + '.', pad, y, W - pad * 2, 40);
+        } else {
+            y = _wrap(ctx, '3) La carga entra sola en tu cuenta.', pad, y, W - pad * 2, 40);
+        }
+        ctx.fillStyle = '#888'; ctx.font = '500 24px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Generada el ' + new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
+        return c;
+    }
+
+    async function saveCapture() {
+        const btn = _el('alCaptureBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Generando…'; }
+        try {
+            if (!_cbu) { const c = await _loadCbu(); if (c) _cbu = c; }
+            const canvas = _drawCard();
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+            if (!blob) throw new Error('sin imagen');
+            const name = 'carga-' + (username() || 'usuario') + '.png';
+            const file = (typeof File === 'function') ? new File([blob], name, { type: 'image/png' }) : null;
+            // Vista previa SIEMPRE (en iPhone el share puede no ofrecer "Guardar imagen";
+            // con la previa, mantener apretado → "Guardar en Fotos").
+            if (_lastBlobUrl) { try { URL.revokeObjectURL(_lastBlobUrl); } catch (_) {} }
+            _lastBlobUrl = URL.createObjectURL(blob);
+            const prev = _el('alCapturePreview');
+            if (prev) {
+                prev.style.display = '';
+                prev.innerHTML = '<div style="color:#ffd700;font-weight:800;font-size:12.5px;margin-bottom:6px;">📸 Tu captura está lista. Mantené apretada la imagen → "Guardar imagen" (o tocá Descargar).</div>' +
+                    '<img src="' + _lastBlobUrl + '" alt="Captura de tus datos" style="width:100%;border-radius:10px;border:1px solid #d4af37;">' +
+                    '<div style="display:flex;gap:8px;margin-top:8px;">' +
+                    '<a href="' + _lastBlobUrl + '" download="' + name + '" style="flex:1;text-align:center;background:#d4af37;color:#000;font-weight:900;border-radius:9px;padding:10px;text-decoration:none;font-size:13px;">⬇️ Descargar</a>' +
+                    '<button type="button" onclick="VIP.autoload.hidePreview()" style="flex:0 0 auto;background:rgba(255,255,255,0.08);color:#ccc;border:1px solid rgba(255,255,255,0.2);border-radius:9px;padding:10px 12px;font-size:13px;cursor:pointer;">Cerrar</button>' +
+                    '</div>';
+                prev.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            // Compartir / guardar nativo cuando se puede (Android: "Guardar en Fotos", WhatsApp, etc.).
+            if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try { await navigator.share({ files: [file], title: 'Mis datos de carga', text: 'Datos para cargar y entrar a la app' }); } catch (_) { /* el cliente canceló */ }
+            }
+            VIP.ui.showToast('📸 Captura lista — guardala en tu teléfono', 'success');
+        } catch (e) {
+            VIP.ui.showToast('No se pudo generar la captura. Probá de nuevo.', 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = '📸 Guardar captura con mis datos'; }
+        }
+    }
+
+    function hidePreview() {
+        const prev = _el('alCapturePreview');
+        if (prev) { prev.style.display = 'none'; prev.innerHTML = ''; }
+    }
+
+    // Al arrancar: si hay contraseña guardada en el dispositivo, dejarla en memoria
+    // (también la usa el modal de acceso manual al casino).
+    try { getPassword(); } catch (_) {}
+
+    VIP.autoload = { init, refresh, togglePassword, saveManualPassword, copy, sendReceipt, saveCapture, hidePreview, rememberPassword, forgetPassword, getPassword, appLink };
+})();

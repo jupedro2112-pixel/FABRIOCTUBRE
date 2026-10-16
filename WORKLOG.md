@@ -8,6 +8,60 @@
 
 ## Sesión 2026-10-16
 
+### 220. 🏠 HOME 2.0 de la PWA: carga automática al frente (CBU/alias/usuario/contraseña/link + captura), chat como SOPORTE arriba, plataformas para elegir dónde jugar, "cómo funciona" automático, reembolsos compactos — SW v118
+- **Owner:** "una forma automática de carga cuando la gente entre y se vaya la parte del chat; el chat
+  que quede como soporte en la parte superior; reembolsos semanales y mensuales más resumidos y
+  chicos; abajo que se explique cómo funciona el servicio, el reembolso resumido y que tenemos dos
+  plataformas; la 'página casino aquí' la sacamos y abajo del CBU van las plataformas para elegir
+  dónde jugar después de cargar; en la carga un botón para sacar captura con usuario, contraseña,
+  CBU, alias y el link de la app, y sugerirle que la guarde".
+- **Layout nuevo de `#chatScreen` (index.html):** header de siempre → **barra de SOPORTE**
+  (`#supportBar`, la vieja `.chat-topbar` movida arriba: avatar + "💬 Soporte" + contador de no
+  leídos + 🌙 🔔 🔥 + "Abrir chat ›") → `#homePanel` con: `.dash-top` **compacta** (reembolsos
+  semanal/mensual + usuario achicados por CSS inline, CTA "VER MÁS" oculto) → **`#autoLoadCard`
+  "💳 CARGÁ ACÁ — es automático"** (CBU vigente y alias con copiar, banco, titular, tu usuario, tu
+  contraseña con 👁, link de la app; botones "📎 Ya transferí: enviar comprobante" y "📸 Guardar
+  captura con mis datos" + sugerencia) → **`#platformsCard` "🎮 ¿DÓNDE QUERÉS JUGAR?"** (un botón
+  por plataforma habilitada + el saldo `#userBalance`; reemplaza al botón "PÁGINA CASINO AQUÍ",
+  eliminado) → **`#howItWorksCard` "ℹ️ CÓMO FUNCIONA"** (4 pasos; reembolsos con la escalera REAL
+  de `refundStatus.tiersByPeriod` y "hasta X%"; plataformas desde /api/platforms; colapsable, se
+  recuerda) → cartel bono app / promos (igual). El botón rojo RETIRAR sigue abajo. **El chat** (mismo
+  `chatMessages`, `messageInput`, `attachBtn`, `cbuChatBtn`…) vive ahora en **`#supportPanel`**
+  (overlay a pantalla completa, cabecera verde con "‹ Volver", placeholder "Escribile a soporte…").
+  `#homePanelToggle` ("Ocultar menú") queda oculto (ya no tiene sentido; app.js sigue cableándolo).
+- **`public/js/home.js` (VIP.home):** `openSupport/closeSupport` + contador de no leídos (envuelve
+  `VIP.chat.addMessageToChat`); **si llega la pregunta "¿dónde querés jugar?" (metadata
+  platform_choice) con el chat cerrado lo ABRE solo** y avisa con toast; `loadPlatforms` (GET
+  /api/platforms, cache 60 s) → `renderPlatforms` (Girox = SSO embebido `VIP.ui.enterCasino('girox')`;
+  Ganamos sin API = `window.open(externalUrl)` dentro del gesto); `renderHowItWorks` (envuelve
+  `VIP.refunds.updateRefundButtons` para refrescar cuando llega la escalera); `init()` enganchado
+  envolviendo `VIP.ui.showChatScreen` (login y sesión restaurada).
+- **`public/js/autoload.js` (VIP.autoload):** completa la tarjeta con GET /api/config/cbu (no
+  spamea el chat como el botón CBU de la barra), usuario, **contraseña** (la que tipeó al entrar:
+  `VIP.state.sessionPassword`, ahora además persistida en el dispositivo en `localStorage
+  vip_access_pw` (base64) para que sobreviva al relanzar la app; auth.js la recuerda en login /
+  cambio de clave y la borra en logout; si no está, un input para escribirla), link de la app
+  (`__VIP_PUBLIC_BASE_URL__`). **Captura:** canvas 1080×1600 con CBU/alias/banco/titular, usuario,
+  contraseña, link y los 3 pasos (con las plataformas) → vista previa inline (mantener apretado →
+  guardar), link "⬇️ Descargar" y `navigator.share` con archivo cuando el teléfono lo soporta.
+  "Enviar comprobante" dispara el `attachBtn` del chat (mismo flujo → auto-carga hgcash).
+- **ui.js:** `enterCasino(platformId)` guarda `VIP.ui._casinoPlatform` y `_fetchCasinoSession` manda
+  `{platform}` al SSO (back #219). **CSS:** `chat.css` (.support-*, .home-card, .al-*, .plat-play-*,
+  .hiw-*) + overrides compactos inline en index.html. **SW v118.**
+- ⚠️ **Trade-off aceptado:** la contraseña del cliente queda guardada en SU dispositivo (base64, no
+  cifrada) para poder mostrarla y meterla en la captura — es su propio acceso en su propio teléfono,
+  mismo dispositivo que ya guarda el JWT de 30 días. Si el owner prefiere no persistirla: quitar
+  `rememberPassword` de auth.js (queda sólo en memoria de sesión, como antes).
+- **Sin cambios de backend.** Validado: `node --check` (home.js, autoload.js, ui.js, auth.js, SW);
+  index.html balanceado (433/433 divs, 1 section) y todos los ids que usa el JS siguen únicos.
+  **PROBAR tras deploy (PWA, forzar recarga/SW v118):** (1) entrar → se ve la barra verde "Soporte"
+  arriba, reembolsos chicos, la tarjeta de carga con CBU/alias/usuario/contraseña/link, las plataformas
+  y "cómo funciona" abierto; (2) "📸 Guardar captura" → previa + descargar/compartir; (3) "📎 Ya
+  transferí" → abre la cámara/galería, el comprobante sale por el chat; (4) transferencia real →
+  el chat se abre solo con los botones Girox/Ganamos; (5) tocar la barra → chat a pantalla completa,
+  "‹ Volver" cierra; mensaje del agente con el chat cerrado → contador rojo; (6) botón Girox → casino
+  embebido como siempre; Ganamos → abre ganamosvip.me; (7) modo oscuro del panel de soporte.
+
 ### 219. 🎮 MULTI-PLATAFORMA: "¿Dónde querés jugar?" al recibir la transferencia (Girox / Ganamos), capa de plataformas prediseñada, Ganamos por link hasta conectar su API
 - **Owner:** "tengo automatización en cargas, quiero agregar otra página de API para vender y que la
   gente cuando cargue pueda elegir dónde cargar (hoy girox, ejemplo Ganamos)… si elige Ganamos y

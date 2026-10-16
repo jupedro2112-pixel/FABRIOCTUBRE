@@ -917,6 +917,8 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${VIP.state.currentToken}`
       },
+      // Multi-plataforma (#219/#220): a qué casino entrar. Sin el campo el back usa girox.
+      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox' }),
       signal: ctrl ? ctrl.signal : undefined
     });
     const data = await response.json().catch(function() { return {}; });
@@ -931,9 +933,12 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
   }
 };
 
-VIP.ui.enterCasino = async function() {
+VIP.ui.enterCasino = async function(platformId) {
   if (VIP.ui._casinoOpening) return; // anti doble-click
   VIP.ui._casinoOpening = true;
+  // Multi-plataforma: con qué plataforma pedir el SSO (default girox). Lo lee
+  // _fetchCasinoSession; los reintentos y "Casino aparte" reusan el mismo valor.
+  VIP.ui._casinoPlatform = (typeof platformId === 'string' && platformId) ? platformId : 'girox';
 
   VIP.ui.closePlatformModal();
   VIP.ui._showCasinoFrame();   // recuadro visible YA, con "cargando"
