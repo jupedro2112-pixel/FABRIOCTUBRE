@@ -226,6 +226,27 @@ const userSchema = new mongoose.Schema({
   },
 
   // ============================================
+  // MULTI-PLATAFORMA (2026-10-16 — ver src/platforms/ y docs/PLATFORMS.md)
+  // ============================================
+  // Última plataforma en la que el cliente ELIGIÓ cargar ('girox' | 'ganamos' | …).
+  // Es el fallback cuando no responde la pregunta "¿dónde querés jugar?" (timeout)
+  // y la que se usa cuando el panel está en askMode 'first_time' / 'never'.
+  // null = nunca eligió → se usa la default de Config['platforms'].
+  lastPlatform: {
+    type: String,
+    default: null,
+    index: true
+  },
+  // Estado de la cuenta del jugador en CADA plataforma distinta de girox (la de girox
+  // sigue en giroxSyncStatus/giroxUserId para no tocar los ~110 call sites):
+  //   { ganamos: { status: 'pending'|'synced'|'linked'|'error', username, error, syncedAt } }
+  // Lo escribe server.js al crear/vincular al jugador en esa plataforma.
+  platforms: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+
+  // ============================================
   // NIVELES VIP (por apostado acumulado — ver src/utils/vipLevels.js)
   // ============================================
   // Apostado de casino ACUMULADO de por vida, en pesos. Es un CACHE de la suma de

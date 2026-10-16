@@ -40,6 +40,96 @@ VIP.chat = (function () {
         }
     }
 
+    // ---- Multi-plataforma: botones en mensajes de sistema ----
+
+    function _platLabel(opt) {
+        return (opt.emoji ? opt.emoji + ' ' : '') + (opt.name || opt.id || '');
+    }
+
+    function _renderPlatformWidget(message) {
+        const md = message && message.metadata;
+        if (!md || typeof md !== 'object') return '';
+        if (md.kind === 'platform_choice') {
+            const mid = escapeHtml(String(message.id || ''));
+            const mov = escapeHtml(String(md.movementId || ''));
+            const opts = Array.isArray(md.options) ? md.options : [];
+            if (md.chosen) {
+                const chosen = opts.find(o => o.id === md.chosen);
+                const txt = md.chosen === 'manual' ? 'Ya te lo cargó un agente' : ('Elegiste ' + (chosen ? _platLabel(chosen) : escapeHtml(String(md.chosen))));
+                return `<div class="plat-choice plat-done" data-plat-msg="${mid}">✅ ${txt}</div>`;
+            }
+            if (!opts.length) return '';
+            const btns = opts.map(o =>
+                `<button type="button" class="plat-btn" data-plat="${escapeHtml(String(o.id))}" ` +
+                `onclick="VIP.chat.choosePlatform('${mov}','${escapeHtml(String(o.id))}',this)">${escapeHtml(_platLabel(o))}</button>`
+            ).join('');
+            return `<div class="plat-choice" data-plat-msg="${mid}" data-plat-mov="${mov}"><div class="plat-btns">${btns}</div></div>`;
+        }
+        if (md.kind === 'platform_link' && md.url) {
+            const url = encodeURI(String(md.url));
+            const label = escapeHtml(_platLabel({ emoji: md.emoji, name: md.name || 'la plataforma' }));
+            return `<div class="plat-choice"><a class="plat-btn plat-link" href="${url}" target="_blank" rel="noopener noreferrer">🎮 Entrar a ${label}</a></div>`;
+        }
+        return '';
+    }
+
+    // Marca el mensaje con botones como resuelto (lo llama el socket
+    // `platform_choice_resolved` y el propio click). `platformId` puede ser el id de
+    // la plataforma, 'manual' (lo cargó un agente a mano) o un texto ya armado.
+    function markPlatformChoiceResolved(messageId, platformId, labelOverride) {
+        const box = document.querySelector(`.plat-choice[data-plat-msg="${messageId}"]`);
+        if (!box) return;
+        let label = labelOverride || '';
+        if (!label) {
+            const btn = box.querySelector(`.plat-btn[data-plat="${platformId}"]`);
+            label = platformId === 'manual' ? 'Ya te lo cargó un agente' : ('Elegiste ' + (btn ? btn.textContent : platformId));
+        }
+        box.classList.add('plat-done');
+        box.innerHTML = '✅ ' + escapeHtml(label);
+    }
+
+    let _platBusy = false;
+    async function choosePlatform(movementId, platformId, btnEl) {
+        if (_platBusy) return;
+        if (!VIP.state.currentToken) return;
+        _platBusy = true;
+        const box = btnEl && btnEl.closest ? btnEl.closest('.plat-choice') : null;
+        const label = btnEl ? btnEl.textContent : platformId;
+        if (box) box.querySelectorAll('.plat-btn').forEach(b => { b.disabled = true; });
+        if (btnEl) btnEl.classList.add('plat-loading');
+        try {
+            const r = await fetch(`${VIP.config.API_URL}/api/platform-choice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${VIP.state.currentToken}` },
+                body: JSON.stringify({ movementId, platform: platformId })
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                // 409 = ya se resolvió (timeout / agente / otro dispositivo) → mostrar el resultado.
+                if (r.status === 409 && box) {
+                    const msgId = box.getAttribute('data-plat-msg');
+                    markPlatformChoiceResolved(msgId, d.platform || 'manual', d.error || 'Esta transferencia ya fue procesada');
+                } else {
+                    if (box) box.querySelectorAll('.plat-btn').forEach(b => { b.disabled = false; });
+                    if (btnEl) btnEl.classList.remove('plat-loading');
+                    VIP.ui.showToast(d.error || 'No pudimos procesar tu elección', 'error');
+                }
+                return;
+            }
+            if (box) {
+                const msgId = box.getAttribute('data-plat-msg');
+                markPlatformChoiceResolved(msgId, platformId, 'Elegiste ' + label + (d.redirected ? ' — te mandamos el link 👇' : ' — ¡te la estamos cargando! 🎉'));
+            }
+            VIP.ui.showToast(d.redirected ? 'Listo, mirá el link que te mandamos 👇' : '¡Listo! Tu carga va a ' + (d.label || label), 'success');
+        } catch (e) {
+            if (box) box.querySelectorAll('.plat-btn').forEach(b => { b.disabled = false; });
+            if (btnEl) btnEl.classList.remove('plat-loading');
+            VIP.ui.showToast('Error de conexión. Probá de nuevo.', 'error');
+        } finally {
+            _platBusy = false;
+        }
+    }
+
     // ---- Message rendering ----
 
     function createMessageElement(message) {
@@ -87,7 +177,14 @@ VIP.chat = (function () {
               `<svg viewBox="0 0 18 12" width="17" height="11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">` +
               `<path d="M1.3 6.8l3.1 3.1L10.9 3.2"/><path d="M7.6 9.6l1.3 1.3L16.7 3.2"/></svg></span>`
             : '';
-        msgDiv.innerHTML = `${contentHtml}<span class="message-time">${time}${ticksHtml}</span>`;
+        // MULTI-PLATAFORMA (2026-10-16): mensajes de sistema con botones.
+        //   metadata.kind = 'platform_choice' → "¿dónde querés jugar?" (un botón por
+        //     plataforma; al tocar → POST /api/platform-choice). Si ya se resolvió
+        //     (metadata.chosen) muestra la elección en vez de los botones.
+        //   metadata.kind = 'platform_link' → botón que abre el link externo de la
+        //     plataforma (Ganamos sin API).
+        const platformHtml = _renderPlatformWidget(message);
+        msgDiv.innerHTML = `${contentHtml}${platformHtml}<span class="message-time">${time}${ticksHtml}</span>`;
 
         if (imageUrl) {
             const img = msgDiv.querySelector('img');
@@ -753,7 +850,10 @@ VIP.chat = (function () {
         handleFileSelect,
         handlePaste,
         sendSystemMessage,
-        loadCanalInformativoUrl
+        loadCanalInformativoUrl,
+        // multi-plataforma
+        choosePlatform,
+        markPlatformChoiceResolved
     };
 
 })();

@@ -14,6 +14,10 @@ const pendingPayoutSchema = new mongoose.Schema({
   username: { type: String, index: true, trim: true },
 
   amount: { type: Number, required: true },
+  // Plataforma de la que salen las fichas (multi-plataforma 2026-10-16). Default 'girox'
+  // → los payouts históricos no necesitan migración. `_deductChipsAtConfirm` usa el
+  // adaptador de ESTA plataforma para leer saldo y debitar.
+  platform: { type: String, default: 'girox', index: true },
   // Datos bancarios cargados por el cliente en el self-retiro.
   titular: { type: String, default: null, trim: true },
   cbu: { type: String, default: null, trim: true },     // CBU/CVU (puede venir alias)

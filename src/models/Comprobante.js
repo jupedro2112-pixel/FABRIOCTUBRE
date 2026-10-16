@@ -60,7 +60,8 @@ const comprobanteSchema = new mongoose.Schema({
   toApiBank: { type: Boolean, default: false }, // el destino es el CBU del banco con API
   bankMatchStatus: {
     type: String,
-    enum: ['none', 'pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'matched', 'duplicate', 'needs_review'],
+    // awaiting_platform / redirected: multi-plataforma (2026-10-16) — espejo del BankMovement matcheado.
+    enum: ['none', 'pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'matched', 'duplicate', 'needs_review', 'awaiting_platform', 'redirected'],
     default: 'none',
     index: true
   },

@@ -627,3 +627,41 @@ body.wa-dark #typingIndicator { color: #8696a0 !important; }
 /* Foco visible por teclado (accesibilidad): sin esto el switch es inalcanzable
    para quien no usa mouse. */
 .wa-switch input:focus-visible + .wa-switch-track { outline: 2px solid #d4af37; outline-offset: 2px; }
+
+/* ── Multi-plataforma (2026-10-16): botones "¿dónde querés jugar?" y link externo ── */
+.plat-choice {
+    margin: 8px 0 4px;
+    padding-right: 0;
+}
+.plat-choice .plat-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.plat-btn {
+    display: inline-block;
+    flex: 1 1 120px;
+    min-width: 110px;
+    padding: 11px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0f8a2f, #1fb954);
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    transition: transform .08s ease, opacity .15s ease;
+}
+.plat-btn:active { transform: scale(0.97); }
+.plat-btn:disabled { opacity: .55; cursor: default; }
+.plat-btn.plat-loading { opacity: .7; animation: platPulse 1s ease-in-out infinite; }
+.plat-btn.plat-link { background: linear-gradient(135deg, #7b1fa2, #b04ae0); }
+.plat-choice.plat-done {
+    font-weight: 700;
+    color: #0f8a2f;
+    font-size: 13.5px;
+}
+@keyframes platPulse { 0%,100% { opacity: .7; } 50% { opacity: 1; } }

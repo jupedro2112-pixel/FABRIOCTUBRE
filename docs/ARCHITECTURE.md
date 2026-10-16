@@ -5,7 +5,10 @@
 > verdad y este doc puede quedar viejo. Si encontrás algo desactualizado acá, corregilo
 > (regla permanente en CLAUDE.md: este doc se actualiza junto con WORKLOG.md).
 >
-> Última actualización: **2026-10-07** — hgcash desde el panel: credenciales cifradas
+> Última actualización: **2026-10-16** — MULTI-PLATAFORMA (#219): capa `src/platforms/` (girox +
+> esqueleto de Ganamos), pregunta "¿dónde querés jugar?" en la auto-carga, derivación por link a la
+> plataforma sin API, `platform` en Transaction/PendingPayout/BankMovement (§2, §4.10, §5 AUTO-CARGA,
+> §7, §9; detalle operativo en `docs/PLATFORMS.md`). Antes: 2026-10-07 — hgcash desde el panel: credenciales cifradas
 > (panel > SSM, firma del webhook: solo el secreto del panel si hay uno (#216)) y reenvío de avisos
 > configurable (§5 AUTO-CARGA, §9). Antes: 2026-09-30 — lotes: tope del % en textos, `useHours` (bono
 > canjeado vence a las 24 h), resumen por lote (§2 NotifBatch). Antes: 2026-09-18 — bonos AUTOMÁTICOS en la carga con tope
@@ -96,7 +99,9 @@ modelos); sus migraciones corren únicamente si algo llamara a ese connectDB.
   actualiza con `$max`), `vipLevel` (0 = sin nivel; NUNCA baja; se avanza recién
   DESPUÉS de acreditar el bono del nivel), `vipLevelUpdatedAt`. Otros:
   `installBonusClaimed`, `notificationPlan`, `notifMonthlyCounts`,
-  `loginWithoutPassword`, `withdrawalAccount`, `pendingAccessCode`.
+  `loginWithoutPassword`, `withdrawalAccount`, `pendingAccessCode`. **Multi-plataforma (#219):**
+  `lastPlatform` (última elegida al cargar; fallback del timeout) y `platforms` (estado de la cuenta
+  en cada plataforma ≠ girox).
 - **Transaction** — registro PERMANENTE (sin TTL). `type`: deposit|withdrawal|bonus|
   refund|transfer|referral_commission|fire_reward|rakeback|vip_levelup|roulette
   ('roulette' desde 2026-09-07: antes el premio de la ruleta no escribía
@@ -104,7 +109,7 @@ modelos); sus migraciones corren únicamente si algo llamara a ese connectDB.
   regalo de verdad en 1girox.
   `metadata.source` distingue regalos ('install_bonus','welcome_gift') y devoluciones
   ('payout_refund') que se EXCLUYEN de los reportes de carga real. **Fuente de toda la
-  analítica.**
+  analítica.** `platform` (default 'girox', #219) = plataforma donde se movió la plata.
 - **VipWagerMonth** — apostado de casino de un usuario en un mes calendario (ART).
   Base del acumulado VIP (`User.lifetimeWagered` = suma de estos buckets). Único por
   `userId+monthKey`; el motor SIEMPRE escribe con `$set` (nunca `$inc`) → recalcular
@@ -122,7 +127,10 @@ modelos); sus migraciones corren únicamente si algo llamara a ese connectDB.
 ### Plata / banco automático (hgcash)
 - **BankMovement** — cada movimiento que hgcash notifica por webhook. `matchStatus`:
   pending→claiming→shadow_matched|auto_charged|manual_charged|needs_review|duplicate|
-  error|ignored. Dedupe por `movementId` único.
+  error|ignored|**awaiting_platform** (esperando que el cliente elija dónde jugar, #219)|
+  **redirected** (eligió una plataforma sin API → se lo mandó al link; consumido). Dedupe por
+  `movementId` único. Campos `platform`, `platformAskedAt/ChosenAt/ChoiceBy`, `platformChoiceMsgId`,
+  `redirectedUrl`.
 - **Comprobante** — cada imagen que la IA (Claude vision) clasificó como comprobante.
   `dedupeKey` (N° operación normalizado, descartando CBU/CUIT) + `imageHash` (SHA-256)
   para detectar reutilización. `bankMatchStatus` para la auto-carga.
@@ -902,6 +910,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
 | `_runInactividadTick` | 6 h | **APAGADO** (`INACTIVIDAD_DISABLED=true`) | InactividadFire.fireKey único |
 | `_runBonusStrategy` | 10 min | **APAGADO** (`BONUS_STRATEGY_DISABLED=true`) | step en StrategyEnrollment |
 | `_runDueSchedules` (ScheduledNotif) | 60 s | activo | lastRunAt |
+| `_platformChoiceTick` (multi-plataforma, #219) | 60 s | activo — preguntas "¿dónde querés jugar?" vencidas → carga en la última plataforma elegida / default | claim atómico `awaiting_platform → claiming` en BankMovement |
 | `_pollPayingPayouts` | 45 s | activo (confirma pagos si el webhook no llegó) | handlePayoutStatusWebhook idempotente |
 | `_runVipTick` (niveles VIP) | 30 min | activo (se apaga desde el panel: Config → "Niveles VIP", flag `vip_levels_disabled` en Config, SOLO admin general — sin cache a propósito para que aplique al instante en todas las instancias) | buckets con `$set` idempotente + bono con reference `vip-lvl-*` (la plataforma dedupe) |
 | `_runVipSweepCheck` (sweep VIP) | 1 h (corre a las 05 ART) | activo | claim atómico por día en Config (`vip_sweep_day`) → instancia única |
@@ -948,6 +957,13 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
 - **Validación local**: sólo `node --check` (no hay node_modules en Tails).
 
 ## 9. Trampas / "no rompas esto"
+
+- **Multi-plataforma (#219):** la auto-carga hgcash YA NO acredita directo si hay 2+ plataformas
+  habilitadas: pregunta y deja el movimiento en `awaiting_platform` (lo resuelve el cliente, el
+  agente o el timeout). Un flujo nuevo que mueva plata "a la plataforma" debe resolver el adaptador
+  con `platforms.getAdapter(id)` y escribir `Transaction.platform`; lo que sigue llamando `girox.*`
+  directo (reembolsos, VIP, lotes, referidos…) es **sólo girox a propósito** (fase 3). El estado
+  `redirected` = la plata se cargó en OTRA página (no hay Transaction local). Ver §4.10 y PLATFORMS.md.
 
 - **Usernames de 1girox: únicos GLOBALES, visibilidad POR RAMA** (caso gxdaiana323,
   2026-09-07): un nombre puede estar tomado por un jugador de OTRA estructura que
@@ -1051,6 +1067,22 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
 - **`checkUsernameAvailability` (PWA)**: existe pero no se dispara — mejora pendiente.
 - **vercel.json es un artefacto** de un deploy anterior; el deploy real es AWS EB.
 - **Env DB_PASSWORD ya no se usa** (sección Base de Datos eliminada 2026-07-09).
+
+## 4.10 Multi-plataforma (#219, 2026-10-16) — ver `docs/PLATFORMS.md`
+
+- **Registro `src/platforms/index.js`:** adaptadores `girox` (envoltura de giroxService) y `ganamos`
+  (esqueleto con el mismo contrato; `isConnected()` = env `GANAMOS_API_URL`+`GANAMOS_API_KEY`).
+  Settings en `Config['platforms']` (`askMode` always/first_time/never, `askTimeoutMin`,
+  `defaultPlatform`, `items.<id>` {enabled, name, emoji, order, externalUrl}), cache 30 s por proceso.
+- **Flujo de carga:** `hgcashAutoCarga` → `platforms.decideForDeposit(user)` → pregunta
+  (`_platformAskUser`, movimiento `awaiting_platform`, mensaje con `metadata.kind='platform_choice'`)
+  o carga directa → `_hgcashCreditToPlatform({platformId})` (candado coelsa + red de seguridad +
+  `adapter.depositToUser` con reference `vip-hg-*` + Transaction.platform + `User.lastPlatform`).
+  Plataforma sin API → `_platformRedirectUser` (movimiento `redirected`, link externo, sin Transaction).
+  Resolución: `_resolvePlatformChoice` (claim atómico) desde `POST /api/platform-choice` (cliente),
+  `POST /api/admin/hgcash/movements/:id/platform` (agente) o `_platformChoiceTick` (timeout).
+- **Carga manual / retiros / SSO** aceptan `platform` y resuelven el adaptador (`PendingPayout.platform`).
+- **Sólo girox todavía:** reembolsos, acumulativo, VIP, rakeback, ruleta, lotes, referidos, bono app.
 
 ## Cronograma de campañas programadas (#218, réplica del #190 de AUTOREEMBOLSOSjygactivo)
 

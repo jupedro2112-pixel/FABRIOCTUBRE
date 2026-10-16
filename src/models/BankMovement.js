@@ -56,7 +56,12 @@ const bankMovementSchema = new mongoose.Schema({
     // para que no se auto-cargue después cuando JUGAYGANA se recupere).
     // duplicate: re-entrega de una transferencia ya acreditada (mismo coelsa) → NO se cargó de nuevo.
     // needs_review: posible duplicado (mismo usuario+monto que una carga reciente) → frenado para revisión manual.
-    enum: ['pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'no_match', 'ignored', 'error', 'duplicate', 'needs_review'],
+    // awaiting_platform: matcheó y se le PREGUNTÓ al cliente dónde quiere jugar (multi-plataforma
+    //   2026-10-16); se carga cuando elige (POST /api/platform-choice) o al vencer el plazo
+    //   (_platformChoiceTick → última plataforma elegida / default).
+    // redirected: el cliente eligió una plataforma SIN API conectada (ej. Ganamos) → NO se cargó
+    //   acá, se lo mandó al link externo de esa plataforma. Queda consumido (nadie lo carga por error).
+    enum: ['pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'no_match', 'ignored', 'error', 'duplicate', 'needs_review', 'awaiting_platform', 'redirected'],
     default: 'pending',
     index: true
   },
@@ -66,6 +71,14 @@ const bankMovementSchema = new mongoose.Schema({
   chargeError: { type: String, default: null },
   chargeAttempts: { type: Number, default: 0 }, // intentos de auto-carga fallidos
   chargedAt: { type: Date, default: null },
+
+  // Multi-plataforma (2026-10-16): a qué plataforma fue (o va a ir) esta carga.
+  platform: { type: String, default: null, index: true },      // 'girox' | 'ganamos' | … (null = todavía no decidido / no aplica)
+  platformAskedAt: { type: Date, default: null },              // cuándo se le preguntó al cliente
+  platformChosenAt: { type: Date, default: null },             // cuándo se decidió (cliente / agente / timeout)
+  platformChoiceBy: { type: String, default: null },           // 'user' | 'agent:<username>' | 'timeout' | 'single' | 'never' | 'first_time'
+  platformChoiceMsgId: { type: String, default: null },        // Message con los botones (para marcarlo resuelto)
+  redirectedUrl: { type: String, default: null },              // link al que se mandó al cliente (status redirected)
 
   createdAt: { type: Date, default: Date.now, index: true }
 }, {

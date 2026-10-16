@@ -25,7 +25,15 @@ const transactionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  amount: { 
+  // Plataforma de juego donde se movió la plata (multi-plataforma 2026-10-16, ver
+  // src/platforms/). Default 'girox' → TODAS las filas históricas son de girox sin
+  // migración. Las analíticas pueden filtrar/agrupar por acá.
+  platform: {
+    type: String,
+    default: 'girox',
+    index: true
+  },
+  amount: {
     type: Number, 
     required: true,
     min: 0

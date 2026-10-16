@@ -57,6 +57,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
 - `src/services/giroxUserLinkService.js` — resuelve y cachea `User.giroxUserId`.
 - `src/services/giroxPublisherKeys.js` — alta de jugadores con la API key del publicista.
 - `src/utils/periodRanges.js` — rangos de fecha (ayer / semana / mes) en hora argentina.
+- `src/platforms/` — **multi-plataforma (2026-10-16):** registro (`index.js`), adaptador girox
+  (envoltura de giroxService) y **esqueleto de Ganamos** (`ganamos.js`, mismo contrato, sin API
+  hasta cargar `GANAMOS_API_URL`/`GANAMOS_API_KEY`). Checklist para conectarla: `docs/PLATFORMS.md`.
 - `jugaygana*.js` + `referralRevenueService.js` + `jugayganaUserLinkService.js` —
   **muertos**, sin consumidores. Ver la nota de migración arriba.
 - `src/models/` — schemas Mongoose canónicos (fuente de verdad).
@@ -151,6 +154,14 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (no renombrar exports sin actualizar el HTML/strings). Tabla de usuarios del panel
   acoplada a `USERS_LIST_FIELDS` del backend (columna nueva ⇒ sumar campo al select).
   Detalle completo de trampas en `docs/ARCHITECTURE.md` §7.
+
+- **Multi-plataforma (#219, 2026-10-16):** con 2+ plataformas habilitadas en Configuración →
+  "Plataformas de juego", la auto-carga hgcash **pregunta al cliente dónde jugar** (botones en el
+  chat) y deja el movimiento en `awaiting_platform`; elige / el agente elige / timeout → se carga en
+  esa plataforma con su adaptador (`platforms.getAdapter`). Ganamos sin API ⇒ el cliente va al
+  link externo (www.ganamosvip.me) y el movimiento queda `redirected` (NO hay Transaction acá).
+  Todo lo que mueva plata "a la plataforma" en un flujo nuevo resuelve el adaptador y escribe
+  `Transaction.platform`; reembolsos/VIP/lotes/referidos siguen `girox.*` directo a propósito.
 
 - **Lotes y Cronograma (#218):** el POST `/api/admin/notif-batches` es un wrapper de
   `_createNotifBatchFromBody(body, user)`; cualquier validación/efecto nuevo del lote va en esa

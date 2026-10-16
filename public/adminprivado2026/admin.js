@@ -263,6 +263,7 @@ function setupEventListeners() {
         document.querySelectorAll('.quick-amounts button').forEach(b => b.classList.remove('active'));
         const bonusInfoEl = document.getElementById('bonusInfo');
         if (bonusInfoEl) bonusInfoEl.textContent = '';
+        populateDepositPlatforms();
         showModal('depositModal');
     });
     if (elements.btnBonus) {
@@ -1388,6 +1389,14 @@ function initSocket() {
     // ALERTA DE SEGURIDAD de los regalos de lote (server: 'security_alert'):
     // un usuario superó los topes anti-abuso → toast rojo bien visible para
     // todos los admins conectados (además queda nota roja en su chat y log).
+    // Multi-plataforma: pregunta pendiente / resuelta → refrescar el banner del chat activo.
+    socket.on('platform_choice_pending', (data) => {
+        if (data && data.userId && data.userId === selectedUserId) loadPlatformBanner(selectedUserId);
+    });
+    socket.on('platform_choice_resolved', () => {
+        if (selectedUserId) loadPlatformBanner(selectedUserId);
+    });
+
     socket.on('security_alert', (data) => {
         if (data && data.message) showToast(data.message, 'error');
     });
@@ -2776,6 +2785,9 @@ async function loadUserInfo(userId) {
         // Bono sorpresa del código de bienvenida (Comunidad Telegram) — ídem.
         renderWelcomeCodeBonusBanner(user);
 
+        // Multi-plataforma: ¿hay una transferencia esperando que el cliente elija dónde jugar?
+        loadPlatformBanner(userId);
+
         // Publicista de adquisición: si el cliente llegó por un link de pauta,
         // mostrar el nombre del publicista al lado del nombre en la cabecera.
         // Nivel VIP: medalla + nombre al lado del usuario, para que el agente
@@ -3307,7 +3319,9 @@ async function handleDeposit() {
                 userId: selectedUserId,
                 amount,
                 bonus,
-                description
+                description,
+                // Multi-plataforma: a qué plataforma va la carga (select del modal; vacío = default del cliente)
+                platform: (document.getElementById('depositPlatform') && document.getElementById('depositPlatform').value) || undefined
             })
         });
         
@@ -3334,7 +3348,7 @@ async function handleDeposit() {
                 : (ab.agentBonus > 0 ? '' : ' (el cliente lo tenía pendiente)');
             showToast(`Depósito de ${formatMoney(amount + _realBonus)} realizado · 🎁 bono AUTOMÁTICO ${ab.pct}% = ${formatMoney(ab.amount)}${corr}`, 'success');
         } else {
-            showToast(`Depósito de ${formatMoney(amount + _realBonus)} realizado`, 'success');
+            showToast(`Depósito de ${formatMoney(amount + _realBonus)} realizado${data.platformLabel ? ' en ' + data.platformLabel : ''}`, 'success');
         }
         hideModal('depositModal');
         
@@ -5828,6 +5842,8 @@ async function loadCBUConfig() {
     loadRefundTiers();
     // Cargar el reembolso acumulativo de por vida (solo admin general)
     loadInstantCashbackCfg();
+    // Cargar las plataformas de juego (multi-plataforma; guarda solo admin general)
+    loadPlatformsCfg();
     // Cargar el estado de los niveles VIP (solo admin general)
     loadVipLevelsConfig();
     // Cargar los premios del fueguito (solo admin general)
@@ -5951,6 +5967,180 @@ async function saveInstantCashback() {
 }
 window.saveInstantCashback = saveInstantCashback;
 window.loadInstantCashbackCfg = loadInstantCashbackCfg;
+
+// ====== MULTI-PLATAFORMA (2026-10-16) — ver src/platforms/ y docs/PLATFORMS.md ======
+
+// Lista de plataformas habilitadas (cache 60 s). La usan el modal de depósito y el banner.
+let _platformsCache = null, _platformsCacheAt = 0;
+async function fetchPlatforms(force) {
+    if (!force && _platformsCache && (Date.now() - _platformsCacheAt) < 60000) return _platformsCache;
+    try {
+        const r = await authFetch('/api/platforms');
+        if (!r.ok) return _platformsCache || { platforms: [] };
+        _platformsCache = await r.json();
+        _platformsCacheAt = Date.now();
+    } catch (e) { /* best-effort */ }
+    return _platformsCache || { platforms: [] };
+}
+
+// Selector de plataforma del modal de depósito: sólo plataformas con API CONECTADA
+// (una sin API no se puede cargar desde acá). Con una sola queda oculto.
+async function populateDepositPlatforms() {
+    const group = document.getElementById('depositPlatformGroup');
+    const sel = document.getElementById('depositPlatform');
+    const hint = document.getElementById('depositPlatformHint');
+    if (!group || !sel) return;
+    const d = await fetchPlatforms(false);
+    const all = Array.isArray(d.platforms) ? d.platforms : [];
+    const connected = all.filter(p => p.connected);
+    sel.innerHTML = '';
+    if (connected.length <= 1) {
+        group.style.display = 'none';
+        if (connected[0]) { const o = document.createElement('option'); o.value = connected[0].id; o.textContent = connected[0].emoji + ' ' + connected[0].name; sel.appendChild(o); }
+        return;
+    }
+    // Preseleccionar la última plataforma del cliente (si está conectada), si no la default.
+    let preferred = null;
+    try {
+        const u = conversations.find(c => c.userId === selectedUserId);
+        preferred = (u && u.lastPlatform) || null;
+    } catch (_) {}
+    connected.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.emoji + ' ' + p.name + (p.isDefault ? ' (default)' : '');
+        if ((preferred && p.id === preferred) || (!preferred && p.isDefault)) o.selected = true;
+        sel.appendChild(o);
+    });
+    const notConnected = all.filter(p => !p.connected).map(p => p.emoji + ' ' + p.name);
+    if (hint) hint.textContent = notConnected.length ? ('Sin API (no se carga desde acá, va por link): ' + notConnected.join(', ')) : '';
+    group.style.display = '';
+}
+
+// Banner "💰 Transferencia recibida — esperando que el cliente elija dónde jugar" con
+// botones para que el AGENTE elija por él (POST /api/admin/hgcash/movements/:id/platform).
+async function loadPlatformBanner(userId) {
+    const el = document.getElementById('chatPlatformBanner');
+    if (!el) return;
+    try {
+        const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/platform-pending');
+        if (!r.ok) { el.style.display = 'none'; return; }
+        const j = await r.json();
+        if (userId !== activeConversationId) return;
+        const list = j.pending || [];
+        if (!list.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+        const plats = j.platforms || [];
+        el.innerHTML = list.map(m => {
+            const since = m.platformAskedAt ? Math.max(0, Math.round((Date.now() - new Date(m.platformAskedAt).getTime()) / 60000)) : 0;
+            const btns = plats.map(p =>
+                '<button class="btn-small" style="background:' + (p.connected ? '#0f8a2f' : '#6a1b9a') + ';color:#fff;border:0;border-radius:7px;padding:5px 10px;font-weight:700;cursor:pointer;" ' +
+                'onclick="agentChoosePlatform(\'' + escapeHtml(m.movementId) + '\',\'' + escapeHtml(p.id) + '\',this)" title="' + (p.connected ? 'Cargar en ' + escapeHtml(p.name) : 'Derivar al link de ' + escapeHtml(p.name) + ' (no se carga acá)') + '">' +
+                escapeHtml(p.emoji + ' ' + p.name) + (p.connected ? '' : ' (link)') + '</button>'
+            ).join(' ');
+            return '<div style="padding:9px 14px;border-bottom:1px solid rgba(0,0,0,0.25);background:linear-gradient(90deg,rgba(106,27,154,0.35),rgba(106,27,154,0.12));font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+                '<span style="font-weight:800;color:#e1bee7;">🎮 TRANSFERENCIA DE ' + formatMoney(m.amount) + ' RECIBIDA</span>' +
+                '<span style="color:#ddd;">— esperando que el cliente elija dónde jugar (hace ' + since + ' min' + (m.fromName ? ' · de ' + escapeHtml(m.fromName) : '') + '). Elegir por él:</span> ' +
+                btns + '</div>';
+        }).join('');
+        el.style.display = '';
+    } catch (e) { el.style.display = 'none'; }
+}
+
+async function agentChoosePlatform(movementId, platformId, btn) {
+    if (!confirm('¿Resolver esta transferencia en ' + (btn ? btn.textContent.trim() : platformId) + '?')) return;
+    if (btn) btn.disabled = true;
+    try {
+        const r = await authFetch('/api/admin/hgcash/movements/' + encodeURIComponent(movementId) + '/platform', {
+            method: 'POST', body: JSON.stringify({ platform: platformId })
+        });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo resolver', 'error'); if (btn) btn.disabled = false; }
+        else showToast(j.redirected ? ('Derivado a ' + (j.label || platformId) + ' (se le mandó el link)') : ('Cargado en ' + (j.label || platformId)), 'success');
+    } catch (e) { showToast('Error de conexión', 'error'); if (btn) btn.disabled = false; }
+    if (selectedUserId) { loadPlatformBanner(selectedUserId); loadMessages(selectedUserId); }
+}
+
+// Card de Configuración: "🎮 Plataformas de juego".
+async function loadPlatformsCfg() {
+    const form = document.getElementById('platformsForm');
+    const header = document.getElementById('platformsHeader');
+    try {
+        const r = await authFetch('/api/admin/platforms');
+        if (!r.ok) { if (form) form.style.display = 'none'; if (header) header.style.display = 'none'; return; }
+        const cfg = await r.json();
+        if (form) form.style.display = '';
+        if (header) header.style.display = '';
+        const canEdit = cfg.canEdit === true;
+        const ask = document.getElementById('platAskMode'); if (ask) { ask.value = cfg.askMode || 'always'; ask.disabled = !canEdit; }
+        const to = document.getElementById('platAskTimeout'); if (to) { to.value = cfg.askTimeoutMin || 10; to.disabled = !canEdit; }
+        const def = document.getElementById('platDefault');
+        const plats = cfg.platforms || [];
+        if (def) {
+            def.innerHTML = '';
+            plats.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.textContent = p.emoji + ' ' + p.name; if (p.id === cfg.defaultPlatform) o.selected = true; def.appendChild(o); });
+            def.disabled = !canEdit;
+        }
+        const rows = document.getElementById('platRows');
+        if (rows) {
+            rows.innerHTML = plats.map(p =>
+                '<div class="plat-row" data-plat="' + escapeHtml(p.id) + '" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:8px 10px;margin-top:6px;border-radius:8px;background:rgba(0,0,0,0.18);border:1px solid rgba(255,255,255,0.08);">' +
+                '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;min-width:120px;"><input type="checkbox" class="plat-enabled" style="width:auto;" ' + (p.enabled ? 'checked' : '') + (canEdit ? '' : ' disabled') + '> Habilitada</label>' +
+                '<input type="text" class="plat-emoji" value="' + escapeHtml(p.emoji) + '" maxlength="4" style="width:52px;text-align:center;" title="Emoji"' + (canEdit ? '' : ' disabled') + '>' +
+                '<input type="text" class="plat-name" value="' + escapeHtml(p.name) + '" maxlength="40" style="width:140px;" title="Nombre visible"' + (canEdit ? '' : ' disabled') + '>' +
+                '<input type="text" class="plat-url" value="' + escapeHtml(p.externalUrl || '') + '" placeholder="Link externo (si no hay API)" style="flex:1;min-width:200px;" title="A dónde se manda al cliente si esta plataforma no tiene API conectada"' + (canEdit ? '' : ' disabled') + '>' +
+                '<span style="font-size:11.5px;font-weight:700;color:' + (p.connected ? '#00c853' : '#ffb300') + ';white-space:nowrap;">' + (p.connected ? '🟢 API conectada' : '🟠 sin API → por link') + '</span>' +
+                '<span style="font-size:11px;color:#888;">id: ' + escapeHtml(p.id) + (p.isDefault ? ' · default' : '') + '</span>' +
+                '</div>'
+            ).join('');
+        }
+        const btn = document.getElementById('platSaveBtn'); if (btn) btn.style.display = canEdit ? '' : 'none';
+        const msg = document.getElementById('platMsg');
+        if (msg) {
+            const on = plats.filter(p => p.enabled);
+            msg.style.color = on.length >= 2 && cfg.askMode !== 'never' ? '#00c853' : '#aaa';
+            msg.textContent = on.length >= 2 && cfg.askMode !== 'never'
+                ? ('🟢 Al cargar se le pregunta al cliente entre: ' + on.map(p => p.emoji + ' ' + p.name).join(' / ') + ' · espera ' + cfg.askTimeoutMin + ' min')
+                : ('⚪ No se pregunta: todo se carga en ' + (plats.find(p => p.id === cfg.defaultPlatform) || { name: cfg.defaultPlatform }).name + (on.length < 2 ? ' (hay una sola habilitada)' : ' (modo "nunca")'));
+        }
+    } catch (e) { if (form) form.style.display = 'none'; if (header) header.style.display = 'none'; }
+}
+async function savePlatformsCfg() {
+    const msg = document.getElementById('platMsg');
+    const items = {};
+    document.querySelectorAll('#platRows .plat-row').forEach(row => {
+        items[row.getAttribute('data-plat')] = {
+            enabled: row.querySelector('.plat-enabled').checked,
+            emoji: row.querySelector('.plat-emoji').value,
+            name: row.querySelector('.plat-name').value,
+            externalUrl: row.querySelector('.plat-url').value
+        };
+    });
+    const askMode = document.getElementById('platAskMode').value;
+    const enabledNames = Object.entries(items).filter(([, v]) => v.enabled).map(([, v]) => v.name);
+    if (!confirm(enabledNames.length >= 2 && askMode !== 'never'
+        ? ('¿Guardar? Al cargar, al cliente se le va a PREGUNTAR dónde jugar entre: ' + enabledNames.join(' / ') + '.')
+        : '¿Guardar? NO se le va a preguntar nada al cliente: todo se carga en la plataforma default.')) return;
+    try {
+        const r = await authFetch('/api/admin/platforms', {
+            method: 'POST',
+            body: JSON.stringify({
+                askMode,
+                askTimeoutMin: Number(document.getElementById('platAskTimeout').value) || 10,
+                defaultPlatform: document.getElementById('platDefault').value,
+                items
+            })
+        });
+        const j = await r.json();
+        if (!r.ok) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = j.error || 'No se pudo guardar.'; } showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Plataformas guardadas', 'success');
+        _platformsCache = null;
+        loadPlatformsCfg();
+    } catch (e) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = 'Error de conexión.'; } showToast('Error de conexión', 'error'); }
+}
+window.loadPlatformsCfg = loadPlatformsCfg;
+window.savePlatformsCfg = savePlatformsCfg;
+window.agentChoosePlatform = agentChoosePlatform;
+window.populateDepositPlatforms = populateDepositPlatforms;
+window.loadPlatformBanner = loadPlatformBanner;
 
 // ====== Rangos de reembolso (solo admin general) ======
 // 🪦 Acá vivían loadRefundPercents/saveRefundPercents (% fijos por período, sin
@@ -6347,7 +6537,9 @@ function hgcashStatusBadge(st) {
         ignored:        ['Saliente', '#666'],
         error:          ['Error', '#dc3545'],
         duplicate:      ['Duplicado (no cargado)', '#7a1010'],
-        needs_review:   ['⚠️ Revisar (posible duplicado)', '#b5651d']
+        needs_review:   ['⚠️ Revisar (posible duplicado)', '#b5651d'],
+        awaiting_platform: ['🎮 Esperando elección del cliente', '#6a1b9a'],
+        redirected:     ['➡️ Derivado a otra plataforma (no cargado acá)', '#4a148c']
     };
     const [label, color] = map[st] || [st || '—', '#888'];
     return '<span style="background:' + color + ';color:#fff;border-radius:9px;padding:2px 8px;font-size:10.5px;white-space:nowrap;">' + escapeHtml(label) + '</span>';

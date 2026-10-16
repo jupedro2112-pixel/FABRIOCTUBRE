@@ -448,6 +448,13 @@ function validatePassword(password) {
 // Partner API REST/JSON, auth por X-Api-Key. Cliente único: reemplaza a los 4
 // clientes de JUGAYGANA. Montos en PESOS (sin ×100) e idempotencia por `reference`.
 const girox = require('./src/services/giroxService');
+// MULTI-PLATAFORMA (2026-10-16): registro de plataformas de juego. `girox` sigue
+// siendo el cliente directo para todo lo que hoy es sólo girox; los flujos que
+// pueden ir a OTRA plataforma (carga automática con pregunta "¿dónde querés
+// jugar?", carga manual, retiros, SSO) resuelven el adaptador por acá.
+// Ganamos tiene su esqueleto en src/platforms/ganamos.js (sin API todavía → el
+// cliente que la elige se manda al link externo). Ver docs/PLATFORMS.md.
+const platforms = require('./src/platforms');
 // NOTA: acá vivía `giroxReportsService`, que sacaba el netwin del PANEL de
 // administración con un Bearer de sesión y el ID numérico del jugador (scraping).
 // Era el punto más frágil de toda la integración. Se ELIMINÓ: desde la Partner API
@@ -1564,6 +1571,38 @@ async function _emitAdminOnlyChatNote(userId, username, content) {
   }
 }
 
+// Mensaje de SISTEMA al cliente (lo ve el cliente Y los admins en el chat), con
+// `metadata` opcional que la PWA usa para renderizar botones (ej. la pregunta
+// "¿dónde querés jugar?" de multi-plataforma: metadata.kind='platform_choice').
+// Devuelve el Message creado (o null si falló). Si `push` viene ({title, body}),
+// manda FCM sólo si el cliente está offline (sendPushIfOffline).
+async function _sendUserSystemMessage(user, content, { metadata = null, senderUsername = 'Sistema', push = null } = {}) {
+  try {
+    const msg = await Message.create({
+      id: uuidv4(), senderId: 'admin', senderUsername, senderRole: 'admin',
+      receiverId: user.id, receiverRole: 'user', content, type: 'system',
+      metadata: metadata || null, timestamp: new Date(), read: false
+    });
+    const data = {
+      id: msg.id, senderId: 'admin', senderUsername, senderRole: 'admin',
+      receiverId: user.id, receiverRole: 'user', content, timestamp: msg.timestamp,
+      type: 'system', metadata: metadata || null
+    };
+    io.to(`user_${user.id}`).emit('new_message', data);
+    io.to(`chat_${user.id}`).emit('new_message', data);
+    notifyAdmins('new_message', { message: data, userId: user.id, username: user.username });
+    if (push && push.title) {
+      sendPushIfOffline(user, push.title, push.body || '', push.data || {}).catch((e) => {
+        logger.warn(`[FCM] sendPushIfOffline (${push.title}) falló para ${user.username}: ${e.message}`);
+      });
+    }
+    return msg;
+  } catch (e) {
+    logger.warn(`[sys-msg] no se pudo enviar a ${user && user.username}: ${e.message}`);
+    return null;
+  }
+}
+
 // Analiza una imagen enviada por un cliente: detecta si es comprobante, lo
 // registra (colección Comprobante) y avisa SÓLO a los admins si es duplicado o
 // no. Pensado para correr fire-and-forget: NUNCA frena la entrega del mensaje.
@@ -1861,20 +1900,23 @@ async function hgcashConsumeOnManualDeposit(userId, username, amount) {
     // Incluye 'needs_review' (frenados por la red de seguridad) para que, si el
     // agente confirma y carga a mano, ese movimiento quede consumido y no quede
     // colgado como pendiente en el panel.
+    // 'awaiting_platform' (multi-plataforma): el agente cargó a mano mientras el
+    // cliente todavía no había elegido → también se consume (y se cierra la pregunta).
     const cands = await BankMovement.find({
       matchedUserId: userId,
-      matchStatus: { $in: ['pending', 'error', 'needs_review'] }
+      matchStatus: { $in: ['pending', 'error', 'needs_review', 'awaiting_platform'] }
     }).sort({ createdAt: -1 }).limit(10).lean();
     const target = cands.find(m => _amountsEqual(m.amount, amount));
     if (!target) return false;
 
     // Claim atómico (evita choque con un reintento automático).
     const claimed = await BankMovement.findOneAndUpdate(
-      { movementId: target.movementId, matchStatus: { $in: ['pending', 'error', 'needs_review'] } },
-      { $set: { matchStatus: 'manual_charged', chargedAt: new Date() } },
+      { movementId: target.movementId, matchStatus: { $in: ['pending', 'error', 'needs_review', 'awaiting_platform'] } },
+      { $set: { matchStatus: 'manual_charged', chargedAt: new Date(), platformChoiceBy: target.matchStatus === 'awaiting_platform' ? 'manual_deposit' : target.platformChoiceBy || null } },
       { new: true }
     );
     if (!claimed) return false;
+    if (target.matchStatus === 'awaiting_platform') { try { await _resolvePlatformChoiceMessage(target, 'manual'); } catch (_) {} }
 
     if (target.matchedComprobanteId) {
       await Comprobante.updateOne({ id: target.matchedComprobanteId },
@@ -2142,6 +2184,214 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     logger.warn(`[hgcash] chequeo de mínimo falló (sigue la carga): ${minErr.message}`);
   }
 
+  // ── MULTI-PLATAFORMA (2026-10-16): ¿DÓNDE QUIERE JUGAR? ──────────────────
+  // Con 2+ plataformas habilitadas (Config['platforms']) la carga NO se acredita
+  // todavía: se le pregunta al cliente con botones en el chat y el movimiento queda
+  // `awaiting_platform`. Elige → POST /api/platform-choice → _hgcashCreditToPlatform.
+  // No responde en `askTimeoutMin` → _platformChoiceTick lo carga en la última
+  // plataforma que eligió (o la default). Con una sola plataforma (o askMode
+  // 'never'/'first_time' con elección previa) se carga directo como siempre.
+  let _decision;
+  try {
+    _decision = await platforms.decideForDeposit(user);
+  } catch (decErr) {
+    logger.warn(`[platforms] decideForDeposit falló (${decErr.message}) → carga directa en ${platforms.DEFAULT_ID}`);
+    _decision = { ask: false, platform: platforms.DEFAULT_ID, reason: 'error' };
+  }
+  if (_decision.ask) {
+    await _platformAskUser({ movement: movClaim || movement, comprobante, user, decision: _decision, dataDesc });
+    return;
+  }
+  await _hgcashCreditToPlatform({ movement: movClaim || movement, comprobante, user, platformId: _decision.platform, by: _decision.reason || 'single' });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MULTI-PLATAFORMA — pregunta "¿dónde querés jugar?", derivación por link y
+// resolución de la elección (2026-10-16). Ver src/platforms/ y docs/PLATFORMS.md.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Multiplicador del bono adjunto a la carga, según la plataforma. Para girox sale
+// de su GET /config (getGiroxBonusMultiplier); otras plataformas: 0 hasta que su
+// adaptador exponga algo mejor (el adaptador ignora `wagering` si no lo soporta).
+async function _bonusMultiplierFor(adapter) {
+  if (!adapter || adapter.id === 'girox' || adapter === girox) return getGiroxBonusMultiplier();
+  return 0;
+}
+
+// Le PREGUNTA al cliente dónde quiere jugar: deja el movimiento/comprobante en
+// `awaiting_platform` y manda un mensaje de sistema con botones (metadata
+// kind='platform_choice' → la PWA los renderiza; el agente ve el mismo texto en el
+// chat y puede resolverlo él desde el panel). Push si está offline.
+async function _platformAskUser({ movement, comprobante, user, decision, dataDesc }) {
+  const amount = Number(movement.amount);
+  const options = (decision.options || []).map((o) => ({ id: o.id, name: o.name, emoji: o.emoji }));
+  const timeoutMin = Number(decision.timeoutMin) || 10;
+  const expiresAt = new Date(Date.now() + timeoutMin * 60 * 1000);
+  await BankMovement.updateOne({ movementId: movement.movementId }, {
+    $set: {
+      matchStatus: 'awaiting_platform', matchedUserId: user.id, matchedUsername: user.username,
+      matchedComprobanteId: comprobante.id, platform: null, platformAskedAt: new Date(), platformChosenAt: null, platformChoiceBy: null
+    }
+  });
+  await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'awaiting_platform', matchedMovementId: movement.movementId } });
+
+  const optsTxt = options.map((o) => `${o.emoji} ${o.name}`).join(' / ');
+  const content = await renderSystemCommand('/sys_platform_choice',
+    '💰 ¡Recibimos tu transferencia de ${amount}! ✅\n\n🎮 ¿Dónde querés jugar? Tocá una opción 👇\n{options}\n\n⏱ Si no elegís en {timeout} minutos, te la cargamos en {default}.',
+    { amount: amount.toLocaleString('es-AR'), options: optsTxt, timeout: timeoutMin, default: platforms.labelOf(await platforms.resolveDefaultFor(user)) });
+  const metadata = { kind: 'platform_choice', movementId: movement.movementId, amount, options, expiresAt: expiresAt.toISOString() };
+  const msg = content
+    ? await _sendUserSystemMessage(user, content, { metadata, push: { title: '💰 Recibimos tu transferencia', body: `$${amount.toLocaleString('es-AR')} · Entrá y elegí dónde querés jugar`, data: { tag: 'platform_choice' } } })
+    : null;
+  if (msg) { try { await BankMovement.updateOne({ movementId: movement.movementId }, { $set: { platformChoiceMsgId: msg.id } }); } catch (_) {} }
+
+  await _emitAdminOnlyChatNote(user.id, user.username,
+    `🏦 ✅ Transferencia OK (${dataDesc}) — 🎮 ESPERANDO que el cliente elija dónde jugar (${optsTxt}). ` +
+    `Si no elige en ${timeoutMin} min se carga sola en ${platforms.labelOf(await platforms.resolveDefaultFor(user))}. ` +
+    `Podés elegir por él desde el banner del chat.`);
+  try { notifyAdmins('platform_choice_pending', { userId: user.id, username: user.username, movementId: movement.movementId, amount, options, expiresAt }); } catch (_) {}
+  _emitHgcashUpdate('esperando_plataforma');
+  logger.info(`[platforms] pregunta enviada user=${user.username} $${amount} mov=${movement.movementId} opciones=${options.map((o) => o.id).join(',')} timeout=${timeoutMin}min`);
+}
+
+// El cliente eligió una plataforma SIN API conectada (hoy: Ganamos) → NO se carga
+// acá. Se lo manda al link externo de esa plataforma (Config['platforms'].items.<id>
+// .externalUrl) y el movimiento queda `redirected` (consumido: nadie lo carga por
+// error). Cuando la API se conecte, este camino deja de usarse solo.
+async function _platformRedirectUser({ movement, comprobante, user, platformId, by, dataDesc }) {
+  const amount = Number(movement.amount);
+  const all = await platforms.listAll();
+  const p = all.find((x) => x.id === platformId) || { id: platformId, name: platformId, emoji: '🎮', externalUrl: '' };
+  const url = p.externalUrl || '';
+  await BankMovement.updateOne({ movementId: movement.movementId }, {
+    $set: { matchStatus: 'redirected', matchedUserId: user.id, matchedUsername: user.username, matchedComprobanteId: comprobante.id,
+      platform: platformId, platformChosenAt: new Date(), platformChoiceBy: String(by || 'user').slice(0, 60), redirectedUrl: url || null, chargedAt: null }
+  });
+  await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'redirected', matchedMovementId: movement.movementId } });
+  try { await User.updateOne({ id: user.id }, { $set: { lastPlatform: platformId } }); } catch (_) {}
+  try { await _resolvePlatformChoiceMessage(movement, platformId); } catch (_) {}
+
+  const label = `${p.emoji} ${p.name}`;
+  const content = await renderSystemCommand('/sys_platform_redirect',
+    url
+      ? '{platform} ¡Buenísimo! Para jugar en {name} entrá acá 👉 {url}\n\nAhí te cargan tu transferencia de ${amount}. 🎮'
+      : '{platform} ¡Buenísimo! Elegiste {name}. En un momento un agente te contacta para cargarte tu transferencia de ${amount}. 🎮',
+    { platform: p.emoji, name: p.name, url, amount: amount.toLocaleString('es-AR') });
+  const metadata = url ? { kind: 'platform_link', platform: platformId, name: p.name, emoji: p.emoji, url } : null;
+  if (content) {
+    await _sendUserSystemMessage(user, content, { metadata, push: { title: `${label} · Entrá a jugar`, body: url ? `Tocá para entrar a ${p.name}` : `Elegiste ${p.name}`, data: { tag: 'platform_redirect', url } } });
+  }
+  await _emitAdminOnlyChatNote(user.id, user.username,
+    `🏦 ➡️ Transferencia (${dataDesc}) DERIVADA a ${label}${url ? ' — se le mandó el link ' + url : ' — ⚠️ sin link configurado: contactalo'}. ` +
+    `${p.name} NO tiene API conectada: acá NO se cargó nada (el movimiento queda consumido como "derivado"). Si hay que cargarla en esta sala igual, hacelo MANUAL.`);
+  _emitHgcashUpdate('derivado');
+  logger.info(`[platforms] derivado user=${user.username} $${amount} mov=${movement.movementId} → ${platformId} url=${url || '-'} by=${by}`);
+}
+
+// Marca el mensaje con botones como RESUELTO (metadata.chosen) para que la PWA deje
+// de mostrar las opciones aunque recargue, y avisa por socket al cliente.
+async function _resolvePlatformChoiceMessage(movement, platformId) {
+  const msgId = movement && movement.platformChoiceMsgId;
+  let mid = msgId;
+  if (!mid && movement && movement.movementId) {
+    const fresh = await BankMovement.findOne({ movementId: movement.movementId }).select('platformChoiceMsgId matchedUserId').lean();
+    mid = fresh && fresh.platformChoiceMsgId;
+  }
+  if (!mid) return;
+  const m = await Message.findOneAndUpdate({ id: mid }, { $set: { 'metadata.chosen': platformId, 'metadata.chosenAt': new Date().toISOString() } }, { new: true }).lean();
+  if (m) {
+    io.to(`user_${m.receiverId}`).emit('platform_choice_resolved', { messageId: mid, movementId: movement.movementId, platform: platformId });
+    io.to(`chat_${m.receiverId}`).emit('platform_choice_resolved', { messageId: mid, movementId: movement.movementId, platform: platformId });
+  }
+}
+
+// Resuelve la elección de un movimiento `awaiting_platform` (cliente / agente /
+// timeout). Claim atómico (awaiting_platform → claiming) para que dos instancias (o
+// un doble toque) no carguen dos veces. Devuelve { ok, platform, redirected, url } o
+// { ok:false, code: 'not_pending' | 'not_yours' | 'invalid_platform' | 'error' }.
+async function _resolvePlatformChoice({ movementId, platformId, by, requireUserId = null }) {
+  const pid = platforms.normalizeId(platformId);
+  if (!pid) return { ok: false, code: 'invalid_platform' };
+  const enabled = await platforms.listEnabled();
+  const plat = enabled.find((p) => p.id === pid);
+  if (!plat && by === 'user') return { ok: false, code: 'invalid_platform' }; // el cliente sólo elige entre las ofrecidas
+  const q = { movementId: String(movementId || ''), matchStatus: 'awaiting_platform' };
+  if (requireUserId) q.matchedUserId = requireUserId;
+  const mov = await BankMovement.findOneAndUpdate(q,
+    { $set: { matchStatus: 'claiming', platform: pid, platformChosenAt: new Date(), platformChoiceBy: String(by || 'user').slice(0, 60) } },
+    { new: true }).lean();
+  if (!mov) {
+    const exists = await BankMovement.findOne({ movementId: String(movementId || '') }).select('matchStatus matchedUserId platform').lean();
+    if (!exists) return { ok: false, code: 'not_pending' };
+    if (requireUserId && exists.matchedUserId !== requireUserId) return { ok: false, code: 'not_yours' };
+    return { ok: false, code: 'not_pending', status: exists.matchStatus, platform: exists.platform || null };
+  }
+  const comprobante = mov.matchedComprobanteId ? await Comprobante.findOne({ id: mov.matchedComprobanteId }).lean() : null;
+  const user = await User.findOne({ id: mov.matchedUserId });
+  if (!user || !comprobante) {
+    await BankMovement.updateOne({ movementId: mov.movementId }, { $set: { matchStatus: 'error', chargeError: !user ? 'usuario no encontrado' : 'comprobante no encontrado' } });
+    return { ok: false, code: 'error' };
+  }
+  try {
+    await _hgcashCreditToPlatform({ movement: mov, comprobante, user, platformId: pid, by });
+  } catch (e) {
+    logger.error(`[platforms] resolver elección mov=${movementId} → ${pid} falló: ${e.message}`);
+    return { ok: false, code: 'error' };
+  }
+  const after = await BankMovement.findOne({ movementId: mov.movementId }).select('matchStatus redirectedUrl platform').lean();
+  return { ok: true, platform: pid, redirected: !!(after && after.matchStatus === 'redirected'), url: (after && after.redirectedUrl) || null, status: after && after.matchStatus };
+}
+
+// Cron (60 s, cada instancia): preguntas vencidas → se cargan solas en la última
+// plataforma elegida por el cliente (o la default). Idempotente por el claim atómico
+// de _resolvePlatformChoice (awaiting_platform → claiming).
+async function _platformChoiceTick() {
+  try {
+    const s = await platforms.getSettings();
+    const limit = new Date(Date.now() - (Number(s.askTimeoutMin) || 10) * 60 * 1000);
+    const due = await BankMovement.find({ matchStatus: 'awaiting_platform', platformAskedAt: { $lte: limit } })
+      .select('movementId matchedUserId amount matchedUsername').limit(20).lean();
+    for (const m of due) {
+      try {
+        const u = m.matchedUserId ? await User.findOne({ id: m.matchedUserId }).select('id username lastPlatform').lean() : null;
+        const pid = await platforms.resolveDefaultFor(u);
+        const r = await _resolvePlatformChoice({ movementId: m.movementId, platformId: pid, by: 'timeout' });
+        logger.info(`[platforms] timeout mov=${m.movementId} user=${m.matchedUsername} → ${pid}: ${r.ok ? (r.redirected ? 'derivado' : 'cargado') : r.code}`);
+      } catch (e) {
+        logger.warn(`[platforms] timeout mov=${m.movementId}: ${e.message}`);
+      }
+    }
+  } catch (e) {
+    logger.warn(`[platforms] tick falló: ${e.message}`);
+  }
+}
+
+// ── CARGA A UNA PLATAFORMA CONCRETA (segunda mitad de la auto-carga) ────────
+// Se llama con la plataforma YA decidida (directo, elección del cliente, del agente
+// o timeout). El movimiento tiene que estar reclamado (`claiming`). Si la plataforma
+// NO tiene API conectada (ej. Ganamos hoy) → `_platformRedirectUser` (link externo,
+// NO se mueve plata acá). Si la tiene → candado por coelsa + red de seguridad +
+// depósito por el ADAPTADOR de esa plataforma (misma reference `vip-hg-*`).
+async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId, by = 'direct' }) {
+  const amount = movement.amount;
+  const opDesc = `op. hgcash ${movement.coelsaCode || movement.externalId || movement.movementId}`;
+  const dataDesc = `$${Number(amount).toLocaleString('es-AR')} · ${movement.fromName || movement.fromCBU || 's/origen'} · ${opDesc}`;
+  const pid = platforms.normalizeId(platformId) || platforms.DEFAULT_ID;
+  const adapter = platforms.getAdapter(pid) || girox;
+  const platLabel = platforms.labelOf(pid);
+
+  // Registrar la decisión (sirve para el panel y para reconciliar).
+  try {
+    await BankMovement.updateOne({ movementId: movement.movementId },
+      { $set: { platform: pid, platformChosenAt: new Date(), platformChoiceBy: String(by || 'direct').slice(0, 60) } });
+  } catch (_) {}
+
+  // Plataforma SIN API conectada → el cliente se maneja afuera (link externo).
+  if (typeof adapter.isConnected === 'function' && !adapter.isConnected()) {
+    await _platformRedirectUser({ movement, comprobante, user, platformId: pid, by, dataDesc });
+    return;
+  }
+
   // ── IDEMPOTENCIA POR TRANSFERENCIA REAL (coelsa) ─────────────────────────
   // Candado ATÓMICO entre instancias: la MISMA transferencia (mismo coelsaCode)
   // se acredita UNA sola vez, sin importar cuántos movimientos/comprobantes haya.
@@ -2153,7 +2403,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     try {
       await HgcashCharge.create({
         chargeKey, userId: user.id, username: user.username,
-        amount: Number(amount), movementId: movement.movementId, comprobanteId: comprobante.id
+        amount: Number(amount), movementId: movement.movementId, comprobanteId: comprobante.id, platform: pid
       });
       chargeLocked = true;
     } catch (lockErr) {
@@ -2212,12 +2462,12 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     const _ref = `vip-hg-${chargeKey || movement.movementId}`;
     // BONO AUTOMÁTICO (#210): el bono en % pendiente entra junto con la carga.
     const _auto = await resolveAutoBonus(user, Number(amount), 'auto-hgcash');
-    const result = await girox.depositToUser(user.username, Number(amount), 'Carga automática (hgcash)', _ref,
-      _auto.bonus > 0 ? { bonusAmount: _auto.bonus, bonusMultiplier: await getGiroxBonusMultiplier() } : null);
+    const result = await adapter.depositToUser(user.username, Number(amount), 'Carga automática (hgcash)', _ref,
+      _auto.bonus > 0 ? { bonusAmount: _auto.bonus, bonusMultiplier: await _bonusMultiplierFor(adapter) } : null);
     if (!result.success) {
       if (_auto.claimed) await _auto.revert();
       if (chargeLocked) { try { await HgcashCharge.deleteOne({ chargeKey }); } catch (_) {} }
-      await hgcashHandleChargeFailure(movClaim || movement, comprobante, result.error || 'fallo deposit', dataDesc, user);
+      await hgcashHandleChargeFailure(movement, comprobante, result.error || 'fallo deposit', dataDesc, user);
       return;
     }
 
@@ -2226,20 +2476,23 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     });
     await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'auto_charged', matchedMovementId: movement.movementId, autoCharged: true } });
     charged = true; // ya acreditó: cualquier error posterior NO debe disparar reintento
+    // Multi-plataforma: recordar dónde cargó (fallback de la próxima pregunta / timeout).
+    try { await User.updateOne({ id: user.id }, { $set: { lastPlatform: pid } }); } catch (_) {}
+    try { await _resolvePlatformChoiceMessage(movement, pid); } catch (_) {}
     // Carga OK pero el bono adjunto falló → el bono vuelve a quedar pendiente.
     const _hgBonusApplied = _auto.bonus > 0 && !result.bonusFailed;
     if (_auto.claimed && !_hgBonusApplied) { await _auto.revert(); logger.error(`[auto-bonus] hgcash user=${user.username}: la carga entró pero el bono adjunto $${_auto.bonus} FALLÓ — vuelve a pendiente`); }
-    if (_hgBonusApplied) { try { await girox.claimPendingBonus(user.username); } catch (_) {} }
+    if (_hgBonusApplied) { try { await adapter.claimPendingBonus(user.username); } catch (_) {} }
 
     try { await recordUserActivity(user.id, 'deposit', Number(amount)); } catch (_) {}
     await Transaction.create({
-      id: uuidv4(), type: 'deposit', amount: Number(amount),
+      id: uuidv4(), type: 'deposit', platform: pid, amount: Number(amount),
       bonus: _hgBonusApplied ? _auto.bonus : 0,
       username: user.username, userId: user.id,
       description: `Carga automática hgcash (${opDesc})${_hgBonusApplied ? ' + bono automático ' + _auto.label : ''}`,
       adminUsername: 'auto-hgcash', adminRole: 'system',
       transactionId: result.data?.transfer_id || result.data?.transferId,
-      metadata: { source: 'auto_hgcash', movementId: movement.movementId, comprobanteId: comprobante.id },
+      metadata: { source: 'auto_hgcash', movementId: movement.movementId, comprobanteId: comprobante.id, platform: pid, platformChoiceBy: by },
       timestamp: new Date()
     });
     // Bonificación como Transaction PROPIA (type 'bonus'), igual que la carga manual:
@@ -2247,7 +2500,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     // $0 aunque en 1girox el bono figuraba (owner 2026-09-30, caso gxFranco896).
     if (_hgBonusApplied) {
       await Transaction.create({
-        id: uuidv4(), type: 'bonus', amount: Number(_auto.bonus),
+        id: uuidv4(), type: 'bonus', platform: pid, amount: Number(_auto.bonus),
         username: user.username, userId: user.id,
         description: `Bonificación incluida en carga automática hgcash de $${Number(amount).toLocaleString('es-AR')} — automática: ${_auto.label}`,
         adminUsername: 'auto-hgcash', adminRole: 'system',
@@ -2260,7 +2513,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     // Mensaje al cliente (usa /sys_deposit si está; si no, fallback).
     let newBalance = null;
     try {
-      const balRes = await girox.getUserBalanceWithRetry(user.username);
+      const balRes = await adapter.getUserBalanceWithRetry(user.username);
       if (balRes.success) newBalance = balRes.balance;
     } catch (_) {}
     const balStr = newBalance !== null ? `$${newBalance}` : 'actualizándose 🔄';
@@ -2289,10 +2542,10 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     // Oferta de recuperación 100% (no se envía si está etiquetado comunidad/no comunidad).
     await maybeSendRecoveryMessage(user);
 
-    await _emitAdminOnlyChatNote(user.id, user.username, `🏦 ✅ CARGA AUTOMÁTICA hgcash — ${dataDesc}. Acreditado.`);
+    await _emitAdminOnlyChatNote(user.id, user.username, `🏦 ✅ CARGA AUTOMÁTICA hgcash — ${dataDesc}. Acreditado en ${platLabel}${by && by !== "single" && by !== "direct" ? " (elección: " + by + ")" : ""}.`);
     if (_hgBonusApplied) await _emitAdminOnlyChatNote(user.id, user.username, _autoBonusNoteText(_auto, Number(amount), 0, 'carga automática hgcash')).catch(() => {});
     _emitHgcashUpdate('cargado');
-    logger.info(`[hgcash] auto-carga OK user=${user.username} amount=$${amount} movement=${movement.movementId}`);
+    logger.info(`[hgcash] auto-carga OK user=${user.username} amount=$${amount} movement=${movement.movementId} platform=${pid} by=${by}`);
   } catch (e) {
     if (charged) {
       // La carga YA se acreditó; el error fue en un paso posterior (mensaje/transacción).
@@ -2301,7 +2554,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     } else {
       // La carga no llegó a confirmarse → liberar el candado y dejarlo reintentable.
       if (chargeLocked) { try { await HgcashCharge.deleteOne({ chargeKey }); } catch (_) {} }
-      await hgcashHandleChargeFailure(movClaim || movement, comprobante, e.message, dataDesc, user);
+      await hgcashHandleChargeFailure(movement, comprobante, e.message, dataDesc, user);
       logger.error(`[hgcash] auto-carga excepción user=${user.username}: ${e.message}`);
     }
   }
@@ -4856,6 +5109,39 @@ const platformSessionLimiter = rateLimit({
 
 async function platformSessionHandler(req, res) {
   try {
+    // MULTI-PLATAFORMA (2026-10-16): `body.platform` elige a qué casino entrar. Sin
+    // el campo (PWA vieja) → girox, como siempre. Una plataforma habilitada SIN API
+    // conectada (Ganamos hoy) devuelve su link externo (`external:true`) en vez de
+    // un SSO; una con API usa su adaptador con la misma lógica que girox.
+    const _reqPlatform = platforms.normalizeId(req.body && req.body.platform) || platforms.DEFAULT_ID;
+    if (_reqPlatform !== platforms.DEFAULT_ID) {
+      const _plist = await platforms.listEnabled();
+      const _p = _plist.find((x) => x.id === _reqPlatform);
+      if (!_p) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
+      const _ad = platforms.getAdapter(_reqPlatform);
+      if (!_p.connected) {
+        if (!_p.externalUrl) return res.status(503).json({ error: `${_p.name} todavía no está disponible. Escribinos por chat.` });
+        return res.json({ success: true, external: true, platform: _reqPlatform, redirectUrl: _p.externalUrl, platformUrl: _p.externalUrl });
+      }
+      const _u = await User.findOne({ id: req.user.userId }).select('id username isBlocked isActive');
+      if (!_u) return res.status(404).json({ error: 'Usuario no encontrado' });
+      if (_u.isBlocked) return res.status(403).json({ error: 'Tu cuenta está bloqueada. Contactá al soporte.' });
+      if (_u.isActive === false) return res.status(403).json({ error: 'Tu cuenta está inactiva. Contactá al soporte.' });
+      let _s = await _ad.createSession(_u.username);
+      if (!_s.success && _s.code === 'player_not_found') {
+        const _sync = await _ad.syncUserToPlatform({ username: _u.username, password: crypto.randomBytes(12).toString('base64url') });
+        if (_sync.success) {
+          try { await User.updateOne({ id: _u.id }, { $set: { [`platforms.${_reqPlatform}`]: { status: _sync.alreadyExists ? 'linked' : 'synced', username: _u.username, syncedAt: new Date() } } }); } catch (_) {}
+          _s = await _ad.createSession(_u.username);
+        }
+      }
+      if (!_s.success) {
+        logger.error(`[${_reqPlatform}-sso] falló para ${_u.username}: ${_s.error} (${_s.code})`);
+        return res.status(502).json({ error: `${_p.name} no está respondiendo. Reintentá en un momento.` });
+      }
+      return res.json({ success: true, platform: _reqPlatform, redirectUrl: _s.redirectUrl, platformUrl: (_ad.getPlayUrl && _ad.getPlayUrl()) || _p.externalUrl || null });
+    }
+
     // Si falta la config, se corta acá con un log EXPLÍCITO. Sin esto, el fallo se ve
     // como "el botón CASINO no abre" y hay que ir a adivinar por qué.
     if (!girox.isEnabled()) {
@@ -4918,6 +5204,140 @@ async function platformSessionHandler(req, res) {
 }
 
 app.post('/api/platform/session', authMiddleware, platformSessionLimiter, platformSessionHandler);
+
+// ════════════════════════════════════════════════════════════════════════════
+// MULTI-PLATAFORMA — endpoints (2026-10-16). Ver src/platforms/ y docs/PLATFORMS.md.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Plataformas HABILITADAS (lo que ve el cliente en la PWA: botones de la pregunta,
+// botón del casino). Cualquier usuario logueado.
+app.get('/api/platforms', authMiddleware, async (req, res) => {
+  try {
+    const list = await platforms.listEnabled();
+    const s = await platforms.getSettings();
+    let lastPlatform = null;
+    try { const u = await User.findOne({ id: req.user.userId }).select('lastPlatform').lean(); lastPlatform = (u && u.lastPlatform) || null; } catch (_) {}
+    res.json({
+      platforms: list.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, isDefault: p.isDefault })),
+      askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform,
+      choiceEnabled: await platforms.isChoiceEnabled()
+    });
+  } catch (e) {
+    logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// El CLIENTE elige dónde cargar su transferencia (botones del mensaje
+// kind='platform_choice'). Sólo puede resolver movimientos matcheados a ÉL.
+app.post('/api/platform-choice', authMiddleware, authLimiter, async (req, res) => {
+  try {
+    const { movementId, platform } = req.body || {};
+    if (!movementId || !platform) return res.status(400).json({ error: 'Faltan datos.' });
+    const r = await _resolvePlatformChoice({ movementId: String(movementId), platformId: String(platform), by: 'user', requireUserId: req.user.userId });
+    if (!r.ok) {
+      const msgs = {
+        invalid_platform: 'Esa plataforma no está disponible.',
+        not_yours: 'Esa transferencia no es tuya.',
+        not_pending: r.platform ? `Esa transferencia ya se cargó en ${platforms.labelOf(r.platform)}.` : 'Esa transferencia ya fue procesada.',
+        error: 'No pudimos procesar tu elección. Escribinos por chat.'
+      };
+      return res.status(r.code === 'error' ? 500 : 409).json({ error: msgs[r.code] || msgs.error, code: r.code, platform: r.platform || null, status: r.status || null });
+    }
+    res.json({ success: true, platform: r.platform, label: platforms.labelOf(r.platform), redirected: r.redirected, url: r.url, status: r.status });
+  } catch (e) {
+    logger.error(`[platforms] POST /api/platform-choice: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// El AGENTE elige por el cliente (banner del chat del panel) — roles con permiso de carga.
+app.post('/api/admin/hgcash/movements/:movementId/platform', authMiddleware, depositorMiddleware, async (req, res) => {
+  try {
+    const { platform } = req.body || {};
+    if (!platform) return res.status(400).json({ error: 'Falta la plataforma.' });
+    const r = await _resolvePlatformChoice({ movementId: String(req.params.movementId), platformId: String(platform), by: `agent:${req.user.username || req.user.userId}` });
+    if (!r.ok) {
+      const msgs = { invalid_platform: 'Plataforma inválida.', not_pending: 'Ese movimiento ya no está esperando elección.', error: 'No se pudo procesar.' };
+      return res.status(r.code === 'error' ? 500 : 409).json({ error: msgs[r.code] || msgs.error, code: r.code, status: r.status || null });
+    }
+    res.json({ success: true, platform: r.platform, label: platforms.labelOf(r.platform), redirected: r.redirected, url: r.url, status: r.status });
+  } catch (e) {
+    logger.error(`[platforms] POST movimiento/platform: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// Movimientos de un cliente esperando elección (para el banner del chat del panel).
+app.get('/api/admin/users/:userId/platform-pending', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const list = await BankMovement.find({ matchedUserId: req.params.userId, matchStatus: 'awaiting_platform' })
+      .select('movementId amount platformAskedAt fromName coelsaCode').sort({ platformAskedAt: -1 }).limit(5).lean();
+    const enabled = await platforms.listEnabled();
+    res.json({ pending: list, platforms: enabled.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected })) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
+// Config de plataformas (panel → Configuración → "🎮 Plataformas de juego").
+// Leen todos los roles del panel; GUARDA sólo el admin general.
+app.get('/api/admin/platforms', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const s = await platforms.getSettings({ fresh: true });
+    const all = await platforms.listAll();
+    res.json({ askMode: s.askMode, askModes: platforms.ASK_MODES, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, platforms: all, canEdit: req.user.role === 'admin' });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/platforms', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {};
+    const patch = {};
+    if (b.askMode != null) {
+      if (!platforms.ASK_MODES.includes(b.askMode)) return res.status(400).json({ error: 'Modo de pregunta inválido.' });
+      patch.askMode = b.askMode;
+    }
+    if (b.askTimeoutMin != null) {
+      const t = Math.round(Number(b.askTimeoutMin));
+      if (!Number.isFinite(t) || t < 1 || t > 180) return res.status(400).json({ error: 'El tiempo de espera va de 1 a 180 minutos.' });
+      patch.askTimeoutMin = t;
+    }
+    if (b.defaultPlatform != null) {
+      if (!platforms.normalizeId(b.defaultPlatform)) return res.status(400).json({ error: 'Plataforma default inválida.' });
+      patch.defaultPlatform = platforms.normalizeId(b.defaultPlatform);
+    }
+    if (b.items && typeof b.items === 'object') {
+      patch.items = {};
+      for (const [rawId, it] of Object.entries(b.items)) {
+        const id = platforms.normalizeId(rawId);
+        if (!id || !it || typeof it !== 'object') continue;
+        const o = {};
+        if (it.enabled != null) o.enabled = it.enabled === true;
+        if (it.name != null) { o.name = String(it.name).trim().slice(0, 40); if (!o.name) return res.status(400).json({ error: 'El nombre no puede quedar vacío.' }); }
+        if (it.emoji != null) o.emoji = String(it.emoji).trim().slice(0, 8);
+        if (it.order != null) o.order = Number(it.order);
+        if (it.externalUrl != null) {
+          const u = String(it.externalUrl).trim();
+          if (u && !/^(https?:\/\/)?[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(u)) return res.status(400).json({ error: `Link inválido para ${id}.` });
+          o.externalUrl = u;
+        }
+        patch.items[id] = o;
+      }
+    }
+    // Al menos una plataforma tiene que quedar habilitada (se chequea ANTES de guardar).
+    const _cur = await platforms.getSettings({ fresh: true });
+    const _willOn = platforms.ids().filter((id) => {
+      const it = patch.items && patch.items[id];
+      return it && it.enabled != null ? it.enabled : _cur.items[id].enabled;
+    });
+    if (_willOn.length === 0) return res.status(400).json({ error: 'Tiene que quedar al menos una plataforma habilitada.' });
+    const saved = await platforms.saveSettings(patch, req.user.username);
+    logger.info(`[platforms] config guardada por ${req.user.username}: ${JSON.stringify(saved)}`);
+    res.json({ success: true, askMode: saved.askMode, askTimeoutMin: saved.askTimeoutMin, defaultPlatform: saved.defaultPlatform, platforms: await platforms.listAll() });
+  } catch (e) {
+    logger.warn(`[platforms] guardar config falló: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
 // Alias histórico (el front viejo lo nombraba así). Mismo handler.
 app.post('/api/auth/platform-login', authMiddleware, platformSessionLimiter, platformSessionHandler);
 
@@ -6480,7 +6900,9 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
         $project: {
           _id: 0, id: 1, senderId: 1, senderUsername: 1, senderRole: 1,
           receiverId: 1, receiverRole: 1, content: 1, type: 1, read: 1,
-          adminOnly: 1, timestamp: 1
+          adminOnly: 1, timestamp: 1,
+          // metadata: botones de la PWA (multi-plataforma: kind platform_choice / platform_link)
+          metadata: 1
         }
       }
     ]);
@@ -8416,16 +8838,25 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
     // pendiente (app / código de bienvenida / ruleta diaria / lote), se aplica
     // SOLO con el tope, pisando lo que haya tipeado el agente (se avisa en una
     // nota interna). Sin bono pendiente, vale el bonus del agente como siempre.
+    // MULTI-PLATAFORMA (2026-10-16): el agente elige la plataforma en el modal
+    // (`body.platform`). Sin el campo (panel viejo) → la última que eligió el cliente
+    // o la default. Sólo se puede cargar por API en una plataforma CONECTADA: una sin
+    // API (Ganamos hoy) rebota con mensaje claro — ahí el cliente se maneja por link.
+    const _platformId = platforms.normalizeId(req.body.platform) || await platforms.resolveDefaultFor(user);
+    const _adapter = platforms.getAdapter(_platformId) || girox;
+    if (typeof _adapter.isConnected === 'function' && !_adapter.isConnected()) {
+      return res.status(400).json({ error: `${platforms.labelOf(_platformId)} no tiene API conectada todavía: no se puede cargar desde acá. Cargalo en su panel o mandale el link al cliente.`, code: 'platform_not_connected', platform: _platformId });
+    }
     const _agentBonus = parseFloat(bonus) || 0;
     const _auto = await resolveAutoBonus(user, parseFloat(amount), req.user.username || 'agente');
     const _effectiveBonus = _auto.bonus > 0 ? _auto.bonus : _agentBonus;
     const bonusRequested = _effectiveBonus > 0;
     const _depTxId = uuidv4();
     // bonusMultiplier OBLIGATORIO cuando va bonus_amount (lo exige la API).
-    const result = await girox.depositToUser(
+    const result = await _adapter.depositToUser(
       user.username, parseFloat(amount), description, `vip-dep-${_depTxId}`,
       bonusRequested
-        ? { bonusAmount: _effectiveBonus, bonusMultiplier: await getGiroxBonusMultiplier() }
+        ? { bonusAmount: _effectiveBonus, bonusMultiplier: await _bonusMultiplierFor(_adapter) }
         : null
     );
     // Si la carga (o el bono adjunto) no entró, el bono pendiente vuelve a
@@ -8446,7 +8877,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       // su saldo al instante. Idempotente (si no hay nada que reclamar, amount 0).
       if (bonusActuallyApplied) {
         try {
-          const _depClaim = await girox.claimPendingBonus(user.username);
+          const _depClaim = await _adapter.claimPendingBonus(user.username);
           if (!_depClaim.success) {
             logger.warn(`[deposit] auto-claim del bono falló para ${user.username}: ${_depClaim.error} — el cliente puede reclamarlo desde el casino`);
           }
@@ -8471,6 +8902,8 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       }
 
       await recordUserActivity(user.id, 'deposit', parseFloat(amount));
+      // Multi-plataforma: recordar dónde cargó (fallback de la pregunta / timeout).
+      User.updateOne({ id: user.id }, { $set: { lastPlatform: _platformId } }).catch(() => {});
 
       // hgcash: si esta carga MANUAL corresponde a una transferencia hgcash pendiente
       // de ese usuario (mismo monto), marcarla como cargada → no se auto-carga después.
@@ -8521,7 +8954,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       // histórico donde un fallo transitorio post-depósito hacía que el server
       // mandara "Tu nuevo saldo es $0" engañoso (el depósito SÍ se aplicó pero
       // getUserBalance falló y defaulteábamos a 0).
-      const balanceResult = await girox.getUserBalanceWithRetry(user.username);
+      const balanceResult = await _adapter.getUserBalanceWithRetry(user.username);
       let newBalance = null;
       if (balanceResult.success) {
         newBalance = balanceResult.balance;
@@ -8757,6 +9190,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         // una operación de 1girox se puede rastrear hasta su fila local y viceversa.
         id: _depTxId,
         type: 'deposit',
+        platform: _platformId,
         amount: parseFloat(amount),
         bonus: bonusActuallyApplied ? _effectiveBonus : 0,
         username: user.username,
@@ -8780,6 +9214,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         await Transaction.create({
           id: uuidv4(),
           type: 'bonus',
+          platform: _platformId,
           amount: _effectiveBonus,
           username: user.username,
           userId: user.id,
@@ -8814,7 +9249,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       fbAdsWebhook.notify('Purchase', user, { value: parseFloat(amount), currency: 'ARS' });
 
       logger.info(
-        `[deposit] OK admin=${req.user?.username} user=${user.username} amount=$${amount} ` +
+        `[deposit] OK admin=${req.user?.username} user=${user.username} amount=$${amount} platform=${_platformId} ` +
         `bonusRequested=$${_effectiveBonus || 0} (agente $${_agentBonus}) auto=${_auto.source || '-'} bonusApplied=${bonusActuallyApplied} ` +
         `transferId=${result.data?.transfer_id || result.data?.transferId || 'n/a'} ` +
         `balanceLookup=${balanceResult.success ? 'ok' : 'failed'}`
@@ -8826,6 +9261,8 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
           ? 'Depósito acreditado, pero el bonus FALLÓ en la plataforma. Reintentá el bonus manualmente.'
           : 'Depósito realizado correctamente',
         newBalance: newBalance,
+        platform: _platformId,
+        platformLabel: platforms.labelOf(_platformId),
         transactionId: result.data?.transfer_id || result.data?.transferId,
         // Banderas explícitas para que el panel admin sepa exactamente qué pasó.
         bonusRequested: bonusRequested,
@@ -10220,6 +10657,14 @@ async function initializeData() {
     console.error('❌ 1girox SIN CONFIGURAR: faltan GIROX_API_URL y/o GIROX_API_KEY. ' +
       'Cargas, retiros, bonos y el acceso al casino NO van a funcionar.');
   }
+  // Radiografía multi-plataforma: qué se le ofrece al cliente al cargar y si cada
+  // plataforma tiene API conectada o se resuelve por link externo.
+  try {
+    const _pl = await platforms.listAll();
+    const _ps = await platforms.getSettings();
+    console.log(`🎮 Plataformas (pregunta: ${_ps.askMode}, timeout ${_ps.askTimeoutMin} min, default ${_ps.defaultPlatform}): ` +
+      _pl.map((p) => `${p.emoji} ${p.name}${p.enabled ? '' : ' [OFF]'} → ${p.connected ? 'API conectada' : (p.externalUrl ? 'SIN API → link ' + p.externalUrl : 'SIN API ni link')}`).join(' · '));
+  } catch (e) { console.warn(`[platforms] radiografía falló: ${e.message}`); }
   // El netwin (reembolsos + referidos) ya NO necesita credenciales aparte: desde la
   // Partner API v1.8 sale del mismo endpoint con la misma API key. Se fueron
   // GIROX_ADMIN_USER / GIROX_ADMIN_PASS / GIROX_ADMIN_TOKEN.
@@ -10316,6 +10761,23 @@ async function initializeData() {
       description: 'Mensaje automático al realizar un depósito con bonus. Variables disponibles: ${amount}, ${bonus}, ${balance}',
       type: 'message',
       response: '🔒💰 Depósito de ${amount} (incluye ${bonus} de bonificación) acreditado con éxito. ✅ \n💸 Tu nuevo saldo es ${balance} 💸\n\nPuedes verificarlo en: https://1girox.com\n\n🔥 Mañana podes revisar si tenes reembolso para reclamar de forma automatica 🔥'
+    },
+    {
+      // MULTI-PLATAFORMA (2026-10-16): pregunta al cliente dónde quiere jugar cuando entra
+      // su transferencia y hay 2+ plataformas habilitadas. Los BOTONES los pone la PWA
+      // (metadata), este texto los acompaña. {options} = lista de plataformas ofrecidas.
+      name: '/sys_platform_choice',
+      description: 'Multi-plataforma: mensaje con la pregunta "¿dónde querés jugar?" al recibir la transferencia (los botones los agrega la app). Variables: ${amount}, {options}, {timeout} (minutos), {default} (plataforma si no elige). Vacío = sin texto (los botones igual salen).',
+      type: 'message',
+      response: '💰 ¡Recibimos tu transferencia de ${amount}! ✅\n\n🎮 ¿Dónde querés jugar? Tocá una opción 👇\n{options}\n\n⏱ Si no elegís en {timeout} minutos, te la cargamos en {default}.'
+    },
+    {
+      // El cliente eligió una plataforma SIN API conectada (ej. Ganamos hoy) → se lo
+      // manda al link externo configurado en Configuración → Plataformas.
+      name: '/sys_platform_redirect',
+      description: 'Multi-plataforma: mensaje cuando el cliente elige una plataforma sin API conectada y se lo manda a su link. Variables: {platform} (emoji), {name}, {url}, ${amount}.',
+      type: 'message',
+      response: '{platform} ¡Buenísimo! Para jugar en {name} entrá acá 👉 {url}\n\nAhí te cargan tu transferencia de ${amount}. 🎮'
     },
     {
       name: '/sys_bonus',
@@ -10709,6 +11171,13 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
   try {
     const { titular, cbu, alias, amount, saveData } = req.body || {};
     const username = req.user.username;
+    // MULTI-PLATAFORMA (2026-10-16): de qué plataforma salen las fichas. Sin el campo
+    // (PWA vieja) → girox. Sólo plataformas con API conectada (sin API no hay saldo que leer).
+    const _wdPlatform = platforms.normalizeId(req.body && req.body.platform) || platforms.DEFAULT_ID;
+    const _wdAdapter = platforms.getAdapter(_wdPlatform) || girox;
+    if (typeof _wdAdapter.isConnected === 'function' && !_wdAdapter.isConnected()) {
+      return res.status(400).json({ error: `Los retiros de ${platforms.labelOf(_wdPlatform, { emoji: false })} no se hacen desde acá todavía.`, code: 'PLATFORM_NOT_CONNECTED' });
+    }
 
     const amountNum = Number(amount);
     if (!amountNum || amountNum < 4999) {
@@ -10749,7 +11218,7 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
     // descuento falla y no se paga — y al rechazar no hay que devolver nada.
     // CON retry (2 intentos): JUGAYGANA es flaky y a veces el lookup de saldo tarda/falla;
     // el reintento entra la mayoría de las veces. Cada intento ya falla rápido (timeout 12s).
-    const balanceResult = await girox.getUserBalanceWithRetry(username, { maxAttempts: 2, baseDelayMs: 400 });
+    const balanceResult = await _wdAdapter.getUserBalanceWithRetry(username, { maxAttempts: 2, baseDelayMs: 400 });
     if (!balanceResult.success) {
       return res.status(503).json({
         error: 'La plataforma está demorada en este momento. Esperá unos segundos y volvé a intentar el retiro.',
@@ -10793,6 +11262,7 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
     try {
       await PendingPayout.create({
         id: uuidv4(), userId: user.id, username: user.username,
+        platform: _wdPlatform,
         amount: amountNum, titular: titularT, cbu: cbuT, alias: aliasT,
         status: 'pending_review',
         deductAtPay: true,         // ← flujo nuevo: descontar al confirmar, no al solicitar
@@ -16393,6 +16863,9 @@ async function _notifyInsufficientAndCloseChat(payout, available, agentUser) {
 async function _deductChipsAtConfirm(payout, agentUser) {
   const amt = Number(payout.amount);
   const user = await User.findOne({ id: payout.userId });
+  // Multi-plataforma: las fichas salen de la plataforma del payout (default girox).
+  const _ad = platforms.getAdapter(payout.platform) || girox;
+  const _pid = platforms.normalizeId(payout.platform) || platforms.DEFAULT_ID;
 
   // 1) Saldo RETIRABLE del cliente.
   // ⚠️ Se usa `available`, no `balance`: con el feat de rollover activo en 1girox el
@@ -16403,7 +16876,7 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   // (fresco) para verificar el descuento. Un `avail` cacheado (hasta 8s viejo) haría
   // que la verificación anti-fantasma mezcle antes-viejo con después-nuevo y falle
   // aunque el descuento SÍ se ejecutó → el cliente quedaría sin fichas Y sin plata.
-  const balRes = await girox.getUserBalance(payout.username, { fresh: true });
+  const balRes = await _ad.getUserBalance(payout.username, { fresh: true });
   const avail = (balRes && balRes.success)
     ? (Number(balRes.available != null ? balRes.available : balRes.balance) || 0)
     : null;
@@ -16423,7 +16896,7 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   // `reference` = el id del payout: único por solicitud de retiro y estable entre
   // reintentos. Si el descuento se hizo pero la respuesta se perdió, reintentar con
   // la misma reference NO vuelve a debitarle las fichas al cliente.
-  const w = await girox.withdrawFromUser(payout.username, amt, `Retiro confirmado - ${payout.username}`, `vip-payout-${payout.id}`);
+  const w = await _ad.withdrawFromUser(payout.username, amt, `Retiro confirmado - ${payout.username}`, `vip-payout-${payout.id}`);
   if (!w || !w.success) {
     await PendingPayout.updateOne({ id: payout.id }, { $set: { status: 'failed', error: 'No se pudo descontar: ' + ((w && w.error) || '') } });
     await _emitAdminOnlyChatNote(payout.userId, payout.username, `⚠️ No se pudo descontar las fichas ($${amt.toLocaleString('es-AR')}) en JUGAYGANA: ${(w && w.error) || 's/detalle'}. Reintentá.`);
@@ -16440,7 +16913,7 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   let after = null, deducted = false;
   try {
     // fresh: el "después" DEBE ser el saldo real post-descuento (no cache).
-    const a = await girox.getUserBalanceWithRetry(payout.username, { fresh: true });
+    const a = await _ad.getUserBalanceWithRetry(payout.username, { fresh: true });
     if (a && a.success) {
       after = Number(a.available != null ? a.available : a.balance) || 0;
       deducted = (avail - after) >= (amt - 1);
@@ -16456,7 +16929,7 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   try { await recordUserActivity(payout.userId, 'withdrawal', amt); } catch (_) {}
   try {
     await Transaction.create({
-      id: uuidv4(), type: 'withdrawal', amount: amt,
+      id: uuidv4(), type: 'withdrawal', platform: _pid, amount: amt,
       username: payout.username, userId: payout.userId,
       description: `Retiro confirmado a ${payout.titular || ''} (${payout.alias || payout.cbu || ''})`,
       adminId: agentUser && agentUser.userId, adminUsername: agentUser && agentUser.username, adminRole: agentUser && agentUser.role,
@@ -16625,7 +17098,7 @@ app.post('/api/admin/payouts/:id/cancel', authMiddleware, withdrawerMiddleware, 
         let ok = false, data = null;
         // `reference` derivada del payout: la devolución de un retiro rechazado ocurre
         // UNA sola vez por payout, así que un reintento nunca puede devolver dos veces.
-        try { const r = await girox.depositToUser(payout.username, W, 'Devolución de retiro rechazado', `vip-payoutref-${payout.id}`); if (r && r.success) { ok = true; data = r.data; } } catch (e) { logger.error(`[payout-cancel] devolución (deductAtPay) falló payout=${id}: ${e.message}`); }
+        try { const r = await (platforms.getAdapter(payout.platform) || girox).depositToUser(payout.username, W, 'Devolución de retiro rechazado', `vip-payoutref-${payout.id}`); if (r && r.success) { ok = true; data = r.data; } } catch (e) { logger.error(`[payout-cancel] devolución (deductAtPay) falló payout=${id}: ${e.message}`); }
         if (ok) {
           await PendingPayout.updateOne({ id }, { $set: { chipsReturned: true } });
           try {
@@ -16706,11 +17179,11 @@ app.post('/api/admin/payouts/:id/cancel', authMiddleware, withdrawerMiddleware, 
     let bonusOk = bonusPart <= 0; // sin parte de bonus  → ya "ok"
     try {
       if (chipsPart > 0) {
-        const r = await girox.depositToUser(payout.username, chipsPart, 'Devolución de retiro rechazado (fichas)', `vip-payoutref-chips-${payout.id}`);
+        const r = await (platforms.getAdapter(payout.platform) || girox).depositToUser(payout.username, chipsPart, 'Devolución de retiro rechazado (fichas)', `vip-payoutref-chips-${payout.id}`);
         if (r && r.success) { chipsOk = true; await mkRefundTx(chipsPart, 'chips', r.data); }
       }
       if (bonusPart > 0) {
-        const r = await girox.creditUserBalance(payout.username, bonusPart, `vip-payoutref-bonus-${payout.id}`);
+        const r = await (platforms.getAdapter(payout.platform) || girox).creditUserBalance(payout.username, bonusPart, `vip-payoutref-bonus-${payout.id}`);
         if (r && r.success) { bonusOk = true; await mkRefundTx(bonusPart, 'bonus', r.data); }
       }
     } catch (e) {
@@ -16915,7 +17388,7 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     // GET /api/users/:userId (viewUser/loadUserInfo). Antes viajaba el doc entero
     // (fcmTokens, tagHistory, withdrawalAccount, acquisitionUtm, adminNotes…).
     // ⚠️ Si se agrega una columna nueva a la tabla del panel: sumar el campo acá.
-    const USERS_LIST_FIELDS = 'id username tags accountNumber email phone role balance isActive isBlocked blockReason lastLogin createdAt notificationPlan notifMonthlyCounts phoneVerified loginWithoutPassword vipLevel lifetimeWagered';
+    const USERS_LIST_FIELDS = 'id username tags accountNumber email phone role balance isActive isBlocked blockReason lastLogin createdAt notificationPlan notifMonthlyCounts phoneVerified loginWithoutPassword vipLevel lifetimeWagered lastPlatform';
     const users = await User.find(query)
       .select(USERS_LIST_FIELDS)
       .sort({ role: 1, username: 1 })
@@ -20173,6 +20646,9 @@ async function _schedTick() {
 }
 setTimeout(() => { _schedTick().catch(() => {}); }, 20 * 1000);
 setInterval(() => { _schedTick().catch(() => {}); }, SCHED_TICK_MS);
+// Multi-plataforma: preguntas "¿dónde querés jugar?" vencidas → carga en la última/default.
+setTimeout(() => { _platformChoiceTick().catch(() => {}); }, 30 * 1000);
+setInterval(() => { _platformChoiceTick().catch(() => {}); }, 60 * 1000);
 
 function _schedCanManage(role) { return NOTIF_BATCH_SEND_ROLES.includes(role); }
 function _schedCanView(role) { return NOTIF_BATCH_VIEW_ROLES.includes(role); }

@@ -8,6 +8,82 @@
 
 ## Sesión 2026-10-16
 
+### 219. 🎮 MULTI-PLATAFORMA: "¿Dónde querés jugar?" al recibir la transferencia (Girox / Ganamos), capa de plataformas prediseñada, Ganamos por link hasta conectar su API
+- **Owner:** "tengo automatización en cargas, quiero agregar otra página de API para vender y que la
+  gente cuando cargue pueda elegir dónde cargar (hoy girox, ejemplo Ganamos)… si elige Ganamos y
+  todavía no hay API mandalo a www.ganamosvip.me… dejalo prediseñado para que después, cuando
+  quiera agregar la API de Ganamos, se pueda y funcione igual que girox". Fase 1 = toda la
+  infraestructura + la pregunta al cliente; fase 2 = conectar la API (checklist en
+  `docs/PLATFORMS.md` §4); fase 3 (a decidir) = abrir reembolsos/VIP/ruleta/lotes por plataforma.
+- **Capa nueva `src/platforms/`:** `index.js` (registro: `getAdapter`, `listEnabled`,
+  `decideForDeposit(user)`, `resolveDefaultFor(user)`, settings en `Config['platforms']` con cache
+  30 s), `girox.js` (envoltura fina de giroxService — `girox.*` sigue intacto en los ~110 call
+  sites), `ganamos.js` (**esqueleto completo** con el MISMO contrato: cliente HTTP lazy, rate limit,
+  reintentos, idempotencia por reference, mapeadores; sin `GANAMOS_API_URL`+`GANAMOS_API_KEY` todo
+  devuelve `not_configured`; los únicos supuestos sobre la API están en `ENDPOINTS`, `_headers` y
+  `_mapPlayer/_mapMoney/_mapStats`). Default: girox y ganamos HABILITADAS, ganamos con
+  `externalUrl` https://www.ganamosvip.me, `askMode:'always'`, timeout 10 min, default girox.
+- **Auto-carga hgcash partida en dos:** `hgcashAutoCarga` (claims, sombra, mínimo) → ahora decide con
+  `platforms.decideForDeposit`: con 2+ habilitadas **pregunta** (`_platformAskUser`: movimiento y
+  comprobante → `awaiting_platform`, mensaje `/sys_platform_choice` con `metadata.kind='platform_choice'`
+  + botones en la PWA, push si está offline, nota interna, socket `platform_choice_pending`); si no,
+  carga directo. `_hgcashCreditToPlatform({platformId})` = la segunda mitad de antes (candado
+  `HgcashCharge` por coelsa, red de seguridad, `adapter.depositToUser` con la MISMA reference
+  `vip-hg-*`, Transaction con `platform`, mensaje, SLA) + guarda `User.lastPlatform` y marca el
+  mensaje de botones como resuelto. **Plataforma sin API** → `_platformRedirectUser`: movimiento
+  `redirected` (consumido), `/sys_platform_redirect` con `metadata.kind='platform_link'` (botón que
+  abre el link), lastPlatform, nota interna. **Supuesto operativo:** ganamosvip.me comparte la cuenta
+  hgcash y recibe el mismo aviso por el reenvío de webhooks (#215); si no fuera así, esa carga hay que
+  hacerla MANUAL acá (el movimiento queda consumido como derivado).
+- **Resolución:** `_resolvePlatformChoice` (claim atómico `awaiting_platform → claiming`; el cliente
+  sólo puede resolver movimientos matcheados a él y sólo entre las plataformas ofrecidas; el agente
+  cualquiera válida). `POST /api/platform-choice` (cliente, authLimiter), `POST
+  /api/admin/hgcash/movements/:id/platform` (agente, depositorMiddleware), `GET
+  /api/admin/users/:id/platform-pending` (banner). **Cron `_platformChoiceTick`** (60 s, cada
+  instancia): preguntas vencidas → última plataforma elegida o default (`by:'timeout'`).
+  `hgcashConsumeOnManualDeposit` también consume `awaiting_platform` (carga manual mientras el
+  cliente no eligió) y cierra la pregunta.
+- **Carga manual** (`POST /api/admin/deposit`): `body.platform` (default: última del cliente o la
+  default); rebota 400 `platform_not_connected` si no tiene API; `adapter.*` en vez de `girox.*`;
+  `_bonusMultiplierFor(adapter)`; Transactions con `platform`; respuesta con `platform/platformLabel`.
+- **Retiros:** `PendingPayout.platform` (default girox); `POST /api/withdrawal/request` acepta
+  `platform` (rebota si no está conectada) y lee saldo con su adaptador; `_deductChipsAtConfirm` y las
+  devoluciones de retiro rechazado (`vip-payoutref-*`) usan `platforms.getAdapter(payout.platform)`.
+- **SSO** (`POST /api/platform/session`): `body.platform`; plataforma sin API → `{external:true,
+  redirectUrl: externalUrl}`; con API → `adapter.createSession` con auto-alta. Sin el campo = girox
+  (la PWA no cambió el botón CASINO: queda para cuando se conecte Ganamos, pedido del owner).
+- **Modelos:** `User.lastPlatform` + `User.platforms` (Mixed, estado por plataforma ≠ girox);
+  `Transaction.platform` (default 'girox', índice); `BankMovement` estados `awaiting_platform` /
+  `redirected` + `platform`, `platformAskedAt`, `platformChosenAt`, `platformChoiceBy`,
+  `platformChoiceMsgId`, `redirectedUrl`; `Comprobante.bankMatchStatus` ídem; `HgcashCharge.platform`.
+  `GET /api/messages/:userId` proyecta `metadata`. `USERS_LIST_FIELDS` suma `lastPlatform`.
+- **Config/endpoints de panel:** `GET /api/platforms` (auth: habilitadas + lastPlatform del que
+  pregunta), `GET/POST /api/admin/platforms` (lee cualquier rol del panel, guarda sólo admin general;
+  valida que quede ≥1 habilitada ANTES de guardar). Seeds `/sys_platform_choice` y
+  `/sys_platform_redirect` (editables en COMANDOS). Boot loguea la radiografía `🎮 Plataformas (...)`.
+- **PWA (SW v117):** `chat.js` renderiza `metadata` (`_renderPlatformWidget`: botones por plataforma /
+  botón de link / "✅ Elegiste X" si ya se resolvió), `choosePlatform` (POST, 409 = ya resuelto →
+  muestra el resultado), `markPlatformChoiceResolved`; `socket.js` escucha `platform_choice_resolved`;
+  CSS `.plat-*` en `chat.css`.
+- **Panel (admin-sw v56):** modal de depósito con selector "🎮 Plataforma donde cargar" (sólo
+  conectadas; oculto con una sola; preselecciona lastPlatform/default; hint de las sin API); banner
+  violeta en el chat "TRANSFERENCIA RECIBIDA — esperando que el cliente elija" con botones para que
+  el agente elija (`loadPlatformBanner` en `loadUserInfo` + sockets); Configuración → card
+  "🎮 Plataformas de juego" (modo de pregunta, espera, default, por plataforma: habilitada / emoji /
+  nombre / link / estado API); etiquetas hgcash "Esperando elección" y "Derivado".
+- **Sigue sólo girox (no tocado, a propósito):** reembolsos semanal/mensual y acumulativo, VIP/rakeback,
+  ruleta en plata, lotes/regalos, referidos, bono de instalación, cambio de clave, alta por publicista.
+  Todos llaman `girox.*` directo. Abrirlos es la fase 3 (ver PLATFORMS.md §4.7).
+- **Validado:** `node --check` OK en server.js, los 3 adaptadores, 6 modelos, chat.js, socket.js,
+  admin.js, ambos SW; HTML del panel balanceado (684/684 divs). Sin runtime (no hay node_modules).
+  **Back necesita redeploy.** PROBAR: (1) boot → log `🎮 Plataformas`; Configuración → card con girox
+  🟢 y Ganamos 🟠 por link; (2) transferencia real → al cliente le llega el mensaje con 2 botones y al
+  agente el banner violeta; tocar Girox → carga normal + nota "Acreditado en 🎰 Girox (elección: user)";
+  (3) otra transferencia → tocar Ganamos → mensaje con botón al link, movimiento "Derivado", nada
+  cargado; (4) no tocar nada 10 min → carga sola en la última elegida; (5) agente elige desde el banner;
+  (6) carga manual: selector oculto (sólo girox conectada), Transaction con platform girox;
+  (7) poner askMode "never" → vuelve a cargar directo sin preguntar.
+
 ### 218. 📅 CRONOGRAMA: campañas programadas (fecha/hora AR), calendario mensual, tandas, rangos de días/fechas y comparativo semanal (réplica #190 de AUTOREEMBOLSOSjygactivo)
 - **Owner:** "entrar a principio de mes, preparar todas las campañas (bonos, regalos, avisos, activos,
   inactivos, fechas fuertes), revisar todo y dejar el mes completo programado". Igual en los 7 repos.

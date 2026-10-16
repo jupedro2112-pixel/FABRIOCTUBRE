@@ -59,6 +59,16 @@ VIP.socket = (function () {
             console.error('❌ Error de reconexión:', error);
         });
 
+        // Multi-plataforma: la pregunta "¿dónde querés jugar?" se resolvió (por el
+        // cliente en otro dispositivo, por el agente o por timeout) → sacar los botones.
+        VIP.state.socket.on('platform_choice_resolved', function (data) {
+            try {
+                if (data && data.messageId && VIP.chat && VIP.chat.markPlatformChoiceResolved) {
+                    VIP.chat.markPlatformChoiceResolved(data.messageId, data.platform || 'manual');
+                }
+            } catch (_) {}
+        });
+
         VIP.state.socket.on('admin_typing', function (data) {
             const typingIndicator = document.getElementById('typingIndicator');
             if (typingIndicator) {

@@ -388,6 +388,8 @@ document.addEventListener('change', function (ev) {
                         <div id="chatFireBonusBanner" style="display:none;"></div>
                         <!-- Pago/retiro pendiente del cliente (verificar y pagar) — lo llena loadUserInfo() -->
                         <div id="chatPayoutBanner" style="display:none;"></div>
+                        <!-- Multi-plataforma: transferencia recibida esperando que el cliente elija dónde jugar (loadPlatformBanner) -->
+                        <div id="chatPlatformBanner" style="display:none;"></div>
                         <!-- Etiquetas y nota interna del cliente — lo llena loadUserInfo() -->
                         <div id="chatTagsBar" style="display:none;padding:7px 14px;border-bottom:1px solid rgba(0,0,0,0.25);background:rgba(0,0,0,0.14);font-size:12px;">
                             <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
@@ -764,6 +766,42 @@ document.addEventListener('change', function (ev) {
                                 </button>
                             </div>
                             <div id="refundTiersMsg" style="font-size:12px;margin-top:8px;color:#aaa;"></div>
+                        </div>
+                        <!-- MULTI-PLATAFORMA (2026-10-16): qué plataformas se le ofrecen al cliente al cargar.
+                             Ven todos los roles del panel; guarda SOLO el admin general. -->
+                        <div class="panel-subheader" style="margin-top: 24px;" id="platformsHeader">
+                            <h3>🎮 Plataformas de juego (dónde carga el cliente)</h3>
+                        </div>
+                        <div class="cbu-form" id="platformsForm">
+                            <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 10px;">
+                                Cuando entra una transferencia y hay <b>2 o más plataformas habilitadas</b>, al cliente le llega un mensaje con
+                                botones: <b>"¿Dónde querés jugar?"</b>. Elige → se carga ahí. Una plataforma <b>sin API conectada</b> (Ganamos hoy)
+                                no carga nada acá: al cliente se le manda el <b>link</b> de esa plataforma. La API se conecta por variables de
+                                entorno (<code>GANAMOS_API_URL</code> / <code>GANAMOS_API_KEY</code>) — ver <code>docs/PLATFORMS.md</code>.
+                            </p>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                                <div class="form-group" style="flex:1;min-width:200px;">
+                                    <label>¿Cuándo preguntar?</label>
+                                    <select id="platAskMode" style="width:100%;">
+                                        <option value="always">En CADA carga (siempre pregunta)</option>
+                                        <option value="first_time">Sólo la primera vez (después usa la última elegida)</option>
+                                        <option value="never">Nunca (carga en la última elegida o la default)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex:0 0 150px;">
+                                    <label>Espera máx. (minutos)</label>
+                                    <input type="number" id="platAskTimeout" min="1" max="180" placeholder="10">
+                                </div>
+                                <div class="form-group" style="flex:0 0 180px;">
+                                    <label>Default si no elige</label>
+                                    <select id="platDefault" style="width:100%;"></select>
+                                </div>
+                            </div>
+                            <div id="platRows" style="margin-top:6px;"></div>
+                            <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+                                <button class="btn-primary" id="platSaveBtn" onclick="savePlatformsCfg()">💾 Guardar plataformas</button>
+                                <span id="platMsg" style="font-size:12px;color:#aaa;"></span>
+                            </div>
                         </div>
                         <!-- Reembolso ACUMULATIVO de por vida (ESPEC-REEMBOLSO-1GIROX, solo admin general) -->
                         <div class="panel-subheader" style="margin-top: 24px;" id="cashbackHeader">
@@ -2954,6 +2992,13 @@ document.addEventListener('change', function (ev) {
                         <button data-bonus="50">+50%</button>
                         <button data-bonus="100">+100%</button>
                     </div>
+                </div>
+                <!-- MULTI-PLATAFORMA (2026-10-16): a qué plataforma va la carga. Se completa desde
+                     GET /api/platforms al abrir el modal; con UNA sola plataforma conectada queda oculto. -->
+                <div class="form-group" id="depositPlatformGroup" style="display:none;">
+                    <label for="depositPlatform">🎮 Plataforma donde cargar:</label>
+                    <select id="depositPlatform" style="width:100%;padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.25);color:#fff;font-size:14px;"></select>
+                    <small id="depositPlatformHint" style="color:#aaa;font-size:11.5px;display:block;margin-top:4px;"></small>
                 </div>
                 <div class="form-group">
                     <label for="depositAmount">Monto ($):</label>

@@ -23,6 +23,7 @@ const hgcashChargeSchema = new mongoose.Schema({
   amount: { type: Number, default: null },
   movementId: { type: String, default: null },     // movimiento que ganó la carga
   comprobanteId: { type: String, default: null },
+  platform: { type: String, default: 'girox' },    // plataforma donde se acreditó (multi-plataforma 2026-10-16)
   createdAt: { type: Date, default: Date.now }
 }, {
   timestamps: true
