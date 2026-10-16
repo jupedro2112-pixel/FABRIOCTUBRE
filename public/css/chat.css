@@ -1449,3 +1449,7 @@ body.support-open .support-bubble { visibility: hidden; }
 .withdraw-row-btn .lr-text small { color: rgba(255,255,255,.9); opacity: 1; }
 .withdraw-row-btn .lr-auto { color: #ffd6dc; }
 .home-actions-row .withdraw-row-btn { display: flex; align-items: center; justify-content: center; text-align: left; }
+
+/* ══ #250: VIP plegado debajo de reseñas ══ */
+.info-vip-inner { margin: 0 0 10px; border: 0; background: none; padding: 0 10px 4px; }
+.info-vip-inner:empty::after { content: 'Entrá a jugar y acá vas a ver tu nivel y la escalera completa.'; display: block; color: var(--dx-muted); font-size: 12px; padding: 4px 0 8px; }

@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 250. 👑 Niveles VIP plegados debajo de reseñas en Información del servicio — SW v144
+- **Owner:** "los niveles dentro de información del servicio ponelos abajo de reseñas, mismo formato, que se
+  pueda maximizar y que no quede tan cargado".
+- El bloque VIP (`#infoVipDetail`) pasa adentro de un plegable `#infoVipWrap` igual al de reseñas, cerrado por
+  default, justo debajo de "Opiniones y dejá tu reseña"; se renderiza al abrir (`VIP.home.toggleInfoVip`).
+
 ### 249. 📲 Instalar app: Android con prompt instala DIRECTO, iPhone ve los pasos, Instagram-Android abre Chrome — SW v143
 - **Owner:** "la explicación de instalar que sea para iPhone o celulares que no pueden automático; si Android
   detecta que se puede, que al apretar el botón aparezca instalar directo".

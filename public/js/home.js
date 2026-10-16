@@ -191,6 +191,14 @@
         body.style.display = open ? '' : 'none';
         if (ch) ch.textContent = open ? '▲' : '▼';
     }
+    function toggleInfoVip() {
+        const body = _el('infoVipBody'), ch = _el('infoVipChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+        if (open) { try { renderVipDetail(); } catch (_) {} }
+    }
     function toggleInfoReviews() {
         const body = _el('infoReviewsBody'), ch = _el('infoReviewsChevron');
         if (!body) return;
@@ -222,7 +230,6 @@
             ? ('Tu nivel: <b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>' + (v.next ? ' · te faltan <b>' + _ars(v.faltaParaSubir) + '</b> jugados para ' + _esc(v.next.name) : ''))
             : (v.next ? 'Todavía sin nivel: con <b>' + _arsShort(v.next.thresholdArs) + '</b> jugados llegás a ' + _esc(v.next.emoji + ' ' + v.next.name) + ' y cobrás <b>' + _arsShort(v.next.levelUpBonusArs) + '</b>.' : '');
         box.innerHTML =
-            '<div class="info-vip-head">👑 Niveles VIP según lo que jugás</div>' +
             '<p class="info-vip-p">Todo lo que apostás suma <b>para siempre</b> (nunca bajás). Al llegar a cada nivel cobrás un <b>bono en el momento</b> y desde ahí un <b>rakeback semanal</b>: un % de todo lo que apostaste en la semana, <b>ganes o pierdas</b>, que reclamás desde tu perfil.</p>' +
             (mine ? '<p class="info-vip-mine">' + mine + '</p>' : '') +
             '<div class="vip-row vip-row-h"><span>Nivel</span><span>Llegás con</span><span>Bono</span><span>Rakeback</span></div>' + rows;
@@ -579,6 +586,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -1779,6 +1779,15 @@
                     <div id="infoReviewsSection"></div>
                 </div>
             </div>
+            <!-- #250: niveles VIP debajo de reseñas, plegados, mismo formato (lo completa home.js con la escalera real) -->
+            <div class="info-reviews-wrap" id="infoVipWrap">
+                <button type="button" class="info-reviews-head" onclick="VIP.home.toggleInfoVip()">
+                    <span>👑 Niveles VIP según lo que jugás</span><span class="info-reviews-chevron" id="infoVipChevron">▼</span>
+                </button>
+                <div id="infoVipBody" style="display:none;">
+                    <div class="info-vip info-vip-inner" id="infoVipDetail"></div>
+                </div>
+            </div>
             <!-- ⚠️ Mantener esto al día con la realidad del negocio: reembolsos por
                  RANGOS 3/6/10 (no los 20/10/5 viejos), niveles VIP con rakeback,
                  bono de instalación = 100% en la próxima carga (no $5.000). -->
@@ -1821,9 +1830,6 @@
                     <div class="info-card-desc">Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</div>
                 </div>
             </div>
-            <!-- #237: niveles VIP según lo que jugás — detallado pero resumido (lo completa home.js con la
-                 escalera real de /api/vip/status). -->
-            <div class="info-vip" id="infoVipDetail"></div>
             <!-- Test de app + notificaciones. Render desde js/apptest.js -->
             <div id="infoDiagnostics"></div>
             <div class="modal-actions" style="margin-top: 20px;">
