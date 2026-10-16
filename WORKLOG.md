@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 247. 💳 Tarjeta de carga sin paso 2; "Cargar aquí · adjuntar comprobante · se carga automáticamente" — SW v141
+- **Owner:** "sacá el paso 2 del principal y ponelo en Cargar aquí: dejá 'adjuntar comprobante' y abajo 'se
+  carga automáticamente'".
+- La tarjeta queda "Cargá acá · automático" + "① Transferí a este CBU". El botón verde de la fila de abajo
+  pasa a tres líneas: **Cargar aquí** / adjuntar comprobante / se carga automáticamente.
+
 ### 246. 🧪 Prueba = página principal de cada casino; burbuja con ícono de chat y la ✕ adentro — SW v140
 - **Owner:** "que entre a la página principal de cada casino"; "en la burbuja cambiá el logo por un ícono de
   soporte chat y la X dejala más adentro del círculo, que se entienda que es para sacarlo de la vista".

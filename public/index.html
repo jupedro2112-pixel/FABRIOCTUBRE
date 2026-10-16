@@ -990,9 +990,9 @@
 
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
                 <div class="home-card al-card" id="autoLoadCard">
-                    <div class="home-card-title">Cargá en 2 pasos <span class="hc-tag">automático</span></div>
-                    <!-- PASO 1: transferir -->
-                    <div class="al-step">
+                    <div class="home-card-title">Cargá acá <span class="hc-tag">automático</span></div>
+                    <!-- #247: un solo paso en la tarjeta (el comprobante va en el botón "Cargar aquí" de abajo) -->
+                    <div class="al-step al-step-only">
                         <span class="al-n">1</span>
                         <div class="al-step-body">
                             <div class="al-step-t">Transferí a este CBU</div>
@@ -1000,13 +1000,6 @@
                             <div class="al-meta"><span id="alBank">…</span><span class="al-dot">·</span><span id="alTitular">…</span></div>
                         </div>
                     </div>
-                    <!-- PASO 2: comprobante -->
-                    <div class="al-step">
-                        <span class="al-n">2</span>
-                        <div class="al-step-body">
-                            <div class="al-step-t">Mandá la foto del comprobante</div>
-                            <div class="al-meta">Tocá <b>📎 Cargar aquí</b> (abajo) y adjuntá la foto. La carga entra sola en minutos.</div>
-                        </div>
                     </div>
                 </div>
 
@@ -1046,7 +1039,7 @@
             <div class="home-actions-row">
                 <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
-                    <span class="lr-text"><b>Cargar aquí</b><small>adjuntar comprobante</small></span>
+                    <span class="lr-text"><b>Cargar aquí</b><small>adjuntar comprobante</small><small class="lr-auto">se carga automáticamente</small></span>
                 </button>
                 <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">Retirar mi premio</button>
             </div>

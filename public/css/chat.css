@@ -1437,3 +1437,8 @@ body.support-open .support-bubble { visibility: hidden; }
 .support-bubble.compact .sb-ico { display: block; }
 .support-bubble.compact .sb-min { position: absolute; top: -2px; right: -2px; width: 20px; height: 20px; margin: 0; font-size: 11px; line-height: 1; border-radius: 50%; background: #fff; color: #ff1744; border: 2px solid #ff1744; box-shadow: 0 2px 6px rgba(0,0,0,.45); z-index: 2; }
 .support-bubble.compact .sb-main .support-unread { top: auto; bottom: -4px; right: -4px; }
+
+/* ══ #247: sin paso 2 en la tarjeta; el botón Cargar aquí lo explica ══ */
+.al-step-only { border-bottom: 0 !important; padding-bottom: 2px; }
+.lr-auto { color: #0b3d1d; opacity: .85; }
+.load-row-btn { padding: 8px 10px; }
