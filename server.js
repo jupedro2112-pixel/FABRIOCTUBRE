@@ -332,7 +332,8 @@ const CSP_HEADER_VALUE = [
   // el iframe y el recuadro queda en blanco.
   // Se listan las dos formas del dominio porque el link de SSO puede volver con o sin
   // `www` según cómo esté configurado el casino.
-  "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://www.facebook.com https://1girox.com https://*.1girox.com",
+  // #260: Ganamos (sin API todavía) se abre embebido en /jugar.html → su dominio también va acá.
+  "frame-src 'self' https://*.firebaseapp.com https://*.google.com https://www.facebook.com https://1girox.com https://*.1girox.com https://ganamosvip.me https://*.ganamosvip.me",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",

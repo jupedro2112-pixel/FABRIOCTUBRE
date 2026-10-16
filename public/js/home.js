@@ -121,14 +121,8 @@
         const test = !!(opts && opts.test);
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', name: platformId };
-        if (test) {
-            // #246 (owner): "que entre a la página principal de cada casino" → la home pública de la
-            // plataforma (playUrl / link externo), sin login único.
-            _embedExternal({ id: p.id, name: p.name, playUrl: p.playUrl || p.externalUrl, externalUrl: p.externalUrl });
-        } else if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
-        else _embedExternal(p);
-        _setCasinoTestMode(test);
-        setTimeout(() => _setCasinoTestMode(test), 50); // por si el overlay se creó recién
+        // #260: siempre aparte, en /jugar.html (prueba = home pública; normal = login por API).
+        openPlatformTab(p.id, { test });
     }
     function renderSupportTests() {
         const box = _el('supportTests');
@@ -479,8 +473,40 @@
         }
     }
 
-    // Entrar a una plataforma: con API → SSO embebido de siempre; sin API → su link.
-    function playOn(platformId) {
+    // #260 (owner): el casino se abre APARTE, en una pestaña propia con nuestra barra "‹ Volver a la
+    // app" arriba (/jugar.html) y el casino ocupando el resto. La pestaña se abre PRIMERO (dentro del
+    // gesto del usuario, si no el bloqueador de pop-ups la mata) y recién después se pide el link de
+    // login único por API (un solo uso, 60 s). Sin API (Ganamos) → su web. test:true → la home pública.
+    async function openPlatformTab(platformId, opts) {
+        const test = !!(opts && opts.test);
+        const list = (_platforms && _platforms.platforms) || [];
+        const p = list.find(x => x.id === platformId) || { id: platformId, name: platformId, connected: platformId === 'girox', playUrl: null, externalUrl: null };
+        let win = null;
+        try {
+            win = window.open('', '_blank');
+            if (win && win.document) win.document.write('<!doctype html><meta charset="utf-8"><title>Entrando…</title><body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#06070d;color:#ff6b6b;font-family:system-ui,sans-serif;font-size:18px;font-weight:800">🎰 Entrando a ' + _esc(p.name) + '…</body>');
+        } catch (_) { win = null; }
+        let url = null, err = null;
+        try {
+            if (test || !p.connected) {
+                url = p.playUrl || p.externalUrl || null;
+                if (!url) err = (p.name || 'Esa plataforma') + ' todavía no está disponible.';
+            } else {
+                VIP.ui._casinoPlatform = p.id;
+                let r = await VIP.ui._fetchCasinoSession(20000);
+                if (!r.ok && r.retryable) { await new Promise(res => setTimeout(res, 1500)); r = await VIP.ui._fetchCasinoSession(20000); }
+                if (r.ok) url = r.url; else err = r.error || 'No pudimos abrirte el casino. Intentá de nuevo.';
+            }
+        } catch (_) { err = 'Sin conexión. Intentá de nuevo.'; }
+        if (!url) { try { if (win && !win.closed) win.close(); } catch (_) {} VIP.ui.showToast(err || 'No se pudo abrir', 'error'); return; }
+        const wrapper = '/jugar.html?p=' + encodeURIComponent(p.id) + '&n=' + encodeURIComponent(p.name || 'Casino') + '&app=' + encodeURIComponent(location.origin + '/') + '#u=' + encodeURIComponent(url);
+        if (win && !win.closed) win.location.href = wrapper;
+        else location.href = wrapper; // pop-up bloqueado → misma pestaña ("Volver" trae de vuelta)
+    }
+
+    // Entrar a una plataforma: ahora SIEMPRE aparte (#260).
+    function playOn(platformId) { openPlatformTab(platformId); return; }
+    function _playOnEmbedded(platformId) {
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', externalUrl: null, name: platformId };
         if (p.connected) {
@@ -520,14 +546,9 @@
         ).join('');
     }
     function switchPlatform(platformId) {
-        const list = (_platforms && _platforms.platforms) || [];
-        const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox' };
-        if (p.connected) {
-            if ((VIP.ui._casinoPlatform || 'girox') === p.id && VIP.ui._casinoOpen) return; // ya está
-            try { VIP.ui.enterCasino(p.id); } catch (_) {}
-            return;
-        }
-        playOn(platformId);
+        // #260: los tabs del recuadro embebido (si alguien lo abre por otro camino) también van aparte.
+        try { VIP.ui.closeCasinoFrame(); } catch (_) {}
+        openPlatformTab(platformId);
     }
     try {
         const _origShowFrame = VIP.ui && VIP.ui._showCasinoFrame;
@@ -668,6 +689,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

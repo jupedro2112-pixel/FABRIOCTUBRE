@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-16
 
+### 260. 🪟 El casino se abre APARTE con barra "‹ Volver a la app" (/jugar.html) — SW v153
+- **Owner:** "que se abra aparte pero dejame arriba de esa página un 'volver a la página', ¿se puede?". Sobre
+  la web oficial no se puede poner nada (otro dominio), así que se abre una PÁGINA NUESTRA en pestaña nueva:
+  `public/jugar.html` = barra arriba ("‹ Volver a la app" → `window.close()` o vuelve a la app, nombre de la
+  plataforma, "para cargar volvé a la app") + el casino ocupando el resto. Si no termina de cargar en 15 s,
+  botón "Abrir en pantalla completa" (navega al casino top-level).
+- `VIP.home.openPlatformTab(id, {test})`: abre la pestaña PRIMERO (gesto del usuario, anti pop-up) con un
+  placeholder, pide el link de login único por API (`_fetchCasinoSession` con reintento) y navega la pestaña
+  a `/jugar.html?p=&n=&app=#u=<link>`; sin API (Ganamos) → su web; `test:true` → home pública. Lo usan
+  "¿Dónde querés jugar?" (`playOn`), "Probá las plataformas" (`openInApp`) y `switchPlatform`. El recuadro
+  embebido (`enterCasino`/overlay) queda en el código pero ya no se usa desde el home.
+- **CSP `frame-src`** suma `ganamosvip.me` (sin esto el iframe de Ganamos quedaba bloqueado — también pasaba con
+  el embebido anterior). **Back necesita redeploy** por la CSP; la pestaña nueva ya funciona para Girox.
+- Trade-off aceptado: adentro del casino no hay burbuja de carga rápida; para cargar se vuelve a la app.
+
 ### 259. 📲 Instalar en Android sin prompt: info con botón "Apretá acá para abrir en Google Chrome" — SW v152
 - **Owner:** "si es Android que instale directo; si está en otro navegador, en la info generá un link de acceso
   directo y decile 'abrí este link en Google Chrome para instalar de forma directa' con un botón 'apretá
