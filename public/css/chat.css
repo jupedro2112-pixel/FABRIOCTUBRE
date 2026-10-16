@@ -1508,3 +1508,8 @@ body.support-open .support-bubble { visibility: hidden; }
 
 /* ══ #255: "Recomendado" en Girox ══ */
 .plat-reco { position: absolute; top: 6px; left: 8px; font: 900 8px var(--dx-font); letter-spacing: .9px; text-transform: uppercase; color: #fff; background: var(--dx-accent); border-radius: 4px; padding: 2px 6px; box-shadow: 0 2px 8px rgba(255,23,68,.4); }
+
+/* ══ #256: escalera VIP sin plata — nivel + % ══ */
+.vip-lvl-3 { grid-template-columns: 18px 1.5fr 1fr; }
+.vip-lvl-name small { font: 700 8.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; color: var(--dx-cyan); margin-left: 4px; }
+.vip-row-2 { grid-template-columns: 1.5fr 1fr; }

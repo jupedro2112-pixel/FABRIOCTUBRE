@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 256. 👑 Niveles VIP sin plata a la vista: sólo nivel y porcentajes — SW v150
+- **Owner:** "la aclaración de cuánto falta que no figure, sólo el porcentaje; en la información igual: sólo niveles
+  y %, la plata es interna".
+- Tarjeta del home: "próximo nivel: X" + % + barra; la escalera muestra ✓/🔒, nivel y "N% rakeback" (sin
+  "$ jugados" ni "+$ bono"). El detalle de Info (hoy oculto) también quedó sin montos.
+
 ### 255. 🏷️ "Recomendado" en rojo dentro del recuadro de Girox — SW v149
 - **Owner:** "en el inicio poné como recomendable elegir Girox: en rojo chiquito, en el mismo recuadro, 'Recomendado'".
 - `_platBtn` agrega la etiqueta `.plat-reco` (arriba a la izquierda, roja, 8 px) sólo en la tarjeta de Girox.

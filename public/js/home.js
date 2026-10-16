@@ -226,19 +226,18 @@
         if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) { box.innerHTML = ''; return; }
         const cur = v.level && v.level.idx;
         const rows = v.levels.map(l =>
-            '<div class="vip-row' + (cur === l.idx ? ' is-cur' : '') + '">' +
+            '<div class="vip-row vip-row-2' + (cur === l.idx ? ' is-cur' : '') + '">' +
             '<span class="vip-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji || '') + ' ' + _esc(l.name) + '</span>' +
-            '<span class="vip-th">' + _arsShort(l.thresholdArs) + ' jugados</span>' +
-            '<span class="vip-bonus">+' + _arsShort(l.levelUpBonusArs) + '</span>' +
-            '<span class="vip-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% sem.</span>' +
+            '<span class="vip-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span>' +
             '</div>').join('');
+        const pct = Math.round(Math.max(0, Math.min(100, Number(v.progressPct) || 0)));
         const mine = v.level
-            ? ('Tu nivel: <b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>' + (v.next ? ' · te faltan <b>' + _ars(v.faltaParaSubir) + '</b> jugados para ' + _esc(v.next.name) : ''))
-            : (v.next ? 'Todavía sin nivel: con <b>' + _arsShort(v.next.thresholdArs) + '</b> jugados llegás a ' + _esc(v.next.emoji + ' ' + v.next.name) + ' y cobrás <b>' + _arsShort(v.next.levelUpBonusArs) + '</b>.' : '');
+            ? ('Tu nivel: <b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>' + (v.next ? ' · <b>' + pct + '%</b> hacia ' + _esc(v.next.name) : ''))
+            : (v.next ? 'Todavía sin nivel · <b>' + pct + '%</b> hacia ' + _esc(v.next.emoji + ' ' + v.next.name) : '');
         box.innerHTML =
             '<p class="info-vip-p">Todo lo que apostás suma <b>para siempre</b> (nunca bajás). Al llegar a cada nivel cobrás un <b>bono en el momento</b> y desde ahí un <b>rakeback semanal</b>: un % de todo lo que apostaste en la semana, <b>ganes o pierdas</b>, que reclamás desde tu perfil.</p>' +
             (mine ? '<p class="info-vip-mine">' + mine + '</p>' : '') +
-            '<div class="vip-row vip-row-h"><span>Nivel</span><span>Llegás con</span><span>Bono</span><span>Rakeback</span></div>' + rows;
+            '<div class="vip-row vip-row-2 vip-row-h"><span>Nivel</span><span>Rakeback</span></div>' + rows;
     }
     // Cuando se abre "Información del servicio", refrescar el detalle VIP con lo último cargado.
     try { document.addEventListener('click', (e) => { if (e.target && e.target.closest && e.target.closest('#infoBtn')) setTimeout(renderVipDetail, 60); }, true); } catch (_) {}
@@ -287,20 +286,20 @@
         const pct = Math.max(0, Math.min(100, Number(v.progressPct) || 0));
         const lvl = _el('vipHeadLvl'), nx = _el('vipHeadNext'), pc = _el('vipHeadPct'), fill = _el('vipBarFill');
         if (lvl) lvl.innerHTML = v.level ? ('<b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>') : 'Nivel VIP <b>— sin nivel aún</b>';
-        if (nx) nx.textContent = v.next ? ('te faltan ' + _ars(v.faltaParaSubir) + ' jugados para ' + v.next.name) : 'nivel máximo alcanzado';
+        if (nx) nx.textContent = v.next ? ('próximo nivel: ' + v.next.name) : 'nivel máximo alcanzado';
         if (pc) pc.textContent = v.next ? (Math.round(pct) + '%') : '100%';
         if (fill) { fill.style.width = (v.next ? pct : 100) + '%'; if (v.next && v.next.color) fill.style.background = 'linear-gradient(90deg, ' + (v.level && v.level.color || '#ff2d55') + ', ' + v.next.color + ')'; }
         const body = _el('vipCardBody');
         if (body) {
-            body.innerHTML = '<p class="vip-body-p">Todo lo que apostás suma para siempre. Al llegar a cada nivel se <b>desbloquea</b> su bono (se acredita solo) y su rakeback semanal.</p>' +
+            // #256 (owner): sin plata a la vista — sólo niveles y porcentajes (los montos son internos).
+            body.innerHTML = '<p class="vip-body-p">Cuanto más jugás, más subís. Cada nivel que alcanzás se <b>desbloquea</b> con su bono y su <b>rakeback semanal</b> (% de lo que apostás, ganes o pierdas).</p>' +
                 v.levels.map(l => {
                     const reached = l.idx <= curIdx;
                     const isNext = v.next && l.idx === v.next.idx;
-                    return '<div class="vip-lvl' + (reached ? ' on' : '') + (isNext ? ' next' : '') + '">' +
+                    return '<div class="vip-lvl vip-lvl-3' + (reached ? ' on' : '') + (isNext ? ' next' : '') + '">' +
                         '<span class="vip-lvl-st">' + (reached ? '✓' : '🔒') + '</span>' +
-                        '<span class="vip-lvl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + '</span>' +
-                        '<span class="vip-lvl-th">' + _arsShort(l.thresholdArs) + ' jugados</span>' +
-                        '<span class="vip-lvl-win">+' + _arsShort(l.levelUpBonusArs) + ' · ' + Number(l.rakebackPct).toLocaleString('es-AR') + '% sem.</span>' +
+                        '<span class="vip-lvl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + (isNext ? ' <small>próximo</small>' : '') + '</span>' +
+                        '<span class="vip-lvl-win">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span>' +
                         '</div>';
                 }).join('');
         }
