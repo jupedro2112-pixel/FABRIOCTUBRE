@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-16
 
+### 255. 🏷️ "Recomendado" en rojo dentro del recuadro de Girox — SW v149
+- **Owner:** "en el inicio poné como recomendable elegir Girox: en rojo chiquito, en el mismo recuadro, 'Recomendado'".
+- `_platBtn` agrega la etiqueta `.plat-reco` (arriba a la izquierda, roja, 8 px) sólo en la tarjeta de Girox.
+
 ### 254. ℹ️ Info del servicio: app+notificaciones en una línea arriba, título chico, Ruleta diaria plegada en vez de VIP — SW v148
 - **Owner:** "poné arriba lo de notificaciones y app en una línea; el título más chico; eso arriba de reseñas sin
   ocupar tanto; la parte de niveles VIP reemplazala por la ruleta diaria y sacá el recuadro de ruleta".

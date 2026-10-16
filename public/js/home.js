@@ -398,6 +398,8 @@
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
             '<button type="button" class="plat-play-btn plat-' + _esc(p.id) + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
             '<span class="plat-check">' + (isPref ? '✓' : '') + '</span>' +
+            // #255 (owner): Girox lleva un "Recomendado" chiquito en rojo dentro del recuadro.
+            (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') +
             logo +
             '<span class="plat-play-name">' + label + '</span>' +
             '<span class="plat-play-sub">' + (isPref ? 'Elegida · tus cargas van acá' : 'Tocá para elegir') + '</span>' +

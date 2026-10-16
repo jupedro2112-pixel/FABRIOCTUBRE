@@ -1505,3 +1505,6 @@ body.support-open .support-bubble { visibility: hidden; }
 .info-roulette p { margin: 0 0 8px; color: var(--dx-muted); font-size: 12px; line-height: 1.45; }
 .info-roulette p b { color: var(--dx-text); }
 .info-roulette-btn { width: 100%; background: var(--dx-accent); color: #06070d; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px; font: 900 12px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 18px rgba(255,23,68,.28); }
+
+/* ══ #255: "Recomendado" en Girox ══ */
+.plat-reco { position: absolute; top: 6px; left: 8px; font: 900 8px var(--dx-font); letter-spacing: .9px; text-transform: uppercase; color: #fff; background: var(--dx-accent); border-radius: 4px; padding: 2px 6px; box-shadow: 0 2px 8px rgba(255,23,68,.4); }
