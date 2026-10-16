@@ -112,6 +112,13 @@
     }
 
     // ---------------- INFO DEL SERVICIO (#237): reseñas plegadas + niveles VIP ----------------
+    function toggleRefHow() {
+        const body = _el('refHowBody'), ch = _el('refHowChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+    }
     function toggleInfoReviews() {
         const body = _el('infoReviewsBody'), ch = _el('infoReviewsChevron');
         if (!body) return;
@@ -471,6 +478,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow,
         get platformsData() { return _platforms; } };
 })();

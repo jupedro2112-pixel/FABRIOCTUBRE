@@ -1329,3 +1329,31 @@ body.support-open .support-bubble { visibility: hidden; }
 .vip-bonus { color: var(--dx-money); font-weight: 800; font-variant-numeric: tabular-nums; }
 .vip-rake { color: #69f0ae; font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
 @media (max-width: 420px) { .vip-row { grid-template-columns: 1.2fr 1fr .8fr .7fr; font-size: 10.5px; gap: 4px; padding: 5px 6px; } }
+
+/* ══ #238: fila Cargar aquí (adjuntar) + Retirar mi premio (rojo) ══ */
+.home-actions-row { display: flex; gap: 6px; margin: 6px 8px; }
+.home-actions-row .withdraw-row-btn { flex: 1; margin: 0 !important; }
+.load-row-btn {
+    flex: 1.15; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; cursor: pointer; color: #052e16;
+    background: linear-gradient(135deg, #00c853 0%, #00e676 55%, #69f0ae 100%); border-radius: 12px; clip-path: var(--dx-cut-sm);
+    padding: 10px 10px; box-shadow: 0 0 0 1px rgba(0,230,118,.35), 0 10px 26px rgba(0,230,118,.3); animation: wdGlow 2.6s ease-in-out infinite;
+}
+.load-row-btn:active { transform: scale(.98); }
+.lr-text { display: flex; flex-direction: column; line-height: 1.05; text-align: left; }
+.lr-text b { font: 900 13px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; }
+.lr-text small { font: 700 9px var(--dx-font); letter-spacing: .3px; opacity: .85; }
+/* Retirar: ROJO (el owner lo quiere así; el verde pasa a "Cargar aquí") */
+.withdraw-row-btn {
+    background: linear-gradient(135deg, #ff1744 0%, #ff3d5a 55%, #ff6b6b 100%) !important; color: #fff !important;
+    box-shadow: 0 0 0 1px rgba(255,23,68,.35), 0 10px 26px rgba(255,23,68,.32) !important; animation: none !important;
+    padding: 10px 10px !important; font-size: 12px !important;
+}
+
+/* ══ #239: referidos — "cómo funciona" plegado, el resto en una pantalla ══ */
+.ref-how-wrap { border: 1px solid var(--dx-border); border-radius: 12px; overflow: hidden; margin: 0 0 12px; background: rgba(255,255,255,.03); }
+.ref-how-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: 0; padding: 9px 12px; cursor: pointer; color: var(--dx-text); font: 800 11px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; text-align: left; }
+.ref-how-chevron { color: var(--dx-cyan); font-weight: 900; }
+#refHowBody { padding: 0 10px 4px; }
+#refHowBody > div { margin-bottom: 10px !important; }
+#referralModal .modal-header h2 { font-size: 16px; }
+#referralModal .modal-header p { font-size: 12px; }

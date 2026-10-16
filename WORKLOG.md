@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-16
 
+### 239. 🤝 Referidos: "¿Cómo funciona y cuándo cobro?" plegado, el resto en una pantalla — SW v135
+- **Owner:** "en referidos veo mucha info; el cómo funciona adentro pero con deslizante y sin maximizar, así lo
+  otro se ve en una pantalla sin deslizar".
+- Los bloques "💡 ¿Cómo funciona?" (3 pasos + ejemplo) y "⏰ ¿Cuándo cobro?" del modal de referidos pasan
+  adentro de un plegable `#refHowBody` (cerrado; `VIP.home.toggleRefHow`). Quedan a la vista: código y
+  link, las 4 estadísticas, período actual e historial. Ids intactos (ui.js los sigue llenando).
+
+### 238. 📎 Fila "Cargar aquí (adjuntar comprobante)" + "Retirar mi premio" en rojo — SW v134
+- **Owner:** "enviar comprobante en la línea de retirar premio; retirar en rojo; que diga 'Cargar aquí
+  (adjuntar comprobante)' con el signo de adjuntar".
+- `.home-actions-row`: izquierda botón VERDE `#loadHereBtn` con ícono de clip "Cargar aquí · adjuntar
+  comprobante" (`VIP.autoload.sendReceipt` → selector de foto del chat); derecha `#withdrawChatBtn` en
+  ROJO. El paso 2 de la tarjeta de carga ya no tiene botón: dice "Tocá 📎 Cargar aquí (abajo) y adjuntá la
+  foto".
+
 ### 237. 👑 Info del servicio: niveles VIP detallados abajo, reseñas plegadas arriba, todo en una hoja — SW v133
 - **Owner:** "detallá cómo funcionan los niveles VIP según la carga en por qué elegirnos, abajo de los recuadros,
   detallado pero resumido; centrá todo en una hoja principal; la parte de dejar tu reseña arriba con

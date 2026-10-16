@@ -1003,8 +1003,7 @@
                         <span class="al-n">2</span>
                         <div class="al-step-body">
                             <div class="al-step-t">Mandá la foto del comprobante</div>
-                            <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">Enviar comprobante</button>
-                            <div class="al-meta">La carga entra sola en minutos.</div>
+                            <div class="al-meta">Tocá <b>📎 Cargar aquí</b> (abajo) y adjuntá la foto. La carga entra sola en minutos.</div>
                         </div>
                     </div>
                 </div>
@@ -1040,7 +1039,15 @@
 
             <!-- Retirar mi premio: queda FUERA de #homePanel, así sigue
                  visible aunque se oculte el menú. -->
-            <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">Retirar mi premio</button>
+            <!-- #238 (owner): "enviar comprobante en la línea de retirar premio; retirar en rojo; 'Cargar aquí
+                 (adjuntar comprobante)' con el signo de adjuntar". -->
+            <div class="home-actions-row">
+                <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
+                    <span class="lr-text"><b>Cargar aquí</b><small>adjuntar comprobante</small></span>
+                </button>
+                <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">Retirar mi premio</button>
+            </div>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
             <div class="home-bottom-bar">
@@ -4280,6 +4287,13 @@
                 <p>Invitá amigos y cobrá <strong style="color:#d4af37;">todos los meses el 8%</strong> de su actividad — sin límite de referidos</p>
             </div>
             <div id="referralContent">
+                <!-- #239 (owner): "en referidos veo mucha info: el cómo funciona adentro de un deslizante, sin
+                     maximizar, así todo lo otro se ve en una pantalla". -->
+                <div class="ref-how-wrap">
+                    <button type="button" class="ref-how-head" onclick="VIP.home.toggleRefHow()">
+                        <span>💡 ¿Cómo funciona y cuándo cobro?</span><span class="ref-how-chevron" id="refHowChevron">▼</span>
+                    </button>
+                    <div id="refHowBody" style="display:none;">
                 <!-- Cómo funciona, en 3 pasos (pedido del owner 2026-08-03: que sea
                      BIEN explicativo — antes solo había un microcopy chiquito) -->
                 <div style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:14px;margin-bottom:16px;">
@@ -4300,6 +4314,14 @@
                     </div>
                     <div style="font-size:11px;color:#999;line-height:1.5;margin-top:10px;border-top:1px solid rgba(212,175,55,0.15);padding-top:8px;">
                         📌 La comisión se calcula al inicio de cada mes sobre la actividad del mes anterior y se acredita sola. Ejemplo: si tus referidos pierden $100.000 en el mes, vos cobrás <strong style="color:#d4af37;">$8.000</strong>. No hay límite de referidos ni de ganancia.
+                    </div>
+                </div>
+                <!-- Aclaración de los cortes de pago -->
+                <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:10px;padding:12px;margin-bottom:16px;">
+                    <p style="color:#b0b0b0;font-size:11px;margin:0;line-height:1.6;">
+                        ⏰ <strong style="color:#d4af37;">¿Cuándo cobro?</strong> Al inicio de cada mes se calcula lo del mes anterior y se acredita solo. Si un referido sigue jugando después de un pago, lo nuevo entra en el corte siguiente — nunca se pierde nada.
+                    </p>
+                </div>
                     </div>
                 </div>
                 <!-- Código y link -->
@@ -4348,12 +4370,6 @@
                         <span style="color:#b0b0b0;font-size:12px;">Próxima acreditación:</span>
                         <span id="referralCreditDate" style="color:#888;font-size:11px;">—</span>
                     </div>
-                </div>
-                <!-- Aclaración de los cortes de pago -->
-                <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:10px;padding:12px;margin-bottom:16px;">
-                    <p style="color:#b0b0b0;font-size:11px;margin:0;line-height:1.6;">
-                        ⏰ <strong style="color:#d4af37;">¿Cuándo cobro?</strong> Al inicio de cada mes se calcula lo del mes anterior y se acredita solo. Si un referido sigue jugando después de un pago, lo nuevo entra en el corte siguiente — nunca se pierde nada.
-                    </p>
                 </div>
                 <!-- Historial agrupado por período -->
                 <div>
