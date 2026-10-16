@@ -65,6 +65,12 @@
         });
     }
     // #243: sacar la burbuja → queda el círculo de soporte arriba, al lado del fueguito (sólo en la sesión).
+    // #248: tocar el círculo de arriba vuelve a mostrar la burbuja movible (y la deja abierta al chat).
+    function restoreBubble() {
+        const b = _el('supportBubble'); if (b) b.style.display = '';
+        const h = _el('headerSupportBtn'); if (h) h.style.display = 'none';
+        _paintBadge();
+    }
     function dismissBubble(ev) {
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         const b = _el('supportBubble'); if (b) b.style.display = 'none';
@@ -546,6 +552,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

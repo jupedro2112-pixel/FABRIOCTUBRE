@@ -498,7 +498,7 @@
                  app.js / fire.js / el inline de FCM, que reescribe el innerHTML de #notificationBtn). -->
             <button class="tb-circle tb-circle-plain notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
             <button class="tb-circle tb-circle-plain fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-            <button type="button" class="tb-circle tb-circle-plain tb-support" id="headerSupportBtn" style="display:none;" title="Soporte en vivo" onclick="VIP.home.openSupport()"><img src="/images/soporte-1girox.png" alt="Soporte" id="headerSupportImg"><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></button>
+            <button type="button" class="tb-circle tb-circle-plain tb-support" id="headerSupportBtn" style="display:none;" title="Volver a mostrar el soporte en vivo" onclick="VIP.home.restoreBubble()"><img src="/images/soporte-1girox.png" alt="Soporte" id="headerSupportImg"><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></button>
             <button type="button" class="tb-circle" title="Cambiar mi contraseña" onclick="VIP.home.openChangePassword()">
                 <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="14" r="4.2"/><path d="M11 11 20.5 1.5M16 6l2.5 2.5M13.5 8.5 16 11"/></svg></span><span class="tb-circle-lbl">Clave</span>
             </button>
@@ -1000,7 +1000,6 @@
                             <div class="al-meta"><span id="alBank">…</span><span class="al-dot">·</span><span id="alTitular">…</span></div>
                         </div>
                     </div>
-                    </div>
                 </div>
 
                 <!-- Soporte por Telegram, abajo de Jugá Aquí. 🪦 Acá también vivía el
@@ -1041,7 +1040,7 @@
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
                     <span class="lr-text"><b>Cargar aquí</b><small>adjuntar comprobante</small><small class="lr-auto">se carga automáticamente</small></span>
                 </button>
-                <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">Retirar mi premio</button>
+                <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio"><span class="lr-text"><b>Retirar mi premio</b><small>completá tus datos</small><small class="lr-auto">se retira automáticamente</small></span></button>
             </div>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->

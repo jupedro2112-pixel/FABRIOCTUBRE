@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 248. 💸 Retirar "completá tus datos · se retira automáticamente"; el círculo de arriba vuelve a mostrar la burbuja; fix HTML — SW v142
+- **Owner:** "en retiro lo mismo: completando los datos poné 'se retira automáticamente'"; "el botón de soporte
+  cuando lo sacás que quede arriba pero si lo vuelvo a abrir que vuelva a aparecer como círculo movible".
+- Botón Retirar en tres líneas: **Retirar mi premio** / completá tus datos / se retira automáticamente.
+  `#headerSupportBtn` ahora llama `VIP.home.restoreBubble()`: reaparece la burbuja movible y el círculo se
+  esconde (el chat se abre desde la burbuja).
+- **Fix:** el #247 había dejado un `</div>` de más en la tarjeta de carga (cerraba `.home-dash` antes de tiempo).
+  Balance de divs verificado.
+
 ### 247. 💳 Tarjeta de carga sin paso 2; "Cargar aquí · adjuntar comprobante · se carga automáticamente" — SW v141
 - **Owner:** "sacá el paso 2 del principal y ponelo en Cargar aquí: dejá 'adjuntar comprobante' y abajo 'se
   carga automáticamente'".

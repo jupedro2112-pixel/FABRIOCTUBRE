@@ -1442,3 +1442,10 @@ body.support-open .support-bubble { visibility: hidden; }
 .al-step-only { border-bottom: 0 !important; padding-bottom: 2px; }
 .lr-auto { color: #0b3d1d; opacity: .85; }
 .load-row-btn { padding: 8px 10px; }
+
+/* ══ #248: Retirar en dos líneas como Cargar aquí ══ */
+.withdraw-row-btn .lr-text { align-items: flex-start; }
+.withdraw-row-btn .lr-text b { font-size: 12.5px; }
+.withdraw-row-btn .lr-text small { color: rgba(255,255,255,.9); opacity: 1; }
+.withdraw-row-btn .lr-auto { color: #ffd6dc; }
+.home-actions-row .withdraw-row-btn { display: flex; align-items: center; justify-content: center; text-align: left; }
