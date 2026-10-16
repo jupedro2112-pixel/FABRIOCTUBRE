@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-16
 
+### 226. 🔑 Cambio de clave propagado a TODAS las plataformas + link de la app completo — SW v124
+- **Owner:** "si la clave se edita arriba (llave) que se cambie en Ganamos, en Girox y en la página de
+  cargas, así la gente no se marea; el link de la app se ve cortado".
+- **Back:** `_syncPasswordOtherPlatforms(user, pw, context)`: tras cualquier cambio de clave (botón llave,
+  reset por SMS, admin → todos pasan por `syncPasswordToJugaygana`) y en el primer login (sync diferido),
+  la MISMA clave se manda a cada plataforma habilitada con API conectada (hoy ninguna además de Girox;
+  Ganamos al conectar). Si el jugador no existe ahí, se crea con la clave nueva. Resultado en
+  `User.platforms.<id>.passwordSyncedAt / passwordError`; nunca frena el flujo. La local (página de
+  cargas) ya se actualizaba en el mismo endpoint.
+- **PWA:** el chip "App" ocupa su propia línea y muestra el link entero sin `https://`; "Copiar" copia la
+  URL completa (`data-full`).
+
 ### 225. 🔴 Rojo de marketing, arriba al mínimo, plataforma FIJA, "cómo funciona" separado, modales en formato nuevo — SW v123
 - **Owner:** "sacá cómo funciona de la línea de soporte en vivo y dejalo abajo para que no se mezcle; achicá
   todo lo de arriba al máximo para que la carga y las plataformas se vean sin deslizar; reembolsos a la

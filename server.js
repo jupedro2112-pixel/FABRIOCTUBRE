@@ -4556,6 +4556,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     // eso se hace sólo una vez y no en cada login.
     if (process.env.GIROX_SYNC_PASSWORD_ON_LOGIN !== '0' &&
         !isAdminRole(userObj.role) && userObj.giroxPasswordSynced !== true) {
+      // Las demás plataformas conectadas reciben la misma clave (una vez, igual que girox).
+      _syncPasswordOtherPlatforms(userObj, password, 'login').catch(() => {});
       girox.changeUserPassword(userObj.username, password)
         .then(async (r) => {
           if (r && r.success) {
@@ -4849,10 +4851,51 @@ app.get('/api/users/me', authMiddleware, async (req, res) => {
 // (PUT /players/{username}/password va con la API key). Además cierra todas las
 // sesiones abiertas de ese jugador en la plataforma, que es lo deseable al cambiar
 // una clave.
+// MULTI-PLATAFORMA (#226, owner 2026-10-16): "si se edita la clave arriba que se cambie en Ganamos,
+// en Girox y en la página de cargas, así la gente no se marea". Girox lo hace
+// syncPasswordToJugaygana (abajo); las DEMÁS plataformas habilitadas con API conectada se
+// actualizan acá con la MISMA clave. Nunca frena el flujo: un fallo queda en
+// User.platforms.<id>.passwordError y se reintenta en el próximo cambio/login.
+async function _syncPasswordOtherPlatforms(user, newPassword, context) {
+  const out = {};
+  try {
+    if (!user || isAdminRole(user.role)) return out;
+    const enabled = await platforms.listEnabled();
+    for (const p of enabled) {
+      if (p.id === 'girox' || !p.connected) continue;
+      const ad = platforms.getAdapter(p.id);
+      if (!ad || typeof ad.changeUserPassword !== 'function') continue;
+      try {
+        let r = await ad.changeUserPassword(user.username, newPassword);
+        if (!r.success && r.code === 'player_not_found') {
+          // Todavía no existe ahí (se creó antes de conectar la API): se crea con la clave nueva.
+          const c = await ad.syncUserToPlatform({ username: user.username, password: newPassword });
+          r = c && c.success ? { success: true, created: true } : r;
+        }
+        if (r && r.success) {
+          out[p.id] = true;
+          await User.updateOne({ id: user.id }, { $set: { [`platforms.${p.id}.status`]: 'synced', [`platforms.${p.id}.username`]: user.username, [`platforms.${p.id}.passwordSyncedAt`]: new Date(), [`platforms.${p.id}.passwordError`]: null } }).catch(() => {});
+          logger.info(`[pwd-sync] clave sincronizada en ${p.id} (${context}) para ${user.username}`);
+        } else {
+          out[p.id] = false;
+          await User.updateOne({ id: user.id }, { $set: { [`platforms.${p.id}.passwordError`]: String((r && r.error) || 'fallo').slice(0, 300) } }).catch(() => {});
+          logger.warn(`[pwd-sync] ${p.id}: no se pudo sincronizar la clave de ${user.username}: ${r && r.error}`);
+        }
+      } catch (e) {
+        out[p.id] = false;
+        logger.warn(`[pwd-sync] ${p.id}: excepción para ${user.username}: ${e.message}`);
+      }
+    }
+  } catch (e) { logger.warn(`[pwd-sync] otras plataformas: ${e.message}`); }
+  return out;
+}
+
 async function syncPasswordToJugaygana(user, newPassword, context) {
   if (isAdminRole(user.role)) {
     return { success: true, skipped: true };
   }
+  // Las demás plataformas (Ganamos cuando tenga API) se actualizan en paralelo con la misma clave.
+  _syncPasswordOtherPlatforms(user, newPassword, context).catch(() => {});
 
   const MAX_ATTEMPTS = 3;
   let lastError = null;

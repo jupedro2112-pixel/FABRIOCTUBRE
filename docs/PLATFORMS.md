@@ -106,6 +106,9 @@ como `{success:false, error:'<texto para el usuario>', code, httpStatus}`; env l
 - Comandos editables: `/sys_platform_choice` (`${amount}`, `{options}`, `{timeout}`, `{default}`)
   y `/sys_platform_redirect` (`{platform}`, `{name}`, `{url}`, `${amount}`).
 
+- **Clave (#226):** todo cambio de contraseña pasa por `syncPasswordToJugaygana` → girox + `_syncPasswordOtherPlatforms`
+  (cada plataforma conectada recibe la misma clave; crea al jugador si no existe).
+
 ## 6. Trampas
 
 - `hgcashConsumeOnManualDeposit` también consume movimientos `awaiting_platform` (si el

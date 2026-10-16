@@ -86,7 +86,9 @@
         if (!VIP.state || !VIP.state.currentToken) return;
         _pwVisible = false;
         _set('alUser', username());
-        _set('alLink', appLink());
+        // Se muestra sin https:// para que entre entero; "Copiar" copia la URL completa (data-full).
+        _set('alLink', appLink().replace(/^https?:\/\//, ''));
+        try { const le = _el('alLink'); if (le) le.dataset.full = appLink(); } catch (_) {}
         _renderPassword();
         if (!_cbu) ['alBank', 'alTitular', 'alCbu'].forEach(id => _set(id, 'cargando…'));
         if (!_loading) _loading = _loadCbu().finally(() => { _loading = null; });
@@ -121,7 +123,7 @@
     function copy(id) {
         const e = _el(id);
         if (!e) return;
-        VIP.ui.copyText(e.textContent || '');
+        VIP.ui.copyText((e.dataset && e.dataset.full) || e.textContent || '');
     }
 
     function sendReceipt() {
