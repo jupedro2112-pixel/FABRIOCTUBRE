@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-16
 
+### 263. 📏 Franja del saldo a la mitad de alto + verificación integral del front — SW v156
+- **Owner:** "tu saldo reducilo a la mitad, achicá la letra y la altura sin que afecte cómo se ve, y una vez que
+  subas todo fijate que no se haya roto nada".
+- CSS: franja del saldo con padding 2 px, letra 12,5 px, Instalar app en 9,5 px. **Verificación:** HTML de
+  index/landing/jugar balanceado (0 errores), sin ids duplicados, todos los ids que usa el JS presentes
+  (sólo falta `installBtn` del login, que ya no existía y el código lo chequea con null), `node --check` OK en
+  server.js, todos los JS del front, SWs, adaptadores, servicio VIP, controlador y rutas de referidos y User.
+
 ### 262. 📲 "Instalar app · IMPORTANTE" al lado del saldo; abajo Referidos + ¿Cómo funciona? en una línea — SW v155
 - **Owner:** "el instalar app ponelo al lado del saldo arriba, con IMPORTANTE en rojo; abajo armá una línea de las
   dos que están para achicar la principal".

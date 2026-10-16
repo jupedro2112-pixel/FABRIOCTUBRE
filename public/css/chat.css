@@ -1599,3 +1599,12 @@ body.support-open .support-bubble { visibility: hidden; }
 .bs-imp { font: 900 8px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--dx-accent); border-radius: 4px; padding: 2px 6px; box-shadow: 0 2px 8px rgba(255,23,68,.4); animation: bsImp 2s ease-in-out infinite; }
 @keyframes bsImp { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
 .hb-how { border-style: dashed; }
+
+/* ══ #263: franja del saldo a la MITAD de alto ══ */
+.balance-strip { padding: 2px 5px 2px 10px; margin: 3px 8px 0; border-radius: 8px; }
+.balance-strip .dash-balance-label { font-size: 8px; letter-spacing: 1px; }
+.balance-strip .dash-balance-amount { font-size: 12.5px; }
+.bs-install { padding: 2px 8px; gap: 6px; border-radius: 8px; }
+.bs-install-t b { font-size: 9.5px; }
+.bs-install-t small { font-size: 7.5px; }
+.bs-imp { font-size: 7px; padding: 1px 5px; }
