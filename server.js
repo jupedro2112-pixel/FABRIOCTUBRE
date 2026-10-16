@@ -8514,10 +8514,14 @@ app.get('/api/vip/status', authMiddleware, async (req, res) => {
     if (await vipLevelService.isDisabled(Config)) return res.json({ enabled: false });
     const userId = req.user.userId;
 
-    const user = await User.findOne({ id: userId }).select('vipLevel lifetimeWagered username').lean();
+    const user = await User.findOne({ id: userId }).select('vipLevel lifetimeWagered username vipPendingLevelBonuses').lean();
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     const info = vipLevels.getVipLevel(user.lifetimeWagered || 0);
+    // #257: bonos de nivel pendientes de reclamo (el cliente elige la plataforma al reclamar).
+    const pendingLevelBonuses = (Array.isArray(user.vipPendingLevelBonuses) ? user.vipPendingLevelBonuses : [])
+      .map((idx) => vipLevels.getLevel(idx)).filter(Boolean)
+      .map((l) => ({ idx: l.idx, name: l.name, emoji: l.emoji, color: l.color, bonusArs: l.levelUpBonusArs }));
     // El nivel PERSISTIDO manda (nunca baja): si el acumulado todavía no se
     // sincronizó, el jugador no tiene que ver su medalla desaparecer.
     const levelIndex = Math.max(user.vipLevel || 0, info.levelIndex);
@@ -8559,10 +8563,51 @@ app.get('/api/vip/status', authMiddleware, async (req, res) => {
       faltaParaSubir: next ? Math.max(0, next.thresholdArs - (user.lifetimeWagered || 0)) : null,
       progressPct: info.progressPct,
       levels: _vipLevelsPublic(),
+      pendingLevelBonuses,
       rakeback
     });
   } catch (error) {
     console.error('Error obteniendo estado VIP:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// #257: el cliente RECLAMA el bono de un nivel alcanzado eligiendo la plataforma.
+// Idempotente: reference vip-lvl-<userId>-<idx> (la plataforma dedupe); el idx se saca de
+// pendientes recién cuando el crédito entró (o vino duplicate = ya estaba pagado).
+app.post('/api/vip/level-bonus/claim', authMiddleware, authLimiter, async (req, res) => {
+  try {
+    if (await vipLevelService.isDisabled(Config)) return res.status(400).json({ error: 'Los niveles VIP no están disponibles.' });
+    const idx = Math.round(Number(req.body && req.body.idx));
+    const level = vipLevels.getLevel(idx);
+    if (!level) return res.status(400).json({ error: 'Nivel inválido.' });
+    const pid = platforms.normalizeId(req.body && req.body.platform) || platforms.DEFAULT_ID;
+    const enabled = await platforms.listEnabled();
+    const plat = enabled.find((p) => p.id === pid);
+    if (!plat) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
+    if (!plat.connected) return res.status(400).json({ error: `${plat.name} todavía no está conectada: elegí otra plataforma para recibir el bono.`, code: 'platform_not_connected' });
+    const user = await User.findOne({ id: req.user.userId }).select('id username vipPendingLevelBonuses').lean();
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!(user.vipPendingLevelBonuses || []).includes(idx)) return res.status(409).json({ error: 'Ese bono ya fue reclamado.', code: 'NOT_PENDING' });
+    const adapter = platforms.getAdapter(pid) || girox;
+    const ref = `vip-lvl-${user.id}-${idx}`;
+    const r = await adapter.creditUserBalance(user.username, level.levelUpBonusArs, ref, { description: `Bono por alcanzar el nivel VIP ${level.name}` });
+    if (!r || !r.success) {
+      logger.warn(`[vip] reclamo nivel ${level.name} de ${user.username} en ${pid} falló: ${(r && r.error) || 's/detalle'}`);
+      return res.status(502).json({ error: 'No pudimos acreditar el bono ahora. Probá en unos minutos.' });
+    }
+    await User.updateOne({ id: user.id }, { $pull: { vipPendingLevelBonuses: idx }, $set: { lastPlatform: pid } });
+    if (!r.duplicate) {
+      try {
+        await Transaction.create({ id: uuidv4(), type: 'vip_levelup', platform: pid, userId: user.id, username: user.username, amount: level.levelUpBonusArs,
+          description: `Nivel VIP ${level.name} alcanzado ${level.emoji} — reclamado por el cliente`, transactionId: (r.data && (r.data.transfer_id || r.data.transferId)) || null,
+          metadata: { source: 'vip_levelup', creditedAs: r.creditedAs || null, platform: pid, levelIdx: idx }, timestamp: new Date() });
+      } catch (e) { logger.warn(`[vip] Transaction del reclamo de nivel falló: ${e.message}`); }
+    }
+    logger.info(`[vip] ${user.username} reclamó el bono del nivel ${level.name} ($${level.levelUpBonusArs}) en ${pid}${r.duplicate ? ' (duplicate)' : ''}`);
+    res.json({ success: true, amount: level.levelUpBonusArs, level: { idx: level.idx, name: level.name, emoji: level.emoji }, platform: pid, label: platforms.labelOf(pid) });
+  } catch (e) {
+    logger.error(`[vip] level-bonus/claim: ${e.message}`);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
@@ -11010,6 +11055,15 @@ async function initializeData() {
     }
   } catch (e) { console.warn('[startup-migration] soporte resumido:', e.message); }
 
+  // #257: el aviso de nivel VIP guardado decía "Ya te acreditamos tu bono" → ahora se reclama desde la app.
+  try {
+    const lv = await Command.findOne({ name: '/sys_vip_levelup' }).lean();
+    if (lv && /Ya te acreditamos/i.test(String(lv.response || ''))) {
+      await Command.updateOne({ name: '/sys_vip_levelup' }, { $set: { response: "🎉 ¡FELICITACIONES {username}!\n\nAlcanzaste el nivel VIP {emoji} {level} por todo lo que jugaste.\n\n🎁 Tenés un bono de ${bonus} para reclamar: entrá a la app, en la tarjeta de Nivel VIP tocá \"Reclamar\" y elegí en qué plataforma querés recibirlo.\n\nCuanto más jugás, más alto llegás: cada nivel te da un bono mayor y más rakeback semanal. 🚀" } });
+      console.log('✅ /sys_vip_levelup: ahora dice que el bono se reclama desde la app (#257)');
+    }
+  } catch (e) { console.warn('[startup-migration] /sys_vip_levelup:', e.message); }
+
   // Verificar/crear comandos de sistema (mensajes automáticos editables desde COMANDOS)
   const systemCmds = [
     {
@@ -11140,9 +11194,9 @@ async function initializeData() {
     },
     {
       name: '/sys_vip_levelup',
-      description: 'Mensaje automático cuando el cliente alcanza un nivel VIP (por apostado acumulado) y se le acredita el bono del nivel. Variables: {username}, {level} (nombre del nivel), {emoji}, ${bonus}. Si lo dejás vacío, no se envía.',
+      description: 'Mensaje automático cuando el cliente alcanza un nivel VIP (por apostado acumulado). El bono queda PENDIENTE y lo reclama desde la app eligiendo la plataforma (#257). Variables: {username}, {level}, {emoji}, ${bonus}. Vacío = no se envía.',
       type: 'message',
-      response: '🎉 ¡FELICITACIONES {username}!\n\nAlcanzaste el nivel VIP {emoji} {level} por todo lo que jugaste.\n\n💰 Ya te acreditamos tu bono de ${bonus} en la plataforma.\n\nCuanto más jugás, más alto llegás: cada nivel te da un bono mayor y más rakeback semanal. Tocá tu perfil en la app para ver cuánto te falta para el próximo nivel. 🚀'
+      response: '🎉 ¡FELICITACIONES {username}!\n\nAlcanzaste el nivel VIP {emoji} {level} por todo lo que jugaste.\n\n🎁 Tenés un bono de ${bonus} para reclamar: entrá a la app, en la tarjeta de Nivel VIP tocá "Reclamar" y elegí en qué plataforma querés recibirlo.\n\nCuanto más jugás, más alto llegás: cada nivel te da un bono mayor y más rakeback semanal. 🚀'
     },
     {
       name: '/sys_welcome_code',
@@ -19089,7 +19143,7 @@ setInterval(function () { _pollPayingPayouts(); }, 45 * 1000);
 async function _notifyVipLevelUp(userLean, level) {
   const content = await renderSystemCommand(
     '/sys_vip_levelup',
-    `🎉 ¡FELICITACIONES {username}!\n\nAlcanzaste el nivel VIP {emoji} {level} por todo lo que jugaste.\n\n💰 Ya te acreditamos tu bono de $\{bonus\} en la plataforma.\n\nCuanto más jugás, más alto llegás: cada nivel te da un bono mayor y más rakeback semanal. Tocá tu perfil en la app para ver cuánto te falta para el próximo nivel. 🚀`,
+    `🎉 ¡FELICITACIONES {username}!\n\nAlcanzaste el nivel VIP {emoji} {level} por todo lo que jugaste.\n\n🎁 Tenés un bono de $\\{bonus\\} para reclamar: entrá a la app, en la tarjeta de Nivel VIP tocá "Reclamar" y elegí en qué plataforma querés recibirlo.\n\nCuanto más jugás, más alto llegás: cada nivel te da un bono mayor y más rakeback semanal. 🚀`,
     {
       username: userLean.username,
       level: level.name,

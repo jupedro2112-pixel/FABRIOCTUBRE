@@ -1513,3 +1513,57 @@ body.support-open .support-bubble { visibility: hidden; }
 .vip-lvl-3 { grid-template-columns: 18px 1.5fr 1fr; }
 .vip-lvl-name small { font: 700 8.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; color: var(--dx-cyan); margin-left: 4px; }
 .vip-row-2 { grid-template-columns: 1.5fr 1fr; }
+
+/* ══ #257: cartel de nuevo nivel + reclamo del bono ══ */
+.vip-claim { border-color: #ffd166 !important; box-shadow: 0 0 26px rgba(255,209,102,.25) !important; padding: 10px 12px !important; }
+.vip-claim::before { background: linear-gradient(90deg, #ffd166, #ff2d55); }
+.vc-item + .vc-item { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--dx-border); }
+.vc-title { font: 800 13px var(--dx-font); color: var(--dx-text); }
+.vc-amt { color: var(--dx-muted); font-size: 12px; margin: 3px 0 7px; }
+.vc-amt b { color: var(--dx-money); font-size: 15px; }
+.vc-plats { display: flex; gap: 6px; margin-bottom: 7px; }
+.vc-plat { flex: 1; background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 8px; padding: 7px; font: 800 11px var(--dx-font); letter-spacing: .5px; text-transform: uppercase; cursor: pointer; }
+.vc-plat.on { background: var(--dx-accent); color: #06070d; border-color: transparent; }
+.vc-btn { width: 100%; background: linear-gradient(135deg, #ffd166, #ffb300); color: #1a1407; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px; font: 900 12px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 18px rgba(255,209,102,.3); }
+.vc-btn:disabled { opacity: .6; }
+
+/* ══ #258: TODO en una pantalla — compactar sin perder estética; saldo arriba ══ */
+.balance-strip { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 8px 0; padding: 5px 12px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); }
+.balance-strip .dash-balance-label { color: var(--dx-muted) !important; font: 800 9px var(--dx-font); letter-spacing: 1.4px; text-transform: uppercase; }
+.balance-strip .dash-balance-amount { color: var(--dx-money) !important; font: 900 15px var(--dx-font); font-variant-numeric: tabular-nums; }
+.home-dash { gap: 5px; margin-top: 5px; }
+.home-card { padding: 7px 10px; }
+.home-card-title { font-size: 10.5px; margin: 0 0 4px; letter-spacing: 1.2px; }
+.home-card-sub { font-size: 10px; margin-bottom: 5px; line-height: 1.3; }
+/* reembolsos */
+.dash-top { padding: 5px 8px !important; }
+.dash-top .dash-refunds-title { font-size: 9px !important; margin-bottom: 2px !important; }
+.dash-top .dash-refunds-row .refund-btn { min-height: 28px; padding: 3px 6px !important; }
+/* guardá tu acceso: una línea */
+.access-head { padding: 6px 10px; }
+.access-title { flex-direction: row; align-items: baseline; gap: 6px; font-size: 10.5px; }
+.access-title small { font-size: 8.5px; }
+/* nivel VIP: una línea + barra fina */
+.vip-card { padding: 6px 10px 7px !important; }
+.vip-head-lvl { font-size: 11px; }
+.vip-head-next { font-size: 9px; }
+.vip-pct { font-size: 12px; }
+.vip-bar { height: 5px; margin-top: 5px; }
+/* plataformas: tarjetas bajas */
+.plat-play-row { gap: 6px; }
+.plat-play-btn { padding: 6px 8px 22px; }
+.plat-logo { width: 24px; height: 24px; margin-bottom: 1px; }
+.plat-play-name { font-size: 12px; }
+.plat-play-sub { display: none; }
+.plat-enter { bottom: 4px; }
+.plat-reco { top: 4px; left: 6px; font-size: 7.5px; }
+.plat-check { width: 16px; height: 16px; top: 5px; right: 7px; font-size: 10px; }
+/* carga */
+.al-step { padding: 4px 0; }
+.al-step-t { font-size: 12px; margin-bottom: 3px; }
+.al-cbu .mono { font-size: 15px; }
+.al-meta { font-size: 9.5px; }
+.home-actions-row { margin: 4px 8px 3px; }
+.home-bottom-bar { margin: 0 8px 3px; }
+.hb-btn { padding: 6px 10px; }
+.home-how-btn { padding: 5px 10px; margin-bottom: 4px; }

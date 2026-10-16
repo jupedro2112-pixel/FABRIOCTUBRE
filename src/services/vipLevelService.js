@@ -274,8 +274,8 @@ async function _storeBatch(players, byLower, monthKey, closed, ctx) {
  * razonamiento de idempotencia.
  */
 async function _applyLevels(u, total, ctx) {
-  const { girox, vipLevels, models, logger, notifyLevelUp, summary } = ctx;
-  const { User, Transaction } = models;
+  const { vipLevels, models, logger, notifyLevelUp, summary } = ctx;
+  const { User } = models;
 
   // $max: un total parcial (meses sin backfillear todavía) nunca pisa uno mayor.
   await User.updateOne({ id: u.id }, { $max: { lifetimeWagered: total } });
@@ -284,42 +284,27 @@ async function _applyLevels(u, total, ctx) {
   const cur = u.vipLevel || 0;
   if (target <= cur) return;
 
+  // #257 (owner 2026-10-16): el bono del nivel YA NO se acredita solo. Cada nivel nuevo queda
+  // PENDIENTE en User.vipPendingLevelBonuses (una sola vez: $addToSet con guard $ne → entre
+  // instancias sólo una lo agrega y avisa) y el cliente lo reclama desde la app eligiendo la
+  // plataforma (server.js POST /api/vip/level-bonus/claim, misma reference vip-lvl-*).
+  // El nivel (medalla, rakeback) sube igual aunque no reclame.
   let reached = cur;
   for (let idx = cur + 1; idx <= target; idx += 1) {
     const level = vipLevels.getLevel(idx);
     if (!level) break;
-    const ref = `vip-lvl-${u.id}-${idx}`;
-    const r = await girox.creditUserBalance(u.username, level.levelUpBonusArs, ref, {
-      description: `Bono por alcanzar el nivel VIP ${level.name}`
-    });
-    if (!r.success) {
-      logger.warn(`[vip] bono nivel ${level.name} de ${u.username} no se pudo acreditar (${r.error || 's/detalle'}) — se reintenta en el próximo sync con la MISMA reference`);
-      break;
-    }
     reached = idx;
+    const marked = await User.updateOne(
+      { id: u.id, vipPendingLevelBonuses: { $ne: idx } },
+      { $addToSet: { vipPendingLevelBonuses: idx } }
+    );
+    const firstTime = marked && (marked.modifiedCount || marked.nModified) > 0;
+    if (!firstTime) continue; // otra instancia ya lo marcó (o ya estaba pendiente)
     summary.levelUps += 1;
-    logger.info(`[vip] ${u.username} alcanzó ${level.emoji} ${level.name} — bono $${level.levelUpBonusArs}${r.duplicate ? ' (duplicate: ya pagado por otra instancia)' : ''}`);
-
-    // Registro y aviso SOLO si esta instancia pagó de verdad (duplicate = otra ya lo hizo).
-    if (!r.duplicate) {
-      try {
-        await Transaction.create({
-          id: uuidv4(),
-          type: 'vip_levelup',
-          userId: u.id,
-          username: u.username,
-          amount: level.levelUpBonusArs,
-          description: `Nivel VIP ${level.name} alcanzado ${level.emoji}`,
-          transactionId: (r.data && (r.data.transfer_id || r.data.transferId)) || null,
-          timestamp: new Date()
-        });
-      } catch (e) {
-        logger.warn(`[vip] no se pudo guardar la Transaction del nivel ${level.name} de ${u.username}: ${e.message}`);
-      }
-      if (notifyLevelUp) {
-        try { await notifyLevelUp(u, level); } catch (e) {
-          logger.warn(`[vip] aviso de nivel a ${u.username} falló: ${e.message}`);
-        }
+    logger.info(`[vip] ${u.username} alcanzó ${level.emoji} ${level.name} — bono $${level.levelUpBonusArs} PENDIENTE de reclamo`);
+    if (notifyLevelUp) {
+      try { await notifyLevelUp(u, level); } catch (e) {
+        logger.warn(`[vip] aviso de nivel a ${u.username} falló: ${e.message}`);
       }
     }
   }

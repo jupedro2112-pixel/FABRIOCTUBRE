@@ -276,10 +276,42 @@
         body.style.display = open ? '' : 'none';
         if (ch) ch.textContent = open ? '▲' : '▼';
     }
+    // #257: cartel "¡Felicidades por tu nuevo nivel!" con reclamo del bono eligiendo plataforma.
+    let _vipClaimPlat = null;
+    function renderVipClaim(v) {
+        const box = _el('vipClaimCard');
+        if (!box) return;
+        const pend = (v && Array.isArray(v.pendingLevelBonuses)) ? v.pendingLevelBonuses : [];
+        if (!pend.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        const plats = ((_platforms && _platforms.platforms) || []).filter(p => p.connected);
+        if (!_vipClaimPlat || !plats.some(p => p.id === _vipClaimPlat)) _vipClaimPlat = (plats.find(p => p.id === ((_platforms && _platforms.preferredPlatform) || 'girox')) || plats[0] || { id: 'girox' }).id;
+        box.style.display = '';
+        box.innerHTML = pend.map(l =>
+            '<div class="vc-item">' +
+            '<div class="vc-title">🎉 ¡Felicidades! Llegaste a <b style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + '</b></div>' +
+            '<div class="vc-amt">Tenés un bono de <b>$' + Math.round(l.bonusArs).toLocaleString('es-AR') + '</b> para reclamar</div>' +
+            (plats.length > 1 ? '<div class="vc-plats">' + plats.map(p => '<button type="button" class="vc-plat' + (p.id === _vipClaimPlat ? ' on' : '') + '" onclick="VIP.home.pickVipClaimPlat(\'' + _esc(p.id) + '\')">' + _esc(p.name) + '</button>').join('') + '</div>' : '') +
+            '<button type="button" class="vc-btn" onclick="VIP.home.claimLevelBonus(' + Number(l.idx) + ', this)">Reclamar en ' + _esc((plats.find(p => p.id === _vipClaimPlat) || { name: 'Girox' }).name) + '</button>' +
+            '</div>').join('');
+    }
+    function pickVipClaimPlat(id) { _vipClaimPlat = id; renderVipClaim(VIP.state && VIP.state.vipStatus); }
+    async function claimLevelBonus(idx, btn) {
+        if (btn) { btn.disabled = true; btn.textContent = 'Acreditando…'; }
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/vip/level-bonus/claim', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ idx, platform: _vipClaimPlat }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { VIP.ui.showToast(d.error || 'No se pudo reclamar', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Reclamar'; } return; }
+            VIP.ui.showToast('🎉 ¡Listo! $' + Math.round(d.amount).toLocaleString('es-AR') + ' acreditados en ' + (d.label || ''), 'success');
+            try { if (VIP.ui.syncBalance) VIP.ui.syncBalance(); } catch (_) {}
+            try { if (VIP.refunds && VIP.refunds.loadVipStatus) await VIP.refunds.loadVipStatus(); } catch (_) {}
+            renderVipClaim(VIP.state && VIP.state.vipStatus);
+        } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); if (btn) { btn.disabled = false; btn.textContent = 'Reclamar'; } }
+    }
     function renderVipCard() {
         const card = _el('vipCard');
         if (!card) return;
         const v = VIP.state && VIP.state.vipStatus;
+        try { renderVipClaim(v); } catch (_) {}
         if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) { card.style.display = 'none'; return; }
         card.style.display = '';
         const curIdx = Number(v.levelIndex) || (v.level && v.level.idx) || 0;
@@ -441,8 +473,8 @@
         if (sub) {
             const prefP = list.find(p => p.id === pref);
             sub.textContent = list.length >= 2
-                ? (prefP ? ('Elegiste ' + prefP.name + ': tus cargas van ahí. Ahora transferí al CBU de abajo 👇')
-                         : ('Elegí ' + list.map(p => p.name).join(' o ') + '. Después mandá tu transferencia al CBU de abajo.'))
+                ? (prefP ? ('Elegiste ' + prefP.name + ' · ahora transferí al CBU de abajo 👇')
+                         : ('Tocá una para elegir · después transferí al CBU de abajo'))
                 : 'Tocá para entrar con tu sesión iniciada.';
         }
     }
@@ -636,6 +668,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

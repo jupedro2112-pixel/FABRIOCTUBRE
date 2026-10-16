@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-16
 
+### 258. 📐 Home en una pantalla: todo más compacto, saldo arriba debajo de los círculos — SW v151
+- **Owner (capturas):** "unificá más para que entre la carga en la principal sin bajar; achicá lo que sea sin
+  sacarle estética; el saldo arriba, debajo del menú de canal/info".
+- `#userBalance` pasa a una franja `.balance-strip` debajo de la cabecera (ui.js lo sigue actualizando por
+  id); se quitó de la tarjeta de plataformas. CSS compacto: tarjetas con menos padding, títulos 10.5 px,
+  reembolsos 28 px de alto, "Guardá tu acceso" en una línea, nivel VIP en una línea + barra fina, tarjetas
+  de plataforma más bajas (logo 24 px, sin la línea "tocá para elegir"), carga y botones más chicos. Textos
+  de plataformas más cortos ("Tocá una para elegir · después transferí al CBU de abajo").
+
+### 257. 🎉 Bono de nivel VIP: ya NO se acredita solo — cartel "¡Felicidades por tu nuevo nivel!" y reclamo eligiendo plataforma
+- **Owner:** "la parte de 'se acredita solo' está mal: cuando sube de nivel quiero un cartel de felicidades por
+  tu nuevo nivel y que pueda reclamar la plata con un botón y elija dónde la quiere".
+- **Motor (`vipLevelService._applyLevels`):** al cruzar un umbral ya no llama a girox: deja el idx en
+  `User.vipPendingLevelBonuses` (`$addToSet` con guard `$ne` → una sola instancia lo marca y avisa) y sube
+  `vipLevel` igual (medalla y rakeback no dependen del reclamo). Aviso `/sys_vip_levelup` reescrito:
+  "tenés un bono de $X para reclamar: en la tarjeta Nivel VIP tocá Reclamar y elegí la plataforma" (+ migración
+  del texto guardado que decía "Ya te acreditamos").
+- **API:** `GET /api/vip/status` suma `pendingLevelBonuses[{idx,name,emoji,color,bonusArs}]`;
+  **`POST /api/vip/level-bonus/claim`** `{idx, platform}` → plataforma habilitada y CONECTADA → 
+  `adapter.creditUserBalance` con la MISMA reference `vip-lvl-<userId>-<idx>` (dedupe de la plataforma) →
+  `$pull` del pendiente + `lastPlatform` + Transaction `vip_levelup` con `platform` (no si vino duplicate).
+- **PWA:** tarjeta dorada `#vipClaimCard` arriba de la de nivel: "🎉 ¡Felicidades! Llegaste a X · Tenés un bono
+  de $Y para reclamar", chips de plataforma (sólo conectadas; preselecciona la fija) y botón "Reclamar en
+  Girox". Al reclamar: toast, refresco de saldo y de estado VIP. **Back necesita redeploy.**
+- ⚠️ Los niveles ya pagados antes de este cambio no se tocan; los que tenían el crédito fallido pasan a
+  pendientes en el próximo sync y el cliente los reclama.
+
 ### 256. 👑 Niveles VIP sin plata a la vista: sólo nivel y porcentajes — SW v150
 - **Owner:** "la aclaración de cuánto falta que no figure, sólo el porcentaje; en la información igual: sólo niveles
   y %, la plata es interna".

@@ -277,6 +277,14 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // #257 (owner 2026-10-16): el bono de nivel YA NO se acredita solo. Al subir de nivel el motor
+  // deja el idx acá y el cliente lo RECLAMA desde la app eligiendo la plataforma
+  // (POST /api/vip/level-bonus/claim). Se saca del array recién cuando el crédito entró
+  // (reference vip-lvl-{userId}-{idx}: reintentar nunca paga dos veces).
+  vipPendingLevelBonuses: {
+    type: [Number],
+    default: []
+  },
 
   // ============================================
   // REEMBOLSO ACUMULATIVO de por vida (ESPEC-REEMBOLSO-1GIROX §3.4)
