@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-16
 
+### 243. 💬 Burbuja de soporte compacta: foto + "Soporte en vivo", se saca y queda arriba al lado del fueguito — SW v137
+- **Owner:** "achicá el soporte en vivo: sólo la foto con 'soporte en vivo', sacá el texto; que se pueda sacar y
+  cuando lo sacás que quede al lado del fueguito arriba".
+- Burbuja `.support-bubble.compact`: foto redonda + rótulo chico "SOPORTE EN VIVO" + contador; botón ✕
+  (`VIP.home.dismissBubble`) la oculta y muestra `#headerSupportBtn` (círculo con la foto, al lado del 🔥)
+  que abre el chat; el contador de no leídos se pinta en los dos. Vuelve a aparecer en la próxima entrada.
+
 ### 242. 🟣 Tarjetas de plataforma más chicas, con logo; Ganamos en violeta — SW v136
 - **Owner:** "achicá el recuadro de Ganamos y Girox; Ganamos con fondo violeta y su logo; Girox con el logo que ya tenés".
 - `_platBtn` muestra el logo (`logoUrl`) arriba del nombre; clases `plat-girox` / `plat-ganamos` (violeta).

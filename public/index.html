@@ -498,6 +498,7 @@
                  app.js / fire.js / el inline de FCM, que reescribe el innerHTML de #notificationBtn). -->
             <button class="tb-circle tb-circle-plain notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
             <button class="tb-circle tb-circle-plain fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
+            <button type="button" class="tb-circle tb-circle-plain tb-support" id="headerSupportBtn" style="display:none;" title="Soporte en vivo" onclick="VIP.home.openSupport()"><img src="/images/soporte-1girox.png" alt="Soporte" id="headerSupportImg"><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></button>
             <button type="button" class="tb-circle" title="Cambiar mi contraseña" onclick="VIP.home.openChangePassword()">
                 <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="14" r="4.2"/><path d="M11 11 20.5 1.5M16 6l2.5 2.5M13.5 8.5 16 11"/></svg></span><span class="tb-circle-lbl">Clave</span>
             </button>
@@ -1115,13 +1116,14 @@
                  mensajes y comparta el redondeo del contenedor. -->
             <!-- ===== BURBUJA DE SOPORTE (#229): "que parezca un botón, un círculo que se mueva, que se pueda
                  minimizar pero al principio quede abierto". Arrastrable (home.js), abre el chat. ===== -->
-            <div id="supportBubble" class="support-bubble expanded" role="button" aria-label="Soporte en vivo">
+            <!-- #243: compacta — sólo la foto con "Soporte en vivo"; ✕ la saca y pasa al círculo de arriba (al lado del fueguito). -->
+            <div id="supportBubble" class="support-bubble compact" role="button" aria-label="Soporte en vivo">
                 <button type="button" class="sb-main" onclick="VIP.home.openSupport()">
                     <span class="sb-avatar"><img id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40"><i class="sb-dot"></i></span>
-                    <span class="sb-text"><b>Soporte en vivo aquí</b><small>Te respondemos al toque</small></span>
+                    <span class="sb-cap">Soporte en vivo</span>
                     <span id="supportUnread" class="support-unread" style="display:none;">0</span>
                 </button>
-                <button type="button" class="sb-min" onclick="VIP.home.toggleBubble(event)" title="Minimizar / abrir">–</button>
+                <button type="button" class="sb-min" onclick="VIP.home.dismissBubble(event)" title="Sacar (queda arriba, al lado del fueguito)">✕</button>
             </div>
             <!-- ===== SOPORTE (#220): el chat de siempre, a pantalla completa. Se abre desde la
                  barra verde de arriba del home (VIP.home.openSupport). Los ids NO cambian:

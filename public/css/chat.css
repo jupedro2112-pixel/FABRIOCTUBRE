@@ -1381,3 +1381,14 @@ body.support-open .support-bubble { visibility: hidden; }
 .plat-play-btn.plat-ganamos .plat-play-name { color: #fff; }
 .plat-play-btn.plat-ganamos .plat-play-sub { color: #e3d2ff; }
 .plat-play-btn.plat-girox .plat-logo { background: #fff; }
+
+/* ══ #243: burbuja de soporte compacta (foto + "Soporte en vivo") y círculo en la cabecera ══ */
+.support-bubble.compact .sb-main { flex-direction: column; gap: 3px; padding: 4px 4px 5px; border-radius: 16px; }
+.support-bubble.compact .sb-avatar { width: 46px; height: 46px; }
+.support-bubble.compact .sb-avatar img { width: 46px; height: 46px; }
+.support-bubble.compact .sb-cap { font: 800 8.5px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; color: #fff; white-space: nowrap; }
+.support-bubble.compact .sb-main .support-unread { top: -4px; left: auto; right: -4px; }
+.support-bubble.compact .sb-min { width: 22px; height: 22px; font-size: 12px; margin-left: -6px; align-self: flex-start; }
+.tb-support img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.tb-support { border-color: var(--dx-border-hi) !important; }
+.tb-support .support-unread { position: absolute; top: -5px; right: -5px; margin: 0; min-width: 16px; font-size: 9.5px; line-height: 14px; padding: 0 4px; }

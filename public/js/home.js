@@ -57,10 +57,19 @@
     function isSupportOpen() { return _open; }
 
     function _paintBadge() {
-        const b = _el('supportUnread');
-        if (!b) return;
-        if (_unread > 0) { b.textContent = _unread > 99 ? '99+' : String(_unread); b.style.display = ''; }
-        else b.style.display = 'none';
+        ['supportUnread', 'headerSupportUnread'].forEach((id) => {
+            const b = _el(id);
+            if (!b) return;
+            if (_unread > 0) { b.textContent = _unread > 99 ? '99+' : String(_unread); b.style.display = ''; }
+            else b.style.display = 'none';
+        });
+    }
+    // #243: sacar la burbuja → queda el círculo de soporte arriba, al lado del fueguito (sólo en la sesión).
+    function dismissBubble(ev) {
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        const b = _el('supportBubble'); if (b) b.style.display = 'none';
+        const h = _el('headerSupportBtn'); if (h) h.style.display = '';
+        try { const src = _el('chatTopbarAvatar') && _el('chatTopbarAvatar').src; const hi = _el('headerSupportImg'); if (src && hi) hi.src = src; } catch (_) {}
     }
 
     // Mensajes que llegan con el chat CERRADO → contador. La pregunta de
@@ -519,6 +528,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
