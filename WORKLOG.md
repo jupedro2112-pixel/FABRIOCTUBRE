@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-16
 
+### 233. 🔒 "Guardá tu acceso a la app" plegable debajo de reembolsos (con la captura adentro) — SW v130
+- **Owner:** "el guardá tu acceso de la app por seguridad ponelo abajo del reembolso semanal y mensual, que se
+  pueda expandir y ahí mismo capturar la pantalla".
+- Tarjeta nueva `#accessCard` entre reembolsos y "¿Dónde querés jugar?": cabecera "🔒 Guardá tu acceso a la
+  app · por seguridad" que abre/cierra (`VIP.home.toggleAccess`, cerrada por default); adentro usuario,
+  clave (ver), link de la app (copiar) y el botón "📸 Capturar mis datos" + vista previa. La tarjeta de carga
+  queda sólo con los 2 pasos. Mismos ids → autoload.js sin cambios de lógica.
+
 ### 232. 🖼️ Logos de las plataformas en la landing (Girox + Ganamos) — admin-sw v59
 - **Owner:** "en la landing poné el logo de Ganamos en el registro principal, donde va el nombre, o el de Girox".
 - `Config[platforms].items.<id>.logoUrl` (ruta del sitio `/images/…` o https; Girox arranca con

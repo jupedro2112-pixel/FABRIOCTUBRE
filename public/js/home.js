@@ -76,6 +76,16 @@
         if (!_open) { _unread++; _paintBadge(); }
     }
 
+    // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
+    function toggleAccess() {
+        const body = _el('accessBody'), ch = _el('accessChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+        if (open) { try { VIP.autoload.init(); } catch (_) {} }
+    }
+
     // ---------------- BURBUJA DE SOPORTE (#229) ----------------
     // Arranca ABIERTA (expandida) en cada entrada; el cliente la puede minimizar a un círculo
     // (sólo durante la sesión) y arrastrarla por la pantalla. Tocarla abre el chat.
@@ -389,6 +399,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess,
         get platformsData() { return _platforms; } };
 })();

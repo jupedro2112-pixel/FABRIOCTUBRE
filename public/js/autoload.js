@@ -220,7 +220,7 @@
         } catch (e) {
             VIP.ui.showToast('No se pudo generar la captura. Probá de nuevo.', 'error');
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Guardar captura'; }
+            if (btn) { btn.disabled = false; btn.textContent = '📸 Capturar mis datos'; }
         }
     }
 
