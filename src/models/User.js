@@ -237,6 +237,13 @@ const userSchema = new mongoose.Schema({
     default: null,
     index: true
   },
+  // Plataforma FIJA elegida por el cliente desde la app (#225): si está seteada y habilitada,
+  // las cargas van directo ahí SIN preguntar. null = no fijó → se pregunta en cada carga
+  // (según askMode de Config['platforms']).
+  preferredPlatform: {
+    type: String,
+    default: null
+  },
   // Estado de la cuenta del jugador en CADA plataforma distinta de girox (la de girox
   // sigue en giroxSyncStatus/giroxUserId para no tocar los ~110 call sites):
   //   { ganamos: { status: 'pending'|'synced'|'linked'|'error', username, error, syncedAt } }

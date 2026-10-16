@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Creá tu cuenta gratis</title>
+<!--
+  LANDING DE PAUTA (#224, 2026-10-16). La sirve server.js en GET /l/:code y /landing/:code
+  reemplazando los placeholders de abajo. Un solo campo (nombre) → POST /api/landing/signup →
+  usuario creado en TODAS las plataformas con API conectada (Girox hoy; Ganamos al conectar su
+  API) → pantalla "¡Cuenta creada!" con usuario, clave, captura para guardar los datos, explicación
+  del servicio (cómo funciona, reembolsos, por qué elegirnos) y "Continuar a mi cuenta" (link de
+  acceso de un solo uso que entra logueado al sistema de cargas).
+  Si el visitante viene del navegador de Instagram/Facebook (Android), "Continuar" abre el link
+  en Google Chrome (intent://) para que después pueda instalar la app desde el botón de la página.
+-->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap">
+<link rel="icon" href="/icons/icon-32x32.png">
+<script>
+  window.__LANDING__ = {
+    campaign: '__LANDING_CAMPAIGN_CODE__',
+    baseUrl: '__VIP_PUBLIC_BASE_URL_PLACEHOLDER__',
+    pixelId: '__META_PIXEL_ID_PLACEHOLDER__'
+  };
+</script>
+<style>
+  :root {
+    --bg: #0a0514; --card: rgba(26,12,46,.82); --line: rgba(190,120,255,.45); --line-soft: rgba(190,120,255,.22);
+    --violet: #b14dff; --violet-2: #7c3aed; --green: #1db954; --green-2: #15a046; --text: #f5f0ff; --muted: #b9a9d6;
+    --font: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: var(--font); color: var(--text); background: var(--bg);
+    background-image: radial-gradient(900px 500px at 50% -10%, rgba(124,58,237,.45), transparent 60%),
+                      radial-gradient(600px 400px at 90% 90%, rgba(177,77,255,.18), transparent 60%);
+    padding: 24px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-direction: column; align-items: center; gap: 22px;
+  }
+  .card {
+    width: 100%; max-width: 480px; background: var(--card); border: 1.5px solid var(--line); border-radius: 22px;
+    padding: 28px 22px 24px; box-shadow: 0 0 0 1px rgba(177,77,255,.08), 0 0 48px rgba(124,58,237,.35), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); text-align: center;
+  }
+  .card.ok { border-color: rgba(29,185,84,.6); box-shadow: 0 0 48px rgba(29,185,84,.22); }
+  .logo { width: 96px; height: 96px; border-radius: 22px; object-fit: cover; box-shadow: 0 0 28px rgba(177,77,255,.55); margin: 0 auto 14px; display: block; }
+  h1 { font-size: 30px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.3px; }
+  h1 em { font-style: normal; background: linear-gradient(90deg, #b14dff, #d98cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); font-size: 16px; margin: 0 0 20px; }
+  .inp {
+    width: 100%; font: 700 17px var(--font); color: var(--text); background: rgba(10,5,20,.85); border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 18px 18px; outline: none; margin-bottom: 14px;
+  }
+  .inp::placeholder { color: #8a7aa6; font-weight: 500; }
+  .inp:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(177,77,255,.2); }
+  .btn {
+    width: 100%; border: 0; border-radius: 14px; padding: 18px 16px; font: 800 17px var(--font); letter-spacing: .4px; cursor: pointer; color: #fff;
+    background: linear-gradient(90deg, #a63cff, #c35cff); box-shadow: 0 10px 30px rgba(177,77,255,.45); text-transform: uppercase;
+    transition: transform .08s ease, filter .15s ease;
+  }
+  .btn:active { transform: scale(.985); }
+  .btn:disabled { filter: grayscale(.4) brightness(.8); cursor: default; }
+  .btn.green { background: linear-gradient(90deg, #15a046, #1db954); box-shadow: 0 10px 30px rgba(29,185,84,.4); text-transform: none; font-size: 18px; }
+  .btn.ghost { background: rgba(255,255,255,.06); border: 1.5px solid var(--line); box-shadow: none; color: var(--text); font-size: 14px; padding: 14px; text-transform: none; }
+  .trust { color: var(--muted); font-size: 14px; margin: 16px 0 0; }
+  .err { color: #ff8da1; font-size: 13.5px; font-weight: 700; margin: 10px 0 0; display: none; }
+  .check { width: 82px; height: 82px; border-radius: 50%; background: var(--green); color: #fff; font-size: 44px; line-height: 82px; margin: 0 auto 16px; box-shadow: 0 0 36px rgba(29,185,84,.55); }
+  h2 { font-size: 28px; font-weight: 800; margin: 0 0 18px; }
+  .row { display: flex; align-items: center; gap: 12px; background: rgba(10,5,20,.85); border: 1.5px solid var(--line-soft); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; text-align: left; }
+  .row .k { flex: 0 0 72px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+  .row .v { flex: 1; min-width: 0; font-size: 20px; font-weight: 800; overflow-wrap: anywhere; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .row .cp { flex: 0 0 auto; background: rgba(177,77,255,.14); color: #e3c6ff; border: 1px solid var(--line-soft); border-radius: 9px; padding: 6px 10px; font: 700 11px var(--font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; }
+  .plats { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 4px 0 14px; }
+  .plat { background: rgba(255,255,255,.05); border: 1px solid var(--line-soft); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .plat.on { border-color: rgba(29,185,84,.6); color: #9ff0b8; }
+  .plat.soon { color: var(--muted); }
+  .hint { color: var(--muted); font-size: 14px; margin: 14px 0 0; }
+  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .preview { display: none; margin-top: 12px; text-align: left; }
+  .preview img { width: 100%; border-radius: 12px; border: 1px solid var(--line-soft); }
+  .preview a { display: block; text-align: center; margin-top: 8px; color: #e3c6ff; font-weight: 700; }
+  .inapp { display: none; margin-top: 14px; background: rgba(255,193,7,.08); border: 1px solid rgba(255,193,7,.45); border-radius: 12px; padding: 12px 14px; text-align: left; font-size: 13px; line-height: 1.45; color: #ffe9a8; }
+  .inapp b { color: #fff; }
+  /* Explicación del servicio */
+  .info { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; }
+  .blk { background: rgba(26,12,46,.6); border: 1px solid var(--line-soft); border-radius: 18px; padding: 16px 18px; text-align: left; }
+  .blk h3 { margin: 0 0 8px; font-size: 13px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: #d9b8ff; }
+  .blk p, .blk li { margin: 0; color: var(--text); font-size: 14px; line-height: 1.5; }
+  .blk ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+  .blk .big { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .step { display: flex; gap: 10px; align-items: flex-start; margin: 7px 0; }
+  .step b.n { flex: 0 0 24px; height: 24px; border-radius: 50%; background: linear-gradient(90deg, #a63cff, #c35cff); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+  .ladder { color: var(--muted); font-size: 13px; margin-top: 6px; line-height: 1.5; }
+  .ladder b { color: #9ff0b8; }
+  footer { width: 100%; max-width: 560px; text-align: center; color: var(--muted); font-size: 12.5px; line-height: 1.5; margin-top: 10px; }
+  footer nav { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+  footer nav a { color: #e3c6ff; font-weight: 700; font-size: 14px; }
+  footer p { margin: 6px 0; }
+  .legal-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.82); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+  .legal-modal .box { background: #1a0c2e; border: 1px solid var(--line); border-radius: 16px; padding: 20px; max-width: 520px; max-height: 80vh; overflow: auto; font-size: 13.5px; line-height: 1.55; color: var(--text); }
+  .legal-modal .box h4 { margin: 0 0 10px; font-size: 16px; }
+  .legal-modal .box button { margin-top: 14px; }
+  #step2 { display: none; }
+</style>
+</head>
+<body>
+
+  <!-- PASO 1: nombre -->
+  <section class="card" id="step1">
+    <img class="logo" src="/icons/icon-192x192.png" alt="Logo">
+    <h1>Creá tu <em>cuenta gratis</em></h1>
+    <p class="sub">Estamos Online 24hs!</p>
+    <form id="form" autocomplete="off" novalidate>
+      <input class="inp" id="name" type="text" placeholder="Ej: Martín" maxlength="60" autocomplete="given-name" inputmode="text" required>
+      <button class="btn" id="go" type="submit">Crear mi cuenta · +18</button>
+      <div class="err" id="err"></div>
+    </form>
+    <p class="trust">🔒 registro seguro · sin tarjeta · gratis</p>
+  </section>
+
+  <!-- PASO 2: cuenta creada + explicación -->
+  <section class="card ok" id="step2">
+    <div class="check">✓</div>
+    <h2>¡Cuenta creada!</h2>
+    <div class="row"><span class="k">Usuario</span><span class="v" id="outUser">—</span><button type="button" class="cp" data-copy="outUser">Copiar</button></div>
+    <div class="row"><span class="k">Clave</span><span class="v" id="outPass">—</span><button type="button" class="cp" data-copy="outPass">Copiar</button></div>
+    <div class="plats" id="outPlats"></div>
+    <div class="actions">
+      <button type="button" class="btn green" id="continue">Continuar a mi cuenta</button>
+      <button type="button" class="btn ghost" id="capture">📸 Guardar captura de mis datos</button>
+    </div>
+    <div class="preview" id="preview"></div>
+    <div class="inapp" id="inapp"></div>
+    <p class="hint">Guardá tus datos para volver a entrar cuando quieras. Con el mismo usuario y clave entrás a todas las plataformas.</p>
+  </section>
+
+  <section class="info" id="info" style="display:none;">
+    <div class="blk">
+      <div class="big">La plataforma mejor paga de internet 💎</div>
+      <p>Cargás solo, elegís dónde jugar y cobrás reembolsos reales por lo que perdés con tu plata. Sin esperar a nadie, 24 hs.</p>
+    </div>
+    <div class="blk">
+      <h3>¿Cómo funciona?</h3>
+      <div class="step"><b class="n">1</b><p><b>Cargás solo:</b> en tu cuenta tenés el CBU vigente. Transferís, mandás la foto del comprobante y la carga entra automática.</p></div>
+      <div class="step"><b class="n">2</b><p id="stepPlat"><b>Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</p></div>
+      <div class="step"><b class="n">3</b><p><b>Retirás cuando quieras:</b> desde el botón "Retirar mi premio", te lo pagamos a tu CBU.</p></div>
+    </div>
+    <div class="blk">
+      <h3>Reembolsos</h3>
+      <p id="refTxt">Te devolvemos un porcentaje de lo que perdés con tu plata, todas las semanas y todos los meses. Se cobra solo desde la app.</p>
+      <div class="ladder" id="refLadder"></div>
+    </div>
+    <div class="blk">
+      <h3>¿Por qué elegirnos?</h3>
+      <ul>
+        <li><b>Carga automática</b> las 24 hs: nadie te hace esperar.</li>
+        <li><b>Reembolsos reales</b> semanales y mensuales, sin letra chica.</li>
+        <li id="whyPlat"><b>Más de una plataforma</b> con el mismo usuario y clave.</li>
+        <li><b>Retiros a tu CBU</b> y soporte en vivo por chat.</li>
+        <li><b>Referidos:</b> invitá amigos y cobrá todos los meses por su actividad.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <nav>
+      <a href="#" data-legal="privacidad">Privacidad</a>
+      <a href="#" data-legal="terminos">Términos</a>
+      <a href="#" data-legal="cookies">Cookies</a>
+      <a href="#" data-legal="responsable">Juego Responsable</a>
+    </nav>
+    <p>Servicio disponible únicamente para mayores de 18 años en Argentina.</p>
+    <p>Ningún resultado está garantizado. Los bonos y promociones están sujetos a <a href="#" data-legal="terminos" style="color:#e3c6ff;">términos y condiciones</a>.</p>
+    <p>Este sitio no forma parte de Facebook, Instagram ni Meta Platforms, Inc. y no está respaldado por ellos. Facebook e Instagram son marcas de Meta Platforms, Inc.</p>
+  </footer>
+
+  <div class="legal-modal" id="legal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="box"><h4 id="legalT"></h4><div id="legalB"></div><button type="button" class="btn ghost" onclick="document.getElementById('legal').style.display='none'">Cerrar</button></div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+  var L = window.__LANDING__ || {};
+  var ph = function (v, key) { return (v && v.indexOf('__') !== 0) ? v : ''; };
+  // Código de pauta: placeholder del server → ?c= → último segmento de la URL (/l/CODIGO).
+  var qs = new URLSearchParams(location.search);
+  var campaign = ph(L.campaign) || qs.get('c') || qs.get('campaign') || (location.pathname.split('/').filter(Boolean).pop() || '');
+  campaign = String(campaign || '').toUpperCase().trim();
+  var baseUrl = ph(L.baseUrl) || location.origin;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── navegador embebido (Instagram / Facebook / TikTok) ──
+  var ua = navigator.userAgent || '';
+  var inApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|Line\/|Snapchat/i.test(ua);
+  var isAndroid = /Android/i.test(ua);
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  function chromeIntent(url) {
+    try {
+      var u = new URL(url);
+      return 'intent://' + u.host + u.pathname + u.search + u.hash + '#Intent;scheme=' + u.protocol.replace(':', '') +
+        ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
+    } catch (e) { return url; }
+  }
+
+  // ── info pública del servicio (plataformas + reembolsos) ──
+  var info = null;
+  fetch(baseUrl + '/api/landing/info?c=' + encodeURIComponent(campaign)).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    info = d; paintInfo();
+  }).catch(function () {});
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+  function paintInfo() {
+    if (!info) return;
+    var plats = info.platforms || [];
+    if (plats.length >= 2) {
+      $('stepPlat').innerHTML = '<b>Elegís dónde jugar:</b> tenés ' + plats.map(function (p) { return '<b>' + esc(p.name) + '</b>'; }).join(' y ') + '. Cuando llega tu transferencia te preguntamos en cuál querés el saldo.';
+      $('whyPlat').innerHTML = '<b>' + plats.length + ' plataformas</b> (' + plats.map(function (p) { return esc(p.name); }).join(' y ') + ') con el mismo usuario y clave.';
+    } else if (plats.length === 1) {
+      $('stepPlat').innerHTML = '<b>Jugás en ' + esc(plats[0].name) + ':</b> la carga entra sola en tu cuenta.';
+      $('whyPlat').innerHTML = '<b>Tu saldo al instante</b> en ' + esc(plats[0].name) + '.';
+    }
+    var r = info.refunds || null;
+    if (r && r.maxPct) {
+      $('refTxt').innerHTML = 'Te devolvemos <b>hasta el ' + r.maxPct + '%</b> de lo que perdés con tu plata (los bonos no cuentan): <b>semanal</b> se cobra lunes y martes, <b>mensual</b> desde el día 7. Solo desde la app, sin pedirle a nadie.';
+      $('refLadder').innerHTML = r.same ? r.weekly : ('🗓️ Semanal: ' + r.weekly + '<br>📆 Mensual: ' + r.monthly);
+    }
+  }
+
+  // ── paso 1: crear cuenta ──
+  var result = null;
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var name = $('name').value.trim();
+    var err = $('err'); err.style.display = 'none';
+    if (name.length < 2) { err.textContent = 'Ingresá tu nombre.'; err.style.display = 'block'; return; }
+    if (!campaign) { err.textContent = 'Este link de registro no es válido. Pedí uno nuevo.'; err.style.display = 'block'; return; }
+    var btn = $('go'); btn.disabled = true; btn.textContent = 'Creando tu cuenta…';
+    var utm = { source: qs.get('utm_source'), medium: qs.get('utm_medium'), campaign: qs.get('utm_campaign'), content: qs.get('utm_content'), term: qs.get('utm_term') };
+    fetch(baseUrl + '/api/landing/signup', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, campaignCode: campaign, utm: utm, landingUrl: location.href.slice(0, 2000) })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (x) {
+      if (!x.ok) { err.textContent = x.j.error || 'No pudimos crear tu cuenta. Probá de nuevo.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear mi cuenta · +18'; return; }
+      result = x.j; showStep2();
+    }).catch(function () {
+      err.textContent = 'Error de conexión. Probá de nuevo.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear mi cuenta · +18';
+    });
+  });
+
+  function showStep2() {
+    $('step1').style.display = 'none';
+    $('step2').style.display = '';
+    $('info').style.display = '';
+    $('outUser').textContent = result.username || '—';
+    $('outPass').textContent = result.password || '—';
+    var plats = result.platforms || [];
+    $('outPlats').innerHTML = plats.length
+      ? '<span style="flex:1 0 100%;color:#b9a9d6;font-size:12px;margin-bottom:2px;">Tu usuario ya está creado en:</span>' +
+        plats.map(function (p) { return '<span class="plat ' + (p.created ? 'on' : 'soon') + '">' + (p.created ? '✓ ' : '') + esc(p.name) + (p.created ? '' : ' · próximamente') + '</span>'; }).join('')
+      : '';
+    // Navegador embebido: explicar y ofrecer Chrome (Android abre el link de acceso directo en Chrome).
+    var box = $('inapp');
+    if (inApp && isAndroid) {
+      box.style.display = 'block';
+      box.innerHTML = '📲 Estás en el navegador de Instagram/Facebook. Al tocar <b>Continuar</b> te abrimos tu cuenta en <b>Google Chrome</b>, así después podés instalar la app con un botón y recibir los avisos.';
+    } else if (inApp && isIOS) {
+      box.style.display = 'block';
+      box.innerHTML = '📲 Estás en el navegador de Instagram/Facebook. Para que todo funcione mejor, tocá los <b>tres puntitos</b> (arriba a la derecha) y elegí <b>"Abrir en Safari"</b>. Tus datos de acceso quedan acá arriba.';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── continuar: link de acceso (un solo uso) ──
+  $('continue').addEventListener('click', function () {
+    if (!result || !result.accessUrl) return;
+    var url = result.accessUrl;
+    if (inApp && isAndroid) { location.href = chromeIntent(url); setTimeout(function () { location.href = url; }, 2500); return; }
+    location.href = url;
+  });
+
+  // ── copiar ──
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = $(b.getAttribute('data-copy')).textContent || '';
+      try { navigator.clipboard.writeText(t); b.textContent = 'Listo'; setTimeout(function () { b.textContent = 'Copiar'; }, 1400); } catch (e) {}
+    });
+  });
+
+  // ── captura con los datos ──
+  function wrap(ctx, text, x, y, maxW, lh) {
+    var words = String(text || '').split(' '), line = '';
+    for (var i = 0; i < words.length; i++) {
+      var t = line ? line + ' ' + words[i] : words[i];
+      if (ctx.measureText(t).width > maxW && line) { ctx.fillText(line, x, y); y += lh; line = words[i]; } else line = t;
+    }
+    if (line) ctx.fillText(line, x, y);
+    return y + lh;
+  }
+  $('capture').addEventListener('click', function () {
+    if (!result) return;
+    var W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+    var ctx = c.getContext('2d');
+    var g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#1a0c2e'); g.addColorStop(1, '#0a0514');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#b14dff'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, W - 40, H - 40);
+    var pad = 80, y = 150;
+    ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff'; ctx.font = '900 58px Montserrat, system-ui, sans-serif';
+    ctx.fillText('MIS DATOS DE ACCESO', W / 2, y); y += 54;
+    ctx.fillStyle = '#b9a9d6'; ctx.font = '600 30px Montserrat, system-ui, sans-serif';
+    ctx.fillText('Guardá esta captura para volver a entrar cuando quieras', W / 2, y); y += 90;
+    ctx.textAlign = 'left';
+    function row(k, v, color, mono) {
+      ctx.fillStyle = '#b9a9d6'; ctx.font = '700 26px Montserrat, system-ui, sans-serif'; ctx.fillText(k.toUpperCase(), pad, y); y += 50;
+      ctx.fillStyle = color || '#fff'; ctx.font = (mono ? '800 52px ui-monospace, Menlo, Consolas, monospace' : '800 40px Montserrat, system-ui, sans-serif');
+      y = wrap(ctx, v || '—', pad, y, W - pad * 2, 58) + 26;
+    }
+    row('Usuario', result.username, '#fff', true);
+    row('Clave', result.password, '#9ff0b8', true);
+    row('Entrá desde', baseUrl.replace(/^https?:\/\//, ''), '#d9b8ff', true);
+    var plats = (result.platforms || []).filter(function (p) { return p.created; }).map(function (p) { return p.name; });
+    if (plats.length) row('Tu usuario sirve en', plats.join(' y '), '#fff', false);
+    ctx.fillStyle = '#e3c6ff'; ctx.font = '700 28px Montserrat, system-ui, sans-serif';
+    y = wrap(ctx, 'Con este usuario y clave entrás a la app, cargás solo y elegís dónde jugar.', pad, y + 10, W - pad * 2, 38);
+    ctx.fillStyle = '#8a7aa6'; ctx.font = '500 24px Montserrat, system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
+    c.toBlob(function (blob) {
+      if (!blob) return;
+      var url = URL.createObjectURL(blob), name = 'mis-datos-' + (result.username || 'usuario') + '.png';
+      var p = $('preview'); p.style.display = 'block';
+      p.innerHTML = '<div style="color:#e3c6ff;font-weight:700;font-size:13px;margin-bottom:6px;">📸 Listo. Mantené apretada la imagen → "Guardar imagen", o tocá Descargar.</div><img src="' + url + '" alt="Mis datos"><a href="' + url + '" download="' + name + '">⬇️ Descargar imagen</a>';
+      try {
+        var file = new File([blob], name, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) navigator.share({ files: [file], title: 'Mis datos de acceso' }).catch(function () {});
+      } catch (e) {}
+    }, 'image/png');
+  });
+
+  // ── legales ──
+  var LEGAL = {
+    privacidad: ['Privacidad', 'Usamos tus datos únicamente para crear y administrar tu cuenta, acreditar tus cargas y contactarte por soporte. No los vendemos ni compartimos con terceros ajenos al servicio.'],
+    terminos: ['Términos y condiciones', 'Servicio exclusivo para mayores de 18 años residentes en Argentina. Los bonos y promociones pueden cambiar sin previo aviso y están sujetos a condiciones de uso. Ningún resultado está garantizado.'],
+    cookies: ['Cookies', 'Usamos cookies técnicas para mantener tu sesión y recordar por qué link llegaste. Podés borrarlas desde tu navegador en cualquier momento.'],
+    responsable: ['Juego responsable', 'Jugá por diversión y con plata que puedas permitirte perder. Si sentís que el juego te está afectando, pedí ayuda y escribinos: podemos limitar o cerrar tu cuenta cuando lo pidas.']
+  };
+  document.querySelectorAll('[data-legal]').forEach(function (a) {
+    a.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      var k = LEGAL[a.getAttribute('data-legal')]; if (!k) return;
+      $('legalT').textContent = k[0]; $('legalB').textContent = k[1]; $('legal').style.display = 'flex';
+    });
+  });
+})();
+</script>
+</body>
+</html>

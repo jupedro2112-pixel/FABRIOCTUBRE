@@ -176,6 +176,8 @@ async function isChoiceEnabled() {
  */
 async function resolveDefaultFor(user) {
   const s = await getSettings();
+  const pref = normalizeId(user && user.preferredPlatform);
+  if (pref && s.items[pref] && s.items[pref].enabled) return pref;
   const last = normalizeId(user && user.lastPlatform);
   if (last && s.items[last] && s.items[last].enabled) return last;
   return s.defaultPlatform;
@@ -192,6 +194,9 @@ async function decideForDeposit(user) {
   if (enabled.length < 2 || s.askMode === 'never') {
     return { ask: false, platform: await resolveDefaultFor(user), reason: enabled.length < 2 ? 'single' : 'never' };
   }
+  // Plataforma FIJA del cliente (#225): la eligió en la app → no se pregunta.
+  const pref = normalizeId(user && user.preferredPlatform);
+  if (pref && s.items[pref] && s.items[pref].enabled) return { ask: false, platform: pref, reason: 'preferred' };
   const last = normalizeId(user && user.lastPlatform);
   if (s.askMode === 'first_time' && last && s.items[last] && s.items[last].enabled) {
     return { ask: false, platform: last, reason: 'first_time' };

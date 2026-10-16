@@ -90,7 +90,10 @@ como `{success:false, error:'<texto para el usuario>', code, httpStatus}`; env l
 
 ## 5. Modelo de datos
 
+- `User.preferredPlatform` (#225): plataforma FIJA elegida en la app → `decideForDeposit` no pregunta
+  (`reason:'preferred'`). `POST /api/platforms/preferred {platform|null}`.
 - `User.lastPlatform` (string), `User.platforms` ({ ganamos: { status, username, syncedAt, error } }).
+  La landing (`POST /api/landing/signup`, #224) crea el jugador en toda plataforma conectada.
 - `Transaction.platform` (default `'girox'` → histórico sin migración).
 - `BankMovement`: `matchStatus` suma `awaiting_platform` y `redirected`; campos `platform`,
   `platformAskedAt`, `platformChosenAt`, `platformChoiceBy` (`user` | `agent:<u>` | `timeout`

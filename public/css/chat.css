@@ -1056,3 +1056,121 @@ body.wa-dark .support-head { background: #1f2c34; }
 /* Botones de plataforma del chat (¿dónde querés jugar?) */
 .plat-btn { background: var(--dx-accent); color: #06070d; border-radius: 10px; clip-path: var(--dx-cut-sm); font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
 .plat-btn.plat-link { background: linear-gradient(135deg, #7c4dff, #b388ff); }
+/* #224: la barra de soporte no se corta en pantallas angostas */
+.support-bar .chat-topbar-info { flex: 1 1 auto; min-width: 0; }
+.support-bar .chat-topbar-name, .support-bar .chat-topbar-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.support-bar .chat-topbar-status { font-size: 10px; }
+.support-bar .support-open-btn { margin-left: 4px; padding: 8px 11px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   #225 — ROJO DE MARKETING + TODO ARRIBA AL MÍNIMO + MODALES EN EL FORMATO NUEVO
+   (owner: "el azul apaga; rojo fuerte", "achicá todo lo de arriba al máximo",
+   "reembolsos la mitad de grosor", "las infos con el formato nuevo").
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --dx-cyan: #ff2d55;
+    --dx-violet: #ff6b6b;
+    --dx-accent: linear-gradient(135deg, #ff1744 0%, #ff3d5a 55%, #ff6b6b 100%);
+    --dx-border-hi: rgba(255,45,85,.6);
+    --dx-glass: linear-gradient(160deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.025) 60%, rgba(255,45,85,.05) 100%);
+    --pr-gold: var(--dx-cyan); --pr-gold-grad: var(--dx-accent);
+}
+.chat-screen {
+    background:
+        radial-gradient(900px 500px at 85% -10%, rgba(255,23,68,.26), transparent 60%),
+        radial-gradient(700px 420px at -10% 30%, rgba(255,107,107,.12), transparent 60%),
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 100% 36px,
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 36px 100%,
+        var(--dx-bg) !important;
+}
+.tb-circle-ico { box-shadow: 0 0 0 1px rgba(255,45,85,.08), 0 8px 20px rgba(0,0,0,.45); }
+.tb-circle:active .tb-circle-ico { box-shadow: 0 0 18px rgba(255,45,85,.35); }
+.support-bar .chat-topbar-avatar { box-shadow: 0 0 14px rgba(255,45,85,.25); }
+.support-bar .chat-topbar-dot { background: #2ee66b; box-shadow: 0 0 8px #2ee66b; }
+.support-open-btn, .support-load-btn, .casino-back, .al-btn.receipt, .plat-btn { box-shadow: 0 6px 18px rgba(255,23,68,.28); }
+.home-card::before { box-shadow: 0 0 12px rgba(255,45,85,.6); }
+.al-copy, .al-eye { background: rgba(255,45,85,.08); }
+.al-copy:active, .al-eye:active { background: rgba(255,45,85,.2); }
+.plat-play-btn.is-default { background: linear-gradient(160deg, rgba(255,23,68,.14), rgba(255,107,107,.08)); box-shadow: 0 0 22px rgba(255,23,68,.18); }
+.hb-install { background: linear-gradient(160deg, rgba(255,23,68,.12), rgba(255,107,107,.08)); }
+.casino-plat-tab.active { box-shadow: 0 0 16px rgba(255,23,68,.35); }
+.withdraw-row-btn { background: linear-gradient(135deg, #2b2f3f, #1a1d2a) !important; border: 1px solid rgba(255,255,255,.14) !important; box-shadow: 0 6px 16px rgba(0,0,0,.35) !important; }
+
+/* ── Arriba al MÍNIMO ── */
+.header.header-toolbar.tb-circles { padding: 5px 6px; padding-top: max(5px, env(safe-area-inset-top, 5px)); gap: 0; }
+.tb-circle { gap: 2px; min-width: 46px; }
+.tb-circle-ico { width: 32px; height: 32px; }
+.tb-circle-ico svg { width: 15px; height: 15px; }
+.tb-circle-lbl { font-size: 8px; letter-spacing: .6px; }
+.support-bar, .support-bar.chat-topbar { padding: 5px 10px; gap: 8px; }
+.support-bar .chat-topbar-avatar { width: 28px; height: 28px; }
+.support-bar .chat-topbar-name { font-size: 12px; }
+.support-bar .chat-topbar-status { font-size: 9px; }
+.support-bar .theme-topbar-btn, .support-bar .notif-topbar-btn, .support-bar .fire-topbar-btn { transform: scale(.85); margin: 0 -2px; }
+.support-bar .support-open-btn { padding: 6px 9px; font-size: 9.5px; }
+.home-dash { gap: 6px; margin-top: 6px; }
+/* Reembolsos + usuario: la MITAD de alto — una sola línea por botón, sin título. */
+.dash-top { padding: 4px !important; gap: 4px !important; }
+.dash-top .dash-refunds { padding: 0 !important; }
+.dash-top .dash-refunds-title { display: none !important; }
+.dash-top .dash-refunds-row { gap: 4px; }
+.dash-top .dash-refunds-row .refund-btn { padding: 4px 6px !important; display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 6px; min-height: 30px; }
+.dash-top .dash-refunds-row .refund-label-full { font-size: 8.5px !important; line-height: 1 !important; text-transform: uppercase; letter-spacing: .8px; color: var(--dx-muted); }
+.dash-top .dash-refunds-row .refund-amount { font-size: 12px !important; }
+.dash-top .dash-refunds-row .refund-timer { display: none !important; }
+.dash-top .refund-tier { top: -5px; right: -3px; font-size: 7.5px; padding: 1px 4px; }
+.dash-top .dash-user { flex: 0 0 auto !important; flex-direction: row !important; gap: 6px !important; padding: 3px 8px !important; }
+.dash-top .dash-user-avatar { width: 20px !important; height: 20px !important; font-size: 11px !important; }
+.dash-top .dash-user-label { display: none !important; }
+.dash-top .dash-user-name { font-size: 10px !important; max-width: 70px; }
+#rouletteHomeCard { display: none !important; }
+.home-card { padding: 9px 12px; }
+.home-card-title { font-size: 11.5px; margin: 1px 0 6px; letter-spacing: 1.4px; }
+.al-line { padding: 6px 0; }
+.al-v { font-size: 14px; }
+.al-meta { font-size: 10px; padding: 4px 0 5px; }
+.al-chip { font-size: 11px; padding: 3px 6px 3px 9px; }
+.al-actions { margin-top: 8px; gap: 6px; }
+.al-btn { padding: 10px 10px; font-size: 11px; }
+.home-card-sub { font-size: 10.5px; margin-bottom: 6px; }
+.plat-play-btn { padding: 10px 8px; }
+.plat-play-name { font-size: 14px; }
+.plat-balance { margin-top: 6px; padding: 4px 10px; }
+.plat-balance .dash-balance-amount { font-size: 15px; }
+.withdraw-row-btn { margin: 5px 8px !important; padding: 8px 12px !important; font-size: 11px !important; }
+.home-bottom-bar { margin: 0 8px 4px; gap: 6px; }
+.hb-btn { padding: 8px 10px; }
+.hb-text b { font-size: 12px; }
+.hb-text small { font-size: 9px; }
+/* Plataforma FIJA */
+.plat-play-row { gap: 6px; }
+.plat-play-wrap { flex: 1 1 130px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.plat-play-wrap .plat-play-btn { flex: 1 1 auto; width: 100%; }
+.plat-fix { align-self: center; font-size: 9.5px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--dx-muted); border: 1px solid var(--dx-border); border-radius: 999px; padding: 3px 9px; cursor: pointer; }
+.plat-fix.on { color: #06070d; background: var(--dx-accent); border-color: transparent; }
+.plat-play-wrap.is-pref .plat-play-btn { border-color: var(--dx-border-hi); box-shadow: 0 0 18px rgba(255,23,68,.25); }
+/* Botón "¿Cómo funciona?" separado abajo */
+.home-how-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 1px; width: calc(100% - 16px); margin: 0 8px 8px;
+    background: rgba(255,255,255,.03); border: 1px dashed var(--dx-border); border-radius: 10px; padding: 7px 10px; cursor: pointer;
+    color: var(--dx-text); font: 800 11px var(--dx-font); letter-spacing: .8px; text-transform: uppercase;
+}
+.home-how-btn span { font-weight: 600; font-size: 9px; color: var(--dx-muted); text-transform: none; letter-spacing: .2px; }
+
+/* ── Modales con el formato nuevo (info del servicio, reembolsos, perfil, retiro, etc.) ── */
+.modal { background: rgba(6,7,13,.86); backdrop-filter: blur(8px); }
+.modal-content {
+    font-family: var(--dx-font); background: linear-gradient(160deg, #11131d 0%, #0a0c14 100%); border: 1px solid var(--dx-border-hi); border-radius: 16px;
+    box-shadow: 0 0 0 1px rgba(255,45,85,.08), 0 24px 60px rgba(0,0,0,.6);
+}
+.modal-header h2, .modal-content h2, .modal-content h3 { font-family: var(--dx-font); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--dx-text); }
+.modal-header p { color: var(--dx-muted); }
+.modal-content .btn, .modal-content .btn-primary, .modal-content button.btn-primary {
+    background: var(--dx-accent); color: #06070d; border: 0; border-radius: 10px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; box-shadow: 0 6px 18px rgba(255,23,68,.28);
+}
+.modal-content .btn-secondary, .modal-content button.btn-secondary { background: rgba(255,255,255,.05); color: var(--dx-text); border: 1px solid var(--dx-border); border-radius: 10px; }
+.modal-content input, .modal-content select, .modal-content textarea { background: rgba(255,255,255,.04) !important; border: 1px solid var(--dx-border) !important; color: var(--dx-text) !important; border-radius: 10px !important; font-family: var(--dx-font); }
+.info-card, .refund-details, .fire-details { background: rgba(255,255,255,.04) !important; border: 1px solid var(--dx-border) !important; border-radius: 12px !important; }
+.info-card-title { color: var(--dx-text) !important; font-weight: 800; letter-spacing: .6px; }
+.info-card-desc { color: var(--dx-muted) !important; }
+.info-card-icon { filter: saturate(.8); }

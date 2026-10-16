@@ -620,6 +620,11 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   filtrar y muestra a qué publicista pertenece cada usuario. La gestión del admin
   (POST/PUT `/api/admin/publisher-admins`) acepta `campaignCodes` (lista) o el legacy
   `campaignCode`.
+- **Landing de pauta (#224):** `GET /l/:code` (y `/landing/:code`) sirve `public/landing/index.html`
+  con el código inyectado; `POST /api/landing/signup` crea el usuario en Girox Y en toda plataforma
+  habilitada con API (`User.platforms`), devuelve usuario/clave/access link (sin `ir=casino`);
+  `GET /api/landing/info` es público (plataformas + escalera). Plataforma FIJA del cliente (#225):
+  `User.preferredPlatform` + `POST /api/platforms/preferred`; `decideForDeposit` no pregunta si hay fija.
 - **Pauta / vanity URL**: `GET /:code` matchea Campaign.code exacto (DB directa) o slug
   del publisher (cache 30s). Setea cookie httpOnly `vip_campaign` (60 días) → el server
   reinyecta el código en CADA carga SPA (`renderIndexHtml`) para que "registro sin SMS"

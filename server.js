@@ -1062,6 +1062,78 @@ async function _getActiveCampaignsCached() {
 //
 // Ambos sirven la home con atribución activa. Si el path no matchea ninguno,
 // next() para que express.static lo intente servir o caiga al 404.
+// ── LANDING DE PAUTA (#224, 2026-10-16) ───────────────────────────────────
+// GET /l/:code y /landing/:code → public/landing/index.html con el código de pauta,
+// la URL pública y el pixel inyectados (misma idea que renderIndexHtml). Un campo
+// (nombre) → POST /api/landing/signup → cuenta en TODAS las plataformas con API →
+// "¡Cuenta creada!" + explicación del servicio + "Continuar a mi cuenta" (access link).
+let _landingHtmlBase = null;
+function renderLandingHtml(campaignCode) {
+  if (_landingHtmlBase === null) {
+    const p = path.join(__dirname, 'public', 'landing', 'index.html');
+    const content = readFileCached(p);
+    if (!content) return null;
+    _landingHtmlBase = content
+      .replace(/__META_PIXEL_ID_PLACEHOLDER__/g, (process.env.META_PIXEL_ID || '').trim())
+      .replace(/__VIP_PUBLIC_BASE_URL_PLACEHOLDER__/g, getPublicBaseUrl());
+  }
+  return _landingHtmlBase.replace(/__LANDING_CAMPAIGN_CODE__/g, String(campaignCode || '').replace(/[^A-Za-z0-9_-]/g, ''));
+}
+async function landingPageHandler(req, res, next) {
+  try {
+    const candidate = String(req.params.code || req.query.c || '').trim();
+    if (!/^[A-Za-z0-9_-]{3,40}$/.test(candidate)) return next();
+    const normalizedCode = candidate.toUpperCase();
+    let campaign = await Campaign.findOne({ code: normalizedCode, isActive: true }).lean();
+    if (!campaign) {
+      const slug = _slugifyPublisher(candidate);
+      if (slug) {
+        const cands = await _getActiveCampaignsCached();
+        const matches = cands.filter(c => _slugifyPublisher(c.publisher) === slug);
+        if (matches.length) { matches.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); campaign = matches[0]; }
+      }
+    }
+    if (!campaign) return res.status(404).send('Link de registro inválido.');
+    const html = renderLandingHtml(campaign.code);
+    if (!html) return res.status(500).send('Error loading page');
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    // La pauta queda en la cookie: si después entra a la PWA sin el access link, el registro
+    // sigue siendo el de pauta (sin SMS) y la atribución no se pierde.
+    res.setHeader('Set-Cookie', buildCampaignCookieHeader(campaign.code));
+    res.send(html);
+  } catch (err) {
+    logger.warn(`[landing] error: ${err.message}`);
+    return next();
+  }
+}
+app.get('/l/:code', landingPageHandler);
+app.get('/landing/:code', landingPageHandler);
+app.get('/landing', landingPageHandler);
+
+// Info PÚBLICA para la landing (sin datos sensibles): plataformas habilitadas y escalera de reembolsos.
+app.get('/api/landing/info', async (req, res) => {
+  try {
+    let plats = [];
+    try { plats = (await platforms.listEnabled()).map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected })); } catch (_) {}
+    let refunds = null;
+    try {
+      const tbp = await getRefundTiersByPeriod();
+      const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+      const linea = (tiers) => (tiers || []).map((t) => {
+        const rango = t.max === null ? `más de ${money(t.min)}` : (t.min === 0 ? `hasta ${money(t.max)}` : `${money(t.min + 1)} a ${money(t.max)}`);
+        return `${rango} → <b>${t.pct}%</b>`;
+      }).join(' · ');
+      let maxPct = 0;
+      [tbp.weekly, tbp.monthly].forEach((ts) => (ts || []).forEach((t) => { if (t && t.pct > maxPct) maxPct = t.pct; }));
+      const same = JSON.stringify((tbp.weekly || []).map((t) => [t.pct, t.max])) === JSON.stringify((tbp.monthly || []).map((t) => [t.pct, t.max]));
+      refunds = { maxPct, same, weekly: linea(tbp.weekly), monthly: linea(tbp.monthly) };
+    } catch (_) {}
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/:code', async (req, res, next) => {
   const candidate = req.params.code || '';
   // Sólo procesar si parece un código/slug válido: 3-40 chars, letras/números/_/-
@@ -4080,6 +4152,36 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
       return res.status(503).json({ error: 'La plataforma está demorada. Probá de nuevo en un momento.' });
     }
 
+    // 1b) MULTI-PLATAFORMA (#224): el MISMO usuario+clave en las demás plataformas habilitadas
+    //     con API conectada (Ganamos cuando se carguen GANAMOS_API_URL/KEY). Girox ya quedó
+    //     arriba. Un fallo acá NO frena el alta (el cliente ya tiene su cuenta en girox): queda
+    //     `platforms.<id>.status='error'` y se reintenta al elegir esa plataforma / SSO.
+    const _platResults = [{ id: 'girox', created: true }];
+    const _platState = {};
+    try {
+      const _enabled = await platforms.listEnabled();
+      for (const p of _enabled) {
+        if (p.id === 'girox') continue;
+        if (!p.connected) { _platResults.push({ id: p.id, created: false, reason: 'not_connected' }); continue; }
+        const ad = platforms.getAdapter(p.id);
+        try {
+          const r = await ad.syncUserToPlatform({ username, password });
+          if (r && r.success) {
+            _platState[p.id] = { status: r.alreadyExists ? 'linked' : 'synced', username, syncedAt: new Date() };
+            _platResults.push({ id: p.id, created: true });
+          } else {
+            _platState[p.id] = { status: 'error', username, error: String((r && r.error) || 'fallo').slice(0, 300), at: new Date() };
+            _platResults.push({ id: p.id, created: false, reason: (r && r.code) || 'error' });
+            logger.warn(`[landing-signup] alta en ${p.id} falló para ${username}: ${r && r.error}`);
+          }
+        } catch (e) {
+          _platState[p.id] = { status: 'error', username, error: String(e.message).slice(0, 300), at: new Date() };
+          _platResults.push({ id: p.id, created: false, reason: 'exception' });
+          logger.warn(`[landing-signup] alta en ${p.id} excepción para ${username}: ${e.message}`);
+        }
+      }
+    } catch (e) { logger.warn(`[landing-signup] multi-plataforma: ${e.message}`); }
+
     // 2) Crear la cuenta local: sin teléfono (phoneVerified:false → el retiro pedirá SMS).
     const userId = uuidv4();
     let newReferralCode = null;
@@ -4109,6 +4211,7 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
       giroxSyncStatus: 'synced',
       giroxPasswordSynced: true,
       giroxOwnerCampaign: giroxOwner,
+      platforms: Object.keys(_platState).length ? _platState : null,
       referralCode: newReferralCode,
       acquisitionCampaign: normalizedCode,
       acquisitionSource: 'landing',
@@ -4143,7 +4246,8 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
     let accessUrl = null;
     try {
       accessUrl = await issueAccessLinkFor(newUser.id);
-      accessUrl += (accessUrl.indexOf('?') === -1 ? '?' : '&') + 'ir=casino';
+      // 🪦 #224: antes se agregaba `ir=casino` (abría el casino directo). Ahora el cliente
+      // entra al SISTEMA DE CARGAS (home 2.0) — el owner quiere que vea la carga primero.
     } catch (linkErr) {
       logger.warn(`[landing-signup] no se pudo generar el access-link de ${username}: ${linkErr.message}`);
       return res.status(500).json({ error: 'Tu cuenta se creó pero no pudimos generar tu acceso. Escribinos por soporte.' });
@@ -4151,7 +4255,13 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
 
     logger.info(`[landing-signup] alta ${username} campaign=${normalizedCode}${giroxOwner ? ' (key publicista)' : ''}`);
     // La landing muestra usuario+clave y ofrece "entrar" con accessUrl (logueado).
-    res.status(201).json({ success: true, accessUrl, username, password });
+    // Plataformas con nombre visible para la landing ("tu usuario ya está creado en …").
+    let _platNames = {};
+    try { (await platforms.listAll()).forEach((p) => { _platNames[p.id] = p.name; }); } catch (_) {}
+    res.status(201).json({
+      success: true, accessUrl, username, password,
+      platforms: _platResults.map((r) => ({ id: r.id, name: _platNames[r.id] || r.id, created: !!r.created, reason: r.reason || null }))
+    });
   } catch (error) {
     // A stdout además del logger de archivo: los 500 de este endpoint tienen que
     // verse en los logs de EB para diagnosticar (el logger winston va solo a
@@ -5216,15 +5326,41 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
   try {
     const list = await platforms.listEnabled();
     const s = await platforms.getSettings();
-    let lastPlatform = null;
-    try { const u = await User.findOne({ id: req.user.userId }).select('lastPlatform').lean(); lastPlatform = (u && u.lastPlatform) || null; } catch (_) {}
+    let lastPlatform = null, preferredPlatform = null;
+    try {
+      const u = await User.findOne({ id: req.user.userId }).select('lastPlatform preferredPlatform').lean();
+      lastPlatform = (u && u.lastPlatform) || null;
+      preferredPlatform = (u && platforms.normalizeId(u.preferredPlatform)) || null;
+      if (preferredPlatform && !list.some((p) => p.id === preferredPlatform)) preferredPlatform = null; // fijó una que ya no está habilitada
+    } catch (_) {}
     res.json({
       platforms: list.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, isDefault: p.isDefault })),
-      askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform,
+      askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform, preferredPlatform,
       choiceEnabled: await platforms.isChoiceEnabled()
     });
   } catch (e) {
     logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// El cliente FIJA su plataforma (#225): las cargas van directo ahí sin preguntar.
+// body { platform: '<id>' | null }  (null = volver a que se le pregunte en cada carga)
+app.post('/api/platforms/preferred', authMiddleware, async (req, res) => {
+  try {
+    const raw = req.body ? req.body.platform : null;
+    let pid = null;
+    if (raw != null && raw !== '') {
+      pid = platforms.normalizeId(raw);
+      if (!pid) return res.status(400).json({ error: 'Plataforma inválida.' });
+      const enabled = await platforms.listEnabled();
+      if (!enabled.some((p) => p.id === pid)) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
+    }
+    await User.updateOne({ id: req.user.userId }, { $set: { preferredPlatform: pid } });
+    logger.info(`[platforms] ${req.user.username} fijó plataforma: ${pid || '(ninguna, pregunta en cada carga)'}`);
+    res.json({ success: true, preferredPlatform: pid, label: pid ? platforms.labelOf(pid) : null });
+  } catch (e) {
+    logger.warn(`[platforms] preferred: ${e.message}`);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
@@ -17459,7 +17595,7 @@ app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) =>
     // GET /api/users/:userId (viewUser/loadUserInfo). Antes viajaba el doc entero
     // (fcmTokens, tagHistory, withdrawalAccount, acquisitionUtm, adminNotes…).
     // ⚠️ Si se agrega una columna nueva a la tabla del panel: sumar el campo acá.
-    const USERS_LIST_FIELDS = 'id username tags accountNumber email phone role balance isActive isBlocked blockReason lastLogin createdAt notificationPlan notifMonthlyCounts phoneVerified loginWithoutPassword vipLevel lifetimeWagered lastPlatform';
+    const USERS_LIST_FIELDS = 'id username tags accountNumber email phone role balance isActive isBlocked blockReason lastLogin createdAt notificationPlan notifMonthlyCounts phoneVerified loginWithoutPassword vipLevel lifetimeWagered lastPlatform preferredPlatform';
     const users = await User.find(query)
       .select(USERS_LIST_FIELDS)
       .sort({ role: 1, username: 1 })

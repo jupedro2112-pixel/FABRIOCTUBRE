@@ -8,6 +8,55 @@
 
 ## Sesión 2026-10-16
 
+### 225. 🔴 Rojo de marketing, arriba al mínimo, plataforma FIJA, "cómo funciona" separado, modales en formato nuevo — SW v123
+- **Owner:** "sacá cómo funciona de la línea de soporte en vivo y dejalo abajo para que no se mezcle; achicá
+  todo lo de arriba al máximo para que la carga y las plataformas se vean sin deslizar; reembolsos a la
+  mitad de grosor; cuando entrás a cada info que siga el formato nuevo; el azul apaga, usá un rojo
+  fuerte; que la plataforma se pueda seleccionar antes y dejarla FIJA, y si no está fija, que al cargar
+  pregunte dónde jugar; al apretar que se abra dentro de la app con autologin".
+- **Plataforma FIJA (back):** `User.preferredPlatform` (null = pregunta). `platforms.decideForDeposit`
+  devuelve `{ask:false, platform, reason:'preferred'}` si está fijada y habilitada; `resolveDefaultFor`
+  la prioriza sobre `lastPlatform` (timeout/never). `GET /api/platforms` suma `preferredPlatform`;
+  **`POST /api/platforms/preferred`** `{platform|null}` la guarda. `USERS_LIST_FIELDS` la incluye.
+  **PWA:** cada plataforma tiene la pill "☆ Fijar" / "★ Fija" (`VIP.home.setPreferred`); el texto de
+  la tarjeta explica el estado. Tocar la plataforma abre el casino embebido con SSO (Girox hoy;
+  Ganamos cuando tenga API; sin API → link).
+- **Home:** barra de soporte sólo "Soporte en vivo · En línea" + "Abrir"; botón punteado
+  "¿Cómo funciona el servicio? · Reembolsos · plataformas · referidos" ABAJO del todo (abre
+  Información del servicio). Cabecera y barra de soporte al mínimo (círculos 32 px); reembolsos +
+  usuario en una sola línea (sin título ni timers, mitad de alto); ruleta del home oculta (no activa).
+- **Tema (chat.css, bloque #225):** acento **rojo** (#ff1744→#ff6b6b) en vez de cian/violeta; glows
+  rojos; retirar en gris oscuro para no competir. **Modales** (info del servicio, reembolsos, perfil,
+  retiro, cambio de clave…) pasan al formato nuevo: fondo oscuro, borde rojo fino, títulos Montserrat
+  en mayúsculas, botones primarios rojos, inputs oscuros, tarjetas de info en vidrio.
+- Validado: `node --check` OK; index.html balanceado. Back necesita redeploy (preferredPlatform).
+
+### 224. 🚀 LANDING DE PAUTA en este repo (nombre → cuenta en TODAS las plataformas) + escape del navegador de Instagram a Chrome — SW v122
+- **Owner (3 capturas):** tarjeta violeta con mascota, "Creá tu cuenta gratis / Estamos Online 24hs!",
+  un solo campo (nombre), "CREAR MI CUENTA · +18", "registro seguro · sin tarjeta · gratis", legales;
+  después "¡Cuenta creada!" con usuario/clave y "Continuar a mi cuenta". Pidió: registrar en AMBAS
+  plataformas (Girox ya; Ganamos cuando tome la API), mostrar los datos + explicación básica (cómo
+  funciona, reembolsos, por qué elegirnos, "la plataforma mejor paga de internet"), captura de los datos
+  de ingreso, buen detalle antes de entrar a cargas, y un link para salir del navegador de Instagram y
+  abrir en Chrome para que el botón Instalar app funcione.
+- **Página `public/landing/index.html`** (standalone, Montserrat, violeta): paso 1 nombre → paso 2
+  usuario/clave con copiar, "tu usuario ya está creado en: ✓ Girox · Ganamos próximamente", botones
+  "Continuar a mi cuenta" y "📸 Guardar captura de mis datos" (canvas + share/descarga), bloques
+  "La plataforma mejor paga de internet", "¿Cómo funciona?" (3 pasos, plataformas reales), "Reembolsos"
+  (escalera real) y "¿Por qué elegirnos?"; legales en modal. **Navegador embebido** (Instagram/Facebook/
+  TikTok): en Android "Continuar" abre el link de acceso en **Google Chrome** vía `intent://…;package=
+  com.android.chrome` (fallback a la URL normal); en iOS muestra el tip "tres puntitos → Abrir en Safari".
+- **Server:** `GET /l/:code`, `/landing/:code`, `/landing?c=` → `renderLandingHtml` (placeholders
+  código/base URL/pixel, cookie `vip_campaign`; acepta código o slug del publicista, 404 si no existe).
+  **`GET /api/landing/info`** (público): plataformas habilitadas + escalera de reembolsos (maxPct,
+  semanal/mensual). **`POST /api/landing/signup`**: tras crear en Girox, crea el MISMO usuario+clave
+  en cada plataforma habilitada con API conectada (`User.platforms.<id>`; un fallo no frena el alta),
+  responde `platforms:[{id,name,created,reason}]` y **ya no agrega `ir=casino`** al access link (entra
+  al sistema de cargas).
+- **Link de la landing:** `https://<dominio>/l/<CÓDIGO_DE_PAUTA>` (ej. `https://cargas1girox.com/l/SANTINOPAUTA`);
+  el código es el de la campaña en el panel (o el slug del publicista). Requiere redeploy.
+- También: la barra de soporte dejó de cortarse en pantallas angostas (nowrap + ellipsis).
+
 ### 223. 🔷 Tema "diamante / futurista" de la PWA (estilo NIKE.com / 1win) — chau serif — SW v121
 - **Owner:** "parece un word; quiero algo profesional, diamantado, futurista, con buena definición tipo
   NIKE.com o 1win, estilos modernos".

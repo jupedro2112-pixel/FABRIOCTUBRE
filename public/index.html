@@ -921,8 +921,8 @@
                          (Comunidad → Logo del chat) hay uno cargado, chat.js lo pisa. -->
                     <img class="chat-topbar-avatar" id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40" onclick="VIP.home.openSupport()">
                     <div class="chat-topbar-info" onclick="VIP.home.openSupport()">
-                        <span class="chat-topbar-name">¿Cómo funciona? <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
-                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>Soporte en vivo · info del servicio, referidos y consultas</span>
+                        <span class="chat-topbar-name">Soporte en vivo <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
+                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>En línea · te respondemos al toque</span>
                     </div>
                     <!-- Modo claro/oscuro A LA VISTA (owner 2026-08-03: en Configuración
                          nadie lo encontraba). El ícono muestra a qué modo se cambia.
@@ -936,7 +936,7 @@
                          barra de escribir (la barra es 100% estilo WhatsApp). El click lo
                          cablea app.js (#fireBtn) y fire.js actualiza #fireStreak. -->
                     <button class="fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Soporte en vivo</button>
+                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Abrir</button>
                 </div>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
@@ -998,7 +998,7 @@
                      Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
                 <div class="home-card" id="platformsCard">
                     <div class="home-card-title">Elegí dónde jugar</div>
-                    <p class="home-card-sub" id="platformsSub">Después de cargar elegís en qué plataforma querés tu saldo. Tocá una y mirala con tu sesión ya iniciada.</p>
+                    <p class="home-card-sub" id="platformsSub">Tocá una para entrar con tu sesión iniciada. Fijala y tus cargas van directo ahí; si no, te preguntamos al cargar.</p>
                     <div class="plat-play-row" id="platformsButtons"></div>
                     <div class="plat-balance">
                         <span class="dash-balance-label">💰 TU SALDO</span>
@@ -1050,6 +1050,8 @@
                     <span class="hb-text"><b>Instalar app</b><small>Acceso directo y avisos</small></span>
                 </button>
             </div>
+            <!-- #225: "cómo funciona" separado del soporte, abajo del todo (abre Información del servicio). -->
+            <button type="button" class="home-how-btn" onclick="var b=document.getElementById('infoBtn'); if(b) b.click();">¿Cómo funciona el servicio? <span>Reembolsos · plataformas · referidos</span></button>
 
             <style>
                 @keyframes winners-pulse {

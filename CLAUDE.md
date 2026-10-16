@@ -155,6 +155,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   acoplada a `USERS_LIST_FIELDS` del backend (columna nueva ⇒ sumar campo al select).
   Detalle completo de trampas en `docs/ARCHITECTURE.md` §7.
 
+- **Landing de pauta en el repo (#224):** `public/landing/index.html` servida en `GET /l/:code`; el alta
+  crea el usuario en TODAS las plataformas con API conectada. **Plataforma fija (#225):**
+  `User.preferredPlatform` evita la pregunta al cargar. ⚠️ En scripts de edición usar
+  `s.replace(from, () => to)`: un `$'` en el texto nuevo rompe el archivo (pasó con server.js).
 - **Bono por instalar la app APAGADO por flag (#221, 2026-10-16):** `Config['installBonusEnabled']`
   (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El
   cartel dorado y las tarjetas del modal Info se ELIMINARON de la PWA. `/sys_install_app` es neutro

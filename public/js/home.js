@@ -87,31 +87,54 @@
         return _platforms;
     }
 
-    function _platBtn(p) {
+    function _platBtn(p, preferred) {
         const label = _esc(p.name);
-        const sub = p.connected ? 'Ver con mi sesión iniciada' : 'Abrir ' + _esc(p.name);
+        const isPref = preferred === p.id;
+        const sub = p.connected ? 'Entrar con mi sesión' : 'Abrir ' + _esc(p.name);
         const onclick = "VIP.home.playOn('" + _esc(p.id) + "')";
-        return '<button type="button" class="plat-play-btn' + (p.isDefault ? ' is-default' : '') + '" onclick="' + onclick + '">' +
+        // Pill "Fijar": las cargas van directo a esta plataforma sin preguntar (#225).
+        const fix = isPref
+            ? '<span class="plat-fix on" onclick="event.stopPropagation();VIP.home.setPreferred(null)" title="Quitar la plataforma fija">★ Fija</span>'
+            : '<span class="plat-fix" onclick="event.stopPropagation();VIP.home.setPreferred(\'' + _esc(p.id) + '\')" title="Fijar: tus cargas van directo acá">☆ Fijar</span>';
+        return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
+            '<button type="button" class="plat-play-btn' + (p.isDefault ? ' is-default' : '') + (isPref ? ' is-pref' : '') + '" onclick="' + onclick + '">' +
             '<span class="plat-play-name">' + label + '</span>' +
             '<span class="plat-play-sub">' + sub + '</span>' +
-            '</button>';
+            '</button>' + fix + '</div>';
+    }
+
+    async function setPreferred(platformId) {
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/platforms/preferred', {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken },
+                body: JSON.stringify({ platform: platformId })
+            });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { VIP.ui.showToast(d.error || 'No se pudo guardar', 'error'); return; }
+            if (_platforms) _platforms.preferredPlatform = d.preferredPlatform || null;
+            renderPlatforms();
+            VIP.ui.showToast(d.preferredPlatform ? ('Listo: tus cargas van directo a ' + (d.label || '')) : 'Listo: te preguntamos dónde jugar en cada carga', 'success');
+        } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); }
     }
 
     function renderPlatforms() {
         const box = _el('platformsButtons');
         if (!box) return;
         const list = (_platforms && _platforms.platforms) || [];
+        const pref = (_platforms && _platforms.preferredPlatform) || null;
         if (!list.length) {
             // Sin respuesta del server (o backend viejo): girox como siempre.
-            box.innerHTML = _platBtn({ id: 'girox', name: 'Girox', emoji: '🎰', connected: true, isDefault: true });
+            box.innerHTML = _platBtn({ id: 'girox', name: 'Girox', emoji: '🎰', connected: true, isDefault: true }, null);
         } else {
-            box.innerHTML = list.map(_platBtn).join('');
+            box.innerHTML = list.map(p => _platBtn(p, list.length >= 2 ? pref : null)).join('');
         }
         const sub = _el('platformsSub');
         if (sub) {
+            const prefP = list.find(p => p.id === pref);
             sub.textContent = list.length >= 2
-                ? 'Tenés ' + list.length + ' plataformas para jugar. Después de cargar te preguntamos en cuál querés tu saldo.'
-                : 'Después de cargar, entrá a jugar desde acá.';
+                ? (prefP ? ('Plataforma fija: ' + prefP.name + '. Tus cargas van directo ahí. Tocá ★ para cambiarla.')
+                         : 'Tocá una para entrar con tu sesión iniciada. Fijala (☆) y tus cargas van directo ahí; si no, te preguntamos al cargar.')
+                : 'Tocá para entrar con tu sesión iniciada.';
         }
     }
 
@@ -296,6 +319,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred,
         get platformsData() { return _platforms; } };
 })();
