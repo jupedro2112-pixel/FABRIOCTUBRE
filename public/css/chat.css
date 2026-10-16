@@ -1453,3 +1453,12 @@ body.support-open .support-bubble { visibility: hidden; }
 /* ══ #250: VIP plegado debajo de reseñas ══ */
 .info-vip-inner { margin: 0 0 10px; border: 0; background: none; padding: 0 10px 4px; }
 .info-vip-inner:empty::after { content: 'Entrá a jugar y acá vas a ver tu nivel y la escalera completa.'; display: block; color: var(--dx-muted); font-size: 12px; padding: 4px 0 8px; }
+
+/* ══ #251: fila de acciones a la MITAD de alto — "Retirar premio" en una línea ══ */
+.home-actions-row { margin: 4px 8px; gap: 6px; }
+.home-actions-row .withdraw-row-btn, .load-row-btn { min-height: 38px; padding: 6px 10px !important; animation: none !important; }
+.home-actions-row .withdraw-row-btn { font-size: 12px !important; letter-spacing: 1px !important; justify-content: center; }
+.load-row-btn svg { width: 16px; height: 16px; }
+.lr-text { line-height: 1; gap: 2px; }
+.lr-text b { font-size: 12px; }
+.lr-text small { font-size: 8.5px; }

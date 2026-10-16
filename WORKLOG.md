@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-16
 
+### 251. 💸 "Retirar premio" en una línea; fila de acciones a la mitad de alto — SW v145
+- **Owner:** "en retirar mi premio poné 'Retirar premio' en una línea y ese cuadrado con la mitad de altura, así
+  entra todo en un lugar".
+- Botón rojo "Retirar premio" (una línea, 38 px de alto, sin brillo pulsante); "Cargar aquí · adjuntar
+  comprobante · automático" en dos líneas compactas a la misma altura.
+
 ### 250. 👑 Niveles VIP plegados debajo de reseñas en Información del servicio — SW v144
 - **Owner:** "los niveles dentro de información del servicio ponelos abajo de reseñas, mismo formato, que se
   pueda maximizar y que no quede tan cargado".
