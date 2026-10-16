@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-16
 
+### 249. 📲 Instalar app: Android con prompt instala DIRECTO, iPhone ve los pasos, Instagram-Android abre Chrome — SW v143
+- **Owner:** "la explicación de instalar que sea para iPhone o celulares que no pueden automático; si Android
+  detecta que se puede, que al apretar el botón aparezca instalar directo".
+- Ya era así en `VIP.ui.installApp` (prompt nativo si `beforeinstallprompt` llegó; si no, instrucciones por
+  plataforma). Se suma: (1) **Android dentro de Instagram/Facebook/TikTok** (no hay prompt) → abre ESTA
+  página en Google Chrome por `intent://` (fallback a seguir), el único caso en que la app manda a Chrome;
+  (2) el botón "Instalar app" dice qué va a pasar (`VIP.home.paintInstallButtons`): "Se instala con un toque"
+  / "Te mostramos cómo (Safari)" / "Te abrimos en Chrome para instalar" / "App instalada ✓" (apagado); se
+  repinta con `beforeinstallprompt` y `appinstalled`.
+
 ### 248. 💸 Retirar "completá tus datos · se retira automáticamente"; el círculo de arriba vuelve a mostrar la burbuja; fix HTML — SW v142
 - **Owner:** "en retiro lo mismo: completando los datos poné 'se retira automáticamente'"; "el botón de soporte
   cuando lo sacás que quede arriba pero si lo vuelvo a abrir que vuelva a aparecer como círculo movible".

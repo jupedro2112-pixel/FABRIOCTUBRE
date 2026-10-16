@@ -574,6 +574,18 @@ VIP.ui = (function () {
         const isMac     = /Macintosh|MacIntel/.test(ua) && !isIOS;
 
         if (!window.deferredPrompt) {
+            // #249: en Android dentro del navegador de Instagram/Facebook/TikTok no existe el
+            // prompt nativo. Se abre ESTA página en Google Chrome (intent://), donde el botón
+            // instala con un toque. Es el único caso en que la app manda a Chrome (owner).
+            const inApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|Line\/|Snapchat/i.test(ua);
+            if (isAndroid && inApp) {
+                try {
+                    const u = new URL(location.href);
+                    showToast('Te abrimos en Google Chrome para instalar la app con un toque', 'info');
+                    location.href = 'intent://' + u.host + u.pathname + u.search + '#Intent;scheme=' + u.protocol.replace(':', '') + ';package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(location.href) + ';end';
+                    return;
+                } catch (_) { /* sigue con las instrucciones */ }
+            }
             if (isIOS)          showInstallInstructions('ios');
             else if (isAndroid) showInstallInstructions('android');
             else if (isWindows) showInstallInstructions('windows');

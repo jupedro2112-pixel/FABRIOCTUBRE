@@ -230,6 +230,32 @@
     // Cuando se abre "Información del servicio", refrescar el detalle VIP con lo último cargado.
     try { document.addEventListener('click', (e) => { if (e.target && e.target.closest && e.target.closest('#infoBtn')) setTimeout(renderVipDetail, 60); }, true); } catch (_) {}
 
+    // ---------------- INSTALAR APP (#249): el botón dice qué va a pasar ----------------
+    // Android con prompt nativo → "se instala con un toque"; iPhone / sin prompt → "te mostramos cómo";
+    // ya instalada → "App instalada ✓" (y el botón se apaga).
+    function paintInstallButtons() {
+        const b = _el('homeInstallAppBtn');
+        const ua = navigator.userAgent || '';
+        const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+        const isIOS = /iPhone|iPad|iPod/.test(ua) && !window.MSStream;
+        const inApp = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|Line\/|Snapchat/i.test(ua);
+        let small = 'Acceso directo y avisos';
+        if (standalone) small = 'App instalada ✓';
+        else if (window.deferredPrompt) small = 'Se instala con un toque';
+        else if (isIOS) small = 'Te mostramos cómo (Safari)';
+        else if (inApp) small = 'Te abrimos en Chrome para instalar';
+        else small = 'Te mostramos cómo';
+        if (b) {
+            const sm = b.querySelector('small'); if (sm) sm.textContent = small;
+            b.disabled = !!standalone; b.style.opacity = standalone ? '.55' : '';
+        }
+        const hl = document.querySelector('#headerInstallBtn .tb-circle-lbl'); if (hl) hl.textContent = standalone ? 'Instalada' : 'Instalar';
+    }
+    try {
+        window.addEventListener('beforeinstallprompt', () => setTimeout(paintInstallButtons, 0));
+        window.addEventListener('appinstalled', () => setTimeout(paintInstallButtons, 0));
+    } catch (_) {}
+
     // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
     function toggleAccess() {
         const body = _el('accessBody'), ch = _el('accessChevron');
@@ -509,6 +535,7 @@
         _inited = true;
         try { if (VIP.autoload) VIP.autoload.init(); } catch (_) {}
         try { _initBubbleDrag(); } catch (_) {}
+        try { paintInstallButtons(); setTimeout(paintInstallButtons, 2500); } catch (_) {}
         await loadPlatforms(true);
         renderPlatforms();
         renderHowItWorks();
@@ -552,6 +579,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
