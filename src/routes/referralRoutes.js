@@ -23,6 +23,10 @@ router.get('/history', authenticate, referralController.getMyReferralHistory);
 // GET /api/referrals/pending - comisiones pendientes del período actual
 router.get('/pending', authenticate, referralController.getMyPendingCommissions);
 
+// #240: cobro desde la app — disponible (meses cerrados) y acreditación
+router.get('/claimable', authenticate, referralController.getMyClaimable);
+router.post('/claim', authenticate, referralController.claimMyCommission);
+
 // =============================================
 // Rutas de admin
 // =============================================

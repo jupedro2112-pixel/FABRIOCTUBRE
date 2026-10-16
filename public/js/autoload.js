@@ -76,6 +76,9 @@
         if (span) span.textContent = pw ? (_pwVisible ? pw : '••••••••') : 'tocá 🔑 Clave arriba';
         if (toggle) { toggle.textContent = _pwVisible ? 'ocultar' : 'ver'; toggle.style.display = pw ? '' : 'none'; }
         if (manual) manual.style.display = 'none';
+        // #241: clave inicial (asd123) → pedirle que la cambie desde la llave de arriba.
+        const hint = _el('alPwHint');
+        if (hint) hint.style.display = (pw && /^asd123$/i.test(pw)) ? '' : 'none';
     }
 
     // Completa la tarjeta del home. Se llama al entrar (VIP.home.init) y cuando

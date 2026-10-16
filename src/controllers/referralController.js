@@ -851,7 +851,95 @@ const adminGetReferralRelationships = asyncHandler(async (req, res) => {
   });
 });
 
+// =============================================
+// COBRO DESDE LA APP (#240, owner 2026-10-16): "que diga 'lo cobrás acá mismo', un botón que
+// muestre el monto disponible y que el 1 del mes ese monto se desbloquee para cobrarlo".
+// Disponible = comisiones de meses CERRADOS (todo lo anterior al mes en curso) todavía no
+// liquidadas. Antes de mostrar/cobrar se recalcula el mes anterior SOLO para este referidor
+// (idempotente: upsert de ReferralCommission con delta). El cobro usa el MISMO motor que el
+// panel (executePayoutsForPeriod → reference vip-refcom-<payoutId>, dedupe en la plataforma).
+// =============================================
+const _claimCalcCache = new Map(); // userId → ts del último recálculo (evita pegarle a la API en cada apertura)
+const _claimLocks = new Set();
+async function _recalcPreviousForUser(userId) {
+  const prev = getPreviousPeriodKey();
+  const last = _claimCalcCache.get(userId) || 0;
+  if (Date.now() - last < 90 * 1000) return prev;
+  try {
+    await referralCalculationService.calculateCommissionsForPeriod(prev, { referrerUserId: userId });
+    _claimCalcCache.set(userId, Date.now());
+  } catch (e) {
+    logger.warn(`[Referrals] recálculo ${prev} para ${userId} falló: ${e.message}`);
+  }
+  return prev;
+}
+async function _claimableFor(userId) {
+  const current = getCurrentPeriodKey();
+  const rows = await ReferralCommission.find({ referrerUserId: userId, status: 'calculated', periodKey: { $lt: current } }).lean();
+  const byPeriod = {};
+  let total = 0;
+  for (const c of rows) {
+    const pend = Math.max(0, (c.commissionAmount || 0) - (c.settledCommissionAmount || 0));
+    if (pend <= 0) continue;
+    total += pend;
+    byPeriod[c.periodKey] = (byPeriod[c.periodKey] || 0) + pend;
+  }
+  return { total: Math.round(total), byPeriod };
+}
+function _firstOfNextMonthLabel() {
+  const now = new Date(Date.now() - 3 * 3600 * 1000); // hora AR
+  const m = now.getUTCMonth() + 2, y = now.getUTCFullYear() + (m > 12 ? 1 : 0);
+  return '1/' + String(((m - 1) % 12) + 1).padStart(2, '0') + '/' + y;
+}
+
+/** GET /api/referrals/claimable — disponible para cobrar ahora + lo que se acumula este mes */
+const getMyClaimable = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  await _recalcPreviousForUser(userId);
+  const cl = await _claimableFor(userId);
+  const current = getCurrentPeriodKey();
+  const curRows = await ReferralCommission.find({ referrerUserId: userId, periodKey: current, status: 'calculated' }).lean();
+  const locked = Math.round(curRows.reduce((s, c) => s + Math.max(0, (c.commissionAmount || 0) - (c.settledCommissionAmount || 0)), 0));
+  res.json({ status: 'success', data: {
+    availableAmount: cl.total,
+    availablePeriods: Object.keys(cl.byPeriod).sort(),
+    lockedEstimate: locked,
+    currentPeriodLabel: getPeriodLabel(current),
+    unlocksAt: _firstOfNextMonthLabel()
+  } });
+});
+
+/** POST /api/referrals/claim — acredita lo disponible (meses cerrados) en la plataforma */
+const claimMyCommission = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  if (_claimLocks.has(userId)) throw new AppError('Ya hay un cobro en curso. Esperá unos segundos.', 429);
+  _claimLocks.add(userId);
+  try {
+    _claimCalcCache.delete(userId);
+    await _recalcPreviousForUser(userId);
+    const cl = await _claimableFor(userId);
+    if (cl.total <= 0) {
+      return res.status(400).json({ status: 'error', error: 'Todavía no tenés comisiones desbloqueadas. Lo de este mes se desbloquea el ' + _firstOfNextMonthLabel() + '.', code: 'NOTHING_TO_CLAIM' });
+    }
+    let paid = 0, failed = 0, details = [];
+    for (const periodKey of Object.keys(cl.byPeriod).sort()) {
+      const r = await referralPayoutService.executePayoutsForPeriod(periodKey, { referrerUserId: userId, adminId: null, adminUsername: 'self-claim' });
+      paid += r.payoutsCreated || 0; failed += r.payoutsFailed || 0;
+      details.push({ periodKey, created: r.payoutsCreated, failed: r.payoutsFailed, errors: (r.errors || []).slice(0, 2) });
+    }
+    const after = await _claimableFor(userId);
+    const credited = Math.max(0, cl.total - after.total);
+    logger.info(`[Referrals] self-claim ${req.user.username}: disponible=${cl.total} acreditado=${credited} pagos=${paid} fallidos=${failed}`);
+    if (credited <= 0 && failed > 0) throw new AppError('No pudimos acreditar tu comisión ahora. Probá en unos minutos o escribinos por soporte.', 502);
+    res.json({ status: 'success', data: { creditedAmount: credited, remaining: after.total, payouts: paid, failed, details } });
+  } finally {
+    _claimLocks.delete(userId);
+  }
+});
+
 module.exports = {
+  getMyClaimable,
+  claimMyCommission,
   getMyReferralInfo,
   getMyReferralSummary,
   getMyReferralHistory,

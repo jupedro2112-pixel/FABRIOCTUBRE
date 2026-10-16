@@ -8,6 +8,36 @@
 
 ## Sesión 2026-10-16
 
+### 242. 🟣 Tarjetas de plataforma más chicas, con logo; Ganamos en violeta — SW v136
+- **Owner:** "achicá el recuadro de Ganamos y Girox; Ganamos con fondo violeta y su logo; Girox con el logo que ya tenés".
+- `_platBtn` muestra el logo (`logoUrl`) arriba del nombre; clases `plat-girox` / `plat-ganamos` (violeta).
+  Padding y tipografías reducidos. Logo default de Ganamos: `public/images/ganamos.svg` (placeholder
+  violeta con una G — **no hay archivo oficial en el repo**: cuando el owner pase el PNG real se sube a
+  `public/images/ganamos.png` y se apunta desde el panel → Plataformas → Logo). Girox usa
+  `/images/soporte-1girox.png`.
+
+### 241. 🔑 Clave inicial única "asd123" (app + Girox + Ganamos) + aviso de cambiarla
+- **Owner:** "la clave predeterminada de Ganamos, Girox y la app va a ser asd123; cuando entre a guardar la
+  clave que diga 'cambiá arriba los accesos de las plataformas y la app por tu seguridad'; si la cambia
+  arriba que se cambie en todos lados (Ganamos cuando esté la API)".
+- Landing: `POST /api/landing/signup` crea con `LANDING_DEFAULT_PASSWORD` (env, default `asd123`) en vez
+  del PIN al azar (misma clave en la app y en cada plataforma con API). En "Guardá tu acceso", si la clave
+  guardada es la inicial aparece el aviso amarillo "Es la clave inicial. Cambiá arriba (🔑 Clave)…". El
+  cambio se propaga a Girox + plataformas conectadas (#226; Ganamos al conectar su API).
+
+### 240. 💰 Comisión de referidos: "lo cobrás acá mismo" — botón con el monto disponible, se desbloquea el 1
+- **Owner:** "que diga 'lo cobrás acá mismo', un botón con el monto disponible y que el 1 del mes ese monto se
+  desbloquee para cobrarlo".
+- **Back (`referralController`):** `GET /api/referrals/claimable` (recalcula el mes anterior SOLO para ese
+  referidor —cache 90 s—, suma lo no liquidado de meses CERRADOS = disponible; lo del mes en curso va como
+  `lockedEstimate` con `unlocksAt` = 1 del mes siguiente) y `POST /api/referrals/claim` (lock por usuario,
+  recalcula, y por cada mes con saldo corre `executePayoutsForPeriod(period, {referrerUserId})` = el MISMO
+  motor del panel: reference `vip-refcom-<payoutId>`, dedupe de la plataforma, mensaje al cliente). Rutas en
+  `referralRoutes.js`.
+- **PWA:** bloque "Disponible para cobrar · $X · [Cobrar acá mismo]" arriba del código de referido; con $0
+  el botón queda apagado y la nota dice cuánto lleva este mes y cuándo se desbloquea. El texto plegado
+  "¿Cuándo cobro?" pasó a "Lo cobrás acá mismo…". Back necesita redeploy.
+
 ### 239. 🤝 Referidos: "¿Cómo funciona y cuándo cobro?" plegado, el resto en una pantalla — SW v135
 - **Owner:** "en referidos veo mucha info; el cómo funciona adentro pero con deslizante y sin maximizar, así lo
   otro se ve en una pantalla sin deslizar".

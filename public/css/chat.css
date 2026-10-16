@@ -1357,3 +1357,27 @@ body.support-open .support-bubble { visibility: hidden; }
 #refHowBody > div { margin-bottom: 10px !important; }
 #referralModal .modal-header h2 { font-size: 16px; }
 #referralModal .modal-header p { font-size: 12px; }
+
+/* ══ #240: cobro de referidos desde la app ══ */
+.ref-claim { border: 1px solid var(--dx-border-hi); border-radius: 12px; padding: 10px 12px; margin: 0 0 12px; background: linear-gradient(160deg, rgba(255,23,68,.12), rgba(255,107,107,.05)); }
+.ref-claim-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ref-claim-text { display: flex; flex-direction: column; }
+.ref-claim-k { font: 800 9.5px var(--dx-font); letter-spacing: 1.4px; text-transform: uppercase; color: var(--dx-muted); }
+.ref-claim-v { font: 900 24px var(--dx-font); color: var(--dx-money); font-variant-numeric: tabular-nums; }
+.ref-claim-btn { background: var(--dx-accent); color: #06070d; border: 0; border-radius: 10px; clip-path: var(--dx-cut-sm); padding: 11px 14px; font: 900 11.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 18px rgba(255,23,68,.28); }
+.ref-claim-btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+.ref-claim-note { margin-top: 6px; color: var(--dx-muted); font-size: 11px; line-height: 1.4; }
+
+/* ══ #241/#242: aviso de clave inicial + tarjetas de plataforma más chicas con logo (Ganamos violeta) ══ */
+.al-pw-hint { margin-top: 7px; padding: 7px 10px; border-radius: 8px; background: rgba(255,179,0,.1); border: 1px solid rgba(255,179,0,.5); color: #ffe9a8; font-size: 11px; line-height: 1.4; }
+.al-pw-hint b { color: #fff; }
+.plat-play-btn { padding: 8px 8px 24px; gap: 1px; }
+.plat-logo { width: 30px; height: 30px; border-radius: 9px; object-fit: cover; background: #06070d; margin-bottom: 2px; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.plat-play-name { font-size: 13px; }
+.plat-play-sub { font-size: 8.5px; }
+.plat-enter { bottom: 5px; padding: 2px 8px; font-size: 9px; }
+.plat-play-btn.plat-ganamos { background: linear-gradient(160deg, #3b1670 0%, #5b21b6 55%, #7c3aed 100%); border-color: rgba(177,77,255,.6); }
+.plat-play-btn.plat-ganamos.is-pref { box-shadow: 0 0 22px rgba(177,77,255,.4); }
+.plat-play-btn.plat-ganamos .plat-play-name { color: #fff; }
+.plat-play-btn.plat-ganamos .plat-play-sub { color: #e3d2ff; }
+.plat-play-btn.plat-girox .plat-logo { background: #fff; }

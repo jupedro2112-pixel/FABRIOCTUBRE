@@ -4131,10 +4131,13 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
     if (!username) {
       return res.status(503).json({ error: 'No pudimos generar tu usuario. Probá de nuevo.' });
     }
-    // PIN de 6 dígitos: cumple el mínimo de 1girox (≥6) y es fácil de anotar.
+    // #241 (owner 2026-10-16): la clave INICIAL es la misma en la app, Girox y Ganamos: "asd123"
+    // (env LANDING_DEFAULT_PASSWORD para cambiarla). La app le pide que la cambie desde la llave;
+    // el cambio se propaga a todas las plataformas conectadas (#226).
+    // 🪦 Antes: PIN de 6 dígitos al azar.
     // Se le MUESTRA al cliente en la landing (se devuelve en la respuesta) para
     // que pueda volver a entrar desde cualquier dispositivo, además del link.
-    const password = String(crypto.randomInt(100000, 1000000));
+    const password = String(process.env.LANDING_DEFAULT_PASSWORD || 'asd123');
 
     // 1) Crear en 1girox PRIMERO (igual que register-quick): si falla, no dejamos
     //    una cuenta local huérfana. Si la campaña tiene key de publicista, el

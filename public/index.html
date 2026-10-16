@@ -968,6 +968,7 @@
                             <span class="al-chip"><span class="al-k">Clave</span><span id="alPassword" class="mono">—</span><button type="button" class="al-eye" id="alPwToggle" onclick="VIP.autoload.togglePassword()" title="Ver / ocultar">ver</button></span>
                             <span class="al-chip al-chip-link"><span class="al-k">App</span><span id="alLink" class="mono">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alLink')">Copiar</button></span>
                         </div>
+                        <div class="al-pw-hint" id="alPwHint" style="display:none;">⚠️ Es la clave inicial. <b>Cambiá arriba (🔑 Clave)</b> los accesos de las plataformas y la app por tu seguridad: se actualiza en todas a la vez.</div>
                         <button type="button" class="al-btn capture access-capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()" title="Guardá una imagen con tu usuario, tu clave y el link de la app">📸 Capturar mis datos</button>
                         <div class="al-meta">Guardá la imagen en tu teléfono: con eso entrás siempre, aunque cambies de celular.</div>
                         <div id="alCapturePreview" style="display:none;margin-top:8px;"></div>
@@ -4319,10 +4320,18 @@
                 <!-- Aclaración de los cortes de pago -->
                 <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:10px;padding:12px;margin-bottom:16px;">
                     <p style="color:#b0b0b0;font-size:11px;margin:0;line-height:1.6;">
-                        ⏰ <strong style="color:#d4af37;">¿Cuándo cobro?</strong> Al inicio de cada mes se calcula lo del mes anterior y se acredita solo. Si un referido sigue jugando después de un pago, lo nuevo entra en el corte siguiente — nunca se pierde nada.
+                        💰 <strong style="color:#d4af37;">Lo cobrás acá mismo.</strong> Lo que tus referidos generan durante el mes se desbloquea el <strong>1 del mes siguiente</strong>: ese día el botón "Cobrar" te muestra el monto y lo acreditás en tu cuenta al instante. Nunca se pierde nada.
                     </p>
                 </div>
                     </div>
+                </div>
+                <!-- #240: cobro desde la app (lo llena home.js desde /api/referrals/claimable) -->
+                <div class="ref-claim" id="referralClaimBox">
+                    <div class="ref-claim-row">
+                        <div class="ref-claim-text"><span class="ref-claim-k">Disponible para cobrar</span><span class="ref-claim-v" id="refClaimAmount">—</span></div>
+                        <button type="button" class="ref-claim-btn" id="refClaimBtn" onclick="VIP.home.claimReferral()" disabled>Cobrar acá mismo</button>
+                    </div>
+                    <div class="ref-claim-note" id="refClaimNote">Cargando…</div>
                 </div>
                 <!-- Código y link -->
                 <div style="background:rgba(255,255,255,0.05);border:1px solid #d4af37;border-radius:12px;padding:16px;margin-bottom:16px;">

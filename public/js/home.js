@@ -112,6 +112,45 @@
     }
 
     // ---------------- INFO DEL SERVICIO (#237): reseñas plegadas + niveles VIP ----------------
+    // ---------------- REFERIDOS: cobro desde la app (#240) ----------------
+    async function loadReferralClaimable() {
+        const amt = _el('refClaimAmount'), btn = _el('refClaimBtn'), note = _el('refClaimNote');
+        if (!amt || !btn) return;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/referrals/claimable', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const j = await r.json().catch(() => ({}));
+            const d = (j && j.data) || {};
+            const av = Number(d.availableAmount) || 0, locked = Number(d.lockedEstimate) || 0;
+            amt.textContent = '$' + Math.round(av).toLocaleString('es-AR');
+            btn.disabled = av <= 0;
+            if (note) note.textContent = av > 0
+                ? 'Tocá "Cobrar" y entra a tu cuenta al instante.'
+                : (locked > 0 ? ('Llevás $' + Math.round(locked).toLocaleString('es-AR') + ' este mes (' + (d.currentPeriodLabel || '') + '). Se desbloquea el ' + (d.unlocksAt || '1 del mes que viene') + '.')
+                             : ('Lo que generen tus referidos este mes se desbloquea el ' + (d.unlocksAt || '1 del mes que viene') + '.'));
+        } catch (_) { if (note) note.textContent = 'No pudimos leer tu comisión. Reintentá.'; }
+    }
+    async function claimReferral() {
+        const btn = _el('refClaimBtn'); if (!btn || btn.disabled) return;
+        btn.disabled = true; const t = btn.textContent; btn.textContent = 'Acreditando…';
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/referrals/claim', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) { VIP.ui.showToast(j.error || (j.message) || 'No se pudo cobrar', 'error'); btn.disabled = false; btn.textContent = t; return; }
+            const c = (j.data && j.data.creditedAmount) || 0;
+            VIP.ui.showToast('¡Listo! Te acreditamos $' + Math.round(c).toLocaleString('es-AR') + ' de comisiones 🤝', 'success');
+            try { if (VIP.ui.syncBalance) VIP.ui.syncBalance(); } catch (_) {}
+            btn.textContent = t;
+            loadReferralClaimable();
+            try { if (VIP.ui.openReferralModal && VIP.ui._loadReferralData) VIP.ui._loadReferralData(); } catch (_) {}
+        } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); btn.disabled = false; btn.textContent = t; }
+    }
+    try {
+        const _origRef = VIP.ui && VIP.ui.openReferralModal;
+        if (typeof _origRef === 'function') {
+            VIP.ui.openReferralModal = async function () { const r = await _origRef.apply(this, arguments); try { loadReferralClaimable(); } catch (_) {} return r; };
+        }
+    } catch (_) {}
+
     function toggleRefHow() {
         const body = _el('refHowBody'), ch = _el('refHowChevron');
         if (!body) return;
@@ -240,9 +279,11 @@
         const isPref = preferred === p.id;
         const onSelect = "VIP.home.choosePlatform('" + _esc(p.id) + "')";
         const onEnter = "event.stopPropagation();VIP.home.playOn('" + _esc(p.id) + "')";
+        const logo = p.logoUrl ? '<img class="plat-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '';
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
-            '<button type="button" class="plat-play-btn' + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
+            '<button type="button" class="plat-play-btn plat-' + _esc(p.id) + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
             '<span class="plat-check">' + (isPref ? '✓' : '') + '</span>' +
+            logo +
             '<span class="plat-play-name">' + label + '</span>' +
             '<span class="plat-play-sub">' + (isPref ? 'Elegida · tus cargas van acá' : 'Tocá para elegir') + '</span>' +
             '<span class="plat-enter" onclick="' + onEnter + '">' + (p.connected ? 'Entrar ›' : 'Abrir ›') + '</span>' +
@@ -478,6 +519,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, choosePlatform, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
