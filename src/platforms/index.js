@@ -37,9 +37,11 @@ const ADAPTERS = {
 const DEFAULT_ID = 'girox';
 const CONFIG_KEY = 'platforms';
 
+// logoUrl (#232): imagen de la plataforma (landing y app). Ruta del repo ("/images/…") o https.
+// Ganamos arranca sin logo → se muestra un badge con el nombre hasta que el panel cargue uno.
 const DEFAULT_ITEMS = {
-  girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '' },
-  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me' }
+  girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
+  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '' }
 };
 
 const DEFAULT_SETTINGS = {
@@ -75,6 +77,13 @@ function _normalizeUrl(u) {
   try { const url = new URL(s); return url.href.replace(/\/+$/, ''); } catch (_) { return ''; }
 }
 
+function _normalizeLogo(u) {
+  const s = String(u || '').trim().slice(0, 300);
+  if (!s) return '';
+  if (/^\/[A-Za-z0-9_\-./]+$/.test(s)) return s;           // ruta del repo (/images/x.png)
+  if (/^https:\/\/[^\s"'<>]+$/i.test(s)) return s;             // https externo
+  return '';
+}
 function _normalizeSettings(raw) {
   const r = raw && typeof raw === 'object' ? raw : {};
   const out = {
@@ -92,7 +101,8 @@ function _normalizeSettings(raw) {
       name: String(it.name || d.name).trim().slice(0, 40) || d.name,
       emoji: String(it.emoji || d.emoji).trim().slice(0, 8) || d.emoji,
       order: Number.isFinite(Number(it.order)) ? Number(it.order) : d.order,
-      externalUrl: it.externalUrl != null ? _normalizeUrl(it.externalUrl) : d.externalUrl
+      externalUrl: it.externalUrl != null ? _normalizeUrl(it.externalUrl) : d.externalUrl,
+      logoUrl: it.logoUrl != null ? _normalizeLogo(it.logoUrl) : (d.logoUrl || '')
     };
   }
   // La default tiene que estar habilitada; si no, cae a la primera habilitada (o girox).
@@ -146,6 +156,7 @@ function _describe(id, settings) {
     order: it.order,
     enabled: it.enabled,
     externalUrl: it.externalUrl || '',
+    logoUrl: it.logoUrl || '',
     connected: !!(a && typeof a.isConnected === 'function' && a.isConnected()),
     capabilities: (a && a.capabilities) || {},
     isDefault: settings.defaultPlatform === id
@@ -201,7 +212,7 @@ async function decideForDeposit(user) {
   if (s.askMode === 'first_time' && last && s.items[last] && s.items[last].enabled) {
     return { ask: false, platform: last, reason: 'first_time' };
   }
-  return { ask: true, options: enabled.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl })), timeoutMin: s.askTimeoutMin };
+  return { ask: true, options: enabled.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl, logoUrl: p.logoUrl || '' })), timeoutMin: s.askTimeoutMin };
 }
 
 /** Nombre visible (con emoji) — sync, usa el cache si lo hay. */

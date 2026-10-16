@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-16
 
+### 232. 🖼️ Logos de las plataformas en la landing (Girox + Ganamos) — admin-sw v59
+- **Owner:** "en la landing poné el logo de Ganamos en el registro principal, donde va el nombre, o el de Girox".
+- `Config[platforms].items.<id>.logoUrl` (ruta del sitio `/images/…` o https; Girox arranca con
+  `/images/soporte-1girox.png`, Ganamos vacío → badge con la inicial hasta cargarlo). Editable en el
+  panel → Configuración → Plataformas (campo "Logo" + miniatura). Lo exponen `GET /api/platforms` y
+  `GET /api/landing/info`; la landing muestra una fila "Girox + Ganamos" con los logos debajo del ícono
+  de la app, arriba de "Creá tu cuenta gratis". ⚠️ No hay archivo del logo de Ganamos en el repo: cuando
+  el owner lo pase, se sube a `public/images/ganamos.png` y se carga la ruta en el panel (o una URL https).
+- **Link de la landing:** `https://cargas1girox.com/l/<CÓDIGO>` (código de pauta o slug del publicista;
+  también `/landing?c=<CÓDIGO>`). Vista previa local sin server: abrir `public/landing/index.html`.
+
 ### 231. 🔥 Fueguito resumido al máximo — SW v129
 - **Owner:** "resumilo al máximo, que entres y esté todo en un lugar, sin tantas vueltas".
 - Modal del fueguito: sólo **racha** (número grande), **botón Reclamar** (rojo, ancho) y la lista de

@@ -1115,7 +1115,7 @@ app.get('/landing', landingPageHandler);
 app.get('/api/landing/info', async (req, res) => {
   try {
     let plats = [];
-    try { plats = (await platforms.listEnabled()).map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected })); } catch (_) {}
+    try { plats = (await platforms.listEnabled()).map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, logoUrl: p.logoUrl || '' })); } catch (_) {}
     let refunds = null;
     try {
       const tbp = await getRefundTiersByPeriod();
@@ -5377,7 +5377,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       if (preferredPlatform && !list.some((p) => p.id === preferredPlatform)) preferredPlatform = null; // fijó una que ya no está habilitada
     } catch (_) {}
     res.json({
-      platforms: list.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, isDefault: p.isDefault })),
+      platforms: list.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, logoUrl: p.logoUrl || '', isDefault: p.isDefault })),
       askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform, preferredPlatform,
       choiceEnabled: await platforms.isChoiceEnabled()
     });
@@ -5499,6 +5499,11 @@ app.post('/api/admin/platforms', authMiddleware, adminMiddleware, async (req, re
           const u = String(it.externalUrl).trim();
           if (u && !/^(https?:\/\/)?[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(u)) return res.status(400).json({ error: `Link inválido para ${id}.` });
           o.externalUrl = u;
+        }
+        if (it.logoUrl != null) {
+          const l = String(it.logoUrl).trim();
+          if (l && !/^(\/[A-Za-z0-9_\-./]+|https:\/\/[^\s"'<>]+)$/i.test(l)) return res.status(400).json({ error: `Logo inválido para ${id}: usá una ruta del sitio (/images/…) o una URL https.` });
+          o.logoUrl = l;
         }
         patch.items[id] = o;
       }

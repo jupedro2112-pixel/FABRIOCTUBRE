@@ -6092,6 +6092,8 @@ async function loadPlatformsCfg() {
                 '<input type="text" class="plat-emoji" value="' + escapeHtml(p.emoji) + '" maxlength="4" style="width:52px;text-align:center;" title="Emoji"' + (canEdit ? '' : ' disabled') + '>' +
                 '<input type="text" class="plat-name" value="' + escapeHtml(p.name) + '" maxlength="40" style="width:140px;" title="Nombre visible"' + (canEdit ? '' : ' disabled') + '>' +
                 '<input type="text" class="plat-url" value="' + escapeHtml(p.externalUrl || '') + '" placeholder="Link externo (si no hay API)" style="flex:1;min-width:200px;" title="A dónde se manda al cliente si esta plataforma no tiene API conectada"' + (canEdit ? '' : ' disabled') + '>' +
+                '<input type="text" class="plat-logo" value="' + escapeHtml(p.logoUrl || '') + '" placeholder="Logo (URL https o /images/…)" style="flex:1;min-width:180px;" title="Imagen de la plataforma para la landing y la app"' + (canEdit ? '' : ' disabled') + '>' +
+                (p.logoUrl ? '<img src="' + escapeHtml(p.logoUrl) + '" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;background:#000;">' : '') +
                 '<span style="font-size:11.5px;font-weight:700;color:' + (p.connected ? '#00c853' : '#ffb300') + ';white-space:nowrap;">' + (p.connected ? '🟢 API conectada' : '🟠 sin API → por link') + '</span>' +
                 '<span style="font-size:11px;color:#888;">id: ' + escapeHtml(p.id) + (p.isDefault ? ' · default' : '') + '</span>' +
                 '</div>'
@@ -6116,7 +6118,8 @@ async function savePlatformsCfg() {
             enabled: row.querySelector('.plat-enabled').checked,
             emoji: row.querySelector('.plat-emoji').value,
             name: row.querySelector('.plat-name').value,
-            externalUrl: row.querySelector('.plat-url').value
+            externalUrl: row.querySelector('.plat-url').value,
+            logoUrl: (row.querySelector('.plat-logo') || {}).value || ''
         };
     });
     const askMode = document.getElementById('platAskMode').value;
