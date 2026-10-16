@@ -780,3 +780,140 @@ body.wa-dark .support-head { background: #1f2c34; }
 .hb-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
 .hb-text b { font-size: 13.5px; font-weight: 900; letter-spacing: .4px; }
 .hb-text small { font-size: 9.5px; opacity: .9; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   #222 — ESTILO PREMIUM (owner: "nivel Casino de Buenos Aires, elegante,
+   profesional, nada infantil, botones con terminación fina").
+   Paleta: negro azulado + dorado champagne. Tipografía de títulos serif.
+   Estas reglas van DESPUÉS de las anteriores a propósito: las pisan.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+    --pr-bg: #0b0d14;
+    --pr-card: linear-gradient(160deg, #141826 0%, #0c0f1a 100%);
+    --pr-gold: #d6b25e;
+    --pr-gold-soft: rgba(214,178,94,.45);
+    --pr-gold-grad: linear-gradient(135deg, #b8902e 0%, #e9cf7a 50%, #b8902e 100%);
+    --pr-text: #f1ead6;
+    --pr-muted: #9aa0b2;
+    --pr-serif: Georgia, 'Times New Roman', 'DejaVu Serif', serif;
+}
+.chat-screen { background: var(--pr-bg); }
+/* Cabecera: fila de círculos */
+.header.header-toolbar.tb-circles {
+    justify-content: space-around; gap: 2px; padding: 8px 6px;
+    padding-top: max(8px, env(safe-area-inset-top, 8px));
+    background: linear-gradient(180deg, #11141f, #0b0d14) !important; border-bottom: 1px solid var(--pr-gold-soft) !important;
+    box-shadow: none !important;
+}
+.tb-circle {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 52px;
+    background: none; border: 0; padding: 0; color: var(--pr-gold); text-decoration: none; cursor: pointer;
+    -webkit-tap-highlight-color: rgba(214,178,94,.2);
+}
+.tb-circle-ico {
+    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 30% 30%, #1d2334, #0f1220); border: 1px solid var(--pr-gold-soft);
+    box-shadow: 0 2px 8px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    transition: transform .08s ease, border-color .15s ease;
+}
+.tb-circle:active .tb-circle-ico { transform: scale(.94); border-color: var(--pr-gold); }
+.tb-circle-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: #cdbf95; }
+/* Barra de soporte */
+.support-bar, .support-bar.chat-topbar {
+    background: linear-gradient(180deg, #121626, #0e111c) !important; color: var(--pr-text) !important;
+    border-bottom: 1px solid var(--pr-gold-soft); padding: 8px 12px; gap: 10px;
+}
+.support-bar .chat-topbar-avatar { border: 1px solid var(--pr-gold-soft); background: #0b0d14; width: 36px; height: 36px; }
+.support-bar .chat-topbar-name { font-family: var(--pr-serif); font-size: 15px; letter-spacing: .5px; color: var(--pr-text); }
+.support-bar .chat-topbar-status { color: #9fd6a8; font-size: 11px; }
+.support-open-btn { background: var(--pr-gold-grad); color: #1a1407; border: 0; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; font-size: 10.5px; padding: 7px 11px; border-radius: 999px; }
+.support-head { background: #121626; border-bottom: 1px solid var(--pr-gold-soft); }
+.support-back { background: none; border: 1px solid var(--pr-gold-soft); color: var(--pr-gold); border-radius: 999px; }
+/* Tarjetas */
+.home-dash { gap: 8px; margin-top: 8px; }
+.home-card {
+    background: var(--pr-card); border: 1px solid var(--pr-gold-soft); border-radius: 14px;
+    padding: 11px 13px; box-shadow: 0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.03); color: var(--pr-text);
+}
+.home-card-title {
+    font-family: var(--pr-serif); font-size: 15px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--pr-gold); margin: 0 0 7px; display: flex; align-items: center; gap: 8px;
+}
+.hc-tag { font-family: system-ui, sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 1px; color: #1a1407; background: var(--pr-gold-grad); border-radius: 999px; padding: 2px 8px; }
+.home-card-sub { color: var(--pr-muted); font-size: 11px; line-height: 1.35; margin: 0 0 8px; }
+/* Carga compacta */
+.al-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.al-k { flex: 0 0 auto; color: var(--pr-muted); font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; min-width: 42px; }
+.al-v { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow-wrap: anywhere; color: var(--pr-text); }
+.al-v.gold { color: var(--pr-gold); }
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: .4px; }
+.al-copy, .al-eye {
+    flex: 0 0 auto; background: none; color: var(--pr-gold); border: 1px solid var(--pr-gold-soft); border-radius: 999px;
+    padding: 4px 10px; font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; cursor: pointer;
+}
+.al-copy:active, .al-eye:active { background: rgba(214,178,94,.15); }
+.al-meta { color: var(--pr-muted); font-size: 10.5px; padding: 5px 0 6px; }
+.al-dot { margin: 0 6px; opacity: .6; }
+.al-access { display: flex; flex-wrap: wrap; gap: 6px; }
+.al-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 999px; padding: 4px 6px 4px 10px; font-size: 12px; }
+.al-chip .al-k { min-width: 0; }
+.al-chip .mono { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.al-chip-link .mono { max-width: 130px; }
+.al-manual { margin-top: 6px; }
+.al-manual input { border-color: var(--pr-gold-soft); background: #0b0d14; }
+.al-manual button { background: var(--pr-gold-grad); color: #1a1407; }
+.al-actions { gap: 8px; margin-top: 10px; }
+.al-btn {
+    flex: 1 1 140px; border-radius: 999px; padding: 11px 12px; font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0,0,0,.35);
+}
+.al-btn.receipt { background: var(--pr-gold-grad); color: #1a1407; border: 0; }
+.al-btn.capture { background: transparent; color: var(--pr-gold); border: 1px solid var(--pr-gold); }
+/* Reembolsos + usuario: la fila dorada pasa a oscuro con borde fino */
+.dash-top {
+    background: var(--pr-card) !important; border: 1px solid var(--pr-gold-soft) !important; box-shadow: 0 6px 18px rgba(0,0,0,.4) !important;
+    border-radius: 14px !important; padding: 6px !important; gap: 6px !important;
+}
+.dash-top .dash-refunds { background: transparent !important; border: 0 !important; }
+.dash-top .dash-refunds-title { color: var(--pr-gold) !important; font-family: var(--pr-serif); letter-spacing: 1.2px; font-weight: 600; }
+.dash-top .refund-btn { background: #141826 !important; border: 1px solid var(--pr-gold-soft) !important; border-radius: 10px !important; color: var(--pr-text) !important; box-shadow: none !important; }
+.dash-top .refund-btn .refund-amount { color: var(--pr-gold) !important; }
+.dash-top .dash-user, .dash-top .dash-roulette { background: #141826 !important; border: 1px solid var(--pr-gold-soft) !important; }
+.dash-top .dash-user-avatar, .dash-top .dash-roulette-avatar { background: var(--pr-gold-grad) !important; color: #1a1407; }
+.dash-top .dash-user-label, .dash-top .dash-roulette-label { color: var(--pr-gold) !important; }
+/* Plataformas */
+.plat-play-btn {
+    background: #141826; border: 1px solid var(--pr-gold-soft); color: var(--pr-text); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.35);
+    padding: 12px 10px;
+}
+.plat-play-btn.is-default { background: linear-gradient(160deg, #1b2033, #11141f); border-color: var(--pr-gold); }
+.plat-play-name { font-family: var(--pr-serif); font-size: 16px; letter-spacing: .8px; color: var(--pr-gold); }
+.plat-play-sub { color: var(--pr-muted); font-size: 10px; text-transform: uppercase; letter-spacing: .6px; }
+.plat-balance { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 5px 12px; margin-top: 8px; }
+.plat-balance .dash-balance-label { color: var(--pr-muted) !important; letter-spacing: .8px; }
+.plat-balance .dash-balance-amount { color: var(--pr-gold) !important; font-family: var(--pr-serif); font-size: 17px; }
+/* Retirar + barra inferior */
+.withdraw-row-btn {
+    background: linear-gradient(135deg, #5a1020, #8a1a2c) !important; border: 1px solid rgba(214,178,94,.5) !important; border-radius: 999px !important;
+    letter-spacing: 1px !important; text-transform: uppercase; font-size: 12px !important; font-weight: 700 !important; box-shadow: 0 4px 12px rgba(0,0,0,.4) !important;
+}
+.home-bottom-bar { gap: 8px; margin: 0 8px 8px; }
+.hb-btn { background: #141826; border: 1px solid var(--pr-gold-soft); border-radius: 12px; padding: 10px 12px; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+.hb-ref, .hb-install { background: #141826; border-color: var(--pr-gold-soft); }
+.hb-install { border-color: var(--pr-gold); }
+.hb-text b { font-family: var(--pr-serif); font-size: 14px; letter-spacing: .8px; color: var(--pr-gold); font-weight: 600; }
+.hb-text small { color: var(--pr-muted); font-size: 9.5px; letter-spacing: .3px; }
+/* Barra superior DENTRO del casino: volver + elegir plataforma */
+.casino-topbar { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; padding: 7px 10px; background: #0b0d14; border-bottom: 1px solid var(--pr-gold-soft); }
+.casino-topbar-row { display: flex; align-items: center; gap: 10px; }
+.casino-back { background: var(--pr-gold-grad); color: #1a1407; border: 0; border-radius: 999px; padding: 7px 12px; font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.casino-topbar-title { font-family: var(--pr-serif); color: var(--pr-gold); font-size: 12.5px; letter-spacing: .8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.casino-plat-tabs { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.casino-plat-tab { flex: 1 0 auto; background: #141826; color: var(--pr-text); border: 1px solid var(--pr-gold-soft); border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 700; letter-spacing: .5px; cursor: pointer; }
+.casino-plat-tab.active { background: var(--pr-gold-grad); color: #1a1407; border-color: transparent; }
+.casino-plat-tab small { font-size: 9px; opacity: .8; text-transform: uppercase; margin-left: 3px; }
+
+/* #222: el chat es soporte/info — el CBU vive en la tarjeta de carga del home. */
+.support-panel .cbu-chat-btn { display: none !important; }
+.support-load-btn { margin-left: auto; background: var(--pr-gold-grad); color: #1a1407; border: 0; border-radius: 999px; padding: 7px 13px; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.support-head-title { flex: 1; min-width: 0; }

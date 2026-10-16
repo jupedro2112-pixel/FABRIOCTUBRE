@@ -28,10 +28,13 @@
     function _decode(s) { try { return decodeURIComponent(escape(atob(s))); } catch (_) { return ''; } }
     function _encode(s) { try { return btoa(unescape(encodeURIComponent(s))); } catch (_) { return ''; } }
 
+    // La llama auth.js al loguear y al CAMBIAR la clave (botón llave de la cabecera):
+    // la tarjeta de carga se refresca sola — muestra siempre la clave vigente, no se edita ahí.
     function rememberPassword(pw) {
         if (!pw) return;
         VIP.state.sessionPassword = pw;
         try { localStorage.setItem(PW_KEY, _encode(pw)); } catch (_) {}
+        try { _renderPassword(); } catch (_) {}
     }
     function forgetPassword() {
         try { localStorage.removeItem(PW_KEY); } catch (_) {}
@@ -68,9 +71,11 @@
         const span = _el('alPassword');
         const toggle = _el('alPwToggle');
         const manual = _el('alPwManual');
-        if (span) span.textContent = pw ? (_pwVisible ? pw : '••••••••') : '—';
-        if (toggle) { toggle.textContent = _pwVisible ? '🙈' : '👁'; toggle.style.display = pw ? '' : 'none'; }
-        if (manual) manual.style.display = pw ? 'none' : '';
+        // Sin clave guardada en este dispositivo (sesión vieja): se indica que la cambie
+        // desde la llave de arriba — al cambiarla, acá aparece la nueva.
+        if (span) span.textContent = pw ? (_pwVisible ? pw : '••••••••') : 'tocá 🔑 Clave arriba';
+        if (toggle) { toggle.textContent = _pwVisible ? 'ocultar' : 'ver'; toggle.style.display = pw ? '' : 'none'; }
+        if (manual) manual.style.display = 'none';
     }
 
     // Completa la tarjeta del home. Se llama al entrar (VIP.home.init) y cuando
@@ -83,14 +88,14 @@
         _set('alUser', username());
         _set('alLink', appLink());
         _renderPassword();
-        if (!_cbu) ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'cargando…'));
+        if (!_cbu) ['alBank', 'alTitular', 'alCbu'].forEach(id => _set(id, 'cargando…'));
         if (!_loading) _loading = _loadCbu().finally(() => { _loading = null; });
         const cbu = await _loading;
         if (cbu) _cbu = cbu;
         if (_cbu) {
-            _set('alBank', _cbu.bank); _set('alTitular', _cbu.titular); _set('alCbu', _cbu.number); _set('alAlias', _cbu.alias);
+            _set('alBank', _cbu.bank); _set('alTitular', _cbu.titular); _set('alCbu', _cbu.number);
         } else {
-            ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'no disponible'));
+            ['alBank', 'alTitular', 'alCbu'].forEach(id => _set(id, 'no disponible'));
         }
     }
 
@@ -181,7 +186,6 @@
         row('Banco', _cbu && _cbu.bank);
         row('Titular', _cbu && _cbu.titular);
         row('CBU', _cbu && _cbu.number, '#ffd700', true);
-        row('Alias', _cbu && _cbu.alias, '#00ff88', true);
         y += 10;
         section('🔐 TUS DATOS DE ACCESO');
         row('Usuario', username(), '#fff', true);
@@ -191,7 +195,7 @@
         y += 10;
         section('✅ CÓMO CARGAR');
         ctx.fillStyle = '#e0e0e0'; ctx.font = '600 29px system-ui, sans-serif';
-        y = _wrap(ctx, '1) Transferí al CBU o alias de arriba.', pad, y, W - pad * 2, 40);
+        y = _wrap(ctx, '1) Transferí al CBU de arriba.', pad, y, W - pad * 2, 40);
         y = _wrap(ctx, '2) Mandanos la foto del comprobante por el chat de soporte de la app.', pad, y, W - pad * 2, 40);
         const p = _platformsForCard();
         if (p.choice) {
@@ -206,7 +210,7 @@
 
     async function saveCapture() {
         const btn = _el('alCaptureBtn');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ Generando…'; }
+        if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
         try {
             if (!_cbu) { const c = await _loadCbu(); if (c) _cbu = c; }
             const canvas = _drawCard();
@@ -237,7 +241,7 @@
         } catch (e) {
             VIP.ui.showToast('No se pudo generar la captura. Probá de nuevo.', 'error');
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '📸 Guardar captura con mis datos'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Guardar captura'; }
         }
     }
 

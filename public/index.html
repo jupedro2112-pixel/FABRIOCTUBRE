@@ -475,27 +475,28 @@
              en el menú desplegable — pedido del owner 2026-08-03).
              ⚠️ Los IDs de los botones NO cambian: el cableado JS (app.js /
              ui.js / inline de notificaciones) los busca por id. -->
-        <header class="header header-toolbar">
-            <button class="tb-info" id="infoBtn" title="Información de nuestro servicio">
-                <span class="tb-info-icon">ℹ️</span>
-                <span class="tb-info-text">Info del servicio</span>
-            </button>
-            <!-- Canal de Telegram: pill celeste estilo Telegram (captura del owner,
-                 2026-08-03). La URL se configura desde el panel admin (Config →
-                 Canal de Telegram). El href estático es /go/comunidad: el SERVER
-                 redirige al link vigente de la config en el momento del click
-                 (owner 2026-08-06: chau canal-proximamente para siempre — un click
-                 temprano por Tor caía en ese 404). chat.js lo pisa con el link
-                 directo cuando la config carga (ahorra el redirect). -->
-            <a class="tb-telegram" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer" title="Unite a la Comunidad de Telegram">
-                <span class="tb-telegram-icon">📣</span>
-                <span class="tb-telegram-text">Unite a la Comunidad de Telegram</span>
+        <header class="header header-toolbar tb-circles">
+            <!-- #222 (owner): "arriba quiero un círculo con el canal de Telegram, info, código, cómo
+                 instalar app y un botón de la llave para cambiar clave" — y chau menú desplegable.
+                 Los ids históricos se conservan (infoBtn, canalTelegramHeaderBtn): app.js/chat.js los cablean. -->
+            <a class="tb-circle" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer" title="Canal de Telegram">
+                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 3.5 2.8 10.7c-.9.4-.9 1.1 0 1.4l4.8 1.5 1.8 5.6c.2.7.9.9 1.4.4l2.6-2.5 5 3.7c.8.5 1.5.2 1.7-.8L23 4.8c.2-1-.5-1.6-1.5-1.3z"/><path d="M7.6 13.6 19.5 6.2"/></svg></span><span class="tb-circle-lbl">Canal</span>
             </a>
-            <button class="tb-hamburger" id="menuToggleBtn" title="Menú" aria-label="Abrir menú" aria-expanded="false">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-                    <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
+            <button type="button" class="tb-circle" id="infoBtn" title="Información del servicio">
+                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tb-circle-lbl">Info</span>
             </button>
+            <button type="button" class="tb-circle" title="Canjear un código" onclick="if(window.openWelcomeCodeModal)openWelcomeCodeModal()">
+                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5h17v3a2 2 0 0 0 0 4v3h-17v-3a2 2 0 0 0 0-4z"/><path d="M9.5 8.5v10" stroke-dasharray="2 2"/></svg></span><span class="tb-circle-lbl">Código</span>
+            </button>
+            <button type="button" class="tb-circle" id="headerInstallBtn" title="Cómo instalar la app" onclick="VIP.ui.installApp()">
+                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M12 7v7M9.3 11.3 12 14l2.7-2.7M10 18.5h4"/></svg></span><span class="tb-circle-lbl">Instalar</span>
+            </button>
+            <button type="button" class="tb-circle" title="Cambiar mi contraseña" onclick="VIP.home.openChangePassword()">
+                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="14" r="4.2"/><path d="M11 11 20.5 1.5M16 6l2.5 2.5M13.5 8.5 16 11"/></svg></span><span class="tb-circle-lbl">Clave</span>
+            </button>
+            <!-- 🪦 Hamburguesa + "Info del servicio" + pill de Telegram: reemplazados por los círculos
+                 (#222). El botón queda oculto porque app.js le cuelga el listener del menú. -->
+            <button class="tb-hamburger" id="menuToggleBtn" title="Menú" aria-label="Abrir menú" aria-expanded="false" style="display:none !important;"></button>
         <!-- Menú desplegable del hamburguesa. VA DENTRO del <header> a propósito:
              el .main-menu es position:absolute y se ancla al header (position:relative). -->
         <div id="mainMenu" class="main-menu hidden" role="menu" aria-label="Menú principal">
@@ -917,8 +918,8 @@
                          (Comunidad → Logo del chat) hay uno cargado, chat.js lo pisa. -->
                     <img class="chat-topbar-avatar" id="chatTopbarAvatar" src="/images/soporte-1girox.png" alt="Soporte" width="40" height="40" onclick="VIP.home.openSupport()">
                     <div class="chat-topbar-info" onclick="VIP.home.openSupport()">
-                        <span class="chat-topbar-name">💬 Soporte <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
-                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>en línea</span>
+                        <span class="chat-topbar-name">¿Cómo funciona? <span id="supportUnread" class="support-unread" style="display:none;">0</span></span>
+                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i>Soporte en vivo · info del servicio, referidos y consultas</span>
                     </div>
                     <!-- Modo claro/oscuro A LA VISTA (owner 2026-08-03: en Configuración
                          nadie lo encontraba). El ícono muestra a qué modo se cambia.
@@ -932,24 +933,11 @@
                          barra de escribir (la barra es 100% estilo WhatsApp). El click lo
                          cablea app.js (#fireBtn) y fire.js actualiza #fireStreak. -->
                     <button class="fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Abrir chat ›</button>
+                    <button type="button" class="support-open-btn" onclick="VIP.home.openSupport()">Soporte en vivo</button>
                 </div>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
             <div class="home-dash">
-                <!-- ===== CÓMO FUNCIONA (#221): arriba, deslizante CERRADO (owner: "si la gente quiere ver cómo funciona que abra"). Reembolsos y plataformas los completa js/home.js ===== -->
-                <div class="home-card hiw-card" id="howItWorksCard" onclick="if(event.target===this||event.target.closest('.hiw-head'))VIP.home.toggleHow()">
-                    <div class="hiw-head">
-                        <div class="home-card-title" style="margin:0;">ℹ️ ¿CÓMO FUNCIONA? <span class="hiw-sub">Cargás solo · elegís dónde jugar · reembolsos</span></div>
-                        <button type="button" class="hiw-toggle" id="hiwToggle" onclick="VIP.home.toggleHow()">Ver ▼</button>
-                    </div>
-                    <div class="hiw-body" id="hiwBody" style="display:none;">
-                        <div class="hiw-step"><b class="n">1</b><span><b>Cargás solo:</b> transferí al CBU o alias de arriba y mandanos la foto del comprobante por el chat de soporte (botón 📎). La carga entra automática, sin esperar a nadie.</span></div>
-                        <div class="hiw-step"><b class="n">2</b><span id="hiwPlatforms"><b>🎮 Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</span></div>
-                        <div class="hiw-step"><b class="n">3</b><span id="hiwRefunds"><b>🎁 Reembolsos</b> semanales y mensuales según lo que perdiste con tu plata.</span></div>
-                        <div class="hiw-step"><b class="n">4</b><span><b>💸 Retirás</b> desde el botón rojo de abajo: te lo pagamos a tu CBU. <b>¿Dudas?</b> El chat de soporte está arriba 👆.</span></div>
-                    </div>
-                </div>
                 <div class="dash-top">
                     <!-- Ruleta diaria: render dinámico desde js/roulette.js -->
                     <div id="rouletteHomeCard" style="display:none;"></div>
@@ -984,57 +972,30 @@
                     </div>
                 </div>
 
-                <!-- ===== CARGA AUTOMÁTICA (#220): lo primero que ve el cliente. Lo completa js/autoload.js ===== -->
-                <div class="home-card" id="autoLoadCard">
-                    <div class="home-card-title">💳 CARGÁ ACÁ — es automático</div>
-                    <p class="home-card-sub">Transferí, mandá el comprobante y la carga entra sola.</p>
-                    <div class="al-grid">
-                        <div class="al-field wide">
-                            <span class="al-label">🔢 CBU vigente</span>
-                            <div class="al-value"><span id="alCbu" class="mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">📋 Copiar</button></div>
-                        </div>
-                        <div class="al-field wide">
-                            <span class="al-label">📱 Alias</span>
-                            <div class="al-value"><span id="alAlias" class="mono green">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alAlias')">📋 Copiar</button></div>
-                        </div>
-                        <div class="al-field">
-                            <span class="al-label">🏦 Banco</span>
-                            <div class="al-value"><span id="alBank">cargando…</span></div>
-                        </div>
-                        <div class="al-field">
-                            <span class="al-label">👤 Titular</span>
-                            <div class="al-value"><span id="alTitular">cargando…</span></div>
-                        </div>
-                        <div class="al-field">
-                            <span class="al-label">🔐 Tu usuario</span>
-                            <div class="al-value"><span id="alUser" class="mono">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alUser')">📋</button></div>
-                        </div>
-                        <div class="al-field">
-                            <span class="al-label">🔑 Tu contraseña</span>
-                            <div class="al-value"><span id="alPassword" class="mono">—</span><button type="button" class="al-eye" id="alPwToggle" onclick="VIP.autoload.togglePassword()" title="Ver / ocultar">👁</button></div>
-                            <div class="al-manual" id="alPwManual" style="display:none;">
-                                <input type="password" id="alPwInput" placeholder="Escribila para guardarla acá" autocomplete="off" onkeydown="if(event.key==='Enter')VIP.autoload.saveManualPassword()">
-                                <button type="button" onclick="VIP.autoload.saveManualPassword()">Guardar</button>
-                            </div>
-                        </div>
-                        <div class="al-field wide">
-                            <span class="al-label">🔗 Link de la app</span>
-                            <div class="al-value"><span id="alLink" class="mono blue">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alLink')">📋 Copiar</button></div>
-                        </div>
+
+
+                <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
+                <div class="home-card al-card" id="autoLoadCard">
+                    <div class="home-card-title">Cargá acá <span class="hc-tag">automático</span></div>
+                    <div class="al-line"><span class="al-k">CBU</span><span id="alCbu" class="al-v mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">Copiar</button></div>
+                    <div class="al-meta"><span id="alBank">…</span><span class="al-dot">·</span><span id="alTitular">…</span></div>
+                    <div class="al-access">
+                        <span class="al-chip"><span class="al-k">Usuario</span><span id="alUser" class="mono">—</span></span>
+                        <span class="al-chip"><span class="al-k">Clave</span><span id="alPassword" class="mono">—</span><button type="button" class="al-eye" id="alPwToggle" onclick="VIP.autoload.togglePassword()" title="Ver / ocultar">ver</button></span>
+                        <span class="al-chip al-chip-link"><span class="al-k">App</span><span id="alLink" class="mono">—</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alLink')">Copiar</button></span>
                     </div>
                     <div class="al-actions">
-                        <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">📎 Ya transferí: enviar comprobante</button>
-                        <button type="button" class="al-btn capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Guardar captura con mis datos</button>
+                        <button type="button" class="al-btn receipt" onclick="VIP.autoload.sendReceipt()">Enviar comprobante</button>
+                        <button type="button" class="al-btn capture" id="alCaptureBtn" onclick="VIP.autoload.saveCapture()" title="Guardá una imagen con el CBU, tu usuario, tu clave y el link de la app">Guardar captura</button>
                     </div>
-                    <div class="al-hint">💡 Guardá la captura: tiene el CBU, tu usuario, tu contraseña y el link de la app, así nunca perdés el acceso.</div>
-                    <div id="alCapturePreview" style="display:none;margin-top:10px;"></div>
+                    <div id="alCapturePreview" style="display:none;margin-top:8px;"></div>
                 </div>
 
                 <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
                      Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
                 <div class="home-card" id="platformsCard">
-                    <div class="home-card-title">🎮 ¿DÓNDE QUERÉS JUGAR?</div>
-                    <p class="home-card-sub" id="platformsSub">Después de cargar, elegí tu plataforma.</p>
+                    <div class="home-card-title">Elegí dónde jugar</div>
+                    <p class="home-card-sub" id="platformsSub">Después de cargar elegís en qué plataforma querés tu saldo. Tocá una y mirala con tu sesión ya iniciada.</p>
                     <div class="plat-play-row" id="platformsButtons"></div>
                     <div class="plat-balance">
                         <span class="dash-balance-label">💰 TU SALDO</span>
@@ -1075,15 +1036,15 @@
 
             <!-- Retirar mi premio: queda FUERA de #homePanel, así sigue
                  visible aunque se oculte el menú. -->
-            <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">💸 RETIRAR MI PREMIO</button>
+            <button class="withdraw-row-btn" id="withdrawChatBtn" title="Retirar premio">Retirar mi premio</button>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
             <div class="home-bottom-bar">
                 <button type="button" class="hb-btn hb-ref" onclick="VIP.ui.openReferralModal()" title="Invitá amigos y cobrá por su actividad">
-                    <span class="hb-icon">🤝</span><span class="hb-text"><b>REFERIDOS</b><small>Invitá y cobrá todos los meses</small></span>
+                    <span class="hb-text"><b>Referidos</b><small>Invitá y cobrá todos los meses</small></span>
                 </button>
                 <button type="button" class="hb-btn hb-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
-                    <span class="hb-icon">📲</span><span class="hb-text"><b>INSTALAR APP</b><small>Avisos al toque y acceso directo</small></span>
+                    <span class="hb-text"><b>Instalar app</b><small>Acceso directo y avisos</small></span>
                 </button>
             </div>
 
@@ -1144,7 +1105,8 @@
             <div id="supportPanel" class="support-panel hidden">
                 <div class="support-head">
                     <button type="button" class="support-back" onclick="VIP.home.closeSupport()">‹ Volver</button>
-                    <div class="support-head-title">💬 Soporte<span class="support-head-sub">Escribinos o mandá tu comprobante por acá</span></div>
+                    <div class="support-head-title">Soporte en vivo<span class="support-head-sub">Cómo funciona · referidos · consultas</span></div>
+                    <button type="button" class="support-load-btn" onclick="VIP.home.closeSupport()" title="Volver al sistema de cargas">Cargar</button>
                 </div>
                 <div class="chat-container">
                     <div class="chat-messages" id="chatMessages">

@@ -8,6 +8,52 @@
 
 ## Sesión 2026-10-16
 
+### 222. 💎 Home PREMIUM en una sola pantalla: cabecera de círculos sin menú desplegable, carga compacta (solo CBU), plataformas con "ver con mi sesión", barra del casino "Volver al menú de cargas", chat = soporte en vivo sin CBU — SW v120
+- **Owner (ráfaga de pedidos):** sacar el menú desplegable de arriba; todo el servicio en la pantalla
+  principal sin deslizar para abajo; arriba círculos con Canal de Telegram, Info, Código, Instalar app
+  y una llave para cambiar la clave; la tarjeta de carga más chica y SOLO CBU (sin alias); en
+  plataformas explicar que después de la carga elige dónde jugar y que antes pueda ver cada una con
+  la sesión iniciada; dentro del casino una barra superior "Elegí en cuál plataforma jugar" con
+  "Volver al menú de cargas"; Girox abre la página ya configurada (SSO de siempre); el chat ("Soporte
+  en vivo") sin nada del CBU: info del servicio, cómo funciona, referidos y consultas, con un botón
+  "Cargar" para volver al sistema de cargas; la clave que se muestra en la carga NO se edita ahí — refleja
+  la vigente y se actualiza si la cambia desde la llave; estilo premium "nivel Casino de Buenos Aires".
+- **Cabecera (index.html):** `.tb-circles` con 5 círculos de ícono SVG fino: 📣 Canal
+  (`#canalTelegramHeaderBtn`, /go/comunidad), ℹ Info (`#infoBtn`, mismo id → app.js), 🎟 Código
+  (`openWelcomeCodeModal`), 📲 Instalar (`VIP.ui.installApp`), 🔑 Clave (`VIP.home.openChangePassword`
+  → prepara y abre `changePasswordModal`). El hamburguesa `#menuToggleBtn` queda en el DOM pero
+  `display:none` (app.js le cuelga el listener) y `#mainMenu` sigue oculto. 🪦 "Info del servicio" y
+  el pill de Telegram del header: reemplazados por los círculos.
+- **Home sin scroll:** se quitó el acordeón "¿Cómo funciona?" (la explicación va por el chat);
+  tarjeta de carga COMPACTA: CBU (copiar) · banco/titular en una línea · chips Usuario / Clave (ver) /
+  App (copiar) · botones "Enviar comprobante" / "Guardar captura". **Sin alias** (tampoco en la
+  captura). La clave es de SOLO lectura: sin input manual; si no hay clave guardada dice "tocá 🔑 Clave
+  arriba" y al cambiarla (auth.js → `VIP.autoload.rememberPassword`) la tarjeta se refresca sola.
+- **Plataformas:** título "Elegí dónde jugar", texto "después de cargar elegís en qué plataforma querés
+  tu saldo; tocá una y mirala con tu sesión ya iniciada"; sub-etiqueta de cada botón "Ver con mi sesión
+  iniciada". Girox → `enterCasino('girox')` (casino embebido de siempre). **Dentro del casino**
+  (`VIP.home.renderCasinoTabs`, envuelve `VIP.ui._showCasinoFrame`): barra superior `#casinoTopBar` con
+  "‹ Volver al menú de cargas" (cierra el overlay) + "Elegí en cuál plataforma jugar" + tabs por
+  plataforma (`switchPlatform`: conectada → SSO; sin API → link).
+- **Chat = soporte en vivo:** barra del home dice "¿Cómo funciona?" / "Soporte en vivo · info del
+  servicio, referidos y consultas", botón "Soporte en vivo"; cabecera del panel "Soporte en vivo ·
+  Cómo funciona · referidos · consultas" + botón dorado **"Cargar"** (vuelve al sistema de cargas).
+  El botón CBU de la barra de escribir queda oculto (`.support-panel .cbu-chat-btn`). **Backend:** la
+  bienvenida ya NO manda el CBU suelto; seed/fallback de `/sys_welcome` sin link viejo ni "CBU activo"
+  (texto de soporte en vivo) + **migración al boot** que limpia esas líneas del guardado;
+  `/sys_como_funciona` reescrito sin CBU/alias, con referidos explicados y "¿alguna duda? preguntá acá".
+- **Estilo premium (chat.css, bloque #222 al final):** paleta negro azulado + dorado champagne
+  (`--pr-*`), títulos serif en mayúsculas espaciadas, tarjetas con borde dorado fino, botones pill
+  (dorado degradado para la acción principal, contorno dorado para la secundaria), reembolsos/usuario
+  en oscuro con borde fino, retirar en burdeos, barra inferior sobria. Sin emojis en títulos/botones.
+- **Validado:** `node --check` OK (server.js, home.js, autoload.js, SW); index.html balanceado.
+  **Back necesita redeploy** (bienvenida + migración + /sys_como_funciona). PROBAR en el celular (SW
+  v120): (1) todo entra en una pantalla sin scroll; (2) los 5 círculos abren lo suyo (la llave abre
+  cambiar clave y al cambiarla la tarjeta muestra la nueva); (3) carga: solo CBU + copiar, chips de
+  acceso, captura sin alias; (4) tocar Girox → casino embebido con la barra "Volver al menú de cargas"
+  y los tabs; Ganamos → link; (5) "Soporte en vivo" → chat sin botón CBU, botón "Cargar" vuelve;
+  usuario nuevo recibe bienvenida + cómo funciona sin CBU.
+
 ### 221. 🧹 Home limpia para convertir: chau bono por instalar la app, "cómo funciona" plegado arriba, barra inferior REFERIDOS / INSTALAR APP, explicación completa en el chat — SW v119, admin-sw v57
 - **Owner:** "limpiame todo lo que es regalos por instalar la app y todo lo que opaque la página; dejar
   el reembolso minimizado; que en el chat esté explicado bien todo; un sistema óptimo para convertir

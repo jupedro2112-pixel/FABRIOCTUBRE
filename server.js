@@ -6171,7 +6171,7 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
     // momento de enviar — así la bienvenida no queda desactualizada (#118).
     const welcomeContent = await renderSystemCommand(
       '/sys_welcome',
-      `🎉 ¡Bienvenido a la Sala de Juegos, {username}!\n\n🎁 Beneficios exclusivos:\n{escalera}\n• Fueguito diario con recompensas\n• Atención 24/7\n\n💬 Escribe aquí para hablar con un agente.\n\nLink de pagina: https://1girox.com/\n\nCBU activo: {cbu}`,
+      `🎉 ¡Bienvenido/a, {username}!\n\nEste es tu SOPORTE EN VIVO: acá te explicamos cómo funciona el servicio y respondemos cualquier duda. Para cargar, tocá "Cargar" arriba y volvés al sistema de cargas.\n\n🎁 Beneficios:\n{escalera}\n• Atención 24/7`,
       { username, cbu: cbuNumber, escalera: await buildEscaleraText() }
     );
 
@@ -6208,6 +6208,8 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
     };
 
     if (welcomeContent) await createSystemMessage(welcomeContent, true); // null = /sys_welcome vaciado
+    // 🪦 #222: ya NO se manda el CBU como mensaje suelto en la bienvenida (owner: "en el chat
+    // limpiá todo lo del CBU" — el CBU vive en la tarjeta de carga del home).
     // #221: explicación completa del servicio (editable en COMANDOS; vacío = no se manda).
     try {
       let plataformasTxt = '🎰 Girox';
@@ -6219,10 +6221,6 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
         { username, cbu: cbuNumber, escalera: await buildEscaleraText(), plataformas: plataformasTxt });
       if (howContent) await createSystemMessage(howContent, false);
     } catch (e) { logger.warn(`[welcome] /sys_como_funciona: ${e.message}`); }
-    if (cbuNumber && cbuNumber !== 'No disponible') {
-      await createSystemMessage(cbuNumber, false);
-    }
-
     // Crear/actualizar el ChatStatus recién ahora — cuando el usuario ingresa y
     // recibe la bienvenida. Los usuarios creados (por publisher_admin o admin)
     // que nunca ingresaron NO tienen ChatStatus, así que no aparecen como chats
@@ -10770,6 +10768,23 @@ async function initializeData() {
     if (r && r.modifiedCount) console.log(`✅ /sys_install_app: texto con regalo reemplazado por el neutro (${r.modifiedCount})`);
   } catch (e) { console.warn('[startup-migration] /sys_install_app:', e.message); }
 
+  // #222: la bienvenida guardada ya no debe llevar "CBU activo: {cbu}" ni el link viejo de la
+  // página (el CBU vive en la tarjeta de carga). Idempotente: sólo si todavía están.
+  try {
+    const w = await Command.findOne({ name: '/sys_welcome' }).lean();
+    if (w && w.response && /CBU activo:|Link de pagina:|Escribe aquí para hablar con un agente/.test(w.response)) {
+      const cleaned = String(w.response)
+        .replace(/\n*CBU activo:[^\n]*\{cbu\}[^\n]*/g, '')
+        .replace(/\n*Link de pagina:[^\n]*/g, '')
+        .replace(/💬 Escribe aquí para hablar con un agente\./, 'Este es tu SOPORTE EN VIVO: acá te explicamos cómo funciona el servicio y respondemos cualquier duda. Para cargar, tocá "Cargar" arriba.')
+        .replace(/\n{3,}/g, '\n\n').trim();
+      if (cleaned && cleaned !== w.response) {
+        await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: cleaned } });
+        console.log('✅ /sys_welcome: CBU/link viejos quitados de la bienvenida');
+      }
+    }
+  } catch (e) { console.warn('[startup-migration] /sys_welcome:', e.message); }
+
   // Verificar/crear comandos de sistema (mensajes automáticos editables desde COMANDOS)
   const systemCmds = [
     {
@@ -10832,7 +10847,7 @@ async function initializeData() {
       name: '/sys_welcome',
       description: 'Mensaje de bienvenida que se envía cuando el usuario ingresa por primera vez (cada 24h). Variables: {username}, {cbu}, {escalera} (se reemplaza sola por los rangos de reembolso vigentes del panel)',
       type: 'message',
-      response: '🎉 ¡Bienvenido a la Sala de Juegos, {username}!\n\n🎁 Beneficios exclusivos:\n{escalera}\n• Fueguito diario con recompensas\n• Atención 24/7\n\n💬 Escribe aquí para hablar con un agente.\n\nLink de pagina: https://1girox.com/\n\nCBU activo: {cbu}'
+      response: '🎉 ¡Bienvenido/a, {username}!\n\nEste es tu SOPORTE EN VIVO: acá te explicamos cómo funciona el servicio y respondemos cualquier duda. Para cargar, tocá "Cargar" arriba y volvés al sistema de cargas.\n\n🎁 Beneficios:\n{escalera}\n• Atención 24/7'
     },
     {
       // #221 (owner 2026-10-16): la explicación completa vive en el CHAT de soporte, no en la
@@ -10841,7 +10856,7 @@ async function initializeData() {
       name: '/sys_como_funciona',
       description: 'Explicación de cómo funciona el servicio, enviada al chat junto con la bienvenida. Variables: {username}, {cbu}, {escalera} (rangos de reembolso vigentes), {plataformas} (plataformas habilitadas). Vacío = no se envía.',
       type: 'message',
-      response: 'ℹ️ ¿CÓMO FUNCIONA?\n\n1️⃣ CARGÁS SOLO: transferí al CBU {cbu} (o al alias que ves en la app) y mandanos la foto del comprobante por este chat. La carga entra automática, sin esperar a nadie.\n\n2️⃣ ELEGÍS DÓNDE JUGAR: tenés {plataformas}. Cuando llega tu transferencia te preguntamos en cuál querés el saldo.\n\n3️⃣ REEMBOLSOS por lo que perdés con tu plata (los bonos no cuentan), se cobran solos desde la app:\n{escalera}\n\n4️⃣ RETIRÁS desde el botón rojo "RETIRAR MI PREMIO": te lo pagamos a tu CBU.\n\n🤝 Invitá amigos desde REFERIDOS y cobrá todos los meses por su actividad.\n📲 Instalá la app para no perder tu acceso y recibir avisos.\n\n💬 Cualquier duda, escribinos acá.'
+      response: 'ℹ️ ¿CÓMO FUNCIONA EL SERVICIO?\n\n1️⃣ CARGÁS SOLO: en la pantalla de cargas (botón "Cargar" arriba) tenés el CBU vigente. Transferí y tocá "Enviar comprobante" con la foto: la carga entra automática, sin esperar a nadie.\n\n2️⃣ ELEGÍS DÓNDE JUGAR: tenés {plataformas}. Cuando llega tu transferencia te preguntamos en cuál querés el saldo. Antes de cargar podés entrar a mirar cada una con tu sesión iniciada.\n\n3️⃣ REEMBOLSOS por lo que perdés con tu plata (los bonos no cuentan), se cobran solos desde la app:\n{escalera}\n\n4️⃣ RETIRÁS desde "Retirar mi premio": te lo pagamos a tu CBU.\n\n🤝 REFERIDOS: en el botón "Referidos" tenés tu código y tu link. Cada amigo que se registra con él queda a tu nombre y cobrás todos los meses un porcentaje de lo que juega, de por vida.\n\n📲 Instalá la app para no perder tu acceso y recibir los avisos.\n\n💬 ¿Alguna duda? Preguntá acá: te respondemos en vivo.'
     },
     {
       name: '/sys_cbu',

@@ -88,8 +88,8 @@
     }
 
     function _platBtn(p) {
-        const label = _esc((p.emoji || '🎮') + ' ' + p.name);
-        const sub = p.connected ? 'Entrar y jugar' : 'Abrir ' + _esc(p.name);
+        const label = _esc(p.name);
+        const sub = p.connected ? 'Ver con mi sesión iniciada' : 'Abrir ' + _esc(p.name);
         const onclick = "VIP.home.playOn('" + _esc(p.id) + "')";
         return '<button type="button" class="plat-play-btn' + (p.isDefault ? ' is-default' : '') + '" onclick="' + onclick + '">' +
             '<span class="plat-play-name">' + label + '</span>' +
@@ -130,6 +130,63 @@
             return;
         }
         VIP.ui.showToast((p.name || 'Esa plataforma') + ' todavía no está disponible. Escribinos por soporte.', 'info');
+    }
+
+    // ---------------- CASINO: barra superior con las plataformas (#222) ----------------
+    // El owner: "cuando entra, en una barra superior que diga 'elegí cuál plataforma jugar',
+    // y una vez que cargan y entran con saldo, que aparezca ahí 'volver al menú de cargas'".
+    // Se inyecta en el overlay del casino (VIP.ui._showCasinoFrame) sin tocar su HTML.
+    function renderCasinoTabs() {
+        const overlay = _el('casinoOverlay');
+        if (!overlay) return;
+        let bar = _el('casinoTopBar');
+        if (!bar) {
+            overlay.insertAdjacentHTML('afterbegin',
+                '<div id="casinoTopBar" class="casino-topbar">' +
+                  '<div class="casino-topbar-row">' +
+                    '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver al menú de cargas</button>' +
+                    '<span class="casino-topbar-title">Elegí en cuál plataforma jugar</span>' +
+                  '</div>' +
+                  '<div id="casinoPlatTabs" class="casino-plat-tabs"></div>' +
+                '</div>');
+            bar = _el('casinoTopBar');
+        }
+        const tabs = _el('casinoPlatTabs');
+        if (!tabs) return;
+        const list = (_platforms && _platforms.platforms) || [{ id: 'girox', name: 'Girox', connected: true }];
+        const current = (VIP.ui && VIP.ui._casinoPlatform) || 'girox';
+        tabs.innerHTML = list.map(p =>
+            '<button type="button" class="casino-plat-tab' + (p.id === current ? ' active' : '') + '" onclick="VIP.home.switchPlatform(\'' + _esc(p.id) + '\')">' +
+            _esc(p.name) + (p.connected ? '' : ' <small>link</small>') + '</button>'
+        ).join('');
+    }
+    function switchPlatform(platformId) {
+        const list = (_platforms && _platforms.platforms) || [];
+        const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox' };
+        if (p.connected) {
+            if ((VIP.ui._casinoPlatform || 'girox') === p.id && VIP.ui._casinoOpen) return; // ya está
+            try { VIP.ui.enterCasino(p.id); } catch (_) {}
+            return;
+        }
+        playOn(platformId);
+    }
+    try {
+        const _origShowFrame = VIP.ui && VIP.ui._showCasinoFrame;
+        if (typeof _origShowFrame === 'function') {
+            VIP.ui._showCasinoFrame = function () {
+                const r = _origShowFrame.apply(this, arguments);
+                try { renderCasinoTabs(); } catch (_) {}
+                return r;
+            };
+        }
+    } catch (_) {}
+
+    // Botón "llave" de la cabecera (#222): cambiar la contraseña.
+    function openChangePassword() {
+        try { VIP.ui.hideModal('settingsModal'); } catch (_) {}
+        VIP.state.passwordChangePending = false;
+        try { if (VIP.auth && typeof VIP.auth.prepareChangePasswordModal === 'function') VIP.auth.prepareChangePasswordModal(); } catch (_) {}
+        VIP.ui.showModal('changePasswordModal');
     }
 
     // ---------------- CÓMO FUNCIONA ----------------
@@ -239,5 +296,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+        renderCasinoTabs, switchPlatform, openChangePassword,
         get platformsData() { return _platforms; } };
 })();
