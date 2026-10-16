@@ -1467,3 +1467,27 @@ body.support-open .support-bubble { visibility: hidden; }
 .tb-support .tb-circle-ico { position: relative; background: var(--dx-accent) !important; color: #06070d; border-color: transparent !important; }
 .tb-support .tb-circle-lbl { color: var(--dx-cyan); }
 .tb-support .support-unread { position: absolute; top: -5px; right: -5px; margin: 0; min-width: 16px; font-size: 9.5px; line-height: 14px; padding: 0 4px; }
+
+/* ══ #253: tarjeta de nivel VIP con barra de progreso ══ */
+.vip-card { padding: 8px 12px 10px !important; }
+.vip-card::before { display: none; }
+.vip-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--dx-text); text-align: left; }
+.vip-head-l { display: flex; flex-direction: column; min-width: 0; }
+.vip-head-lvl { font: 800 12px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; }
+.vip-head-next { font: 600 9.5px var(--dx-font); color: var(--dx-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vip-head-r { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.vip-pct { font: 900 13px var(--dx-font); color: var(--dx-money); font-variant-numeric: tabular-nums; }
+.vip-chevron { color: var(--dx-cyan); font-size: 11px; font-weight: 900; }
+.vip-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid var(--dx-border); overflow: hidden; margin-top: 7px; }
+.vip-bar-fill { height: 100%; border-radius: 999px; background: var(--dx-accent); box-shadow: 0 0 10px rgba(255,45,85,.5); transition: width .6s ease; }
+#vipCardBody { margin-top: 8px; }
+.vip-body-p { margin: 0 0 6px; color: var(--dx-muted); font-size: 11px; line-height: 1.4; }
+.vip-body-p b { color: var(--dx-text); }
+.vip-lvl { display: grid; grid-template-columns: 18px 1.3fr 1fr 1.2fr; gap: 6px; align-items: center; padding: 5px 6px; border-radius: 8px; font-size: 11px; opacity: .55; }
+.vip-lvl.on { opacity: 1; background: rgba(46,230,107,.06); }
+.vip-lvl.next { opacity: 1; outline: 1px solid var(--dx-border-hi); background: rgba(255,45,85,.07); }
+.vip-lvl-st { font-size: 11px; }
+.vip-lvl.on .vip-lvl-st { color: #2ee66b; font-weight: 900; }
+.vip-lvl-name { font-weight: 800; }
+.vip-lvl-th { color: var(--dx-muted); }
+.vip-lvl-win { color: var(--dx-money); font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }

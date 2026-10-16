@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-16
 
+### 253. 👑 Barra de progreso de nivel VIP en el home, plegable, con la escalera que se desbloquea — SW v147
+- **Owner:** "abajo de guardar el ingreso poné una barra de progreso de nivel, que se pueda maximizar para ver cómo
+  avanza; que cada nivel que llegue se desbloquee lo que le corresponde".
+- Tarjeta `#vipCard` entre "Guardá tu acceso" y "¿Dónde querés jugar?": nivel actual, "te faltan $X jugados
+  para <siguiente>", % y barra con degradado entre el color del nivel actual y el próximo. Al expandir:
+  explicación en una línea y la escalera completa con ✓ en los niveles alcanzados (desbloqueados: bono +
+  rakeback) y 🔒 en los que faltan; el próximo resaltado. Datos de `VIP.state.vipStatus`
+  (`VIP.refunds.loadVipStatus` queda envuelto para repintar); oculta si los niveles están apagados.
+
 ### 252. 💬 El círculo de arriba dice "Soporte aquí" con ícono de chat (chau logo de Girox) — SW v146
 - **Owner:** "cuando cierro el soporte queda arriba pero con el logo de Girox; quiero la foto de soporte, que
   diga en texto SOPORTE AQUÍ".

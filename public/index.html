@@ -980,6 +980,17 @@
                     </div>
                 </div>
 
+                <!-- ===== NIVEL VIP (#253): barra de progreso plegable debajo de "Guardá tu acceso". Lo pinta home.js
+                     con /api/vip/status; cada nivel alcanzado aparece desbloqueado (✓) y los que faltan con 🔒. ===== -->
+                <div class="home-card vip-card" id="vipCard" style="display:none;">
+                    <button type="button" class="vip-head" onclick="VIP.home.toggleVipCard()">
+                        <span class="vip-head-l"><span class="vip-head-lvl" id="vipHeadLvl">Nivel</span><span class="vip-head-next" id="vipHeadNext"></span></span>
+                        <span class="vip-head-r"><span class="vip-pct" id="vipHeadPct"></span><span class="vip-chevron" id="vipChevron">▼</span></span>
+                    </button>
+                    <div class="vip-bar"><div class="vip-bar-fill" id="vipBarFill" style="width:0%"></div></div>
+                    <div id="vipCardBody" style="display:none;"></div>
+                </div>
+
                 <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
                      Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
                 <div class="home-card" id="platformsCard">

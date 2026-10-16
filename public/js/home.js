@@ -262,6 +262,49 @@
         window.addEventListener('appinstalled', () => setTimeout(paintInstallButtons, 0));
     } catch (_) {}
 
+    // ---------------- NIVEL VIP en el home (#253): barra + escalera desbloqueable ----------------
+    function toggleVipCard() {
+        const body = _el('vipCardBody'), ch = _el('vipChevron');
+        if (!body) return;
+        const open = body.style.display === 'none';
+        body.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲' : '▼';
+    }
+    function renderVipCard() {
+        const card = _el('vipCard');
+        if (!card) return;
+        const v = VIP.state && VIP.state.vipStatus;
+        if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) { card.style.display = 'none'; return; }
+        card.style.display = '';
+        const curIdx = Number(v.levelIndex) || (v.level && v.level.idx) || 0;
+        const pct = Math.max(0, Math.min(100, Number(v.progressPct) || 0));
+        const lvl = _el('vipHeadLvl'), nx = _el('vipHeadNext'), pc = _el('vipHeadPct'), fill = _el('vipBarFill');
+        if (lvl) lvl.innerHTML = v.level ? ('<b style="color:' + _esc(v.level.color || '#fff') + '">' + _esc(v.level.emoji + ' ' + v.level.name) + '</b>') : 'Nivel VIP <b>— sin nivel aún</b>';
+        if (nx) nx.textContent = v.next ? ('te faltan ' + _ars(v.faltaParaSubir) + ' jugados para ' + v.next.name) : 'nivel máximo alcanzado';
+        if (pc) pc.textContent = v.next ? (Math.round(pct) + '%') : '100%';
+        if (fill) { fill.style.width = (v.next ? pct : 100) + '%'; if (v.next && v.next.color) fill.style.background = 'linear-gradient(90deg, ' + (v.level && v.level.color || '#ff2d55') + ', ' + v.next.color + ')'; }
+        const body = _el('vipCardBody');
+        if (body) {
+            body.innerHTML = '<p class="vip-body-p">Todo lo que apostás suma para siempre. Al llegar a cada nivel se <b>desbloquea</b> su bono (se acredita solo) y su rakeback semanal.</p>' +
+                v.levels.map(l => {
+                    const reached = l.idx <= curIdx;
+                    const isNext = v.next && l.idx === v.next.idx;
+                    return '<div class="vip-lvl' + (reached ? ' on' : '') + (isNext ? ' next' : '') + '">' +
+                        '<span class="vip-lvl-st">' + (reached ? '✓' : '🔒') + '</span>' +
+                        '<span class="vip-lvl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + '</span>' +
+                        '<span class="vip-lvl-th">' + _arsShort(l.thresholdArs) + ' jugados</span>' +
+                        '<span class="vip-lvl-win">+' + _arsShort(l.levelUpBonusArs) + ' · ' + Number(l.rakebackPct).toLocaleString('es-AR') + '% sem.</span>' +
+                        '</div>';
+                }).join('');
+        }
+    }
+    try {
+        const _origVip = VIP.refunds && VIP.refunds.loadVipStatus;
+        if (typeof _origVip === 'function') {
+            VIP.refunds.loadVipStatus = async function () { const r = await _origVip.apply(this, arguments); try { renderVipCard(); renderVipDetail(); } catch (_) {} return r; };
+        }
+    } catch (_) {}
+
     // ---------------- GUARDÁ TU ACCESO (#233): plegable ----------------
     function toggleAccess() {
         const body = _el('accessBody'), ch = _el('accessChevron');
@@ -545,7 +588,7 @@
         await loadPlatforms(true);
         renderPlatforms();
         renderHowItWorks();
-        try { renderVipDetail(); setTimeout(renderVipDetail, 4000); } catch (_) {}
+        try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
 
     // Enganches (una sola vez, al cargar el script):
@@ -585,6 +628,6 @@
     } catch (_) {}
 
     VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
-        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, renderVipDetail, toggleRefHow, loadReferralClaimable, claimReferral,
+        renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
