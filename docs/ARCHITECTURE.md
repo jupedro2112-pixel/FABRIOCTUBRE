@@ -228,9 +228,12 @@ modelos); sus migraciones corren únicamente si algo llamara a ese connectDB.
   registran la carga que lo usó (los setea `settle()` al aplicar, `revert()` los limpia) y
   alimentan el resumen por lote: `GET /api/admin/notif-batches` (usados/activos/vencidos/
   bonoTotal) y `GET /:id` (vencimiento lazy + `outcome` used|active|expired|cancelled +
-  `summary`). Código ajeno a la lista → "Este código no es para tu cuenta". ⚠️ Acá NO hay
-  `applyMode`/franja horaria (`_inDailyWindow`) como en el gemelo: el % de lote es siempre
-  automático desde #210.
+  `summary`). Código ajeno a la lista → "Este código no es para tu cuenta". **#295:** ahora SÍ hay
+  `applyMode` ('auto'|'agent'), `applyScope` ('first'|'all'), `applyFrom/applyTo` (franja HH:mm AR,
+  `_inDailyWindowAR`), `giftType:'none'` (sólo aviso) y audiencia `depositors` (cargadores recientes);
+  los campos se copian al PromoBonus y `claimPromoBonusPercent` los respeta (agent → no se suma solo;
+  fuera de franja → no se suma y sigue activo; all → `$inc usesCount`, no se marca usado). Antes (#210)
+  el % de lote era siempre automático y de una sola carga.
 - **DailyRouletteSpin** — 1 giro/día (índices únicos userId+dateKey y
   username+dateKey). Auto-crédito en 1girox; `credit_failed` → retry desde panel.
   v2 (2026-09-18): `prizeType` cash|percent|none, `prizePct`, `rolloverX`, status

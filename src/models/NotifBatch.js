@@ -32,8 +32,18 @@ const notifBatchSchema = new mongoose.Schema({
   // carga, cartel verde). fixed = regalo de fichas: en modo 'code' se
   // ACREDITA AUTOMÁTICO al canjear (bono girox con rolloverX); en modo
   // 'window' va con cartel del agente como el %.
-  giftType: { type: String, enum: ['percent', 'fixed'], required: true },
-  amount: { type: Number, required: true, min: 1 },
+  // #295: 'none' = SOLO AVISO (sin regalo, sin código).
+  giftType: { type: String, enum: ['percent', 'fixed', 'none'], required: true },
+  amount: { type: Number, required: true, min: 0 },
+  // #295 (réplica del gemelo): cómo se aplica el % — 'auto' lo suma resolveAutoBonus en la carga,
+  // 'agent' lo aplica el agente (cartel verde). applyScope: 'first' = sólo la primera carga (queda consumido),
+  // 'all' = TODAS las cargas hasta que venza. applyFrom/applyTo: franja horaria 'HH:mm' (hora AR) o null.
+  applyMode: { type: String, enum: ['auto', 'agent'], default: 'auto' },
+  applyScope: { type: String, enum: ['first', 'all'], default: 'first' },
+  applyFrom: { type: String, default: null },
+  applyTo: { type: String, default: null },
+  // #295 segmento "cargadores": mínimo de cargas en los últimos audienceDays días.
+  audienceMinDeposits: { type: Number, default: null },
 
   // Rollover del regalo de fichas auto-acreditado (owner 2026-08-10):
   // 0 = sin rollover (retirable), x2/x5/etc = debe apostar N× el bono.
@@ -79,7 +89,7 @@ const notifBatchSchema = new mongoose.Schema({
   // Cómo se armó la lista (para el historial): 'list' = usernames pegados,
   // 'inactive' = inactivos ≥ audienceDays sin login (tope audienceLimit,
   // los más recientes primero), 'all' = lote completo (todos los clientes).
-  audienceType: { type: String, enum: ['list', 'inactive', 'all', 'public'], default: 'list' },
+  audienceType: { type: String, enum: ['list', 'inactive', 'all', 'public', 'depositors'], default: 'list' }, // depositors (#295): cargadores recientes
   audienceDays: { type: Number, default: null },
   audienceLimit: { type: Number, default: null },
   // #190 rangos de inactivos: "entre X y Y días" / "entre fecha y fecha" + texto legible.

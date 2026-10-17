@@ -8,6 +8,30 @@
 
 ## Sesión 2026-10-17
 
+### 295. 🎛️ Lote con regalo = el formulario del gemelo (sin regalo · auto/agente · 1ª carga/todas · franja · cargadores) + "Guardar en un plan" desde el formulario + calendario del plan — admin-sw v67
+**Pedido (owner, capturas del otro panel):** "lo de programar que sea sobre ESTE formulario; había otra configuración:
+quiero poder configurar esto así mismo, programarlo y, una vez guardado, expandir un cronograma mensual sobre lo
+guardado. El % de un lote le llega solo a ese usuario en su carga automática, el resto no: fino".
+- **Formulario del lote** (Notificaciones → Lote con regalo), réplica del gemelo:
+  · Regalo: **% extra en la carga** / **Fichas (se acreditan solas)** / **📢 Sin regalo (solo aviso)** (`giftType:'none'`:
+    sólo chat + push, sin bono ni código; siempre modo "por tiempo").
+  · **¿Cómo se aplica el %?** ⚡ Automático (lo suma `resolveAutoBonus` en la carga) / 👤 Lo aplica el agente (cartel
+    verde; no se suma solo). **¿En qué cargas?** 1️⃣ Solo la primera (queda consumido) / 🔁 TODAS hasta que venza
+    (`applyScope:'all'`: el PromoBonus sigue activo y `usesCount/usesTotalBonus` acumulan). **⏱ Franja horaria**
+    HH:mm–HH:mm (hora AR): fuera de hora no se suma y el bono sigue activo (`_inDailyWindowAR`, cruza medianoche).
+    Campos en NotifBatch y copiados al PromoBonus al activar (`_activateBatchPromoBonus`). El cartel del agente
+    (`GET /api/admin/promo-bonus`) devuelve cómo se aplica.
+  · **Segmento (inactivos / cargadores):** nuevo `audienceType:'depositors'` = clientes con ≥ N cargas reales en los
+    últimos D días (más recientes primero, cupo opcional) — sirve para premiar/fidelizar a los que SÍ cargan.
+  · **Margen fino:** el % de un lote lo recibe SOLO cada destinatario (su PromoBonus); el formulario lo aclara y muestra
+    los % generales vigentes (primera carga / carga automática) que se aplican al resto; con un lote activo manda el
+    lote (nunca se suman dos).
+- **Guardar en un plan desde el formulario:** "📅 Cuándo sale" → **🧭 Guardar en un plan del mes (no envía ahora)**:
+  elegís plan existente o nuevo, día del mes, hora, tandas y horas entre tandas → `POST /api/admin/cronograma-plans
+  /:id/items` (o crea el plan con ese ítem). Cada plan en 📅 Cronograma tiene **"📅 Ver calendario del plan"** (grilla
+  día 1→31 con chips hora · regalo) y la lista de campañas con 🗑️ (`DELETE …/items/:idx`). Aplicar al mes = igual que #293.
+- El envío manual ("🚀 Ahora") y "📅 Programar fecha y hora" siguen exactamente igual.
+
 ### 294. 🧩 Un solo cartel (Jugar ahora + extra por instalar), barra pendiente de punta a punta, fueguito como estaba, niveles VIP abribles, sin Soporte en vivo — SW v185
 **Pedidos (owner):** "en Carga auto poné 'Adjuntar comprobante aquí'; que el test del extra por instalar sea el de
 'ver cartel Jugar ahora' y que exista UN solo cartel: el 50% figura ahí, sólo en la primera carga, y después queda

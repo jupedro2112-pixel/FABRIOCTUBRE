@@ -11657,6 +11657,16 @@ function updateGiftBatchTypeUI() {
     const tipo = (document.querySelector('input[name="giftBatchType"]:checked') || {}).value || 'percent';
     const wrap = document.getElementById('giftBatchRolloverWrap');
     if (wrap) wrap.style.display = (tipo === 'fixed') ? '' : 'none';
+    // #295: sin regalo = sólo aviso (sin monto, tope, código ni "cómo se aplica"); el % muestra el bloque de aplicación
+    const esNone = tipo === 'none';
+    const amountEl = document.getElementById('giftBatchAmount');
+    if (amountEl && amountEl.parentElement) amountEl.parentElement.style.display = esNone ? 'none' : '';
+    const applyW = document.getElementById('giftBatchApplyWrap');
+    if (applyW) applyW.style.display = tipo === 'percent' ? '' : 'none';
+    const modeRadios = document.querySelectorAll('input[name="giftBatchMode"]');
+    modeRadios.forEach((r) => { if (esNone) { if (r.value === 'window') r.checked = true; r.disabled = true; } else if (r.value === 'window') { r.disabled = false; } });
+    const codeW = document.getElementById('giftBatchCodeWrap'); if (codeW && esNone) codeW.style.display = 'none';
+    try { updateGiftBatchApplyUI(); } catch (_) {}
     // #CAP tope propio del lote
     const capW = document.getElementById('giftBatchCapWrap');
     if (capW) capW.style.display = (tipo === 'percent' && true) ? 'flex' : 'none';
@@ -11680,14 +11690,46 @@ function updateGiftBatchTypeUI() {
     if (uh) uh.style.display = (mode && mode.value === 'window') || tipo !== 'percent' ? 'none' : '';
 }
 
+// #295: hint de "cómo se aplica" + limpiar franja + aviso de margen fino (globales vigentes)
+function updateGiftBatchApplyUI() {
+    const h = document.getElementById('giftBatchApplyHint'); if (!h) return;
+    const am = (document.querySelector('input[name="giftBatchApplyMode"]:checked') || {}).value || 'auto';
+    const sc = (document.querySelector('input[name="giftBatchApplyScope"]:checked') || {}).value || 'first';
+    const f = (document.getElementById('giftBatchApplyFrom') || {}).value || '', t = (document.getElementById('giftBatchApplyTo') || {}).value || '';
+    const scopeRadios = document.querySelectorAll('input[name="giftBatchApplyScope"]');
+    scopeRadios.forEach((r) => { r.disabled = am === 'agent'; });
+    let txt = am === 'agent'
+        ? '👤 El agente ve el cartel verde en el chat del cliente y lo aplica a mano en la carga (una vez). No se suma solo.'
+        : (sc === 'all' ? '⚡ Se suma solo en TODAS las cargas del cliente hasta que venza la vigencia (cada carga lleva el %, con el tope). Nadie tiene que marcar nada.'
+                        : '⚡ Se suma solo en la PRIMERA carga del cliente (después queda consumido). Nadie tiene que marcar nada.');
+    if (am === 'auto' && f && t) txt += ' ⏱ Solo si la carga entra entre las ' + f + ' y las ' + t + ' (hora Argentina); fuera de hora el bono sigue activo para la próxima.';
+    h.textContent = txt;
+}
+function clearGiftBatchWindow() { ['giftBatchApplyFrom', 'giftBatchApplyTo'].forEach((id) => { const e = document.getElementById(id); if (e) e.value = ''; }); updateGiftBatchApplyUI(); }
+let _marginHintLoaded = false;
+async function _fillMarginHint() {
+    const el = document.getElementById('giftBatchMarginHint'); if (!el || _marginHintLoaded) return;
+    _marginHintLoaded = true;
+    let g = null;
+    try { const r = await authFetch('/api/admin/install-bonus-config'); if (r.ok) g = await r.json(); } catch (_) {}
+    const fd = g && g.firstDepositPct != null ? g.firstDepositPct : null, al = g && g.autoLoadPct != null ? g.autoLoadPct : null;
+    el.innerHTML = '🎯 <b>Margen fino:</b> este % lo recibe SOLO cada destinatario de este lote (en su carga automática o manual, según lo de arriba). Los demás clientes no lo ven. ' +
+        'Regla general para el resto (COMANDOS → Bonos automáticos): primera carga <b>' + (fd != null ? fd + '%' : '—') + '</b> · carga automática <b>' + (al != null ? al + '%' : '—') + '</b>; en 0 = sin regalo general. ' +
+        'Si un destinatario tiene este bono activo, manda ESTE % (no se suman los dos).';
+}
 function updateGiftBatchAudienceUI() {
     const aud = (document.querySelector('input[name="giftBatchAudience"]:checked') || {}).value || 'list';
     const listW = document.getElementById('giftBatchListWrap');
     const inacW = document.getElementById('giftBatchInactiveWrap');
+    // #295: segmento inactivos / cargadores
+    const segW = document.getElementById('giftBatchSegmentWrap'), depW = document.getElementById('giftBatchDepositorsWrap');
+    const kind = (document.getElementById('giftBatchSegmentKind') || {}).value || 'inactive';
+    if (segW) segW.style.display = aud === 'inactive' ? '' : 'none';
+    if (depW) depW.style.display = (aud === 'inactive' && kind === 'depositors') ? 'flex' : 'none';
     const allN = document.getElementById('giftBatchAllNote');
     const pubW = document.getElementById('giftBatchPublicWrap');
     if (listW) listW.style.display = aud === 'list' ? '' : 'none';
-    if (inacW) inacW.style.display = aud === 'inactive' ? 'flex' : 'none';
+    if (inacW) inacW.style.display = (aud === 'inactive' && kind !== 'depositors') ? 'flex' : 'none';
     if (allN) allN.style.display = aud === 'all' ? '' : 'none';
     if (pubW) pubW.style.display = aud === 'public' ? '' : 'none';
     try { updateGiftBatchScheduleUI(); } catch (_) {} // #190 tandas no aplican a código público
@@ -11711,6 +11753,13 @@ function _giftBatchAudiencePayload() {
         const usernames = _giftBatchUsernames();
         if (!usernames.length) { showToast('Pegá al menos un username', 'error'); return null; }
         return { audienceType: 'list', usernames };
+    }
+    if (aud === 'inactive' && ((document.getElementById('giftBatchSegmentKind') || {}).value || 'inactive') === 'depositors') {
+        // #295 cargadores recientes
+        const days = Number((document.getElementById('giftBatchDepDays') || {}).value), minDep = Number((document.getElementById('giftBatchDepMin') || {}).value) || 1;
+        if (!Number.isFinite(days) || days < 1) { showToast('Poné los días del período de cargas', 'error'); return null; }
+        const limitRaw = ((document.getElementById('giftBatchDepLimit') || {}).value || '').trim();
+        return { audienceType: 'depositors', audienceDays: days, audienceMinDeposits: minDep, audienceLimit: limitRaw === '' ? null : Number(limitRaw) };
     }
     if (aud === 'inactive') {
         const v = (id) => ((document.getElementById(id) || {}).value || '').trim();
@@ -11799,7 +11848,7 @@ async function sendGiftBatch() {
     const amount = Number((document.getElementById('giftBatchAmount') || {}).value);
     const validHours = Number((document.getElementById('giftBatchHours') || {}).value);
     const message = ((document.getElementById('giftBatchMessage') || {}).value || '').trim();
-    if (!Number.isFinite(amount) || amount < 1) { showToast('Poné el monto del regalo (% o $)', 'error'); return; }
+    if (giftType !== 'none' && (!Number.isFinite(amount) || amount < 1)) { showToast('Poné el monto del regalo (% o $)', 'error'); return; } // #295 sin regalo = sin monto
     if (!Number.isFinite(validHours) || validHours < 1 || validHours > 168) { showToast('La vigencia va de 1 a 168 horas', 'error'); return; }
     const audience = _giftBatchAudiencePayload();
     if (!audience) return;
@@ -11821,7 +11870,8 @@ async function sendGiftBatch() {
     const exRaw = ((document.getElementById('giftBatchCapExcess') || {}).value || '').trim();
     const capARS = capRaw === '' ? null : Math.round(Number(capRaw));
     const capExcessPct = exRaw === '' ? null : Math.round(Number(exRaw));
-    const _capApplies = !esFichas && true;
+    const esNone = giftType === 'none'; // #295
+    const _capApplies = giftType === 'percent';
     if (_capApplies) {
         if (capARS != null && (!Number.isFinite(capARS) || capARS < 0)) { showToast('El tope del bono tiene que ser un monto ≥ 0 (0 = sin tope)', 'error'); return; }
         if (capExcessPct != null && (!Number.isFinite(capExcessPct) || capExcessPct < 0 || capExcessPct > 200)) { showToast('El % sobre el excedente va de 0 a 200', 'error'); return; }
@@ -11829,8 +11879,13 @@ async function sendGiftBatch() {
     const capTxtLote = _capApplies
         ? (capARS === 0 ? ' · SIN tope (el % sobre toda la carga)' : capARS != null ? (' · tope PROPIO: ' + amount + '% hasta $' + capARS.toLocaleString('es-AR') + (capExcessPct != null ? ' + ' + capExcessPct + '% sobre el resto' : ' + el % excedente global')) : (capExcessPct != null ? ' · tope global con ' + capExcessPct + '% sobre el resto' : ''))
         : '';
-    const regaloTxt = giftType === 'percent'
-        ? ('+' + amount + '% en próxima carga (se aplica SOLO al cargar, con el tope de bonos)' + capTxtLote)
+    // #295 cómo se aplica
+    const _am = (document.querySelector('input[name="giftBatchApplyMode"]:checked') || {}).value || 'auto';
+    const _sc = (document.querySelector('input[name="giftBatchApplyScope"]:checked') || {}).value || 'first';
+    const _af = ((document.getElementById('giftBatchApplyFrom') || {}).value || '').trim(), _at = ((document.getElementById('giftBatchApplyTo') || {}).value || '').trim();
+    if (giftType === 'percent' && ((_af && !_at) || (!_af && _at))) { showToast('La franja horaria necesita DESDE y HASTA (o las dos vacías)', 'error'); return; }
+    const regaloTxt = esNone ? '📢 SIN regalo (solo el aviso)' : giftType === 'percent'
+        ? ('+' + amount + '% ' + (_am === 'agent' ? 'con cartel verde (lo aplica el agente)' : (_sc === 'all' ? 'AUTOMÁTICO en TODAS las cargas hasta vencer' : 'AUTOMÁTICO solo en la primera carga')) + (_af && _at ? ' · franja ' + _af + '–' + _at : '') + ' (con el tope de bonos)' + capTxtLote)
         : ('$' + amount.toLocaleString('es-AR') + ' en fichas — SE ACREDITAN SOLAS (rollover x' + rolloverX + ')');
     const modoTxt = mode === 'code' ? 'CON CÓDIGO (solo los del lote pueden canjearlo)' : ('POR TIEMPO (' + validHours + 'hs)');
     const audTxt = esPublico ? ('📣 CÓDIGO PÚBLICO — cualquier cliente registrado' + (audience.maxClaims ? ' (cupo ' + audience.maxClaims + ' canjes)' : ' (SIN cupo)')) :
@@ -11846,17 +11901,22 @@ async function sendGiftBatch() {
         notaFinal = '⚠️ La plata se acredita AUTOMÁTICAMENTE cuando cada uno canjea su código — sin intervención del agente.';
     } else if (esFichas) {
         notaFinal = '🚨 ATENCIÓN: se le acreditan $' + amount.toLocaleString('es-AR') + ' A CADA UNO apenas se envíe el lote — TOTAL ≈ $' + (amount * count).toLocaleString('es-AR') + ', automático, sin intervención del agente.';
+    } else if (esNone) {
+        notaFinal = 'Solo se manda el aviso (chat + push). No se activa ningún bono ni código.';
     } else {
-        notaFinal = 'El regalo lo aplicás VOS en la carga (cartel verde del chat).';
+        notaFinal = _am === 'agent' ? 'El regalo lo aplicás VOS en la carga (cartel verde del chat).' : 'El % se suma SOLO en la carga de cada destinatario (los demás clientes no lo tienen).';
     }
     // #190 programar / tandas
     const _schedParts = _giftBatchScheduleParts();
     if (_schedParts === false) return;
+    // #295 guardar en un plan del mes (no envía)
+    const _planTarget = _giftBatchPlanTarget();
+    if (_planTarget === false) return;
     const _schedTxt = _schedParts ? ('\n\n📅 PROGRAMADA: ' + (_schedParts.length > 1 ? _schedParts.length + ' tandas sin repetir usuarios: ' + _schedParts.map((p, i) => (i + 1) + ') ' + p.runAt.replace('T', ' ')).join(' · ') : 'sale el ' + _schedParts[0].runAt.replace('T', ' ')) + ' (hora Argentina). La audiencia se recalcula al enviar. NO se manda nada ahora.') : '';
     const confirmMsg = esPublico
         ? '¿Crear el código público?\n\nRegalo: ' + regaloTxt + '\nAudiencia: ' + audTxt + '\nVigencia: ' + validHours + 'hs\n\n' + notaFinal + ' No se envía ninguna notificación: el código lo subís vos a Telegram/redes.'
         : '¿Enviar el lote?\n\nRegalo: ' + regaloTxt + '\nModo: ' + modoTxt + '\nAudiencia: ' + audTxt + '\nDestinatarios: ' + count + '\n\n' + notaFinal + ' El envío sale en segundo plano y se reanuda solo si el server se reinicia.' + _schedTxt;
-    if (!confirm(confirmMsg)) return;
+    if (!confirm(_planTarget ? ('¿Guardar esta campaña en el plan ' + (_planTarget.planId ? '' : 'NUEVO ') + '"' + (_planTarget.name || _planTarget.planLabel || '') + '" para el día ' + _planTarget.day + ' a las ' + _planTarget.time + (_planTarget.parts > 1 ? ' (' + _planTarget.parts + ' tandas)' : '') + '?\n\nNo se envía nada ahora: el plan se aplica a un mes desde 📅 Cronograma.\n\nRegalo: ' + regaloTxt + '\nAudiencia: ' + audTxt) : confirmMsg)) return;
     const btn = document.getElementById('giftBatchSendBtn');
     const st = document.getElementById('giftBatchStatus');
     if (btn) btn.disabled = true;
@@ -11869,8 +11929,23 @@ async function sendGiftBatch() {
                 ...audience,
                 name: ((document.getElementById('giftBatchName') || {}).value || '').trim(),
                 title: ((document.getElementById('giftBatchTitle') || {}).value || '').trim(),
-                code: mode === 'code' ? ((document.getElementById('giftBatchCode') || {}).value || '').trim() : null
+                code: mode === 'code' ? ((document.getElementById('giftBatchCode') || {}).value || '').trim() : null,
+                // #295 cómo/cuándo se aplica el %
+                applyMode: giftType === 'percent' ? _am : 'auto', applyScope: giftType === 'percent' ? _sc : 'first',
+                applyFrom: giftType === 'percent' && _af && _at ? _af : null, applyTo: giftType === 'percent' && _af && _at ? _at : null
             };
+        if (_planTarget) {
+            const item = { day: _planTarget.day, time: _planTarget.time, parts: _planTarget.parts, gapHours: _planTarget.gapHours, name: _lotBody.name, payload: _lotBody };
+            const rp = _planTarget.planId
+                ? await authFetch('/api/admin/cronograma-plans/' + _planTarget.planId + '/items', { method: 'POST', body: JSON.stringify({ item }) })
+                : await authFetch('/api/admin/cronograma-plans', { method: 'POST', body: JSON.stringify({ name: _planTarget.name, items: [item] }) });
+            const jp = await rp.json().catch(() => ({}));
+            if (!rp.ok || !jp.success) { showToast(jp.error || 'No se pudo guardar en el plan', 'error'); if (st) st.textContent = ''; return; }
+            showToast('Guardado en el plan "' + (jp.plan ? jp.plan.name : '') + '" (' + (jp.plan ? jp.plan.itemsCount : '?') + ' campañas)', 'success');
+            if (st) st.innerHTML = '🧭 Guardado en el plan <b>' + escHtml(jp.plan ? jp.plan.name : '') + '</b> · día ' + _planTarget.day + ' ' + escHtml(_planTarget.time) + ' <a href="#" onclick="switchSection(\'cronograma\');return false" style="color:#a5b4fc">ver el plan y su calendario</a>';
+            _planOptionsLoaded = false; await _loadPlanOptions(jp.plan ? jp.plan.id : null);
+            return;
+        }
         // #190: programada → va al cronograma con el MISMO body como payload
         const r = await authFetch(_schedParts ? '/api/admin/cronograma' : '/api/admin/notif-batches', {
             method: 'POST',
@@ -11910,6 +11985,7 @@ async function sendGiftBatch() {
 }
 
 async function loadNotifBatches() {
+    try { _fillMarginHint(); } catch (_) {} // #295
     const box = document.getElementById('notifBatchesList');
     if (!box) return;
     try {
@@ -11921,11 +11997,12 @@ async function loadNotifBatches() {
         box.innerHTML = rows.map((b) => {
             const fecha = new Date(b.sentAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
             const vencido = new Date(b.expiresAt).getTime() <= Date.now();
-            const regalo = b.giftType === 'percent' ? ('+' + b.amount + '%' + (b.capARS != null ? (Number(b.capARS) === 0 ? ' · sin tope' : ' · tope $' + Number(b.capARS).toLocaleString('es-AR') + (b.capExcessPct != null ? ' +' + b.capExcessPct + '% resto' : '')) : '')) : ('$' + Number(b.amount).toLocaleString('es-AR'));
+            const regalo = b.giftType === 'none' ? '📢 sin regalo (aviso)' : b.giftType === 'percent' ? ('+' + b.amount + '%' + (b.applyMode === 'agent' ? ' 👤 agente' : ' ⚡ auto') + (b.applyScope === 'all' ? ' · todas las cargas' : ' · 1ª carga') + (b.applyFrom && b.applyTo ? ' ' + b.applyFrom + '-' + b.applyTo : '') + (b.capARS != null ? (Number(b.capARS) === 0 ? ' · sin tope' : ' · tope $' + Number(b.capARS).toLocaleString('es-AR') + (b.capExcessPct != null ? ' +' + b.capExcessPct + '% resto' : '')) : '')) : ('$' + Number(b.amount).toLocaleString('es-AR'));
             const modo = b.mode === 'code' ? ('🔑 ' + escapeHtml(b.code || '')) : ('⏰ ' + b.validHours + 'hs');
             const aud = b.isPublic ? ('📣 código público' + (b.maxClaims ? ' (cupo ' + b.maxClaims + ')' : '')) :
                 b.audienceType === 'all' ? '🌍 todos' :
                 b.audienceType === 'inactive' ? ('😴 ' + (b.audienceLabel || ('inactivos ≥' + (b.audienceDays || '?') + 'd')) + (b.audienceLimit ? ' (cupo ' + b.audienceLimit + ')' : '')) :
+                b.audienceType === 'depositors' ? ((b.audienceLabel || '💸 cargadores') + (b.audienceLimit ? ' (cupo ' + b.audienceLimit + ')' : '')) :
                 '📋 lista';
             const envio = b.isPublic
                 ? (b.claimed + ' canjes' + (b.maxClaims ? ' de ' + b.maxClaims : ''))
@@ -14080,6 +14157,7 @@ function _cronFmt(d) { const k = _cronArtKey(d); return k.slice(8, 10) + '/' + k
 function _cronBadge(st) { const s = CRON_STATUS[st] || { t: st, c: '#888' }; return '<span style="background:' + s.c + ';color:#fff;border-radius:4px;padding:1px 6px;font-size:.72rem;font-weight:600">' + s.t + '</span>'; }
 function _cronGiftTxt(g) {
     if (!g) return '';
+    if (g.giftType === 'none') return '📢 sin regalo (aviso)' + (g.mode === 'code' ? '' : ' · por tiempo ' + g.validHours + 'h');
     const base = g.giftType === 'percent' ? ('+' + g.amount + '%' + (g.applyMode === 'auto' ? ' auto' : ' c/agente') + (g.capARS != null ? (Number(g.capARS) === 0 ? ' sin tope' : ' tope $' + Number(g.capARS).toLocaleString('es-AR')) : '')) : ('$' + Number(g.amount || 0).toLocaleString('es-AR') + ' fichas');
     return base + ' · ' + (g.mode === 'code' ? 'código' : 'por tiempo ' + g.validHours + 'h');
 }
@@ -14089,6 +14167,10 @@ function updateGiftBatchScheduleUI() {
     const when = (document.getElementById('giftBatchWhen') || {}).value || 'now';
     const aud = (document.querySelector('input[name="giftBatchAudience"]:checked') || {}).value || 'list';
     const sched = when === 'schedule';
+    const plan = when === 'plan'; // #295
+    const planW = document.getElementById('giftBatchPlanWrap');
+    if (planW) planW.style.display = plan ? 'flex' : 'none';
+    if (plan) { _loadPlanOptions(); const nw = document.getElementById('giftBatchPlanNameWrap'); if (nw) nw.style.display = ((document.getElementById('giftBatchPlanSelect') || {}).value || 'new') === 'new' ? '' : 'none'; }
     const runW = document.getElementById('giftBatchRunAtWrap');
     const partsW = document.getElementById('giftBatchPartsWrap');
     const timesW = document.getElementById('giftBatchPartsTimes');
@@ -14096,7 +14178,7 @@ function updateGiftBatchScheduleUI() {
     const hint = document.getElementById('giftBatchScheduleHint');
     if (runW) runW.style.display = sched ? '' : 'none';
     if (partsW) partsW.style.display = (sched && aud !== 'public') ? '' : 'none';
-    if (btn) btn.textContent = sched ? '📅 Programar' : '🚀 Enviar lote';
+    if (btn) btn.textContent = plan ? '🧭 Guardar en el plan' : (sched ? '📅 Programar' : '🚀 Enviar lote');
     const runAtEl = document.getElementById('giftBatchRunAt');
     if (sched && runAtEl && !runAtEl.value) {
         const d = new Date(Date.now() + 3600 * 1000); d.setMinutes(0, 0, 0);
@@ -14115,9 +14197,41 @@ function updateGiftBatchScheduleUI() {
             timesW.innerHTML = html; timesW.style.display = 'flex';
         } else { timesW.innerHTML = ''; timesW.style.display = 'none'; }
     }
+    if (hint && plan) { hint.textContent = 'No se envía nada ahora: la campaña queda guardada en el plan con su día del mes y hora. Después, desde 📅 Cronograma, aplicás el plan a un mes y se programa todo junto (y ves el calendario del plan).'; return; }
     if (hint) hint.textContent = !sched ? '' : (n > 1
         ? 'La audiencia se resuelve al salir la PRIMERA tanda y se reparte en ' + n + ' partes iguales SIN repetir usuarios (el cupo limita el total). Cada tanda sale a su hora como un lote propio; en Cronograma ves cuál salió y cuál falta.'
         : 'Se guarda como campaña programada y sale sola a esa hora (hora Argentina). La audiencia se calcula al momento del envío. Podés editarla, pausarla, duplicarla o borrarla desde 📅 Cronograma.');
+}
+// #295: destino "plan" del formulario — null = no aplica; false = error (ya avisó); si no, {planId|null, name, day, time, parts, gapHours}
+let _planOptionsLoaded = false;
+async function _loadPlanOptions(selectId) {
+    const sel = document.getElementById('giftBatchPlanSelect'); if (!sel) return;
+    if (_planOptionsLoaded && !selectId) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans'); const j = await r.json();
+        const cur = selectId || sel.value || 'new';
+        sel.innerHTML = '<option value="new">➕ Nuevo plan…</option>' + (j.plans || []).map((p) => '<option value="' + p.id + '">' + escHtml(p.name) + ' (' + p.itemsCount + ')</option>').join('');
+        sel.value = Array.from(sel.options).some((o) => o.value === cur) ? cur : 'new';
+        _planOptionsLoaded = true;
+        const nw = document.getElementById('giftBatchPlanNameWrap'); if (nw) nw.style.display = sel.value === 'new' ? '' : 'none';
+    } catch (_) {}
+}
+function _giftBatchPlanTarget() {
+    const when = (document.getElementById('giftBatchWhen') || {}).value || 'now';
+    if (when !== 'plan') return null;
+    const sel = document.getElementById('giftBatchPlanSelect');
+    const planId = sel && sel.value !== 'new' ? sel.value : null;
+    const planLabel = sel && planId ? (sel.options[sel.selectedIndex] || {}).text : '';
+    const name = ((document.getElementById('giftBatchPlanName') || {}).value || '').trim();
+    const day = Number((document.getElementById('giftBatchPlanDay') || {}).value);
+    const time = ((document.getElementById('giftBatchPlanTime') || {}).value || '').trim();
+    const aud = (document.querySelector('input[name="giftBatchAudience"]:checked') || {}).value || 'list';
+    const parts = aud === 'public' ? 1 : (Number((document.getElementById('giftBatchPlanParts') || {}).value) || 1);
+    const gapHours = Number((document.getElementById('giftBatchPlanGap') || {}).value) || 5;
+    if (!planId && !name) { showToast('Poné el nombre del plan nuevo', 'error'); return false; }
+    if (!(day >= 1 && day <= 31)) { showToast('El día del mes va de 1 a 31', 'error'); return false; }
+    if (!/^\d{2}:\d{2}$/.test(time)) { showToast('Poné la hora (HH:mm)', 'error'); return false; }
+    return { planId, planLabel, name, day, time, parts, gapHours };
 }
 // null = ahora; [] con error → showToast y devuelve false; si no, array de 'YYYY-MM-DDTHH:mm'
 function _giftBatchScheduleParts() {
@@ -14365,13 +14479,40 @@ async function loadCronPlans() {
             return '<div class="cron-row"><div style="flex:1;min-width:220px"><div><strong>' + escHtml(p.name) + '</strong> <span style="color:#a5b4fc">· ' + p.itemsCount + ' campaña(s)</span>' + (p.lastAppliedMonth ? ' <span style="color:#8fd3a8;font-size:.76rem">· aplicado a ' + escHtml(p.lastAppliedMonth) + (p.appliedCount > 1 ? ' (' + p.appliedCount + ' veces)' : '') + '</span>' : '') + '</div>' +
                 '<div style="font-size:.76rem;color:#cbd5e1;margin-top:2px">' + items + ((p.items || []).length > 8 ? ' · …' : '') + '</div>' +
                 (p.notes ? '<div style="font-size:.74rem;color:#a5b4fc;margin-top:2px">📝 ' + escHtml(p.notes) + '</div>' : '') + '</div>' +
-                '<div class="acts"><input type="month" id="cronPlanMonth_' + p.id + '" class="form-input" value="' + escHtml(_cronMonth || '') + '" style="width:150px">' +
+                '<div class="acts"><button class="btn btn-secondary" onclick="cronPlanToggleCal(\'' + p.id + '\')">📅 Ver calendario del plan</button><input type="month" id="cronPlanMonth_' + p.id + '" class="form-input" value="' + escHtml(_cronMonth || '') + '" style="width:150px">' +
                 '<button class="btn btn-primary" onclick="cronApplyPlan(\'' + p.id + '\')">▶ Aplicar al mes</button>' +
                 '<button class="btn btn-secondary" onclick="cronRenamePlan(\'' + p.id + '\')">✏️</button>' +
-                '<button class="btn btn-secondary" style="color:#f87171" onclick="cronDeletePlan(\'' + p.id + '\')">🗑️</button></div></div>';
+                '<button class="btn btn-secondary" style="color:#f87171" onclick="cronDeletePlan(\'' + p.id + '\')">🗑️</button></div></div>' +
+                '<div id="cronPlanCal_' + p.id + '" style="display:none;margin:.2rem 0 .8rem"></div>';
         }).join('');
     } catch (e) { el.innerHTML = '<span style="color:#f87171">No se pudieron cargar los planes</span>'; }
 }
+// #295: calendario mensual del plan (día 1 → 31, sin mes fijo) + lista de campañas con quitar
+function cronPlanToggleCal(id) {
+    const box = document.getElementById('cronPlanCal_' + id); if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    const p = _cronPlans.find((x) => x.id === id); if (!p) return;
+    const byDay = {}; (p.items || []).forEach((it, i) => { (byDay[it.day] = byDay[it.day] || []).push(Object.assign({ i }, it)); });
+    const gTxt = (it) => { const g = it.payload || {}; return g.giftType === 'none' ? '📢 aviso' : g.giftType === 'percent' ? ('+' + g.amount + '%' + (g.applyMode === 'agent' ? ' 👤' : ' ⚡')) : ('$' + Number(g.amount || 0).toLocaleString('es-AR')); };
+    let html = '<div class="cron-grid" style="grid-template-columns:repeat(7,1fr)">';
+    for (let d = 1; d <= 31; d++) {
+        const items = (byDay[d] || []).sort((a, b) => String(a.time).localeCompare(String(b.time)));
+        html += '<div class="cron-day" style="min-height:64px;cursor:default"><div class="n">' + d + '</div>' + items.map((it) => '<span class="cron-chip" style="background:#4f46e5" title="' + escHtml(it.name || '') + '">' + escHtml(it.time) + ' ' + gTxt(it) + (it.parts > 1 ? ' ×' + it.parts : '') + '</span>').join('') + '</div>';
+    }
+    html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' tandas c/' + it.gapHours + 'h' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
+    box.innerHTML = html; box.style.display = '';
+}
+async function cronPlanRemoveItem(id, idx) {
+    if (!confirm('¿Quitar esta campaña del plan? (las ya programadas en el calendario no se tocan)')) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/' + id + '/items/' + idx, { method: 'DELETE' });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo quitar', 'error'); return; }
+        await loadCronPlans();
+        cronPlanToggleCal(id);
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.cronPlanToggleCal = cronPlanToggleCal; window.cronPlanRemoveItem = cronPlanRemoveItem; window.updateGiftBatchApplyUI = updateGiftBatchApplyUI; window.clearGiftBatchWindow = clearGiftBatchWindow;
 async function cronSaveMonthAsPlan() {
     const name = prompt('Nombre del plan (ej. "Mes fuerte: bonos a inactivos + fichas finde").\nSe arma con TODAS las campañas programadas/enviadas de ' + _cronMonth + '.', 'Plan ' + _cronMonth);
     if (!name) return;

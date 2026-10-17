@@ -25,6 +25,12 @@ const promoBonusSchema = new mongoose.Schema({
   // #CAP tope propio del % (copiado del lote al activar): null = tope global.
   capARS:       { type: Number, default: null },
   capExcessPct: { type: Number, default: null },
+  // #295 (copiados del lote al activar): 'auto' lo aplica resolveAutoBonus / 'agent' el agente; 'first' una
+  // carga y queda usado / 'all' todas las cargas hasta vencer (usesCount acumula); franja horaria HH:mm AR.
+  applyMode:    { type: String, default: 'auto' },
+  applyScope:   { type: String, default: 'first' },
+  applyFrom:    { type: String, default: null },
+  applyTo:      { type: String, default: null },
 
   // Regalo de monto fijo en pesos (ej: 5000). Si es > 0, el bono no es
   // un % sobre la carga sino un regalo directo que el agente acredita.

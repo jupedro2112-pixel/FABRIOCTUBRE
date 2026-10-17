@@ -1837,9 +1837,37 @@ document.addEventListener('change', function (ev) {
                         </div>
                         <div>
                             <label class="form-label" style="display:block;margin-bottom:.3rem">Regalo</label>
-                            <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchType" value="percent" checked onchange="updateGiftBatchTypeUI()"> ％ en próxima carga (cartel al agente)</label>
-                            <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchType" value="fixed" onchange="updateGiftBatchTypeUI()"> 💵 Fichas (con código = automático)</label>
+                            <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchType" value="percent" checked onchange="updateGiftBatchTypeUI()"> ％ extra en la carga (cartel al agente)</label>
+                            <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchType" value="fixed" onchange="updateGiftBatchTypeUI()"> 💵 Fichas (se acreditan solas)</label>
+                            <label style="margin-left:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchType" value="none" onchange="updateGiftBatchTypeUI()"> 📢 Sin regalo (solo aviso)</label>
                         </div>
+                    </div>
+                    <!-- #295 (réplica del gemelo): cómo y cuándo se aplica el % — FINO por destinatario -->
+                    <div id="giftBatchApplyWrap" style="margin-top:.75rem;padding:.7rem .8rem;border:1px solid rgba(0,255,136,0.25);border-radius:10px;background:rgba(0,255,136,0.04)">
+                        <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem">¿Cómo se aplica el %?</label>
+                                <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchApplyMode" value="auto" checked onchange="updateGiftBatchApplyUI()"> ⚡ Automático (se suma solo en la carga)</label>
+                                <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchApplyMode" value="agent" onchange="updateGiftBatchApplyUI()"> 👤 Lo aplica el agente (cartel verde)</label>
+                            </div>
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem">¿En qué cargas?</label>
+                                <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchApplyScope" value="first" checked onchange="updateGiftBatchApplyUI()"> 1️⃣ Solo la primera carga</label>
+                                <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchApplyScope" value="all" onchange="updateGiftBatchApplyUI()"> 🔁 TODAS las cargas hasta que venza</label>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-top:.6rem">
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem" title="Opcional: el % se suma solo si la carga entra dentro de esta franja (hora Argentina). Fuera de hora el bono sigue activo para la próxima.">⏱ Franja horaria (opcional, hora Argentina)</label>
+                                <div style="display:flex;gap:.4rem;align-items:center">
+                                    <span style="color:#aaa;font-size:.8rem">de</span><input type="time" id="giftBatchApplyFrom" class="form-input" style="width:120px" onchange="updateGiftBatchApplyUI()">
+                                    <span style="color:#aaa;font-size:.8rem">a</span><input type="time" id="giftBatchApplyTo" class="form-input" style="width:120px" onchange="updateGiftBatchApplyUI()">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="clearGiftBatchWindow()" title="Sin franja">✕</button>
+                                </div>
+                            </div>
+                            <div id="giftBatchApplyHint" style="color:#8fd3a8;font-size:.8rem;max-width:560px;line-height:1.45"></div>
+                        </div>
+                        <div id="giftBatchMarginHint" style="color:#a5b4fc;font-size:.76rem;margin-top:.5rem;line-height:1.45;border-top:1px dashed rgba(165,180,252,0.3);padding-top:.4rem"></div>
                     </div>
                     <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.75rem;align-items:flex-end">
                         <div>
@@ -1891,12 +1919,35 @@ document.addEventListener('change', function (ev) {
                         <label class="form-label" style="display:block;margin-bottom:.3rem">Destinatarios *</label>
                         <div style="margin-bottom:.5rem">
                             <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="list" checked onchange="updateGiftBatchAudienceUI()"> 📋 Lista pegada</label>
-                            <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="inactive" onchange="updateGiftBatchAudienceUI()"> 😴 Inactivos</label>
+                            <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="inactive" onchange="updateGiftBatchAudienceUI()"> 🎯 Segmento (inactivos / cargadores)</label>
                             <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="all" onchange="updateGiftBatchAudienceUI()"> 🌍 Lote completo (todos)</label>
                             <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="public" onchange="updateGiftBatchAudienceUI()"> 📣 Código PÚBLICO (para Telegram/redes)</label>
                         </div>
                         <div id="giftBatchListWrap">
                             <textarea id="giftBatchUsers" class="form-input" rows="4" placeholder="gxjuan123&#10;gxana456&#10;gxpedro789 (separados por coma, espacio o enter)" style="resize:vertical"></textarea>
+                        </div>
+                        <!-- #295: tipo de segmento -->
+                        <div id="giftBatchSegmentWrap" style="display:none;margin-bottom:.5rem">
+                            <label class="form-label" style="display:block;margin-bottom:.3rem">Segmento</label>
+                            <select id="giftBatchSegmentKind" class="form-input" style="width:260px" onchange="updateGiftBatchAudienceUI()">
+                                <option value="inactive">😴 Inactivos (sin entrar hace X días)</option>
+                                <option value="depositors">💸 Cargadores (cargaron en los últimos D días)</option>
+                            </select>
+                        </div>
+                        <div id="giftBatchDepositorsWrap" style="display:none;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem">Cargaron en los últimos (días)</label>
+                                <input type="number" id="giftBatchDepDays" class="form-input" min="1" max="365" step="1" value="30" style="width:120px" />
+                            </div>
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem" title="Mínimo de cargas reales en ese período">Mínimo de cargas</label>
+                                <input type="number" id="giftBatchDepMin" class="form-input" min="1" max="500" step="1" value="1" style="width:110px" />
+                            </div>
+                            <div>
+                                <label class="form-label" style="display:block;margin-bottom:.3rem">Cupo (vacío = todos)</label>
+                                <input type="number" id="giftBatchDepLimit" class="form-input" min="1" step="1" placeholder="sin cupo" style="width:130px" />
+                            </div>
+                            <div style="color:#777;font-size:.75rem;max-width:280px">Clientes que SÍ cargan: ideal para premiar, fidelizar o empujar una segunda carga. Los más recientes primero.</div>
                         </div>
                         <div id="giftBatchInactiveWrap" style="display:none;gap:1rem;flex-wrap:wrap;align-items:flex-end">
                             <div>
@@ -1934,7 +1985,35 @@ document.addEventListener('change', function (ev) {
                                 <select id="giftBatchWhen" class="form-input" style="width:240px" onchange="updateGiftBatchScheduleUI()">
                                     <option value="now">🚀 Ahora (al tocar Enviar)</option>
                                     <option value="schedule">📅 Programar fecha y hora</option>
+                                    <option value="plan">🧭 Guardar en un plan del mes (no envía ahora)</option>
                                 </select>
+                            </div>
+                            <!-- #295: guardar ESTA configuración como campaña de un plan (día del mes + hora) -->
+                            <div id="giftBatchPlanWrap" style="display:none;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+                                <div>
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Plan</label>
+                                    <select id="giftBatchPlanSelect" class="form-input" style="width:220px" onchange="updateGiftBatchScheduleUI()"><option value="new">➕ Nuevo plan…</option></select>
+                                </div>
+                                <div id="giftBatchPlanNameWrap">
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Nombre del plan nuevo</label>
+                                    <input type="text" id="giftBatchPlanName" class="form-input" maxlength="80" placeholder="Ej: Mes fuerte octubre" style="width:200px" />
+                                </div>
+                                <div>
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Día del mes</label>
+                                    <input type="number" id="giftBatchPlanDay" class="form-input" min="1" max="31" step="1" value="1" style="width:90px" />
+                                </div>
+                                <div>
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Hora (Argentina)</label>
+                                    <input type="time" id="giftBatchPlanTime" class="form-input" value="19:00" style="width:120px" />
+                                </div>
+                                <div>
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Tandas</label>
+                                    <select id="giftBatchPlanParts" class="form-input" style="width:110px"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="6">6</option></select>
+                                </div>
+                                <div>
+                                    <label class="form-label" style="display:block;margin-bottom:.3rem">Horas entre tandas</label>
+                                    <input type="number" id="giftBatchPlanGap" class="form-input" min="1" max="24" step="1" value="5" style="width:90px" />
+                                </div>
                             </div>
                             <div id="giftBatchRunAtWrap" style="display:none">
                                 <label class="form-label" style="display:block;margin-bottom:.3rem">Fecha y hora (Argentina)</label>

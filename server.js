@@ -12181,6 +12181,19 @@ async function claimPromoBonusPercent(user, usedBy, amount) {
   try {
     const b = await _getActivePromoBonus(user.username); // ya aplica el tope de lectura 30% (no lote)
     if (!b || !(Number(b.percent) > 0)) return { pct: 0, claimed: false };
+    // #295 (réplica del gemelo): FINO por destinatario. 'agent' → no se suma solo (lo aplica el agente con el
+    // cartel verde); franja horaria → fuera de hora no se suma (el bono sigue activo para la próxima);
+    // 'all' → se suma en TODAS las cargas hasta vencer (no se marca usado: usesCount acumula).
+    if (b.applyMode === 'agent') return { pct: 0, claimed: false };
+    if (!_inDailyWindowAR(b.applyFrom, b.applyTo)) return { pct: 0, claimed: false };
+    if (b.applyScope === 'all') {
+      const pctA = Number(b.percent) || 0;
+      const hasta = new Date(b.expiresAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      return { pct: pctA, claimed: pctA > 0, source: 'promo_bonus', capARS: b.capARS == null ? null : Number(b.capARS), capExcessPct: b.capExcessPct == null ? null : Number(b.capExcessPct),
+        label: `bono de lote +${pctA}% (TODAS las cargas hasta ${hasta})`,
+        settle: (bonusAmt) => PromoBonus.updateOne({ id: b.id }, { $inc: { usesCount: 1, usesTotalBonus: Number(bonusAmt) || 0 }, $set: { usedBy: usedBy || 'auto', usedAt: new Date(), cargaMonto: Number(amount) || 0 } }).catch(() => {}),
+        revert: () => PromoBonus.updateOne({ id: b.id }, { $inc: { usesCount: -1 } }).catch(() => {}) };
+    }
     const upd = await PromoBonus.findOneAndUpdate(
       { id: b.id, status: 'active' },
       { $set: { status: 'used', usedBy: usedBy || 'auto', usedAt: new Date(), cargaMonto: Number(amount) || 0 } }
@@ -20394,6 +20407,7 @@ app.get('/api/admin/promo-bonus', authMiddleware, adminMiddleware, async (req, r
         expiresAt: b.expiresAt,
         sourceRuleCode: b.sourceRuleCode,
         sourceRuleName: b.sourceRuleName,
+        applyMode: b.applyMode || 'auto', applyScope: b.applyScope || 'first', applyFrom: b.applyFrom || null, applyTo: b.applyTo || null, // #295
         capTxt: Number(b.percent) > 0 ? _loteCapTxt(b.percent, _loteCfgFor(b, await getBonusCapConfig())) : '' // #172
       }
     });
@@ -20505,7 +20519,29 @@ function _notifInactiveRange(b) {
   return { days: days || null, daysMax, dateFrom: hasDates ? b.dateFrom : null, dateTo: hasDates ? b.dateTo : null, hasRange: !!winFrom, winFrom, winTo, label, or };
 }
 async function _resolveNotifBatchAudience(b) {
-  const type = (b.audienceType === 'inactive' || b.audienceType === 'all') ? b.audienceType : 'list';
+  const type = (b.audienceType === 'inactive' || b.audienceType === 'all' || b.audienceType === 'depositors') ? b.audienceType : 'list';
+  // #295 segmento CARGADORES: clientes con ≥ N cargas reales en los últimos D días (los más recientes primero).
+  if (type === 'depositors') {
+    const days = Math.max(1, Math.min(365, parseInt(b.audienceDays, 10) || 30));
+    const minDep = Math.max(1, Math.min(500, parseInt(b.audienceMinDeposits, 10) || 1));
+    let limit = b.audienceLimit == null || b.audienceLimit === '' ? null : Math.round(Number(b.audienceLimit));
+    if (limit != null && (!Number.isFinite(limit) || limit < 1 || limit > NOTIF_BATCH_MAX_RECIPIENTS)) {
+      return { error: `El cupo tiene que estar entre 1 y ${NOTIF_BATCH_MAX_RECIPIENTS} (o vacío = sin cupo).` };
+    }
+    const since = new Date(Date.now() - days * 86400000);
+    const agg = await Transaction.aggregate([
+      { $match: Object.assign({ timestamp: { $gte: since }, userId: { $ne: null } }, SCHED_ADAPTER.realDepositMatch()) },
+      { $group: { _id: '$userId', n: { $sum: 1 }, last: { $max: '$timestamp' } } },
+      { $match: { n: { $gte: minDep } } },
+      { $sort: { last: -1 } },
+      { $limit: limit || NOTIF_BATCH_MAX_RECIPIENTS }
+    ]);
+    const ids = agg.map(a => a._id).filter(Boolean);
+    const users = ids.length ? await User.find({ id: { $in: ids }, role: 'user', isBlocked: { $ne: true } }).select(NOTIF_BATCH_USER_SELECT).lean() : [];
+    const order = new Map(ids.map((id, i) => [id, i]));
+    users.sort((x, y) => (order.get(x.id) || 0) - (order.get(y.id) || 0));
+    return { users, notFound: [], skipped: [], audience: { audienceType: 'depositors', audienceDays: days, audienceLimit: limit, audienceMinDeposits: minDep, audienceLabel: `💸 cargadores: ${minDep}+ carga${minDep > 1 ? 's' : ''} en ${days} d` } };
+  }
   if (type === 'list') {
     const usernames = Array.isArray(b.usernames) ? b.usernames : [];
     if (!usernames.length) return { error: 'Pegá al menos un username.' };
@@ -20641,7 +20677,11 @@ function _notifBatchChatContent(batch) {
     // #173: con % aclara cuántas horas tiene para USARLO una vez canjeado.
     return `${batch.message}\n\n🎁 Tu regalo: ${giftLabel}.\n🔑 Tu código: ${batch.code}\nCanjealo desde el menú ☰ → "🎁 Reclamar Bono con Código". ⏰ Válido por ${batch.validHours}hs${batch.giftType === 'percent' ? ` y, una vez canjeado, tenés ${Number(batch.useHours) > 0 ? batch.useHours : 24}hs para usarlo en tu carga` : ''}.`;
   }
-  return `${batch.message}\n\n🎁 Tenés un ${_giftLabelOf(batch)}, ya activado. Se aplica solo en tu próxima carga. ⏰ Válido por ${batch.validHours}hs.`;
+  if (batch.giftType === 'none') return batch.message; // #295: sólo el aviso, sin regalo
+  // #295: texto según cómo se aplica (todas las cargas / franja / agente).
+  const alcance = batch.applyScope === 'all' ? 'Se aplica en TODAS tus cargas' : 'Se aplica solo en tu próxima carga';
+  const franja = batch.applyFrom && batch.applyTo ? ` (cargando entre las ${batch.applyFrom} y las ${batch.applyTo})` : '';
+  return `${batch.message}\n\n🎁 Tenés un ${_giftLabelOf(batch)}, ya activado. ${alcance}${franja}. ⏰ Válido por ${batch.validHours}hs.`;
 }
 
 // ============================================================
@@ -20754,7 +20794,7 @@ async function _processOneNotifBatch(batchId) {
               : '';
             mensajeChat = `${batch.message}\n\n💰 ¡Te ACREDITAMOS $${Number(batch.amount).toLocaleString('es-AR')} en fichas${rollTxt}! Ya están en tu cuenta. ¡A jugarlas! 🎰`;
           }
-        } else if (batch.mode === 'window' && !rec.promoBonusId) {
+        } else if (batch.mode === 'window' && batch.giftType !== 'none' && !rec.promoBonusId) { // #295: sin regalo = sin PromoBonus
           // % por tiempo: cartel verde del agente (PromoBonus), como siempre.
           const pb = await _activateBatchPromoBonus(u, batch);
           await NotifBatch.updateOne(
@@ -20838,11 +20878,26 @@ async function _activateBatchPromoBonus(user, batch) {
     status: 'active',
     // #CAP tope propio del lote (null = global)
     capARS: batch.capARS == null ? null : Number(batch.capARS),
-    capExcessPct: batch.capExcessPct == null ? null : Number(batch.capExcessPct)
+    capExcessPct: batch.capExcessPct == null ? null : Number(batch.capExcessPct),
+    // #295: cómo/cuándo se aplica (copiado del lote)
+    applyMode: batch.applyMode === 'agent' ? 'agent' : 'auto',
+    applyScope: batch.applyScope === 'all' ? 'all' : 'first',
+    applyFrom: batch.applyFrom || null,
+    applyTo: batch.applyTo || null
   });
+}
+// #295: ¿la hora actual (Argentina) cae dentro de la franja HH:mm → HH:mm? Soporta franjas que cruzan medianoche.
+function _inDailyWindowAR(from, to) {
+  if (!from || !to) return true;
+  const now = new Date(Date.now() - 3 * 3600 * 1000);
+  const cur = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const [fh, fm] = String(from).split(':').map(Number), [th, tm] = String(to).split(':').map(Number);
+  const a = fh * 60 + fm, b = th * 60 + tm;
+  return a <= b ? (cur >= a && cur < b) : (cur >= a || cur < b);
 }
 
 function _giftLabelOf(batch) {
+  if (batch.giftType === 'none') return ''; // #295 sólo aviso
   if (batch.giftType !== 'percent') {
     return `regalo de $${Number(batch.amount).toLocaleString('es-AR')} en tu próxima carga`;
   }
@@ -21070,12 +21125,26 @@ async function _createNotifBatchFromBody(body, user) {
       return res.status(403).json({ error: 'Solo admin general y cajeros de carga pueden enviar lotes.' });
     }
     const b = req.body || {};
-    const mode = b.mode === 'window' ? 'window' : (b.mode === 'code' ? 'code' : null);
+    // #295: 'none' = sólo aviso (sin regalo ni código) → siempre modo 'window' (no hay nada que canjear).
+    const giftType = b.giftType === 'fixed' ? 'fixed' : (b.giftType === 'percent' ? 'percent' : (b.giftType === 'none' ? 'none' : null));
+    if (!giftType) return res.status(400).json({ error: 'Tipo de regalo inválido (percent | fixed | none).' });
+    const mode = giftType === 'none' ? 'window' : (b.mode === 'window' ? 'window' : (b.mode === 'code' ? 'code' : null));
     if (!mode) return res.status(400).json({ error: 'Modo inválido (code | window).' });
-    const giftType = b.giftType === 'fixed' ? 'fixed' : (b.giftType === 'percent' ? 'percent' : null);
-    if (!giftType) return res.status(400).json({ error: 'Tipo de regalo inválido (percent | fixed).' });
+    // #295: cómo/cuándo se aplica el % (sólo percent): auto|agent · first|all · franja HH:mm-HH:mm (hora AR).
+    const applyMode = giftType === 'percent' && b.applyMode === 'agent' ? 'agent' : 'auto';
+    const applyScope = giftType === 'percent' && b.applyScope === 'all' ? 'all' : 'first';
+    let applyFrom = null, applyTo = null;
+    if (giftType === 'percent') {
+      const f = String(b.applyFrom || '').trim(), t = String(b.applyTo || '').trim();
+      if ((f && !t) || (!f && t)) return res.status(400).json({ error: 'La franja horaria necesita hora DESDE y HASTA (o las dos vacías).' });
+      if (f && t) {
+        if (!/^\d{2}:\d{2}$/.test(f) || !/^\d{2}:\d{2}$/.test(t)) return res.status(400).json({ error: 'La franja horaria va en formato HH:mm (hora Argentina).' });
+        if (f === t) return res.status(400).json({ error: 'La franja horaria no puede empezar y terminar a la misma hora.' });
+        applyFrom = f; applyTo = t;
+      }
+    }
 
-    const amount = Math.round(Number(b.amount));
+    const amount = giftType === 'none' ? 0 : Math.round(Number(b.amount));
     if (giftType === 'percent' && (!Number.isFinite(amount) || amount < 1 || amount > 200)) {
       return res.status(400).json({ error: 'El % del regalo tiene que estar entre 1 y 200.' });
     }
@@ -21083,7 +21152,7 @@ async function _createNotifBatchFromBody(body, user) {
       return res.status(400).json({ error: 'El monto del regalo tiene que estar entre $1 y $500.000.' });
     }
 
-    const validHours = Number(b.validHours);
+    const validHours = giftType === 'none' ? (Number(b.validHours) > 0 ? Number(b.validHours) : 24) : Number(b.validHours);
     if (!Number.isFinite(validHours) || validHours < 1 || validHours > 168) {
       return res.status(400).json({ error: 'La vigencia tiene que estar entre 1 y 168 horas.' });
     }
@@ -21141,7 +21210,7 @@ async function _createNotifBatchFromBody(body, user) {
     // Telegram/redes a mano. El mensaje es opcional (no se envía nada).
     const esPublico = b.audienceType === 'public';
     if (esPublico && mode !== 'code') {
-      return res.status(400).json({ error: 'El código público solo funciona en modo CON CÓDIGO.' });
+      return res.status(400).json({ error: giftType === 'none' ? 'Un aviso sin regalo no puede ser código público (no hay nada que canjear).' : 'El código público solo funciona en modo CON CÓDIGO.' });
     }
 
     const message = String(b.message || '').trim();
@@ -21184,7 +21253,7 @@ async function _createNotifBatchFromBody(body, user) {
       const sentAtP = new Date();
       const batchP = {
         id: uuidv4(),
-        name, mode: 'code', giftType, amount, rolloverX, code, validHours, useHours, capARS, capExcessPct,
+        name, mode: 'code', giftType, amount, rolloverX, code, validHours, useHours, capARS, capExcessPct, applyMode, applyScope, applyFrom, applyTo,
         sentAt: sentAtP, expiresAt: new Date(sentAtP.getTime() + validHours * 3600 * 1000),
         title: '', message,
         sentBy: req.user.username, sentByRole: req.user.role,
@@ -21219,7 +21288,7 @@ async function _createNotifBatchFromBody(body, user) {
     const expiresAt = new Date(sentAt.getTime() + validHours * 3600 * 1000);
     const batch = {
       id: uuidv4(),
-      name, mode, giftType, amount, rolloverX, code, validHours, useHours, sentAt, expiresAt, capARS, capExcessPct,
+      name, mode, giftType, amount, rolloverX, code, validHours, useHours, sentAt, expiresAt, capARS, capExcessPct, applyMode, applyScope, applyFrom, applyTo,
       title, message,
       sentBy: req.user.username, sentByRole: req.user.role,
       ...audience,
@@ -21588,8 +21657,8 @@ app.post('/api/admin/cronograma', authMiddleware, adminMiddleware, async (req, r
     const payload = (b.payload && typeof b.payload === 'object') ? b.payload : null;
     if (!payload) return res.status(400).json({ error: 'Falta el contenido del lote (payload).' });
     if (!['code', 'window'].includes(payload.mode)) return res.status(400).json({ error: 'Modo inválido (code | window).' });
-    if (!['percent', 'fixed'].includes(payload.giftType)) return res.status(400).json({ error: 'Tipo de regalo inválido.' });
-    if (!(Number(payload.amount) > 0)) return res.status(400).json({ error: 'Poné el monto del regalo.' });
+    if (!['percent', 'fixed', 'none'].includes(payload.giftType)) return res.status(400).json({ error: 'Tipo de regalo inválido.' });
+    if (payload.giftType !== 'none' && !(Number(payload.amount) > 0)) return res.status(400).json({ error: 'Poné el monto del regalo.' });
     if (payload.audienceType !== 'public' && String(payload.message || '').trim().length < 5) return res.status(400).json({ error: 'El mensaje tiene que tener al menos 5 caracteres.' });
     const pr = _schedBuildParts(b);
     if (pr.error) return res.status(400).json({ error: pr.error });
@@ -21892,8 +21961,8 @@ function _planNormalizeItems(arr) {
     const pl = it.payload && typeof it.payload === 'object' ? it.payload : null;
     if (!pl) return { error: `Campaña ${i + 1}: falta el contenido del lote.` };
     if (!['code', 'window'].includes(pl.mode)) return { error: `Campaña ${i + 1}: modo inválido.` };
-    if (!['percent', 'fixed'].includes(pl.giftType)) return { error: `Campaña ${i + 1}: tipo de regalo inválido.` };
-    if (!(Number(pl.amount) > 0)) return { error: `Campaña ${i + 1}: falta el monto del regalo.` };
+    if (!['percent', 'fixed', 'none'].includes(pl.giftType)) return { error: `Campaña ${i + 1}: tipo de regalo inválido.` };
+    if (pl.giftType !== 'none' && !(Number(pl.amount) > 0)) return { error: `Campaña ${i + 1}: falta el monto del regalo.` };
     if (pl.audienceType !== 'public' && String(pl.message || '').trim().length < 5) return { error: `Campaña ${i + 1}: el mensaje tiene que tener al menos 5 caracteres.` };
     items.push({ day, time, parts, gapHours: gap, name: String(it.name || '').trim().slice(0, 80), payload: pl });
   }
@@ -21965,6 +22034,34 @@ app.delete('/api/admin/cronograma-plans/:id', authMiddleware, adminMiddleware, a
     if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
     const r = await StrategyPlan.deleteOne({ id: String(req.params.id || '') });
     res.json({ success: true, deleted: r.deletedCount > 0 });
+  } catch (err) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #295: agregar UNA campaña al plan desde el formulario del lote ("🧭 Guardar en el plan") / quitar una.
+app.post('/api/admin/cronograma-plans/:id/items', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const p = await StrategyPlan.findOne({ id: String(req.params.id || '') });
+    if (!p) return res.status(404).json({ error: 'Plan no encontrado' });
+    const n = _planNormalizeItems([(req.body || {}).item || req.body]);
+    if (n.error) return res.status(400).json({ error: n.error });
+    if ((p.items || []).length >= 60) return res.status(400).json({ error: 'El plan ya tiene 60 campañas (máximo).' });
+    p.items.push(n.items[0]);
+    p.items.sort((a, b) => a.day - b.day || String(a.time).localeCompare(String(b.time)));
+    p.markModified('items'); p.updatedBy = req.user.username;
+    await p.save();
+    res.json({ success: true, plan: _planPublic(p.toObject()) });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-plans/:id/items: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/cronograma-plans/:id/items/:idx', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const p = await StrategyPlan.findOne({ id: String(req.params.id || '') });
+    if (!p) return res.status(404).json({ error: 'Plan no encontrado' });
+    const i = parseInt(req.params.idx, 10);
+    if (!(i >= 0 && i < (p.items || []).length)) return res.status(400).json({ error: 'Campaña inexistente en el plan.' });
+    p.items.splice(i, 1); p.markModified('items'); p.updatedBy = req.user.username;
+    await p.save();
+    res.json({ success: true, plan: _planPublic(p.toObject()) });
   } catch (err) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Aplica el plan a un mes: una ScheduledCampaign por ítem (fechas pasadas → salteadas; audiencia vacía → salteada).
