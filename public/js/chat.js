@@ -65,6 +65,11 @@ VIP.chat = (function () {
             ).join('');
             return `<div class="plat-choice" data-plat-msg="${mid}" data-plat-mov="${mov}"><div class="plat-btns">${btns}</div></div>`;
         }
+        // #275: carga acreditada → botón "Jugar ahora" (abre la plataforma ADENTRO de la app).
+        if (md.kind === 'deposit_credited') {
+            const pid = escapeHtml(String(md.platform || 'girox'));
+            return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="VIP.home.playNow('${pid}')">🎰 Jugar ahora</button></div>`;
+        }
         if (md.kind === 'platform_link' && md.url) {
             const url = encodeURI(String(md.url));
             const label = escapeHtml(_platLabel({ emoji: md.emoji, name: md.name || 'la plataforma' }));

@@ -2606,11 +2606,13 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
       : `🔒💰 Depósito de $${Number(amount).toLocaleString('es-AR')} acreditado con éxito. ✅\n💸 Tu nuevo saldo es ${balStr} 💸`);
     if (depositTpl) { // null = comando vaciado a propósito → no enviar mensaje al cliente
       const clientMsg = depositTpl.replace(/\{amount\}/g, Number(amount)).replace(/\{bonus\}/g, _hgBonusApplied ? _auto.bonus : 0).replace(/\{pct\}/g, _hgBonusApplied ? _auto.pct : 0).replace(/\{balance\}/g, newBalance !== null ? newBalance : 'actualizándose');
+      // #275: metadata para el cartel "Jugar ahora" de la PWA (abre la plataforma adentro de la app).
+      const _depMeta = { kind: 'deposit_credited', platform: pid, amount: Number(amount), bonus: _hgBonusApplied ? Number(_auto.bonus) : 0 };
       const sysMsg = await Message.create({
         id: uuidv4(), senderId: 'admin', senderUsername: 'Sistema', senderRole: 'admin',
-        receiverId: user.id, receiverRole: 'user', content: clientMsg, type: 'system', timestamp: new Date(), read: false
+        receiverId: user.id, receiverRole: 'user', content: clientMsg, type: 'system', timestamp: new Date(), read: false, metadata: _depMeta
       });
-      const msgData = { id: sysMsg.id, senderId: 'admin', senderUsername: 'Sistema', senderRole: 'admin', receiverId: user.id, receiverRole: 'user', content: clientMsg, timestamp: new Date(), type: 'system' };
+      const msgData = { id: sysMsg.id, senderId: 'admin', senderUsername: 'Sistema', senderRole: 'admin', receiverId: user.id, receiverRole: 'user', content: clientMsg, timestamp: new Date(), type: 'system', metadata: _depMeta };
       io.to(`user_${user.id}`).emit('new_message', msgData);
       io.to(`chat_${user.id}`).emit('new_message', msgData);
       notifyAdmins('new_message', { message: msgData, userId: user.id, username: user.username });
@@ -9252,6 +9254,8 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         messageContent = `🔒💰 Depósito de $${amount} acreditado con éxito. ✅ \n💸 Tu nuevo saldo es ${balanceStr} 💸\n\nPuedes verificarlo en: https://1girox.com\n\n🔥 Mañana podes revisar si tenes reembolso para reclamar de forma automatica 🔥`;
       }
       
+      // #275: metadata para el cartel "Jugar ahora" de la PWA.
+      const _depMeta = { kind: 'deposit_credited', platform: _platformId, amount: Number(amount), bonus: includeBonusInMessage ? Number(_effectiveBonus) : 0 };
       const systemMessage = await Message.create({
         id: uuidv4(),
         senderId: 'admin',
@@ -9262,7 +9266,8 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         content: messageContent,
         type: 'system',
         timestamp: new Date(),
-        read: false
+        read: false,
+        metadata: _depMeta
       });
       
       // CORREGIDO: Emitir a todos los que están viendo este chat (usuario y admins)
@@ -9275,7 +9280,8 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
         receiverRole: 'user',
         content: messageContent,
         timestamp: new Date(),
-        type: 'system'
+        type: 'system',
+        metadata: _depMeta
       };
       
       // Emitir a la sala del usuario

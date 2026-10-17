@@ -8,6 +8,27 @@
 
 ## Sesión 2026-10-17
 
+### 275. 🎰 Cartel "Jugar ahora" al acreditarse la carga (abre la plataforma ADENTRO de la app) + botón test — SW v168
+**Pedido (owner):** "cuando detecte la carga que aparezca un cartel que diga jugar ahora y apretándolo se
+abra tipo link aparte dentro de la app, entrando a la página original adentro, saliendo de la app pero
+adentro; armá un botón chiquito abajo del de carga, en manual y automático, que diga test para ver cómo
+quedaría".
+- **Backend:** los mensajes de depósito acreditado (hgcash `_hgcashCreditToPlatform` y carga MANUAL del
+  agente) llevan `metadata = { kind:'deposit_credited', platform, amount, bonus }` (en Message y en el
+  `new_message` emitido). `GET /api/messages` ya proyectaba metadata.
+- **Chat:** debajo del mensaje de carga aparece el botón rojo "🎰 Jugar ahora" (`_renderPlatformWidget`).
+- **Cartel** `#playNowCard` (hoja inferior, z 9700, estilo oscuro/cian): "¡Entró tu carga de $X!", "Ya tenés
+  las fichas en <plataforma> (+ bono)…", botón "🎰 Jugar ahora en <plataforma>" y "Después". Lo dispara
+  `_onIncoming` sólo si el mensaje tiene menos de 3 min (el historial también pasa por ahí) y una vez por
+  id. `VIP.home.playNow(pid)` → `_playOnEmbedded`: casino embebido con login automático si la plataforma
+  tiene API; si no (Ganamos hoy) su web embebida. Siempre adentro de la app, con la barra "Volver al menú
+  de cargas" y la carga rápida de siempre.
+- **Test:** botón chiquito punteado "test · ver cartel Jugar ahora" debajo de la fila Cargar/Retirar (carga
+  automática) y debajo del cartel "Recomendable" (carga manual): muestra el cartel con una carga de
+  ejemplo de $10.000 y la etiqueta amarilla TEST. Sacarlo cuando el owner lo apruebe = borrar los dos
+  `.test-mini-row` del HTML.
+- ⚠️ El cartel real necesita redeploy del backend (metadata); el test se ve ya con el SW v168.
+
 ### 274. 💰 Bono REAL del 10% en la carga automática (hgcash) · Perfil en estilo oscuro — SW v167 · admin-sw v61
 **Pedido (owner):** "en los mensajes de carga automática la bonificación es del 10%, dice 0%, hay que
 corregirlo; el Perfil es blanco y no va con el estilo de la página".

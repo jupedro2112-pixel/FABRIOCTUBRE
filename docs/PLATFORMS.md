@@ -101,7 +101,8 @@ como `{success:false, error:'<texto para el usuario>', code, httpStatus}`; env l
 - `Comprobante.bankMatchStatus` suma los mismos dos estados. `HgcashCharge.platform`,
   `PendingPayout.platform`.
 - `Message.metadata`: `{kind:'platform_choice', movementId, amount, options[], expiresAt, chosen?}`
-  o `{kind:'platform_link', platform, name, emoji, url}`. El `GET /api/messages/:userId`
+  o `{kind:'platform_link', platform, name, emoji, url}` o, desde #275, `{kind:'deposit_credited',
+  platform, amount, bonus}` (botón "Jugar ahora" + cartel en la PWA). El `GET /api/messages/:userId`
   proyecta `metadata`.
 - Comandos editables: `/sys_platform_choice` (`${amount}`, `{options}`, `{timeout}`, `{default}`)
   y `/sys_platform_redirect` (`{platform}`, `{name}`, `{url}`, `${amount}`).

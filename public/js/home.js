@@ -299,7 +299,55 @@
             try { VIP.ui.showToast('💰 ¡Llegó tu transferencia! Elegí dónde querés jugar 👇', 'success'); } catch (_) {}
             return;
         }
+        // #275: carga acreditada (automática o manual) → cartel "Jugar ahora" si el mensaje es reciente
+        // (el historial también pasa por acá: no mostrarlo por cargas viejas).
+        if (md && md.kind === 'deposit_credited') {
+            try {
+                const ts = new Date(message.timestamp || 0).getTime();
+                const fresh = !ts || (Date.now() - ts) < 3 * 60000;
+                if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); showPlayNow({ platform: md.platform, amount: md.amount, bonus: md.bonus }); }
+            } catch (_) {}
+        }
         if (!_open) { _unread++; _paintBadge(); }
+    }
+
+    // ---------------- #275: CARTEL "JUGAR AHORA" ----------------
+    // (owner: "cuando detecte la carga que aparezca un cartel que diga jugar ahora y apretándolo se abra
+    //  tipo link aparte dentro de la app, entrando a la página original adentro"). Hoja inferior fija;
+    // el botón abre la plataforma EMBEBIDA (login automático si tiene API; si no, su web) — siempre adentro.
+    const _playNowShown = new Set();
+    function _platName(pid) {
+        const list = (_platforms && _platforms.platforms) || [];
+        const p = list.find((x) => x.id === pid);
+        return p ? p.name : (pid === 'ganamos' ? 'Ganamos' : 'Girox');
+    }
+    function showPlayNow(opts) {
+        const o = opts || {};
+        const pid = o.platform || (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform || _platforms.defaultPlatform)) || 'girox';
+        let card = _el('playNowCard');
+        if (!card) return;
+        const amt = Number(o.amount) > 0 ? '$' + Math.round(Number(o.amount)).toLocaleString('es-AR') : '';
+        const bon = Number(o.bonus) > 0 ? ' + $' + Math.round(Number(o.bonus)).toLocaleString('es-AR') + ' de bono' : '';
+        const t = _el('playNowTitle'), s = _el('playNowSub'), b = _el('playNowBtn'), tag = _el('playNowTest');
+        if (t) t.textContent = amt ? ('¡Entró tu carga de ' + amt + '!') : '¡Entró tu carga!';
+        if (s) s.textContent = 'Ya tenés las fichas en ' + _platName(pid) + bon + '. Entrás con tu sesión, sin salir de la app.';
+        if (b) { b.onclick = function () { playNow(pid); }; b.textContent = '🎰 Jugar ahora en ' + _platName(pid); }
+        if (tag) tag.style.display = o.test ? '' : 'none';
+        card.classList.add('show');
+        card.setAttribute('aria-hidden', 'false');
+    }
+    function hidePlayNow() { const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); } }
+    function playNow(pid) {
+        hidePlayNow();
+        try { VIP.ui.hideModal('profileModal'); } catch (_) {}
+        _playOnEmbedded(pid || 'girox'); // adentro de la app: SSO si hay API, si no su web embebida
+        _setCasinoTestMode(false);
+        setTimeout(() => { try { _setupCasinoQuick(); } catch (_) {} }, 80);
+    }
+    // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.
+    function playNowTest() {
+        const pid = (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform || _platforms.defaultPlatform)) || 'girox';
+        showPlayNow({ platform: pid, amount: 10000, bonus: 0, test: true });
     }
 
     // ---------------- PRUEBAS DE PLATAFORMA (#235/#236): SIEMPRE dentro de la app ----------------
@@ -983,7 +1031,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
