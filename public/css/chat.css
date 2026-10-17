@@ -2580,3 +2580,15 @@ body.story-open { overflow: hidden; }
   .header.topnav .tn-btn:not(.tn-home) .tn-ico svg { width: 15px; height: 15px; }
 }
 @media (min-width: 430px) { .header.topnav .tn-btn:not(.tn-home) .tn-lbl { font-size: 7.8px !important; } }
+
+/* ══ #364 (owner): tarjeta CBU en el chat (como la gemela) ══ */
+.cbu-card { margin: 8px 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.cbu-box { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.cbu-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13px; }
+.cbu-row span { color: #9aa3b8; font-weight: 700; font-size: 12px; }
+.cbu-row b { font-weight: 900; font-size: 14px; letter-spacing: .3px; word-break: break-all; text-align: right; }
+.cbu-actions { display: flex; flex-direction: column; gap: 7px; }
+.cbu-copy { border: 2px solid #1fb954; background: transparent; color: #1fb954; font-weight: 900; font-size: 14px; padding: 10px; border-radius: 12px; cursor: pointer; }
+.cbu-send { border: 0; background: linear-gradient(135deg, #0f8a2f, #1fb954); color: #fff; font-weight: 900; font-size: 14px; padding: 12px; border-radius: 12px; cursor: pointer; box-shadow: 0 3px 10px rgba(31,185,84,.35); }
+.cbu-send:active, .cbu-copy:active { transform: scale(.98); }
+.message.admin .cbu-copy, .message.system .cbu-copy { color: #0f8a2f; border-color: #0f8a2f; }

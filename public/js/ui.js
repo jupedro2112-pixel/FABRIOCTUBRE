@@ -403,9 +403,9 @@ VIP.ui = (function () {
                 document.getElementById('cbuNumberDisplay').textContent  = data.cbu.number  || '-';
                 document.getElementById('cbuAliasDisplay').textContent   = data.cbu.alias   || '-';
 
-                showModal('cbuModal');
-                setTimeout(() => VIP.chat.loadMessages(), 500);
-                showToast('💳 Datos CBU enviados al chat', 'success');
+                // #364 (owner): sin modal — el CBU aparece directo en el chat como tarjeta con botones.
+                setTimeout(() => { VIP.chat.loadMessages(); try { VIP.chat.scrollToBottom && VIP.chat.scrollToBottom(); } catch (_) {} }, 400);
+                showToast('💳 CBU enviado al chat 👇', 'success');
 
                 // Meta Pixel — InitiateCheckout (usuario va a depositar).
                 if (VIP.pixel) VIP.pixel.trackWithId(metaEventId, 'InitiateCheckout', { content_name: 'cbu_request' });

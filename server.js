@@ -3497,6 +3497,7 @@ app.post('/api/admin/send-cbu', authMiddleware, adminMiddleware, async (req, res
       receiverRole: 'user',
       content: fullMessage,
       type: 'text',
+      metadata: { kind: 'cbu_card', bank: cbuConfig.bank || '', titular: cbuConfig.titular || '', cbu: cbuConfig.number || '', alias: cbuConfig.alias || '' }, // #364
       timestamp: timestamp,
       read: false
     });
@@ -6405,6 +6406,8 @@ app.post('/api/cbu/request', authMiddleware, async (req, res) => {
       receiverRole: 'user',
       content: fullMessage,
       type: 'text',
+      // #364: tarjeta CBU con 'Copiar CBU/ALIAS' y 'Por favor enviar comprobante aquí' (chat.js la dibuja)
+      metadata: { kind: 'cbu_card', bank: cbuConfig.bank || '', titular: cbuConfig.titular || '', cbu: cbuConfig.number || '', alias: cbuConfig.alias || '' },
       timestamp: new Date(),
       read: false
     });

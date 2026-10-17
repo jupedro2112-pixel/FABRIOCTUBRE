@@ -74,6 +74,20 @@ VIP.chat = (function () {
         if (md.kind === 'install_gift_offer') {
             return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="VIP.home.installGiftOpen()">🎁 Ver mi extra por instalar la app</button></div>`;
         }
+        // #364 (owner): tarjeta del CBU como en la gemela — CBU / Alias / Titular, Copiar CBU, Copiar ALIAS y el botón
+        // verde "Por favor enviar comprobante aquí" que abre el adjuntar. El texto del mensaje (/sys_cbu) va arriba.
+        if (md.kind === 'cbu_card') {
+            const row = (k, v) => v ? `<div class="cbu-row"><span>${k}</span><b>${escapeHtml(String(v))}</b></div>` : '';
+            const cbu = String(md.cbu || ''), alias = String(md.alias || '');
+            return `<div class="cbu-card">
+                <div class="cbu-box">${row('CBU', cbu)}${row('Alias', alias)}${row('Titular', md.titular)}${row('Banco', md.bank)}</div>
+                <div class="cbu-actions">
+                    ${cbu ? `<button type="button" class="cbu-copy" onclick="VIP.ui.copyText('${escapeHtml(cbu)}')">Copiar CBU</button>` : ''}
+                    ${alias ? `<button type="button" class="cbu-copy" onclick="VIP.ui.copyText('${escapeHtml(alias)}')">Copiar ALIAS</button>` : ''}
+                    <button type="button" class="cbu-send" onclick="VIP.chat.attachFromCard()">📎 Por favor enviar comprobante aquí</button>
+                </div>
+            </div>`;
+        }
         if (md.kind === 'platform_link' && md.url) {
             const url = encodeURI(String(md.url));
             const label = escapeHtml(_platLabel({ emoji: md.emoji, name: md.name || 'la plataforma' }));
@@ -85,6 +99,13 @@ VIP.chat = (function () {
     // Marca el mensaje con botones como resuelto (lo llama el socket
     // `platform_choice_resolved` y el propio click). `platformId` puede ser el id de
     // la plataforma, 'manual' (lo cargó un agente a mano) o un texto ya armado.
+    // #364: el botón de la tarjeta CBU abre el selector de archivo (mismo que el clip de abajo).
+    function attachFromCard() {
+        const fi = document.getElementById('fileInput');
+        if (fi) { try { fi.click(); return; } catch (_) {} }
+        const b = document.getElementById('attachBtn'); if (b) b.click();
+    }
+
     function markPlatformChoiceResolved(messageId, platformId, labelOverride) {
         const box = document.querySelector(`.plat-choice[data-plat-msg="${messageId}"]`);
         if (!box) return;
@@ -848,6 +869,7 @@ VIP.chat = (function () {
     return {
         escapeHtml,
         scrollToBottom,
+        attachFromCard, // #364
         openLightbox,
         closeLightbox,
         markReceivedAsRead,

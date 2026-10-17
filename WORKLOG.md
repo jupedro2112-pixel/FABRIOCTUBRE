@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 364. 💳 Carga manual: el CBU aparece en el chat como tarjeta + "Por favor enviar comprobante aquí" — SW v252
+**Pedido (owner, captura de la gemela):** "cuando aprieten ahí que aparezca el CBU directamente, con el texto como la
+automática, y el botón 'por favor enviar comprobante aquí'". El mensaje del CBU (`/api/cbu/request` y el envío del
+agente `/api/admin/send-cbu`) lleva `metadata.kind='cbu_card'` (cbu, alias, titular, banco); chat.js lo dibuja como
+tarjeta: CBU / Alias / Titular, "Copiar CBU", "Copiar ALIAS" y el botón verde que abre el adjuntar
+(`VIP.chat.attachFromCard`). El modal `cbuModal` ya no se abre al pedir el CBU (queda en el HTML). El texto de arriba
+sigue siendo `/sys_cbu` (COMANDOS). Requiere redeploy para los mensajes nuevos; los viejos se ven como antes.
+
 ### 363. 🔤 Barra de arriba: letras más chicas, sin cortes — SW v251
 **Pedido (owner):** "achicá las letras de los recuadros superiores para que se vean dentro del recuadro y no se corte la
 palabra". Con 7 botones: etiquetas a 7 px (6,3 px en ≤370 px, 7,8 px en ≥430 px), sin letter-spacing, sin partir
