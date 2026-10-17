@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 338. 🔴 Botón rojo encima de la foto + sin leyenda abajo — SW v224
+**Pedidos (owner):** "el 'para cargar apretá aquí' ponelo encimado de las fotos así no perdemos lugar" y "el texto
+'fotos ilustrativas' de abajo sacalo, ya está arriba". La píldora roja y los puntos se superponen al borde inferior
+de la foto (la foto usa casi todo el recuadro) y se quitó `.ev-slides-cap`.
+
 ### 337. 📐 Recuadro de fotos al espacio sobrante: Inicio sin deslizar — SW v223
 **Pedido (owner):** "el recuadro hizo que haya que deslizar y se pierden las reseñas; ajustalo al borde máximo así no
 hay que deslizar, antes entraba bien". Se deshace la altura fija de #322 (64 vh): `.ev-frame-wrap` vuelve a `flex:1`

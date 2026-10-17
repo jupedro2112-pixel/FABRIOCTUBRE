@@ -2439,3 +2439,10 @@ body.home-mini .ig-bar { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); 
 .ev-frame-wrap { flex: 1 1 auto !important; height: auto !important; min-height: 150px !important; }
 .entry-view { overflow-y: hidden; }
 @media (max-height: 640px) { .entry-view { overflow-y: auto; } }
+
+/* ══ #338 (owner): el botón rojo y los puntos van ENCIMA de la foto (no reservan lugar); sin leyenda abajo ══ */
+.ev-slide { padding: 8px 10px 10px; }
+.ev-slides-dots { bottom: 6px; }
+.ev-cta { bottom: 18px; }
+.ev-frame-wrap.is-expanded .ev-slides-dots { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+.ev-frame-wrap.is-expanded .ev-cta { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
