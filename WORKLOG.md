@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 335. 🔘 Puntos del carrusel fuera del botón "LINK CASINO AQUÍ" — SW v221
+**Pedido (owner, captura):** "el deslizante de fondo hace que se vea mal 'link de casino'; dejalo activo pero que no se
+vea de fondo". Los puntos pasan arriba del botón rojo (bottom 74 px) y la franja del botón de link tiene fondo oscuro
+propio. El deslizamiento sigue igual.
+
 ### 334. 📐 Ajuste y centrado por modelo de teléfono (Inicio · Carga auto · Carga manual) — SW v220
 **Pedido (owner):** "ajustá y centrá viendo los distintos modelos: iPhone grande o chico, Android chico o grande".
 Reglas por ancho: ≤360 (SE/mini, Android chico: letras y botones más chicos, recuadro de fotos 60 vh), ≥431 (Plus/
