@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 336. 🧹 Sin el botón "LINK CASINO AQUÍ" en el Inicio — SW v222
+**Pedido (owner).** Se quita del carrusel (vuelve la leyenda chica "Fotos ilustrativas de Girox"); el botón "Link casino
+aquí" de carga auto / manual sigue. `entryViewSite` queda disponible sin uso.
+
 ### 335. 🔘 Puntos del carrusel fuera del botón "LINK CASINO AQUÍ" — SW v221
 **Pedido (owner, captura):** "el deslizante de fondo hace que se vea mal 'link de casino'; dejalo activo pero que no se
 vea de fondo". Los puntos pasan arriba del botón rojo (bottom 74 px) y la franja del botón de link tiene fondo oscuro
