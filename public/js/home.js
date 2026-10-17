@@ -261,8 +261,9 @@
     const TESTER_USERNAMES = ['lalodj'];
     function _applyTesterClass() {
         const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
-        // #308 (owner): con la app INSTALADA no hay nada de test, ni para lalodj: funciona como app instalada real.
-        const tester = TESTER_USERNAMES.includes(u) && !_isStandalone();
+        // #313 (owner): el usuario de prueba ve los tests también con la app INSTALADA (para probar carga, nivel, etc.
+        // desde la app). El resto de los usuarios nunca los ve.
+        const tester = TESTER_USERNAMES.includes(u);
         if (!tester) _installedTest = false;
         document.body.classList.toggle('is-tester', tester);
     }

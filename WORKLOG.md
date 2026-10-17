@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 313. 🧪 Tests también con la app instalada (solo usuario de prueba) — SW v199
+**Pedido (owner):** "habilitá de nuevo los tests de cargas y todo lo que teníamos también en la app, así puedo
+testear todo desde la app: la carga, lo del nivel, etc.". Deshace #308: `body.is-tester` depende sólo del
+usuario (`TESTER_USERNAMES`), instalada o no. Los demás clientes siguen sin ver nada de test.
+
 ### 312. 🖼️ Inicio: carrusel de fotos ilustrativas de Girox en vez de la página embebida — SW v198
 **Pedido (owner, 5 capturas):** "poné estas fotos con deslizante en el Inicio en vez de la página de Girox, que
 deslicen cada 2 segundos y diga 'fotos ilustrativas de Girox'".
