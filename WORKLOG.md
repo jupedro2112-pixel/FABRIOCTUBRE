@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-17
 
+### 369. ℹ️ Info del servicio en UN SOLO MENSAJE · app y notificaciones sólo en Perfil — SW v256
+**Pedido (owner, captura de un tester):** "sacaría de Info la opción de instalar app y notificaciones" → "app y
+notificaciones dejalo en Perfil nomás" (ya estaban ahí: 🔔 Notificaciones y 📲 Instalar la app); "y todo esto lo
+pondría en un solo mensaje". `#infoModal`: se sacó `#infoDiagnostics` (apptest.js es null-safe) y la ruleta plegada;
+las tarjetas `.info-grid` se reemplazaron por una sola burbuja `.info-msg` (`#infoMsg`) con secciones: por qué
+elegir · Reembolsos NOVEDAD (diario/semanal/mensual, % reales en `infoDailyMax/WeeklyMax/MonthlyMax`) · Dos
+plataformas (`infoCardTwoPlats`, sólo con 2+ habilitadas) · Ruleta diaria (texto sin montos hardcodeados + link
+"Girar la ruleta") · Referidos (`.ref-pct`) · Niveles VIP. Las opiniones siguen plegadas arriba. Los ids que usa
+home.js se mantienen.
+
 ### 368. 📽️ Historia nueva: "La novedad llegó · El futuro está acá · Cargas automática · Bienvenidos"
 **Pedido (owner):** "en historias cambiá la foto y poné: la novedad llegó, el futuro está acá, cargas automática,
 bienvenidos". Imagen nueva `public/images/stories/novedad-1.png` (1080×1920, generada con PIL: pica de la app con

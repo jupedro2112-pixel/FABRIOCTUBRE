@@ -2671,3 +2671,12 @@ body.home-easy .easy-view { display: flex; }
 .mc-opt.mc-full b { color: #00e5ff; }
 .mc-tag { position: absolute; top: -9px; right: 12px; padding: 2px 9px; border-radius: 999px; background: #2ee66b; color: #06270f; font: 900 9px var(--dx-font); letter-spacing: .5px; text-transform: uppercase; }
 .mc-tag.mc-tag-dim { background: rgba(255,255,255,.14); color: #c9d1e3; }
+
+/* ══ #369: INFO DEL SERVICIO en un solo mensaje (burbuja), sin tarjetas ══ */
+.info-msg { position: relative; margin: 8px 0 4px; padding: 12px 14px 10px; border-radius: 16px 16px 16px 4px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 8px 24px rgba(0,0,0,.25); color: var(--dx-muted); font: 500 12.5px/1.5 var(--dx-font); }
+.info-msg .im-sec { margin: 0 0 11px; padding: 0 0 10px; border-bottom: 1px dashed var(--dx-border); }
+.info-msg .im-sec:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+.info-msg .im-sec > b:first-child { display: block; margin-bottom: 3px; font-size: 13px; font-weight: 900; letter-spacing: .3px; color: var(--dx-text); }
+.info-msg b { color: var(--dx-text); }
+.info-msg .im-line { display: block; margin-top: 4px; }
+.info-msg .im-link { border: 0; background: transparent; padding: 0; color: #00e5ff; font: 800 12.5px var(--dx-font); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
