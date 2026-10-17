@@ -69,6 +69,8 @@ VIP.fire = (function () {
             clearInterval(VIP.state.fireCountdownInterval);
         }
 
+        // #348: la misma regla arriba del modal
+        try { const top = document.getElementById('fireRuleTop'); const r0 = VIP.state.fireStatus.minDeposits; const m0 = (r0 == null || r0 === '') ? 10 : (Number(r0) || 0); if (top) { top.innerHTML = m0 > 0 ? ('⚠️ Mínimo <b>' + m0 + ' cargas entre racha y racha</b> para poder reclamar cada premio · si no, el fueguito vuelve a 0') : ''; top.style.display = m0 > 0 ? '' : 'none'; } } catch (_) {}
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
             // #347: si el server todavía no manda el mínimo (sin redeploy) se muestra el default 10; sólo 0 explícito lo apaga.

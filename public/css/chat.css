@@ -2471,3 +2471,7 @@ html.has-session body { background: #06070d; }
 .fire-ms-sum { white-space: normal; overflow: visible; text-overflow: clip; flex: 1 1 100%; text-align: left; font-size: 10px; }
 .fire-ms-chev { margin-left: auto; }
 #fireMilestonesWrap { margin-top: 4px; }
+
+/* ══ #348: regla del fueguito arriba del modal ══ */
+.fire-rule-top { margin: 6px 0 0 !important; padding: 6px 10px; border-radius: 10px; background: rgba(255,140,0,.1); border: 1px solid rgba(255,140,0,.4); color: #e6c9a8 !important; font: 700 11px/1.4 var(--dx-font) !important; text-align: center; }
+.fire-rule-top b { color: #ffb347; }

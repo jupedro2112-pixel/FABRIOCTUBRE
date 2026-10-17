@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 348. 🚀 Deploys visibles en la PRIMERA apertura + regla del fueguito arriba del modal — SW v234
+**Contexto:** el owner seguía viendo textos viejos aun con Render ya en v233. Causa: el SW servía el JS propio
+stale-while-revalidate (primero del caché, se actualizaba para la vez siguiente). Ahora JS y CSS propios van
+**network-first** (el server ya los manda `no-cache`): el deploy se ve en la primera apertura; sin red cae al caché.
+**Pedido (owner):** "que aparezca antes del día 7, si no lo ven como estafa". La regla ("Mínimo 10 cargas entre racha y
+racha…") va además ARRIBA del modal, debajo del título, desde el día 1 (`#fireRuleTop`, fire.js pone el mínimo real).
+
 ### 347. 🔥 "Mínimo 10 cargas entre racha y racha" — visible siempre — SW v233, admin-sw v73
 **Pedido (owner, captura):** el modal mostraba el texto viejo ("movimientos de cargas durante el mes") porque el server
 de prueba aún no manda `minDeposits` (sin redeploy) y el front caía al fallback. Ahora sin valor del server se asume
