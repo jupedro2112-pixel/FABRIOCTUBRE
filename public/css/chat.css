@@ -2454,3 +2454,9 @@ body.home-full #homePanel { overflow-y: auto !important; overflow-x: hidden; min
 body.home-full #homePanel::-webkit-scrollbar { display: none; }
 body.home-full .home-dash { min-height: 0; flex: 1 0 auto; }
 body.home-full .home-actions-row, body.home-full .test-mini-row, body.home-full .plat-link-btn { flex: 0 0 auto; position: relative; z-index: 2; }
+
+/* ══ #340: regla del fueguito a la vista en la tarjeta del home ══ */
+#fireHomeCard { flex-wrap: wrap; row-gap: 4px; }
+#fireHomeCard .fh-rule { flex: 1 1 100%; display: block; font: 600 9px/1.3 var(--dx-font); color: #e6c9a8; text-align: center; white-space: normal; margin-top: 1px; }
+#fireHomeCard .fh-rule b { color: #ffb347; font-weight: 900; }
+@media (min-height: 780px) { body.home-full #fireHomeCard .fh-rule { font-size: 10px; } }

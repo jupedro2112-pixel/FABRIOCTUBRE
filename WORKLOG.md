@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 340. 🔥 Regla del fueguito a la vista (fuera del modal) — SW v226
+**Pedido (owner):** "aclará afuera de la parte expandida que hay un mínimo de 10 cargas en cada racha para reclamar; si
+no, se reinicia a 0". Línea en la tarjeta `#fireHomeCard` del home ("⚠️ Mínimo 10 cargas en cada racha para reclamar el
+premio · si no, el fueguito vuelve a 0"); el número lo pinta `_paintFireLevels` desde `fireStatus.minDeposits`
+(`Config['fireMinDeposits']`, panel). Con mínimo 0 la línea se oculta.
+
 ### 339. 🧱 Carga auto: botones de abajo sin encimarse — SW v225
 **Pedido (owner, captura):** "quedó mal encimado". Con #333 el panel crecía pero no podía achicarse, y en pantallas
 donde no entra todo los botones Adjuntar/Retirar tapaban el paso 2. Ahora `#homePanel` scrollea adentro cuando no

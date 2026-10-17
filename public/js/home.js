@@ -162,6 +162,12 @@
     // #291: barra con los niveles de fueguito (hitos) + regla de cargas mínimas en el plazo.
     function _paintFireLevels(st) {
         const fill = _el('fireHomeFill'), dots = _el('fireHomeDots'), rule = _el('fireHomeRule');
+        // #340: la regla de cargas mínimas se pinta aunque no haya barra (tarjeta simple del home).
+        if (rule && st && st.minDeposits != null) {
+            const min = Number(st.minDeposits) || 0;
+            if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas</b> en cada racha para reclamar el premio · si no, el fueguito vuelve a 0'; rule.style.display = ''; }
+            else rule.style.display = 'none';
+        }
         if (!fill || !dots) return;
         const ms = (st && Array.isArray(st.milestones)) ? st.milestones.filter((m) => m && m.day > 0) : [];
         const streak = Number(st && st.streak) || 0;
