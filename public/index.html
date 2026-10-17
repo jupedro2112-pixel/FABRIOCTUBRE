@@ -933,7 +933,33 @@
                     <b>⭐ Servicio completo</b>
                     <span class="svb-msg" id="serviceBannerMsg">Carga automática con bono extra en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.</span>
                 </div>
+                <span class="svb-plat" onclick="event.stopPropagation();VIP.home.setHomeMode('play')" title="Volver a las plataformas">🎰 Plataformas</span>
                 <span class="svb-cta" id="serviceBannerCta">Ver todo ▾</span>
+            </div>
+            <!-- ===== #267 (owner 2026-10-17): PANTALLA DE ENTRADA = la plataforma abierta adentro.
+                 "De entrada 3 botones: Girox con la página ya abierta para que vean cómo es, Ganamos abajo
+                 para cambiar, y la opción Carga manual / Carga automática, aparte de todo lo que está".
+                 body.home-play (modo por default al abrir la app): tabs de plataforma (home.js renderEntryTabs,
+                 desde /api/platforms; antes de la respuesta, Girox/Ganamos fijos) + iframe público de la
+                 plataforma (sin login: el link SSO es de un solo uso) + abajo Carga manual (chat WhatsApp,
+                 modo mini) y Carga automática (app completa, modo full). -->
+            <div id="entryView" class="entry-view">
+                <div class="ev-tabs" id="entryTabs"></div>
+                <div class="ev-frame-wrap">
+                    <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
+                    <div class="ev-status" id="entryStatus">
+                        <div class="ev-st-t">🎰 Abriendo la plataforma…</div>
+                        <button type="button" class="ev-st-open" style="display:none" onclick="VIP.home.entryOpen()">Abrir la plataforma ›</button>
+                    </div>
+                </div>
+                <div class="ev-loads">
+                    <button type="button" class="ev-load manual" onclick="VIP.home.setHomeMode('mini')" title="Cargar por chat con un agente, como en WhatsApp">
+                        <b>💬 Carga manual</b><small>chat con un agente · tipo WhatsApp</small><span id="evManualUnread" class="support-unread" style="display:none;">0</span>
+                    </button>
+                    <button type="button" class="ev-load auto" onclick="VIP.home.setHomeMode('full')" title="Carga automática: transferís, mandás el comprobante y se acredita solo">
+                        <b>⚡ Carga automática</b><small id="evAutoSub">bono extra en todas tus cargas</small>
+                    </button>
+                </div>
             </div>
             <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->

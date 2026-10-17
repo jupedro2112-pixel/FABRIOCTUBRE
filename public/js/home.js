@@ -37,20 +37,35 @@
     //                    cabecera estilo WhatsApp (#waHead) y el botón CBU en la barra de escribir.
     //   full            → el home de siempre; el chat vuelve a ser overlay (burbuja).
     // Se recuerda por dispositivo (localStorage vip_home_mode). El cartel viene de /api/platforms.
+    // #267: tercer modo **play** (el de ENTRADA, siempre al abrir la app): la plataforma abierta adentro
+    //       (#entryView: tabs Girox/Ganamos + iframe público) y abajo "Carga manual" (→ mini) /
+    //       "Carga automática" (→ full). El modo elegido se recuerda sólo en la SESIÓN (sessionStorage):
+    //       cada vez que se abre la app, la gente ve de entrada la plataforma.
     const HOME_MODE_KEY = 'vip_home_mode';
     const HOME_BANNER_KEY = 'vip_home_banner';
-    let _homeMode = 'mini';
+    let _homeMode = 'play';
     let _headObs = null;
 
     function getHomeMode() { return _homeMode; }
     function setHomeMode(mode, opts) {
-        mode = mode === 'full' ? 'full' : 'mini';
+        mode = (mode === 'full' || mode === 'mini') ? mode : 'play';
         _homeMode = mode;
         const p = _el('supportPanel');
         const cta = _el('serviceBannerCta');
         const bn = _el('serviceBanner');
         document.body.classList.toggle('home-mini', mode === 'mini');
+        document.body.classList.toggle('home-play', mode === 'play');
         document.body.classList.remove('support-open');
+        if (mode === 'play') {
+            if (p) p.classList.add('hidden');
+            _open = false;
+            try { const bb = _el('supportBubble'); if (bb) bb.style.visibility = ''; } catch (_) {}
+            try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
+            renderEntryTabs();
+            _entryLoad();
+        } else {
+            _entryUnload();
+        }
         if (mode === 'mini') {
             if (p) p.classList.remove('hidden');
             _open = true; _unread = 0; _paintBadge();
@@ -66,12 +81,13 @@
             if (bn) { bn.setAttribute('aria-expanded', 'true'); bn.title = 'Volver al chat'; }
             try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
         }
-        if (!opts || opts.persist !== false) { try { localStorage.setItem(HOME_MODE_KEY, mode); } catch (_) {} }
+        if (!opts || opts.persist !== false) { try { sessionStorage.setItem(HOME_MODE_KEY, mode); } catch (_) {} }
     }
     function toggleHomeMode() { setHomeMode(_homeMode === 'mini' ? 'full' : 'mini'); }
     function _initHomeMode() {
-        let m = 'mini';
-        try { m = localStorage.getItem(HOME_MODE_KEY) === 'full' ? 'full' : 'mini'; } catch (_) {}
+        let m = 'play';
+        try { const v = sessionStorage.getItem(HOME_MODE_KEY); if (v === 'full' || v === 'mini') m = v; } catch (_) {}
+        _bindEntryFrame();
         setHomeMode(m, { persist: false });
         try { const c = localStorage.getItem(HOME_BANNER_KEY); if (c) _paintHomeBanner(JSON.parse(c)); } catch (_) {}
         _mirrorHeadBits();
@@ -82,6 +98,8 @@
     function _paintHomeBanner(hb) {
         const msg = _el('serviceBannerMsg');
         if (!msg || !hb || typeof hb !== 'object') return;
+        // #267: el % también va en el botón "Carga automática" de la pantalla de entrada.
+        try { const ap = _el('evAutoSub'); if (ap && hb.pct != null && hb.pct !== '') ap.textContent = hb.pct + '% en todas tus cargas'; } catch (_) {}
         if (hb.text === null || hb.text === '') { msg.style.display = 'none'; return; }
         msg.innerHTML = _esc(hb.text).replace(/(\d+(?:[.,]\d+)?\s?%)/g, '<em>$1</em>');
         msg.style.display = '';
@@ -100,6 +118,64 @@
             ['fireStreak', 'themeToggleBtn', 'chatTopbarAvatar'].forEach((id) => { const n = _el(id); if (n) _headObs.observe(n, { childList: true, characterData: true, subtree: true, attributes: true }); });
         } catch (_) { _headObs = true; setInterval(_mirrorHeadBits, 2000); }
     }
+    // ---------------- #267: PANTALLA DE ENTRADA (plataforma abierta adentro) ----------------
+    // Antes de que responda /api/platforms (Tor es lento) se muestran Girox y Ganamos fijos con sus
+    // webs públicas; después se re-renderiza con la lista real (misma URL ⇒ no se recarga el iframe).
+    const ENTRY_FALLBACK = [
+        { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
+        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos.svg' }
+    ];
+    let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
+    function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
+    function renderEntryTabs() {
+        const box = _el('entryTabs'); if (!box) return;
+        const list = _entryList();
+        if (!_entryPlat || !list.some((p) => p.id === _entryPlat)) {
+            const def = (_platforms && _platforms.defaultPlatform) || 'girox';
+            _entryPlat = (list.find((p) => p.id === def) || list[0]).id;
+        }
+        box.innerHTML = list.map((p) =>
+            '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + '" onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')">' +
+            (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + _esc(p.name) +
+            (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
+            '</button>').join('');
+    }
+    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); }
+    function _entryStatus(text, showOpen) {
+        const st = _el('entryStatus'); if (!st) return;
+        if (text == null) { st.hidden = true; return; }
+        st.hidden = false;
+        const t = st.querySelector('.ev-st-t'); if (t) t.textContent = text;
+        const b = st.querySelector('.ev-st-open'); if (b) b.style.display = showOpen ? '' : 'none';
+    }
+    function _entryLoad() {
+        if (_homeMode !== 'play') return;
+        const f = _el('entryFrame'); if (!f) return;
+        const p = _entryList().find((x) => x.id === _entryPlat) || {};
+        const url = p.playUrl || p.externalUrl || '';
+        if (!url) { _entryStatus((p.name || 'Esa plataforma') + ' todavía no está disponible.', false); return; }
+        if (url === _entryUrl && f.getAttribute('src') === url) return; // ya está abierta
+        _entryUrl = url;
+        _entryStatus('🎰 Abriendo ' + (p.name || 'la plataforma') + '…', false);
+        f.src = url;
+        clearTimeout(_entryTimer);
+        // Si la web no deja embeberse (X-Frame-Options) nunca llega el 'load' → ofrecer abrirla aparte.
+        _entryTimer = setTimeout(() => { const st = _el('entryStatus'); if (st && !st.hidden) _entryStatus((p.name || 'La plataforma') + ' no terminó de cargar acá adentro.', true); }, 15000);
+    }
+    function _entryUnload() {
+        clearTimeout(_entryTimer);
+        const f = _el('entryFrame');
+        if (f && f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank'; // libera la página del casino
+        _entryUrl = '';
+    }
+    function _bindEntryFrame() {
+        if (_entryBound) return;
+        const f = _el('entryFrame'); if (!f) return;
+        _entryBound = true;
+        f.addEventListener('load', () => { if (_entryUrl && f.getAttribute('src') === _entryUrl) { clearTimeout(_entryTimer); _entryStatus(null); } });
+    }
+    function entryOpen() { openPlatform(_entryPlat || 'girox', { test: true }); }
+
     function _paintWaHeadName() {
         try {
             const n = _el('waHeadName'); if (!n || !_platforms || !Array.isArray(_platforms.platforms)) return;
@@ -110,6 +186,8 @@
 
     // ---------------- SOPORTE (chat) ----------------
     function openSupport() {
+        // #267: desde la pantalla de entrada, el chat se abre como pantalla principal (modo mini).
+        if (_homeMode === 'play') { setHomeMode('mini'); return; }
         const p = _el('supportPanel');
         if (!p) return;
         p.classList.remove('hidden');
@@ -137,7 +215,7 @@
     function isSupportOpen() { return _open; }
 
     function _paintBadge() {
-        ['supportUnread', 'headerSupportUnread'].forEach((id) => {
+        ['supportUnread', 'headerSupportUnread', 'evManualUnread'].forEach((id) => {
             const b = _el(id);
             if (!b) return;
             if (_unread > 0) { b.textContent = _unread > 99 ? '99+' : String(_unread); b.style.display = ''; }
@@ -807,6 +885,7 @@
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         _paintWaHeadName();
+        try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
         renderHowItWorks();
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
@@ -847,7 +926,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

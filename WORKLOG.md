@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 267. 🎰 Pantalla de ENTRADA: Girox abierto adentro, Ganamos para cambiar, Carga manual / Carga automática — SW v160
+**Pedido (owner):** "cuando entre la gente que aparezca de entrada 3 botones: Girox y que automáticamente
+esté abierta esa página para que vean cómo es la plataforma; abajo Ganamos para cambiar y ver la de
+Ganamos; y tercero la opción de carga manual y otro carga automática, aparte de todo lo que está".
+- **Modo nuevo `play`** (`VIP.home.setHomeMode('play')`), el de ENTRADA **siempre que se abre la app**
+  (el modo elegido se recuerda sólo en `sessionStorage vip_home_mode`, ya no en localStorage).
+  `body.home-play` muestra `#entryView` y pliega todo lo demás (home completo, cartel, chat, burbuja).
+- `#entryView`: **tabs de plataforma** (`renderEntryTabs`, lista de `/api/platforms`; antes de la respuesta
+  Girox/Ganamos fijos con `https://1girox.com` y `https://www.ganamosvip.me`; Girox lleva "Recomendado",
+  Ganamos violeta) + **iframe público** de la plataforma elegida (`#entryFrame`, sin login: el link SSO
+  es de un solo uso; si en 15 s no carga adentro aparece "Abrir la plataforma ›" = `openPlatform(test)`)
+  + abajo **💬 Carga manual** (→ modo mini, el chat WhatsApp; con contador de no leídos) y **⚡ Carga
+  automática** (→ modo full, la app completa; el subtítulo muestra el `{pct}` del cartel).
+- Al salir del modo play el iframe se vacía (`about:blank`) para no dejar el casino corriendo detrás.
+- El cartel "Servicio completo" (modos mini/full) suma el chip **🎰 Plataformas** para volver a la entrada.
+  `openSupport()` en modo play = pasar a mini (así la pregunta "¿dónde querés jugar?" se ve igual).
+- Verificado: `node --check`, balance HTML, sin ids duplicados.
+
 ### 266. 💬 Chat estilo WhatsApp como pantalla principal + menú deslizante "Servicio completo" — SW v159 · admin-sw v60
 **Pedido (owner, 2026-10-17, con foto del chat viejo):** "que la página principal tenga un menú
 deslizante para arriba ocultando todo y dejar el chat como principal; en el menú un cartel: servicio

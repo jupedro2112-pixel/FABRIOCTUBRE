@@ -1668,3 +1668,39 @@ body.home-mini .wa-head { display: flex; }
 .wa-head-btn { position: relative; flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(255,255,255,.1); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .wa-head-btn:active { transform: scale(.95); }
 .wa-head-fire .fire-streak-badge { top: -4px; right: -4px; }
+
+/* ══ #267: PANTALLA DE ENTRADA — plataforma abierta adentro + Carga manual / automática ══ */
+.entry-view { display: none; flex: 1 1 auto; min-height: 0; flex-direction: column; gap: 6px; margin: 4px 6px 0; }
+body.home-play .entry-view { display: flex; }
+body.home-play #homeFull { max-height: 0; opacity: 0; pointer-events: none; }
+body.home-play .service-banner { display: none; }
+body.home-play #supportPanel { display: none !important; }
+body.home-play #supportBubble, body.home-play #headerSupportBtn { display: none !important; }
+.ev-tabs { display: flex; gap: 6px; flex: 0 0 auto; padding-top: 6px; }
+.ev-tab {
+  position: relative; flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 6px; border-radius: 11px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05);
+  color: #f4f6fb; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; cursor: pointer;
+  -webkit-tap-highlight-color: rgba(255,255,255,.15); touch-action: manipulation;
+}
+.ev-tab img { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: #0a0c16; }
+.ev-tab.active { background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; border-color: transparent; box-shadow: 0 6px 18px rgba(255,23,68,.3); }
+.ev-tab.plat-ganamos.active { background: linear-gradient(135deg, #6a0dad, #9b30ff); color: #fff; box-shadow: 0 6px 18px rgba(106,13,173,.35); }
+.ev-reco { position: absolute; top: -7px; right: 6px; font-size: 8px; font-weight: 900; letter-spacing: .3px; background: #ff1744; color: #fff; border-radius: 999px; padding: 1px 6px; text-transform: uppercase; }
+.ev-tab.active .ev-reco { background: #06070d; color: #ff6b6b; }
+.ev-frame-wrap { flex: 1 1 auto; min-height: 0; position: relative; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); background: #0d0d1a; }
+#entryFrame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; background: #0d0d1a; }
+.ev-status { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; color: #ff6b6b; font-weight: 800; background: #0d0d1a; }
+.ev-status[hidden] { display: none !important; }
+.ev-st-open { background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; font-size: 11px; cursor: pointer; }
+.ev-loads { display: flex; gap: 6px; flex: 0 0 auto; padding-bottom: 4px; }
+.ev-load { position: relative; flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 6px; border-radius: 12px; border: 0; cursor: pointer; line-height: 1.15; -webkit-tap-highlight-color: rgba(255,255,255,.15); touch-action: manipulation; }
+.ev-load b { font-size: 12.5px; font-weight: 900; }
+.ev-load small { font-size: 9.5px; font-weight: 600; opacity: .9; }
+.ev-load.manual { background: linear-gradient(135deg, #128c4a, #25d366); color: #06120a; box-shadow: 0 6px 18px rgba(37,211,102,.25); }
+.ev-load.auto { background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; box-shadow: 0 6px 18px rgba(255,23,68,.3); }
+.ev-load .support-unread { position: absolute; top: -6px; right: -4px; }
+.ev-load:active, .ev-tab:active { transform: scale(.98); }
+/* Chip "Plataformas" del cartel (vuelve a la pantalla de entrada desde el chat / la app completa). */
+.svb-plat { flex: 0 0 auto; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 800; color: #f4f6fb; white-space: nowrap; cursor: pointer; }
+body:not(.home-mini) .svb-plat { padding: 3px 8px; font-size: 9.5px; }

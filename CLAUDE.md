@@ -163,8 +163,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El
   cartel dorado y las tarjetas del modal Info se ELIMINARON de la PWA. `/sys_install_app` es neutro
   (sin regalo) y una migración al boot pisa el texto viejo con "$5.000".
-- **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay DOS modos
-  (`VIP.home.setHomeMode`, `localStorage vip_home_mode`). **mini (default):** se entra al CHAT estilo
+- **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay TRES modos
+  (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **play (entrada, #267):** `#entryView` con
+  tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
+  Carga automática (→ full). **mini:** se entra al CHAT estilo
   WhatsApp (`#supportPanel` inline con cabecera `#waHead`, botón CBU abajo) y el home completo
   (`#homeFull`: carga automática `js/autoload.js`, plataformas, VIP, reembolsos…) queda plegado arriba
   bajo el cartel "⭐ SERVICIO COMPLETO · Ver todo" (texto `/sys_home_banner`, `{pct}` =

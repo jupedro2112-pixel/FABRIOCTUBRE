@@ -869,6 +869,12 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   `/sys_home_banner` con `{pct}` = `Config['autoLoadBonusPct']` (texto de marketing, NO acredita nada),
   servido en `GET /api/platforms` → `homeBanner:{pct,text}` y cacheado en `localStorage vip_home_banner`.
   En **full** el chat vuelve a ser overlay/burbuja; `closeSupport()` en mini = pasar a full.
+  **#267:** tercer modo **play** = la ENTRADA (siempre al abrir la app; el modo elegido vive en
+  `sessionStorage vip_home_mode`): `body.home-play` muestra `#entryView` (tabs de plataforma
+  `renderEntryTabs` + iframe público `#entryFrame` de la plataforma elegida, fallback Girox/Ganamos fijos
+  hasta que responda `/api/platforms`, "Abrir la plataforma ›" a los 15 s si no embebe) y abajo
+  "Carga manual" (→ mini) / "Carga automática" (→ full). Al salir el iframe se vacía. `openSupport()`
+  en play = mini. El cartel tiene el chip "🎰 Plataformas" para volver.
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo
