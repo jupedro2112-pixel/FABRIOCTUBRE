@@ -175,8 +175,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (sin regalo) y una migración al boot pisa el texto viejo con "$5.000".
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
-  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; se elige en el selector al entrar
-  (`localStorage vip_menu_pref` = 'easy'|'full', cambiable en Perfil) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
+  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; se elige en el selector que aparece en CADA arranque
+  y tras 10 min en segundo plano (#367; `localStorage vip_menu_pref` = 'easy'|'full' sólo fija dónde arranca; cambiable en Perfil) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
   tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
   Carga automática (→ full). **mini:** se entra al CHAT estilo
   WhatsApp (`#supportPanel` inline con cabecera `#waHead`, botón CBU abajo) y el home completo

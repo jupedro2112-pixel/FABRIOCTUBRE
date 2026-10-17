@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 367. ☰ El selector fácil / completo pregunta en CADA arranque y tras 10 min afuera — SW v255
+**Pedido (owner):** "adentro del fácil que haya una forma de pasar al completo; una vez que reiniciás la app o salís
+y volvés a los 10 minutos que vuelva a preguntar". `maybeShowMenuChooser` (en `showChatScreen`) abre `#menuChooser`
+SIEMPRE al entrar (la preferencia guardada sólo decide dónde arranca detrás del selector), y `_menuReaskInit`
+(visibilitychange) lo vuelve a abrir si la app estuvo ≥ 10 min en segundo plano (`MENU_REASK_MS`) con sesión
+iniciada. Dentro del fácil, "🧭 Pasar al menú completo ›" es ahora un botón visible (`.ez-switch`), no un link finito.
+
 ### 366. ☰ MENÚ FÁCIL / MENÚ COMPLETO: selector al entrar + pantalla de 6 accesos grandes — SW v254
 **Pedido (owner):** "trabajemos para la gente que quiere un menú fácil y se pierde con tantos botones: al entrar
 elige menú fácil o completo; el completo es el que tenemos; el fácil abre desde Inicio con reembolso diario /

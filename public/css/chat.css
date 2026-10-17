@@ -2635,8 +2635,13 @@ body.home-easy .easy-view { display: flex; }
 .ez-chat-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .ez-chat-txt b { font: 900 13px var(--dx-font); color: #25d366; }
 .ez-chat-txt small { font: 600 10px var(--dx-font); color: #c9d1e3; }
-.ez-switch, .ev-easy-link { flex: 0 0 auto; align-self: center; border: 0; background: transparent; color: #8f99b0; font: 700 10.5px var(--dx-font); padding: 4px 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.ez-switch b, .ev-easy-link b { color: #c9d1e3; text-decoration: underline; text-underline-offset: 2px; }
+.ev-easy-link { flex: 0 0 auto; align-self: center; border: 0; background: transparent; color: #8f99b0; font: 700 10.5px var(--dx-font); padding: 4px 8px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ev-easy-link b { color: #c9d1e3; text-decoration: underline; text-underline-offset: 2px; }
+/* #367: dentro del fácil, el paso al completo es un botón visible (no un link finito) */
+.ez-switch { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: 5px; row-gap: 1px; padding: 9px 12px; border-radius: 14px; border: 1px solid rgba(0,229,255,.45); background: rgba(0,229,255,.07); color: #f4f6fb; font: 700 12px var(--dx-font); cursor: pointer; -webkit-tap-highlight-color: transparent; text-align: center; }
+.ez-switch:active { transform: scale(.985); }
+.ez-switch b { color: #00e5ff; font-weight: 900; }
+.ez-switch small { flex: 1 0 100%; font: 600 9.5px var(--dx-font); color: #aeb7cc; }
 .ev-easy-link { font-size: 9.5px; padding: 2px 6px; margin-top: -2px; }
 @media (max-height: 640px) {
   .ez-main { min-height: 60px; padding: 9px 12px; }

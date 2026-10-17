@@ -138,11 +138,23 @@
         const m = _el('menuChooser'); if (!m) return;
         m.classList.remove('open'); document.body.classList.remove('mc-open');
     }
-    // Al entrar logueado (ui.showChatScreen): si nunca eligió, se le pregunta; si eligió fácil, arranca ahí.
+    // #367 (owner): se pregunta SIEMPRE al entrar (cada arranque de la app) y de nuevo si la persona se fue y
+    // volvió después de 10 minutos en segundo plano. La preferencia guardada sólo define dónde arranca mientras tanto.
+    const MENU_REASK_MS = 10 * 60 * 1000;
+    let _hiddenAt = 0;
     function maybeShowMenuChooser() {
         const pref = getMenuPref();
-        if (!pref) { setTimeout(openMenuChooser, 350); return; }
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
+        setTimeout(openMenuChooser, 350);
+    }
+    function _menuReaskInit() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) { _hiddenAt = Date.now(); return; }
+            const away = _hiddenAt ? Date.now() - _hiddenAt : 0;
+            _hiddenAt = 0;
+            const logged = VIP.state && VIP.state.currentToken && !(_el('chatScreen') || {}).classList?.contains('hidden');
+            if (logged && away >= MENU_REASK_MS) openMenuChooser();
+        });
     }
     function easyLoad() { setHomeMode('full'); }
     function easyPlay() { openPlatform(_entryPlat || 'girox'); }
@@ -1538,6 +1550,7 @@
         renderHowItWorks();
         try { _applyTesterClass(); } catch (_) {} // #296: botones de test sólo para el usuario de prueba
         try { _avatarInit(); } catch (_) {} // #304
+        try { _menuReaskInit(); } catch (_) {} // #367: volver a preguntar fácil / completo tras 10 min afuera
         try { _paintPlatformTexts(); } catch (_) {} // #296: textos según cuántas plataformas hay
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
