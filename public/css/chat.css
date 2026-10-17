@@ -2310,3 +2310,44 @@ body.home-mini .plat-link-manual { display: flex; }
 .ev-link-btn:active { transform: scale(.97); }
 .ev-link-btn b { font: 900 10.5px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; color: var(--dx-cyan); white-space: nowrap; }
 .ev-link-btn span { font: 700 10.5px var(--dx-font); color: #e1e6f0; white-space: nowrap; }
+
+/* ══ #333 (owner, Samsung A56): la carga automática OCUPA toda la pantalla en cualquier teléfono. Antes el bloque
+   medía lo justo y en pantallas altas quedaba un vacío abajo; ahora crece y reparte el espacio entre las tarjetas,
+   y en pantallas altas sube un poco el tamaño de letra/botones. En pantallas bajas sigue la compactación de siempre. ══ */
+body.home-full #homeFull { flex: 1 1 auto; max-height: none; }
+body.home-full #homePanel { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; max-height: none !important; overflow: visible; }
+body.home-full .home-dash { flex: 1 1 auto; justify-content: space-evenly; }
+@media (min-height: 780px) {
+  body.home-full .home-dash { gap: 8px; }
+  body.home-full .home-card { padding: 11px 12px !important; }
+  body.home-full .home-card-title { font-size: 12.5px !important; }
+  body.home-full .balance-strip { padding: 6px 10px 6px 14px !important; }
+  body.home-full .balance-strip .dash-balance-amount { font-size: 17px !important; }
+  body.home-full .fire-home-card .fh-text b { font-size: 12.5px; }
+  body.home-full .fire-home-card .fh-text small { font-size: 10px; }
+  body.home-full .fire-home-card .fh-streak b { font-size: 17px; }
+  body.home-full #platformsCard .plat-play-btn { padding: 9px 8px 10px !important; }
+  body.home-full #platformsCard .plat-logo { width: 26px !important; height: 26px !important; }
+  body.home-full #platformsCard .plat-play-name { font-size: 13px !important; }
+  body.home-full #platformsCard .plat-play-sub { font-size: 9px !important; }
+  body.home-full #autoLoadCard .al-step-c { padding: 9px 10px 10px; gap: 5px; }
+  body.home-full #autoLoadCard .al-step-h .al-step-t { font-size: 14px; }
+  body.home-full #autoLoadCard .al-cbu .mono { font-size: 15.5px; }
+  body.home-full #autoLoadCard .al-copy { padding: 6px 11px; font-size: 11px; }
+  body.home-full #autoLoadCard .al-meta { font-size: 10.5px; }
+  body.home-full #autoLoadCard .al-step-sub { font-size: 12px; max-width: 44ch; }
+  body.home-full .al-minline { font-size: 12px; }
+  body.home-full .home-actions-row { margin: 6px 8px; gap: 8px; }
+  body.home-full .load-row-btn, body.home-full .home-actions-row .withdraw-row-btn { min-height: 50px; padding: 8px 12px !important; }
+  body.home-full .lr-text b { font-size: 14px; }
+  body.home-full .lr-text small { font-size: 10px; }
+  body.home-full .withdraw-row-btn .lr-text b { font-size: 13.5px; }
+  body.home-full .plat-link-btn { padding: 11px 12px; }
+  body.home-full .plat-link-btn .plb-t { font-size: 12px; }
+}
+@media (min-height: 900px) {
+  body.home-full .home-card { padding: 13px 14px !important; }
+  body.home-full #autoLoadCard .al-cbu .mono { font-size: 17px; }
+  body.home-full #autoLoadCard .al-step-h .al-step-t { font-size: 15px; }
+  body.home-full .lr-text b { font-size: 15px; }
+}

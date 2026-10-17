@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 333. 📱 Carga automática a pantalla completa en todos los teléfonos — SW v219
+**Pedido (owner, captura Samsung A56):** "se ve así (vacío abajo); ajustalo en todos los modelos, maximizar o ajustar
+si es más grande o más chico". `#homeFull` / `#homePanel` / `.home-dash` crecen (`flex:1`) y reparten el espacio
+entre las tarjetas (`space-evenly`); en pantallas de ≥780 px de alto suben letras, logos y botones (y un poco más en
+≥900 px). En pantallas bajas sigue la compactación de responsive.css (≤760/≤640).
+
 ### 332. 🧯 Fotos del Inicio sin caché viejo (?b=versión) — SW v218
 **Contexto:** la captura del owner seguía mostrando una foto de la primera tanda con el mismo nombre de archivo: el
 navegador la tenía en su caché HTTP. Ahora `_slideUrl` agrega `?b=<versión de #appBuildTag>` a cada foto, así cada
