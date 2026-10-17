@@ -454,6 +454,8 @@ VIP.ui = (function () {
             document.getElementById('referralCurrentPeriod').textContent = me.currentPeriodLabel || me.currentPeriod || '—';
 
             VIP.state.referralData = me;
+            // #351: % de comisión real (panel) en todos los textos de la app.
+            try { if (me.referralPct != null) document.querySelectorAll('.ref-pct').forEach((el) => { el.textContent = me.referralPct; }); } catch (_) {}
 
             try {
                 const sumRes = await fetch(`${VIP.config.API_URL}/api/referrals/summary`, {

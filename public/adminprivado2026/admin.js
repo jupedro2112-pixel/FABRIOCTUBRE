@@ -8323,7 +8323,33 @@ function fmtPeriod(pk) {
 // Cached referrers for client-side quick filters
 let cachedReferrers = [];
 
+// #351: % de comisión del referidor (editable; la app lo lee en /api/referrals/me).
+async function loadReferralPct() {
+    const inp = document.getElementById('referralPctInput');
+    if (!inp) return;
+    try {
+        const r = await authFetch('/api/referrals/admin/rate');
+        if (!r.ok) return;
+        const j = await r.json();
+        if (j.data && j.data.pct != null) inp.value = j.data.pct;
+    } catch (_) {}
+}
+async function saveReferralPct() {
+    const inp = document.getElementById('referralPctInput');
+    const msg = document.getElementById('referralPctMsg');
+    const pct = Number(inp && inp.value);
+    if (!Number.isFinite(pct) || pct <= 0 || pct > 100) { showToast('Poné un % mayor a 0 y hasta 100', 'error'); return; }
+    try {
+        const r = await authFetch('/api/referrals/admin/rate', { method: 'POST', body: JSON.stringify({ pct }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.message || j.error || 'No se pudo guardar', 'error'); return; }
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Guardado: ' + j.data.pct + '% (rige para los cálculos nuevos y la app lo muestra ya)'; }
+        showToast('% de referidos actualizado', 'success');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+
 async function loadAdminReferralSummary() {
+    loadReferralPct();
     const container = document.getElementById('referralTopList');
     const summaryContainer = document.getElementById('referralGlobalSummary');
     if (!container) return;

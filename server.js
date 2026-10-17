@@ -2873,6 +2873,9 @@ async function _loadGiroxCredentials() {
 }
 setTimeout(() => { _loadGiroxCredentials(); }, 6 * 1000);
 setInterval(() => { _loadGiroxCredentials(); }, 60 * 1000);
+// #351: % de comisión de referidos desde el panel (Config['referralCommissionPct']); mismo ritmo.
+setTimeout(() => { require('./src/utils/referralRate').refreshFromConfig().catch(() => {}); }, 7 * 1000);
+setInterval(() => { require('./src/utils/referralRate').refreshFromConfig().catch(() => {}); }, 60 * 1000);
 function _hgcashWebhookSecrets() {
   // #216 (owner 2026-10-13, réplica de PAUTANUEVAsantino #323): si hay secreto en el PANEL se
   // acepta SOLO ese — el de SSM deja de valer, así los avisos de la cuenta hgcash VIEJA

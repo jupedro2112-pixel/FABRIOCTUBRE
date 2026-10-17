@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 351. 🤝 Referidos: 5% (no 8) y editable en el panel — SW v237, admin-sw v75
+**Pedido (owner):** "en referidos es un 5%, ajustalo; no un 8". El 8% estaba fijo en `referralRate.js` (default) y en 3
+textos del HTML. Ahora: default **5%**, override desde el panel (Referidos → "% de comisión del referidor",
+`Config['referralCommissionPct']`, rutas `GET/POST /api/referrals/admin/rate`; cache por proceso refrescada al
+arrancar y cada 60 s; env `GIROX_REFERRAL_COMMISSION_PCT` queda como fallback), y la app pinta el % real en todos
+los textos (`referralPct` en `/api/referrals/me`, spans `.ref-pct`). Los overrides por usuario siguen mandando.
+Rige para los cálculos NUEVOS (los períodos ya calculados no se recalculan solos).
+
 ### 350. ♠️ Logo de Ganamos + promedio de reseñas 4,8 — SW v236
 **Pedidos (owner):** "logo de Ganamos para ponerlo donde está Ganamos" (captura: pica violeta) y "ajustá a 4.8
 estrellas para que se vea real" (el Inicio mostraba 5.0 con 202 reseñas).

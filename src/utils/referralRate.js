@@ -21,8 +21,28 @@
  * usuario con `referralRateOverride` (en DECIMAL: 0.08 = 8%) para acuerdos puntuales.
  */
 
-/** Tasa por defecto, en decimal. 0.08 = 8% del netwin del referido. */
-const DEFAULT_REFERRAL_RATE = 0.08;
+/** Tasa por defecto, en decimal. 0.05 = 5% del netwin del referido (#351, owner 2026-10-17: "es un 5%, no un 8"). */
+const DEFAULT_REFERRAL_RATE = 0.05;
+
+// #351: % editable desde el panel (Referidos → "% de comisión"), guardado en Config['referralCommissionPct'].
+// Cache por proceso: server.js lo refresca al arrancar y cada 60 s (multi-instancia) y el panel al guardar.
+const CONFIG_KEY = 'referralCommissionPct';
+let _cfgPct = null;
+function setConfiguredPct(pct) {
+  const n = Number(pct);
+  _cfgPct = (Number.isFinite(n) && n > 0 && n <= 100) ? Math.round(n * 10) / 10 : null;
+  return _cfgPct;
+}
+async function refreshFromConfig() {
+  try {
+    const Config = require('../models/Config');
+    const v = await Config.get(CONFIG_KEY, null);
+    setConfiguredPct(v);
+  } catch (_) { /* se mantiene lo último */ }
+  return _cfgPct;
+}
+/** % vigente (entero/1 decimal) para mostrar en la app y el panel. */
+function getConfiguredPct() { return Math.round(getConfiguredRate() * 1000) / 10; }
 
 /**
  * Tasa configurada por entorno, en decimal.
@@ -32,6 +52,7 @@ const DEFAULT_REFERRAL_RATE = 0.08;
  * patrón que `hgcashService.getToken()`).
  */
 function getConfiguredRate() {
+  if (_cfgPct != null) return _cfgPct / 100; // #351: panel > env > default
   const pct = Number(process.env.GIROX_REFERRAL_COMMISSION_PCT);
   // Sanea basura (NaN, negativos, >100) cayendo al default acordado: un porcentaje
   // inválido nunca debe traducirse en pagar de más ni en no pagar nada.
@@ -57,6 +78,10 @@ function getReferralRateForUser(user) {
 
 module.exports = {
   DEFAULT_REFERRAL_RATE,
+  CONFIG_KEY,
+  setConfiguredPct,
+  refreshFromConfig,
+  getConfiguredPct,
   getConfiguredRate,
   getReferralRateForUser
 };

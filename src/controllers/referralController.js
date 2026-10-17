@@ -9,6 +9,8 @@ const referralCalculationService = require('../services/referralCalculationServi
 const referralPayoutService = require('../services/referralPayoutService');
 const { getCurrentPeriodKey, getPreviousPeriodKey, getPeriodLabel, getPeriodRange, getNextPeriodLabel } = require('../utils/periodKey');
 const { generateReferralCode } = require('../utils/referralCode');
+const referralRate = require('../utils/referralRate'); // #351
+const Config = require('../models/Config');
 const logger = require('../utils/logger');
 
 // Validate period key format (YYYY-MM)
@@ -121,9 +123,28 @@ const getMyReferralInfo = asyncHandler(async (req, res) => {
       currentPeriod,
       currentPeriodLabel: getPeriodLabel(currentPeriod),
       historicalTotalCredited: historicalTotal,
+      referralPct: referralRate.getConfiguredPct(), // #351: la app lo pinta (nada de % fijos en el HTML)
       note: 'Las ganancias por referidos se acreditan mensualmente en fichas'
     }
   });
+});
+
+/**
+ * GET /api/referrals/admin/rate — % de comisión vigente (#351). POST idem para guardarlo
+ * (Config['referralCommissionPct']); los overrides por usuario (referralRateOverride) siguen mandando.
+ */
+const adminGetRate = asyncHandler(async (req, res) => {
+  await referralRate.refreshFromConfig();
+  res.json({ status: 'success', data: { pct: referralRate.getConfiguredPct(), defaultPct: referralRate.DEFAULT_REFERRAL_RATE * 100 } });
+});
+const adminSetRate = asyncHandler(async (req, res) => {
+  const n = Number(req.body && req.body.pct);
+  if (!Number.isFinite(n) || n <= 0 || n > 100) throw new AppError('El % de comisión tiene que ser un número mayor a 0 y hasta 100.', 400);
+  const pct = Math.round(n * 10) / 10;
+  await Config.set(referralRate.CONFIG_KEY, pct, req.user.username);
+  referralRate.setConfiguredPct(pct);
+  logger.info(`[Referrals] % de comisión → ${pct}% (por ${req.user.username})`);
+  res.json({ status: 'success', data: { pct } });
 });
 
 /**
@@ -938,6 +959,8 @@ const claimMyCommission = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  adminGetRate,
+  adminSetRate,
   getMyClaimable,
   claimMyCommission,
   getMyReferralInfo,

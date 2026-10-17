@@ -2426,6 +2426,16 @@ document.addEventListener('change', function (ev) {
                     <!-- ── CÁLCULO Y PAGO MENSUAL ── -->
                     <div style="background:var(--bg-card,#1a1a2e);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:18px;">
                         <h3 style="margin-bottom:14px;color:#d4af37;font-size:15px;">⚙️ Cálculo y Pago Mensual</h3>
+                        <!-- #351: % de comisión del referidor (Config referralCommissionPct). La app lo muestra en todos sus textos. -->
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;padding:10px 14px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:8px;">
+                            <div>
+                                <label style="display:block;font-size:11px;color:#888;margin-bottom:4px;">🤝 % de comisión del referidor (sobre lo que pierde el referido en el mes)</label>
+                                <input type="number" id="referralPctInput" min="0.1" max="100" step="0.1" placeholder="5"
+                                    style="background:#0d0d1a;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:8px 12px;border-radius:6px;width:110px;font-size:13px;">
+                            </div>
+                            <button class="btn-primary" onclick="saveReferralPct()" style="font-size:12px;">💾 Guardar %</button>
+                            <span id="referralPctMsg" style="font-size:12px;color:#aaa;"></span>
+                        </div>
                         <div style="background:rgba(247,147,30,0.05);border:1px solid rgba(247,147,30,0.15);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#b0b0b0;line-height:1.6;">
                             <strong style="color:#f7931e;">Flujo recomendado:</strong>
                             1) Ingresá el período → 2) <em>Preview</em> para ver estimación sin guardar →

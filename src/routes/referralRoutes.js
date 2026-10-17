@@ -46,6 +46,10 @@ router.get('/admin/users/:userId', authenticate, authorize('admin'), referralCon
 // POST /api/referrals/admin/calculate - ejecutar cálculo mensual
 router.post('/admin/calculate', authenticate, authorize('admin'), referralController.adminCalculate);
 
+// GET/POST /api/referrals/admin/rate - % de comisión del referidor (#351, editable en el panel)
+router.get('/admin/rate', authenticate, authorize('admin'), referralController.adminGetRate);
+router.post('/admin/rate', authenticate, authorize('admin'), referralController.adminSetRate);
+
 // POST /api/referrals/admin/preview - preview sin guardar
 router.post('/admin/preview', authenticate, authorize('admin'), referralController.adminPreview);
 
