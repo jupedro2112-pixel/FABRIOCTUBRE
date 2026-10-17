@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-17
 
+### 316. 🧹 Sin la línea "Vista ilustrativa" en el Inicio — SW v202
+**Pedido (owner).** Se quitó `.ev-note-line` (la leyenda ya está en el carrusel y el botón grande lleva a cargar).
+
 ### 315. 🔴 Botón grande debajo de las fotos: "PARA CARGAR AHORA MISMO · APRETÁ AQUÍ" — SW v201
 **Pedido (owner).** `.ev-cta` (rojo con borde dorado, pulso suave) debajo del carrusel del Inicio → `setHomeMode('full')`
 (carga automática).
