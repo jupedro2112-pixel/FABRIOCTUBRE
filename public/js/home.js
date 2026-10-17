@@ -30,6 +30,84 @@
     function _el(id) { return document.getElementById(id); }
     function _esc(s) { const d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
 
+    // ---------------- #266: CHAT PRINCIPAL + MENÚ DESLIZANTE ----------------
+    // (owner 2026-10-17: "un menú deslizante para arriba ocultando todo y dejar el chat como principal;
+    //  si quiere el % o ver más de la app que pueda expandir todo lo que ya tenemos").
+    //   mini (default) → body.home-mini: #homeFull plegado (max-height 0), #supportPanel INLINE con la
+    //                    cabecera estilo WhatsApp (#waHead) y el botón CBU en la barra de escribir.
+    //   full            → el home de siempre; el chat vuelve a ser overlay (burbuja).
+    // Se recuerda por dispositivo (localStorage vip_home_mode). El cartel viene de /api/platforms.
+    const HOME_MODE_KEY = 'vip_home_mode';
+    const HOME_BANNER_KEY = 'vip_home_banner';
+    let _homeMode = 'mini';
+    let _headObs = null;
+
+    function getHomeMode() { return _homeMode; }
+    function setHomeMode(mode, opts) {
+        mode = mode === 'full' ? 'full' : 'mini';
+        _homeMode = mode;
+        const p = _el('supportPanel');
+        const cta = _el('serviceBannerCta');
+        const bn = _el('serviceBanner');
+        document.body.classList.toggle('home-mini', mode === 'mini');
+        document.body.classList.remove('support-open');
+        if (mode === 'mini') {
+            if (p) p.classList.remove('hidden');
+            _open = true; _unread = 0; _paintBadge();
+            if (cta) cta.textContent = 'Ver todo ▾';
+            if (bn) { bn.setAttribute('aria-expanded', 'false'); bn.title = 'Ver la app completa'; }
+            try { VIP.chat.markReceivedAsRead(); } catch (_) {}
+            setTimeout(() => { try { VIP.chat.scrollToBottom(); } catch (_) {} }, 80);
+        } else {
+            if (p) p.classList.add('hidden');
+            _open = false;
+            try { const bb = _el('supportBubble'); if (bb) bb.style.visibility = ''; } catch (_) {}
+            if (cta) cta.textContent = '▴ Ocultar · ir al chat';
+            if (bn) { bn.setAttribute('aria-expanded', 'true'); bn.title = 'Volver al chat'; }
+            try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
+        }
+        if (!opts || opts.persist !== false) { try { localStorage.setItem(HOME_MODE_KEY, mode); } catch (_) {} }
+    }
+    function toggleHomeMode() { setHomeMode(_homeMode === 'mini' ? 'full' : 'mini'); }
+    function _initHomeMode() {
+        let m = 'mini';
+        try { m = localStorage.getItem(HOME_MODE_KEY) === 'full' ? 'full' : 'mini'; } catch (_) {}
+        setHomeMode(m, { persist: false });
+        try { const c = localStorage.getItem(HOME_BANNER_KEY); if (c) _paintHomeBanner(JSON.parse(c)); } catch (_) {}
+        _mirrorHeadBits();
+        _watchHeadBits();
+    }
+    // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
+    // COMANDOS → sólo el título. El "N%" se resalta en verde.
+    function _paintHomeBanner(hb) {
+        const msg = _el('serviceBannerMsg');
+        if (!msg || !hb || typeof hb !== 'object') return;
+        if (hb.text === null || hb.text === '') { msg.style.display = 'none'; return; }
+        msg.innerHTML = _esc(hb.text).replace(/(\d+(?:[.,]\d+)?\s?%)/g, '<em>$1</em>');
+        msg.style.display = '';
+    }
+    // La cabecera WhatsApp copia lo que ya pintan otros módulos: ícono ☀️/🌙 (app.js en #themeToggleBtn),
+    // racha del fueguito (#fireStreak) y logo del chat (#chatTopbarAvatar, lo cambia chat.js por config).
+    function _mirrorHeadBits() {
+        try { const t = _el('themeToggleBtn'), w = _el('waThemeBtn'); if (t && w && t.textContent) w.textContent = t.textContent; } catch (_) {}
+        try { const src = _el('fireStreak'), dst = _el('waFireStreak'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } } catch (_) {}
+        try { const av = _el('chatTopbarAvatar'), wa = _el('waHeadAvatar'); const u = av && av.getAttribute('src'); if (u && wa && wa.getAttribute('src') !== u) wa.src = u; } catch (_) {}
+    }
+    function _watchHeadBits() {
+        if (_headObs) return;
+        try {
+            _headObs = new MutationObserver(() => _mirrorHeadBits());
+            ['fireStreak', 'themeToggleBtn', 'chatTopbarAvatar'].forEach((id) => { const n = _el(id); if (n) _headObs.observe(n, { childList: true, characterData: true, subtree: true, attributes: true }); });
+        } catch (_) { _headObs = true; setInterval(_mirrorHeadBits, 2000); }
+    }
+    function _paintWaHeadName() {
+        try {
+            const n = _el('waHeadName'); if (!n || !_platforms || !Array.isArray(_platforms.platforms)) return;
+            const d = _platforms.platforms.find((p) => p.id === _platforms.defaultPlatform) || _platforms.platforms[0];
+            if (d && d.name) n.textContent = 'Cargas ' + d.name;
+        } catch (_) {}
+    }
+
     // ---------------- SOPORTE (chat) ----------------
     function openSupport() {
         const p = _el('supportPanel');
@@ -45,6 +123,8 @@
         setTimeout(() => { try { VIP.chat.scrollToBottom(); } catch (_) {} }, 120);
     }
     function closeSupport() {
+        // #266: con el home plegado el chat ES la pantalla → "cerrar" = desplegar la app completa.
+        if (_homeMode === 'mini') { setHomeMode('full'); return; }
         const p = _el('supportPanel');
         if (!p) return;
         p.classList.add('hidden');
@@ -709,6 +789,8 @@
     // ---------------- INIT ----------------
     let _inited = false;
     async function init() {
+        // #266: primero el modo (chat principal / app completa) para que el primer paint ya sea el correcto.
+        try { _initHomeMode(); } catch (_) {}
         // El panel viejo colapsable ("Ocultar menú") ya no aplica: el home es la carga.
         try {
             const hp = _el('homePanel'); if (hp) { hp.classList.remove('collapsed'); hp.style.maxHeight = 'none'; }
@@ -722,6 +804,9 @@
         try { paintInstallButtons(); setTimeout(paintInstallButtons, 2500); } catch (_) {}
         await loadPlatforms(true);
         renderPlatforms();
+        // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
+        try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
+        _paintWaHeadName();
         renderHowItWorks();
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
@@ -762,7 +847,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -612,6 +612,15 @@ document.addEventListener('change', function (ev) {
                                 </button>
                                 <span id="installBonusPctMsg" style="font-size:12px;color:#aaa;"></span>
                             </div>
+                            <!-- #266: % del cartel "SERVICIO COMPLETO" del chat principal de la app (texto, no acredita). -->
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                                <label style="margin:0;" title="Aparece en el cartel de arriba del chat principal de la app: 'Si usás la carga automática tenés un X% en todas tus cargas'. Texto editable en el comando /sys_home_banner (variable {pct}).">⭐ % del cartel "Servicio completo" (chat principal de la app):</label>
+                                <input type="number" id="autoLoadPctInput" min="0" max="500" step="1" style="width:90px;">
+                                <button class="btn-primary btn-small" id="autoLoadPctSaveBtn" onclick="saveInstallBonusPct()">
+                                    <span class="icon icon-save"></span> Guardar
+                                </button>
+                                <span style="font-size:11.5px;color:#888;">Sólo texto: el bono real lo da lo que ya tengas configurado (lotes, códigos, ruleta…).</span>
+                            </div>
                             <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">
                                 <b>Tope de TODOS los bonos automáticos</b> (app, código de bienvenida, ruleta diaria, lotes): el % del bono
                                 aplica hasta el monto de carga del tope; sobre lo que cargue de más va el "% del resto". Se aplican

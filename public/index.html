@@ -922,6 +922,20 @@
                 }
                 #homePanelToggle .hpt-chevron { font-size:9px; }
             </style>
+            <!-- ===== #266 (owner 2026-10-17): CHAT PRINCIPAL + MENÚ DESLIZANTE HACIA ARRIBA =====
+                 Al entrar se ve el CHAT (estilo WhatsApp, con el agente) y arriba este cartel.
+                 "Ver todo" despliega #homeFull (TODO el home de siempre: saldo, reembolsos, acceso,
+                 VIP, plataformas, CBU, acciones, barra inferior) y el chat vuelve a ser la burbuja.
+                 Texto editable en COMANDOS (/sys_home_banner, {pct} = Config autoLoadBonusPct);
+                 llega por GET /api/platforms (homeBanner) y se cachea en localStorage. -->
+            <div id="serviceBanner" class="service-banner" role="button" tabindex="0" aria-expanded="false" onclick="VIP.home.toggleHomeMode()" title="Ver la app completa">
+                <div class="svb-text">
+                    <b>⭐ Servicio completo</b>
+                    <span class="svb-msg" id="serviceBannerMsg">Carga automática con bono extra en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.</span>
+                </div>
+                <span class="svb-cta" id="serviceBannerCta">Ver todo ▾</span>
+            </div>
+            <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
             <div class="balance-strip">
                 <span class="bs-balance"><span class="dash-balance-label">Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
@@ -1074,6 +1088,7 @@
                     <span class="hb-text"><b>¿Cómo funciona?</b><small>Reembolsos · plataformas · referidos</small></span>
                 </button>
             </div>
+            </div><!-- /#homeFull (#266) -->
 
             <style>
                 @keyframes winners-pulse {
@@ -1146,6 +1161,18 @@
                  barra verde de arriba del home (VIP.home.openSupport). Los ids NO cambian:
                  chatMessages, typingIndicator, messageInput, attachBtn, fileInput, sendBtn, cbuChatBtn. ===== -->
             <div id="supportPanel" class="support-panel hidden">
+                <!-- #266: cabecera estilo WhatsApp del CHAT PRINCIPAL (foto del owner): avatar, "Cargas …",
+                     "en línea", modo claro/oscuro y fueguito. Sólo se ve con el home plegado (body.home-mini);
+                     con el home desplegado el chat es la burbuja y usa .support-head de abajo. -->
+                <div class="chat-topbar wa-head" id="waHead">
+                    <img class="chat-topbar-avatar" id="waHeadAvatar" src="/images/soporte-1girox.png" alt="" width="40" height="40">
+                    <div class="chat-topbar-info" onclick="VIP.home.setHomeMode('full')" title="Ver la app completa">
+                        <span class="chat-topbar-name" id="waHeadName">Cargas 1Girox</span>
+                        <span class="chat-topbar-status"><i class="chat-topbar-dot"></i> en línea</span>
+                    </div>
+                    <button type="button" class="wa-head-btn" id="waThemeBtn" onclick="var b=document.getElementById('themeToggleBtn'); if(b) b.click(); VIP.home.syncWaHead();" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">☀️</button>
+                    <button type="button" class="wa-head-btn wa-head-fire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito — racha diaria" aria-label="Fueguito">🔥<span id="waFireStreak" class="fire-streak-badge">0</span></button>
+                </div>
                 <div class="support-head">
                     <button type="button" class="support-back" onclick="VIP.home.closeSupport()">‹ Volver</button>
                     <div class="support-head-title">Soporte en vivo<span class="support-head-sub">Cómo funciona · referidos · consultas</span></div>

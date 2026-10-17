@@ -5393,7 +5393,10 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       platforms: list.map((p) => { const ad = platforms.getAdapter(p.id); const play = (ad && typeof ad.getPlayUrl === 'function' && ad.getPlayUrl()) || p.externalUrl || null;
         return { id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, playUrl: play, logoUrl: p.logoUrl || '', isDefault: p.isDefault }; }),
       askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform, preferredPlatform,
-      choiceEnabled: await platforms.isChoiceEnabled()
+      choiceEnabled: await platforms.isChoiceEnabled(),
+      // #266: cartel "SERVICIO COMPLETO" del chat principal (texto editable en /sys_home_banner, {pct} de
+      // Config['autoLoadBonusPct']). text === null ⇒ el comando se vació en COMANDOS → la app muestra sólo el título.
+      homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })()
     });
   } catch (e) {
     logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
@@ -6372,7 +6375,7 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
     try { const _pl = await platforms.listEnabled(); if (_pl.length) _plataformasTxt = _pl.map((p) => `${p.emoji} ${p.name}`).join(' o '); } catch (_) {}
     const welcomeContent = await renderSystemCommand(
       '/sys_welcome',
-      `👋 ¡Hola, {username}! Este es tu SOPORTE EN VIVO.\n\nSomos tu sala de juegos: cargás solo, elegís en qué plataforma jugar ({plataformas}) y cobrás reembolsos por lo que perdés.\n\n💳 Para CARGAR: tocá "Cargar" arriba, transferí al CBU que ves ahí, enviá el comprobante y elegí la plataforma donde querés jugar.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá.`,
+      `👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés "Ver todo": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá.`,
       { username, cbu: cbuNumber, escalera: await buildEscaleraText(), plataformas: _plataformasTxt }
     );
 
@@ -11046,8 +11049,12 @@ async function initializeData() {
   try {
     const w = await Command.findOne({ name: '/sys_welcome' }).lean();
     if (w && /SOPORTE EN VIVO: acá te explicamos|Bienvenido a la Sala de Juegos|Beneficios exclusivos/.test(String(w.response || ''))) {
-      await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu SOPORTE EN VIVO.\n\nSomos tu sala de juegos: cargás solo, elegís en qué plataforma jugar ({plataformas}) y cobrás reembolsos por lo que perdés.\n\n💳 Para CARGAR: tocá \"Cargar\" arriba, transferí al CBU que ves ahí, enviá el comprobante y elegí la plataforma donde querés jugar.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
-      console.log('✅ /sys_welcome: resumido (#235)');
+      await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés \"Ver todo\": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
+      console.log('✅ /sys_welcome: resumido (#235/#266)');
+    } else if (w && String(w.response || '') === "👋 ¡Hola, {username}! Este es tu SOPORTE EN VIVO.\n\nSomos tu sala de juegos: cargás solo, elegís en qué plataforma jugar ({plataformas}) y cobrás reembolsos por lo que perdés.\n\n💳 Para CARGAR: tocá \"Cargar\" arriba, transferí al CBU que ves ahí, enviá el comprobante y elegí la plataforma donde querés jugar.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá.") {
+      // #266: el chat volvió a ser la pantalla principal (botón CBU abajo, "Ver todo" arriba).
+      await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés \"Ver todo\": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
+      console.log('✅ /sys_welcome: texto del chat principal (#266)');
     }
     const c = await Command.findOne({ name: '/sys_como_funciona' }).lean();
     if (c && /CÓMO FUNCIONA EL SERVICIO|CÓMO FUNCIONA\?/.test(String(c.response || ''))) {
@@ -11078,6 +11085,14 @@ async function initializeData() {
       description: 'Mensaje automático al realizar un depósito con bonus. Variables disponibles: ${amount}, ${bonus}, ${balance}',
       type: 'message',
       response: '🔒💰 Depósito de ${amount} (incluye ${bonus} de bonificación) acreditado con éxito. ✅ \n💸 Tu nuevo saldo es ${balance} 💸\n\nPuedes verificarlo en: https://1girox.com\n\n🔥 Mañana podes revisar si tenes reembolso para reclamar de forma automatica 🔥'
+    },
+    {
+      // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
+      // completo queda plegado y se abre con "Ver todo"). {pct} = Config['autoLoadBonusPct'].
+      name: '/sys_home_banner',
+      description: 'Cartel "SERVICIO COMPLETO" del chat principal de la app (arriba del chat, con el botón "Ver todo" que despliega la app completa). Variable: {pct} (% de "servicio completo", se edita en Bonos automáticos). Vacío = sólo el título.',
+      type: 'message',
+      response: 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.'
     },
     {
       // MULTI-PLATAFORMA (2026-10-16): pregunta al cliente dónde quiere jugar cuando entra
@@ -11733,12 +11748,24 @@ async function getInstallBonusEnabled() {
   try { const v = await getConfig('installBonusEnabled', null); if (v === true || v === false) return v; } catch (_) {}
   return false;
 }
+// #266 (owner 2026-10-17): % que anuncia el cartel "SERVICIO COMPLETO" del chat principal de la
+// PWA ("si usás la carga automática tenés un {pct}% en todas tus cargas"). Es TEXTO de marketing
+// (no acredita nada solo): Config['autoLoadBonusPct'], editable en COMANDOS → Bonos automáticos.
+const AUTO_LOAD_BONUS_PCT_DEFAULT = 10;
+async function getAutoLoadBonusPct() {
+  try {
+    const n = Number(await getConfig('autoLoadBonusPct', null));
+    if (Number.isFinite(n) && n >= 0 && n <= 500) return Math.round(n);
+  } catch (_) { /* fallback */ }
+  return AUTO_LOAD_BONUS_PCT_DEFAULT;
+}
+const HOME_BANNER_DEFAULT = 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.';
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -11773,7 +11800,15 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('installBonusPct', Math.round(pct), req.user.username);
       logger.info(`[install-bonus] % del bono cambiado a ${Math.round(pct)}% por ${req.user.username}`);
     }
-    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled() });
+    // #266: % del cartel "servicio completo" del chat principal (texto, no acredita).
+    const alRaw = req.body && req.body.autoLoadPct;
+    if (alRaw != null && alRaw !== '') {
+      const al = Number(alRaw);
+      if (!Number.isFinite(al) || al < 0 || al > 500) return res.status(400).json({ error: 'El % de "servicio completo" tiene que ser un número entre 0 y 500.' });
+      await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
+      logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
+    }
+    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

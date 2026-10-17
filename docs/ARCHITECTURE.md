@@ -860,6 +860,15 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   y `VIP.chat.addMessageToChat` (no leídos; una pregunta platform_choice abre el chat solo).
   `#homePanelToggle` quedó oculto. ⚠️ Mover `chatMessages`/`messageInput`/`attachBtn` de lugar
   rompe el cableado de app.js/chat.js: dejarlos dentro de `#supportPanel`.
+  **#266 (2026-10-17) — el CHAT volvió a ser la pantalla de entrada:** `VIP.home.setHomeMode('mini'|'full')`
+  (`localStorage vip_home_mode`, default mini). En **mini** `body.home-mini` pliega `#homeFull` (todo el
+  home de #220–#265, max-height 0) y `#supportPanel` se muestra INLINE (position static, flex 1) con la
+  cabecera WhatsApp `#waHead` (espejo de `#themeToggleBtn`/`#fireStreak`/`#chatTopbarAvatar`) y el botón
+  CBU de la barra de escribir visible; burbuja/círculo de soporte/`.support-head`/`#supportTests` ocultos.
+  Arriba de todo, `#serviceBanner` ("⭐ SERVICIO COMPLETO" + "Ver todo ▾") alterna el modo; su texto es
+  `/sys_home_banner` con `{pct}` = `Config['autoLoadBonusPct']` (texto de marketing, NO acredita nada),
+  servido en `GET /api/platforms` → `homeBanner:{pct,text}` y cacheado en `localStorage vip_home_banner`.
+  En **full** el chat vuelve a ser overlay/burbuja; `closeSupport()` en mini = pasar a full.
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo

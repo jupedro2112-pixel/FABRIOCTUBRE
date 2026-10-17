@@ -4,7 +4,44 @@
 > commit por commit está en `git log --oneline`. Esto captura decisiones, umbrales de
 > negocio y pendientes que NO se ven leyendo el código.
 >
-> **Última actualización: 2026-10-16**
+> **Última actualización: 2026-10-17**
+
+## Sesión 2026-10-17
+
+### 266. 💬 Chat estilo WhatsApp como pantalla principal + menú deslizante "Servicio completo" — SW v159 · admin-sw v60
+**Pedido (owner, 2026-10-17, con foto del chat viejo):** "que la página principal tenga un menú
+deslizante para arriba ocultando todo y dejar el chat como principal; en el menú un cartel: servicio
+completo, si usás la carga automática tenés un 10% en todas tus cargas, si preferís la carga tipo
+WhatsApp seguimos en este chat; que la gente vea algo no tan cargado y si quiere el 10% o ver más de
+la app pueda expandir todo lo que ya tenemos; el chat con el mismo formato y fondo de la foto".
+- **PWA — dos modos** (`public/js/home.js`, `setHomeMode('mini'|'full')`, recordado por dispositivo en
+  `localStorage vip_home_mode`, default **mini**):
+  - **mini:** `body.home-mini` → `#homeFull` (TODO el home de siempre: franja del saldo, reembolsos,
+    acceso, VIP, plataformas, CBU, Cargar/Retirar, Referidos/¿Cómo funciona?) queda plegado arriba
+    (max-height 0, transición) y `#supportPanel` deja de ser overlay: va **inline** ocupando la pantalla,
+    con la cabecera estilo WhatsApp `#waHead` (avatar del chat, "Cargas <plataforma default>",
+    "● en línea", ☀️/🌙 y 🔥 con la racha — espejo de `#themeToggleBtn`/`#fireStreak`/`#chatTopbarAvatar`
+    por MutationObserver) y el **botón CBU** visible en la barra de escribir (flujo WhatsApp: pedir CBU,
+    transferir, mandar el comprobante con la cámara). Burbuja, círculo "Soporte aquí", `.support-head`
+    y pruebas de plataforma ocultos. Fondo = el patrón de garabatos de siempre (`chat-bg-dark.webp`,
+    modo oscuro por default).
+  - **full:** el home completo como estaba hasta #265; el chat vuelve a la burbuja. `closeSupport()`
+    en modo mini = desplegar la app (no hay nada que "cerrar").
+- **Cartel `#serviceBanner`** arriba de todo (rojo marketing): "⭐ SERVICIO COMPLETO — <texto>" + botón
+  "Ver todo ▾" (desplegado: manija de una línea "▴ Ocultar · ir al chat"). El texto es el comando
+  **`/sys_home_banner`** (nuevo, editable en COMANDOS; vacío = sólo el título) con variable `{pct}` =
+  **`Config['autoLoadBonusPct']`** (default 10, editable en COMANDOS → Bonos automáticos → "% del cartel
+  Servicio completo", mismo POST `/api/admin/install-bonus-config`). Llega en `GET /api/platforms`
+  (`homeBanner:{pct,text}`) y se cachea en `localStorage vip_home_banner`. El "N%" se resalta en verde.
+  ⚠️ Es **texto de marketing**: el sistema NO acredita ese % solo — el bono real sigue saliendo de lo
+  configurado (lotes, códigos, ruleta, bono manual). Si el owner quiere un % fijo automático en cada
+  carga hgcash, es un flujo nuevo (decidir).
+- **Bienvenida `/sys_welcome`:** fallback y migración de arranque con el texto del chat principal
+  ("tocá el botón CBU de abajo… con la cámara… arriba tenés Ver todo"); sólo pisa el texto exacto de #235
+  (si el owner lo editó a mano, no se toca).
+- Panel: campo nuevo en Bonos automáticos (`autoLoadPctInput`) — admin-sw v60.
+- Verificado: `node --check` en server.js/home.js/admin.js/SWs, balance HTML de las dos páginas, sin ids
+  duplicados, ids del chat intactos (`chatMessages`, `messageInput`, `attachBtn`, `cbuChatBtn`…).
 
 ## Sesión 2026-10-16
 

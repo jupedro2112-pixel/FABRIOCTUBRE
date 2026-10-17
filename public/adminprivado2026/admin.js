@@ -5731,6 +5731,11 @@ async function loadInstallBonusPct() {
         if (btn) btn.style.display = j.canEdit ? '' : 'none';
         const enChk = document.getElementById('installBonusEnabledChk');
         if (enChk) { enChk.checked = j.enabled === true; enChk.disabled = !j.canEdit; }
+        // #266: % del cartel "servicio completo" del chat principal de la app
+        const alIn = document.getElementById('autoLoadPctInput');
+        if (alIn) { alIn.value = j.autoLoadPct != null ? j.autoLoadPct : 10; alIn.disabled = !j.canEdit; }
+        const alBtn = document.getElementById('autoLoadPctSaveBtn');
+        if (alBtn) alBtn.style.display = j.canEdit ? '' : 'none';
         const estado = j.enabled === true ? 'ACTIVO' : 'APAGADO (la app no muestra el cartel; lo ya reclamado se honra)';
         if (msg) msg.textContent = j.canEdit ? `${estado} · ${j.pct}%` : `${estado} · ${j.pct}% (solo el admin general lo cambia)`;
         // Tope de los bonos automáticos
@@ -5772,9 +5777,13 @@ async function saveInstallBonusPct() {
     if (!Number.isFinite(pct) || pct < 0 || pct > 500) { showToast('El % tiene que ser un número entre 0 y 500', 'error'); return; }
     const enChk = document.getElementById('installBonusEnabledChk');
     const enabled = enChk ? enChk.checked : undefined;
-    if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
+    // #266: % del cartel "servicio completo" (va en el mismo POST)
+    const alIn = document.getElementById('autoLoadPctInput');
+    const autoLoadPct = alIn && alIn.value !== '' ? Number(alIn.value) : undefined;
+    if (autoLoadPct !== undefined && (!Number.isFinite(autoLoadPct) || autoLoadPct < 0 || autoLoadPct > 500)) { showToast('El % de "Servicio completo" tiene que ser un número entre 0 y 500', 'error'); return; }
+    if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%${autoLoadPct !== undefined ? ` y el cartel "Servicio completo" en ${autoLoadPct}%` : ''}?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
     try {
-        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled }) });
+        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct }) });
         const j = await r.json();
         if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         if (msg) msg.textContent = `${j.enabled ? 'ACTIVO' : 'APAGADO'} · ${j.pct}%`;
