@@ -2145,6 +2145,16 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .ev-hero-t b { color: #fff; font-weight: 900; }
 .ev-note-line { font-size: 9.5px; color: #8f98ad; padding: 0 6px; margin: 0; }
 .ev-note-line a { color: #c9d1e3; font-weight: 800; text-decoration: none; }
-.ev-tab.soon { opacity: .55; cursor: not-allowed; }
+.ev-tab.soon { opacity: .8; } /* #300: se puede tocar (abre su página) */
 .ev-tab.soon .ev-soon { margin-left: 4px; font: 900 7.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; color: #06070d; background: #ffd166; border-radius: 4px; padding: 1px 5px; }
 .plat-play-wrap.soon .plat-play-btn { opacity: .5; cursor: not-allowed; filter: saturate(.6); }
+
+/* ══ #299: carga mínima + toques de casino (íconos discretos y patrón de palos muy tenue) ══ */
+.al-min { font: 700 9.5px var(--dx-font); color: var(--dx-money); letter-spacing: .2px; white-space: nowrap; }
+.hc-ico { vertical-align: -2px; color: var(--dx-cyan); opacity: .9; margin-right: 2px; filter: drop-shadow(0 0 4px rgba(0,229,255,.45)); }
+#autoLoadCard .hc-ico { color: var(--dx-money); filter: drop-shadow(0 0 4px rgba(255,209,102,.45)); }
+.ev-hero-k .hc-ico { color: #ffd166; filter: none; vertical-align: -2px; }
+.balance-strip .dash-balance-label .hc-ico { width: 11px; height: 11px; vertical-align: -1px; }
+.chat-screen::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .035;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120' fill='%23ffffff'><path d='M30 14c-3 4-7 6.5-7 10.2 0 2.4 1.8 3.8 3.8 3.8 1.1 0 2.1-.4 2.7-1.1-.2 1.9-1 3.4-2.5 4.6h6c-1.5-1.2-2.3-2.7-2.5-4.6.6.7 1.6 1.1 2.7 1.1 2 0 3.8-1.4 3.8-3.8C37 20.5 33 18 30 14z'/><path d='M90 72c-1.8 0-3.3 1-4 2.4-.7-1.4-2.2-2.4-4-2.4-2.5 0-4.5 2-4.5 4.5 0 4.6 8.5 9.5 8.5 9.5s8.5-4.9 8.5-9.5c0-2.5-2-4.5-4.5-4.5z'/><path d='M30 70l6 8-6 8-6-8z'/><circle cx='86' cy='22' r='4'/><circle cx='94' cy='30' r='4'/><circle cx='78' cy='30' r='4'/><path d='M85 30h2v8h-2z'/></svg>"); background-size: 120px 120px; }
+.chat-screen > * { position: relative; z-index: 1; }

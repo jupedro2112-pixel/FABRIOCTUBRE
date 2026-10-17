@@ -946,7 +946,7 @@
             <div id="entryView" class="entry-view">
                 <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
                 <div class="ev-hero" role="note">
-                    <span class="ev-hero-k">GIROX · LA APP QUE PAGA</span>
+                    <span class="ev-hero-k"><svg class="hc-ico" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 3C9 7 5 9.5 5 13.2 5 15.6 6.8 17 8.8 17c1.1 0 2.1-.4 2.7-1.1-.2 1.9-1 3.4-2.5 4.6h6c-1.5-1.2-2.3-2.7-2.5-4.6.6.7 1.6 1.1 2.7 1.1 2 0 3.8-1.4 3.8-3.8C19 9.5 15 7 12 3z" fill="currentColor"/></svg> GIROX · LA APP QUE PAGA <svg class="hc-ico" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 3C9 7 5 9.5 5 13.2 5 15.6 6.8 17 8.8 17c1.1 0 2.1-.4 2.7-1.1-.2 1.9-1 3.4-2.5 4.6h6c-1.5-1.2-2.3-2.7-2.5-4.6.6.7 1.6 1.1 2.7 1.1 2 0 3.8-1.4 3.8-3.8C19 9.5 15 7 12 3z" fill="currentColor"/></svg></span>
                     <span class="ev-hero-t">La única app que paga <b>todo en el momento</b>, <b>sin tope</b>, las <b>24 hs</b></span>
                 </div>
                 <!-- #269 (owner): "en el inicio, arriba de la página, el reembolso, la ruleta diaria y el sistema
@@ -983,7 +983,7 @@
             <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
             <div class="balance-strip">
-                <span class="bs-balance"><span class="dash-balance-label">Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
+                <span class="bs-balance"><span class="dash-balance-label"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
                 <!-- #262: Instalar app al lado del saldo, con IMPORTANTE en rojo -->
                 <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
                     <span class="bs-install-t"><b>📲 Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
@@ -1080,7 +1080,7 @@
                 <!-- ===== PLATAFORMAS (#220): dónde jugar después de cargar (reemplaza al botón "PÁGINA CASINO AQUÍ").
                      Las dibuja js/home.js desde GET /api/platforms (Girox por SSO; Ganamos por link hasta tener API). ===== -->
                 <div class="home-card" id="platformsCard">
-                    <div class="home-card-title">¿Dónde querés jugar?</div>
+                    <div class="home-card-title"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor"/></svg> <span id="platformsCardTitleTxt">¿Dónde querés jugar?</span></div>
                     <!-- #271 (owner): explicar fija / cartel al cargar; "entrar a verla" sólo desde Inicio. -->
                     <p class="home-card-sub" id="platformsSub">Podés jugar en cualquiera de las dos. Tocá una para dejarla <b>fija</b> (tus cargas van directo ahí) o no elijas ninguna: cuando entre tu carga te aparece un cartel preguntando dónde querés la plata. Para verlas, andá a Inicio.</p>
                     <div class="plat-play-row" id="platformsButtons"></div>
@@ -1088,11 +1088,11 @@
 
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
                 <div class="home-card al-card" id="autoLoadCard">
-                    <div class="home-card-title">Cargá acá <span class="hc-tag">automático</span></div>
+                    <div class="home-card-title"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Cargá acá <span class="hc-tag">automático</span></div>
                     <!-- #282 (owner 2026-10-17): tarjeta CENTRADA y en 2 pasos: 1) transferir, 2) adjuntar la foto
                          con el botón verde "Cargá aquí" de abajo. Mismos ids (autoload.js). -->
                     <div class="al-step al-step-c">
-                        <div class="al-step-h"><span class="al-n">1</span><span class="al-step-t">Transferí a este CBU</span></div>
+                        <div class="al-step-h"><span class="al-n">1</span><span class="al-step-t">Transferí a este CBU <small class="al-min" id="alMinDep">· mínimo $5.000</small></span></div>
                         <div class="al-step-body">
                             <div class="al-cbu"><span id="alCbu" class="mono gold">cargando…</span><button type="button" class="al-copy" onclick="VIP.autoload.copy('alCbu')">Copiar</button></div>
                             <!-- #271 (owner): alias y titular a la vista -->
@@ -1144,7 +1144,7 @@
             <div class="home-actions-row">
                 <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
-                    <span class="lr-text"><b>Adjuntar comprobante aquí</b><small>se acredita solo</small></span>
+                    <span class="lr-text"><b>Adjuntar comprobante aquí</b><small id="loadHereMin">carga mínima $5.000 · se acredita solo</small></span>
                 </button>
                 <button class="withdraw-row-btn" id="withdrawChatBtn" title="Completá tus datos y se retira automáticamente">Retirar premio</button>
             </div>

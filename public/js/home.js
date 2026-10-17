@@ -202,6 +202,13 @@
         const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
         document.body.classList.toggle('is-tester', TESTER_USERNAMES.includes(u));
     }
+    // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
+    function _paintMinDeposit(n) {
+        const v = Math.round(Number(n));
+        const txt = v > 0 ? '$' + v.toLocaleString('es-AR') : '';
+        const a = _el('loadHereMin'); if (a) a.textContent = txt ? ('carga mínima ' + txt + ' · se acredita solo') : 'se acredita solo';
+        const b = _el('alMinDep'); if (b) { b.textContent = txt ? ('· mínimo ' + txt) : ''; b.style.display = txt ? '' : 'none'; }
+    }
     // #296: con UNA sola plataforma habilitada (Ganamos apagada hasta tener la API) los textos no la nombran.
     function _paintPlatformTexts() {
         const list = (_platforms && _platforms.platforms) || [];
@@ -214,27 +221,30 @@
         const twoDesc = _el('infoCardTwoPlatsDesc'); if (twoDesc && !one) twoDesc.textContent = names.join(' y ') + ' con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.';
         const sub = _el('platformsSub');
         if (sub && one) sub.textContent = 'Tus cargas van a ' + one.name + '. Para verla, andá a Inicio.';
-        const pt = document.querySelector('#platformsCard .home-card-title'); if (pt) pt.textContent = one ? 'Tu plataforma' : '¿Dónde querés jugar?';
+        const pt = _el('platformsCardTitleTxt') || document.querySelector('#platformsCard .home-card-title'); if (pt) pt.textContent = one ? 'Tu plataforma' : '¿Dónde querés jugar?';
     }
     function renderEntryTabs() {
         const box = _el('entryTabs'); if (!box) return;
         const list = _entryList();
-        // #298: sólo se puede elegir una plataforma CON API; las demás se ven como "Próximamente".
-        const avail = list.filter((p) => p.connected !== false);
+        // #298/#300: la plataforma default (Girox) SIEMPRE se puede elegir; una sin API se ve con "Próximamente" pero la
+        // pestaña sigue abriendo su página como antes (owner: "agregá Ganamos como estaba y ponele próximamente").
+        const defId = (_platforms && _platforms.defaultPlatform) || 'girox';
+        const isSoon = (p) => p.connected === false && p.id !== defId;
+        const avail = list.filter((p) => !isSoon(p));
         if (!_entryPlat || !avail.some((p) => p.id === _entryPlat)) {
             const def = (_platforms && _platforms.defaultPlatform) || 'girox';
             _entryPlat = ((avail.find((p) => p.id === def) || avail[0] || list[0]) || {}).id;
         }
         box.innerHTML = list.map((p) => {
-            const soon = p.connected === false;
-            return '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + (soon ? ' soon' : '') + '"' + (soon ? ' disabled title="Próximamente"' : ' onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')"') + '>' +
+            const soon = isSoon(p);
+            return '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + (soon ? ' soon' : '') + '" onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')"' + (soon ? ' title="Próximamente"' : '') + '>' +
             (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + _esc(p.name) +
             (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
             (soon ? '<span class="ev-soon">Próximamente</span>' : '') +
             '</button>';
         }).join('');
     }
-    function entrySwitch(id) { const p = _entryList().find((x) => x.id === id); if (p && p.connected === false) { try { VIP.ui.showToast('🔜 ' + p.name + ': próximamente', 'info'); } catch (_) {} return; } _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #298
+    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     function entryShowSite() {
         const f = _el('entryFrame'); if (!f) return;
@@ -970,7 +980,7 @@
     function _platBtn(p, preferred) {
         const label = _esc(p.name);
         const isPref = preferred === p.id;
-        const soon = p.connected === false; // #298: sin API → "Próximamente", no se puede elegir
+        const soon = p.connected === false && p.id !== ((_platforms && _platforms.defaultPlatform) || 'girox'); // #298/#300: sin API → "Próximamente" (la default nunca)
         const onSelect = soon ? "VIP.ui.showToast('🔜 " + _esc(p.name) + ": próximamente', 'info')" : "VIP.home.choosePlatform('" + _esc(p.id) + "')";
         const logo = p.logoUrl ? '<img class="plat-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '';
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + (soon ? ' soon' : '') + '">' +
@@ -1282,6 +1292,7 @@
         renderPlatforms();
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
+        try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada

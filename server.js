@@ -5474,6 +5474,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       choiceEnabled: await platforms.isChoiceEnabled(),
       // #266: cartel "SERVICIO COMPLETO" del chat principal (texto editable en /sys_home_banner, {pct} de
       // Config['autoLoadBonusPct']). text === null ⇒ el comando se vació en COMANDOS → la app muestra sólo el título.
+      minDeposit: await getMinDepositArs(), // #299
       homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })()
     });
   } catch (e) {
@@ -12016,13 +12017,24 @@ async function _isFirstRealDeposit(user) {
     return n === 0;
   } catch (_) { return false; } // ante duda, no regalar
 }
+// #299 (owner 2026-10-17): CARGA MÍNIMA informativa ($5.000 default): la app la muestra en "Adjuntar comprobante aquí"
+// y en el paso 1 de la carga automática. Config['minDepositArs'], editable en COMANDOS → Bonos automáticos.
+// Es un AVISO al cliente: no bloquea acreditaciones (una transferencia menor igual se acredita).
+const MIN_DEPOSIT_ARS_DEFAULT = 5000;
+async function getMinDepositArs() {
+  try {
+    const n = Number(await getConfig('minDepositArs', null));
+    if (Number.isFinite(n) && n >= 0 && n <= 10000000) return Math.round(n);
+  } catch (_) { /* fallback */ }
+  return MIN_DEPOSIT_ARS_DEFAULT;
+}
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -12065,6 +12077,13 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
       logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
     }
+    // #299: carga mínima informativa.
+    const mdRaw = req.body && req.body.minDepositArs;
+    if (mdRaw != null && mdRaw !== '') {
+      const md = Number(mdRaw);
+      if (!Number.isFinite(md) || md < 0 || md > 10000000) return res.status(400).json({ error: 'La carga mínima tiene que ser un monto entre 0 y 10.000.000.' });
+      await Config.set('minDepositArs', Math.round(md), req.user.username);
+    }
     // #290: % automático de la PRIMERA carga (publicidad).
     const fdRaw = req.body && req.body.firstDepositPct;
     if (fdRaw != null && fdRaw !== '') {
@@ -12085,7 +12104,7 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('installGift', { enabled: next.enabled, pct: Math.round(next.pct), capArs: Math.round(next.capArs), days: Math.round(next.days) }, req.user.username);
       logger.info(`[install-gift] config ${JSON.stringify(next)} por ${req.user.username}`);
     }
-    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig() });
+    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

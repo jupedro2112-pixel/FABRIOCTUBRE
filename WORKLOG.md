@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-17
 
+### 300. 🔧 Girox siempre seleccionable · Ganamos como estaba + etiqueta "Próximamente" — SW v189
+**Pedido (owner):** "lo del próximamente no era para sacarlo de Girox: Girox queda para seleccionar; volvé a agregar
+Ganamos como estaba y ponele próximamente; cuando configure bien la API te digo y lo sacás".
+- La plataforma default (Girox) NUNCA se marca "próximamente" aunque el server no informe `connected`.
+- Ganamos vuelve a verse y funcionar como antes en el Inicio (la pestaña abre su página) y en la tarjeta de
+  plataformas, con la etiqueta **Próximamente**. Lo único que no permite mientras no tenga API: fijarla como
+  plataforma de cargas y aparecer en la pregunta "¿dónde querés jugar?" (server, #298). Quitar la etiqueta = cuando
+  el owner confirme la API (`connected` pasa a true solo).
+
+### 299. 💵 Carga mínima $5.000 configurable + toques de casino — SW v188, admin-sw v70
+**Pedido (owner):** "aclará y configurá que la carga mínima es 5000, ponelo en 'adjuntar comprobante aquí'; dale un
+poco de versión de juego a toda la página con algún ícono de apuestas, sin que quede poco profesional".
+- `Config['minDepositArs']` (default 5000; panel → COMANDOS → Bonos automáticos → "Carga mínima $"); viaja en
+  `GET /api/platforms` (`minDeposit`). La app lo pinta en el botón verde ("carga mínima $5.000 · se acredita solo")
+  y en el paso 1 ("Transferí a este CBU · mínimo $5.000"). Es informativo: NO bloquea acreditaciones (una
+  transferencia menor igual se acredita).
+- Casino sutil: íconos SVG (ficha en "Cargá acá" y en "Tu saldo", dados en la tarjeta de plataformas, picas en el
+  aviso premium) y un patrón de palos/dados al 3,5% de opacidad de fondo (`.chat-screen::before`).
+
 ### 298. ✨ Aviso premium en el Inicio + Ganamos "Próximamente" (visible, no seleccionable) — SW v187
 **Pedidos (owner):** "en el Inicio resumí lo ilustrativo en una línea y poné LA ÚNICA APP QUE PAGA TODO EN EL MOMENTO
 SIN TOPE LAS 24 HS · GIROX LA APP QUE PAGA, debajo del menú y arriba de reembolsos/ruleta/referidos, premium y

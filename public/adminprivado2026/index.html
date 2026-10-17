@@ -621,6 +621,13 @@ document.addEventListener('change', function (ev) {
                                 </button>
                                 <span style="font-size:11.5px;color:#888;">Se aplica de verdad en cada carga automática (hgcash) que no tenga otro bono pendiente, con el tope de abajo. La carga manual del agente no lo lleva.</span>
                             </div>
+                            <!-- #299: carga mínima (aviso en la app) -->
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                                <label style="margin:0;" title="Se muestra en la app: botón 'Adjuntar comprobante aquí' y paso 1 de la carga automática. Es un aviso: no bloquea acreditaciones.">💵 Carga mínima $ (aviso en la app):</label>
+                                <input type="number" id="minDepositArsInput" min="0" step="500" style="width:110px;">
+                                <button class="btn-primary btn-small" onclick="saveInstallBonusPct()"><span class="icon icon-save"></span> Guardar</button>
+                                <span style="font-size:11.5px;color:#888;">Informativo: una transferencia menor igual se acredita.</span>
+                            </div>
                             <!-- #296: qué plataformas se ofrecen en la app (Inicio y cargas). Ganamos apagada hasta tener la API. -->
                             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
                                 <label style="margin:0;" title="Las plataformas con tilde aparecen en el Inicio de la app y se ofrecen al cargar. Sin tilde: no aparecen en ningún lado. Ganamos: prendela cuando esté configurada su API.">🎮 Plataformas ofrecidas en la app:</label>

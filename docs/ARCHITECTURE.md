@@ -890,7 +890,9 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   adapta Info/tarjeta de plataformas a la cantidad de plataformas habilitadas (tilde en COMANDOS → "Plataformas
   ofrecidas"). **#298:** una plataforma habilitada SIN API es "Próximamente": visible (pestaña del Inicio y tarjeta
   deshabilitadas) pero no se puede fijar (`/api/platforms/preferred` la rechaza) ni se ofrece al cargar
-  (`decideForDeposit` filtra `connected`). `.ev-hero` = aviso premium del Inicio. **#297:** Cronograma como hoja del mes
+  (`decideForDeposit` filtra `connected`); en la PWA la default nunca es "próximamente" y la pestaña de Ganamos
+  sigue abriendo su página (#300). `.ev-hero` = aviso premium del Inicio. **#299:** `Config['minDepositArs']`
+  (carga mínima informativa, `minDeposit` en `GET /api/platforms`, `_paintMinDeposit`). **#297:** Cronograma como hoja del mes
   (panel del día `#cronDayPanel`, `cronPlanDay` → formulario con fecha) y reparto en hasta 60 lotes (`SCHED_MAX_PARTS`).
   **#294:** la oferta del % extra por instalar va ADENTRO de `#playNowCard` (`#pnGift`); `playNowLater` la deja
   pendiente (barra `#installGiftBar` de punta a punta). Ya no existe `#installGiftCard`.
