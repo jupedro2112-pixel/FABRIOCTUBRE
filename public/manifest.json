@@ -1,7 +1,7 @@
 {
-  "name": "CARGAS AUTOMÁTICA",
-  "short_name": "CARGAS AUTOMÁTICA",
-  "description": "CARGAS 1GIROX - Chat y reembolsos con notificaciones push",
+  "name": "CARGAS AUTOMATIC",
+  "short_name": "CARGAS AUTOMATIC",
+  "description": "CARGAS AUTOMATIC - Cargas automáticas, reembolsos y chat con notificaciones push",
   "id": "/",
   "start_url": "/?source=pwa",
   "display": "standalone",

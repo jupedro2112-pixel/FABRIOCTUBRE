@@ -4,22 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CARGAS AUTOMÁTICA</title>
+    <title>CARGAS AUTOMATIC</title>
     <!-- Ícono de ruleta como favicon SVG (issue #7) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎰</text></svg>">
+    <!-- #358: favicon = ícono de la app (pica) -->
+    <link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96x96.png?v=358">
     
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CARGAS AUTOMÁTICA">
-    <meta name="application-name" content="CARGAS AUTOMÁTICA">
+    <meta name="apple-mobile-web-app-title" content="CARGAS AUTOMATIC">
+    <meta name="application-name" content="CARGAS AUTOMATIC">
     <meta name="msapplication-TileColor" content="#00ff88">
     <meta name="theme-color" content="#00ff88">
     
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png?v=358">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png?v=358">
     
     <!-- Firebase SDK: lo carga el loader robusto de abajo (reintentos +
          fallback de CDN). No se ponen <script> estáticos acá para no bloquear
@@ -2136,7 +2137,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v243</div>
+                    <div class="pf-build" id="appBuildTag">app v244</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

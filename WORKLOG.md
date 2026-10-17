@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 358. ♠️ Ícono de la app: pica roja con borde dorado · nombre "CARGAS AUTOMATIC" — SW v244
+**Pedido (owner):** "cargas automatic ponele y el logo de un picas en forma de logo tipo para app". Ícono generado
+(pica roja brillante, borde dorado, fondo negro con brillo rojo) en los 10 tamaños de `public/icons/` (el "1G" viejo
+queda en el historial de git). Favicon = el mismo ícono (antes un emoji). Nombre/título/manifest: "CARGAS AUTOMATIC".
+Los íconos son cache-first en el SW: el bump de versión los renueva; el ícono instalado cambia cuando el sistema
+relea el manifest (o al reinstalar).
+
 ### 357. 🏷️ Título de la app: "CARGAS AUTOMÁTICA" — SW v243
 **Pedido (owner):** "en el título de la página que dice cargas 1girox 24/7 ponele cargas automática". `<title>`,
 `application-name`, `apple-mobile-web-app-title` y `manifest.json` (name/short_name). En teléfonos que ya tienen la
