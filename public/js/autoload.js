@@ -93,14 +93,15 @@
         _set('alLink', appLink().replace(/^https?:\/\//, ''));
         try { const le = _el('alLink'); if (le) le.dataset.full = appLink(); } catch (_) {}
         _renderPassword();
-        if (!_cbu) ['alBank', 'alTitular', 'alCbu'].forEach(id => _set(id, 'cargando…'));
+        if (!_cbu) ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'cargando…'));
         if (!_loading) _loading = _loadCbu().finally(() => { _loading = null; });
         const cbu = await _loading;
         if (cbu) _cbu = cbu;
         if (_cbu) {
             _set('alBank', _cbu.bank); _set('alTitular', _cbu.titular); _set('alCbu', _cbu.number);
+            _set('alAlias', _cbu.alias || '—'); // #271
         } else {
-            ['alBank', 'alTitular', 'alCbu'].forEach(id => _set(id, 'no disponible'));
+            ['alBank', 'alTitular', 'alCbu', 'alAlias'].forEach(id => _set(id, 'no disponible'));
         }
     }
 
@@ -190,8 +191,10 @@
         return c;
     }
 
+    // #270: si el modal Perfil está abierto, el botón y la vista previa son los de ahí.
+    function _pfOpen() { const m = document.getElementById('profileModal'); return !!(m && !m.classList.contains('hidden')); }
     async function saveCapture() {
-        const btn = _el('alCaptureBtn');
+        const btn = (_pfOpen() && _el('pfCaptureBtn')) || _el('alCaptureBtn');
         if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
         try {
             if (!_cbu) { const c = await _loadCbu(); if (c) _cbu = c; }
@@ -204,7 +207,7 @@
             // con la previa, mantener apretado → "Guardar en Fotos").
             if (_lastBlobUrl) { try { URL.revokeObjectURL(_lastBlobUrl); } catch (_) {} }
             _lastBlobUrl = URL.createObjectURL(blob);
-            const prev = _el('alCapturePreview');
+            const prev = (_pfOpen() && _el('pfCapturePreview')) || _el('alCapturePreview');
             if (prev) {
                 prev.style.display = '';
                 prev.innerHTML = '<div style="color:#ffd700;font-weight:800;font-size:12.5px;margin-bottom:6px;">📸 Tu captura está lista. Mantené apretada la imagen → "Guardar imagen" (o tocá Descargar).</div>' +
@@ -228,8 +231,7 @@
     }
 
     function hidePreview() {
-        const prev = _el('alCapturePreview');
-        if (prev) { prev.style.display = 'none'; prev.innerHTML = ''; }
+        ['alCapturePreview', 'pfCapturePreview'].forEach((id) => { const prev = _el(id); if (prev) { prev.style.display = 'none'; prev.innerHTML = ''; } });
     }
 
     // Al arrancar: si hay contraseña guardada en el dispositivo, dejarla en memoria

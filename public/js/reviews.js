@@ -161,6 +161,55 @@
         box.innerHTML = html;
     }
 
+    // ---------- #270: reseñas deslizantes al pie del Inicio (tipo Google) ----------
+    let _pubCache = null, _pubAt = 0;
+    async function _loadPublic() {
+        if (_pubCache && (Date.now() - _pubAt) < 120000) return _pubCache;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=12');
+            if (r.ok) { _pubCache = await r.json(); _pubAt = Date.now(); }
+        } catch (e) { /* best-effort */ }
+        return _pubCache;
+    }
+    const _AV_COLORS = ['#1a73e8', '#d93025', '#188038', '#f9ab00', '#9334e6', '#e8710a', '#007b83'];
+    function _avatar(name) {
+        const n = String(name || '*');
+        let h = 0; for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+        return '<span class="rv-avatar" style="background:' + _AV_COLORS[h % _AV_COLORS.length] + '">' + _esc(n.charAt(0).toUpperCase()) + '</span>';
+    }
+    function _gStars(n) {
+        const v = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
+        let h = '';
+        for (let i = 1; i <= 5; i++) h += '<span class="' + (i <= v ? 'on' : '') + '">★</span>';
+        return '<span class="rv-stars">' + h + '</span>';
+    }
+    async function renderEntrySlider() {
+        const box = document.getElementById('entryReviews');
+        if (!box) return;
+        const pub = await _loadPublic();
+        const avg = Number((pub && pub.avgStars) || 0);
+        const total = Number((pub && pub.total) || 0);
+        const items = ((pub && pub.items) || []).filter(function (it) {
+            const c = (it.comment || '').trim();
+            return c && !/^[1-5] estrellas$/.test(c);
+        }).slice(0, 10);
+        if (!total && !items.length) { box.style.display = 'none'; return; }
+        let html = '<div class="rv-head"><span class="rv-g">Opiniones de jugadores</span>' +
+            (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStars(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
+        html += '<div class="rv-track">';
+        for (const it of items) {
+            const name = it.maskedUsername || '***';
+            html += '<div class="rv-card">' +
+                '<div class="rv-top">' + _avatar(name) + '<div class="rv-who"><b>' + _esc(name) + '</b>' + _gStars(it.stars) + '</div></div>' +
+                '<div class="rv-text">' + _esc(it.comment) + '</div>' +
+                '</div>';
+        }
+        html += '<button type="button" class="rv-card rv-add" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b><small>Contale a otros cómo te fue</small></button>';
+        html += '</div>';
+        box.innerHTML = html;
+        box.style.display = '';
+    }
+
     // ---------- Reseñas dentro del pantallazo de pauta (adServiceModal) ----------
 
     function openModal() {
@@ -222,7 +271,7 @@
                 if (d && d.alreadyReviewed) {
                     _myReview = { stars: _selectedStars, comment: comment };
                     if (msg) { msg.style.color = '#ffd700'; msg.textContent = 'Ya habías opinado. ¡Gracias!'; }
-                    setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); }, 1400);
+                    setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); _pubCache = null; renderEntrySlider(); }, 1400);
                     return;
                 }
                 if (msg) { msg.style.color = '#ff8080'; msg.textContent = (d && d.error) || 'Error'; }
@@ -232,14 +281,14 @@
             _myReview = { stars: _selectedStars, comment: comment };
             if (msg) { msg.style.color = '#66ff66'; msg.textContent = '✅ ¡Gracias! Tu opinión quedó enviada.'; }
             if (VIP.ui && VIP.ui.showToast) VIP.ui.showToast('✅ ¡Gracias por tu opinión!', 'success');
-            setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); }, 1600);
+            setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); _pubCache = null; renderEntrySlider(); }, 1600);
         } catch (e) {
             if (msg) { msg.style.color = '#ff8080'; msg.textContent = 'Error de conexión'; }
             if (btn) { btn.disabled = false; btn.textContent = '📨 Enviar opinión'; }
         }
     }
 
-    VIP.reviews = { initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection };
+    VIP.reviews = { initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection, renderEntrySlider: renderEntrySlider };
 
     document.addEventListener('DOMContentLoaded', function () {
         initLogin();

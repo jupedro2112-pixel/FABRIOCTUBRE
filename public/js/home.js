@@ -71,7 +71,7 @@
         if (mode === 'mini') {
             if (p) p.classList.remove('hidden');
             _open = true; _unread = 0; _paintBadge();
-            if (cta) cta.textContent = 'Ver todo ▾';
+            if (cta) cta.textContent = 'Ir a carga automática ›';
             if (bn) { bn.setAttribute('aria-expanded', 'false'); bn.title = 'Ver la app completa'; }
             try { VIP.chat.markReceivedAsRead(); } catch (_) {}
             setTimeout(() => { try { VIP.chat.scrollToBottom(); } catch (_) {} }, 80);
@@ -98,6 +98,7 @@
         const pw = (VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '';
         const eu = _el('pfUser'), ep = _el('pfPass'), eye = _el('pfEye'), hint = _el('pfHint');
         if (eu) eu.textContent = u;
+        try { const el = _el('pfLink'); if (el) el.textContent = (VIP.autoload && VIP.autoload.appLink && VIP.autoload.appLink()) || (location.origin + '/'); } catch (_) {}
         if (ep) ep.textContent = pw ? (_pfShown ? pw : '•'.repeat(Math.min(12, Math.max(6, pw.length)))) : 'no guardada';
         if (eye) { eye.textContent = _pfShown ? 'Ocultar' : 'Ver'; eye.style.display = pw ? '' : 'none'; }
         if (hint) {
@@ -107,12 +108,15 @@
     }
     function openProfile() {
         _pfShown = false;
+        try { if (VIP.autoload && VIP.autoload.hidePreview) VIP.autoload.hidePreview(); } catch (_) {}
         _pfPaint();
         try { VIP.ui.showModal('profileModal'); } catch (_) { const m = _el('profileModal'); if (m) m.classList.remove('hidden'); }
     }
     function profileTogglePw() { _pfShown = !_pfShown; _pfPaint(); }
     function profileCopy(which) {
-        const v = which === 'pass' ? ((VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '') : ((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '');
+        const v = which === 'pass' ? ((VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '')
+            : which === 'link' ? ((VIP.autoload && VIP.autoload.appLink && VIP.autoload.appLink()) || (location.origin + '/'))
+            : ((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '');
         if (!v) { try { VIP.ui.showToast('No hay nada para copiar', 'info'); } catch (_) {} return; }
         try { VIP.ui.copyText(v); } catch (_) { try { navigator.clipboard.writeText(v); } catch (__) {} }
     }
@@ -141,6 +145,14 @@
     function _mirrorHeadBits() {
         try { const t = _el('themeToggleBtn'), w = _el('waThemeBtn'); if (t && w && t.textContent) w.textContent = t.textContent; } catch (_) {}
         try { const src = _el('fireStreak'), dst = _el('waFireStreak'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } } catch (_) {}
+        // #271: recuadro "Fueguito diario" de la carga automática (racha + si hay premio para reclamar).
+        try {
+            const src = _el('fireStreak'), fh = _el('fireHomeStreak'), card = _el('fireHomeCard'), sub = _el('fireHomeSub');
+            const st = VIP.state && VIP.state.fireStatus;
+            if (src && fh) fh.textContent = src.textContent || '0';
+            if (card) card.classList.toggle('can-claim', !!(st && st.canClaim));
+            if (sub && st) sub.textContent = st.canClaim ? '¡Tenés premio para reclamar!' : 'Ya reclamaste hoy · volvé mañana';
+        } catch (_) {}
         try { const av = _el('chatTopbarAvatar'), wa = _el('waHeadAvatar'); const u = av && av.getAttribute('src'); if (u && wa && wa.getAttribute('src') !== u) wa.src = u; } catch (_) {}
     }
     function _watchHeadBits() {
@@ -618,7 +630,6 @@
         const label = _esc(p.name);
         const isPref = preferred === p.id;
         const onSelect = "VIP.home.choosePlatform('" + _esc(p.id) + "')";
-        const onEnter = "event.stopPropagation();VIP.home.playOn('" + _esc(p.id) + "')";
         const logo = p.logoUrl ? '<img class="plat-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '';
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
             '<button type="button" class="plat-play-btn plat-' + _esc(p.id) + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
@@ -627,13 +638,13 @@
             (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') +
             logo +
             '<span class="plat-play-name">' + label + '</span>' +
-            '<span class="plat-play-sub">' + (isPref ? 'Elegida · tus cargas van acá' : 'Tocá para elegir') + '</span>' +
-            '<span class="plat-enter" onclick="' + onEnter + '">' + (p.connected ? 'Entrar ›' : 'Abrir ›') + '</span>' +
+            // #271: sin "Entrar" acá (verlas = Inicio). Tocar la fija la suelta (vuelve el cartel al cargar).
+            '<span class="plat-play-sub">' + (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija') + '</span>' +
             '</button></div>';
     }
     function choosePlatform(platformId) {
         const cur = (_platforms && _platforms.preferredPlatform) || null;
-        if (cur === platformId) { playOn(platformId); return; } // ya elegida → entrar
+        if (cur === platformId) { setPreferred(null); return; } // #271: ya fija → soltarla (se pregunta en cada carga)
         setPreferred(platformId);
     }
 
@@ -931,6 +942,7 @@
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         _paintWaHeadName();
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
+        try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }

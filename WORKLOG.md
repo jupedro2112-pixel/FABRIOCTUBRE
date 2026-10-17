@@ -8,6 +8,44 @@
 
 ## Sesión 2026-10-17
 
+### 271. 🔥 Carga automática: alias+titular, plataformas explicadas (sin "Entrar"), Fueguito diario entre Cargar y Retirar · cartel del chat corto — SW v164
+**Pedidos (owner, 3 mensajes seguidos):** "en carga automática agregá alias y titular; explicá que podés
+elegir cualquiera de las plataformas, dejar fija 1 o, si no elegís, que al entrar la carga aparezca un
+cartel preguntando dónde querés la plata; sacá de ahí 'entrar a la página' (que se vea sólo del Inicio)";
+"arriba del chat hay mucha info: sólo 'Recomendable: cargando de forma automática tenés un 10% en todas
+tus cargas', sacá Plataformas y poné Ir a carga automática"; "el fueguito en la carga automática, en el
+medio entre cargas y retiros, con un buen recuadro de fueguito diario".
+- **Tarjeta CBU:** fila "o al alias" (`#alAlias`, Copiar; viene de `GET /api/config/cbu`) y "Banco: … · Titular: …"
+  explícitos (ids `alBank`/`alTitular` intactos; autoload.js llena `alAlias`).
+- **¿Dónde querés jugar?:** texto nuevo (fija / sin elegir → cartel al cargar / verlas en Inicio). `_platBtn` ya
+  no pinta "Entrar ›/Abrir ›"; tocar la plataforma FIJA la **suelta** (`setPreferred(null)` → vuelve la
+  pregunta en cada carga) en vez de abrirla.
+- **Fueguito diario** (`#fireHomeCard`) entre "Cargar aquí" y "Retirar premio": recuadro naranja con llama,
+  racha en días y estado ("¡Tenés premio para reclamar!" con pulso / "Ya reclamaste hoy"). Abre el modal
+  de siempre haciendo click en `#fireBtn` (que vive en Perfil); racha y `canClaim` los espeja
+  `_mirrorHeadBits` (MutationObserver sobre `#fireStreak` + `VIP.state.fireStatus`).
+- **Cartel del chat (modo mini):** "⭐ Recomendable · Cargando de forma automática tenés un {pct}% en todas
+  tus cargas." + botón "Ir a carga automática ›" (tocar el cartel = modo full). Chip "Plataformas" quitado.
+  `HOME_BANNER_DEFAULT` y el seed de `/sys_home_banner` con la frase corta; migración de arranque que pisa
+  SÓLO el texto exacto de #266.
+
+### 270. 💎 Inicio moderno (chau retro) · reseñas tipo Google deslizantes al pie del Inicio · Perfil con datos protagonistas + captura — SW v163
+**Pedido (owner):** "el Inicio es muy retro: más moderno, futurista, del mundo de las apuestas sin ser
+infantil; en Perfil predominancia a usuario, contraseña y página de la app con botón de sacar captura;
+las reseñas en la pantalla principal abajo, deslizantes, nombre + reseña + estrellas, recuadro prolijo
+tipo Google".
+- **Inicio:** mismo botón (`.tn-home.tn-retro`, clase conservada) restilado: vidrio oscuro con corte
+  diamantado (clip-path), borde cian con halo rojo, ícono de diamante en SVG, rótulo Montserrat 900 con
+  degradé cian→blanco→rojo y un brillo que cruza cada 4,5 s. Fuente 'Press Start 2P' quitada del link.
+- **Reseñas en el Inicio** (`#entryReviews`, debajo de la plataforma): `VIP.reviews.renderEntrySlider()`
+  (reviews.js, cache 2 min de `/api/reviews/public?limit=12`): cabecera "Opiniones de jugadores · 4.8 ★ (N)"
+  y carrusel con scroll-snap de tarjetas blancas tipo Google (avatar con inicial y color por nombre,
+  nombre enmascarado, estrellas amarillas, texto a 3 líneas) + tarjeta "Dejá tu opinión" al final. Se
+  refresca al enviar una reseña. Sin reseñas → oculto.
+- **Perfil:** bloque grande con Usuario, Contraseña (Ver/Ocultar) y **Página de la app** (link, Copiar) +
+  botón "📸 Capturar mis datos" y vista previa adentro del modal. `VIP.autoload.saveCapture/hidePreview`
+  usan `pfCaptureBtn`/`pfCapturePreview` cuando el Perfil está abierto (misma imagen de link/usuario/clave).
+
 ### 269. 🕹️ Inicio al centro (retro, separado) · servicios arriba del Inicio · carga automática sencilla — SW v162
 **Pedido (owner):** "el Inicio dejalo en el medio con una separación al resto, en forma retro del mismo
 formato; en el Inicio arriba de la página poné el reembolso, la ruleta diaria y el sistema de referidos

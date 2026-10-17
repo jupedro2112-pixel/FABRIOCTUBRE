@@ -11056,6 +11056,12 @@ async function initializeData() {
       await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés \"Ver todo\": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
       console.log('✅ /sys_welcome: texto del chat principal (#266)');
     }
+    // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
+    const hb = await Command.findOne({ name: '/sys_home_banner' }).lean();
+    if (hb && String(hb.response || '') === 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.') {
+      await Command.updateOne({ name: '/sys_home_banner' }, { $set: { response: 'Cargando de forma automática tenés un {pct}% en todas tus cargas.' } });
+      console.log('✅ /sys_home_banner: texto corto (#271)');
+    }
     const c = await Command.findOne({ name: '/sys_como_funciona' }).lean();
     if (c && /CÓMO FUNCIONA EL SERVICIO|CÓMO FUNCIONA\?/.test(String(c.response || ''))) {
       await Command.updateOne({ name: '/sys_como_funciona' }, { $set: { response: '' } });
@@ -11092,7 +11098,7 @@ async function initializeData() {
       name: '/sys_home_banner',
       description: 'Cartel "SERVICIO COMPLETO" del chat principal de la app (arriba del chat, con el botón "Ver todo" que despliega la app completa). Variable: {pct} (% de "servicio completo", se edita en Bonos automáticos). Vacío = sólo el título.',
       type: 'message',
-      response: 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.'
+      response: 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'
     },
     {
       // MULTI-PLATAFORMA (2026-10-16): pregunta al cliente dónde quiere jugar cuando entra
@@ -11759,7 +11765,7 @@ async function getAutoLoadBonusPct() {
   } catch (_) { /* fallback */ }
   return AUTO_LOAD_BONUS_PCT_DEFAULT;
 }
-const HOME_BANNER_DEFAULT = 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.';
+const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
 
