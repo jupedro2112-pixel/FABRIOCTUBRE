@@ -413,8 +413,10 @@
         if (amt) amt.textContent = _igFmt(_ig.amount);
         if (t) t.textContent = _isStandalone() ? 'Reclamá tu última carga sin cargo' : 'Instalá la app para reclamar tu última carga sin cargo';
     }
+    let _igSheet = null; // oferta que muestra la hoja ahora ({amount, test})
     function showInstallGift(o) {
         o = o || {};
+        _igSheet = o;
         const card = _el('installGiftCard'); if (!card) return;
         const amt = _el('igAmount'), sub = _el('igSub'), main = _el('igMainBtn'), later = _el('igLaterBtn'), note = _el('igNote'), tag = _el('igTest');
         const inApp = _isStandalone();
@@ -433,19 +435,23 @@
     function hideInstallGift() { const c = _el('installGiftCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); } }
     function _igIsTest() { const c = _el('installGiftCard'); return !!(c && c.dataset.test === '1'); }
     function installGiftOpen() { showInstallGift(_ig || {}); }
+    function _igClearTest() { if (_ig && _ig.test) { _ig = null; _igPaintBar(); } }
     // "Ahora quiero jugar": la oferta queda PENDIENTE (botón grande abajo) hasta que instale y reclame.
     async function installGiftLater() {
         const test = _igIsTest();
+        const amount = (_ig && Number(_ig.amount) > 0) ? _ig.amount : (_igSheet && _igSheet.amount) || 0;
         hideInstallGift();
-        if (test) { try { VIP.ui.showToast('TEST: así quedaría el botón grande de abajo hasta que instale y reclame.', 'info'); } catch (_) {} return; }
-        try { const { ok, j } = await _igFetch('/api/install-gift/defer', 'POST'); if (ok && j && j.status) _ig = Object.assign({}, _ig || {}, j); } catch (_) {}
-        if (_ig && _ig.status === 'offered') _ig.status = 'deferred';
+        // Primero se pinta el botón grande (local): no depende de que el server conteste.
+        _ig = Object.assign({}, _ig || {}, { status: 'deferred', amount, test: !!test });
+        _igPaintBar();
+        if (test) { try { VIP.ui.showToast('TEST: abajo quedó el botón grande. Tocalo para volver a ver la oferta; al apretar "Instalar/Reclamar" se borra el test.', 'info'); } catch (_) {} return; }
+        try { const { ok, j } = await _igFetch('/api/install-gift/defer', 'POST'); if (ok && j && j.status && j.status !== 'none') _ig = Object.assign({}, _ig, j); } catch (_) {}
         _igPaintBar();
         try { VIP.ui.showToast('👌 Cuando quieras, tocá el botón de abajo para reclamar tu carga sin cargo.', 'info'); } catch (_) {}
     }
     // Botón principal: en la app instalada RECLAMA; en el navegador INSTALA (y la oferta queda pendiente).
     async function installGiftMain() {
-        if (_igIsTest()) { hideInstallGift(); try { VIP.ui.showToast('TEST: acá se instala la app y se acredita la carga sin cargo.', 'info'); } catch (_) {} return; }
+        if (_igIsTest()) { hideInstallGift(); _igClearTest(); try { VIP.ui.showToast('TEST: acá se instala la app y se acredita la carga sin cargo (fin del test).', 'info'); } catch (_) {} return; }
         if (_isStandalone()) return installGiftClaim();
         hideInstallGift();
         try { await _igFetch('/api/install-gift/defer', 'POST'); } catch (_) {}
@@ -455,6 +461,7 @@
         try { VIP.ui.showToast('📲 Cuando termine, abrí la app desde tu pantalla de inicio y tocá el botón de abajo para reclamar.', 'info'); } catch (_) {}
     }
     async function installGiftClaim() {
+        if (_ig && _ig.test) { hideInstallGift(); _igClearTest(); return; }
         const btn = _el('igMainBtn');
         if (btn) { btn.disabled = true; btn.textContent = 'Acreditando…'; }
         try {

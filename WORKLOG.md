@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 285. 🐛 Carga gratis: "la instalo después" no mostraba el botón grande de abajo — SW v177
+**Pedido (owner):** "si aprieto reclamar después, dice que aparecerá abajo pero después no aparece".
+- Causa: en el **modo test** (botón "test · carga gratis por instalar") "la instalo después" sólo mostraba un
+  aviso y no pintaba el botón; y en el flujo real el botón dependía de la respuesta de `/api/install-gift/defer`
+  (sin redeploy ⇒ 404 ⇒ nada).
+- Ahora `installGiftLater` pinta el botón grande **primero y en local** (estado `deferred` con el monto de la
+  hoja) y recién después avisa al server. En test el botón queda con el monto de ejemplo: tocarlo reabre la
+  hoja (etiqueta TEST) y "Instalar/Reclamar" termina el test y lo saca. El estado de test nunca llama al server.
+
 ### 284. 🧱 Pasos 1 y 2 de "Cargá acá" en recuadros, compactos — SW v176
 **Pedido (owner):** "el paso 1 y 2 en cargas hacelo con recuadro y que se entienda, se pierde ahí; achicalo para
 que no haya deslizante".
