@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 347. 🔥 "Mínimo 10 cargas entre racha y racha" — visible siempre — SW v233, admin-sw v73
+**Pedido (owner, captura):** el modal mostraba el texto viejo ("movimientos de cargas durante el mes") porque el server
+de prueba aún no manda `minDeposits` (sin redeploy) y el front caía al fallback. Ahora sin valor del server se asume
+el default **10** (sólo un 0 explícito del panel apaga la regla). Default 10 en server/panel/tarjeta/modal (el owner
+volvió a 10 tras el 5 de #344).
+
 ### 346. 🔥 Premios del fueguito ×5 — SW v232
 **Pedido (owner):** "subí los premios un 500%". Interpretado como ×5: día 10 $10.000 → **$50.000**, día 20 $50.000 →
 **$250.000**, día 30 $200.000 → **$1.000.000**. Defaults nuevos + migración única que multiplica ×5 lo que haya

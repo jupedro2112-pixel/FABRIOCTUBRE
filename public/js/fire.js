@@ -71,11 +71,13 @@ VIP.fire = (function () {
 
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
-            const _md = Number(VIP.state.fireStatus.minDeposits) || 0; // #291
+            // #347: si el server todavía no manda el mínimo (sin redeploy) se muestra el default 10; sólo 0 explícito lo apaga.
+            const _mdRaw = VIP.state.fireStatus.minDeposits;
+            const _md = (_mdRaw == null || _mdRaw === '') ? 10 : (Number(_mdRaw) || 0);
             const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
             activityConditionEl.innerHTML = _md > 0
                 ? '📋 <strong>Condición:</strong> entre racha y racha necesitás como mínimo <strong>' + _md + ' cargas</strong> para poder reclamar el premio (ej.: para el premio del día ' + _d1 + ', al menos ' + _md + ' cargas en esos ' + _d1 + ' días). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
-                : '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
+                : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.';
         }
 
         const pendingBonusEl = document.getElementById('firePendingBonus');

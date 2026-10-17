@@ -13234,7 +13234,7 @@ const getDepositsInPeriod = async (username, daysBack) => {
 // #291 (owner 2026-10-17): "para que el premio se acredite automático tiene que tener mínimo 10 cargas dentro
 // del plazo del reclamo; si no, el fueguito se reinicia". Config['fireMinDeposits'] (default 10, 0 = sin
 // requisito; panel → Premios del Fueguito). El plazo = los días del hito (día 10 ⇒ últimos 10 días).
-const FIRE_MIN_DEPOSITS_DEFAULT = 5; // #344 (owner): "al menos 5 cargas en los días de esa racha"
+const FIRE_MIN_DEPOSITS_DEFAULT = 10; // #347 (owner): "mínimo 10 cargas entre racha y racha"
 async function getFireMinDeposits() {
   try {
     const n = Number(await getConfig('fireMinDeposits', null));
