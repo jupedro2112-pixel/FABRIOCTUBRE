@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 289. 🪟 "Información del servicio" con el estilo de la barra de arriba — SW v181
+**Pedido (owner, captura):** "armalo más con el estilo de la parte superior, pero que tenga su recuadro y todo
+como es y no lo pierda tanto; que tenga predominancia el texto".
+- Modal `#infoModal`: fondo de vidrio oscuro con borde cian (chau borde dorado), título con brillo cian,
+  X redonda. Estado de la app (apptest.js `_row` → clases `.at-*`, sin estilos inline) en recuadros con
+  corte diamantado, verde OK / rojo falta, botón de ayuda rojo. Plegables de opiniones y ruleta en el mismo
+  vidrio. Las tarjetas van **todas a lo ancho** (chau grilla de 3 columnas con letra de 8,5 px): ícono como
+  medalla a la izquierda, título Montserrat mayúsculas 13,5 px y texto 13 px claro (12,5 en celular).
+  Reembolsos conserva su recuadro rojo "Novedad". "Entendido" rojo con corte diamantado.
+- Todo con `!important` dentro de `#infoModal` porque modals.css carga después de chat.css y pinta el modal viejo.
+
 ### 288. 🫧 Sin globo flotante de soporte — SW v180
 **Pedido (owner):** "sacá el globo de soporte". `#supportBubble` queda oculto por CSS (`display:none !important`,
 no se borra del DOM porque adentro vive `#chatTopbarAvatar`, que chat.js actualiza y home.js espeja en la

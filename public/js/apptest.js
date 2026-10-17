@@ -19,21 +19,13 @@ VIP.appTest = (function () {
     }
 
     function _row(icon, label, ok, helpFn, helpLabel) {
-        let h = '<div style="display:flex;align-items:center;gap:9px;background:rgba(0,0,0,0.30);border:1px solid '
-            + (ok ? 'rgba(102,255,102,0.45)' : 'rgba(255,80,80,0.5)')
-            + ';border-radius:10px;padding:9px 11px;">';
-        h += '<span style="font-size:18px;">' + icon + '</span>';
-        h += '<span style="flex:1;color:#fff;font-weight:700;font-size:12.5px;">' + label + '</span>';
-        if (ok) {
-            h += '<span style="color:#66ff66;font-weight:900;font-size:13px;letter-spacing:.5px;">✓ OK</span>';
-        } else {
-            h += '<span style="color:#ff5050;font-weight:900;font-size:17px;line-height:1;">✕</span>';
-        }
+        // #289: clases .at-* (estilo en chat.css, bloque #289: vidrio oscuro, corte diamantado, texto grande).
+        let h = '<div class="at-row ' + (ok ? 'at-ok' : 'at-bad') + '">';
+        h += '<span class="at-ico">' + icon + '</span>';
+        h += '<span class="at-lbl">' + label + '</span>';
+        h += ok ? '<span class="at-st">✓ OK</span>' : '<span class="at-st at-x">✕</span>';
         h += '</div>';
-        if (!ok) {
-            h += '<button onclick="' + helpFn + '" style="width:100%;margin-top:5px;background:linear-gradient(135deg,#9d4edd,#6603a8);color:#fff;border:none;border-radius:9px;padding:9px;font-weight:800;font-size:11.5px;cursor:pointer;">'
-                + helpLabel + '</button>';
-        }
+        if (!ok) h += '<button type="button" class="at-help" onclick="' + helpFn + '">' + helpLabel + '</button>';
         return h;
     }
 

@@ -2012,3 +2012,57 @@ body.ig-pending #loginScreen:not(.hidden) ~ .ig-bar { display: none !important; 
 /* ══ #288 (owner): sin globo flotante de soporte. El chat se abre desde "Carga manual" en la barra de arriba.
    Se oculta por CSS (no se borra del DOM): #chatTopbarAvatar vive adentro y chat.js/home.js lo siguen usando. ══ */
 #supportBubble { display: none !important; }
+
+/* ══ #289 (owner): "Información del servicio" con el estilo de la barra de arriba — vidrio oscuro, cortes
+   diamantados, cian/rojo, Montserrat. Cada bloque conserva su recuadro; el TEXTO manda (grande y claro).
+   Va con !important porque modals.css (carga después) pinta el modal viejo: borde dorado, grilla 3 col, 8,5 px. ══ */
+#infoModal .modal-content {
+  background: linear-gradient(160deg, #0f1322 0%, #07080f 70%) !important; border: 1px solid rgba(0,229,255,.35) !important; border-radius: 18px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 0 40px rgba(0,229,255,.12), 0 24px 60px rgba(0,0,0,.7) !important; padding: 16px 14px 18px !important; color: #f4f6fb;
+}
+#infoModal .info-head-sm { margin: 2px 0 12px; text-align: center; }
+#infoModal .info-head-sm h2 { font: 900 15px var(--dx-font) !important; letter-spacing: 2px !important; color: #fff !important; text-shadow: 0 0 14px rgba(0,229,255,.55); }
+#infoModal .info-head-sm h2::after { content: ''; display: block; width: 60px; height: 2px; margin: 8px auto 0; background: linear-gradient(90deg, transparent, var(--dx-cyan), transparent); }
+#infoModal .modal-content > button[onclick] { color: #c9d1e3 !important; background: rgba(255,255,255,.06) !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 50% !important; width: 32px; height: 32px; font-size: 16px !important; display: flex; align-items: center; justify-content: center; }
+/* Estado de la app (apptest.js _row) */
+.at-row { display: flex; align-items: center; gap: 10px; background: var(--dx-glass); border: 1px solid var(--dx-border); clip-path: var(--dx-cut-sm); padding: 11px 12px; box-sizing: border-box; }
+.at-row.at-ok { border-color: rgba(46,230,107,.5); }
+.at-row.at-bad { border-color: rgba(255,23,68,.55); }
+.at-ico { font-size: 18px; line-height: 1; }
+.at-lbl { flex: 1; min-width: 0; font: 800 13px var(--dx-font); color: #fff; }
+.at-st { font: 900 12px var(--dx-font); letter-spacing: .8px; color: #2ee66b; }
+.at-st.at-x { color: #ff5c7a; font-size: 16px; line-height: 1; }
+.at-help { width: 100%; margin-top: 6px; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; border: 0; clip-path: var(--dx-cut-sm); padding: 10px 12px; font: 900 11.5px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 18px rgba(255,23,68,.3); }
+#infoModal .info-diag-top { margin: 0 0 10px; }
+#infoModal .info-diag-top > div > div { flex-direction: column !important; gap: 8px !important; }
+#infoModal .info-diag-top > div > div > * { flex: 1 1 100% !important; font-size: 13px !important; padding: 11px 12px !important; }
+#infoModal .info-diag-top > div > div > .at-help { padding: 10px 12px !important; font-size: 11.5px !important; margin-top: -2px; }
+#infoModal .info-diag-top > div > div + div { font-size: 12px !important; margin-top: 8px !important; color: #2ee66b !important; }
+/* Plegables: opiniones · ruleta */
+#infoModal .info-reviews-wrap { background: var(--dx-glass); border: 1px solid var(--dx-border); border-radius: 0; clip-path: var(--dx-cut-sm); margin: 0 0 8px; }
+#infoModal .info-reviews-head { padding: 12px 14px; font: 900 12.5px var(--dx-font); letter-spacing: 1.4px; text-transform: uppercase; color: #fff; }
+#infoModal .info-reviews-chevron { color: var(--dx-cyan); }
+#infoModal .info-roulette p { font-size: 13px; color: #d6dbe8; line-height: 1.5; }
+#infoModal .info-roulette p b { color: #fff; }
+#infoModal .info-roulette-btn { background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; font: 900 12px var(--dx-font); letter-spacing: .8px; text-transform: uppercase; }
+/* Tarjetas: todas a lo ancho, ícono como medalla a la izquierda, texto grande */
+#infoModal .info-grid { display: flex !important; flex-direction: column; gap: 8px !important; margin-top: 2px !important; }
+#infoModal .info-card { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; text-align: left !important; background: var(--dx-glass) !important; border: 1px solid var(--dx-border) !important; border-radius: 0 !important; clip-path: var(--dx-cut-sm); padding: 12px 14px 13px !important; transform: none !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important; position: relative; }
+#infoModal .info-card::before { content: ''; position: absolute; left: 0; top: 0; width: 38px; height: 2px; background: var(--dx-cyan); box-shadow: 0 0 12px rgba(0,229,255,.6); }
+#infoModal .info-card-icon { grid-row: 1 / span 2; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 24px !important; margin: 0 !important; background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.3); border-radius: 50%; filter: none !important; }
+#infoModal .info-card-title { font: 900 13.5px var(--dx-font) !important; letter-spacing: 1px; text-transform: uppercase; color: #fff !important; margin: 0 0 4px !important; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+#infoModal .info-card-desc { font-size: 13px !important; line-height: 1.5 !important; color: #d6dbe8 !important; }
+#infoModal .info-card-desc b { color: #fff; }
+#infoModal .info-card-new { border-color: rgba(255,23,68,.55) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 24px rgba(255,23,68,.18) !important; }
+#infoModal .info-card-new::before { background: #ff1744; box-shadow: 0 0 12px rgba(255,23,68,.6); }
+#infoModal .info-card-new .info-card-icon { background: rgba(255,23,68,.1); border-color: rgba(255,23,68,.4); }
+#infoModal .info-badge { background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; margin-left: 0; font-size: 9px; padding: 3px 7px; border-radius: 4px; }
+#infoModal .info-point { padding: 7px 0; border-bottom: 1px dashed rgba(255,255,255,.14); font-size: 13px; line-height: 1.5; }
+#infoModal .info-point:last-child { border-bottom: 0; padding-bottom: 0; }
+#infoModal .modal-actions { margin-top: 14px !important; }
+#infoModal #closeInfoModal { background: linear-gradient(135deg, #ff1744, #ff6b6b) !important; color: #06070d !important; clip-path: var(--dx-cut-sm); border-radius: 0 !important; padding: 13px !important; font: 900 13px var(--dx-font) !important; letter-spacing: 1px !important; text-transform: uppercase; box-shadow: 0 8px 22px rgba(255,23,68,.35) !important; }
+@media (max-width: 600px) {
+  #infoModal .modal-content { padding: 14px 12px 16px !important; border-radius: 16px !important; }
+  #infoModal .info-card { padding: 11px 12px 12px !important; }
+  #infoModal .info-card-desc, #infoModal .info-point { font-size: 12.5px !important; }
+}
