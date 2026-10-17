@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 343. 👩‍💼 Carga manual: asistente mujer + "Escribí aquí…" — SW v229
+**Pedido (owner):** "en carga manual poné una personita tipo mujer (parece que no tiene foto) y abajo 'escribí aquí'".
+`#waHeadAvatar` pasa a un SVG de asistente mujer (pelo, vincha verde, remera verde) y el placeholder del campo del chat
+es "Escribí aquí…".
+
 ### 342. 🧼 Sin parpadeo del login con sesión + verificación general — SW v228
 **Pedido (owner):** "limpiá un poco la página y verificá que no haya errores; cuando esté iniciado que no aparezca el
 login sin entrar".
