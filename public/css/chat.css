@@ -2446,3 +2446,11 @@ body.home-mini .ig-bar { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); 
 .ev-cta { bottom: 18px; }
 .ev-frame-wrap.is-expanded .ev-slides-dots { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
 .ev-frame-wrap.is-expanded .ev-cta { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+
+/* ══ #339 (owner, captura): en carga auto los botones de abajo se encimaban con el paso 2 cuando el contenido no
+   entra. El panel de tarjetas ahora scrollea ADENTRO (los botones Adjuntar/Retirar quedan siempre abajo, sin pisar
+   nada); cuando sobra lugar, sigue repartiendo el espacio (#333). ══ */
+body.home-full #homePanel { overflow-y: auto !important; overflow-x: hidden; min-height: 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+body.home-full #homePanel::-webkit-scrollbar { display: none; }
+body.home-full .home-dash { min-height: 0; flex: 1 0 auto; }
+body.home-full .home-actions-row, body.home-full .test-mini-row, body.home-full .plat-link-btn { flex: 0 0 auto; position: relative; z-index: 2; }

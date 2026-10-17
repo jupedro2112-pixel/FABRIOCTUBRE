@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 339. 🧱 Carga auto: botones de abajo sin encimarse — SW v225
+**Pedido (owner, captura):** "quedó mal encimado". Con #333 el panel crecía pero no podía achicarse, y en pantallas
+donde no entra todo los botones Adjuntar/Retirar tapaban el paso 2. Ahora `#homePanel` scrollea adentro cuando no
+entra (y reparte el espacio cuando sobra); los botones quedan siempre abajo, sin pisar nada.
+
 ### 338. 🔴 Botón rojo encima de la foto + sin leyenda abajo — SW v224
 **Pedidos (owner):** "el 'para cargar apretá aquí' ponelo encimado de las fotos así no perdemos lugar" y "el texto
 'fotos ilustrativas' de abajo sacalo, ya está arriba". La píldora roja y los puntos se superponen al borde inferior
