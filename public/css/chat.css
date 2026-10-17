@@ -2290,3 +2290,15 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .al-step-c { background: rgba(255,255,255,.06) !important; }
 .ev-slides { background: radial-gradient(120% 80% at 50% 0%, rgba(124,77,255,.16), transparent 60%), #10172b; }
 body.home-mini .support-panel { border-color: rgba(255,255,255,.12); }
+
+/* ══ #322: fotos COMPLETAS (recuadro con altura propia, foto entera) + botón chiquito sobre el final de la foto ══ */
+.entry-view { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.entry-view::-webkit-scrollbar { display: none; }
+.ev-frame-wrap { flex: 0 0 auto; min-height: min(64vh, 560px); height: min(64vh, 560px); }
+.ev-slide { align-items: center; padding: 8px 10px 36px; }
+.ev-slide img { height: 100%; max-height: 100%; width: auto; max-width: 100%; object-fit: contain; object-position: center; }
+.ev-slides-dots { position: absolute; left: 0; right: 0; bottom: 24px; z-index: 3; padding: 0; }
+.ev-slides-cap { position: absolute; left: 0; right: 0; bottom: 4px; z-index: 3; padding: 0 10px; font-size: 9px; }
+.ev-cta { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 4; margin: 0; padding: 6px 12px; border-radius: 999px; animation: none; box-shadow: 0 6px 18px rgba(255,23,68,.45), inset 0 1px 0 rgba(255,255,255,.3); white-space: nowrap; max-width: calc(100% - 24px); }
+.ev-cta:active { transform: translateX(-50%) scale(.97); }
+.ev-cta-b { font-size: 10.5px; letter-spacing: .6px; text-transform: none; text-shadow: none; }

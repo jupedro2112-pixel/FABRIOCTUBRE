@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 322. 🖼️ Fotos COMPLETAS + botón chiquito sobre el final de la foto — SW v208
+**Pedido (owner, captura):** "las fotos se tienen que ver completas; el botón abajo pero chiquito, tapando sólo la
+parte final de la foto". Causa: el recuadro tomaba el alto sobrante de la columna (con reembolsos + opiniones quedaba
+una franja). Ahora el recuadro tiene altura propia (64 vh, máx. 560 px), la foto entera (`contain`) sobre el fondo
+desenfocado, y el Inicio scrollea si no entra. El botón pasa ADENTRO del recuadro, como píldora chica sobre el borde
+inferior de la foto; puntos y leyenda quedan debajo.
+
 ### 321. 🎨 Fondo azul profundo (tono del mockup del owner) — SW v207
 **Pedido (owner, mockup):** "poné este tono para darle más claridad al fondo". Base `--dx-bg` #141c33 con degradé
 azul→azul oscuro y radiales violeta/cian/rojo más presentes; vidrio (`--dx-glass`) y bordes un poco más claros; barra

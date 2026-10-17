@@ -974,6 +974,8 @@
                         <div class="ev-slides-track" id="entrySlidesTrack"></div>
                         <div class="ev-slides-dots" id="entrySlidesDots"></div>
                         <div class="ev-slides-cap">📸 Son fotos ilustrativas de Girox · para jugar, cargá y tocá «Jugar ahora»</div>
+                        <!-- #322 (owner): botón chiquito sobre el final de la foto (no tapa el resto) -->
+                        <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ Para cargar ahora mismo · apretá aquí ›</span></button>
                     </div>
                     <!-- #278 (owner): el modo logo (#277) quedó mal → las páginas vuelven a verse embebidas al entrar. -->
                     <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
@@ -982,10 +984,6 @@
                         <button type="button" class="ev-st-open" style="display:none" onclick="VIP.home.entryOpen()">Abrir la plataforma ›</button>
                     </div>
                 </div>
-                <!-- #315 (owner): botón GRANDE con recuadro debajo de las fotos → carga automática -->
-                <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')">
-                    <span class="ev-cta-b">⚡ PARA CARGAR AHORA MISMO · APRETÁ AQUÍ ›</span>
-                </button>
                 <!-- #270 (owner): reseñas en la pantalla principal, abajo, deslizantes, "recuadro prolijo tipo Google":
                      nombre, estrellas y opinión. Las pinta reviews.js (renderEntrySlider) desde /api/reviews/public. -->
                 <div class="ev-reviews" id="entryReviews" style="display:none;"></div>
@@ -2118,7 +2116,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v207</div>
+                    <div class="pf-build" id="appBuildTag">app v208</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
