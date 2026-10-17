@@ -887,7 +887,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   **#270/#271:** el Inicio además pinta `#entryReviews` (`VIP.reviews.renderEntrySlider`, carrusel tipo Google).
   Perfil: usuario/clave/link + captura (`VIP.autoload.saveCapture` detecta el modal abierto → `pfCapture*`).
   Carga automática: alias (`#alAlias`) + titular, tarjetas de plataforma sin "Entrar" (tocar la fija la
-  suelta), y `#fireHomeCard` (Fueguito diario) entre Cargar y Retirar — es un espejo: el `#fireBtn` real
+  suelta), y `#fireHomeCard` (Fueguito diario, desde #272 debajo del saldo a todo el ancho) — es un espejo: el `#fireBtn` real
   sigue en Perfil y fire.js le cuelga el listener ahí. El cartel del chat es una frase (`/sys_home_banner`)
   con "Ir a carga automática".
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin

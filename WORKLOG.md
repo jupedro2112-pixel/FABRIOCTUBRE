@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 272. 🧊 Toda la barra con el estilo del Inicio · Fueguito diario arriba de la carga automática — SW v165
+**Pedido (owner):** "aparte del Inicio, cambiá el resto de los íconos con el mismo estilo; el fueguito en
+carga automática sacalo del medio y ponelo en la parte superior".
+- Los 4 botones restantes (`.tn-btn:not(.tn-home)`) pasan a **íconos SVG de trazo** (rayo, chat, info,
+  perfil) en cian con halo, sobre vidrio oscuro con corte diamantado (clip-path) y borde cian tenue; el
+  activo vira a rojo (borde + ícono) como el Inicio. El contador de no leídos de Carga manual sigue en su
+  ícono. El Inicio queda igual y sigue siendo el más grande.
+- `#fireHomeCard` salió de la fila Cargar/Retirar y va **debajo del saldo**, a todo el ancho
+  (`.fire-home-top`), siempre dentro de `#homeFull` (sólo se ve en carga automática). Mismo cableado
+  (click en `#fireBtn`, espejo de racha/estado).
+
 ### 271. 🔥 Carga automática: alias+titular, plataformas explicadas (sin "Entrar"), Fueguito diario entre Cargar y Retirar · cartel del chat corto — SW v164
 **Pedidos (owner, 3 mensajes seguidos):** "en carga automática agregá alias y titular; explicá que podés
 elegir cualquiera de las plataformas, dejar fija 1 o, si no elegís, que al entrar la carga aparezca un
