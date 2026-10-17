@@ -2199,3 +2199,7 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 /* ══ #305: cabecera del chat — asistente ══ */
 .wa-head .wa-assist { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px rgba(37,211,102,.45); flex: 0 0 auto; }
 .wa-head .wa-assist svg { width: 40px; height: 40px; display: block; }
+
+/* ══ #307: carga mínima también en el cartel del chat manual ══ */
+.svb-min { display: block; width: 100%; text-align: center; margin-top: 4px; font: 700 10px var(--dx-font); color: #e6e9f2; }
+.svb-min b { color: var(--dx-money); }

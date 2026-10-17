@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 307. 🏠 Inicio SIEMPRE al entrar + carga mínima en más lugares + hallazgo: producción sirve el SW v57 — SW v195
+**Pedidos (owner):** "cuando la gente entre que aparezca Inicio como página principal siempre y de ahí vayan a carga
+auto o donde quieran — importante"; "la carga mínima sigue sin aparecer, ponela".
+- `_initHomeMode` arranca SIEMPRE en `play` (Inicio) y borra el modo recordado de la sesión.
+- Carga mínima además en el paso 2 ("Carga mínima $5.000. Se acredita sola.") y en el cartel "Recomendable" del
+  chat manual (`#serviceBannerMin`, lo pinta `_paintMinDeposit`).
+- ⚠️ **Hallazgo:** `https://vipcargas.com/firebase-messaging-sw.js` devuelve `CACHE_VERSION = 'v57'` (Cloudflare
+  BYPASS, no-store): **producción está MUY atrasada** respecto del repo (hoy v195). El owner ve las novedades en otro
+  entorno (clon / local); hay que verificar en qué URL prueba y redeployar producción desde `main`. Mientras
+  producción esté en v57, nada de lo de hoy se ve en vipcargas.com.
+
 ### 306. 🔗 Link de ingreso general: vipcargas.com/ingreso (landing con campaña INGRESO)
 **Pedido (owner):** "¿no me podés generar un link sobre el que tenemos con un / y agregar 'landing ingreso', y pasarme
 cómo quedó?".

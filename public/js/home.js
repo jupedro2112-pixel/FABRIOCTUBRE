@@ -122,8 +122,10 @@
         try { VIP.ui.copyText(v); } catch (_) { try { navigator.clipboard.writeText(v); } catch (__) {} }
     }
     function _initHomeMode() {
-        let m = 'play';
-        try { const v = sessionStorage.getItem(HOME_MODE_KEY); if (v === 'full' || v === 'mini') m = v; } catch (_) {}
+        // #307 (owner): al entrar SIEMPRE arranca en Inicio; desde ahí van a Carga auto / manual. (Antes se
+        // recordaba el último modo dentro de la sesión: ya no.)
+        const m = 'play';
+        try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
         try { const c = localStorage.getItem(HOME_BANNER_KEY); if (c) _paintHomeBanner(JSON.parse(c)); } catch (_) {}
@@ -270,6 +272,7 @@
         const a = _el('loadHereMin'); if (a) a.textContent = txt ? ('carga mínima ' + txt + ' · se acredita solo') : 'se acredita solo';
         const b = _el('alMinDep'); if (b) { b.textContent = txt ? ('· mínimo ' + txt) : ''; b.style.display = txt ? '' : 'none'; }
         const c = _el('alMinLine'); if (c) { const bb = c.querySelector('b'); if (bb) bb.textContent = txt; c.style.display = txt ? '' : 'none'; }
+        const d = _el('serviceBannerMin'); if (d) { const bb = d.querySelector('b'); if (bb) bb.textContent = txt; d.style.display = txt ? '' : 'none'; }
     }
     // #296: con UNA sola plataforma habilitada (Ganamos apagada hasta tener la API) los textos no la nombran.
     function _paintPlatformTexts() {
