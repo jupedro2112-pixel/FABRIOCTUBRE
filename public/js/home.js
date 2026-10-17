@@ -342,6 +342,16 @@
             _slidesGo(_slIdx + 1);
         }, 2000);
     }
+    // #323 (owner): expandir el recuadro de fotos a pantalla completa (se ven enteras) y achicar.
+    function toggleEntryExpand(force) {
+        const w = document.querySelector('.ev-frame-wrap'); const b = _el('entryExpandBtn');
+        if (!w) return;
+        const on = typeof force === 'boolean' ? force : !w.classList.contains('is-expanded');
+        w.classList.toggle('is-expanded', on);
+        document.body.classList.toggle('ev-expanded', on);
+        if (b) b.textContent = on ? '✕ Achicar' : '⛶ Ver completas';
+        try { const tr = _el('entrySlidesTrack'); if (tr) setTimeout(() => tr.scrollTo({ left: _slIdx * tr.clientWidth }), 60); } catch (_) {}
+    }
     function _slidesStop() { clearInterval(_slTimer); _slTimer = null; const box = _el('entrySlides'); if (box) box.style.display = 'none'; }
     function entryShowSite() {
         const f = _el('entryFrame'); if (!f) return;
@@ -378,6 +388,7 @@
     }
     function _entryUnload() {
         clearTimeout(_entryTimer);
+        try { toggleEntryExpand(false); } catch (_) {} // #323
         _slidesStop(); // #312
         const f = _el('entryFrame');
         if (f && f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank'; // libera la página del casino
@@ -1445,7 +1456,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

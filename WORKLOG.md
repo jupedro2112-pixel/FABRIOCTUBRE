@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 323. ⛶ Botón "Ver completas / Achicar" en las fotos — SW v209
+**Pedido (owner):** "las fotos se tapan; poné un botón de expandir para verlas completas y que se pueda achicar".
+`#entryExpandBtn` arriba a la derecha del recuadro: expande el recuadro a pantalla completa (`.is-expanded`, fija,
+foto entera, el mismo botón pasa a "✕ Achicar" en rojo, la píldora de cargar y los puntos quedan abajo) y vuelve.
+Al salir del Inicio se achica solo.
+
 ### 322. 🖼️ Fotos COMPLETAS + botón chiquito sobre el final de la foto — SW v208
 **Pedido (owner, captura):** "las fotos se tienen que ver completas; el botón abajo pero chiquito, tapando sólo la
 parte final de la foto". Causa: el recuadro tomaba el alto sobrante de la columna (con reembolsos + opiniones quedaba

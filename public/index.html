@@ -974,6 +974,8 @@
                         <div class="ev-slides-track" id="entrySlidesTrack"></div>
                         <div class="ev-slides-dots" id="entrySlidesDots"></div>
                         <div class="ev-slides-cap">📸 Son fotos ilustrativas de Girox · para jugar, cargá y tocá «Jugar ahora»</div>
+                        <!-- #323 (owner): expandir las fotos a pantalla completa / achicar -->
+                        <button type="button" class="ev-expand" id="entryExpandBtn" onclick="VIP.home.toggleEntryExpand()">⛶ Ver completas</button>
                         <!-- #322 (owner): botón chiquito sobre el final de la foto (no tapa el resto) -->
                         <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ Para cargar ahora mismo · apretá aquí ›</span></button>
                     </div>
@@ -2116,7 +2118,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v208</div>
+                    <div class="pf-build" id="appBuildTag">app v209</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

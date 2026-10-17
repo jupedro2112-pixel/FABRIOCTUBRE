@@ -2302,3 +2302,15 @@ body.home-mini .support-panel { border-color: rgba(255,255,255,.12); }
 .ev-cta { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 4; margin: 0; padding: 6px 12px; border-radius: 999px; animation: none; box-shadow: 0 6px 18px rgba(255,23,68,.45), inset 0 1px 0 rgba(255,255,255,.3); white-space: nowrap; max-width: calc(100% - 24px); }
 .ev-cta:active { transform: translateX(-50%) scale(.97); }
 .ev-cta-b { font-size: 10.5px; letter-spacing: .6px; text-transform: none; text-shadow: none; }
+
+/* ══ #323: botón "Ver completas / Achicar" del recuadro de fotos ══ */
+.ev-expand { position: absolute; right: 10px; top: 10px; z-index: 5; background: rgba(6,7,13,.72); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 5px 10px; font: 800 10px var(--dx-font); letter-spacing: .5px; cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.ev-frame-wrap.is-expanded { position: fixed; inset: 0; z-index: 9600; height: auto; min-height: 0; border-radius: 0; border: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: #0a0f1f; }
+.ev-frame-wrap.is-expanded .ev-slide { padding: 46px 8px 64px; }
+.ev-frame-wrap.is-expanded .ev-slide img { border-radius: 14px; }
+.ev-frame-wrap.is-expanded .ev-expand { top: calc(10px + env(safe-area-inset-top, 0px)); font-size: 12px; padding: 8px 14px; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; border: 0; }
+.ev-frame-wrap.is-expanded .ev-slide-tag { top: calc(14px + env(safe-area-inset-top, 0px)); }
+.ev-frame-wrap.is-expanded .ev-cta { bottom: calc(44px + env(safe-area-inset-bottom, 0px)); }
+.ev-frame-wrap.is-expanded .ev-slides-dots { bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+.ev-frame-wrap.is-expanded .ev-slides-cap { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+body.ev-expanded { overflow: hidden; }
