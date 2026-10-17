@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 284. 🧱 Pasos 1 y 2 de "Cargá acá" en recuadros, compactos — SW v176
+**Pedido (owner):** "el paso 1 y 2 en cargas hacelo con recuadro y que se entienda, se pierde ahí; achicalo para
+que no haya deslizante".
+- Cada paso va en su propio recuadro (paso 2 con borde/fondo verde, el mismo color del botón "Cargá aquí").
+  Título del paso 2: "Adjuntá la foto del comprobante" + "Tocá el botón verde «Cargá aquí» de abajo 👇 y mandá
+  la captura. Se acredita sola".
+- Todo más chico (CBU 13 px en una línea, alias/banco/titular compactos, menos padding) para que la carga
+  automática entre en una pantalla sin scroll. Sólo CSS al pie de chat.css (#284) + ese texto.
+
 ### 283. 🎁 CARGA GRATIS por instalar la app, ofrecida en la PRIMERA carga (retención) — SW v175, admin-sw v62
 **Pedido (owner):** "en la primera carga ofrecer una carga gratis si no instaló la app, para retención: darle la
 opción 'quiero jugar y luego vengo a instalar la app para reclamar una carga sin cargo' → botón grande abajo
