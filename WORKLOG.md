@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 332. 🧯 Fotos del Inicio sin caché viejo (?b=versión) — SW v218
+**Contexto:** la captura del owner seguía mostrando una foto de la primera tanda con el mismo nombre de archivo: el
+navegador la tenía en su caché HTTP. Ahora `_slideUrl` agrega `?b=<versión de #appBuildTag>` a cada foto, así cada
+versión de la app pide archivos "nuevos" y nunca se ve una foto anterior. (Más el renombre g1..g5 de #331.)
+
 ### 331. 🖼️ Fotos del Inicio: sólo las últimas, nombres nuevos y orden del owner — SW v217
 **Pedido (owner, 5 capturas):** "borrá todas las otras y dejá estas, sin expandir, con recuadro". Son las mismas 5 de #327;
 se renombraron a `g1..g5.jpg` (así ningún caché viejo puede mostrar una anterior con el mismo nombre) y quedaron en el

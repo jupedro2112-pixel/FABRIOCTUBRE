@@ -320,12 +320,14 @@
     // #331: nombres nuevos (g1..g5) para que ningún caché viejo muestre fotos anteriores. Orden del owner: Jokers, Fire Joker, Starburst, Sugar Rush, Money Time.
     const ENTRY_SLIDES = ['/images/girox-slides/g1.jpg', '/images/girox-slides/g2.jpg', '/images/girox-slides/g3.jpg', '/images/girox-slides/g4.jpg', '/images/girox-slides/g5.jpg'];
     let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
+    // #332: las fotos se piden con la versión de la app pegada (?b=NNN) → el navegador nunca muestra una foto vieja guardada.
+    function _slideUrl(u) { const t = (_el('appBuildTag') || {}).textContent || ''; const m = /v(\d+)/.exec(t); return u + (m ? '?b=' + m[1] : ''); }
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
         if (!tr || _slBuilt) return;
         // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").
         // #319: cada foto lleva la etiqueta "FOTO ILUSTRATIVA · acá no se juega" para que nadie intente tocarla.
-        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"><span class="ev-slide-tag">📸 FOTO ILUSTRATIVA · acá no se juega</span></div>').join('');
+        tr.innerHTML = ENTRY_SLIDES.map((u0, i) => { const u = _slideUrl(u0); return '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"><span class="ev-slide-tag">📸 FOTO ILUSTRATIVA · acá no se juega</span></div>'; }).join('');
         if (dots) dots.innerHTML = ENTRY_SLIDES.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
         const pause = () => { _slPausedUntil = Date.now() + 5000; };
         ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
