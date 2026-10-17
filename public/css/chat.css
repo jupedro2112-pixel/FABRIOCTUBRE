@@ -2162,3 +2162,17 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 /* ══ #302: aclaración de carga mínima bien visible ══ */
 .al-minline { display: inline-block; margin: 6px auto 0; padding: 4px 10px; border-radius: 999px; background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.45); color: #f4f6fb; font: 700 11px var(--dx-font); letter-spacing: .3px; }
 .al-minline b { color: var(--dx-money); font-weight: 900; }
+
+/* ══ #303: tarjetas Girox/Ganamos más chicas en la carga automática (sin scroll) + saldo apilado ══ */
+#platformsCard { padding: 6px 8px 7px !important; }
+#platformsCard .home-card-sub { font-size: 9.5px !important; line-height: 1.25 !important; margin-bottom: 4px !important; }
+#platformsCard .plat-play-row { gap: 5px !important; }
+#platformsCard .plat-play-btn { padding: 5px 6px 6px !important; gap: 0 !important; min-height: 0 !important; }
+#platformsCard .plat-logo { width: 20px !important; height: 20px !important; margin: 0 !important; }
+#platformsCard .plat-play-name { font-size: 11.5px !important; letter-spacing: .8px !important; }
+#platformsCard .plat-play-sub { font-size: 8px !important; letter-spacing: .5px !important; }
+#platformsCard .plat-reco { font-size: 7px !important; padding: 1px 5px !important; margin-top: 1px !important; }
+#platformsCard .plat-check { top: 4px !important; right: 6px !important; width: 15px !important; height: 15px !important; font-size: 9px !important; }
+.bs-balance { flex-direction: column !important; align-items: flex-start !important; gap: 0 !important; line-height: 1.05; }
+.balance-strip .dash-balance-label { font-size: 8.5px !important; }
+.balance-strip .dash-balance-amount { font-size: 14px !important; }

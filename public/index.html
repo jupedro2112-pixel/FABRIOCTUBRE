@@ -2613,6 +2613,20 @@
                 // FCM asocia el token FCM a la registration del SW. Si el SW activo es
                 // user-sw.js y FCM usa firebase-messaging-sw.js, los tokens no coinciden.
                 // Al usar un único SW (firebase-messaging-sw.js) se elimina ese conflicto.
+                // #303: si YA había un SW controlando y entra uno nuevo (CACHE_VERSION nueva), recargar UNA vez para que
+                // HTML y JS queden de la misma versión (antes el JS viejo quedaba del caché y "se veía y desaparecía").
+                try {
+                    if (!window.__swReloadHooked) {
+                        window.__swReloadHooked = true;
+                        const hadController = !!navigator.serviceWorker.controller;
+                        let refreshing = false;
+                        navigator.serviceWorker.addEventListener('controllerchange', function () {
+                            if (!hadController || refreshing) return;
+                            refreshing = true;
+                            setTimeout(function () { location.reload(); }, 300);
+                        });
+                    }
+                } catch (_) {}
                 const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
                     updateViaCache: 'none'
                 });

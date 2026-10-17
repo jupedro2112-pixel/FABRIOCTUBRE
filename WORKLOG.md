@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 303. 🔄 Recarga automática al actualizar · tarjetas de plataforma compactas · saldo apilado — SW v192
+**Pedidos (owner):** "la carga mínima se ve y desaparece"; "achicá el recuadro de Girox y Ganamos en carga auto así
+no tengo que deslizar"; "el saldo dejalo pero poné el número abajo así no se junta con lo de la derecha".
+- **Causa del "se ve y desaparece":** los JS propios van stale-while-revalidate en el SW: en la primera apertura tras
+  una actualización el HTML ya es nuevo pero `home.js` sale del caché viejo (el de v188/189 ocultaba el texto). Fix de
+  fondo: al entrar un SW nuevo (`controllerchange` con un SW previo controlando) la página se recarga UNA vez sola,
+  así HTML y JS quedan siempre de la misma versión. Vale para todas las actualizaciones futuras.
+- `#platformsCard`: padding, logo (20 px), nombre (11,5 px), subtítulo y "Recomendado" más chicos → la carga
+  automática entra sin scroll.
+- Saldo: "Tu saldo" arriba y el número abajo (columna), sin chocar con el botón de la derecha.
+
 ### 302. 💵 Carga mínima: siempre visible — SW v191
 **Pedido (owner):** "la carga mínima de 5000 no la estoy viendo como aclaración".
 - Causa: sin el redeploy el server no manda `minDeposit` y `_paintMinDeposit` borraba el texto por defecto. Ahora
