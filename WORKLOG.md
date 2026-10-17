@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 326. ↩️ Fondo como estaba antes — SW v212
+**Pedido (owner):** "el fondo dejalo como estaba antes de la actualización". Se quitaron los bloques CSS de #321 (azul
+profundo) y #325 (más oscuro + barra transparente): vuelve el fondo original (`--dx-bg` #06070d, vidrio y barra de
+arriba como estaban).
+
 ### 325. 🎨 Fondo un poco más oscuro + barra superior con el mismo fondo — SW v211
 **Pedido (owner):** "el fondo está cargado: dale un poco más de oscuridad, y la parte superior el mismo fondo porque
 quedó diferente". `--dx-bg` #0e1426 (entre el azul de #321 y el negro original), radiales más suaves, patrón al 4%;

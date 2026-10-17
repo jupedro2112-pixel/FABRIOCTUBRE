@@ -2267,30 +2267,6 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .ev-cta { flex-direction: row; margin: 4px 8px 3px; padding: 8px 12px; border-radius: 12px; }
 .ev-cta-b { font-size: 12px; letter-spacing: .9px; line-height: 1.15; }
 
-/* ══ #321 (owner, mockup): tono AZUL PROFUNDO de fondo para dar claridad (antes casi negro). Mismo estilo:
-   vidrio, cian/violeta; sólo cambia la base y el vidrio es un poco más claro. ══ */
-:root {
-  --dx-bg: #141c33;
-  --dx-glass: linear-gradient(160deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,.05) 60%, rgba(0,229,255,.06) 100%);
-  --dx-border: rgba(255,255,255,.14);
-}
-.chat-screen {
-  background:
-    radial-gradient(900px 520px at 85% -10%, rgba(124,77,255,.42), transparent 62%),
-    radial-gradient(760px 460px at -10% 35%, rgba(0,229,255,.22), transparent 60%),
-    radial-gradient(600px 400px at 50% 110%, rgba(255,23,68,.14), transparent 60%),
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 100% 36px,
-    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 36px 100%,
-    linear-gradient(180deg, #182240 0%, #141c33 45%, #10172b 100%) !important;
-}
-.chat-screen::before { opacity: .05; }
-.header.topnav { background: linear-gradient(180deg, rgba(24,34,64,.92), rgba(20,28,51,.85)) !important; }
-.tn-btn { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); }
-.home-card, .ev-hero, #entryReviews.ev-reviews, .fire-home-card, .balance-strip, #serviceBanner { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 10px 30px rgba(6,10,24,.45); }
-.al-step-c { background: rgba(255,255,255,.06) !important; }
-.ev-slides { background: radial-gradient(120% 80% at 50% 0%, rgba(124,77,255,.16), transparent 60%), #10172b; }
-body.home-mini .support-panel { border-color: rgba(255,255,255,.12); }
-
 /* ══ #322: fotos COMPLETAS (recuadro con altura propia, foto entera) + botón chiquito sobre el final de la foto ══ */
 .entry-view { overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .entry-view::-webkit-scrollbar { display: none; }
@@ -2319,16 +2295,3 @@ body.ev-expanded { overflow: hidden; }
 .ev-slides-cap .ev-plat-link { color: var(--dx-cyan); font-weight: 900; text-decoration: underline; text-underline-offset: 2px; letter-spacing: .3px; }
 .ev-slides-cap { font-size: 10.5px; color: #e1e6f0; }
 
-/* ══ #325 (owner): fondo un poco MÁS OSCURO (menos cargado) y la barra de arriba con el MISMO fondo (transparente sobre él) ══ */
-:root { --dx-bg: #0e1426; }
-.chat-screen {
-  background:
-    radial-gradient(900px 520px at 85% -10%, rgba(124,77,255,.26), transparent 62%),
-    radial-gradient(760px 460px at -10% 35%, rgba(0,229,255,.13), transparent 60%),
-    radial-gradient(600px 400px at 50% 110%, rgba(255,23,68,.09), transparent 60%),
-    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 100% 36px,
-    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 36px 100%,
-    linear-gradient(180deg, #121a30 0%, #0e1426 45%, #0b1020 100%) !important;
-}
-.chat-screen::before { opacity: .04; }
-.header.topnav { background: transparent !important; border-bottom: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
