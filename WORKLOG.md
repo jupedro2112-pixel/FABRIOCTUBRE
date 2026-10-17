@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 315. 🔴 Botón grande debajo de las fotos: "PARA CARGAR AHORA MISMO · APRETÁ AQUÍ" — SW v201
+**Pedido (owner).** `.ev-cta` (rojo con borde dorado, pulso suave) debajo del carrusel del Inicio → `setHomeMode('full')`
+(carga automática).
+
 ### 314. 🖼️ Fotos del Inicio a todo el ancho con recuadro — SW v200
 **Pedido (owner):** "ensanchá las fotos al ancho de la app o ponele un recuadro, que no quede incompleta". Cada foto
 ocupa todo el ancho dentro de un recuadro con borde cian (recorte `cover` anclado arriba) y el fondo del recuadro es

@@ -2223,3 +2223,11 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .ev-slide { position: relative; padding: 8px 8px 4px; background-size: cover; background-position: center; align-items: flex-start; }
 .ev-slide::before { content: ''; position: absolute; inset: 0; background: rgba(6,7,13,.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
 .ev-slide img { position: relative; width: 100%; max-width: 100%; height: 100%; max-height: 100%; object-fit: cover; object-position: top center; border-radius: 14px; border: 1px solid rgba(0,229,255,.35); box-shadow: 0 12px 34px rgba(0,0,0,.6), 0 0 24px rgba(0,229,255,.12); }
+
+/* ══ #315: botón grande "PARA CARGAR AHORA MISMO · APRETÁ AQUÍ" debajo de las fotos ══ */
+.ev-cta { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 3px; margin: 6px 8px 4px; padding: 11px 14px 12px; border-radius: 16px; border: 1px solid rgba(255,209,102,.6); background: linear-gradient(135deg, #ff1744 0%, #ff6b6b 60%, #ff8a65 100%); color: #06070d; cursor: pointer; box-shadow: 0 10px 28px rgba(255,23,68,.45), inset 0 1px 0 rgba(255,255,255,.35); animation: evCta 2.2s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+.ev-cta:active { transform: scale(.98); }
+.ev-cta-t { font: 900 12px var(--dx-font); letter-spacing: 1.6px; text-transform: uppercase; opacity: .9; }
+.ev-cta-b { font: 900 18px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255,255,255,.3); }
+@keyframes evCta { 0%, 100% { box-shadow: 0 10px 28px rgba(255,23,68,.45), inset 0 1px 0 rgba(255,255,255,.35); } 50% { box-shadow: 0 10px 34px rgba(255,23,68,.7), 0 0 0 3px rgba(255,209,102,.25), inset 0 1px 0 rgba(255,255,255,.35); } }
+@media (prefers-reduced-motion: reduce) { .ev-cta { animation: none; } }
