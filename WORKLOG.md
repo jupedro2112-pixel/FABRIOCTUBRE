@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 324. 🔗 Leyenda del carrusel = link de la plataforma — SW v210
+**Pedido (owner, captura):** "eso sacalo y poné el link de la plataforma para que la gente pueda verla antes de jugar:
+'Link plataforma: www.1girox.com (mirala)'; si abre, que abra tipo externo dentro de la app". La leyenda pasa a ser
+ese link; `VIP.home.entryViewSite` → `openPlatformTab('girox', {test:true})`: la web pública de Girox en una ventana
+aparte con la línea "‹ Volver a cargas" (sin login, sólo para verla).
+
 ### 323. ⛶ Botón "Ver completas / Achicar" en las fotos — SW v209
 **Pedido (owner):** "las fotos se tapan; poné un botón de expandir para verlas completas y que se pueda achicar".
 `#entryExpandBtn` arriba a la derecha del recuadro: expande el recuadro a pantalla completa (`.is-expanded`, fija,

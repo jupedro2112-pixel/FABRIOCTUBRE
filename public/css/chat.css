@@ -2314,3 +2314,7 @@ body.home-mini .support-panel { border-color: rgba(255,255,255,.12); }
 .ev-frame-wrap.is-expanded .ev-slides-dots { bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 .ev-frame-wrap.is-expanded .ev-slides-cap { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
 body.ev-expanded { overflow: hidden; }
+
+/* ══ #324: link de la plataforma en la leyenda del carrusel ══ */
+.ev-slides-cap .ev-plat-link { color: var(--dx-cyan); font-weight: 900; text-decoration: underline; text-underline-offset: 2px; letter-spacing: .3px; }
+.ev-slides-cap { font-size: 10.5px; color: #e1e6f0; }
