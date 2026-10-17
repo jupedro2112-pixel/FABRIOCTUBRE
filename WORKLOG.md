@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 319. 📸 Marcar que son FOTOS (no se juega ahí) — SW v205
+**Pedido (owner):** "marcando bien que son fotos y que la gente no se piense que de ahí se juega". Etiqueta dorada
+arriba de cada foto ("📸 FOTO ILUSTRATIVA · acá no se juega"), leyenda abajo "Son fotos ilustrativas de Girox · para
+jugar, cargá y tocá «Jugar ahora»" y las imágenes no reaccionan al toque (`pointer-events:none`; el deslizamiento
+sigue siendo el de la pista).
+
 ### 318. 🖼️ Foto principal (página completa de Girox) primera, con recuadro fino — SW v204
 **Pedido (owner, captura):** "esta foto es la principal de la página completa; ponele un recuadro bien, que quede
 fina y entendible". Ahora es `girox-slides/1.jpg` (las anteriores pasan a 2..6, seis fotos en total) y todas las fotos

@@ -2257,3 +2257,8 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 /* ══ #318: recuadro fino tipo pantalla de teléfono para las fotos del Inicio ══ */
 .ev-slide { padding: 8px 10px 4px; }
 .ev-slide img { border-radius: 18px; border: 3px solid #161a27; box-shadow: 0 0 0 1px rgba(0,229,255,.45), 0 0 22px rgba(0,229,255,.18), 0 14px 36px rgba(0,0,0,.65); background: #000; }
+
+/* ══ #319: que se note que son FOTOS (no se juega desde acá) ══ */
+.ev-slide img { pointer-events: none; user-select: none; -webkit-user-select: none; }
+.ev-slide-tag { position: absolute; left: 18px; top: 16px; z-index: 2; font: 900 9px var(--dx-font); letter-spacing: 1px; text-transform: uppercase; color: #06070d; background: linear-gradient(135deg, #ffd166, #ffb347); border-radius: 999px; padding: 4px 9px; box-shadow: 0 4px 14px rgba(0,0,0,.45); pointer-events: none; }
+.ev-slides-cap { font-size: 9.5px; text-transform: none; letter-spacing: .2px; color: #c9d1e3; padding: 0 10px 7px; line-height: 1.3; }

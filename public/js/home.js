@@ -323,7 +323,8 @@
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
         if (!tr || _slBuilt) return;
         // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").
-        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async"></div>').join('');
+        // #319: cada foto lleva la etiqueta "FOTO ILUSTRATIVA · acá no se juega" para que nadie intente tocarla.
+        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"><span class="ev-slide-tag">📸 FOTO ILUSTRATIVA · acá no se juega</span></div>').join('');
         if (dots) dots.innerHTML = ENTRY_SLIDES.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
         const pause = () => { _slPausedUntil = Date.now() + 5000; };
         ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
