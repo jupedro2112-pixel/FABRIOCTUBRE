@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 325. 🎨 Fondo un poco más oscuro + barra superior con el mismo fondo — SW v211
+**Pedido (owner):** "el fondo está cargado: dale un poco más de oscuridad, y la parte superior el mismo fondo porque
+quedó diferente". `--dx-bg` #0e1426 (entre el azul de #321 y el negro original), radiales más suaves, patrón al 4%;
+`.header.topnav` transparente sobre ese fondo (sin franja propia).
+
 ### 324. 🔗 Leyenda del carrusel = link de la plataforma — SW v210
 **Pedido (owner, captura):** "eso sacalo y poné el link de la plataforma para que la gente pueda verla antes de jugar:
 'Link plataforma: www.1girox.com (mirala)'; si abre, que abra tipo externo dentro de la app". La leyenda pasa a ser

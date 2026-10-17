@@ -2318,3 +2318,17 @@ body.ev-expanded { overflow: hidden; }
 /* ══ #324: link de la plataforma en la leyenda del carrusel ══ */
 .ev-slides-cap .ev-plat-link { color: var(--dx-cyan); font-weight: 900; text-decoration: underline; text-underline-offset: 2px; letter-spacing: .3px; }
 .ev-slides-cap { font-size: 10.5px; color: #e1e6f0; }
+
+/* ══ #325 (owner): fondo un poco MÁS OSCURO (menos cargado) y la barra de arriba con el MISMO fondo (transparente sobre él) ══ */
+:root { --dx-bg: #0e1426; }
+.chat-screen {
+  background:
+    radial-gradient(900px 520px at 85% -10%, rgba(124,77,255,.26), transparent 62%),
+    radial-gradient(760px 460px at -10% 35%, rgba(0,229,255,.13), transparent 60%),
+    radial-gradient(600px 400px at 50% 110%, rgba(255,23,68,.09), transparent 60%),
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 100% 36px,
+    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 36px 100%,
+    linear-gradient(180deg, #121a30 0%, #0e1426 45%, #0b1020 100%) !important;
+}
+.chat-screen::before { opacity: .04; }
+.header.topnav { background: transparent !important; border-bottom: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
