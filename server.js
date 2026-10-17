@@ -19859,15 +19859,23 @@ app.get('/api/reviews/mine', authMiddleware, async (req, res) => {
 app.get('/api/reviews/public', async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(50, parseInt(req.query.limit, 10) || 20));
+    // #279 (owner): el carrusel del Inicio pide `random=1` → muestra reseñas AL AZAR (cambian en cada apertura).
+    const random = String(req.query.random || '') === '1';
     const [aggRes, items] = await Promise.all([
       Review.aggregate([
         { $match: { approved: true } },
         { $group: { _id: null, total: { $sum: 1 }, sumStars: { $sum: '$stars' } } }
       ]),
-      Review.find({ approved: true }, { stars: 1, comment: 1, username: 1, updatedAt: 1, _id: 0 })
-        .sort({ approvedAt: -1, updatedAt: -1 })
-        .limit(limit)
-        .lean()
+      random
+        ? Review.aggregate([
+            { $match: { approved: true, comment: { $exists: true, $ne: '' } } },
+            { $sample: { size: limit } },
+            { $project: { stars: 1, comment: 1, username: 1, updatedAt: 1, _id: 0 } }
+          ])
+        : Review.find({ approved: true }, { stars: 1, comment: 1, username: 1, updatedAt: 1, _id: 0 })
+            .sort({ approvedAt: -1, updatedAt: -1 })
+            .limit(limit)
+            .lean()
     ]);
     const stats = aggRes[0] || { total: 0, sumStars: 0 };
     const total = stats.total || 0;

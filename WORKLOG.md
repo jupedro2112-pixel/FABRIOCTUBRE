@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 279. 🎲 Opiniones: 30 reseñas al azar en cada apertura — SW v172
+**Pedido (owner):** "en opiniones de jugadores muestra sólo 2; tendría que mostrar siempre 30, al azar,
+cambiando con cada inicio".
+- Hoy se ven 2 porque en producción todavía están sólo las reseñas reales: las **33 sembradas (#273)
+  entran con el próximo redeploy**.
+- `GET /api/reviews/public?random=1` → `$sample` sobre las aprobadas con comentario (hasta `limit`, máx. 50).
+  El carrusel pide `limit=30&random=1` y cachea sólo mientras la página está abierta: cada apertura de la
+  app es otro sorteo. El modal Info y la pantalla de ingreso siguen con el orden por fecha.
+
 ### 278. ↩️ Vuelven las páginas embebidas al entrar (modo logo descartado) — SW v171
 **Pedido (owner):** "retomá lo último y dejá las dos páginas como estaba en Inicio, que se vean; quedó mal".
 - Se descartó el modo LOGO / "Ver página" / contador de ingresos / test de #277: `_entryLoad` vuelve a

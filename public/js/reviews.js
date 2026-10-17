@@ -162,12 +162,14 @@
     }
 
     // ---------- #270: reseñas deslizantes al pie del Inicio (tipo Google) ----------
-    let _pubCache = null, _pubAt = 0;
+    // #279 (owner): "siempre 30 reseñas, al azar, que cambien con cada inicio" → random=1 y cache por
+    // apertura de la app (vive mientras la página esté abierta; al reabrir, otro sorteo).
+    let _pubCache = null;
     async function _loadPublic() {
-        if (_pubCache && (Date.now() - _pubAt) < 120000) return _pubCache;
+        if (_pubCache) return _pubCache;
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=12');
-            if (r.ok) { _pubCache = await r.json(); _pubAt = Date.now(); }
+            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=30&random=1');
+            if (r.ok) _pubCache = await r.json();
         } catch (e) { /* best-effort */ }
         return _pubCache;
     }
@@ -192,7 +194,7 @@
         const items = ((pub && pub.items) || []).filter(function (it) {
             const c = (it.comment || '').trim();
             return c && !/^[1-5] estrellas$/.test(c);
-        }).slice(0, 10);
+        }).slice(0, 30);
         if (!total && !items.length) { box.style.display = 'none'; return; }
         let html = '<div class="rv-head"><span class="rv-g">Opiniones de jugadores</span>' +
             (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStars(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
