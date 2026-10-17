@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 359. 💸 Tarjeta "Reembolso" del Inicio: toma el % DIARIO (25) — SW v245
+**Pedido (owner, captura):** decía "hasta 3%" porque `renderHowItWorks` sólo miraba semanal/mensual (anterior a #349).
+Ahora el máximo incluye la escalera diaria: "hasta 25% de lo que perdés · diario".
+
 ### 358. ♠️ Ícono de la app: pica roja con borde dorado · nombre "CARGAS AUTOMATIC" — SW v244
 **Pedido (owner):** "cargas automatic ponele y el logo de un picas en forma de logo tipo para app". Ícono generado
 (pica roja brillante, borde dorado, fondo negro con brillo rojo) en los 10 tamaños de `public/icons/` (el "1G" viejo

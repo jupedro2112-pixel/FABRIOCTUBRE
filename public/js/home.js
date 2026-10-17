@@ -1368,9 +1368,10 @@
                 const w = _el('infoWeeklyMax'), m = _el('infoMonthlyMax');
                 if (w && mx(tbp.weekly)) w.textContent = mx(tbp.weekly);
                 if (m && mx(tbp.monthly)) m.textContent = mx(tbp.monthly);
-                // #269: tarjeta "Reembolso" del Inicio — % máximo real entre semanal y mensual.
-                const top = Math.max(mx(tbp.weekly), mx(tbp.monthly));
-                const sv = _el('evSvcRefund'); if (sv && top) sv.textContent = 'hasta ' + top + '% de lo que perdés';
+                // #269/#359: tarjeta "Reembolso" del Inicio — % máximo real entre DIARIO (#349), semanal y mensual.
+                const top = Math.max(mx(tbp.daily), mx(tbp.weekly), mx(tbp.monthly));
+                const sv = _el('evSvcRefund'); if (sv && top) sv.textContent = 'hasta ' + top + '% de lo que perdés' + (mx(tbp.daily) >= top ? ' · diario' : '');
+                const d = _el('infoDailyMax'); if (d && mx(tbp.daily)) d.textContent = mx(tbp.daily);
             }
         } catch (_) {}
         if (ref) {
