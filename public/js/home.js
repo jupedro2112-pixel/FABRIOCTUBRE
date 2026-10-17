@@ -1129,6 +1129,7 @@
             '<span class="plat-play-name">' + label + '</span>' +
             // #255 (owner): Girox lleva un "Recomendado" chiquito en rojo; #286: DEBAJO del nombre (antes flotaba arriba).
             (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') +
+            (soon ? '<span class="plat-soon-badge">🔜 Próximamente</span>' : '') + // #353 (owner): se entiende sin tocar
             // #271: sin "Entrar" acá (verlas = Inicio). Tocar la fija la suelta (vuelve el cartel al cargar).
             '<span class="plat-play-sub">' + (soon ? '🔜 Próximamente' : (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija')) + '</span>' +
             '</button></div>';

@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 353. 🔜 "Próximamente" visible debajo de Ganamos — SW v239
+**Pedido (owner, captura):** "ahí (tarjeta de plataformas) y en Inicio poné 'próximamente' abajo de Ganamos sin apretar,
+para que la gente entienda ya viendo". El texto existía pero el modo compacto ocultaba el subtítulo. Ahora la tarjeta
+lleva un chip amarillo `.plat-soon-badge` (siempre visible) y la pestaña del Inicio muestra el chip `.ev-soon` en una
+línea propia debajo del nombre.
+
 ### 352. 🖼️ Inicio: pase automático sin puntitos ni etiqueta; el botón de cargar donde estaban los puntos — SW v238
 **Pedido (owner, captura):** "el deslizante automático sí, pero sacá la parte inferior (los puntos no van); ahí mismo
 poné el botón de cargar ahora mismo; y la etiqueta 'foto ilustrativa' de arriba sacala". Se ocultan `.ev-slides-dots`

@@ -2486,3 +2486,10 @@ html.has-session body { background: #06070d; }
 .ev-slide { padding: 8px 10px 8px !important; }
 .ev-cta { bottom: 8px !important; }
 .ev-frame-wrap.is-expanded .ev-cta { bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important; }
+
+/* ══ #353 (owner): "Próximamente" visible debajo de Ganamos sin tocar (tarjeta de plataformas y pestaña del Inicio) ══ */
+.plat-soon-badge { display: block !important; margin-top: 3px; font: 900 8.5px/1.2 var(--dx-font); letter-spacing: .8px; text-transform: uppercase; color: #06070d; background: linear-gradient(135deg, #ffd166, #ffb347); border-radius: 999px; padding: 3px 8px; width: max-content; max-width: 100%; margin-left: auto; margin-right: auto; box-shadow: 0 2px 8px rgba(255,209,102,.35); }
+.plat-play-wrap.soon .plat-play-btn { opacity: .85 !important; filter: none !important; }
+.plat-play-wrap.soon .plat-play-name { opacity: .7; }
+.ev-tab.soon { flex-wrap: wrap; justify-content: center; row-gap: 2px; opacity: 1; }
+.ev-tab.soon .ev-soon { display: block; flex: 1 1 100%; margin: 0; text-align: center; font-size: 8px; padding: 2px 6px; width: max-content; margin-left: auto; margin-right: auto; }
