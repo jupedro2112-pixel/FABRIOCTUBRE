@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 328. 🔗 Botón "Link plataforma" en carga auto y carga manual — SW v214
+**Pedido (owner):** "en cargas auto y cargas manual poné 'link plataforma' como botón abajo de todo, donde dice test; al
+apretarlo abre el casino para jugar". `.plat-link-btn` (visible para TODOS, no es test) → `VIP.home.playNow('girox')`:
+ventana aparte con login automático y la línea "‹ Volver a cargas".
+
 ### 327. 🖼️ Fotos nuevas del carrusel del Inicio — SW v213
 **Pedido (owner, 5 capturas):** "te paso nuevas fotos para el Inicio, las anteriores las borramos". `girox-slides/1..5.jpg`
 nuevas (grillas de juegos: Sugar Rush/Sweet Bonanza, Jokers/Book of Dead, Fire Joker/Fruit Party, Starburst/Thunderstruck,
