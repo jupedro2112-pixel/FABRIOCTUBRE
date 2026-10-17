@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 276. 👁 Nota "vista ilustrativa" en el Inicio — SW v169
+**Pedido (owner):** "en el Inicio donde están las 2 páginas poné que es modo ilustrativo de nuestras
+plataformas activas, resumido, y explicá que para cargar tienen que ir a la parte superior".
+- Una sola línea gris (`.ev-note`) entre las pestañas y la plataforma embebida: "👁 Vista ilustrativa de
+  nuestras plataformas activas · Para cargar, usá Carga automática o Carga manual arriba ↑". Nada más.
+
 ### 275. 🎰 Cartel "Jugar ahora" al acreditarse la carga (abre la plataforma ADENTRO de la app) + botón test — SW v168
 **Pedido (owner):** "cuando detecte la carga que aparezca un cartel que diga jugar ahora y apretándolo se
 abra tipo link aparte dentro de la app, entrando a la página original adentro, saliendo de la app pero

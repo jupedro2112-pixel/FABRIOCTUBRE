@@ -1924,3 +1924,7 @@ body.home-full #autoLoadCard { margin-top: 4px; }
 body.home-full .test-mini-row:not(.test-mini-manual) { display: flex; }
 body.home-mini .test-mini-manual { display: flex; }
 .plat-play-now { background: linear-gradient(135deg, #ff1744, #ff6b6b) !important; color: #06070d !important; border: 0 !important; }
+
+/* ══ #276: nota ilustrativa en el Inicio ══ */
+.ev-note { flex: 0 0 auto; font-size: 9.5px; line-height: 1.3; color: #8f98ad; text-align: center; padding: 0 6px; margin-top: -2px; }
+.ev-note b { color: #c9d1e3; font-weight: 800; }
