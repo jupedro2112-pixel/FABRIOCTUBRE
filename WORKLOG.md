@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 357. 🏷️ Título de la app: "CARGAS AUTOMÁTICA" — SW v243
+**Pedido (owner):** "en el título de la página que dice cargas 1girox 24/7 ponele cargas automática". `<title>`,
+`application-name`, `apple-mobile-web-app-title` y `manifest.json` (name/short_name). En teléfonos que ya tienen la
+app instalada el nombre del ícono se actualiza cuando el sistema vuelva a leer el manifest (puede tardar o requerir
+reinstalar).
+
 ### 356. 🔥 Tarjeta del fueguito más baja — SW v242
 **Pedido (owner):** "achicá el recuadro del fueguito un poco de altura, mínimo, para que la página principal no tenga
 deslizante". Menos relleno, llama/título/racha/regla más chicos (CSS `#fireHomeCard`, mismo contenido).
