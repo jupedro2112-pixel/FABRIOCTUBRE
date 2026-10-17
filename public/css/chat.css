@@ -1947,3 +1947,22 @@ body.home-mini .test-mini-manual { display: flex; }
 
 /* ══ #280: carrusel de opiniones — desliza solo y a mano ══ */
 .rv-track { scroll-behavior: smooth; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+
+/* ══ #282: "Cargá acá" CENTRADA + paso 2 (adjuntar la foto abajo) ══ */
+#autoLoadCard { text-align: center; }
+#autoLoadCard .home-card-title { justify-content: center; }
+#autoLoadCard .al-step-c { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 7px 0; border-bottom: 0; }
+#autoLoadCard .al-step-h { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+#autoLoadCard .al-step-h .al-n { margin-top: 0; }
+#autoLoadCard .al-step-h .al-step-t { margin-bottom: 0; font-size: 13px; }
+#autoLoadCard .al-step-body { width: 100%; }
+#autoLoadCard .al-cbu { justify-content: center; }
+#autoLoadCard .al-cbu .mono { flex: 0 1 auto; font-size: 14px; letter-spacing: .4px; white-space: nowrap; }
+#autoLoadCard .al-alias-row { margin-top: 5px; }
+#autoLoadCard .al-meta { display: flex; justify-content: center; flex-wrap: wrap; gap: 0 6px; text-align: center; }
+#autoLoadCard .al-step-2 { border-top: 1px dashed var(--dx-border); margin-top: 2px; padding-top: 9px; }
+#autoLoadCard .al-step-2 .al-n { background: var(--dx-money, #2ee59d); box-shadow: 0 0 12px rgba(46,229,157,.35); }
+#autoLoadCard .al-step-2 .al-step-t { color: var(--dx-money, #2ee59d); }
+#autoLoadCard .al-step-sub { font-size: 11px; line-height: 1.35; color: #c9d0e0; max-width: 34ch; margin: 0 auto; }
+#autoLoadCard .al-step-sub b { color: #f4f6fb; }
+@media (max-width: 360px) { #autoLoadCard .al-cbu .mono { font-size: 12.5px; letter-spacing: .2px; } }

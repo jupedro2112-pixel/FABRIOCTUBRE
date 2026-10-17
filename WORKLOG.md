@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 282. 🎯 "Cargá acá" centrada, en 2 pasos; botón "Cargá aquí (adjuntá la foto aquí)" — SW v174
+**Pedido (owner, captura):** "centralo y ponele un paso 2 explicando que tiene que adjuntar la foto abajo; en
+cargar poné 'cargá aquí (adjuntá la foto aquí)'".
+- `#autoLoadCard` (index.html): todo centrado (título, número de paso + texto en una fila, CBU/alias/banco).
+  Paso **1** transferir · paso **2** (verde) "Adjuntá la foto del comprobante abajo 👇 — tocá el botón verde
+  «Cargá aquí» y mandá la captura. Se acredita sola". Mismos ids (`alCbu`, `alAlias`, `alBank`, `alTitular`).
+- El CBU ya no se parte en dos líneas (14 px, `nowrap`; 12,5 px en pantallas ≤360).
+- Botón verde: **Cargá aquí** / (adjuntá la foto aquí). CSS al pie de chat.css (#282).
+
 ### 281. 🔟 El cartel del chat decía "0% en todas tus cargas" → migración a 10%
 **Pedido (owner, captura):** el cartel "Recomendable" mostraba **0%**; "ponele 10 %".
 - El texto lo arma el server: `{pct}` = `Config['autoLoadBonusPct']` (default 10 en código). Que diga 0%

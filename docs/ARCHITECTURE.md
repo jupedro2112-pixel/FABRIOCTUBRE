@@ -870,6 +870,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hgcash sin otro bono pendiente: fuente `auto_load` en `resolveAutoBonus`, con tope; la manual no lo lleva),
   ⚠️ si el cartel dice "0%" es que esa Config quedó en 0 (panel → Bonos automáticos → "Servicio completo"); la
   migración `migration_autoloadpct_10_v1_done` (#281) la fuerza a 10 una sola vez,
+  **#282:** `#autoLoadCard` va centrada y en 2 pasos (1 transferir · 2 adjuntar la foto con el botón verde
+  "Cargá aquí (adjuntá la foto aquí)" = `#loadHereBtn` → `VIP.autoload.sendReceipt()`).
   **#275:** el mensaje de depósito acreditado (hgcash y manual) lleva `metadata.kind='deposit_credited'`
   (`platform, amount, bonus`); chat.js pinta "🎰 Jugar ahora" y home.js muestra la hoja `#playNowCard` si el
   mensaje es reciente (< 3 min). `VIP.home.playNow` abre la plataforma embebida (SSO si hay API).
