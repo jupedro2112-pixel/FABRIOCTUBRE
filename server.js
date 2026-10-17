@@ -11393,6 +11393,23 @@ async function initializeData() {
       await Config.set('migration_reviews_seed_v1_done', true, 'startup-migration');
       console.log('✅ Reseñas sembradas (#273): 33 aprobadas, promedio 4,7');
     }
+    // #350 (owner 2026-10-17): "ajustá a 4.8 estrellas para que se vea real". Una sola vez: si el promedio de las
+    // reseñas aprobadas supera 4,85, se bajan a 4★ las 5★ SEMBRADAS necesarias (approvedBy null/'seed' = no las
+    // aprobó un admin en el panel; las reales no se tocan) hasta dejar el promedio en ~4,80.
+    try {
+      if (!(await getConfig('migration_reviews_avg_48_done', false))) {
+        const agg = await Review.aggregate([{ $match: { approved: true } }, { $group: { _id: null, total: { $sum: 1 }, sum: { $sum: '$stars' } } }]);
+        const st = agg[0] || { total: 0, sum: 0 };
+        if (st.total >= 20 && st.sum / st.total > 4.85) {
+          const need = Math.max(0, Math.round(st.sum - 4.8 * st.total)); // cada 5→4 resta 1 al total
+          const victims = await Review.find({ approved: true, stars: 5, $or: [{ approvedBy: null }, { approvedBy: 'seed' }] })
+            .sort({ createdAt: 1 }).limit(need).select('_id').lean();
+          if (victims.length) await Review.updateMany({ _id: { $in: victims.map((v) => v._id) } }, { $set: { stars: 4 } });
+          console.log(`✅ Reseñas (#350): ${victims.length} de 5★ → 4★ (promedio ${((st.sum - victims.length) / st.total).toFixed(2)})`);
+        }
+        await Config.set('migration_reviews_avg_48_done', true, 'startup-migration');
+      }
+    } catch (e) { console.warn('[startup-migration] reseñas 4,8:', e.message); }
   } catch (e) { console.warn('[startup-migration] reseñas seed:', e.message); }
 
   // #281 (owner 2026-10-17, "ponele 10 %"): en producción Config['autoLoadBonusPct'] quedó en 0 y el cartel

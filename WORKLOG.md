@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 350. ♠️ Logo de Ganamos + promedio de reseñas 4,8 — SW v236
+**Pedidos (owner):** "logo de Ganamos para ponerlo donde está Ganamos" (captura: pica violeta) y "ajustá a 4.8
+estrellas para que se vea real" (el Inicio mostraba 5.0 con 202 reseñas).
+- `public/images/ganamos.png` (recorte con fondo transparente, 256 px) reemplaza al placeholder `ganamos.svg` en
+  `DEFAULT_ITEMS`, en el fallback de home.js y, por `_normalizeLogo`, en cualquier config guardada con el svg viejo.
+- Migración única `migration_reviews_avg_48_done`: si el promedio aprobado supera 4,85 baja a 4★ las 5★ sembradas
+  (approvedBy null/'seed') necesarias para quedar en ~4,80; las aprobadas por un admin no se tocan. El promedio del
+  Inicio dibuja la quinta estrella parcial (`_gStarsFrac`).
+
 ### 349. 📅 Reembolso DIARIO de vuelta (25%) · semanal 3% · mensual 1% · NOVEDAD en el Inicio — SW v235, admin-sw v74
 **Pedidos (owner):** "ajustá reembolso diario 25%, semanal 3% y mensual 1%" + "en el inicio, donde dice la app que paga,
 poné hasta diciembre reembolso diario de 25% NOVEDAD" + "ajustá desde Comandos todo para después poder modificarlo".

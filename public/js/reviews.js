@@ -185,6 +185,19 @@
         for (let i = 1; i <= 5; i++) h += '<span class="' + (i <= v ? 'on' : '') + '">★</span>';
         return '<span class="rv-stars">' + h + '</span>';
     }
+    // #350: estrellas con FRACCIÓN para el promedio (4,8 → cuatro llenas y la quinta al 80 %).
+    function _gStarsFrac(n) {
+        const v = Math.max(0, Math.min(5, Number(n) || 0));
+        let h = '';
+        for (let i = 1; i <= 5; i++) {
+            const fill = Math.max(0, Math.min(1, v - (i - 1)));
+            h += fill >= 1 ? '<span class="on">★</span>'
+                : fill <= 0 ? '<span>★</span>'
+                : '<span class="part" style="background:linear-gradient(90deg,#fbbc04 ' + Math.round(fill * 100) + '%,#dadce0 ' + Math.round(fill * 100) + '%);-webkit-background-clip:text;background-clip:text;color:transparent;">★</span>';
+        }
+        return '<span class="rv-stars">' + h + '</span>';
+    }
+
     async function renderEntrySlider() {
         const box = document.getElementById('entryReviews');
         if (!box) return;
@@ -197,7 +210,7 @@
         }).slice(0, 30);
         if (!total && !items.length) { box.style.display = 'none'; return; }
         let html = '<div class="rv-head"><span class="rv-g">Opiniones de jugadores</span>' +
-            (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStars(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
+            (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStarsFrac(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
         html += '<div class="rv-track">';
         // #273 (owner): la tarjeta "Dejá tu opinión" va PRIMERO.
         html += '<button type="button" class="rv-card rv-add" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b><small>Contale a otros cómo te fue</small></button>';

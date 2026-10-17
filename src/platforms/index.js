@@ -42,7 +42,7 @@ const CONFIG_KEY = 'platforms';
 const DEFAULT_ITEMS = {
   girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
   // #298 (owner): Ganamos HABILITADA y visible, pero sin API se muestra "Próximamente" y no se puede elegir (connected=false).
-  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.svg' }
+  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.png' } // #350: logo real (pica violeta)
 };
 
 const DEFAULT_SETTINGS = {
@@ -79,7 +79,8 @@ function _normalizeUrl(u) {
 }
 
 function _normalizeLogo(u) {
-  const s = String(u || '').trim().slice(0, 300);
+  let s = String(u || '').trim().slice(0, 300);
+  if (s === '/images/ganamos.svg') s = '/images/ganamos.png'; // #350: config guardada con el placeholder viejo
   if (!s) return '';
   if (/^\/[A-Za-z0-9_\-./]+$/.test(s)) return s;           // ruta del repo (/images/x.png)
   if (/^https:\/\/[^\s"'<>]+$/i.test(s)) return s;             // https externo
