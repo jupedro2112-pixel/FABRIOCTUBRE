@@ -211,9 +211,10 @@
         if (!total && !items.length) { box.style.display = 'none'; return; }
         let html = '<div class="rv-head"><span class="rv-g">Opiniones de jugadores</span>' +
             (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStarsFrac(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
+        // #360 (owner): "Dejá tu opinión" FIJA a la izquierda (chica) y las reseñas deslizando al lado — nunca se pierde.
+        html += '<div class="rv-row">';
+        html += '<button type="button" class="rv-card rv-add rv-add-fixed" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b></button>';
         html += '<div class="rv-track">';
-        // #273 (owner): la tarjeta "Dejá tu opinión" va PRIMERO.
-        html += '<button type="button" class="rv-card rv-add" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b><small>Contale a otros cómo te fue</small></button>';
         for (const it of items) {
             const name = it.maskedUsername || '***';
             html += '<div class="rv-card">' +
@@ -221,7 +222,7 @@
                 '<div class="rv-text">' + _esc(it.comment) + '</div>' +
                 '</div>';
         }
-        html += '</div>';
+        html += '</div></div>';
         box.innerHTML = html;
         box.style.display = '';
         _startAutoSlide(box.querySelector('.rv-track'));

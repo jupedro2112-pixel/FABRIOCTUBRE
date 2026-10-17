@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 360. ⭐ Reseñas: "Dejá tu opinión" fija y chica a la izquierda, las reseñas deslizan al lado — SW v247
+**Pedido (owner):** "que vayan deslizando las reseñas pero dejá un cuadrado principal fijo para dejar reseña, que no se
+pierda; achicá el primer cuadrado de la izquierda". La tarjeta sale del `.rv-track` y queda en `.rv-row` como botón fijo
+de 64 px (estrella + "Dejá tu opinión"); el carrusel automático (#280) sigue igual con solo las reseñas.
+
 ### 359. 💸 Tarjeta "Reembolso" del Inicio: toma el % DIARIO (25) — SW v245
 **Pedido (owner, captura):** decía "hasta 3%" porque `renderHowItWorks` sólo miraba semanal/mensual (anterior a #349).
 Ahora el máximo incluye la escalera diaria: "hasta 25% de lo que perdés · diario". El modal "Información del servicio"

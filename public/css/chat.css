@@ -2514,3 +2514,12 @@ html.has-session body { background: #06070d; }
 #fireHomeCard .fh-streak b { font-size: 14px !important; line-height: 1 !important; }
 #fireHomeCard .fh-streak small { font-size: 7.5px !important; }
 #fireHomeCard .fh-rule { font-size: 8.5px !important; margin-top: 0 !important; line-height: 1.2 !important; }
+
+/* ══ #360 (owner): "Dejá tu opinión" fija y chica a la izquierda; las reseñas deslizan al lado ══ */
+#entryReviews .rv-row { display: flex; align-items: stretch; gap: 6px; min-width: 0; }
+#entryReviews .rv-add-fixed { flex: 0 0 64px !important; max-width: 64px !important; min-width: 64px; padding: 6px 4px !important; border-radius: 12px !important; gap: 3px !important; scroll-snap-align: none; }
+#entryReviews .rv-add-fixed .rv-add-star { font-size: 20px !important; }
+#entryReviews .rv-add-fixed b { font-size: 8.5px !important; line-height: 1.15; letter-spacing: .2px !important; }
+#entryReviews .rv-row .rv-track { flex: 1 1 auto; min-width: 0; }
+#entryReviews .rv-row .rv-track .rv-card { flex: 0 0 72%; max-width: 250px; }
+@media (min-width: 420px) { #entryReviews .rv-row .rv-track .rv-card { flex: 0 0 60%; } }
