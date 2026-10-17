@@ -316,8 +316,8 @@
     function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
-    // #318: la 1 es la PRINCIPAL (página completa de Girox); después las secciones.
-    const ENTRY_SLIDES = ['/images/girox-slides/1.jpg', '/images/girox-slides/2.jpg', '/images/girox-slides/3.jpg', '/images/girox-slides/4.jpg', '/images/girox-slides/5.jpg', '/images/girox-slides/6.jpg'];
+    // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
+    const ENTRY_SLIDES = ['/images/girox-slides/1.jpg', '/images/girox-slides/2.jpg', '/images/girox-slides/3.jpg', '/images/girox-slides/4.jpg', '/images/girox-slides/5.jpg'];
     let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');

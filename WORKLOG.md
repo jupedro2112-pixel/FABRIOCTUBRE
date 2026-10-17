@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 327. 🖼️ Fotos nuevas del carrusel del Inicio — SW v213
+**Pedido (owner, 5 capturas):** "te paso nuevas fotos para el Inicio, las anteriores las borramos". `girox-slides/1..5.jpg`
+nuevas (grillas de juegos: Sugar Rush/Sweet Bonanza, Jokers/Book of Dead, Fire Joker/Fruit Party, Starburst/Thunderstruck,
+Money Time/Crazy Time), 800 px de lado mayor, JPEG q84; las 6 anteriores se eliminaron.
+
 ### 326. ↩️ Fondo como estaba antes — SW v212
 **Pedido (owner):** "el fondo dejalo como estaba antes de la actualización". Se quitaron los bloques CSS de #321 (azul
 profundo) y #325 (más oscuro + barra transparente): vuelve el fondo original (`--dx-bg` #06070d, vidrio y barra de
