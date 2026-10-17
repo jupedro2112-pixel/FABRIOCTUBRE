@@ -368,7 +368,7 @@
     // #362: Telegram desde la barra de arriba (mismo link que el botón "Soporte Telegram" del login: /api/soporte).
     async function openTelegram() {
         let url = '';
-        try { const r = await fetch(VIP.config.API_URL + '/api/soporte'); const d = r.ok ? await r.json() : null; url = (d && d.telegram && d.telegram.url) || ''; } catch (_) {}
+        try { const r = await fetch(VIP.config.API_URL + '/api/config/soporte-vip'); const d = r.ok ? await r.json() : null; url = (d && d.telegram && d.telegram.url) || ''; } catch (_) {}
         if (!url) url = (VIP.state && VIP.state.communityLink) || '';
         if (url) window.open(url, '_blank', 'noopener'); else if (VIP.ui && VIP.ui.showToast) VIP.ui.showToast('Telegram no disponible por ahora', 'info');
     }
