@@ -74,7 +74,7 @@ VIP.fire = (function () {
             const _md = Number(VIP.state.fireStatus.minDeposits) || 0; // #291
             const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
             activityConditionEl.innerHTML = _md > 0
-                ? '📋 <strong>Condición para cobrar:</strong> al llegar al fueguito del día ' + _d1 + ' necesitás tener <strong>mínimo ' + _md + ' cargas</strong> en esos ' + _d1 + ' días. Si no las tenés, <strong>no podés reclamar el premio y perdés el fueguito</strong> (la racha vuelve a 0 y arrancás de nuevo). Vale igual para cada premio: día N = mínimo ' + _md + ' cargas en los últimos N días.'
+                ? '📋 <strong>Condición para reclamar cada racha:</strong> necesitás al menos <strong>' + _md + ' cargas</strong> en los días de esa racha (ej.: para el premio del día ' + _d1 + ', ' + _md + ' cargas en esos ' + _d1 + ' días). Si no las tenés, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
                 : '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
         }
 
@@ -117,7 +117,7 @@ VIP.fire = (function () {
             const ms = VIP.state.fireStatus.milestones || [];
             const nxt = ms.find((m) => m.status !== 'completed');
             const sum = document.getElementById('fireMsSummary');
-            if (sum) sum.textContent = nxt ? ('próximo: día ' + nxt.day + (nxt.reward ? ' · $' + Number(nxt.reward).toLocaleString('es-AR') : '')) : 'todos desbloqueados';
+            if (sum) sum.textContent = nxt ? ('próx. día ' + nxt.day + (nxt.reward ? ' · $' + Number(nxt.reward).toLocaleString('es-AR') : '')) : 'todos listos';
         } catch (_) {}
         const milestonesEl = document.getElementById('fireMilestonesMenu');
         if (milestonesEl && VIP.state.fireStatus.milestones) {

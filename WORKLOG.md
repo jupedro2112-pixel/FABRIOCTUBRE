@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 344. 🔥 Fueguito: la condición SE VE en el modal + mínimo 5 cargas por racha — SW v230, admin-sw v72
+**Pedido (owner, captura):** "sigue sin aparecer el detalle dentro del fueguito; para reclamar cada racha necesitás al
+menos 5 cargas en esos días antes de la racha".
+- Causa: `.fire-compact #fireActivityCondition { display:none }` (modo compacto de #129) ocultaba el bloque de la
+  condición. Ahora se muestra (compacto) debajo de "Premios por racha". El resumen del plegable ya no se corta ("p…").
+- Mínimo por defecto **5** (`FIRE_MIN_DEPOSITS_DEFAULT`, panel placeholder, textos de la tarjeta y del modal):
+  "Para reclamar cada racha: al menos 5 cargas en los días de esa racha · si no, el fueguito vuelve a 0". Si en el
+  panel ya se guardó otro número, manda el panel.
+
 ### 343. 👩‍💼 Carga manual: asistente mujer + "Escribí aquí…" — SW v229
 **Pedido (owner):** "en carga manual poné una personita tipo mujer (parece que no tiene foto) y abajo 'escribí aquí'".
 `#waHeadAvatar` pasa a un SVG de asistente mujer (pelo, vincha verde, remera verde) y el placeholder del campo del chat

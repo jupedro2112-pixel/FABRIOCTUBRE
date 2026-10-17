@@ -2464,3 +2464,10 @@ body.home-full .home-actions-row, body.home-full .test-mini-row, body.home-full 
 /* ══ #342: sin parpadeo del login cuando ya hay sesión guardada (html.has-session lo pone un script antes de pintar) ══ */
 html.has-session #loginScreen { display: none !important; }
 html.has-session body { background: #06070d; }
+
+/* ══ #344: el detalle del fueguito SE VE — la condición estaba oculta por .fire-compact; el resumen del plegable no se corta ══ */
+.fire-compact #fireActivityCondition { display: block !important; margin: 8px 0 4px !important; font-size: 11.5px !important; line-height: 1.45 !important; }
+.fire-ms-toggle { flex-wrap: wrap; row-gap: 2px; }
+.fire-ms-sum { white-space: normal; overflow: visible; text-overflow: clip; flex: 1 1 100%; text-align: left; font-size: 10px; }
+.fire-ms-chev { margin-left: auto; }
+#fireMilestonesWrap { margin-top: 4px; }
