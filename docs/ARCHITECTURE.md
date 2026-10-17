@@ -871,6 +871,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   **#275:** el mensaje de depósito acreditado (hgcash y manual) lleva `metadata.kind='deposit_credited'`
   (`platform, amount, bonus`); chat.js pinta "🎰 Jugar ahora" y home.js muestra la hoja `#playNowCard` si el
   mensaje es reciente (< 3 min). `VIP.home.playNow` abre la plataforma embebida (SSO si hay API).
+  **#277:** el Inicio arranca en modo LOGO (`#entryLogo`, sin iframe); "Ver página" (`entryShowSite`) sólo
+  desde el 2º ingreso (`localStorage vip_entry_visits`) carga la web en `#entryFrame`.
   servido en `GET /api/platforms` → `homeBanner:{pct,text}` y cacheado en `localStorage vip_home_banner`.
   En **full** el chat vuelve a ser overlay/burbuja; `closeSupport()` en mini = pasar a full.
   **#267:** tercer modo **play** = la ENTRADA (siempre al abrir la app; el modo elegido vive en

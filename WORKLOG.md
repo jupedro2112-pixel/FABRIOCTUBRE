@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-17
 
+### 277. 🖼️ Inicio en modo LOGO (no carga la web) · "Ver página" desde el 2º ingreso · texto con links · test — SW v170
+**Pedido (owner):** "en las 2 páginas dejá las fotos del logo; agrandá el texto explicativo y que Carga
+manual / Carga automática se puedan tocar y te deriven; dejalo modo visión el logo para que no ralentice;
+si quieren verlo, 'Ver página' abajo del logo después del 2º ingreso; dejá un test como que entró por
+segunda vez".
+- Al entrar ya NO se carga la web del casino: `#entryLogo` muestra el **logo grande** de la plataforma
+  elegida (de `logoUrl` de /api/platforms; fallback girox/ganamos del repo), su nombre y "Plataforma
+  activa · entrás con tu usuario" si tiene API. Cambiar de pestaña cambia el logo (y descarga el iframe).
+- **"Ver página ›"** debajo del logo sólo a partir del **2º ingreso** (`localStorage vip_entry_visits`, se
+  cuenta una vez por sesión). Recién ahí `entryShowSite()` carga la web en el iframe (con el aviso de
+  15 s si no embebe, como antes).
+- **Test:** botón chiquito "test · simular 2º ingreso" debajo del logo → fuerza el estado de visitante
+  recurrente para ver "Ver página". Sacarlo cuando el owner apruebe = borrar `.ev-test-row` del HTML.
+- La nota explicativa es más grande y **Carga automática / Carga manual son links** que llevan directo a
+  cada modo.
+
 ### 276. 👁 Nota "vista ilustrativa" en el Inicio — SW v169
 **Pedido (owner):** "en el Inicio donde están las 2 páginas poné que es modo ilustrativo de nuestras
 plataformas activas, resumido, y explicá que para cargar tienen que ir a la parte superior".
