@@ -11813,6 +11813,7 @@ async function _runGiftBatchPreview(renderInBox) {
         });
         const j = await r.json();
         if (!r.ok) { if (renderInBox && box) box.innerHTML = ''; showToast(j.error || 'No se pudo validar', 'error'); return null; }
+        _giftBatchLastTotals = j.totals || null; try { _giftBatchPaintSplitHint(Number((document.getElementById('giftBatchParts') || {}).value) || 1); } catch (_) {} // #297
         if (renderInBox && box) {
             const t = j.totals || {};
             let html = '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:.75rem;font-size:.82rem;">' +
@@ -11961,6 +11962,7 @@ async function sendGiftBatch() {
         const t = j.totals || {};
         if (j.scheduled) {
             showToast('Campaña programada', 'success');
+            if (_cronReturnTo) { const m = _cronReturnTo; _cronReturnTo = null; setTimeout(() => { _cronMonth = m; switchSection('cronograma'); loadCronograma(); }, 900); } // #297 volver a la hoja del mes
             if (st) st.innerHTML = '📅 ' + escHtml(j.message || 'Campaña programada') + ' <a href="#" onclick="switchSection(\'cronograma\');return false" style="color:#a5b4fc">ver cronograma</a>';
             const w = document.getElementById('giftBatchWhen'); if (w) { w.value = 'now'; }
             const ra = document.getElementById('giftBatchRunAt'); if (ra) ra.value = '';
@@ -14188,16 +14190,21 @@ function updateGiftBatchScheduleUI() {
     const n = (sched && aud !== 'public') ? (Number((document.getElementById('giftBatchParts') || {}).value) || 1) : 1;
     if (timesW) {
         if (n > 1) {
+            // #297: horarios generados desde la primera fecha, cada "gap" minutos (editables uno por uno).
             const base = runAtEl && runAtEl.value ? new Date(runAtEl.value + ':00-03:00') : new Date(Date.now() + 3600 * 1000);
+            const gapMin = Math.max(1, Number((document.getElementById('giftBatchPartGap') || {}).value) || 30);
             const prev = Array.from(timesW.querySelectorAll('input')).map((i) => i.value);
+            const sizes = _giftBatchSplitSizes(n);
             let html = '';
             for (let i = 0; i < n; i++) {
-                const def = prev[i] || _cronArtLocalInput(new Date(base.getTime() + i * 5 * 3600 * 1000));
-                html += '<div><label class="form-label" style="display:block;margin-bottom:.2rem;font-size:.75rem">Tanda ' + (i + 1) + '/' + n + '</label><input type="datetime-local" id="giftBatchPartAt_' + i + '" class="form-input" style="width:200px" value="' + def + '" /></div>';
+                const def = (!_giftBatchRegen && prev[i]) || _cronArtLocalInput(new Date(base.getTime() + i * gapMin * 60 * 1000));
+                html += '<div><label class="form-label" style="display:block;margin-bottom:.2rem;font-size:.72rem">Lote ' + (i + 1) + '/' + n + (sizes ? ' <span style="color:#8fd3a8">· ~' + sizes[i] + '</span>' : '') + '</label><input type="datetime-local" id="giftBatchPartAt_' + i + '" class="form-input" style="width:190px;font-size:.78rem" value="' + def + '"></div>';
             }
-            timesW.innerHTML = html; timesW.style.display = 'flex';
+            _giftBatchRegen = false;
+            timesW.innerHTML = html; timesW.style.display = 'grid'; timesW.style.gridTemplateColumns = 'repeat(auto-fill, minmax(200px, 1fr))';
         } else { timesW.innerHTML = ''; timesW.style.display = 'none'; }
     }
+    try { _giftBatchPaintSplitHint(n); } catch (_) {}
     if (hint && plan) { hint.textContent = 'No se envía nada ahora: la campaña queda guardada en el plan con su día del mes y hora. Después, desde 📅 Cronograma, aplicás el plan a un mes y se programa todo junto (y ves el calendario del plan).'; return; }
     if (hint) hint.textContent = !sched ? '' : (n > 1
         ? 'La audiencia se resuelve al salir la PRIMERA tanda y se reparte en ' + n + ' partes iguales SIN repetir usuarios (el cupo limita el total). Cada tanda sale a su hora como un lote propio; en Cronograma ves cuál salió y cuál falta.'
@@ -14228,11 +14235,34 @@ function _giftBatchPlanTarget() {
     const time = ((document.getElementById('giftBatchPlanTime') || {}).value || '').trim();
     const aud = (document.querySelector('input[name="giftBatchAudience"]:checked') || {}).value || 'list';
     const parts = aud === 'public' ? 1 : (Number((document.getElementById('giftBatchPlanParts') || {}).value) || 1);
-    const gapHours = Number((document.getElementById('giftBatchPlanGap') || {}).value) || 5;
+    const gapHours = Math.max(0.05, (Number((document.getElementById('giftBatchPlanGap') || {}).value) || 30) / 60); // #297 minutos → horas
     if (!planId && !name) { showToast('Poné el nombre del plan nuevo', 'error'); return false; }
     if (!(day >= 1 && day <= 31)) { showToast('El día del mes va de 1 a 31', 'error'); return false; }
     if (!/^\d{2}:\d{2}$/.test(time)) { showToast('Poné la hora (HH:mm)', 'error'); return false; }
     return { planId, planLabel, name, day, time, parts, gapHours };
+}
+// #297: reparto en N lotes parejos — tamaños estimados a partir de la última vista previa.
+let _giftBatchRegen = false;
+let _giftBatchLastTotals = null; // {ok, app, browser, none} de /preview
+function giftBatchRegenTimes() { _giftBatchRegen = true; updateGiftBatchScheduleUI(); }
+function _giftBatchSplitSizes(n) {
+    const t = _giftBatchLastTotals; if (!t || !(t.ok > 0) || !(n > 0)) return null;
+    const base = Math.floor(t.ok / n), rest = t.ok % n;
+    return Array.from({ length: n }, (_, i) => base + (i < rest ? 1 : 0));
+}
+function _giftBatchPaintSplitHint(n) {
+    const el = document.getElementById('giftBatchSplitHint'); if (!el) return;
+    const t = _giftBatchLastTotals;
+    if (!t) { el.textContent = n > 1 ? 'Tocá "🔢 Calcular reparto" para ver cuántos entran en cada lote (y cuántos tienen la app).' : ''; return; }
+    const sizes = _giftBatchSplitSizes(n) || [t.ok];
+    el.innerHTML = '<b>' + Number(t.ok).toLocaleString('es-AR') + '</b> destinatarios · 📱 ' + Number(t.app).toLocaleString('es-AR') + ' con app · 🌐 ' + Number(t.browser).toLocaleString('es-AR') + ' navegador · 🔕 ' + Number(t.none).toLocaleString('es-AR') + ' sin notis' +
+        (n > 1 ? ' → <b>' + n + ' lotes</b> de ~' + sizes[0].toLocaleString('es-AR') + (sizes[sizes.length - 1] !== sizes[0] ? ' / ' + sizes[sizes.length - 1].toLocaleString('es-AR') : '') + ' cada uno (sin repetir usuarios; cada lote sale a su hora).' : '');
+}
+async function giftBatchSplitPreview() {
+    const prev = await _runGiftBatchPreview(false);
+    if (!prev) return;
+    _giftBatchLastTotals = prev.totals || null;
+    updateGiftBatchScheduleUI();
 }
 // null = ahora; [] con error → showToast y devuelve false; si no, array de 'YYYY-MM-DDTHH:mm'
 function _giftBatchScheduleParts() {
@@ -14251,6 +14281,8 @@ function _giftBatchScheduleParts() {
 }
 
 // ── Sección Cronograma ──
+// #297: ir a un mes puntual (selector) — "si pongo noviembre, completar por día"
+function cronMonthGo(v) { if (/^\d{4}-\d{2}$/.test(String(v || ''))) { _cronMonth = String(v); _cronDayFilter = null; loadCronograma(); } }
 function cronMonthShift(d) {
     const now = _cronArtKey(new Date()).slice(0, 7);
     if (d === 0 || !_cronMonth) _cronMonth = now;
@@ -14265,13 +14297,14 @@ function cronMonthShift(d) {
 async function loadCronograma() {
     if (!_cronMonth) _cronMonth = _cronArtKey(new Date()).slice(0, 7);
     const lbl = document.getElementById('cronMonthLabel');
+    try { const mp = document.getElementById('cronMonthPick'); if (mp) mp.value = _cronMonth; } catch (_) {} // #297
     if (lbl) { const [y, m] = _cronMonth.split('-').map(Number); lbl.textContent = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^./, (c) => c.toUpperCase()); }
     try {
         const r = await authFetch('/api/admin/cronograma?month=' + _cronMonth);
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'error');
         _cronData = j;
-        _cronRenderCalendar(); _cronRenderList();
+        _cronRenderCalendar(); _cronRenderList(); try { _cronRenderDayPanel(); } catch (_) {}
     } catch (e) {
         const l = document.getElementById('cronList'); if (l) l.innerHTML = '<span style="color:#f87171">No se pudo cargar el cronograma</span>';
     }
@@ -14292,18 +14325,60 @@ function _cronRenderCalendar() {
         const k = _cronMonth + '-' + String(d).padStart(2, '0');
         const items = (byDay[k] || []).sort((a, b) => new Date(a.p.runAt) - new Date(b.p.runAt));
         const isToday = k === _cronData.today;
+        const isPast = k < _cronData.today;
         let chips = '';
-        items.slice(0, 3).forEach(({ c, p }) => {
+        items.slice(0, 4).forEach(({ c, p }) => {
             const st = c.cancelled ? 'cancelled' : (c.paused && p.status === 'scheduled' ? 'paused' : p.status);
             const col = (CRON_STATUS[st] || {}).c || '#888';
-            chips += '<span class="cron-chip" style="background:' + col + (st === 'cancelled' ? ';opacity:.5' : '') + '" title="' + escHtml(c.name) + ' — ' + _cronArtHM(p.runAt) + (c.partsTotal > 1 ? ' (tanda ' + (p.idx + 1) + '/' + c.partsTotal + ')' : '') + '">' + _cronArtHM(p.runAt) + ' ' + escHtml(c.name || 'Campaña') + (c.partsTotal > 1 ? ' ' + (p.idx + 1) + '/' + c.partsTotal : '') + '</span>';
+            chips += '<span class="cron-chip" style="background:' + col + (st === 'cancelled' ? ';opacity:.5' : '') + '" title="' + escHtml(c.name) + ' — ' + _cronArtHM(p.runAt) + (c.partsTotal > 1 ? ' (lote ' + (p.idx + 1) + '/' + c.partsTotal + ')' : '') + '">' + _cronArtHM(p.runAt) + ' ' + escHtml(c.name || _cronGiftTxt(c.gift)) + '</span>';
         });
-        if (items.length > 3) chips += '<span style="color:#a5b4fc">+' + (items.length - 3) + ' más</span>';
-        html += '<div class="cron-day' + (isToday ? ' today' : '') + (_cronDayFilter === k ? ' cron-best' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-weight:400">(' + items.length + ')</span>' : '') + '</div>' + chips + '</div>';
+        if (items.length > 4) chips += '<span style="color:#a5b4fc">+' + (items.length - 4) + ' más</span>';
+        // #297: hoja del mes — tocar el día abre el panel; "+" lleva directo a programar algo ese día.
+        html += '<div class="cron-day' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (items.length ? ' has-items' : '') + (_cronDayFilter === k ? ' picked' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-size:.7rem">(' + items.length + ')</span>' : '') + '</div>' + chips +
+            (!isPast ? '<button type="button" class="cron-add" title="Programar algo el ' + k.slice(8, 10) + '/' + k.slice(5, 7) + '" onclick="event.stopPropagation();cronPlanDay(\'' + k + '\',\'schedule\')">+</button>' : '') + '</div>';
     }
     el.innerHTML = html;
 }
-function cronPickDay(k) { _cronDayFilter = (_cronDayFilter === k) ? null : k; _cronRenderCalendar(); _cronRenderList(); }
+// #297: panel del día elegido — lo que hay ese día + programar/agregar al plan ese día.
+function _cronRenderDayPanel() {
+    const el = document.getElementById('cronDayPanel'); if (!el) return;
+    if (!_cronDayFilter) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    const k = _cronDayFilter;
+    const items = [];
+    for (const c of _cronData.campaigns || []) for (const p of c.parts || []) if (_cronArtKey(p.runAt) === k) items.push({ c, p });
+    items.sort((a, b) => new Date(a.p.runAt) - new Date(b.p.runAt));
+    const fecha = k.slice(8, 10) + '/' + k.slice(5, 7) + '/' + k.slice(0, 4);
+    const isPast = k < _cronData.today;
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">' +
+        '<strong>📅 ' + fecha + '</strong>' +
+        '<div style="display:flex;gap:.4rem;flex-wrap:wrap">' +
+        (!isPast ? '<button class="btn btn-primary" onclick="cronPlanDay(\'' + k + '\',\'schedule\')">➕ Programar algo este día</button>' : '') +
+        '<button class="btn btn-secondary" onclick="cronPlanDay(\'' + k + '\',\'plan\')">🧭 Agregar a un plan (día ' + Number(k.slice(8, 10)) + ')</button>' +
+        '<button class="btn btn-secondary" onclick="cronPickDay(\'' + k + '\')">Cerrar</button></div></div>' +
+        (items.length ? '<div style="margin-top:.5rem;font-size:.82rem">' + items.map(({ c, p }) => {
+            const st = c.cancelled ? 'cancelled' : (c.paused && p.status === 'scheduled' ? 'paused' : p.status);
+            return '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>' + _cronBadge(st) + ' <b>' + _cronArtHM(p.runAt) + '</b> ' + escHtml(c.name || '') + (c.partsTotal > 1 ? ' <span style="color:#a5b4fc">(lote ' + (p.idx + 1) + '/' + c.partsTotal + ')</span>' : '') + ' · <span style="color:#8fd3a8">' + escHtml(_cronGiftTxt(c.gift)) + '</span> · ' + escHtml(c.audienceLabel || '') + (c.estimatedCount != null ? ' ~' + Number(c.estimatedCount).toLocaleString('es-AR') : '') + '</span>' +
+                (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap">ver lote</a>' : (!c.cancelled ? '<a href="#" onclick="cronOpenEdit(\'' + c.id + '\');return false" style="color:#a5b4fc;white-space:nowrap">editar</a>' : '')) + '</div>';
+        }).join('') + '</div>' : '<div style="margin-top:.4rem;color:#888;font-size:.82rem">Nada programado este día todavía.</div>');
+    el.style.display = '';
+}
+// #297: desde el calendario al formulario del lote, con la fecha ya puesta ("qué quiero configurar ese día").
+let _cronReturnTo = null;
+function cronPlanDay(k, mode) {
+    _cronReturnTo = k.slice(0, 7);
+    switchSection('notifications');
+    setTimeout(() => {
+        const w = document.getElementById('giftBatchWhen');
+        if (w) w.value = mode === 'plan' ? 'plan' : 'schedule';
+        if (mode === 'plan') { const d = document.getElementById('giftBatchPlanDay'); if (d) d.value = Number(k.slice(8, 10)); }
+        else { const ra = document.getElementById('giftBatchRunAt'); if (ra) ra.value = k + 'T19:00'; _giftBatchRegen = true; }
+        updateGiftBatchScheduleUI();
+        const st = document.getElementById('giftBatchStatus');
+        if (st) st.innerHTML = '📅 ' + (mode === 'plan' ? 'Agregando al plan para el día ' + Number(k.slice(8, 10)) : 'Programando para el ' + k.slice(8, 10) + '/' + k.slice(5, 7)) + ' — elegí regalo, código, bono o aviso y tocá el botón. ' + '<a href="#" onclick="switchSection(\'cronograma\');return false" style="color:#a5b4fc">volver al cronograma</a>';
+        const f = document.getElementById('giftBatchName'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 400);
+}
+function cronPickDay(k) { _cronDayFilter = (_cronDayFilter === k) ? null : k; _cronRenderCalendar(); _cronRenderList(); try { _cronRenderDayPanel(); } catch (_) {} }
 function _cronRenderList() {
     const el = document.getElementById('cronList'); if (!el) return;
     let rows = (_cronData.campaigns || []).slice();
@@ -14500,7 +14575,7 @@ function cronPlanToggleCal(id) {
         const items = (byDay[d] || []).sort((a, b) => String(a.time).localeCompare(String(b.time)));
         html += '<div class="cron-day" style="min-height:64px;cursor:default"><div class="n">' + d + '</div>' + items.map((it) => '<span class="cron-chip" style="background:#4f46e5" title="' + escHtml(it.name || '') + '">' + escHtml(it.time) + ' ' + gTxt(it) + (it.parts > 1 ? ' ×' + it.parts : '') + '</span>').join('') + '</div>';
     }
-    html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' tandas c/' + it.gapHours + 'h' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
+    html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' lotes c/' + Math.round((it.gapHours || 0) * 60) + ' min' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
     box.innerHTML = html; box.style.display = '';
 }
 async function cronPlanRemoveItem(id, idx) {
@@ -14513,7 +14588,7 @@ async function cronPlanRemoveItem(id, idx) {
         cronPlanToggleCal(id);
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
-window.cronPlanToggleCal = cronPlanToggleCal; window.cronPlanRemoveItem = cronPlanRemoveItem; window.updateGiftBatchApplyUI = updateGiftBatchApplyUI; window.clearGiftBatchWindow = clearGiftBatchWindow;
+window.cronPlanToggleCal = cronPlanToggleCal; window.cronPlanRemoveItem = cronPlanRemoveItem; window.cronMonthGo = cronMonthGo; window.cronPlanDay = cronPlanDay; window.giftBatchRegenTimes = giftBatchRegenTimes; window.giftBatchSplitPreview = giftBatchSplitPreview; window.updateGiftBatchApplyUI = updateGiftBatchApplyUI; window.clearGiftBatchWindow = clearGiftBatchWindow;
 async function cronSaveMonthAsPlan() {
     const name = prompt('Nombre del plan (ej. "Mes fuerte: bonos a inactivos + fichas finde").\nSe arma con TODAS las campañas programadas/enviadas de ' + _cronMonth + '.', 'Plan ' + _cronMonth);
     if (!name) return;

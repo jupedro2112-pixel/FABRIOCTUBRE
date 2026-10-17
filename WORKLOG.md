@@ -8,6 +8,35 @@
 
 ## Sesión 2026-10-17
 
+### 298. ✨ Aviso premium en el Inicio + Ganamos "Próximamente" (visible, no seleccionable) — SW v187
+**Pedidos (owner):** "en el Inicio resumí lo ilustrativo en una línea y poné LA ÚNICA APP QUE PAGA TODO EN EL MOMENTO
+SIN TOPE LAS 24 HS · GIROX LA APP QUE PAGA, debajo del menú y arriba de reembolsos/ruleta/referidos, premium y
+prolijo"; "Ganamos dejala habilitada y como no está configurada poné 'próximamente' sin que se pueda seleccionar;
+agregala en todos lados como estaba".
+- `.ev-hero` (primera fila de `#entryView`): eyebrow "GIROX · LA APP QUE PAGA" + "La única app que paga **todo en el
+  momento**, **sin tope**, las **24 hs**", vidrio dorado/rojo/cian con brillo suave (sin animación si el sistema lo pide).
+  La nota ilustrativa quedó en una línea chica debajo de las pestañas (`.ev-note-line`).
+- **Ganamos:** se deshizo lo de #296 que la apagaba (default `enabled:true`, sin migración). Sigue visible en Inicio,
+  en la tarjeta de plataformas y en Info ("¿Por qué elegir Girox o Ganamos?") pero con `connected:false` se muestra
+  **"Próximamente"** y no se puede elegir: pestaña deshabilitada, tarjeta atenuada (tocar = toast), `POST
+  /api/platforms/preferred` la rechaza y `decideForDeposit` sólo ofrece plataformas CON API (con una sola, no
+  pregunta). Cuando se cargue la API de Ganamos (`GANAMOS_API_URL/KEY`) pasa a seleccionable sola. El tilde de
+  COMANDOS ("Plataformas ofrecidas") sigue sirviendo para esconder una plataforma del todo.
+
+### 297. 📆 Cronograma tipo hoja del mes + reparto de un lote en N lotes parejos — admin-sw v69
+**Pedido (owner):** "que el cronograma figure como una hoja con los días y ver qué hay en cada día; elegir el mes
+(noviembre) e ir completando por día: toco el día y me lleva a configurar lo que quiera (código, regalo, bono…);
+en el envío por lote ver cuántos tienen la app y repartir en 10 o 20 lotes parejos (10.000 → 20 lotes de 500)".
+- **Hoja del mes:** selector de mes (`#cronMonthPick`), celdas más altas con hasta 4 chips (hora + nombre), contador
+  por día, días pasados atenuados y un **➕** por día. Tocar el día abre el **panel del día** (`#cronDayPanel`): lo
+  programado ese día (con editar / ver lote) y botones "➕ Programar algo este día" / "🧭 Agregar a un plan (día N)".
+  `cronPlanDay(k, mode)` lleva al formulario del lote con la fecha (19:00) o el día del plan ya puestos; al programar,
+  vuelve solo a la hoja de ese mes.
+- **Reparto en lotes:** "Repartir en lotes" pasa a número (1–60, antes 12; `SCHED_MAX_PARTS=60`) + "cada N minutos"
+  + "🕒 Generar horarios" (recalcula las N fechas desde la primera) + "🔢 Calcular reparto" (vista previa: total,
+  📱 con app / 🌐 navegador / 🔕 sin notis, y "N lotes de ~M cada uno"); cada lote muestra su tamaño estimado. Los
+  planes guardan minutos entre lotes (`gapHours` fraccional).
+
 ### 296. 🎰 Jugar ahora AFUERA con autologin · Ganamos apagada (tilde en COMANDOS) · tests sólo para el usuario de prueba · acceso admin de prueba — SW v186, admin-sw v68
 **Pedidos (owner):** "Jugar ahora tiene que abrir un link externo de la plataforma con el login ya hecho, saliendo de
 la página (así no ven el delay), con una línea finita arriba 'volver a cargas'; Ganamos: poder habilitarla o

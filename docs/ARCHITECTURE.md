@@ -887,8 +887,11 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   es plegable). El modal Info ya no muestra opiniones ni ruleta (ocultos por CSS).
   **#296:** `playNow` abre SIEMPRE afuera (`openPlatformTab` → `/jugar.html` con SSO, barra finita "‹ Volver a cargas");
   `body.is-tester` (username en `TESTER_USERNAMES`, home.js) es lo único que muestra los botones test; `_paintPlatformTexts`
-  adapta Info/tarjeta de plataformas a la cantidad de plataformas habilitadas (Ganamos apagada por default y por
-  migración `migration_ganamos_off_v1_done`; tilde en COMANDOS → "Plataformas ofrecidas").
+  adapta Info/tarjeta de plataformas a la cantidad de plataformas habilitadas (tilde en COMANDOS → "Plataformas
+  ofrecidas"). **#298:** una plataforma habilitada SIN API es "Próximamente": visible (pestaña del Inicio y tarjeta
+  deshabilitadas) pero no se puede fijar (`/api/platforms/preferred` la rechaza) ni se ofrece al cargar
+  (`decideForDeposit` filtra `connected`). `.ev-hero` = aviso premium del Inicio. **#297:** Cronograma como hoja del mes
+  (panel del día `#cronDayPanel`, `cronPlanDay` → formulario con fecha) y reparto en hasta 60 lotes (`SCHED_MAX_PARTS`).
   **#294:** la oferta del % extra por instalar va ADENTRO de `#playNowCard` (`#pnGift`); `playNowLater` la deja
   pendiente (barra `#installGiftBar` de punta a punta). Ya no existe `#installGiftCard`.
   **#288:** el globo flotante `#supportBubble` está OCULTO por CSS (no borrarlo: contiene `#chatTopbarAvatar`);

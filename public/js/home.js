@@ -219,17 +219,22 @@
     function renderEntryTabs() {
         const box = _el('entryTabs'); if (!box) return;
         const list = _entryList();
-        if (!_entryPlat || !list.some((p) => p.id === _entryPlat)) {
+        // #298: sólo se puede elegir una plataforma CON API; las demás se ven como "Próximamente".
+        const avail = list.filter((p) => p.connected !== false);
+        if (!_entryPlat || !avail.some((p) => p.id === _entryPlat)) {
             const def = (_platforms && _platforms.defaultPlatform) || 'girox';
-            _entryPlat = (list.find((p) => p.id === def) || list[0]).id;
+            _entryPlat = ((avail.find((p) => p.id === def) || avail[0] || list[0]) || {}).id;
         }
-        box.innerHTML = list.map((p) =>
-            '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + '" onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')">' +
+        box.innerHTML = list.map((p) => {
+            const soon = p.connected === false;
+            return '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + (soon ? ' soon' : '') + '"' + (soon ? ' disabled title="Próximamente"' : ' onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')"') + '>' +
             (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + _esc(p.name) +
             (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
-            '</button>').join('');
+            (soon ? '<span class="ev-soon">Próximamente</span>' : '') +
+            '</button>';
+        }).join('');
     }
-    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); }
+    function entrySwitch(id) { const p = _entryList().find((x) => x.id === id); if (p && p.connected === false) { try { VIP.ui.showToast('🔜 ' + p.name + ': próximamente', 'info'); } catch (_) {} return; } _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #298
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     function entryShowSite() {
         const f = _el('entryFrame'); if (!f) return;
@@ -965,17 +970,18 @@
     function _platBtn(p, preferred) {
         const label = _esc(p.name);
         const isPref = preferred === p.id;
-        const onSelect = "VIP.home.choosePlatform('" + _esc(p.id) + "')";
+        const soon = p.connected === false; // #298: sin API → "Próximamente", no se puede elegir
+        const onSelect = soon ? "VIP.ui.showToast('🔜 " + _esc(p.name) + ": próximamente', 'info')" : "VIP.home.choosePlatform('" + _esc(p.id) + "')";
         const logo = p.logoUrl ? '<img class="plat-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '';
-        return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + '">' +
-            '<button type="button" class="plat-play-btn plat-' + _esc(p.id) + (isPref ? ' is-pref' : '') + '" onclick="' + onSelect + '">' +
+        return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + (soon ? ' soon' : '') + '">' +
+            '<button type="button" class="plat-play-btn plat-' + _esc(p.id) + (isPref ? ' is-pref' : '') + (soon ? ' soon' : '') + '" onclick="' + onSelect + '">' +
             '<span class="plat-check">' + (isPref ? '✓' : '') + '</span>' +
             logo +
             '<span class="plat-play-name">' + label + '</span>' +
             // #255 (owner): Girox lleva un "Recomendado" chiquito en rojo; #286: DEBAJO del nombre (antes flotaba arriba).
             (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') +
             // #271: sin "Entrar" acá (verlas = Inicio). Tocar la fija la suelta (vuelve el cartel al cargar).
-            '<span class="plat-play-sub">' + (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija') + '</span>' +
+            '<span class="plat-play-sub">' + (soon ? '🔜 Próximamente' : (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija')) + '</span>' +
             '</button></div>';
     }
     function choosePlatform(platformId) {

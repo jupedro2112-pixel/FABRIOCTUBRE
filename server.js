@@ -5493,6 +5493,8 @@ app.post('/api/platforms/preferred', authMiddleware, async (req, res) => {
       if (!pid) return res.status(400).json({ error: 'Plataforma inválida.' });
       const enabled = await platforms.listEnabled();
       if (!enabled.some((p) => p.id === pid)) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
+      const adp = platforms.getAdapter(pid); // #298: "Próximamente" (sin API) todavía no se puede fijar
+      if (!adp || typeof adp.isConnected !== 'function' || !adp.isConnected()) return res.status(400).json({ error: 'Próximamente: esa plataforma todavía no se puede elegir.' });
     }
     await User.updateOne({ id: req.user.userId }, { $set: { preferredPlatform: pid } });
     logger.info(`[platforms] ${req.user.username} fijó plataforma: ${pid || '(ninguna, pregunta en cada carga)'}`);
@@ -11258,15 +11260,8 @@ async function initializeData() {
       await Config.set('migration_autoloadpct_10_v1_done', true, 'startup-migration');
     }
   } catch (e) { console.warn('[startup-migration] autoLoadBonusPct:', e.message); }
-  // #296 (owner 2026-10-17): Ganamos se APAGA una vez (hasta tener la API): no aparece en Inicio ni en las cargas.
-  // Se vuelve a prender con el tilde del panel (COMANDOS → Plataformas ofrecidas, o Configuración → Plataformas).
-  try {
-    if (!(await getConfig('migration_ganamos_off_v1_done', false))) {
-      await platforms.saveSettings({ items: { ganamos: { enabled: false } } }, 'startup-migration');
-      await Config.set('migration_ganamos_off_v1_done', true, 'startup-migration');
-      console.log('✅ Ganamos apagada hasta tener la API (#296)');
-    }
-  } catch (e) { console.warn('[startup-migration] ganamos off:', e.message); }
+  // #298 (owner): Ganamos queda HABILITADA y visible ("Próximamente" mientras no tenga API; no se puede elegir).
+  // La migración de #296 que la apagaba se quitó antes de salir a producción.
   // #296 (owner): el usuario de PRUEBA "lalodj" tiene acceso TOTAL al panel (role admin) para probar los ajustes.
   // La clave NO vive en el código: la cuenta se crea desde el panel (Usuarios → crear) o registrándose en la app,
   // y en cada arranque se le asegura el rol admin. Cuando termine la etapa de pruebas: bajarle el rol o borrarla.
@@ -21487,7 +21482,7 @@ app.get('/api/admin/notif-batches/:id', authMiddleware, adminMiddleware, async (
 const ScheduledCampaign = require('./src/models/ScheduledCampaign');
 const SCHED_TICK_MS = 60 * 1000;
 const SCHED_STALE_SENDING_MS = 15 * 60 * 1000;
-const SCHED_MAX_PARTS = 12;
+const SCHED_MAX_PARTS = 60; // #297: repartir un lote grande en hasta 60 lotes parejos (antes 12)
 const SCHED_ART_OFFSET_MS = 3 * 60 * 60 * 1000;
 // Adaptadores de ESTE repo (al replicar a otro repo, sólo cambian estas 3 líneas).
 const SCHED_ADAPTER = {
@@ -21970,7 +21965,7 @@ function _planNormalizeItems(arr) {
   const items = [];
   for (let i = 0; i < arr.length; i++) {
     const it = arr[i] || {};
-    const day = parseInt(it.day, 10), parts = Math.min(SCHED_MAX_PARTS, Math.max(1, parseInt(it.parts, 10) || 1)), gap = Math.min(24, Math.max(1, Number(it.gapHours) || 5));
+    const day = parseInt(it.day, 10), parts = Math.min(SCHED_MAX_PARTS, Math.max(1, parseInt(it.parts, 10) || 1)), gap = Math.min(48, Math.max(0.05, Number(it.gapHours) || 0.5)); // #297: gapHours fraccional (0.5 = 30 min)
     const time = String(it.time || '').trim();
     if (!(day >= 1 && day <= 31)) return { error: `Campaña ${i + 1}: el día tiene que estar entre 1 y 31.` };
     if (!/^\d{2}:\d{2}$/.test(time)) return { error: `Campaña ${i + 1}: la hora tiene que ser HH:mm.` };
@@ -22021,7 +22016,7 @@ app.post('/api/admin/cronograma-plans/from-month', authMiddleware, adminMiddlewa
       const parts = (c.parts || []).slice().sort((a, b2) => new Date(a.runAt) - new Date(b2.runAt));
       const first = new Date(parts[0].runAt);
       const art = new Date(first.getTime() - SCHED_ART_OFFSET_MS);
-      const gap = parts.length > 1 ? Math.max(1, Math.min(24, Math.round((new Date(parts[1].runAt) - first) / 3600000))) : 5;
+      const gap = parts.length > 1 ? Math.max(0.05, Math.min(48, Math.round((new Date(parts[1].runAt) - first) / 60000) / 60)) : 0.5; // #297 en horas (fraccional)
       return { day: art.getUTCDate(), time: `${String(art.getUTCHours()).padStart(2, '0')}:${String(art.getUTCMinutes()).padStart(2, '0')}`, parts: parts.length, gapHours: gap, name: c.name || '', payload: c.payload };
     });
     const n = _planNormalizeItems(items);

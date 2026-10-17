@@ -41,8 +41,8 @@ const CONFIG_KEY = 'platforms';
 // Ganamos arranca sin logo → se muestra un badge con el nombre hasta que el panel cargue uno.
 const DEFAULT_ITEMS = {
   girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
-  // #296 (owner 2026-10-17): Ganamos APAGADA hasta tener la API (se prende con el tilde del panel: COMANDOS o Configuración).
-  ganamos: { enabled: false, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.svg' }
+  // #298 (owner): Ganamos HABILITADA y visible, pero sin API se muestra "Próximamente" y no se puede elegir (connected=false).
+  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.svg' }
 };
 
 const DEFAULT_SETTINGS = {
@@ -203,17 +203,22 @@ async function resolveDefaultFor(user) {
 async function decideForDeposit(user) {
   const s = await getSettings();
   const enabled = await listEnabled();
-  if (enabled.length < 2 || s.askMode === 'never') {
-    return { ask: false, platform: await resolveDefaultFor(user), reason: enabled.length < 2 ? 'single' : 'never' };
+  // #298: una plataforma habilitada pero SIN API es "Próximamente": se ve en la app pero no se ofrece al cargar.
+  const offer = enabled.filter((p) => p.connected);
+  const isOffered = (id) => offer.some((p) => p.id === id);
+  if (offer.length < 2 || s.askMode === 'never') {
+    const def = await resolveDefaultFor(user);
+    const pid = isOffered(def) ? def : ((offer[0] && offer[0].id) || def);
+    return { ask: false, platform: pid, reason: offer.length < 2 ? 'single' : 'never' };
   }
   // Plataforma FIJA del cliente (#225): la eligió en la app → no se pregunta.
   const pref = normalizeId(user && user.preferredPlatform);
-  if (pref && s.items[pref] && s.items[pref].enabled) return { ask: false, platform: pref, reason: 'preferred' };
+  if (pref && isOffered(pref)) return { ask: false, platform: pref, reason: 'preferred' };
   const last = normalizeId(user && user.lastPlatform);
-  if (s.askMode === 'first_time' && last && s.items[last] && s.items[last].enabled) {
+  if (s.askMode === 'first_time' && last && isOffered(last)) {
     return { ask: false, platform: last, reason: 'first_time' };
   }
-  return { ask: true, options: enabled.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl, logoUrl: p.logoUrl || '' })), timeoutMin: s.askTimeoutMin };
+  return { ask: true, options: offer.map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl, logoUrl: p.logoUrl || '' })), timeoutMin: s.askTimeoutMin };
 }
 
 /** Nombre visible (con emoji) — sync, usa el cache si lo hay. */

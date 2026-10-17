@@ -944,6 +944,11 @@
                  plataforma (sin login: el link SSO es de un solo uso) + abajo Carga manual (chat WhatsApp,
                  modo mini) y Carga automática (app completa, modo full). -->
             <div id="entryView" class="entry-view">
+                <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
+                <div class="ev-hero" role="note">
+                    <span class="ev-hero-k">GIROX · LA APP QUE PAGA</span>
+                    <span class="ev-hero-t">La única app que paga <b>todo en el momento</b>, <b>sin tope</b>, las <b>24 hs</b></span>
+                </div>
                 <!-- #269 (owner): "en el inicio, arriba de la página, el reembolso, la ruleta diaria y el sistema
                      de referidos como servicio para que vean". Tres accesos compactos; el % de reembolso lo llena
                      home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
@@ -960,10 +965,8 @@
                 </div>
                 <div class="ev-tabs" id="entryTabs"></div>
                 <!-- #276 (owner): aclarar en una línea que es ilustrativo y que para cargar se usa la barra de arriba. -->
-                <!-- #277 (owner): texto más grande y con links directos a Carga automática / Carga manual. -->
-                <div class="ev-note ev-note-big">👁 Vista ilustrativa de nuestras plataformas activas. Para cargar, entrá a
-                    <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('full')">⚡ Carga automática</a> o
-                    <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('mini')">💬 Carga manual</a>.</div>
+                <!-- #298 (owner): la nota ilustrativa se resumió en una línea chica debajo de las pestañas. -->
+                <div class="ev-note ev-note-line">Vista ilustrativa · para cargar usá <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('full')">Carga auto</a> o <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('mini')">Carga manual</a> arriba</div>
                 <div class="ev-frame-wrap">
                     <!-- #278 (owner): el modo logo (#277) quedó mal → las páginas vuelven a verse embebidas al entrar. -->
                     <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
