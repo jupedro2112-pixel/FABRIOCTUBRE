@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 280. 🎠 Opiniones: deslizan solas y también a mano — SW v173
+**Pedido (owner):** "que se vayan deslizando automático y que el que entra también pueda deslizar".
+- `_startAutoSlide` (reviews.js): avanza una tarjeta cada 3,5 s con scroll suave y vuelve al principio al
+  llegar al final; se pausa al tocar/arrastrar/scrollear y retoma 6 s después de soltar; no corre con la
+  pestaña oculta, con el Inicio plegado ni si el sistema pide reducir animaciones. El arrastre manual
+  sigue siendo nativo (scroll-snap).
+
 ### 279. 🎲 Opiniones: 30 reseñas al azar en cada apertura — SW v172
 **Pedido (owner):** "en opiniones de jugadores muestra sólo 2; tendría que mostrar siempre 30, al azar,
 cambiando con cada inicio".

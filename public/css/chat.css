@@ -1944,3 +1944,6 @@ body.home-mini .test-mini-manual { display: flex; }
 
 /* ══ #278: sin modo logo (vuelven las páginas embebidas al entrar) ══ */
 .ev-logo { display: none !important; }
+
+/* ══ #280: carrusel de opiniones — desliza solo y a mano ══ */
+.rv-track { scroll-behavior: smooth; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }

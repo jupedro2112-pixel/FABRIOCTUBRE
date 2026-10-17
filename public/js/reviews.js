@@ -211,6 +211,32 @@
         html += '</div>';
         box.innerHTML = html;
         box.style.display = '';
+        _startAutoSlide(box.querySelector('.rv-track'));
+    }
+    // #280 (owner): "que se vayan deslizando automático y que el que entra también pueda deslizar".
+    // Cada 3,5 s avanza una tarjeta (vuelve al principio al final). Si la persona toca/arrastra, se pausa
+    // y retoma 6 s después de soltar. Sin movimiento si el sistema pide reducir animaciones.
+    let _autoTimer = null, _resumeTimer = null;
+    function _startAutoSlide(track) {
+        clearInterval(_autoTimer); clearTimeout(_resumeTimer);
+        if (!track) return;
+        try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+        let paused = false;
+        const step = function () {
+            if (paused || document.hidden || !track.isConnected || track.offsetParent === null) return;
+            const first = track.querySelector('.rv-card');
+            if (!first) return;
+            const gap = 6;
+            const w = first.getBoundingClientRect().width + gap;
+            const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+            if (atEnd) track.scrollTo({ left: 0, behavior: 'smooth' });
+            else track.scrollBy({ left: w, behavior: 'smooth' });
+        };
+        const pause = function () { paused = true; clearTimeout(_resumeTimer); };
+        const resumeLater = function () { clearTimeout(_resumeTimer); _resumeTimer = setTimeout(function () { paused = false; }, 6000); };
+        ['touchstart', 'pointerdown', 'mousedown', 'wheel'].forEach(function (ev) { track.addEventListener(ev, pause, { passive: true }); });
+        ['touchend', 'pointerup', 'mouseup', 'touchcancel'].forEach(function (ev) { track.addEventListener(ev, resumeLater, { passive: true }); });
+        _autoTimer = setInterval(step, 3500);
     }
 
     // ---------- Reseñas dentro del pantallazo de pauta (adServiceModal) ----------
