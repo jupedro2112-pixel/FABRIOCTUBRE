@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 312. 🖼️ Inicio: carrusel de fotos ilustrativas de Girox en vez de la página embebida — SW v198
+**Pedido (owner, 5 capturas):** "poné estas fotos con deslizante en el Inicio en vez de la página de Girox, que
+deslicen cada 2 segundos y diga 'fotos ilustrativas de Girox'".
+- Imágenes en `public/images/girox-slides/1..5.jpg` (reescaladas a 640 px de alto, JPEG q82, ~60–120 KB c/u).
+- `#entrySlides` dentro de `.ev-frame-wrap`: pista con scroll-snap (se puede deslizar a mano; al tocar se pausa 5 s),
+  puntos, leyenda "📸 Fotos ilustrativas de Girox"; avanza cada 2 s (`_slidesStart`), se frena con la pestaña
+  oculta o fuera del Inicio. Para Girox ya NO se carga su web en el iframe (más liviano); Ganamos sigue embebida.
+
 ### 311. 🧪 Landing: si la plataforma no está conectada, sigue en MODO PRUEBA
 **Pedido (owner):** "no importa; que el próximo paso de la landing haga como un test que se crea el usuario, para ver
 cómo sigue".

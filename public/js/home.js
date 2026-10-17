@@ -314,9 +314,43 @@
     }
     function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
+    // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
+    const ENTRY_SLIDES = ['/images/girox-slides/1.jpg', '/images/girox-slides/2.jpg', '/images/girox-slides/3.jpg', '/images/girox-slides/4.jpg', '/images/girox-slides/5.jpg'];
+    let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
+    function _slidesBuild() {
+        const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
+        if (!tr || _slBuilt) return;
+        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide"><img src="' + u + '" alt="Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async"></div>').join('');
+        if (dots) dots.innerHTML = ENTRY_SLIDES.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
+        const pause = () => { _slPausedUntil = Date.now() + 5000; };
+        ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
+        tr.addEventListener('scroll', () => { const w = tr.clientWidth || 1; const i = Math.round(tr.scrollLeft / w); if (i !== _slIdx) { _slIdx = i; _slidesDots(); } }, { passive: true });
+        _slBuilt = true;
+    }
+    function _slidesDots() { const dots = _el('entrySlidesDots'); if (!dots) return; Array.from(dots.children).forEach((d, i) => d.classList.toggle('on', i === _slIdx)); }
+    function _slidesGo(i) { const tr = _el('entrySlidesTrack'); if (!tr) return; _slIdx = (i + ENTRY_SLIDES.length) % ENTRY_SLIDES.length; tr.scrollTo({ left: _slIdx * tr.clientWidth, behavior: 'smooth' }); _slidesDots(); }
+    function _slidesStart() {
+        _slidesBuild();
+        const box = _el('entrySlides'); if (box) box.style.display = '';
+        clearInterval(_slTimer);
+        _slTimer = setInterval(() => {
+            if (document.hidden || _homeMode !== 'play' || Date.now() < _slPausedUntil) return;
+            _slidesGo(_slIdx + 1);
+        }, 2000);
+    }
+    function _slidesStop() { clearInterval(_slTimer); _slTimer = null; const box = _el('entrySlides'); if (box) box.style.display = 'none'; }
     function entryShowSite() {
         const f = _el('entryFrame'); if (!f) return;
         const p = _entryList().find((x) => x.id === _entryPlat) || {};
+        // #312: Girox = carrusel de fotos (no se carga su web); las demás siguen embebidas.
+        if ((p.id || _entryPlat) === 'girox') {
+            clearTimeout(_entryTimer); _entryStatus(null);
+            if (f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank';
+            f.style.display = 'none'; _entryUrl = null;
+            _slidesStart();
+            return;
+        }
+        _slidesStop();
         const url = p.playUrl || p.externalUrl || '';
         if (!url) { _entryStatus((p.name || 'Esa plataforma') + ' todavía no está disponible.', false); return; }
         f.style.display = '';
@@ -340,6 +374,7 @@
     }
     function _entryUnload() {
         clearTimeout(_entryTimer);
+        _slidesStop(); // #312
         const f = _el('entryFrame');
         if (f && f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank'; // libera la página del casino
         if (f) f.style.display = 'none';
