@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 309. 🔢 Versión visible en Perfil ("app v197") — SW v197
+**Contexto:** el owner seguía sin ver la carga mínima; su captura tenía el ícono de ficha (v188) pero no la línea
+dorada (v191) ⇒ su entorno corre v188–v190, la versión con el bug ya corregido en `main`. Para no adivinar más:
+- `#appBuildTag` en el recuadro de usuario del Perfil muestra "app vNNN". **Regla:** al bumpear `CACHE_VERSION` del
+  SW de la PWA, actualizar también ese texto (mismo número).
+
 ### 308. 📲 Con la app instalada, sin test (también para lalodj) — SW v196
 **Pedido (owner):** "si en el usuario lalodj una persona instala la app, sacá todo el test con la app instalada y que
 funcione como app instalada directo".

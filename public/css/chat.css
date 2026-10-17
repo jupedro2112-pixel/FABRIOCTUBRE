@@ -2203,3 +2203,6 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 /* ══ #307: carga mínima también en el cartel del chat manual ══ */
 .svb-min { display: block; width: 100%; text-align: center; margin-top: 4px; font: 700 10px var(--dx-font); color: #e6e9f2; }
 .svb-min b { color: var(--dx-money); }
+
+/* ══ #309: versión visible en Perfil ══ */
+.profile-modal .pf-build { font: 700 8.5px var(--dx-font); color: #5d6577; margin-top: 3px; letter-spacing: .4px; }

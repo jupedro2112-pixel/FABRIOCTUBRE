@@ -217,5 +217,7 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
 1. Leer `WORKLOG.md` al iniciar.
 2. Hacer el cambio. Validar sintaxis (`node --check` en archivos tocados — no hay
    node_modules local, así que no se puede correr el server; sólo syntax check).
+   En cambios de la PWA: bumpear `CACHE_VERSION` de `public/firebase-messaging-sw.js` **y** el texto
+   `app vNNN` de `#appBuildTag` en `public/index.html` (mismo número; es la versión visible en Perfil, #309).
 3. Actualizar `WORKLOG.md`.
 4. Commitear y pushear a `main` cuando el owner lo pida (o si pidió "todo seguido").
