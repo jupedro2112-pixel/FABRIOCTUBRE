@@ -261,7 +261,10 @@
     const TESTER_USERNAMES = ['lalodj'];
     function _applyTesterClass() {
         const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
-        document.body.classList.toggle('is-tester', TESTER_USERNAMES.includes(u));
+        // #308 (owner): con la app INSTALADA no hay nada de test, ni para lalodj: funciona como app instalada real.
+        const tester = TESTER_USERNAMES.includes(u) && !_isStandalone();
+        if (!tester) _installedTest = false;
+        document.body.classList.toggle('is-tester', tester);
     }
     // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
     function _paintMinDeposit(n) {

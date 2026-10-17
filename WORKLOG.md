@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 308. 📲 Con la app instalada, sin test (también para lalodj) — SW v196
+**Pedido (owner):** "si en el usuario lalodj una persona instala la app, sacá todo el test con la app instalada y que
+funcione como app instalada directo".
+- `_applyTesterClass`: `body.is-tester` sólo si es usuario de prueba **y** la app NO está instalada (navegador). En
+  standalone no hay botones test ni simulación: nivel real junto al saldo, cartel real, reclamo real.
+
 ### 307. 🏠 Inicio SIEMPRE al entrar + carga mínima en más lugares + hallazgo: producción sirve el SW v57 — SW v195
 **Pedidos (owner):** "cuando la gente entre que aparezca Inicio como página principal siempre y de ahí vayan a carga
 auto o donde quieran — importante"; "la carga mínima sigue sin aparecer, ponela".
