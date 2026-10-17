@@ -53,7 +53,7 @@ El sistema VIPCARGAS:
   automático por hgcash).
 - Da **reembolsos** sobre la pérdida real/NETWIN (DIARIO desde #349 2026-10-17 · semanal/mensual — el diario se había
   eliminó el 2026-08-07), **ruleta
-  diaria**, **fueguito** (racha), **bono instalación $5.000**, **referidos** (8% de
+  diaria**, **fueguito** (racha), **bono instalación $5.000**, **referidos** (5% desde #351 — antes 8% — de
   netwin → owner-revenue, y 7% de eso al referidor) y **campañas/publicistas** con
   sub-atribución por influencer.
 - El "saldo real" del jugador vive en 1girox; VIPCARGAS guarda atribución, bonos,
@@ -512,7 +512,7 @@ salen de la MISMA Partner API, con la misma `X-Api-Key` y por **username**:
 
 **La comisión de referidos no viene del proveedor:** 1girox devuelve todos los campos
 `commission` en 0, así que la tasa es NUESTRA: `GIROX_REFERRAL_COMMISSION_PCT`
-(default **8%** del netwin = owner-revenue), y sobre eso va la tasa del referidor.
+(default **5%** del netwin desde #351 2026-10-17 — antes 8% —, editable en el panel → Referidos, Config['referralCommissionPct']; env como fallback). Es la ÚNICA tasa.
 
 **`giroxUserId`** — el propio `stats` devuelve el ID numérico del jugador y los flujos
 lo persisten "gratis" (update condicional sólo si estaba vacío). Ya NO bloquea nada:
@@ -786,7 +786,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   payout (acredita con `giroxService.creditUserBalance`, reference
   `vip-refcom-<payoutId>` reusando el documento de intentos fallidos). El revenue sale
   del netwin del panel × `GIROX_REFERRAL_COMMISSION_PCT` (8%) y sobre eso la tasa del
-  referidor (7%). Ver §4.6.
+  referidor (7%). Ver §4.6. **Hoy (#351): una sola tasa, 5% por defecto, editable en el panel.**
 - **Ruleta diaria** (v2 2026-09-18, premios CONFIGURABLES): gates editables en el panel
   (`Config['dailyRoulette']`: `enabled`, `requireAppInstalled` default sí,
   `minCargas30d` default 10 = "más de 10 cargas reales en 30 días"; default = la tabla
