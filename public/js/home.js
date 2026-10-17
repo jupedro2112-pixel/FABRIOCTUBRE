@@ -365,6 +365,13 @@
     // #324 (owner): "Link plataforma: www.1girox.com (mirala)" → la web pública de Girox aparte, adentro de la app
     // (ventana /jugar.html con la línea "‹ Volver a cargas"), sin login: es para VERLA antes de jugar.
     function entryViewSite() { openPlatformTab('girox', { test: true }); }
+    // #362: Telegram desde la barra de arriba (mismo link que el botón "Soporte Telegram" del login: /api/soporte).
+    async function openTelegram() {
+        let url = '';
+        try { const r = await fetch(VIP.config.API_URL + '/api/soporte'); const d = r.ok ? await r.json() : null; url = (d && d.telegram && d.telegram.url) || ''; } catch (_) {}
+        if (!url) url = (VIP.state && VIP.state.communityLink) || '';
+        if (url) window.open(url, '_blank', 'noopener'); else if (VIP.ui && VIP.ui.showToast) VIP.ui.showToast('Telegram no disponible por ahora', 'info');
+    }
     // #323 (owner): expandir el recuadro de fotos a pantalla completa (se ven enteras) y achicar.
     function toggleEntryExpand(force) {
         const w = document.querySelector('.ev-frame-wrap'); const b = _el('entryExpandBtn');
@@ -1482,7 +1489,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

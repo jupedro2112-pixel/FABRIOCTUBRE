@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 362. ✈️ Telegram a la izquierda de la barra · colores en las puntas · "Historias" más chico — SW v249
+**Pedido (owner):** "del otro lado agregá el Telegram así Inicio queda centrado; ponele color de Telegram así los 2 de la
+punta quedan con color; achicá la palabra Historias así se ve completa". `#navTelegram` (izquierda, celeste Telegram,
+abre el link de `/api/soporte` — el mismo del botón del login — vía `VIP.home.openTelegram`), `#navHistorias` con
+fondo violeta→rojo; etiquetas de ambos a 6,8–7,5 px en una línea. Barra: Telegram · Auto · Manual | INICIO | Info ·
+Perfil · Historias.
+
 ### 361. 📽️ HISTORIAS: el admin publica, el cliente las ve arriba a la derecha (al lado de Perfil) — SW v248, admin-sw v76
 **Pedido (owner):** "arriba de todo a la derecha, al lado de Perfil, una sección de historias donde se pueda subir
 contenido desde el admin; que se vea como historias activas; configurar las horas desde el admin; publicá una de prueba:

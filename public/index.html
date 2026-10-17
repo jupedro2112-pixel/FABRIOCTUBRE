@@ -487,6 +487,11 @@
                  app.js / chat.js / fire.js / el inline de FCM). #infoBtn conserva el id: app.js le cuelga el
                  listener y el botón "¿Cómo funciona?" de abajo le hace click. -->
             <!-- #269 (owner): "el Inicio dejalo en el medio y ponele una separación al resto, en forma retro". -->
+            <!-- #362 (owner): Telegram a la izquierda de todo (color Telegram) — equilibra con Historias a la derecha y deja Inicio centrado. -->
+            <button type="button" class="tn-btn tn-telegram" id="navTelegram" onclick="VIP.home.openTelegram()" title="Nuestro Telegram">
+                <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#fff"/><path fill="#229ed9" d="M5.5 11.8l11.4-4.5c.54-.21 1.01.11.84.93l-1.94 9.15c-.15.65-.54.81-1.09.5l-3.02-2.22-1.45 1.4c-.16.16-.3.3-.59.3l.21-3.07 5.6-5.06c.24-.22-.05-.34-.37-.13l-6.92 4.36-2.98-.93c-.65-.2-.66-.65.14-.96z"/></svg></span>
+                <span class="tn-lbl">Telegram</span>
+            </button>
             <button type="button" class="tn-btn" id="navAuto" onclick="VIP.home.setHomeMode('full')" title="Carga automática: transferís, mandás el comprobante y se acredita solo">
                 <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/></svg></span><span class="tn-lbl">Carga<br>auto</span>
             </button>
@@ -2144,7 +2149,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v248</div>
+                    <div class="pf-build" id="appBuildTag">app v249</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

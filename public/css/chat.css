@@ -2555,3 +2555,12 @@ body.story-open { overflow: hidden; }
 .st-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.75)); display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
 .st-caption { font: 700 14px/1.35 var(--dx-font); text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
 .st-link { pointer-events: auto; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; font: 900 12px var(--dx-font); text-transform: uppercase; letter-spacing: .6px; padding: 10px 18px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 18px rgba(255,23,68,.4); }
+
+/* ══ #362 (owner): Telegram (izquierda) e Historias (derecha) con color; "Historias" más chico para que entre entero ══ */
+.tn-telegram { background: linear-gradient(135deg, #229ed9, #1b7fb3) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 4px 14px rgba(34,158,217,.35); }
+.tn-telegram .tn-lbl { color: #fff !important; }
+.tn-stories { background: linear-gradient(135deg, #9b30ff, #ff1744) !important; color: #fff !important; border-color: transparent !important; box-shadow: 0 4px 14px rgba(155,48,255,.35); }
+.tn-stories .st-ring { background: #1a0a2e; border-color: rgba(255,255,255,.55); }
+.tn-stories.has-active .st-ring { background: linear-gradient(#1a0a2e, #1a0a2e) padding-box, linear-gradient(135deg, #ffd166, #fff) border-box; }
+.tn-btn:not(.tn-home).tn-stories .tn-lbl, .tn-btn:not(.tn-home).tn-telegram .tn-lbl { font-size: 6.8px !important; letter-spacing: .2px !important; color: #fff !important; white-space: nowrap; }
+@media (min-width: 400px) { .tn-btn:not(.tn-home).tn-stories .tn-lbl, .tn-btn:not(.tn-home).tn-telegram .tn-lbl { font-size: 7.5px !important; } }
