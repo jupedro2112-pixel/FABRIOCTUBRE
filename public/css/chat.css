@@ -2093,3 +2093,6 @@ body.home-full .test-mini-bs { display: inline-block; }
 .fire-home-card .fh-dot b { position: absolute; top: -13px; font: 900 8px var(--dx-font); color: #e6c9a8; white-space: nowrap; }
 .fire-home-card .fh-dot small { position: absolute; top: 9px; font: 800 8px var(--dx-font); color: #ffb347; white-space: nowrap; }
 .fire-home-card .fh-rule { display: block; font: 600 8.5px/1.3 var(--dx-font); color: #e6c9a8; text-align: center; white-space: normal; }
+
+/* ══ #292: escalera VIP — plata que desbloquea cada nivel ══ */
+#vipCard .vip-lvl-win { font-size: 10px; white-space: nowrap; }

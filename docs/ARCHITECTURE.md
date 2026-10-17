@@ -759,10 +759,14 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   (`VIP.refunds.showProfileModal`, sólo si está encendido). Panel Transacciones: se
   etiqueta "💸 Reembolso acumulativo", entra en el filtro Reembolsos (no en
   Bonificaciones). Validación: `node scripts/test-cashback-spec.js` (tabla §7).
-- **Niveles VIP** (2026-08-03, réplica de Stake): se sube por APOSTADO acumulado de
+- **Niveles VIP** (2026-08-03; escalera de **1win** desde #292 2026-10-17, antes Stake): se sube por APOSTADO acumulado de
   por vida (buckets `VipWagerMonth`, ver §2 y el motor en
-  `src/services/vipLevelService.js`). Escalera en `src/utils/vipLevels.js`: umbrales
-  de Stake en USD × `VIP_USD_ARS_RATE` (1500) — Bronce $15M ARS … Diamante V $750.000M.
+  `src/services/vipLevelService.js`). Escalera en `src/utils/vipLevels.js`: 19 niveles (Bronce II US$5k … Black V
+  US$5.000M) × tasa (1500) — Bronce II $7,5M ARS apostados; bono al subir 0,1% del umbral, rakeback 0,10–0,80%.
+  **Editable** desde el panel (Configuración → Niveles VIP → escalera): `Config['vipLevelsConfig']` con overrides
+  por idx (nombre, thresholdArs, levelUpBonusArs, rakebackPct) + `usdArsRate`; `POST /api/admin/vip-levels/table`
+  (valida umbrales crecientes; `reset:true` = defaults) y `vipLevels.refreshFromConfig(Config)` (boot + 60 s +
+  al guardar). Los idx se persisten: sólo AGREGAR niveles al final, nunca reordenar.
   Cada nivel destraba: (a) **bono one-time** al alcanzarlo (lo acredita el motor con
   bono 0 regalo directo (§4.5), reference `vip-lvl-<userId>-<idx>`, aviso por chat+push vía
   `/sys_vip_levelup`; `duplicate:true` = otra instancia ya pagó → no re-notificar) y

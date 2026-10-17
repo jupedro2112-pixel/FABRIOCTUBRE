@@ -9001,7 +9001,9 @@ app.get('/api/admin/vip-levels', authMiddleware, adminMiddleware, async (req, re
       return res.status(403).json({ error: 'Solo el admin general puede ver el estado de los niveles VIP.' });
     }
     const disabled = await vipLevelService.isDisabled(Config);
-    res.json({ disabled });
+    // #292: la escalera vigente (con overrides del panel) + los defaults (1win) para "restaurar".
+    await vipLevels.refreshFromConfig(Config);
+    res.json({ disabled, levels: vipLevels.listLevels(), defaults: vipLevels.listDefaults(), usdArsRate: vipLevels.currentRate() });
   } catch (error) {
     console.error('Error obteniendo estado de niveles VIP:', error);
     res.status(500).json({ error: 'Error del servidor' });
@@ -9020,6 +9022,52 @@ app.post('/api/admin/vip-levels', authMiddleware, adminMiddleware, async (req, r
     res.json({ success: true, disabled });
   } catch (error) {
     console.error('Error cambiando estado de niveles VIP:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// #292 (owner 2026-10-17): ESCALERA VIP editable — nombre, umbral de apostado acumulado en pesos, bono al
+// subir y rakeback % por nivel + tasa USD→ARS. Guarda Config['vipLevelsConfig'] (overrides por idx) y recarga
+// en esta instancia al instante (las demás, en ≤ 60 s). { reset: true } vuelve a la escalera 1win.
+app.post('/api/admin/vip-levels/table', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el admin general puede editar la escalera VIP.' });
+    if (req.body && req.body.reset === true) {
+      await Config.set(vipLevels.CONFIG_KEY, { usdArsRate: null, levels: {} }, req.user.username);
+      vipLevels.setOverrides(null);
+      logger.info(`[vip] escalera restaurada a defaults (1win) por ${req.user.username}`);
+      return res.json({ success: true, reset: true, levels: vipLevels.listLevels(), defaults: vipLevels.listDefaults(), usdArsRate: vipLevels.currentRate() });
+    }
+    const arr = Array.isArray(req.body && req.body.levels) ? req.body.levels : null;
+    if (!arr) return res.status(400).json({ error: 'Falta la escalera (levels).' });
+    const levels = {};
+    for (const l of arr) {
+      const idx = parseInt(l && l.idx, 10);
+      if (!(idx >= 1 && idx <= vipLevels.VIP_LEVELS.length)) continue;
+      const th = Number(l.thresholdArs), bo = Number(l.levelUpBonusArs), rk = Number(l.rakebackPct);
+      if (!(th > 0)) return res.status(400).json({ error: `Nivel ${idx}: el apostado acumulado tiene que ser mayor a 0.` });
+      if (!Number.isFinite(bo) || bo < 0) return res.status(400).json({ error: `Nivel ${idx}: el bono al subir tiene que ser 0 o más.` });
+      if (!Number.isFinite(rk) || rk < 0 || rk > 20) return res.status(400).json({ error: `Nivel ${idx}: el rakeback tiene que estar entre 0 y 20%.` });
+      levels[idx] = { name: String(l.name || '').trim().slice(0, 30), thresholdArs: Math.round(th), levelUpBonusArs: Math.round(bo), rakebackPct: Math.round(rk * 100) / 100 };
+    }
+    const rateRaw = req.body.usdArsRate;
+    const usdArsRate = rateRaw != null && rateRaw !== '' ? Number(rateRaw) : undefined;
+    if (usdArsRate !== undefined && !(usdArsRate > 0)) return res.status(400).json({ error: 'La tasa USD→ARS tiene que ser mayor a 0.' });
+    const cfg = vipLevels.normalizeConfig({ usdArsRate, levels });
+    // Los umbrales tienen que ir de menor a mayor (si no, getVipLevel se confunde).
+    vipLevels.setOverrides(cfg);
+    const list = vipLevels.listLevels();
+    for (let i = 1; i < list.length; i += 1) {
+      if (!(list[i].thresholdArs > list[i - 1].thresholdArs)) {
+        await vipLevels.refreshFromConfig(Config); // volver a lo guardado
+        return res.status(400).json({ error: `El apostado de "${list[i].name}" tiene que ser mayor que el de "${list[i - 1].name}".` });
+      }
+    }
+    await Config.set(vipLevels.CONFIG_KEY, cfg, req.user.username);
+    logger.info(`[vip] escalera editada por ${req.user.username}: ${Object.keys(cfg.levels).length} niveles con override, tasa ${cfg.usdArsRate || 'default'}`);
+    res.json({ success: true, levels: vipLevels.listLevels(), defaults: vipLevels.listDefaults(), usdArsRate: vipLevels.currentRate() });
+  } catch (error) {
+    console.error('Error guardando escalera VIP:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });
@@ -19660,6 +19708,9 @@ async function _runVipSweepCheck() {
 
 setTimeout(function () { _runVipTick(); }, 5 * 60 * 1000);
 setInterval(function () { _runVipTick(); }, 30 * 60 * 1000);
+// #292: escalera VIP editable desde el panel (Config['vipLevelsConfig']) — cada instancia la recarga sola.
+setTimeout(function () { vipLevels.refreshFromConfig(Config).catch(function () {}); }, 15 * 1000);
+setInterval(function () { vipLevels.refreshFromConfig(Config).catch(function () {}); }, 60 * 1000);
 setInterval(function () { _runVipSweepCheck(); }, 60 * 60 * 1000);
 
 

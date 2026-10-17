@@ -5921,6 +5921,7 @@ async function loadVipLevelsConfig() {
         const j = await r.json();
         _vipLevelsDisabled = !!j.disabled;
         _renderVipLevelsState();
+        _renderVipLevelsTable(j); // #292
     } catch (e) {
         console.error('Error cargando estado de niveles VIP:', e);
     }
@@ -14333,3 +14334,59 @@ function _giftBatchInactiveTxt(a) {
     if (a.audienceDaysMax) return 'sin entrar entre ' + a.audienceDays + ' y ' + a.audienceDaysMax + ' días';
     return 'inactivos ≥' + a.audienceDays + ' días';
 }
+
+
+// ═══ #292: escalera VIP editable (umbral apostado / bono al subir / rakeback por nivel + tasa) ═══
+function _renderVipLevelsTable(j) {
+    const body = document.getElementById('vipLevelsRows');
+    if (!body) return;
+    const rateIn = document.getElementById('vipUsdArsRate');
+    if (rateIn && j.usdArsRate) rateIn.value = j.usdArsRate;
+    const rate = Number(j.usdArsRate) || 1500;
+    const q = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    body.innerHTML = (j.levels || []).map((l) =>
+        '<tr data-idx="' + l.idx + '"' + (l.custom ? ' title="Editado a mano (distinto del default 1win)"' : '') + '>' +
+        '<td>' + l.idx + (l.custom ? ' ✎' : '') + '</td>' +
+        '<td>' + q(l.emoji) + ' <input type="text" class="vl-name" value="' + q(l.name) + '" maxlength="30" style="width:110px;"></td>' +
+        '<td><input type="number" class="vl-th" value="' + Math.round(l.thresholdArs) + '" min="1" step="1000" style="width:160px;" oninput="this.closest(\'tr\').querySelector(\'.vl-usd\').textContent = Math.round(Number(this.value) / (Number(document.getElementById(\'vipUsdArsRate\').value) || 1500)).toLocaleString(\'es-AR\')"></td>' +
+        '<td class="vl-usd" style="color:#888;">' + Math.round(l.thresholdArs / rate).toLocaleString('es-AR') + '</td>' +
+        '<td><input type="number" class="vl-bonus" value="' + Math.round(l.levelUpBonusArs) + '" min="0" step="500" style="width:140px;"></td>' +
+        '<td><input type="number" class="vl-rake" value="' + l.rakebackPct + '" min="0" max="20" step="0.01" style="width:80px;"></td>' +
+        '</tr>').join('');
+}
+async function saveVipLevelsTable() {
+    const msg = document.getElementById('vipLevelsTableMsg');
+    const rows = Array.from(document.querySelectorAll('#vipLevelsRows tr'));
+    const levels = rows.map((tr) => ({
+        idx: parseInt(tr.getAttribute('data-idx'), 10),
+        name: ((tr.querySelector('.vl-name') || {}).value || '').trim(),
+        thresholdArs: Number((tr.querySelector('.vl-th') || {}).value),
+        levelUpBonusArs: Number((tr.querySelector('.vl-bonus') || {}).value),
+        rakebackPct: Number((tr.querySelector('.vl-rake') || {}).value)
+    }));
+    const rateIn = document.getElementById('vipUsdArsRate');
+    const usdArsRate = rateIn && rateIn.value !== '' ? Number(rateIn.value) : undefined;
+    if (!confirm('¿Guardar la escalera VIP?\n\nAplica a todos los clientes al instante: los umbrales nuevos definen a qué nivel llega cada uno con su apostado acumulado (nunca bajan de nivel) y los bonos nuevos valen para los niveles que se alcancen de acá en más.')) return;
+    try {
+        const r = await authFetch('/api/admin/vip-levels/table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ levels, usdArsRate }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.success) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = j.error || 'No se pudo guardar.'; } return; }
+        _renderVipLevelsTable(j);
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Escalera guardada (' + (j.levels || []).length + ' niveles).'; }
+        showToast('Escalera VIP guardada', 'success');
+    } catch (e) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = 'Error de conexión.'; } }
+}
+async function resetVipLevelsTable() {
+    const msg = document.getElementById('vipLevelsTableMsg');
+    if (!confirm('¿Restaurar la escalera oficial de 1win (19 niveles, bono 0,1% del apostado, rakeback 0,10–0,80%)?\n\nSe pierden los valores editados a mano.')) return;
+    try {
+        const r = await authFetch('/api/admin/vip-levels/table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reset: true }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.success) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = j.error || 'No se pudo restaurar.'; } return; }
+        _renderVipLevelsTable(j);
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Escalera 1win restaurada.'; }
+        showToast('Escalera VIP restaurada', 'success');
+    } catch (e) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = 'Error de conexión.'; } }
+}
+window.saveVipLevelsTable = saveVipLevelsTable;
+window.resetVipLevelsTable = resetVipLevelsTable;

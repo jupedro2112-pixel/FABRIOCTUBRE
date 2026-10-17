@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-17
 
+### 292. 👑 Niveles VIP: escalera de 1win (19 niveles) editable desde el panel; la app muestra la plata que desbloquea cada nivel — SW v184, admin-sw v65
+**Pedido (owner):** "que el progreso se pueda expandir para ver los niveles y qué plata se desbloquea en cada uno,
+sin marcar cómo sube de nivel; que el rollover por nivel y la plata por nivel se ajusten desde el admin; usar los
+montos de una página oficial como 1win en pesos (ajustable) y regalar plata razonable sin que el negocio se funda".
+- **Escalera nueva** (`src/utils/vipLevels.js`): réplica del programa oficial de 1win por turnover acumulado —
+  Bronce II US$5k · Bronce III US$10k · Plata I–III US$25k/50k/100k · Oro I–III US$250k/500k/1M · Platino I–III
+  US$2,5M/5M/10M · Diamante I–III US$25M/50M/100M · Black I–V US$250M/500M/1.000M/2.500M/5.000M (Bronze 1 = sin
+  nivel). Umbral en pesos = USD × tasa (1500). **Bono al subir = 0,1% del apostado del umbral** (Bronce II $7.500,
+  Plata I $37.500, Oro I $375.000…) y rakeback 0,10 → 0,80%: con una ventaja de la casa del 3–5% del apostado,
+  lo regalado queda ≪ 1% del volumen. Antes: escalera de Stake (14 niveles, Bronce a US$10k).
+- **Editable en el panel** (Configuración → Niveles VIP → "Escalera de niveles"): nombre, apostado acumulado $,
+  bono al subir $, rakeback % por nivel + tasa USD→ARS; botón "Restaurar escalera 1win". `GET /api/admin/vip-levels`
+  devuelve `levels/defaults/usdArsRate`; `POST /api/admin/vip-levels/table` valida (umbrales crecientes) y guarda
+  `Config['vipLevelsConfig']` (overrides por idx); `vipLevels.refreshFromConfig(Config)` lo recarga al boot, cada
+  60 s por instancia y al guardar. El motor y las rutas siguen usando `vipLevels.getLevel/getVipLevel` ⇒ toman los
+  overrides solos.
+- **PWA:** en la tarjeta VIP (y al tocar el nivel junto al saldo) cada fila muestra **🎁 $ que desbloquea** + rakeback;
+  no se muestra el apostado que falta. Sólo cambió la fila de `renderVipCard`.
+- ⚠️ Los idx 1–14 cambian de significado (idx 1 era Bronce a US$10k; ahora Bronce II a US$5k). Nadie baja de nivel;
+  quien ya tenía nivel puede SUBIR varios escalones en la próxima sincronización y le quedan pendientes los bonos
+  nuevos de esos niveles (son chicos: 0,1%). Los 5 niveles Black se AGREGARON al final (no se insertó en el medio).
+  Requiere redeploy.
+
 ### 291. 🧹 Info sin opiniones ni ruleta · nivel VIP junto al saldo (app instalada) · Fueguito con barra de niveles y mínimo de cargas — SW v183, admin-sw v64
 **Pedidos (owner):** "en la info sacá las reseñas y la ruleta (dejala solo en Inicio)"; "donde está Instalar app,
 cuando la gente instala la app poné el progreso del nivel y el nivel que tiene; ahora ponelo como test al lado del

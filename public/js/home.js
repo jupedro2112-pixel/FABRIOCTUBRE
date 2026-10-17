@@ -802,14 +802,15 @@
         const body = _el('vipCardBody');
         if (body) {
             // #256 (owner): sin plata a la vista — sólo niveles y porcentajes (los montos son internos).
-            body.innerHTML = '<p class="vip-body-p">Cuanto más jugás, más subís. Cada nivel que alcanzás se <b>desbloquea</b> con su bono y su <b>rakeback semanal</b> (% de lo que apostás, ganes o pierdas).</p>' +
+            body.innerHTML = '<p class="vip-body-p">Cuanto más jugás, más subís. Cada nivel que alcanzás te <b>desbloquea plata</b> (el 🎁 de cada fila, se reclama acá) y un <b>rakeback semanal</b> (% de lo que apostás, ganes o pierdas).</p>' +
                 v.levels.map(l => {
                     const reached = l.idx <= curIdx;
                     const isNext = v.next && l.idx === v.next.idx;
                     return '<div class="vip-lvl vip-lvl-3' + (reached ? ' on' : '') + (isNext ? ' next' : '') + '">' +
                         '<span class="vip-lvl-st">' + (reached ? '✓' : '🔒') + '</span>' +
                         '<span class="vip-lvl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + (isNext ? ' <small>próximo</small>' : '') + '</span>' +
-                        '<span class="vip-lvl-win">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span>' +
+                        // #292 (owner): mostrar la plata que DESBLOQUEA cada nivel (bono al llegar) + rakeback; sin el apostado que falta.
+                        '<span class="vip-lvl-win">' + (Number(l.levelUpBonusArs) > 0 ? '🎁 $' + Math.round(Number(l.levelUpBonusArs)).toLocaleString('es-AR') + ' · ' : '') + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span>' +
                         '</div>';
                 }).join('');
         }

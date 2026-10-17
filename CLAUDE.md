@@ -176,6 +176,11 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   como burbuja/overlay. Los ids del chat (`chatMessages`, `messageInput`, `attachBtn`…) siguen siendo
   los mismos: no moverlos.
 
+- **Niveles VIP = escalera de 1win editable (#292, 2026-10-17):** 19 niveles en `src/utils/vipLevels.js`
+  (Bronce II US$5k … Black V US$5.000M × tasa 1500; bono al subir 0,1% del umbral). Overrides por idx en
+  `Config['vipLevelsConfig']` (panel → Niveles VIP → escalera), recargados por `vipLevels.refreshFromConfig`.
+  Los idx se persisten en `User.vipLevel` y en las references `vip-lvl-*`: sólo agregar niveles AL FINAL.
+
 - **% EXTRA por instalar la app (#283/#290, 2026-10-17):** en la PRIMERA carga de un cliente sin la app se le
   ofrece pct% (50%) de esa carga (tope) como EXTRA si la instala; queda como botón grande pendiente abajo hasta que reclame
   desde la app instalada (`User.installGift`, rutas `/api/install-gift/*`, `Config['installGift']`, ref
