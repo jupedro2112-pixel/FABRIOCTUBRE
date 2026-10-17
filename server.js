@@ -2605,7 +2605,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
       ? `🔒💰 Depósito de $${Number(amount).toLocaleString('es-AR')} (incluye $${Number(_auto.bonus).toLocaleString('es-AR')} de bonificación) acreditado con éxito. ✅\n💸 Tu nuevo saldo es ${balStr} 💸`
       : `🔒💰 Depósito de $${Number(amount).toLocaleString('es-AR')} acreditado con éxito. ✅\n💸 Tu nuevo saldo es ${balStr} 💸`);
     if (depositTpl) { // null = comando vaciado a propósito → no enviar mensaje al cliente
-      const clientMsg = depositTpl.replace(/\{amount\}/g, Number(amount)).replace(/\{bonus\}/g, _hgBonusApplied ? _auto.bonus : 0).replace(/\{balance\}/g, newBalance !== null ? newBalance : 'actualizándose');
+      const clientMsg = depositTpl.replace(/\{amount\}/g, Number(amount)).replace(/\{bonus\}/g, _hgBonusApplied ? _auto.bonus : 0).replace(/\{pct\}/g, _hgBonusApplied ? _auto.pct : 0).replace(/\{balance\}/g, newBalance !== null ? newBalance : 'actualizándose');
       const sysMsg = await Message.create({
         id: uuidv4(), senderId: 'admin', senderUsername: 'Sistema', senderRole: 'admin',
         receiverId: user.id, receiverRole: 'user', content: clientMsg, type: 'system', timestamp: new Date(), read: false
@@ -11141,7 +11141,7 @@ async function initializeData() {
     },
     {
       name: '/sys_deposit_bonus',
-      description: 'Mensaje automático al realizar un depósito con bonus. Variables disponibles: ${amount}, ${bonus}, ${balance}',
+      description: 'Mensaje automático al realizar un depósito con bonus. Variables disponibles: ${amount}, ${bonus}, ${balance}, {pct} (% del bono, en la carga automática)',
       type: 'message',
       response: '🔒💰 Depósito de ${amount} (incluye ${bonus} de bonificación) acreditado con éxito. ✅ \n💸 Tu nuevo saldo es ${balance} 💸\n\nPuedes verificarlo en: https://1girox.com\n\n🔥 Mañana podes revisar si tenes reembolso para reclamar de forma automatica 🔥'
     },
@@ -11808,8 +11808,9 @@ async function getInstallBonusEnabled() {
   return false;
 }
 // #266 (owner 2026-10-17): % que anuncia el cartel "SERVICIO COMPLETO" del chat principal de la
-// PWA ("si usás la carga automática tenés un {pct}% en todas tus cargas"). Es TEXTO de marketing
-// (no acredita nada solo): Config['autoLoadBonusPct'], editable en COMANDOS → Bonos automáticos.
+// PWA ("cargando de forma automática tenés un {pct}% en todas tus cargas"). Desde #274 es además el
+// bono REAL de toda carga hgcash sin otro bono pendiente (resolveAutoBonus, con tope). Config
+// ['autoLoadBonusPct'], editable en COMANDOS → Bonos automáticos.
 const AUTO_LOAD_BONUS_PCT_DEFAULT = 10;
 async function getAutoLoadBonusPct() {
   try {
@@ -11998,6 +11999,13 @@ async function resolveAutoBonus(user, amount, usedBy) {
   if (!c.claimed) c = await claimWelcomeCodePercent(user, usedBy);
   if (!c.claimed) c = await claimDailyRoulettePercent(user, usedBy);
   if (!c.claimed) c = await claimPromoBonusPercent(user, usedBy, amount);
+  // #274 (owner 2026-10-17): "la bonificación de la carga automática es del 10%, dice 0%". Toda carga
+  // AUTOMÁTICA (hgcash) sin otro bono pendiente lleva el % de Config['autoLoadBonusPct'] (el mismo que
+  // anuncia el cartel del chat), con el tope de bonos de siempre. No aplica a la carga manual del agente.
+  if (!c.claimed && usedBy === 'auto-hgcash') {
+    const ap = await getAutoLoadBonusPct();
+    if (ap > 0) c = { pct: ap, claimed: true, source: 'auto_load', label: `bono por carga automática (${ap}%)`, revert: async () => {} };
+  }
   if (!c.claimed) return none;
   const cfg = await getBonusCapConfig();
   // Lote: _loteBonusAmount (#172, mismo tope, mismo resultado que bonusWithCap);

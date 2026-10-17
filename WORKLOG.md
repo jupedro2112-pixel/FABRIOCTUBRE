@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-17
 
+### 274. 💰 Bono REAL del 10% en la carga automática (hgcash) · Perfil en estilo oscuro — SW v167 · admin-sw v61
+**Pedido (owner):** "en los mensajes de carga automática la bonificación es del 10%, dice 0%, hay que
+corregirlo; el Perfil es blanco y no va con el estilo de la página".
+- **Hasta acá el 10% era sólo el cartel** (#266). Ahora `resolveAutoBonus` suma una fuente nueva, sólo para
+  `usedBy === 'auto-hgcash'`: si el cliente NO tiene otro bono pendiente (app / código / ruleta / lote),
+  la carga automática lleva `Config['autoLoadBonusPct']` (default 10, el mismo % del cartel; se edita en
+  COMANDOS → Bonos automáticos) con el **tope de bonos** de siempre (X% hasta `bonusCap.capArs`, `restPct`
+  sobre el resto). `source:'auto_load'`, sin reserva ni revert (no es consumible). La carga MANUAL del
+  agente NO lo lleva. El cliente recibe `/sys_deposit_bonus` ("incluye $X de bonificación"); se agregó la
+  variable `{pct}` a ese mensaje por si el texto del panel la usa.
+- Panel: el texto del campo ya no dice "sólo texto".
+- **Perfil oscuro:** `.modal.profile-modal` pisa el formato blanco (`refund-simple`) con el vidrio oscuro de la
+  app: fondo degradé, borde cian, títulos Montserrat, bloque de datos translúcido, link en cian, filas
+  oscuras, botón de notificaciones verde al activarse. Mismo DOM.
+- ⚠️ Requiere redeploy del backend (bono + `{pct}`); el Perfil se ve con el SW v167.
+
 ### 273. ⭐ Reseñas discretas con "Dejá tu opinión" primero · 33 reseñas sembradas (4,7) · sin aviso de verificar teléfono — SW v166
 **Pedido (owner):** "sacale el aviso de verificá tu teléfono; en reseñas, 'dejá tu reseña' primero y más
 disimulado, el fondo blanco resalta demasiado; agregá 33 reseñas que promedien 4,7 estrellas".

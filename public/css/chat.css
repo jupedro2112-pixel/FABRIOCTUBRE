@@ -1888,3 +1888,21 @@ body.home-full #autoLoadCard { margin-top: 4px; }
 .rv-add-star { font-size: 16px; color: #e2b23a; }
 .rv-add b { font-size: 11px; color: #4de1ff; }
 .rv-add small { font-size: 9px; color: #8f98ad; }
+
+/* ══ #274: modal PERFIL en el estilo oscuro de la app (chau blanco) ══ */
+.modal.profile-modal .modal-content { background: linear-gradient(160deg, #151a2e 0%, #0b0d16 70%) !important; border: 1px solid rgba(0,229,255,.25) !important; box-shadow: 0 14px 40px rgba(0,0,0,.6), 0 0 24px rgba(0,229,255,.08) !important; color: #f4f6fb; font-family: 'Montserrat', system-ui, sans-serif; }
+.modal.profile-modal .modal-header h2 { color: #fff !important; font: 900 16px 'Montserrat', system-ui, sans-serif !important; letter-spacing: .6px !important; text-transform: uppercase !important; }
+.modal.profile-modal .modal-header p { color: #8f98ad !important; }
+.modal.profile-modal .rs-close { color: #8f98ad; }
+.profile-modal .pf-main, .profile-modal .pf-main-big { background: rgba(255,255,255,.05); border: 1px solid rgba(0,229,255,.2); }
+.profile-modal .pf-row { border-bottom-color: rgba(255,255,255,.08); }
+.profile-modal .pf-k { color: #8f98ad; }
+.profile-modal .pf-v, .profile-modal .pf-main-big .pf-v { color: #fff; }
+.profile-modal .pf-main-big .pf-link { color: #4de1ff; }
+.profile-modal .pf-copy { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); color: #f4f6fb; }
+.profile-modal .pf-hint { color: #9aa3b8; }
+.profile-modal .pf-act { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); color: #f4f6fb; }
+.profile-modal .pf-act small { color: #9aa3b8; }
+.profile-modal .pf-act .pf-ico-btn { background: rgba(255,255,255,.1) !important; color: #fff; }
+.profile-modal .pf-act .pf-ico-btn.active { background: rgba(46,230,107,.25) !important; }
+.profile-modal .pf-capture { box-shadow: 0 6px 18px rgba(255,23,68,.35); }

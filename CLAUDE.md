@@ -170,7 +170,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   WhatsApp (`#supportPanel` inline con cabecera `#waHead`, botón CBU abajo) y el home completo
   (`#homeFull`: carga automática `js/autoload.js`, plataformas, VIP, reembolsos…) queda plegado arriba
   bajo el cartel "⭐ SERVICIO COMPLETO · Ver todo" (texto `/sys_home_banner`, `{pct}` =
-  `Config['autoLoadBonusPct']`, sólo marketing — no acredita). **full:** el home desplegado y el chat
+  `Config['autoLoadBonusPct']` — desde #274 es también el bono REAL de toda carga hgcash sin otro bono
+  pendiente, con tope, vía `resolveAutoBonus`). **full:** el home desplegado y el chat
   como burbuja/overlay. Los ids del chat (`chatMessages`, `messageInput`, `attachBtn`…) siguen siendo
   los mismos: no moverlos.
 

@@ -866,7 +866,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   cabecera WhatsApp `#waHead` (espejo de `#themeToggleBtn`/`#fireStreak`/`#chatTopbarAvatar`) y el botón
   CBU de la barra de escribir visible; burbuja/círculo de soporte/`.support-head`/`#supportTests` ocultos.
   Arriba de todo, `#serviceBanner` ("⭐ SERVICIO COMPLETO" + "Ver todo ▾") alterna el modo; su texto es
-  `/sys_home_banner` con `{pct}` = `Config['autoLoadBonusPct']` (texto de marketing, NO acredita nada),
+  `/sys_home_banner` con `{pct}` = `Config['autoLoadBonusPct']` (desde #274 también el bono REAL de la carga
+  hgcash sin otro bono pendiente: fuente `auto_load` en `resolveAutoBonus`, con tope; la manual no lo lleva),
   servido en `GET /api/platforms` → `homeBanner:{pct,text}` y cacheado en `localStorage vip_home_banner`.
   En **full** el chat vuelve a ser overlay/burbuja; `closeSupport()` en mini = pasar a full.
   **#267:** tercer modo **play** = la ENTRADA (siempre al abrir la app; el modo elegido vive en
