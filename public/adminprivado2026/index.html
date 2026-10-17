@@ -177,6 +177,10 @@ document.addEventListener('change', function (ev) {
                     <span>Reseñas</span>
                     <span id="reviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:4px;">0</span>
                 </a>
+                <a href="#" class="nav-item" data-section="stories">
+                    <span>📽️</span>
+                    <span>Historias</span>
+                </a>
                 <a href="#" class="nav-item" data-section="referrals">
                     <span class="icon icon-chart"></span>
                     <span>Referidos</span>
@@ -2411,6 +2415,46 @@ document.addEventListener('change', function (ev) {
                 <div id="reviewsAdminBody">
                     <div style="color:#aaa;text-align:center;padding:24px;">⏳ Cargando…</div>
                 </div>
+            </section>
+
+            <!-- #361: HISTORIAS de la app (solo admin general) -->
+            <section id="storiesSection" class="section">
+                <div class="panel-header">
+                    <h2>📽️ Historias</h2>
+                    <button class="refresh-btn" onclick="loadStories()" title="Refrescar">🔄</button>
+                </div>
+                <div style="background:rgba(255,23,68,0.06);border:1px solid rgba(255,23,68,0.30);border-radius:10px;padding:12px;margin-bottom:14px;">
+                    <p style="margin:0;color:#bbb;font-size:11.5px;line-height:1.6;">Lo que publiques acá lo ve el cliente <strong style="color:#fff;">arriba a la derecha de la app</strong> (al lado de Perfil), como historias: pantalla completa, pasan solas. Cada historia <strong style="color:#fff;">vence sola</strong> a las horas que indiques; después queda acá por si querés extenderla o borrarla.</p>
+                </div>
+                <div class="cbu-form" style="margin-bottom:14px;">
+                    <h3 style="margin:0 0 8px;">➕ Publicar historia</h3>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
+                        <div class="form-group" style="margin:0;"><label>Título (arriba, opcional)</label><input type="text" id="stTitle" maxlength="60" placeholder="CARGAS AUTOMATIC" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Texto (abajo de la foto; si no hay foto, va grande al centro)</label><input type="text" id="stText" maxlength="300" placeholder="Ej: Nuevo sistema de cargas automáticas" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Imagen o video (png/jpg/webp ≤ 4 MB · mp4 ≤ 8 MB)</label><input type="file" id="stFile" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>…o URL de imagen (ruta /images/… o https)</label><input type="text" id="stMediaUrl" maxlength="500" placeholder="/images/stories/prueba-1.png" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Horas visible</label><input type="number" id="stHours" min="1" max="720" step="1" placeholder="24" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Segundos por historia (imagen/texto)</label><input type="number" id="stDuration" min="2" max="60" step="1" placeholder="6" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Link (botón abajo, opcional)</label><input type="text" id="stLink" maxlength="500" placeholder="https://… o /" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Texto del botón</label><input type="text" id="stLinkLabel" maxlength="40" placeholder="Cargar ahora ›" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Color de fondo (solo texto)</label><input type="color" id="stBg" value="#06070d" style="width:60px;height:34px;padding:0;border:0;background:none;"></div>
+                    </div>
+                    <div id="stPreview" style="margin-top:10px;display:none;"><img id="stPreviewImg" alt="" style="max-height:160px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);"></div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+                        <button class="btn-primary" id="stPublishBtn" onclick="publishStory()">📽️ Publicar historia</button>
+                        <span id="stMsg" style="font-size:12px;color:#aaa;"></span>
+                    </div>
+                </div>
+                <div class="cbu-form" style="margin-bottom:14px;">
+                    <h3 style="margin:0 0 8px;">⚙️ Valores por defecto</h3>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+                        <div class="form-group" style="margin:0;"><label>Horas visible (si no indicás otra cosa)</label><input type="number" id="stDefHours" min="1" max="720" step="1" style="width:140px;"></div>
+                        <div class="form-group" style="margin:0;"><label>Segundos por historia</label><input type="number" id="stDefDuration" min="2" max="60" step="1" style="width:140px;"></div>
+                        <button class="btn-secondary" onclick="saveStoriesConfig()">💾 Guardar</button>
+                        <span id="stCfgMsg" style="font-size:12px;color:#aaa;"></span>
+                    </div>
+                </div>
+                <div id="storiesList"><div style="color:#aaa;text-align:center;padding:24px;">⏳ Cargando…</div></div>
             </section>
 
             <!-- Referidos Section -->

@@ -2523,3 +2523,35 @@ html.has-session body { background: #06070d; }
 #entryReviews .rv-row .rv-track { flex: 1 1 auto; min-width: 0; }
 #entryReviews .rv-row .rv-track .rv-card { flex: 0 0 72%; max-width: 250px; }
 @media (min-width: 420px) { #entryReviews .rv-row .rv-track .rv-card { flex: 0 0 60%; } }
+
+/* ══ #361 (owner): HISTORIAS — anillo en la barra de arriba + visor a pantalla completa ══ */
+.tn-stories .st-ring { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #0d1020; border: 2px solid rgba(255,255,255,.22); box-sizing: border-box; }
+.tn-stories .st-core { font-size: 9px; color: #8f98ad; margin-left: 1px; }
+.tn-stories.has-active .st-ring { border-color: transparent; background: linear-gradient(#0d1020, #0d1020) padding-box, linear-gradient(135deg, #ffd166, #ff1744, #9b30ff) border-box; }
+.tn-stories.has-active .st-core { color: #fff; }
+.tn-stories.has-new .st-ring { box-shadow: 0 0 12px rgba(255,23,68,.55); animation: stPulse 1.6s ease-in-out infinite; }
+@keyframes stPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .tn-stories.has-new .st-ring { animation: none; } }
+.tn-stories .st-badge { position: absolute; top: -6px; right: -8px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px; background: #ff1744; color: #fff; font: 900 9px/15px var(--dx-font); text-align: center; box-shadow: 0 0 0 2px #06070d; }
+.story-viewer { position: fixed; inset: 0; z-index: 30000; background: #000; display: none; flex-direction: column; color: #fff; font-family: var(--dx-font); }
+.story-viewer.open { display: flex; }
+body.story-open { overflow: hidden; }
+.st-bars { position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); left: 8px; right: 8px; display: flex; gap: 4px; z-index: 5; }
+.st-bars i { flex: 1 1 0; height: 3px; border-radius: 3px; background: rgba(255,255,255,.3); overflow: hidden; display: block; }
+.st-bars i b { display: block; height: 100%; width: 0; background: #fff; border-radius: 3px; }
+.st-bars i.done b { width: 100%; }
+.st-head { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; display: flex; align-items: center; gap: 8px; z-index: 5; }
+.st-logo img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ffd166; background: #000; display: block; }
+.st-who { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.st-who b { font-size: 12.5px; letter-spacing: .4px; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.st-who small { font-size: 10px; color: rgba(255,255,255,.75); }
+.st-close { background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.3); color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 15px; cursor: pointer; }
+.st-media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.st-media .st-blur { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(22px) brightness(.5); }
+.st-media img { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; }
+.st-media video { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; background: #000; }
+.st-media .st-textonly { position: relative; padding: 28px; font: 900 26px/1.25 var(--dx-font); text-align: center; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.st-tap { position: absolute; inset: 0; z-index: 4; touch-action: manipulation; }
+.st-foot { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding: 14px 14px calc(18px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.75)); display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
+.st-caption { font: 700 14px/1.35 var(--dx-font); text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+.st-link { pointer-events: auto; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; font: 900 12px var(--dx-font); text-transform: uppercase; letter-spacing: .6px; padding: 10px 18px; border-radius: 999px; text-decoration: none; box-shadow: 0 6px 18px rgba(255,23,68,.4); }

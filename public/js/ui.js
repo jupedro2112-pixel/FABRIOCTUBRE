@@ -103,6 +103,7 @@ VIP.ui = (function () {
         syncBalance();
         startBalancePolling();
         sendWelcomeMessages();
+        if (VIP.stories && VIP.stories.load) VIP.stories.load(); // #361: historias activas (anillo arriba a la derecha)
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).
         if (VIP.installBonus && typeof VIP.installBonus.init === 'function') {

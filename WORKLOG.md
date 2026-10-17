@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 361. 📽️ HISTORIAS: el admin publica, el cliente las ve arriba a la derecha (al lado de Perfil) — SW v248, admin-sw v76
+**Pedido (owner):** "arriba de todo a la derecha, al lado de Perfil, una sección de historias donde se pueda subir
+contenido desde el admin; que se vea como historias activas; configurar las horas desde el admin; publicá una de prueba:
+'prueba historias 1girox ganamos nuevo sistema de cargas' con un logo de apuestas".
+- **Modelo** `src/models/Story.js` (id, title, text, mediaType image/video/none, mediaUrl o `mediaData` data-URL en
+  Mongo —disco efímero—, bgColor, link, durationSec, hours, publishedAt, **expiresAt**, isActive, views).
+- **Rutas:** usuario `GET /api/stories/active`, `POST /api/stories/:id/view`; media subida `GET /api/stories/:id/media`
+  (público por uuid, cache 1 día); admin general `GET/POST /api/admin/stories`, `PATCH /:id` (hours = extender desde
+  ahora / isActive / texto), `DELETE /:id`, `POST /api/admin/stories/config` (`Config['storiesConfig']`:
+  defaultHours 24, defaultDurationSec 6). Límites: imagen ≤ 4 MB, mp4 ≤ 8 MB (express.json ya admite 10 MB).
+- **PWA:** botón `#navHistorias` (anillo; con historias activas gradiente, con no vistas pulso + contador; vistas en
+  localStorage `vip_stories_seen`), visor `#storyViewer` (barras de progreso, pasa sola, tocar derecha/izquierda,
+  mantener = pausa, Esc), `js/stories.js` (`VIP.stories`), carga al entrar (`showChatScreen`) y cada 5 min.
+- **Panel:** sección "📽️ Historias" (publicar con archivo o URL, horas, segundos, link, color; valores por defecto;
+  lista con estado ACTIVA/vence en/Vencida, vistas, Extender / Pausar / Borrar).
+- **Semilla:** `migration_story_seed_v1_done` publica la de prueba (`/images/stories/prueba-1.png`: pica + "1GIROX ·
+  GANAMOS · NUEVO SISTEMA DE CARGAS"), 72 h.
+
 ### 360. ⭐ Reseñas: "Dejá tu opinión" fija y chica a la izquierda, las reseñas deslizan al lado — SW v247
 **Pedido (owner):** "que vayan deslizando las reseñas pero dejá un cuadrado principal fijo para dejar reseña, que no se
 pierda; achicá el primer cuadrado de la izquierda". La tarjeta sale del `.rv-track` y queda en `.rv-row` como botón fijo

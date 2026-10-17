@@ -62,7 +62,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   hasta cargar `GANAMOS_API_URL`/`GANAMOS_API_KEY`). Checklist para conectarla: `docs/PLATFORMS.md`.
 - `jugaygana*.js` + `referralRevenueService.js` + `jugayganaUserLinkService.js` —
   **muertos**, sin consumidores. Ver la nota de migración arriba.
-- `src/models/` — schemas Mongoose canónicos (fuente de verdad).
+- `src/models/` — schemas Mongoose canónicos (fuente de verdad). `Story.js` (#361) = HISTORIAS de la app que
+  publica el admin (panel → Historias; PWA `js/stories.js`, anillo arriba a la derecha al lado de Perfil; vencen por
+  horas, `Config['storiesConfig']`). No confundir con `InfluencerStory` (placements de publicistas).
 - `src/services/` — lógica (referidos, notificaciones, otp, metaCapi, fbAds, hgcash,
   comprobantes IA, analítica publicistas…).
 - `public/` — PWA del cliente (namespace global `window.VIP`, SW único

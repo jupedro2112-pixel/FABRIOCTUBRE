@@ -453,6 +453,7 @@ function setupEventListeners() {
         if (VIP.publisherWelcome && typeof VIP.publisherWelcome.init === 'function') {
             VIP.publisherWelcome.init();
         }
+        if (VIP.stories && typeof VIP.stories.init === 'function') VIP.stories.init(); // #361
 
         // Cambio de contraseña — entrada temporal (fallback cuando el SMS no llega)
         // "Omitir por ahora" el teléfono en el cambio obligatorio de contraseña.

@@ -67,6 +67,7 @@ const ReferralEvent = require('./src/models/ReferralEvent');
 const Campaign = require('./src/models/Campaign');
 const CampaignClick = require('./src/models/CampaignClick');
 const InfluencerStory = require('./src/models/InfluencerStory');
+const Story = require('./src/models/Story'); // #361: historias de la app (las publica el admin)
 const ChatDelay = require('./src/models/ChatDelay');
 const Comprobante = require('./src/models/Comprobante');
 const comprobanteAi = require('./src/services/comprobanteAiService');
@@ -11450,6 +11451,19 @@ async function initializeData() {
     const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
+  // #361 (owner 2026-10-17): historia de PRUEBA ("prueba historias 1girox ganamos nuevo sistema de cargas" + logo). 72 h.
+  try {
+    if (!(await getConfig('migration_story_seed_v1_done', false))) {
+      const now = new Date();
+      await Story.create({
+        id: uuidv4(), title: 'CARGAS AUTOMATIC', text: 'Prueba historias · 1girox · Ganamos · Nuevo sistema de cargas',
+        mediaType: 'image', mediaUrl: '/images/stories/prueba-1.png', bgColor: '#06070d', durationSec: 7, hours: 72,
+        publishedAt: now, expiresAt: new Date(now.getTime() + 72 * 36e5), isActive: true, createdBy: 'seed'
+      });
+      await Config.set('migration_story_seed_v1_done', true, 'startup-migration');
+      console.log('✅ Historia de prueba publicada (#361, 72 h)');
+    }
+  } catch (e) { console.warn('[startup-migration] historia de prueba:', e.message); }
   // #349 (owner 2026-10-17): reembolsos DIARIO 25% · SEMANAL 3% · MENSUAL 1% (planos). Una sola vez: pisa
   // las escaleras guardadas en el panel; después manda el panel (Comandos → Rangos de reembolso).
   try {
@@ -20535,6 +20549,138 @@ app.get('/api/reviews/mine', authMiddleware, async (req, res) => {
 // GET /api/reviews/public — feed PÚBLICO (sin auth) para la pantalla de
 // registro. Solo reseñas aprobadas. Usernames enmascarados. Devuelve
 // promedio + cantidad para el cartel de prueba social.
+// ============================================================
+// HISTORIAS (#361, owner 2026-10-17): el admin publica contenido desde el panel y el cliente lo ve
+// arriba a la derecha de la app (al lado de Perfil), estilo historias. Vencen solas por horas.
+// ============================================================
+const STORIES_CFG_KEY = 'storiesConfig';
+async function getStoriesConfig() {
+  let c = null; try { c = await getConfig(STORIES_CFG_KEY, null); } catch (_) {}
+  const h = Number(c && c.defaultHours), d = Number(c && c.defaultDurationSec);
+  return {
+    defaultHours: Number.isFinite(h) && h >= 1 && h <= 720 ? Math.round(h) : 24,
+    defaultDurationSec: Number.isFinite(d) && d >= 2 && d <= 60 ? Math.round(d) : 6
+  };
+}
+function _storyPublic(s, req) {
+  const base = ''; // mismo origen
+  let mediaUrl = s.mediaUrl || '';
+  if (!mediaUrl && s.mediaMime) mediaUrl = base + '/api/stories/' + encodeURIComponent(s.id) + '/media?v=' + new Date(s.publishedAt || s.createdAt).getTime();
+  return {
+    id: s.id, title: s.title || '', text: s.text || '', mediaType: s.mediaType || 'none', mediaUrl, bgColor: s.bgColor || '#06070d',
+    linkUrl: s.linkUrl || '', linkLabel: s.linkLabel || '', durationSec: s.durationSec || 6, hours: s.hours,
+    publishedAt: s.publishedAt, expiresAt: s.expiresAt, isActive: !!s.isActive, views: s.views || 0, createdBy: s.createdBy || null,
+    hoursLeft: Math.max(0, Math.round((new Date(s.expiresAt).getTime() - Date.now()) / 36e5 * 10) / 10),
+    expired: new Date(s.expiresAt).getTime() <= Date.now()
+  };
+}
+app.get('/api/stories/active', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    const items = await Story.find({ isActive: true, expiresAt: { $gt: now } }).sort({ publishedAt: 1 }).limit(30).lean();
+    res.json({ items: items.map((s) => _storyPublic(s, req)) });
+  } catch (e) { logger.warn(`[stories] active: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/stories/:id/view', authMiddleware, async (req, res) => {
+  try { await Story.updateOne({ id: String(req.params.id) }, { $inc: { views: 1 } }); res.json({ ok: true }); }
+  catch (_) { res.json({ ok: false }); }
+});
+// Media subida desde el panel (guardada en Mongo como data URL). Público: la URL no es adivinable (uuid) y es contenido de pauta.
+app.get('/api/stories/:id/media', async (req, res) => {
+  try {
+    const s = await Story.findOne({ id: String(req.params.id) }).select('+mediaData mediaMime').lean();
+    if (!s || !s.mediaData) return res.status(404).end();
+    const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(s.mediaData);
+    if (!m) return res.status(404).end();
+    res.set('Content-Type', s.mediaMime || m[1]);
+    res.set('Cache-Control', 'public, max-age=86400, immutable');
+    res.send(Buffer.from(m[2], 'base64'));
+  } catch (e) { res.status(500).end(); }
+});
+function _storiesAdminOnly(req, res) {
+  if (req.user.role !== 'admin') { res.status(403).json({ error: 'Solo el admin general puede manejar las historias.' }); return false; }
+  return true;
+}
+app.get('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const [items, cfg] = await Promise.all([Story.find({}).sort({ publishedAt: -1 }).limit(200).lean(), getStoriesConfig()]);
+    res.json({ items: items.map((s) => _storyPublic(s, req)), config: cfg });
+  } catch (e) { logger.warn(`[stories] admin list: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/stories/config', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const h = Number(req.body && req.body.defaultHours), d = Number(req.body && req.body.defaultDurationSec);
+    if (!Number.isFinite(h) || h < 1 || h > 720) return res.status(400).json({ error: 'Horas por defecto: entre 1 y 720.' });
+    if (!Number.isFinite(d) || d < 2 || d > 60) return res.status(400).json({ error: 'Duración por historia: entre 2 y 60 segundos.' });
+    await Config.set(STORIES_CFG_KEY, { defaultHours: Math.round(h), defaultDurationSec: Math.round(d) }, req.user.username);
+    res.json({ success: true, config: await getStoriesConfig() });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const b = req.body || {};
+    const cfg = await getStoriesConfig();
+    const hours = Number(b.hours) >= 1 && Number(b.hours) <= 720 ? Math.round(Number(b.hours)) : cfg.defaultHours;
+    const durationSec = Number(b.durationSec) >= 2 && Number(b.durationSec) <= 60 ? Math.round(Number(b.durationSec)) : cfg.defaultDurationSec;
+    const text = String(b.text || '').trim().slice(0, 300);
+    const title = String(b.title || '').trim().slice(0, 60);
+    let mediaType = 'none', mediaUrl = '', mediaData = '', mediaMime = '';
+    const dataUrl = typeof b.mediaDataUrl === 'string' ? b.mediaDataUrl : '';
+    if (dataUrl) {
+      const m = /^data:(image\/(png|jpeg|jpg|webp|gif)|video\/mp4);base64,/.exec(dataUrl);
+      if (!m) return res.status(400).json({ error: 'Archivo no soportado: imagen (png/jpg/webp/gif) o video mp4.' });
+      const bytes = Math.floor((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
+      const isVideo = m[1] === 'video/mp4';
+      if (bytes > (isVideo ? 8 : 4) * 1024 * 1024) return res.status(400).json({ error: isVideo ? 'El video pesa más de 8 MB.' : 'La imagen pesa más de 4 MB.' });
+      mediaType = isVideo ? 'video' : 'image'; mediaData = dataUrl; mediaMime = m[1];
+    } else if (typeof b.mediaUrl === 'string' && b.mediaUrl.trim()) {
+      const u = b.mediaUrl.trim().slice(0, 500);
+      if (!/^(\/[\w\-./]+|https:\/\/[^\s"'<>]+)$/i.test(u)) return res.status(400).json({ error: 'URL de la imagen inválida (ruta /images/… o https).' });
+      mediaUrl = u; mediaType = /\.mp4(\?|$)/i.test(u) ? 'video' : 'image';
+    }
+    if (mediaType === 'none' && !text) return res.status(400).json({ error: 'Poné un texto o una imagen/video.' });
+    const linkUrl = String(b.linkUrl || '').trim().slice(0, 500);
+    if (linkUrl && !/^(https?:\/\/|\/)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /.' });
+    const bgColor = /^#[0-9a-f]{3,8}$/i.test(String(b.bgColor || '')) ? String(b.bgColor) : '#06070d';
+    const now = new Date();
+    const doc = await Story.create({
+      id: uuidv4(), title, text, mediaType, mediaUrl, mediaData, mediaMime, bgColor,
+      linkUrl, linkLabel: String(b.linkLabel || '').trim().slice(0, 40), durationSec, hours,
+      publishedAt: now, expiresAt: new Date(now.getTime() + hours * 36e5), isActive: true, createdBy: req.user.username
+    });
+    logger.info(`[stories] publicada por ${req.user.username}: "${title || text.slice(0, 40)}" (${mediaType}, ${hours} h)`);
+    res.json({ success: true, story: _storyPublic(doc.toObject(), req) });
+  } catch (e) { logger.warn(`[stories] crear: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.patch('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const b = req.body || {};
+    const set = {};
+    if (b.isActive != null) set.isActive = !!b.isActive;
+    if (b.text != null) set.text = String(b.text).trim().slice(0, 300);
+    if (b.title != null) set.title = String(b.title).trim().slice(0, 60);
+    if (b.hours != null) {
+      const h = Number(b.hours); if (!Number.isFinite(h) || h < 1 || h > 720) return res.status(400).json({ error: 'Horas: entre 1 y 720.' });
+      // "Extender": las horas cuentan desde AHORA (así una vencida vuelve a estar activa).
+      set.hours = Math.round(h); set.expiresAt = new Date(Date.now() + Math.round(h) * 36e5); set.isActive = true;
+    }
+    const doc = await Story.findOneAndUpdate({ id: String(req.params.id) }, { $set: set }, { new: true }).lean();
+    if (!doc) return res.status(404).json({ error: 'Historia no encontrada' });
+    res.json({ success: true, story: _storyPublic(doc, req) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const r = await Story.deleteOne({ id: String(req.params.id) });
+    res.json({ success: true, deleted: r.deletedCount || 0 });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/api/reviews/public', async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(50, parseInt(req.query.limit, 10) || 20));

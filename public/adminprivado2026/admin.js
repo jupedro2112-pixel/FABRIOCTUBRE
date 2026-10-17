@@ -4958,6 +4958,7 @@ function switchSection(section) {
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
     if (section === 'referrals') loadAdminReferralSummary();
+    if (section === 'stories') loadStories(); // #361
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -14822,3 +14823,110 @@ async function clearGiroxCredentials() {
     } catch (_) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ Error de conexión'; } }
 }
 window.loadGiroxCredentials = loadGiroxCredentials; window.saveGiroxCredentials = saveGiroxCredentials; window.clearGiroxCredentials = clearGiroxCredentials;
+
+// ============================================================
+// HISTORIAS (#361): publicar / listar / extender / borrar (solo admin general)
+// ============================================================
+let _stFileDataUrl = '';
+document.addEventListener('change', function (e) {
+    if (!e.target || e.target.id !== 'stFile') return;
+    const f = e.target.files && e.target.files[0];
+    _stFileDataUrl = '';
+    const pv = document.getElementById('stPreview'), img = document.getElementById('stPreviewImg');
+    if (!f) { if (pv) pv.style.display = 'none'; return; }
+    const max = f.type === 'video/mp4' ? 8 : 4;
+    if (f.size > max * 1024 * 1024) { showToast('El archivo pesa más de ' + max + ' MB', 'error'); e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = function () {
+        _stFileDataUrl = String(reader.result || '');
+        if (pv && img) { if (f.type.indexOf('image/') === 0) { img.src = _stFileDataUrl; pv.style.display = ''; } else pv.style.display = 'none'; }
+    };
+    reader.readAsDataURL(f);
+});
+async function loadStories() {
+    const box = document.getElementById('storiesList');
+    if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/stories');
+        if (!r.ok) { box.innerHTML = '<div style="color:#ff8080;padding:14px;">' + (r.status === 403 ? 'Solo el admin general.' : 'Error cargando.') + '</div>'; return; }
+        const j = await r.json();
+        const cfg = j.config || {};
+        const dh = document.getElementById('stDefHours'), dd = document.getElementById('stDefDuration');
+        if (dh && !dh.value) dh.value = cfg.defaultHours || 24;
+        if (dd && !dd.value) dd.value = cfg.defaultDurationSec || 6;
+        const h = document.getElementById('stHours'), d = document.getElementById('stDuration');
+        if (h) h.placeholder = cfg.defaultHours || 24;
+        if (d) d.placeholder = cfg.defaultDurationSec || 6;
+        const items = j.items || [];
+        if (!items.length) { box.innerHTML = '<div style="color:#aaa;text-align:center;padding:24px;">Todavía no hay historias. Publicá la primera arriba.</div>'; return; }
+        box.innerHTML = '<h3 style="margin:0 0 8px;">📋 Historias (' + items.length + ')</h3>' + items.map(function (s) {
+            const live = s.isActive && !s.expired;
+            const st = live ? '<span style="color:#00ff88;font-weight:800;">● ACTIVA · vence en ' + s.hoursLeft + ' h</span>' : (!s.isActive ? '<span style="color:#ffaa44;font-weight:800;">⏸ Desactivada</span>' : '<span style="color:#ff8080;font-weight:800;">✖ Vencida</span>');
+            const thumb = s.mediaType === 'image' && s.mediaUrl ? '<img src="' + escapeHtml(s.mediaUrl) + '" alt="" style="width:54px;height:96px;object-fit:cover;border-radius:8px;background:#000;">'
+                : (s.mediaType === 'video' ? '<div style="width:54px;height:96px;border-radius:8px;background:#222;display:flex;align-items:center;justify-content:center;font-size:22px;">🎬</div>'
+                : '<div style="width:54px;height:96px;border-radius:8px;background:' + escapeHtml(s.bgColor || '#06070d') + ';display:flex;align-items:center;justify-content:center;font-size:18px;">Aa</div>');
+            return '<div style="display:flex;gap:12px;align-items:center;padding:10px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:rgba(255,255,255,0.03);">'
+                + thumb
+                + '<div style="flex:1;min-width:0;font-size:12px;line-height:1.5;">'
+                + '<div><b>' + escapeHtml(s.title || 'CARGAS AUTOMATIC') + '</b> · ' + st + '</div>'
+                + '<div style="color:#ddd;">' + escapeHtml(s.text || '(sin texto)') + '</div>'
+                + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas' + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
+                + '</div>'
+                + '<div style="display:flex;flex-direction:column;gap:6px;">'
+                + '<button class="btn-secondary btn-sm" onclick="extendStory(\'' + s.id + '\')" title="Vuelve a contar las horas desde ahora">⏱ Extender</button>'
+                + (s.isActive ? '<button class="btn-secondary btn-sm" onclick="toggleStory(\'' + s.id + '\', false)">⏸ Pausar</button>' : '<button class="btn-secondary btn-sm" onclick="toggleStory(\'' + s.id + '\', true)">▶ Activar</button>')
+                + '<button class="btn-secondary btn-sm" style="color:#ff8080;" onclick="deleteStory(\'' + s.id + '\')">🗑 Borrar</button>'
+                + '</div></div>';
+        }).join('');
+    } catch (e) { box.innerHTML = '<div style="color:#ff8080;padding:14px;">Error: ' + escapeHtml(e.message) + '</div>'; }
+}
+async function publishStory() {
+    const msg = document.getElementById('stMsg'), btn = document.getElementById('stPublishBtn');
+    const v = function (id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const body = { title: v('stTitle'), text: v('stText'), mediaDataUrl: _stFileDataUrl || '', mediaUrl: v('stMediaUrl'), hours: v('stHours') ? Number(v('stHours')) : undefined, durationSec: v('stDuration') ? Number(v('stDuration')) : undefined, linkUrl: v('stLink'), linkLabel: v('stLinkLabel'), bgColor: v('stBg') || '#06070d' };
+    if (!body.text && !body.mediaDataUrl && !body.mediaUrl) { showToast('Poné un texto o una imagen/video', 'error'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Publicando…'; }
+    try {
+        const r = await authFetch('/api/admin/stories', { method: 'POST', body: JSON.stringify(body) });
+        const j = await r.json();
+        if (!r.ok) { if (msg) { msg.style.color = '#ff8080'; msg.textContent = j.error || 'No se pudo publicar'; } showToast(j.error || 'No se pudo publicar', 'error'); return; }
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Publicada · visible ' + j.story.hours + ' h'; }
+        showToast('Historia publicada', 'success');
+        ['stTitle', 'stText', 'stMediaUrl', 'stHours', 'stLink', 'stLinkLabel'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
+        const f = document.getElementById('stFile'); if (f) f.value = ''; _stFileDataUrl = '';
+        const pv = document.getElementById('stPreview'); if (pv) pv.style.display = 'none';
+        loadStories();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = '📽️ Publicar historia'; } }
+}
+async function saveStoriesConfig() {
+    const msg = document.getElementById('stCfgMsg');
+    const body = { defaultHours: Number(document.getElementById('stDefHours')?.value), defaultDurationSec: Number(document.getElementById('stDefDuration')?.value) };
+    try {
+        const r = await authFetch('/api/admin/stories/config', { method: 'POST', body: JSON.stringify(body) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Guardado'; }
+        loadStories();
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
+}
+async function extendStory(id) {
+    const h = prompt('¿Cuántas horas más tiene que verse (desde ahora)?', document.getElementById('stDefHours')?.value || '24');
+    if (h == null) return;
+    const r = await authFetch('/api/admin/stories/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ hours: Number(h) }) });
+    const j = await r.json();
+    if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
+    showToast('Historia extendida', 'success'); loadStories();
+}
+async function toggleStory(id, on) {
+    const r = await authFetch('/api/admin/stories/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify({ isActive: !!on }) });
+    if (!r.ok) { showToast('No se pudo', 'error'); return; }
+    loadStories();
+}
+async function deleteStory(id) {
+    if (!confirm('¿Borrar esta historia? No se puede deshacer.')) return;
+    const r = await authFetch('/api/admin/stories/' + encodeURIComponent(id), { method: 'DELETE' });
+    if (!r.ok) { showToast('No se pudo borrar', 'error'); return; }
+    showToast('Historia borrada', 'success'); loadStories();
+}
+window.loadStories = loadStories; window.publishStory = publishStory; window.saveStoriesConfig = saveStoriesConfig; window.extendStory = extendStory; window.toggleStory = toggleStory; window.deleteStory = deleteStory;
