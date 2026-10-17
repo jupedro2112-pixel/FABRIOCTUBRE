@@ -2066,3 +2066,30 @@ body.ig-pending #loginScreen:not(.hidden) ~ .ig-bar { display: none !important; 
   #infoModal .info-card { padding: 11px 12px 12px !important; }
   #infoModal .info-card-desc, #infoModal .info-point { font-size: 12.5px !important; }
 }
+
+/* ══ #291: Info sin opiniones ni ruleta (viven en el Inicio) ══ */
+#infoReviewsWrap, #infoRouletteWrap { display: none !important; }
+/* ══ #291: nivel VIP al lado del saldo (app instalada) + botoncito test ══ */
+.bs-vip { position: relative; display: flex; align-items: center; gap: 8px; background: linear-gradient(160deg, rgba(0,229,255,.12), rgba(124,77,255,.08)); border: 1px solid rgba(0,229,255,.35); border-radius: 10px; padding: 3px 9px; color: var(--dx-text); cursor: pointer; min-width: 0; flex: 1 1 auto; max-width: 240px; }
+.bs-vip-t { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; flex: 1 1 auto; text-align: left; }
+.bs-vip-t b { font: 900 11px var(--dx-font); letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-vip-t small { font: 700 8.5px var(--dx-font); color: var(--dx-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-vip-bar { flex: 0 0 54px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; }
+.bs-vip-bar i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #00e5ff, #7c4dff); transition: width .4s ease; }
+.bs-vip-pct { font: 900 11px var(--dx-font); color: var(--dx-cyan); font-variant-numeric: tabular-nums; }
+.test-mini-bs { display: none; padding: 1px 6px; font-size: 8.5px; flex: 0 0 auto; }
+body.home-full .test-mini-bs { display: inline-block; }
+@media (max-width: 420px) { .bs-vip { padding: 2px 7px; gap: 6px; } .bs-vip-t b { font-size: 9.5px; } .bs-vip-t small { font-size: 7.5px; } .bs-vip-bar { flex-basis: 40px; } .bs-vip-pct { font-size: 10px; } }
+/* ══ #291: Fueguito diario resumido con barra de niveles + regla de cargas ══ */
+.fire-home-card { flex-direction: column; align-items: stretch; gap: 5px; }
+.fire-home-card .fh-row { display: flex; align-items: center; gap: 8px; }
+.fire-home-card .fh-track { position: relative; display: block; height: 6px; margin: 10px 14px 16px 6px; border-radius: 999px; background: rgba(255,255,255,.1); }
+.fire-home-card .fh-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #ff6d00, #ffb347); box-shadow: 0 0 10px rgba(255,140,0,.6); transition: width .5s ease; }
+.fire-home-card .fh-dots { position: absolute; inset: 0; }
+.fire-home-card .fh-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.fire-home-card .fh-dot i { display: block; width: 12px; height: 12px; border-radius: 50%; background: #1b1d2a; border: 2px solid rgba(255,255,255,.35); box-sizing: border-box; }
+.fire-home-card .fh-dot.on i { background: #ffb347; border-color: #fff; box-shadow: 0 0 8px rgba(255,179,71,.8); }
+.fire-home-card .fh-dot.next i { border-color: #ffb347; box-shadow: 0 0 8px rgba(255,140,0,.5); }
+.fire-home-card .fh-dot b { position: absolute; top: -13px; font: 900 8px var(--dx-font); color: #e6c9a8; white-space: nowrap; }
+.fire-home-card .fh-dot small { position: absolute; top: 9px; font: 800 8px var(--dx-font); color: #ffb347; white-space: nowrap; }
+.fire-home-card .fh-rule { display: block; font: 600 8.5px/1.3 var(--dx-font); color: #e6c9a8; text-align: center; white-space: normal; }

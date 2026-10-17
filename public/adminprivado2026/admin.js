@@ -6348,6 +6348,8 @@ async function loadFireMilestones() {
         if (!(j.milestones || []).length) addFireMilestoneRow();
         const rmInput = document.getElementById('fireRolloverMultiplier');
         if (rmInput && j.rolloverMultiplier != null) rmInput.value = j.rolloverMultiplier;
+        const mdInput = document.getElementById('fireMinDeposits');
+        if (mdInput && j.minDeposits != null) mdInput.value = j.minDeposits;
     } catch (e) {
         if (form) form.style.display = 'none';
         if (header) header.style.display = 'none';
@@ -6383,9 +6385,11 @@ async function saveFireMilestones() {
     if (!milestones.length) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = 'Cargá al menos un premio con día y monto.'; } return; }
     const rmInput = document.getElementById('fireRolloverMultiplier');
     const rolloverMultiplier = rmInput && rmInput.value !== '' ? Number(rmInput.value) : undefined;
+    const mdInput = document.getElementById('fireMinDeposits');
+    const minDeposits = mdInput && mdInput.value !== '' ? Number(mdInput.value) : undefined;
     try {
         const r = await authFetch('/api/admin/fire-milestones', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ milestones, rolloverMultiplier })
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ milestones, rolloverMultiplier, minDeposits })
         });
         const j = await r.json().catch(() => ({}));
         if (!r.ok) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = j.error || 'No se pudo guardar.'; } return; }

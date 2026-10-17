@@ -872,6 +872,11 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hgcash sin otro bono pendiente: fuente `auto_load` en `resolveAutoBonus`, con tope; la manual no lo lleva),
   ⚠️ si el cartel dice "0%" es que esa Config quedó en 0 (panel → Bonos automáticos → "Servicio completo"); la
   migración `migration_autoloadpct_10_v1_done` (#281) la fuerza a 10 una sola vez,
+  **#291:** con la app instalada, junto al saldo va `#homeVipStrip` (nivel VIP + progreso, `_paintInstallStrip`)
+  en lugar de "Instalar app" (botón test para simularlo). `#fireHomeCard` muestra una barra con los hitos del
+  fueguito y la regla `Config['fireMinDeposits']` (10 cargas reales en los últimos N días del hito, si no el
+  premio se pierde y la racha se reinicia — se valida en `POST /api/fire/claim-reward`). El modal Info ya no
+  muestra opiniones ni ruleta (ocultos por CSS).
   **#288:** el globo flotante `#supportBubble` está OCULTO por CSS (no borrarlo: contiene `#chatTopbarAvatar`);
   el chat se abre sólo desde "Carga manual" de la barra.
   **#282:** `#autoLoadCard` va centrada y en 2 pasos (1 transferir · 2 adjuntar la foto con el botón verde

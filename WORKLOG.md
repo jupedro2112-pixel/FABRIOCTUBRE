@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-17
 
+### 291. 🧹 Info sin opiniones ni ruleta · nivel VIP junto al saldo (app instalada) · Fueguito con barra de niveles y mínimo de cargas — SW v183, admin-sw v64
+**Pedidos (owner):** "en la info sacá las reseñas y la ruleta (dejala solo en Inicio)"; "donde está Instalar app,
+cuando la gente instala la app poné el progreso del nivel y el nivel que tiene; ahora ponelo como test al lado del
+saldo"; "en los fueguitos resumilo con barra deslizadora la cantidad de niveles a desbloquear y aclará abajo que
+para que se acredite automático tiene que tener mínimo 10 cargas dentro del plazo; si no, se reinicia".
+- **Info:** `#infoReviewsWrap` y `#infoRouletteWrap` ocultos por CSS (siguen en el DOM; reviews.js escribe ahí sin romper).
+- **Nivel VIP al lado del saldo:** con la app instalada (`display-mode: standalone`) `#homeInstallAppBtn` se
+  esconde y aparece `#homeVipStrip` (nivel con color/emoji, "N% hacia <siguiente>", barrita y %). Lo pinta
+  `_paintInstallStrip` desde `VIP.state.vipStatus` (se refresca en `renderVipCard`). Tocar = baja a la tarjeta VIP.
+  Botoncito **test** al lado (solo en carga automática) que simula la app instalada (`installedTestToggle`).
+- **Fueguito:** la tarjeta del home pasa a columna: fila (llama · título · racha) + **barra** con un punto por
+  hito (`fireStatus.milestones`: día y premio en $k; encendido = alcanzado, próximo resaltado) + regla abajo.
+- **Regla nueva (server):** `Config['fireMinDeposits']` (default **10**, 0 = off; panel → Premios del Fueguito →
+  "Mínimo de cargas en el plazo del premio"). En `POST /api/fire/claim-reward`, antes de acreditar: cargas
+  reales en los últimos N días (N = día del hito) ≥ mínimo; si no, **se pierde el premio y la racha vuelve a 0**
+  (`code:'MIN_DEPOSITS'`, nota interna al agente). `GET /api/fire/status` suma `minDeposits`,
+  `depositsWindowDays` (día del próximo hito) y `depositsCount` (la tarjeta muestra "llevás X/10"). El modal del
+  fueguito explica la condición con el mínimo vigente. Requiere redeploy.
+
 ### 290. 🥇 50% automático en la PRIMERA carga (publicidad) + la oferta por instalar pasa a "% EXTRA" (50%) — SW v182, admin-sw v63
 **Pedido (owner):** "la publi va a venir con un 50% automático en la primera carga: cargalo y que se ajuste desde
 el panel; y saquemos lo de regalar la última carga: instalando la app tenés un 50% extra, con la opción de

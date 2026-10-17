@@ -13073,6 +13073,29 @@ const getDepositsInPeriod = async (username, daysBack) => {
 };
 
 // Mínimo de depósitos mensuales para acceder al Fueguito diario
+// #291 (owner 2026-10-17): "para que el premio se acredite automático tiene que tener mínimo 10 cargas dentro
+// del plazo del reclamo; si no, el fueguito se reinicia". Config['fireMinDeposits'] (default 10, 0 = sin
+// requisito; panel → Premios del Fueguito). El plazo = los días del hito (día 10 ⇒ últimos 10 días).
+const FIRE_MIN_DEPOSITS_DEFAULT = 10;
+async function getFireMinDeposits() {
+  try {
+    const n = Number(await getConfig('fireMinDeposits', null));
+    if (Number.isFinite(n) && n >= 0 && n <= 500) return Math.round(n);
+  } catch (_) { /* fallback */ }
+  return FIRE_MIN_DEPOSITS_DEFAULT;
+}
+// Cargas REALES (deposits sin regalos) del cliente en los últimos `days` días.
+async function _countRealDepositsDays(userId, username, days) {
+  try {
+    const since = new Date(Date.now() - Math.max(1, Number(days) || 1) * 86400000);
+    return await Transaction.countDocuments({
+      $or: [{ userId }, { username }],
+      type: 'deposit',
+      'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] },
+      timestamp: { $gte: since }
+    });
+  } catch (_) { return 0; }
+}
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
 const FIRE_MILESTONES_DEFAULT = [
@@ -13223,6 +13246,7 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
 
     // Construir lista de milestones con estado para la UI (premios editables desde el panel)
     const FIRE_MILESTONES = await getFireMilestones();
+    const _fireNextDay = ((FIRE_MILESTONES.find(m => m.day > currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || {}).day) || 10; // #291
     const milestones = FIRE_MILESTONES.map(m => {
       let status;
       if (currentStreak >= m.day) {
@@ -13254,7 +13278,11 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
       nextReward: (FIRE_MILESTONES.find(m => m.day > currentStreak) || {}).reward || 0,
       // x del rollover con que se acreditan los premios (0 = libres). El front lo
       // usa para avisar "para retirarlo apostá X×" antes de que el cliente reclame.
-      rolloverMultiplier: await getFireRolloverMultiplier()
+      rolloverMultiplier: await getFireRolloverMultiplier(),
+      // #291: mínimo de cargas en el plazo del próximo premio (y cuántas lleva) para la barra del home.
+      minDeposits: await getFireMinDeposits(),
+      depositsWindowDays: _fireNextDay,
+      depositsCount: await _countRealDepositsDays(userId, req.user.username, _fireNextDay)
     });
   } catch (error) {
     console.error('Error obteniendo estado del fueguito:', error);
@@ -13379,6 +13407,27 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'La recompensa expiró. Solo podés reclamarla el mismo día que llegaste al hito.' });
     }
 
+    // #291 (owner): para que el premio se acredite tiene que tener MÍNIMO N cargas reales dentro del plazo
+    // del hito (día 10 ⇒ últimos 10 días). Si no llega, la racha se REINICIA y el premio se pierde.
+    const _minDep = await getFireMinDeposits();
+    if (_minDep > 0) {
+      const _days = Math.max(1, Number(fireStreak.pendingCashRewardDay) || 1);
+      const _have = await _countRealDepositsDays(userId, username, _days);
+      if (_have < _minDep) {
+        fireStreak.streak = 0;
+        fireStreak.lastReset = new Date();
+        fireStreak.pendingCashReward = 0;
+        fireStreak.pendingCashRewardDay = 0;
+        fireStreak.pendingCashRewardDesc = '';
+        fireStreak.pendingCashRewardDate = '';
+        await fireStreak.save();
+        _emitAdminOnlyChatNote(userId, username, `🔥 Fueguito: quiso cobrar el premio del día ${_days} pero tenía ${_have} carga(s) en los últimos ${_days} días (mínimo ${_minDep}). Premio perdido y racha reiniciada (regla #291). No hay que hacer nada.`).catch(() => {});
+        return res.status(400).json({
+          error: `Para desbloquear este premio necesitás mínimo ${_minDep} cargas en los últimos ${_days} días (tenés ${_have}). La racha se reinició: ¡arrancá de nuevo y cargá seguido! 🔥`,
+          code: 'MIN_DEPOSITS', have: _have, min: _minDep, days: _days, streakReset: true
+        });
+      }
+    }
     // 🪦 Acá estaba el "Req 6": el premio exigía actividad de CARGAS del período
     // (milestone.requireDeposits vía getDepositsInPeriod). ELIMINADO (owner
     // 2026-08-05): el candado ahora es el ROLLOVER — el premio se acredita con
@@ -13583,7 +13632,8 @@ app.get('/api/admin/fire-milestones', authMiddleware, adminMiddleware, async (re
     const milestones = await getFireMilestones();
     res.json({
       success: true, milestones, defaults: FIRE_MILESTONES_DEFAULT,
-      rolloverMultiplier: await getFireRolloverMultiplier()
+      rolloverMultiplier: await getFireRolloverMultiplier(),
+      minDeposits: await getFireMinDeposits()
     });
   } catch (e) {
     logger.warn(`[fire-milestones] GET falló: ${e.message}`);
@@ -13639,7 +13689,15 @@ app.post('/api/admin/fire-milestones', authMiddleware, adminMiddleware, async (r
     }
     await setConfig('fireMilestones', norm);
     logger.info(`[fire-milestones] actualizados por ${req.user.username}: ${norm.length} premios, rollover x${rolloverMultiplier}`);
-    res.json({ success: true, milestones: norm, rolloverMultiplier });
+    // #291: mínimo de cargas en el plazo del premio (0 = sin requisito).
+    let minDeposits;
+    if (req.body.minDeposits !== undefined && req.body.minDeposits !== null && req.body.minDeposits !== '') {
+      const md = Number(req.body.minDeposits);
+      if (!Number.isFinite(md) || md < 0 || md > 500) return res.status(400).json({ error: 'El mínimo de cargas tiene que ser un número entre 0 y 500 (0 = sin requisito).' });
+      minDeposits = Math.round(md);
+      await Config.set('fireMinDeposits', minDeposits, req.user.username);
+    }
+    res.json({ success: true, milestones: norm, rolloverMultiplier, minDeposits: minDeposits != null ? minDeposits : await getFireMinDeposits() });
   } catch (e) {
     logger.warn(`[fire-milestones] POST falló: ${e.message}`);
     res.status(500).json({ error: 'Error del servidor' });

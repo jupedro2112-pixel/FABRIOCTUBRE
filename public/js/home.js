@@ -152,8 +152,33 @@
             if (src && fh) fh.textContent = src.textContent || '0';
             if (card) card.classList.toggle('can-claim', !!(st && st.canClaim));
             if (sub && st) sub.textContent = st.canClaim ? '¡Tenés premio para reclamar!' : 'Ya reclamaste hoy · volvé mañana';
+            _paintFireLevels(st); // #291
         } catch (_) {}
         try { const av = _el('chatTopbarAvatar'), wa = _el('waHeadAvatar'); const u = av && av.getAttribute('src'); if (u && wa && wa.getAttribute('src') !== u) wa.src = u; } catch (_) {}
+    }
+    // #291: barra con los niveles de fueguito (hitos) + regla de cargas mínimas en el plazo.
+    function _paintFireLevels(st) {
+        const fill = _el('fireHomeFill'), dots = _el('fireHomeDots'), rule = _el('fireHomeRule');
+        if (!fill || !dots) return;
+        const ms = (st && Array.isArray(st.milestones)) ? st.milestones.filter((m) => m && m.day > 0) : [];
+        const streak = Number(st && st.streak) || 0;
+        const max = ms.length ? ms[ms.length - 1].day : 30;
+        fill.style.width = Math.max(0, Math.min(100, streak / max * 100)) + '%';
+        dots.innerHTML = ms.map((m) => {
+            const left = Math.max(0, Math.min(100, m.day / max * 100));
+            const cls = m.status === 'completed' ? ' on' : (m.status === 'next' ? ' next' : '');
+            const prize = m.reward ? ('$' + Math.round(Number(m.reward) / 1000) + 'k') : '';
+            return '<span class="fh-dot' + cls + '" style="left:' + left + '%"><i></i><b>' + m.day + 'd</b><small>' + prize + '</small></span>';
+        }).join('');
+        if (rule) {
+            const min = Number(st && st.minDeposits) || 0;
+            if (min > 0) {
+                const have = st && st.depositsCount != null ? Number(st.depositsCount) : null;
+                const days = Number(st && st.depositsWindowDays) || 0;
+                rule.textContent = 'Para desbloquear cada premio: mínimo ' + min + ' cargas dentro del plazo' + (days ? ' (' + days + ' días)' : '') + (have != null ? ' · llevás ' + have + '/' + min : '') + '. Si no, la racha se reinicia.';
+                rule.style.display = '';
+            } else rule.style.display = 'none';
+        }
     }
     function _watchHeadBits() {
         if (_headObs) return;
@@ -678,6 +703,43 @@
             b.disabled = !!standalone; b.style.opacity = standalone ? '.55' : '';
         }
         const hl = document.querySelector('#headerInstallBtn .tb-circle-lbl'); if (hl) hl.textContent = standalone ? 'Instalada' : 'Instalar';
+        try { _paintInstallStrip(); } catch (_) {}
+    }
+    // #291 (owner): con la app instalada, al lado del saldo va el NIVEL VIP con su progreso en vez de
+    // "Instalar app". El botoncito "test" simula la app instalada para verlo desde el navegador.
+    let _installedTest = false;
+    function _installedView() { return _installedTest || _isStandalone(); }
+    function _paintInstallStrip() {
+        const ib = _el('homeInstallAppBtn'), vs = _el('homeVipStrip');
+        if (!ib || !vs) return;
+        const on = _installedView();
+        ib.style.display = on ? 'none' : '';
+        vs.style.display = on ? '' : 'none';
+        if (!on) return;
+        const v = VIP.state && VIP.state.vipStatus;
+        const lvl = _el('hvLevel'), sub = _el('hvSub'), fill = _el('hvFill'), pc = _el('hvPct');
+        if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) {
+            if (lvl) { lvl.textContent = 'Nivel VIP'; lvl.style.color = ''; }
+            if (sub) sub.textContent = 'cargando…';
+            if (fill) fill.style.width = '0%';
+            if (pc) pc.textContent = '';
+            return;
+        }
+        const pct = Math.round(Math.max(0, Math.min(100, Number(v.progressPct) || 0)));
+        if (lvl) { lvl.textContent = v.level ? (v.level.emoji + ' ' + v.level.name) : 'Sin nivel aún'; lvl.style.color = (v.level && v.level.color) || ''; }
+        if (sub) sub.textContent = v.next ? (pct + '% hacia ' + v.next.name) : 'nivel máximo';
+        if (fill) { fill.style.width = (v.next ? pct : 100) + '%'; fill.style.background = 'linear-gradient(90deg, ' + ((v.level && v.level.color) || '#00e5ff') + ', ' + ((v.next && v.next.color) || '#7c4dff') + ')'; }
+        if (pc) pc.textContent = (v.next ? pct : 100) + '%';
+    }
+    function installedTestToggle() {
+        _installedTest = !_installedTest;
+        _paintInstallStrip();
+        try { VIP.ui.showToast(_installedTest ? 'TEST: así se ve con la app instalada (nivel VIP al lado del saldo)' : 'TEST: vista normal (Instalar app)', 'info'); } catch (_) {}
+    }
+    function vipStripOpen() {
+        const card = _el('vipCard'); if (!card) return;
+        try { const body = _el('vipCardBody'); if (body && body.style.display === 'none') toggleVipCard(); } catch (_) {}
+        try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { card.scrollIntoView(); }
     }
     try {
         window.addEventListener('beforeinstallprompt', () => setTimeout(paintInstallButtons, 0));
@@ -751,6 +813,7 @@
                         '</div>';
                 }).join('');
         }
+        try { _paintInstallStrip(); } catch (_) {} // #291: nivel al lado del saldo (app instalada)
     }
     try {
         const _origVip = VIP.refunds && VIP.refunds.loadVipStatus;
@@ -1194,7 +1257,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, installedTestToggle, vipStripOpen, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

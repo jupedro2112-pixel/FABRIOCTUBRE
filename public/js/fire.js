@@ -71,7 +71,10 @@ VIP.fire = (function () {
 
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
-            activityConditionEl.innerHTML = '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
+            const _md = Number(VIP.state.fireStatus.minDeposits) || 0; // #291
+            activityConditionEl.innerHTML = _md > 0
+                ? '📋 <strong>Condición:</strong> para que el premio de cada día se acredite automático tenés que tener <strong>mínimo ' + _md + ' cargas</strong> dentro del plazo (día 10 = últimos 10 días). Si no llegás, el fueguito se reinicia.'
+                : '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
         }
 
         const pendingBonusEl = document.getElementById('firePendingBonus');

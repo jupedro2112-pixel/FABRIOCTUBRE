@@ -985,14 +985,27 @@
                 <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
                     <span class="bs-install-t"><b>📲 Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
                 </button>
+                <!-- #291 (owner): con la app INSTALADA, en lugar de "Instalar app" va el NIVEL VIP con su progreso
+                     (datos de VIP.state.vipStatus; lo pinta home.js _paintInstallStrip). Tocar = ir a la tarjeta VIP. -->
+                <button type="button" class="bs-vip" id="homeVipStrip" style="display:none;" onclick="VIP.home.vipStripOpen()" title="Tu nivel VIP y tu progreso">
+                    <span class="bs-vip-t"><b id="hvLevel">Nivel VIP</b><small id="hvSub">cargando…</small></span>
+                    <span class="bs-vip-bar"><i id="hvFill"></i></span>
+                    <span class="bs-vip-pct" id="hvPct">0%</span>
+                </button>
+                <button type="button" class="test-mini test-mini-bs" onclick="VIP.home.installedTestToggle()" title="Test: simular app instalada">test</button>
             </div>
             <!-- #272 (owner): el Fueguito diario va ARRIBA de la carga automática (debajo del saldo), no en el medio.
                  Abre el modal del fueguito (click en #fireBtn, que vive en Perfil); racha y estado los espeja
                  home.js (_mirrorHeadBits) desde #fireStreak / VIP.state.fireStatus. -->
             <button type="button" class="fire-home-card fire-home-top" id="fireHomeCard" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito diario: reclamá tu premio cada día">
-                <span class="fh-flame" aria-hidden="true">🔥</span>
-                <span class="fh-text"><b>Fueguito diario</b><small id="fireHomeSub">Reclamá tu premio de hoy</small></span>
-                <span class="fh-streak"><b id="fireHomeStreak">0</b><small>días</small></span>
+                <span class="fh-row">
+                    <span class="fh-flame" aria-hidden="true">🔥</span>
+                    <span class="fh-text"><b>Fueguito diario</b><small id="fireHomeSub">Reclamá tu premio de hoy</small></span>
+                    <span class="fh-streak"><b id="fireHomeStreak">0</b><small>días</small></span>
+                </span>
+                <!-- #291: barra con los niveles de fueguito a desbloquear (hitos de VIP.state.fireStatus) + regla de cargas -->
+                <span class="fh-track" id="fireHomeTrack"><span class="fh-fill" id="fireHomeFill"></span><span class="fh-dots" id="fireHomeDots"></span></span>
+                <small class="fh-rule" id="fireHomeRule">Para desbloquear cada premio: mínimo 10 cargas dentro del plazo. Si no, la racha se reinicia.</small>
             </button>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
