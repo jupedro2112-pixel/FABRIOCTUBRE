@@ -11320,6 +11320,19 @@ async function initializeData() {
     const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { console.warn('[startup] tester lalodj:', e.message); }
+  // #346 (owner): premios del fueguito ×5 — una sola vez sobre lo que haya guardado en el panel (si no hay config
+  // guardada, ya rigen los defaults nuevos). Después, el panel manda.
+  try {
+    if (!(await getConfig('migration_fire_rewards_x5_v1_done', false))) {
+      const cfg = await getConfig('fireMilestones', null);
+      if (Array.isArray(cfg) && cfg.length) {
+        const next = cfg.map((m) => Object.assign({}, m, { reward: Math.round((Number(m.reward) || 0) * 5) }));
+        await Config.set('fireMilestones', next, 'startup-migration');
+        console.log('✅ Premios del fueguito ×5 (#346): ' + next.map((m) => 'día ' + m.day + ' $' + m.reward).join(' · '));
+      }
+      await Config.set('migration_fire_rewards_x5_v1_done', true, 'startup-migration');
+    }
+  } catch (e) { console.warn('[startup-migration] fueguito ×5:', e.message); }
   // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
     const hb = await Command.findOne({ name: '/sys_home_banner' }).lean();
     if (hb && String(hb.response || '') === 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.') {
@@ -13243,10 +13256,11 @@ async function _countRealDepositsDays(userId, username, days) {
 }
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
+// #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
 const FIRE_MILESTONES_DEFAULT = [
-  { day: 10, reward: 10000,  type: 'cash', requireDeposits: 20000,  depositDays: 30, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 50000,  type: 'cash', requireDeposits: 100000, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 200000, type: 'cash', requireDeposits: 300000, depositDays: 45, desc: 'Recompensa Fueguito 30 días' }
+  { day: 10, reward: 50000,   type: 'cash', requireDeposits: 20000,  depositDays: 30, desc: 'Recompensa Fueguito 10 días' },
+  { day: 20, reward: 250000,  type: 'cash', requireDeposits: 100000, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 1000000, type: 'cash', requireDeposits: 300000, depositDays: 45, desc: 'Recompensa Fueguito 30 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config

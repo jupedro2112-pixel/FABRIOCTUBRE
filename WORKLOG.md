@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 346. 🔥 Premios del fueguito ×5 — SW v232
+**Pedido (owner):** "subí los premios un 500%". Interpretado como ×5: día 10 $10.000 → **$50.000**, día 20 $50.000 →
+**$250.000**, día 30 $200.000 → **$1.000.000**. Defaults nuevos + migración única que multiplica ×5 lo que haya
+guardado en el panel (`migration_fire_rewards_x5_v1_done`); después manda el panel (Premios del Fueguito). Los
+rollover y requisitos no cambian. Requiere redeploy.
+
 ### 345. 🔥 Texto: "mínimo 5 cargas entre racha y racha" — SW v231
 **Pedido (owner).** Tarjeta del home: "⚠️ Mínimo 5 cargas entre racha y racha para reclamar · si no, el fueguito vuelve
 a 0". Modal: "entre racha y racha necesitás como mínimo 5 cargas para poder reclamar el premio (ej.: día 10 → al menos
