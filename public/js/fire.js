@@ -74,7 +74,7 @@ VIP.fire = (function () {
             const _md = Number(VIP.state.fireStatus.minDeposits) || 0; // #291
             const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
             activityConditionEl.innerHTML = _md > 0
-                ? '📋 <strong>Condición para reclamar cada racha:</strong> necesitás al menos <strong>' + _md + ' cargas</strong> en los días de esa racha (ej.: para el premio del día ' + _d1 + ', ' + _md + ' cargas en esos ' + _d1 + ' días). Si no las tenés, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
+                ? '📋 <strong>Condición:</strong> entre racha y racha necesitás como mínimo <strong>' + _md + ' cargas</strong> para poder reclamar el premio (ej.: para el premio del día ' + _d1 + ', al menos ' + _md + ' cargas en esos ' + _d1 + ' días). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
                 : '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
         }
 

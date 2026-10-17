@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 345. 🔥 Texto: "mínimo 5 cargas entre racha y racha" — SW v231
+**Pedido (owner).** Tarjeta del home: "⚠️ Mínimo 5 cargas entre racha y racha para reclamar · si no, el fueguito vuelve
+a 0". Modal: "entre racha y racha necesitás como mínimo 5 cargas para poder reclamar el premio (ej.: día 10 → al menos
+5 cargas en esos 10 días)". El número sigue saliendo del panel.
+
 ### 344. 🔥 Fueguito: la condición SE VE en el modal + mínimo 5 cargas por racha — SW v230, admin-sw v72
 **Pedido (owner, captura):** "sigue sin aparecer el detalle dentro del fueguito; para reclamar cada racha necesitás al
 menos 5 cargas en esos días antes de la racha".

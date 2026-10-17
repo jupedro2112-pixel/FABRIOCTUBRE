@@ -165,7 +165,7 @@
         // #340: la regla de cargas mínimas se pinta aunque no haya barra (tarjeta simple del home).
         if (rule && st && st.minDeposits != null) {
             const min = Number(st.minDeposits) || 0;
-            if (min > 0) { rule.innerHTML = '⚠️ Para reclamar cada racha: al menos <b>' + min + ' cargas</b> en los días de esa racha · si no, el fueguito vuelve a 0'; rule.style.display = ''; }
+            if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas entre racha y racha</b> para reclamar · si no, el fueguito vuelve a 0'; rule.style.display = ''; }
             else rule.style.display = 'none';
         }
         if (!fill || !dots) return;
