@@ -4239,6 +4239,12 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
     // que pueda volver a entrar desde cualquier dispositivo, además del link.
     const password = String(process.env.LANDING_DEFAULT_PASSWORD || 'asd123');
 
+    // #311 (owner): sin la Partner API conectada en este entorno no se puede crear la cuenta → se avisa con un
+    // código y la landing sigue el recorrido en MODO PRUEBA (simula el paso 2, sin crear nada).
+    if (!girox.isEnabled()) {
+      logger.warn(`[landing-signup] Partner API sin configurar: ${username} NO se creó (modo prueba en la landing)`);
+      return res.status(503).json({ error: 'La plataforma todavía no está conectada en este entorno.', code: 'platform_not_configured' });
+    }
     // 1) Crear en 1girox PRIMERO (igual que register-quick): si falla, no dejamos
     //    una cuenta local huérfana. Si la campaña tiene key de publicista, el
     //    jugador se crea bajo ESE sub-agente (si no, la comisión iría mal atribuida).

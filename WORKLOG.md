@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 311. 🧪 Landing: si la plataforma no está conectada, sigue en MODO PRUEBA
+**Pedido (owner):** "no importa; que el próximo paso de la landing haga como un test que se crea el usuario, para ver
+cómo sigue".
+- `POST /api/landing/signup` sin Partner API ⇒ 503 `code:'platform_not_configured'` (antes: 400 genérico).
+- La landing, con ese código, simula el paso 2 igual que `/l/demo` (usuario/clave de ejemplo, Girox "creado") con
+  una barra amarilla "MODO PRUEBA · la plataforma no está conectada: la cuenta NO se creó". Con la API cargada
+  (panel, #310) el flujo es el real sin tocar nada.
+
 ### 310. 🎰 API de 1girox desde el panel + la landing habla con su propio servidor — admin-sw v71
 **Contexto (owner):** "¿está funcionando la API de Girox acá? Cuando entro como lalodj tengo que estar abierto en
 Girox"; "la landing no crea el usuario en Girox: 'Error de conexión'". Entorno de prueba: fabrioctubre.onrender.com.
