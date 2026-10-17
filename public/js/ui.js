@@ -83,6 +83,7 @@ VIP.ui = (function () {
     // ---- Screen switching ----
 
     function showLoginScreen() {
+        try { document.documentElement.classList.remove('has-session'); } catch (_) {} // #342: el token no sirvió → ahora sí el login
         document.getElementById('loginScreen').classList.remove('hidden');
         // #283: sin sesión no hay carga gratis pendiente que mostrar.
         try { document.body.classList.remove('ig-pending'); document.body.classList.remove('is-tester'); const b = document.getElementById('installGiftBar'); if (b) b.style.display = 'none'; } catch (_) {}

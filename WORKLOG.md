@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 342. 🧼 Sin parpadeo del login con sesión + verificación general — SW v228
+**Pedido (owner):** "limpiá un poco la página y verificá que no haya errores; cuando esté iniciado que no aparezca el
+login sin entrar".
+- **Login:** con `userToken` en localStorage, un script inline (antes de `#loginScreen`) pone `html.has-session` y el
+  CSS oculta el login hasta que `verifyToken()` confirma (`showChatScreen`) o rechaza (`showLoginScreen` quita la
+  clase y muestra el login). Antes el login se veía un instante en cada apertura con sesión.
+- **Verificación:** `node --check` en todos los JS (PWA, SWs, panel, server), balance de etiquetas en los 4 HTML, sin
+  ids duplicados, los 7 scripts inline de index.html parsean, y los 54 `onclick="VIP.x.y()"` del HTML apuntan a
+  funciones exportadas. Los `getElementById` de home.js sobre ids que ya no existen (casino embebido viejo, "cómo
+  funciona", VIP en Info, barra de hitos de #291) están todos protegidos con `if (!el) return` — no generan errores.
+
 ### 341. 🧹 Sin el botón "Link casino aquí" en carga auto y manual — SW v227
 **Pedido (owner).** Se quitaron los dos botones de #328. El casino se abre con "Jugar ahora" al acreditarse la carga
 (y desde el mensaje del chat).
