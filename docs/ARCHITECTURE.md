@@ -871,6 +871,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hgcash sin otro bono pendiente: fuente `auto_load` en `resolveAutoBonus`, con tope; la manual no lo lleva),
   ⚠️ si el cartel dice "0%" es que esa Config quedó en 0 (panel → Bonos automáticos → "Servicio completo"); la
   migración `migration_autoloadpct_10_v1_done` (#281) la fuerza a 10 una sola vez,
+  **#288:** el globo flotante `#supportBubble` está OCULTO por CSS (no borrarlo: contiene `#chatTopbarAvatar`);
+  el chat se abre sólo desde "Carga manual" de la barra.
   **#282:** `#autoLoadCard` va centrada y en 2 pasos (1 transferir · 2 adjuntar la foto con el botón verde
   "Cargá aquí (adjuntá la foto aquí)" = `#loadHereBtn` → `VIP.autoload.sendReceipt()`).
   **#283 — carga GRATIS por instalar la app (retención en la 1ª carga):** al acreditarse la PRIMERA carga real

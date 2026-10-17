@@ -2008,3 +2008,7 @@ body.ig-pending #loginScreen:not(.hidden) ~ .ig-bar { display: none !important; 
 
 /* ══ #286: "Recomendado" debajo del nombre Girox (en flujo, ya no flota arriba a la izquierda) ══ */
 .plat-play-btn .plat-reco { position: static; top: auto; left: auto; margin-top: 3px; font-size: 8px; letter-spacing: .9px; }
+
+/* ══ #288 (owner): sin globo flotante de soporte. El chat se abre desde "Carga manual" en la barra de arriba.
+   Se oculta por CSS (no se borra del DOM): #chatTopbarAvatar vive adentro y chat.js/home.js lo siguen usando. ══ */
+#supportBubble { display: none !important; }

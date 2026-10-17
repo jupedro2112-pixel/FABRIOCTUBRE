@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 288. 🫧 Sin globo flotante de soporte — SW v180
+**Pedido (owner):** "sacá el globo de soporte". `#supportBubble` queda oculto por CSS (`display:none !important`,
+no se borra del DOM porque adentro vive `#chatTopbarAvatar`, que chat.js actualiza y home.js espeja en la
+cabecera WhatsApp). El chat se abre desde **Carga manual** en la barra de arriba (con su globito de no leídos).
+
 ### 287. 🔤 Barra de arriba: "Carga auto" — SW v179
 **Pedido (owner):** "el carga automática de arriba a la izquierda poné carga auto" (la palabra "automática" se
 cortaba en el botón). Sólo el texto de `#navAuto` en index.html.
