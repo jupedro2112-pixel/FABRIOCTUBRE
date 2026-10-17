@@ -8,6 +8,27 @@
 
 ## Sesión 2026-10-17
 
+### 366. ☰ MENÚ FÁCIL / MENÚ COMPLETO: selector al entrar + pantalla de 6 accesos grandes — SW v254
+**Pedido (owner):** "trabajemos para la gente que quiere un menú fácil y se pierde con tantos botones: al entrar
+elige menú fácil o completo; el completo es el que tenemos; el fácil abre desde Inicio con reembolso diario /
+semanal / mensual, ruleta diaria, referidos, la carga automática rápida y un botón para ver la plataforma; armado
+para retención". Sólo PWA (sin backend):
+- **Selector `#menuChooser`** (overlay) la PRIMERA vez que entra logueado (`ui.showChatScreen` →
+  `VIP.home.maybeShowMenuChooser`): "¿Cómo querés ver la app?" → **MENÚ FÁCIL** (Recomendado) / **MENÚ COMPLETO**
+  (Si ya conocés la app). La elección va a `localStorage vip_menu_pref` ('easy' | 'full') y se cambia desde
+  **Perfil → "☰ Menú fácil / completo"**, con el link "¿Te perdés con tantos botones? Pasá al menú fácil" al pie del
+  Inicio completo y "¿Ya conocés la app? Pasar al menú completo" al pie del fácil.
+- **Cuarto modo `easy`** del Inicio (`setHomeMode('easy')`, `body.home-easy`, `#easyView`), orden pensado para
+  retención: 1) saludo + saldo (espejo de `#userBalance`); 2) **CARGAR AHORA** grande y animado (→ carga automática,
+  modo full); 3) grilla 2×2: **Reembolso** (sub "Diario 25% · Semanal 3% · Mensual 1%" con la escalera REAL de
+  `refundStatus.tiersByPeriod` y un badge verde "¡Tenés $X para cobrar!" si hay algo reclamable → modal unificado),
+  **Ruleta diaria**, **Referidos** (% desde `/api/referrals/me`, `.ref-pct`), **Ver la plataforma**
+  (`openPlatform` de la plataforma de la entrada: SSO si hay API, si no la web pública); 4) **Carga manual · Ayuda**
+  (→ chat, modo mini); 5) link al menú completo. Se repinta al entrar y cada 15 s (`_easyPaint`), y desde
+  `renderHowItWorks` cuando llegan los % reales. Nada hardcodeado (los "5" de `.ref-pct` son el placeholder de siempre).
+- **Inicio** de la barra ahora llama `VIP.home.goHome()`: fácil o completo según la preferencia (se resalta en ambos).
+  `_initHomeMode` arranca en easy si la preferencia es fácil. Todo lo demás (play/mini/full) queda igual.
+
 ### 365. 💳 Al entrar a Carga manual, el CBU aparece solo — SW v253
 **Pedido (owner):** "dejalo fijo: cuando la gente aprieta Carga manual que se apriete CBU solo, así aparece el CBU y la
 tarjeta". `setHomeMode('mini')` dispara `loadAndShowCBU(null, {silent:true})` (sin toasts) como máximo una vez cada

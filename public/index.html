@@ -500,7 +500,7 @@
             </button>
             <span class="tn-sep" aria-hidden="true"></span>
             <!-- #270 (owner): "muy retro → más moderno, futurista, del mundo de las apuestas, sin ser infantil". -->
-            <button type="button" class="tn-btn tn-home tn-retro" id="navInicio" onclick="VIP.home.setHomeMode('play')" title="Inicio: ver las plataformas">
+            <button type="button" class="tn-btn tn-home tn-retro" id="navInicio" onclick="VIP.home.goHome()" title="Inicio">
                 <span class="tn-ico tn-ico-dia" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5 21.5 12 12 21.5 2.5 12z"/><path d="M12 7.5 16.5 12 12 16.5 7.5 12z" fill="currentColor" stroke="none" opacity=".9"/></svg></span><span class="tn-lbl">Inicio</span>
             </button>
             <span class="tn-sep" aria-hidden="true"></span>
@@ -1008,7 +1008,60 @@
                 <!-- #270 (owner): reseñas en la pantalla principal, abajo, deslizantes, "recuadro prolijo tipo Google":
                      nombre, estrellas y opinión. Las pinta reviews.js (renderEntrySlider) desde /api/reviews/public. -->
                 <div class="ev-reviews" id="entryReviews" style="display:none;"></div>
+                <!-- #366 (owner): quien se pierde con tantos botones pasa al MENÚ FÁCIL (una línea finita). -->
+                <button type="button" class="ev-easy-link" onclick="VIP.home.setMenuPref('easy')">☰ ¿Te perdés con tantos botones? Pasá al <b>menú fácil</b> ›</button>
                 <!-- #268: Carga manual / Carga automática viven SOLO en la barra de arriba. -->
+            </div>
+            <!-- ===== #366 (owner): MENÚ FÁCIL — "para la gente que se pierde con tantos botones". Cuarto modo del
+                 Inicio (body.home-easy): saldo + CARGAR AHORA (carga automática) + reembolso / ruleta / referidos /
+                 ver la plataforma + ayuda por chat. La preferencia (fácil o completo) vive en localStorage
+                 vip_menu_pref y se elige en #menuChooser la primera vez (o desde Perfil). home.js: _easyPaint. ===== -->
+            <div id="easyView" class="easy-view" aria-label="Menú fácil">
+                <div class="ez-top">
+                    <div class="ez-hello"><span id="easyHello">Hola</span><small>¿Qué querés hacer hoy?</small></div>
+                    <div class="ez-bal"><small>Tu saldo</small><b id="easyBalance">$0</b></div>
+                </div>
+                <button type="button" class="ez-main" onclick="VIP.home.easyLoad()" title="Carga automática">
+                    <span class="ez-main-ico">⚡</span>
+                    <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo</small></span>
+                    <span class="ez-main-arrow">›</span>
+                </button>
+                <div class="ez-grid">
+                    <button type="button" class="ez-btn ez-refund" onclick="VIP.home.svcRefund()" title="Reembolsos">
+                        <span class="ez-badge" id="easyRefundBadge" style="display:none"></span>
+                        <span class="ez-ico">💸</span><b>Reembolso</b><small id="easyRefundSub">de lo que perdés</small>
+                    </button>
+                    <button type="button" class="ez-btn ez-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
+                        <span class="ez-ico">🎰</span><b>Ruleta diaria</b><small>Girá gratis todos los días</small>
+                    </button>
+                    <button type="button" class="ez-btn ez-ref" onclick="VIP.ui.openReferralModal()" title="Referidos">
+                        <span class="ez-ico">👥</span><b>Referidos</b><small>Ganás el <span class="ref-pct">5</span>% de lo que juegan</small>
+                    </button>
+                    <button type="button" class="ez-btn ez-play" onclick="VIP.home.easyPlay()" title="Ver la plataforma">
+                        <span class="ez-ico">🎮</span><b>Ver la plataforma</b><small>Entrá a jugar con tu usuario</small>
+                    </button>
+                </div>
+                <button type="button" class="ez-chat" onclick="VIP.home.setHomeMode('mini')" title="Carga manual por chat">
+                    <span class="ez-ico">💬</span><span class="ez-chat-txt"><b>Carga manual · Ayuda</b><small>Hablá con una persona por chat</small></span>
+                </button>
+                <button type="button" class="ez-switch" onclick="VIP.home.setMenuPref('full')">¿Ya conocés la app? Pasar al <b>menú completo</b> ›</button>
+            </div>
+            <div id="menuChooser" class="menu-chooser" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
+                <div class="mc-card">
+                    <div class="mc-kicker">BIENVENIDO/A</div>
+                    <h2 id="mcTitle">¿Cómo querés ver la app?</h2>
+                    <p class="mc-sub">Elegí la que te resulte más cómoda. Lo cambiás cuando quieras desde <b>Perfil</b>.</p>
+                    <button type="button" class="mc-opt mc-easy" onclick="VIP.home.chooseMenu('easy')">
+                        <span class="mc-ico">👍</span>
+                        <span class="mc-txt"><b>MENÚ FÁCIL</b><small>Pocos botones y grandes: cargar, reembolso, ruleta, referidos y jugar.</small></span>
+                        <span class="mc-tag">Recomendado</span>
+                    </button>
+                    <button type="button" class="mc-opt mc-full" onclick="VIP.home.chooseMenu('full')">
+                        <span class="mc-ico">🧭</span>
+                        <span class="mc-txt"><b>MENÚ COMPLETO</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga auto y manual, historias…</small></span>
+                        <span class="mc-tag mc-tag-dim">Si ya conocés la app</span>
+                    </button>
+                </div>
             </div>
             <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
@@ -2149,7 +2202,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v253</div>
+                    <div class="pf-build" id="appBuildTag">app v254</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2162,6 +2215,8 @@
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
             <div class="pf-actions">
+                <!-- #366: elegir menú fácil / completo cuando quieran -->
+                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()">☰ <span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
                 <div class="pf-act pf-wrap">
                     <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>

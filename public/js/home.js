@@ -41,14 +41,21 @@
     //       (#entryView: tabs Girox/Ganamos + iframe público) y abajo "Carga manual" (→ mini) /
     //       "Carga automática" (→ full). El modo elegido se recuerda sólo en la SESIÓN (sessionStorage):
     //       cada vez que se abre la app, la gente ve de entrada la plataforma.
+    // #366 (owner): cuarto modo **easy** = MENÚ FÁCIL ("para la gente que se pierde con tantos botones"): saldo,
+    //       CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat. La preferencia
+    //       (fácil o completo) vive en localStorage vip_menu_pref; se elige en #menuChooser al entrar la primera
+    //       vez y se cambia desde Perfil (o con los links de abajo de cada menú). "Inicio" respeta la preferencia.
     const HOME_MODE_KEY = 'vip_home_mode';
     const HOME_BANNER_KEY = 'vip_home_banner';
+    const MENU_PREF_KEY = 'vip_menu_pref';
     let _homeMode = 'play';
+    let _easyTimer = null;
+    let _easyRefLoaded = false;
     let _headObs = null;
 
     function getHomeMode() { return _homeMode; }
     function setHomeMode(mode, opts) {
-        mode = (mode === 'full' || mode === 'mini') ? mode : 'play';
+        mode = (mode === 'full' || mode === 'mini' || mode === 'easy') ? mode : 'play';
         _homeMode = mode;
         const p = _el('supportPanel');
         const cta = _el('serviceBannerCta');
@@ -56,6 +63,8 @@
         document.body.classList.toggle('home-mini', mode === 'mini');
         document.body.classList.toggle('home-play', mode === 'play');
         document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
+        document.body.classList.toggle('home-easy', mode === 'easy'); // #366: MENÚ FÁCIL
+        clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();
         if (mode === 'play') {
@@ -65,6 +74,13 @@
             try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
             renderEntryTabs();
             _entryLoad();
+        } else if (mode === 'easy') {
+            _entryUnload();
+            if (p) p.classList.add('hidden');
+            _open = false;
+            try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
+            _easyPaint();
+            _easyTimer = setInterval(() => { if (!document.hidden && _homeMode === 'easy') _easyPaint(); }, 15000);
         } else {
             _entryUnload();
         }
@@ -98,7 +114,69 @@
     // #268: barra de arriba — resalta la sección activa.
     function _paintNav() {
         const map = { navInicio: 'play', navAuto: 'full', navManual: 'mini' };
-        Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode); });
+        Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode || (id === 'navInicio' && _homeMode === 'easy')); });
+    }
+    // ---------------- #366: MENÚ FÁCIL / COMPLETO ----------------
+    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); return (v === 'easy' || v === 'full') ? v : null; } catch (_) { return null; } }
+    // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
+    function goHome() { setHomeMode(getMenuPref() === 'easy' ? 'easy' : 'play'); }
+    function setMenuPref(pref, opts) {
+        pref = pref === 'easy' ? 'easy' : 'full';
+        try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
+        closeMenuChooser();
+        setHomeMode(pref === 'easy' ? 'easy' : 'play');
+        if (!opts || !opts.quiet) {
+            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú fácil activado. Lo cambiás cuando quieras desde Perfil.' : '🧭 Menú completo activado. Lo cambiás cuando quieras desde Perfil.', 'success'); } catch (_) {}
+        }
+    }
+    function chooseMenu(pref) { setMenuPref(pref); }
+    function openMenuChooser() {
+        const m = _el('menuChooser'); if (!m) return;
+        m.classList.add('open'); document.body.classList.add('mc-open');
+    }
+    function closeMenuChooser() {
+        const m = _el('menuChooser'); if (!m) return;
+        m.classList.remove('open'); document.body.classList.remove('mc-open');
+    }
+    // Al entrar logueado (ui.showChatScreen): si nunca eligió, se le pregunta; si eligió fácil, arranca ahí.
+    function maybeShowMenuChooser() {
+        const pref = getMenuPref();
+        if (!pref) { setTimeout(openMenuChooser, 350); return; }
+        if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
+    }
+    function easyLoad() { setHomeMode('full'); }
+    function easyPlay() { openPlatform(_entryPlat || 'girox'); }
+    // Pinta el menú fácil con datos reales: usuario, saldo (espejo de #userBalance), % de reembolso por período
+    // (escalera real del server, nada hardcodeado), plata reclamable y % de referidos.
+    function _easyPaint() {
+        const v = _el('easyView'); if (!v) return;
+        try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('easyHello'); if (h) h.textContent = u ? ('Hola, ' + u) : 'Hola'; } catch (_) {}
+        try { const b = _el('userBalance'), eb = _el('easyBalance'); if (b && eb && b.textContent) eb.textContent = b.textContent; } catch (_) {}
+        try {
+            const s = VIP.state && VIP.state.refundStatus;
+            const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0);
+            if (s && (s.tiersByPeriod || s.tiers)) {
+                const tbp = s.tiersByPeriod || { weekly: s.tiers, monthly: s.tiers };
+                const parts = [];
+                if (mx(tbp.daily)) parts.push('Diario ' + mx(tbp.daily) + '%');
+                if (mx(tbp.weekly)) parts.push('Semanal ' + mx(tbp.weekly) + '%');
+                if (mx(tbp.monthly)) parts.push('Mensual ' + mx(tbp.monthly) + '%');
+                const el = _el('easyRefundSub'); if (el && parts.length) el.textContent = parts.join(' · ');
+                let claim = 0;
+                ['daily', 'weekly', 'monthly'].forEach((k) => { const d = s[k]; if (d && d.canClaim && Number(d.potentialAmount) > 0) claim += Number(d.potentialAmount); });
+                const bd = _el('easyRefundBadge');
+                if (bd) { if (claim > 0) { bd.textContent = '¡Tenés $' + Math.round(claim).toLocaleString('es-AR') + ' para cobrar!'; bd.style.display = ''; } else bd.style.display = 'none'; }
+            }
+        } catch (_) {}
+        if (!_easyRefLoaded && VIP.state && VIP.state.currentToken) {
+            _easyRefLoaded = true;
+            try {
+                fetch(VIP.config.API_URL + '/api/referrals/me', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } })
+                    .then((r) => (r.ok ? r.json() : null))
+                    .then((me) => { if (me && me.referralPct != null) document.querySelectorAll('.ref-pct').forEach((el) => { el.textContent = me.referralPct; }); })
+                    .catch(() => {});
+            } catch (_) {}
+        }
     }
     // ---------------- #268: PERFIL ----------------
     let _pfShown = false;
@@ -133,7 +211,8 @@
     function _initHomeMode() {
         // #307 (owner): al entrar SIEMPRE arranca en Inicio; desde ahí van a Carga auto / manual. (Antes se
         // recordaba el último modo dentro de la sesión: ya no.)
-        const m = 'play';
+        // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
+        const m = getMenuPref() === 'easy' ? 'easy' : 'play';
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
@@ -1390,6 +1469,7 @@
                 const d = _el('infoDailyMax'); if (d && mx(tbp.daily)) d.textContent = mx(tbp.daily);
             }
         } catch (_) {}
+        try { _easyPaint(); } catch (_) {} // #366: menú fácil con los % reales
         if (ref) {
             if (s && (s.tiersByPeriod || s.tiers)) {
                 const tbp = s.tiersByPeriod || { weekly: s.tiers, monthly: s.tiers };
@@ -1498,7 +1578,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

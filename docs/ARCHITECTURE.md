@@ -928,6 +928,15 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hasta que responda `/api/platforms`, "Abrir la plataforma ›" a los 15 s si no embebe) y abajo
   "Carga manual" (→ mini) / "Carga automática" (→ full). Al salir el iframe se vacía. `openSupport()`
   en play = mini. El cartel tiene el chip "🎰 Plataformas" para volver.
+  **#366 (2026-10-17):** cuarto modo **easy** = MENÚ FÁCIL para quien se pierde con tantos botones. La primera vez
+  que entra logueado, `ui.showChatScreen` → `VIP.home.maybeShowMenuChooser` abre `#menuChooser` ("¿Cómo querés ver
+  la app?" fácil / completo); la elección vive en `localStorage vip_menu_pref` ('easy' | 'full') y se cambia en
+  Perfil ("☰ Menú fácil / completo") o con los links al pie de cada menú (`setMenuPref`). `body.home-easy` muestra
+  `#easyView`: saludo + saldo (espejo de `#userBalance`), CARGAR AHORA (→ full), grilla Reembolso (% por período de
+  `refundStatus.tiersByPeriod` + badge "¡Tenés $X para cobrar!" con `canClaim/potentialAmount`) · Ruleta · Referidos
+  (`.ref-pct` desde `/api/referrals/me`) · Ver la plataforma (`openPlatform`), Carga manual · Ayuda (→ mini).
+  `_easyPaint` repinta al entrar, cada 15 s y desde `renderHowItWorks`. "Inicio" llama `goHome()` (easy o play
+  según la preferencia) y `_initHomeMode` arranca en easy si así lo eligió. Sin cambios de backend.
   **#268:** la cabecera es la barra `header.topnav`: Inicio (play, destacado) · Carga automática (full) ·
   Carga manual (mini) · Info (`#infoBtn`) · Perfil (`#profileModal`: usuario + clave guardada, Cambiar
   clave, Notificaciones = `#notificationBtn` del inline FCM, Instalar, Código, Canal `#canalTelegramHeaderBtn`,

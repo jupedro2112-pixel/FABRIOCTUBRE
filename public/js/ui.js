@@ -104,6 +104,7 @@ VIP.ui = (function () {
         startBalancePolling();
         sendWelcomeMessages();
         if (VIP.stories && VIP.stories.load) VIP.stories.load(); // #361: historias activas (anillo arriba a la derecha)
+        try { if (VIP.home && VIP.home.maybeShowMenuChooser) VIP.home.maybeShowMenuChooser(); } catch (_) {} // #366: ¿menú fácil o completo?
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).
         if (VIP.installBonus && typeof VIP.installBonus.init === 'function') {
