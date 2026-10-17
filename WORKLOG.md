@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 287. 🔤 Barra de arriba: "Carga auto" — SW v179
+**Pedido (owner):** "el carga automática de arriba a la izquierda poné carga auto" (la palabra "automática" se
+cortaba en el botón). Sólo el texto de `#navAuto` en index.html.
+
 ### 286. 🏷️ "Recomendado" debajo de Girox — SW v178
 **Pedido (owner, captura):** "el recomendado dejalo abajo de Girox". La etiqueta flotaba arriba a la izquierda
 del recuadro; ahora va en flujo, debajo del nombre (`_platBtn` en home.js + CSS #286).
