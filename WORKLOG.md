@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-17
 
+### 310. 🎰 API de 1girox desde el panel + la landing habla con su propio servidor — admin-sw v71
+**Contexto (owner):** "¿está funcionando la API de Girox acá? Cuando entro como lalodj tengo que estar abierto en
+Girox"; "la landing no crea el usuario en Girox: 'Error de conexión'". Entorno de prueba: fabrioctubre.onrender.com.
+- **Diagnóstico:** `GET /api/landing/info` en Render devolvía `girox.connected:false` (faltan `GIROX_API_URL/KEY` en ese
+  entorno) y `baseUrl: https://cargas1girox.com` ⇒ la landing mandaba el registro a la URL pública de producción
+  (otro dominio) → "Error de conexión"; y aunque llegara, sin API no se crea la cuenta en Girox.
+- **Landing:** usa SIEMPRE `location.origin` para la API y para el link de la app (el placeholder sólo de respaldo).
+- **API de 1girox desde el panel** (COMANDOS → Banco automático → "🎰 API de 1girox"): Base URL + API key, se
+  prueban con `girox.ping()` antes de guardar, quedan cifradas en `Config['giroxCredentials']` (misma clave que
+  hgcash) y mandan sobre env/SSM (`giroxService.setCredentialsOverride`, recarga al boot, cada 60 s y al guardar).
+  Rutas `GET/POST/DELETE /api/admin/girox/credentials`. Con la key cargada, `connected` pasa a true: la landing
+  crea la cuenta en Girox, "Jugar ahora"/Inicio abren con SSO y el SSO crea al vuelo al jugador que no exista
+  (lalodj, creado desde el panel sin API, entra igual: `platformSessionHandler` lo sincroniza con clave provisoria).
+
 ### 309. 🔢 Versión visible en Perfil ("app v197") — SW v197
 **Contexto:** el owner seguía sin ver la carga mínima; su captura tenía el ícono de ficha (v188) pero no la línea
 dorada (v191) ⇒ su entorno corre v188–v190, la versión con el bug ya corregido en `main`. Para no adivinar más:

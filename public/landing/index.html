@@ -197,7 +197,10 @@
   var qs = new URLSearchParams(location.search);
   var campaign = ph(L.campaign) || qs.get('c') || qs.get('campaign') || (location.pathname.split('/').filter(Boolean).pop() || '');
   campaign = String(campaign || '').toUpperCase().trim();
-  var baseUrl = ph(L.baseUrl) || location.origin;
+  // #310: la landing SIEMPRE habla con su propio servidor (antes usaba la URL pública configurada: en un entorno de
+  // prueba mandaba el registro a producción → "Error de conexión"). El link de la app también es este origen.
+  var sameOrigin = /^https?:/.test(location.protocol) ? location.origin : '';
+  var baseUrl = sameOrigin || ph(L.baseUrl) || '';
   var $ = function (id) { return document.getElementById(id); };
 
   // ── navegador embebido (Instagram / Facebook / TikTok) ──

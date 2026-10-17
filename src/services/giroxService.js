@@ -63,12 +63,25 @@ const logger = {
 // CONFIG (lazy)
 // ============================================================
 
+// #310: credenciales cargadas desde el PANEL (Config['giroxCredentials'], cifradas) mandan sobre las de env/SSM.
+// server.js las inyecta con setCredentialsOverride() al arrancar, cada 60 s y al guardar.
+let _credOverride = { baseUrl: null, apiKey: null };
+function setCredentialsOverride(o) {
+  _credOverride = { baseUrl: o && o.baseUrl ? String(o.baseUrl).trim().replace(/\/+$/, '') : null, apiKey: o && o.apiKey ? String(o.apiKey).trim() : null };
+  try { _invalidatePlayer && _invalidatePlayer(); } catch (_) {}
+}
+function getCredentialsSource() {
+  if (_credOverride.apiKey && _credOverride.baseUrl) return 'panel';
+  if (process.env.GIROX_API_KEY && process.env.GIROX_API_URL) return 'env';
+  return 'none';
+}
 function getBaseUrl() {
+  if (_credOverride.baseUrl) return _credOverride.baseUrl;
   const raw = process.env.GIROX_API_URL || '';
   return raw.trim().replace(/\/+$/, ''); // sin barra final
 }
 function getApiKey() {
-  return process.env.GIROX_API_KEY || null;
+  return _credOverride.apiKey || process.env.GIROX_API_KEY || null;
 }
 /** Keys OPCIONALES solo-consultas (`GIROX_API_KEY_CONSULTAS` en SSM, 2026-08-15).
  *  El límite de 1girox es POR KEY (confirmado por su soporte): con keys extra,
@@ -1535,6 +1548,8 @@ module.exports = {
   isEnabled,
   getPlayUrl,
   getBaseUrl,
+  setCredentialsOverride, // #310 credenciales desde el panel
+  getCredentialsSource,
   validateUsername,
   // diagnóstico: cuántas keys de consultas cargó (log de arranque en server.js)
   getReadsKeysCount: function () { return getReadsKeys().length; },

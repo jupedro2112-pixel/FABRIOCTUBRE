@@ -2855,6 +2855,23 @@ async function _loadHgcashCredentials() {
 }
 setTimeout(() => { _loadHgcashCredentials(); }, 8 * 1000);
 setInterval(() => { _loadHgcashCredentials(); }, 60 * 1000);
+// #310 (owner 2026-10-17): API de 1girox (Base URL + X-Api-Key) desde el PANEL, igual que hgcash. Cifradas con la
+// misma clave derivada de JWT_SECRET en Config['giroxCredentials']; panel > env/SSM. Sirve para entornos (Render,
+// clon) donde no se pueden tocar las variables: se carga la key y en ≤ 60 s todas las instancias la usan.
+let _giroxCredMeta = null;
+async function _loadGiroxCredentials() {
+  try {
+    const v = await getConfig('giroxCredentials', null);
+    if (!v || !v.keyEnc || !v.baseUrl) { girox.setCredentialsOverride(null); _giroxCredMeta = null; return; }
+    let key = null, decryptError = false;
+    try { key = _credDecrypt(v.keyEnc); } catch (_) { decryptError = true; }
+    girox.setCredentialsOverride(key ? { baseUrl: v.baseUrl, apiKey: key } : null);
+    _giroxCredMeta = { baseUrl: v.baseUrl, keyLast4: v.keyLast4 || null, updatedBy: v.updatedBy || null, updatedAt: v.updatedAt || null, decryptError };
+    if (decryptError) logger.error('[girox] la API key del panel NO se pudo descifrar (¿cambió JWT_SECRET?) — se usa env/SSM');
+  } catch (e) { logger.warn(`[girox] no se pudieron leer las credenciales del panel: ${e.message}`); }
+}
+setTimeout(() => { _loadGiroxCredentials(); }, 6 * 1000);
+setInterval(() => { _loadGiroxCredentials(); }, 60 * 1000);
 function _hgcashWebhookSecrets() {
   // #216 (owner 2026-10-13, réplica de PAUTANUEVAsantino #323): si hay secreto en el PANEL se
   // acepta SOLO ese — el de SSM deja de valer, así los avisos de la cuenta hgcash VIEJA
@@ -17393,6 +17410,53 @@ app.delete('/api/admin/hgcash/credentials', authMiddleware, adminMiddleware, asy
     await _loadHgcashCredentials();
     logger.warn(`[hgcash] credenciales del panel BORRADAS por ${req.user.username} → vuelve a SSM`);
     res.json({ success: true, tokenSource: hgcashPay.getTokenSource() });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #310 API de 1girox desde el panel (Base URL + API key) — solo admin general.
+app.get('/api/admin/girox/credentials', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    await _loadGiroxCredentials();
+    const m = _giroxCredMeta || {};
+    res.json({
+      source: girox.getCredentialsSource(), enabled: girox.isEnabled(),
+      baseUrl: girox.getBaseUrl() || null, panelBaseUrl: m.baseUrl || null, keyLast4: m.keyLast4 || null,
+      updatedBy: m.updatedBy || null, updatedAt: m.updatedAt || null, decryptError: !!m.decryptError,
+      envUrl: !!process.env.GIROX_API_URL, envKey: !!process.env.GIROX_API_KEY
+    });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/girox/credentials', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {};
+    const baseUrl = String(b.baseUrl || '').trim().replace(/\/+$/, '');
+    const apiKey = String(b.apiKey || '').trim();
+    if (!/^https:\/\/[a-z0-9.-]+(\/[^\s]*)?$/i.test(baseUrl)) return res.status(400).json({ error: 'La Base URL tiene que ser https://… (la que te dio 1girox, sin barra final).' });
+    if (apiKey.length < 10 || apiKey.length > 300 || /\s/.test(apiKey)) return res.status(400).json({ error: 'La API key no parece válida.' });
+    if (!_credKey()) return res.status(503).json({ error: 'No se puede cifrar ahora (falta JWT_SECRET).' });
+    // Se PRUEBA contra la plataforma antes de guardar (swap breve del override + ping; se restaura pase lo que pase).
+    const prevSrc = (await getConfig('giroxCredentials', null)) || null;
+    let probe;
+    try {
+      girox.setCredentialsOverride({ baseUrl, apiKey });
+      probe = await girox.ping();
+    } finally { await _loadGiroxCredentials(); }
+    if (!probe || !probe.ok) return res.status(400).json({ error: '1girox no aceptó esos datos: ' + String((probe && probe.detalle) || 'sin respuesta').slice(0, 200) });
+    await setConfig('giroxCredentials', Object.assign({}, prevSrc || {}, { baseUrl, keyEnc: _credEncrypt(apiKey), keyLast4: apiKey.slice(-4), updatedBy: req.user.username, updatedAt: new Date() }));
+    await _loadGiroxCredentials();
+    try { platforms.invalidateCache(); } catch (_) {}
+    logger.warn(`[girox] credenciales de la Partner API cargadas desde el panel por ${req.user.username} (key …${apiKey.slice(-4)}, ${baseUrl})`);
+    res.json({ success: true, source: girox.getCredentialsSource(), enabled: girox.isEnabled(), detalle: probe.detalle });
+  } catch (e) { logger.warn(`[girox] credentials POST: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/girox/credentials', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    await setConfig('giroxCredentials', { baseUrl: null, keyEnc: null, keyLast4: null, updatedBy: req.user.username, updatedAt: new Date() });
+    await _loadGiroxCredentials();
+    logger.warn(`[girox] credenciales del panel BORRADAS por ${req.user.username} → vuelve a env/SSM`);
+    res.json({ success: true, source: girox.getCredentialsSource(), enabled: girox.isEnabled() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // #326 Reenvío (fan-out) de los avisos de hgcash a otras páginas — desde el panel.

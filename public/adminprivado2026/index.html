@@ -1004,6 +1004,29 @@ document.addEventListener('change', function (ev) {
                                 <span class="icon icon-save"></span> Guardar banco automático
                             </button>
                             <!-- #320 Credenciales de la cuenta hgcash (token + secreto) desde el panel -->
+                            <!-- #310: API de 1girox desde el panel (Base URL + key), igual que la cuenta hgcash -->
+                            <div id="giroxCredBox" style="margin-top:18px;padding:14px;border:1px solid rgba(0,229,255,0.4);border-radius:10px;background:rgba(0,229,255,0.04);">
+                                <h4 style="margin:0 0 6px;color:#7fd7ff;font-size:14px;">🎰 API de 1girox (Partner API) — altas, cargas, retiros y entrada al casino</h4>
+                                <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 10px;">
+                                    Si acá dice <b>NINGUNA</b>, la app no puede crear usuarios en Girox ni abrir el casino (la landing dice "no pudimos crear tu cuenta"
+                                    y el nivel/saldo no cargan). Pegá la <b>Base URL</b> y la <b>API key</b> (<code>pk_…</code>) que te dio 1girox: se prueban contra la
+                                    plataforma antes de guardarse, quedan cifradas y mandan sobre las variables del servidor (AWS/Render). En ≤ 60 s las usan todas las instancias.
+                                </p>
+                                <div id="giroxCredStatus" style="font-size:12px;color:#ccc;margin-bottom:10px;line-height:1.6;">Cargando…</div>
+                                <div class="form-group">
+                                    <label>Base URL de la Partner API:</label>
+                                    <input type="text" id="giroxCredUrl" placeholder="https://api.1girox.com/api/v1" autocomplete="off" style="width:100%;">
+                                </div>
+                                <div class="form-group">
+                                    <label>API key (pk_…):</label>
+                                    <input type="password" id="giroxCredKey" placeholder="(dejar vacío para no cambiarla)" autocomplete="off" style="width:100%;">
+                                </div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                    <button class="btn-primary" onclick="saveGiroxCredentials()">🎰 Probar y guardar</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="clearGiroxCredentials()" title="Borra lo cargado acá y vuelve a usar las variables del servidor">↩️ Volver a las variables del servidor</button>
+                                    <span id="giroxCredMsg" style="font-size:12px;color:#aaa;"></span>
+                                </div>
+                            </div>
                             <div id="hgcashCredBox" style="margin-top:18px;padding:14px;border:1px solid rgba(212,175,55,0.45);border-radius:10px;background:rgba(212,175,55,0.05);">
                                 <h4 style="margin:0 0 6px;color:#d4af37;font-size:14px;">🔐 Cuenta hgcash conectada (token y secreto)</h4>
                                 <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 10px;">

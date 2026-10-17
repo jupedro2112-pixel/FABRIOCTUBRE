@@ -6549,6 +6549,7 @@ async function loadHgcashConfig() {
         loadHgcashBalance();
         startHgcashLive();
         loadHgcashCredentials(); // #320
+        try { loadGiroxCredentials(); } catch (_) {} // #310
         loadHgcashFanout(); // #326
         const j = await r.json();
         const c = j.config || {};
@@ -14739,3 +14740,53 @@ async function savePlatToggles() {
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
 window.loadPlatToggles = loadPlatToggles; window.savePlatToggles = savePlatToggles;
+
+
+// ====== #310 API de 1girox desde el panel (Base URL + API key) ======
+async function loadGiroxCredentials() {
+    const box = document.getElementById('giroxCredBox');
+    const st = document.getElementById('giroxCredStatus');
+    if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/girox/credentials');
+        if (!r.ok) { box.style.display = 'none'; return; }
+        box.style.display = '';
+        const j = await r.json();
+        const src = j.source === 'panel' ? '<b style="color:#66ff99;">PANEL</b> (key …' + escapeHtml(j.keyLast4 || '') + ' · ' + escapeHtml(j.baseUrl || '') + ')'
+            : j.source === 'env' ? '<b style="color:#ffd479;">VARIABLES DEL SERVIDOR</b> (' + escapeHtml(j.baseUrl || '') + ')'
+            : '<b style="color:#ff8080;">NINGUNA — la app NO puede crear usuarios en Girox ni abrir el casino</b>';
+        st.innerHTML = '🔑 API en uso: ' + src + (j.enabled ? ' · <span style="color:#66ff99;">conectada</span>' : ' · <span style="color:#ff8080;">sin conexión</span>') +
+            (j.updatedBy ? '<br><span style="color:#888;">Último cambio desde el panel: ' + escapeHtml(j.updatedBy) + ' · ' + (j.updatedAt ? fmtFechaHoraAR(j.updatedAt) : '') + '</span>' : '') +
+            (j.decryptError ? '<br><span style="color:#ff8080;">⚠️ Lo guardado en el panel no se pudo leer (¿cambió JWT_SECRET?). Volvé a cargarlo.</span>' : '');
+        const u = document.getElementById('giroxCredUrl'); if (u && !u.value && (j.panelBaseUrl || j.baseUrl)) u.value = j.panelBaseUrl || j.baseUrl || '';
+    } catch (_) { if (st) st.textContent = 'No se pudo leer el estado.'; }
+}
+async function saveGiroxCredentials() {
+    const url = ((document.getElementById('giroxCredUrl') || {}).value || '').trim();
+    const key = ((document.getElementById('giroxCredKey') || {}).value || '').trim();
+    const m = document.getElementById('giroxCredMsg');
+    if (!url || !key) { if (m) { m.style.color = '#ff8080'; m.textContent = 'Pegá la Base URL y la API key.'; } return; }
+    if (!confirm('¿Probar y guardar estos datos de la Partner API de 1girox? Desde ahora las altas, cargas, retiros y la entrada al casino van a usar esta key.')) return;
+    if (m) { m.style.color = '#aaa'; m.textContent = 'Probando contra 1girox…'; }
+    try {
+        const r = await authFetch('/api/admin/girox/credentials', { method: 'POST', body: JSON.stringify({ baseUrl: url, apiKey: key }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ ' + (j.error || 'No se pudo guardar'); } return; }
+        document.getElementById('giroxCredKey').value = '';
+        if (m) { m.style.color = '#66ff99'; m.textContent = '✅ Guardado y conectado — ' + (j.detalle || ''); }
+        showToast('API de 1girox conectada', 'success');
+        loadGiroxCredentials(); try { loadPlatToggles(); } catch (_) {}
+    } catch (_) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ Error de conexión'; } }
+}
+async function clearGiroxCredentials() {
+    if (!confirm('¿Borrar la API key cargada en el panel y volver a las variables del servidor?')) return;
+    const m = document.getElementById('giroxCredMsg');
+    try {
+        const r = await authFetch('/api/admin/girox/credentials', { method: 'DELETE' });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ ' + (j.error || 'No se pudo'); } return; }
+        if (m) { m.style.color = '#66ff99'; m.textContent = '✅ Vuelve a usar las variables del servidor'; }
+        loadGiroxCredentials();
+    } catch (_) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ Error de conexión'; } }
+}
+window.loadGiroxCredentials = loadGiroxCredentials; window.saveGiroxCredentials = saveGiroxCredentials; window.clearGiroxCredentials = clearGiroxCredentials;

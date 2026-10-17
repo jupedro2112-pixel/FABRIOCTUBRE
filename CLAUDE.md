@@ -128,6 +128,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   cualquier mensaje automático nuevo. **Ningún % de bono hardcodeado en textos**
   (owner 2026-09-17, varían por mes/día): va a Config + variable (ej. `{pct}` del bono
   por instalar la app, `Config['installBonusPct']`, editable en COMANDOS).
+- **API de 1girox desde el panel (#310, 2026-10-17):** Base URL + key en Config['giroxCredentials'] (cifradas con
+  `JWT_SECRET`, panel > env/SSM, `giroxService.setCredentialsOverride`). Sin API, `connected:false` ⇒ la landing no
+  crea cuentas y el casino no abre; se arregla cargándola en COMANDOS → Banco automático → "🎰 API de 1girox".
 - **hgcash desde el panel (2026-10-07):** token de API y secreto del webhook se cargan
   en Comandos → Banco automático (cifrados con `JWT_SECRET` en `Config['hgcashCredentials']`,
   **panel > SSM**; el webhook acepta la firma con cualquiera de los dos secretos). El

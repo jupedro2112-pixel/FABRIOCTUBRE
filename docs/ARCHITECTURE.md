@@ -553,7 +553,7 @@ tenían los 4 clientes viejos.
 
 | Variable | Default | Para qué |
 |---|---|---|
-| `GIROX_API_URL` | — | Base de la Partner API, sin barra final (ej. `https://api.1girox.com/api/v1`) |
+| `GIROX_API_URL` | — | Base de la Partner API, sin barra final (ej. `https://api.1girox.com/api/v1`). **#310:** el panel puede pisarla (`Config['giroxCredentials']`, cifrada; `giroxService.setCredentialsOverride`) |
 | `GIROX_API_KEY` | — | Header `X-Api-Key` de la cuenta MASTER (`pk_...`). **SSM, nunca en el repo** |
 | `GIROX_PLAY_URL` | `https://1girox.com` | Sitio del jugador (fallback si el SSO falla) |
 | `GIROX_NETWIN_SCOPE` | `casino` | `casino` \| `total` (incluiría sports) en reembolsos/comisiones |
