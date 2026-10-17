@@ -1547,6 +1547,80 @@ async function maybeSendRecoveryMessage(user) {
   }
 }
 
+// ============================================
+// #283 (owner 2026-10-17): CARGA GRATIS por instalar la app — retención en la PRIMERA carga
+// ============================================
+// Al acreditarse la PRIMERA carga de un cliente que NO tiene la app instalada se le ofrece una
+// carga sin cargo (pct% de esa primera carga, con tope) a cambio de instalar la app. Dos caminos:
+//   · "Instalar ahora y reclamar" → instala, abre la app y reclama al instante.
+//   · "Ahora quiero jugar" → queda PENDIENTE: botón grande abajo en la app hasta que instale y reclame.
+// Se acredita SOLO al reclamar desde la app instalada (token FCM standalone, igual que la ruleta),
+// como regalo (bono 0) vía creditGift, reference `vip-igift-<userId>` (una vez en la vida).
+// Config['installGift'] = { enabled, pct, capArs, days } (panel → COMANDOS → Bonos automáticos).
+const INSTALL_GIFT_DEFAULT = { enabled: true, pct: 100, capArs: 20000, days: 7 };
+const INSTALL_GIFT_OFFER_DEFAULT = '🎁 ¡{username}, tu primera carga te la devolvemos GRATIS!\n\nInstalá la app y reclamá *${monto} sin cargo* (el {pct}% de tu primera carga). Tenés {dias} días.\n\n👉 Podés instalarla ahora y reclamarla al instante, o seguir jugando y hacerlo después: te queda el botón abajo en la app.';
+const INSTALL_GIFT_CREDITED_DEFAULT = '🎁 ¡Listo {username}! Te acreditamos *${monto} sin cargo* en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰';
+async function getInstallGiftConfig() {
+  let raw = null;
+  try { raw = await getConfig('installGift', null); } catch (_) { raw = null; }
+  const r = raw && typeof raw === 'object' ? raw : {};
+  const num = (v, d, min, max) => { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : d; };
+  return {
+    enabled: r.enabled == null ? INSTALL_GIFT_DEFAULT.enabled : r.enabled === true,
+    pct: Math.round(num(r.pct, INSTALL_GIFT_DEFAULT.pct, 0, 500)),
+    capArs: Math.round(num(r.capArs, INSTALL_GIFT_DEFAULT.capArs, 0, 10000000)),
+    days: Math.round(num(r.days, INSTALL_GIFT_DEFAULT.days, 1, 365))
+  };
+}
+function installGiftAmount(baseAmount, cfg) {
+  const b = Math.max(0, Number(baseAmount) || 0);
+  const capped = cfg.capArs > 0 ? Math.min(b, cfg.capArs) : b;
+  return Math.round(capped * cfg.pct / 100);
+}
+function _installGiftExpired(ig) { return !!(ig && ig.expiresAt && new Date(ig.expiresAt).getTime() < Date.now()); }
+// Devuelve true si se OFRECIÓ (el que llama puede omitir el cartel genérico "instalá la app").
+async function maybeOfferInstallGift(userIn, { amount, platform = null, source = '' } = {}) {
+  try {
+    if (!userIn || !userIn.id) return false;
+    const cfg = await getInstallGiftConfig();
+    if (!cfg.enabled || !(cfg.pct > 0)) return false;
+    const user = await User.findOne({ id: userIn.id }).lean();
+    if (!user) return false;
+    const st = user.installGift && user.installGift.status;
+    if (st && st !== 'none') return false;            // ya ofrecida / reclamada / vencida
+    if (_rouletteHasAppInstalled(user)) return false; // ya tiene la app: no hay nada que incentivar
+    // Sólo la PRIMERA carga real (la recién acreditada ya está en Transaction).
+    const n = await Transaction.countDocuments({
+      $or: [{ userId: user.id }, { username: user.username }],
+      type: 'deposit',
+      'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] }
+    });
+    if (n > 1) return false;
+    const gift = installGiftAmount(amount, cfg);
+    if (!(gift > 0)) return false;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + cfg.days * 86400000);
+    const base = Math.round(Number(amount) || 0);
+    const reserved = await User.findOneAndUpdate(
+      { id: user.id, $or: [{ 'installGift.status': 'none' }, { 'installGift.status': { $exists: false } }] },
+      { $set: { installGift: { status: 'offered', amount: gift, baseAmount: base, pct: cfg.pct, offeredAt: now, expiresAt, deferredAt: null, claimedAt: null, claimTxId: null, platform: platforms.normalizeId(platform) || null, source: String(source || '').slice(0, 30), lastError: null } } }
+    );
+    if (!reserved) return false;
+    const vars = { username: user.username, monto: gift.toLocaleString('es-AR'), pct: cfg.pct, dias: cfg.days, carga: base.toLocaleString('es-AR') };
+    const text = (await renderSystemCommand('/sys_install_gift_offer', INSTALL_GIFT_OFFER_DEFAULT, vars)) || _renderVars('🎁 Instalá la app y reclamá ${monto} sin cargo.', vars);
+    const md = { kind: 'install_gift_offer', amount: gift, baseAmount: base, pct: cfg.pct, expiresAt: expiresAt.toISOString() };
+    await _sendUserSystemMessage(user, text, { metadata: md, push: { title: '🎁 Tu primera carga, GRATIS', body: `Instalá la app y reclamá $${vars.monto} sin cargo.` } });
+    await _emitAdminOnlyChatNote(user.id, user.username,
+      `🎁 CARGA GRATIS por instalar la app OFRECIDA: $${vars.monto} (${cfg.pct}% de su primera carga de $${vars.carga}; tope $${cfg.capArs.toLocaleString('es-AR')}). Vence en ${cfg.days} días. Se acredita SOLA cuando reclama desde la app instalada: no hay que hacer nada.`
+    ).catch(() => {});
+    logger.info(`[install-gift] ofrecida user=${user.username} gift=$${gift} base=$${base} via=${source || '?'}`);
+    return true;
+  } catch (e) {
+    logger.warn(`[install-gift] offer ${userIn && userIn.username}: ${e.message}`);
+    return false;
+  }
+}
+
 // Agregar usuario externo
 async function addExternalUser(userData) {
   try {
@@ -2626,6 +2700,8 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     try { await delayClockResolve(user.id, { responded: true, agentId: 'auto-hgcash', agentUsername: 'auto-hgcash', via: 'auto_carga', queueHint: 'cargas' }); } catch (_) {}
     // Oferta de recuperación 100% (no se envía si está etiquetado comunidad/no comunidad).
     await maybeSendRecoveryMessage(user);
+    // #283: en la PRIMERA carga de un cliente sin la app → oferta de carga GRATIS por instalarla.
+    await maybeOfferInstallGift(user, { amount, platform: pid, source: 'hgcash' });
 
     await _emitAdminOnlyChatNote(user.id, user.username, `🏦 ✅ CARGA AUTOMÁTICA hgcash — ${dataDesc}. Acreditado en ${platLabel}${by && by !== "single" && by !== "direct" ? " (elección: " + by + ")" : ""}.`);
     if (_hgBonusApplied) await _emitAdminOnlyChatNote(user.id, user.username, _autoBonusNoteText(_auto, Number(amount), 0, 'carga automática hgcash')).catch(() => {});
@@ -8182,7 +8258,7 @@ async function _cashbackPaidBetween(userId, fromDate, toDate) {
 // reembolsos por período ('refund'), el rakeback, el nivel VIP, la ruleta, el
 // fueguito, las comisiones y TODO 'bonus' (incluido el propio reembolso
 // acumulativo, metadata.source 'instant_cashback' — §3.2).
-const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette'];
+const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette', 'install_gift']; // install_gift (#283): carga gratis por instalar la app
 
 /**
  * Estado del reembolso acumulativo de un jugador. `opts.fresh` → netwin sin
@@ -9383,7 +9459,9 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       const hasAppInstalled = user.fcmTokenContext === 'standalone'
         || (Array.isArray(user.fcmTokens) && user.fcmTokens.some(t => t && t.context === 'standalone'));
 
-      if (!hasAppInstalled) {
+      // #283: en la PRIMERA carga sin app instalada, la oferta de carga GRATIS reemplaza al cartel genérico.
+      const _giftOffered = !hasAppInstalled ? await maybeOfferInstallGift(user, { amount, platform: _platformId, source: 'manual' }) : false;
+      if (!hasAppInstalled && !_giftOffered) {
         const installCmd = await Command.findOne({ name: '/sys_install_app', isActive: true });
         const installDisabled = installCmd && (!installCmd.response || !String(installCmd.response).trim());
         if (!installDisabled) { // null = comando vaciado a propósito → no enviar
@@ -11165,6 +11243,20 @@ async function initializeData() {
       response: '🔒💰 Depósito de ${amount} (incluye ${bonus} de bonificación) acreditado con éxito. ✅ \n💸 Tu nuevo saldo es ${balance} 💸\n\nPuedes verificarlo en: https://1girox.com\n\n🔥 Mañana podes revisar si tenes reembolso para reclamar de forma automatica 🔥'
     },
     {
+      // #283 (2026-10-17): oferta de CARGA GRATIS por instalar la app al acreditarse la PRIMERA carga de un
+      // cliente sin la app. Los botones ("Instalar ahora" / "Ahora quiero jugar") los pone la PWA (metadata).
+      name: '/sys_install_gift_offer',
+      description: 'Carga GRATIS por instalar la app: mensaje al acreditarse la PRIMERA carga de un cliente que no tiene la app (los botones "Instalar ahora y reclamar" / "Ahora quiero jugar" los pone la app). Variables: {username}, {monto} (sin $), {pct}, {dias}, {carga}. Vacío = texto corto por defecto (el cartel igual sale). El % / tope / días se editan en Bonos automáticos.',
+      type: 'message',
+      response: '🎁 ¡{username}, tu primera carga te la devolvemos GRATIS!\n\nInstalá la app y reclamá *${monto} sin cargo* (el {pct}% de tu primera carga). Tenés {dias} días.\n\n👉 Podés instalarla ahora y reclamarla al instante, o seguir jugando y hacerlo después: te queda el botón abajo en la app.'
+    },
+    {
+      name: '/sys_install_gift_credited',
+      description: 'Carga GRATIS por instalar la app: mensaje cuando se acredita (el cliente la reclamó desde la app instalada). Variables: {username}, {monto} (sin $), {plataforma}. Vacío = no se manda mensaje.',
+      type: 'message',
+      response: '🎁 ¡Listo {username}! Te acreditamos *${monto} sin cargo* en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰'
+    },
+    {
       // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
       // completo queda plegado y se abre con "Ver todo"). {pct} = Config['autoLoadBonusPct'].
       name: '/sys_home_banner',
@@ -11844,7 +11936,7 @@ const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica a
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), installGift: await getInstallGiftConfig(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -11887,7 +11979,19 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
       logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
     }
-    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct() });
+    // #283: carga GRATIS por instalar la app (primera carga): activa / % / tope / días.
+    const igRaw = req.body && req.body.installGift;
+    if (igRaw && typeof igRaw === 'object') {
+      const cur = await getInstallGiftConfig();
+      const pick = (v, d) => (v == null || v === '' ? d : Number(v));
+      const next = { enabled: igRaw.enabled == null ? cur.enabled : igRaw.enabled === true, pct: pick(igRaw.pct, cur.pct), capArs: pick(igRaw.capArs, cur.capArs), days: pick(igRaw.days, cur.days) };
+      if (!Number.isFinite(next.pct) || next.pct < 0 || next.pct > 500) return res.status(400).json({ error: 'El % de la carga gratis tiene que ser un número entre 0 y 500.' });
+      if (!Number.isFinite(next.capArs) || next.capArs < 0) return res.status(400).json({ error: 'El tope de la carga gratis tiene que ser un número mayor o igual a 0.' });
+      if (!Number.isFinite(next.days) || next.days < 1 || next.days > 365) return res.status(400).json({ error: 'Los días de vigencia de la carga gratis tienen que estar entre 1 y 365.' });
+      await Config.set('installGift', { enabled: next.enabled, pct: Math.round(next.pct), capArs: Math.round(next.capArs), days: Math.round(next.days) }, req.user.username);
+      logger.info(`[install-gift] config ${JSON.stringify(next)} por ${req.user.username}`);
+    }
+    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct(), installGift: await getInstallGiftConfig() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -12250,6 +12354,110 @@ app.post('/api/install-bonus/claim', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     logger.error(`Error en install-bonus/claim: ${error.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// ============================================
+// #283: CARGA GRATIS por instalar la app (primera carga) — estado / posponer / reclamar
+// ============================================
+app.get('/api/install-gift/status', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.user.userId }).lean();
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const cfg = await getInstallGiftConfig();
+    const ig = user.installGift || {};
+    let status = ig.status || 'none';
+    if ((status === 'offered' || status === 'deferred') && _installGiftExpired(ig)) {
+      status = 'expired';
+      await User.updateOne({ id: user.id, 'installGift.status': { $in: ['offered', 'deferred'] } }, { $set: { 'installGift.status': 'expired' } }).catch(() => {});
+    }
+    res.json({
+      enabled: cfg.enabled, status, amount: Number(ig.amount) || 0, baseAmount: Number(ig.baseAmount) || 0, pct: ig.pct != null ? ig.pct : cfg.pct,
+      expiresAt: ig.expiresAt || null, claimedAt: ig.claimedAt || null, platform: ig.platform || null,
+      appInstalled: _rouletteHasAppInstalled(user)
+    });
+  } catch (e) {
+    logger.error(`Error en install-gift/status: ${e.message}`);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// "Ahora quiero jugar, después la instalo": la oferta queda PENDIENTE (botón grande abajo en la app).
+app.post('/api/install-gift/defer', authMiddleware, async (req, res) => {
+  try {
+    await User.updateOne({ id: req.user.userId, 'installGift.status': 'offered' }, { $set: { 'installGift.status': 'deferred', 'installGift.deferredAt': new Date() } });
+    const u = await User.findOne({ id: req.user.userId }).select('installGift').lean();
+    const ig = (u && u.installGift) || {};
+    res.json({ success: true, status: ig.status || 'none', amount: Number(ig.amount) || 0, expiresAt: ig.expiresAt || null });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
+// Reclamo: SOLO desde la app instalada (token FCM standalone), una vez en la vida, mientras no venció.
+// Se honra aunque el panel haya apagado la oferta después (ya se le prometió).
+app.post('/api/install-gift/claim', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findOne({ id: req.user.userId });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const ig = user.installGift || {};
+    if (ig.status === 'claimed') return res.status(400).json({ error: 'Ya reclamaste tu carga sin cargo.', code: 'ALREADY_CLAIMED' });
+    if (ig.status !== 'offered' && ig.status !== 'deferred') return res.status(400).json({ error: 'No tenés una carga sin cargo pendiente.', code: 'NOT_OFFERED' });
+    if (_installGiftExpired(ig)) {
+      await User.updateOne({ id: user.id }, { $set: { 'installGift.status': 'expired' } }).catch(() => {});
+      return res.status(400).json({ error: 'La oferta venció. ¡Gracias igual por instalar la app!', code: 'EXPIRED' });
+    }
+    if (!_rouletteHasAppInstalled(user)) {
+      return res.status(400).json({ error: 'La carga sin cargo se reclama desde la app instalada, con las notificaciones activadas.', code: 'NOT_STANDALONE' });
+    }
+    // Anti-multicuenta por dispositivo (mismo criterio que el bono por instalar): si un token FCM de
+    // este usuario ya está en OTRO usuario que cobró la carga gratis, no se paga dos veces.
+    const userTokens = [];
+    if (user.fcmToken) userTokens.push(user.fcmToken);
+    if (Array.isArray(user.fcmTokens)) for (const t of user.fcmTokens) { if (t && t.token && !userTokens.includes(t.token)) userTokens.push(t.token); }
+    if (userTokens.length) {
+      const conflict = await User.findOne({ id: { $ne: user.id }, 'installGift.status': 'claimed', $or: [{ fcmToken: { $in: userTokens } }, { 'fcmTokens.token': { $in: userTokens } }] }).select('username').lean();
+      if (conflict) {
+        logger.warn(`[install-gift] DEVICE_ALREADY_CLAIMED user=${user.username} conflictWith=${conflict.username}`);
+        return res.status(400).json({ error: 'Este dispositivo ya recibió la carga sin cargo en otra cuenta.', code: 'DEVICE_ALREADY_CLAIMED' });
+      }
+    }
+    const amount = Math.round(Number(ig.amount) || 0);
+    if (!(amount > 0)) return res.status(400).json({ error: 'Monto inválido.', code: 'INVALID' });
+    // Reserva atómica (dos toques simultáneos → uno solo acredita).
+    const prevStatus = ig.status;
+    const reserved = await User.findOneAndUpdate(
+      { id: user.id, 'installGift.status': { $in: ['offered', 'deferred'] } },
+      { $set: { 'installGift.status': 'claimed', 'installGift.claimedAt': new Date() } }
+    );
+    if (!reserved) return res.status(400).json({ error: 'Ya reclamaste tu carga sin cargo.', code: 'ALREADY_CLAIMED' });
+    // Plataforma: la fija/última del cliente si tiene API; si no, girox (los regalos van a girox directo).
+    let pid = await platforms.resolveDefaultFor(user);
+    let adapter = platforms.getAdapter(pid);
+    if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
+    const reference = `vip-igift-${user.id}`;
+    const credit = await adapter.creditGift(user.username, amount, { description: 'Carga GRATIS por instalar la app (primera carga)', reference });
+    if (!credit || !credit.success) {
+      await User.updateOne({ id: user.id }, { $set: { 'installGift.status': prevStatus, 'installGift.claimedAt': null, 'installGift.lastError': String((credit && credit.error) || 'unknown').slice(0, 200) } }).catch(() => {});
+      logger.error(`[install-gift] credit FAIL user=${user.username} $${amount}: ${(credit && credit.error) || 'unknown'}`);
+      return res.status(503).json({ error: 'No pudimos acreditar ahora. Probá de nuevo en un rato o avisanos por el chat.', code: 'CREDIT_FAILED' });
+    }
+    const txId = credit.data?.transfer_id || credit.data?.transferId || null;
+    await User.updateOne({ id: user.id }, { $set: { 'installGift.claimTxId': txId, 'installGift.platform': pid } }).catch(() => {});
+    await Transaction.create({
+      id: uuidv4(), type: 'install_gift', platform: pid, userId: user.id, username: user.username, amount,
+      description: `Carga GRATIS por instalar la app (${ig.pct != null ? ig.pct : '?'}% de su primera carga de $${Number(ig.baseAmount || 0).toLocaleString('es-AR')})`,
+      adminUsername: 'auto-install-gift', adminRole: 'system', transactionId: txId,
+      metadata: { source: 'install_gift', creditedAs: credit.creditedAs || null, baseAmount: ig.baseAmount || null, pct: ig.pct != null ? ig.pct : null },
+      timestamp: new Date()
+    }).catch((e) => logger.warn(`[install-gift] no se pudo registrar la Transaction (${user.username}): ${e.message}`));
+    const vars = { username: user.username, monto: amount.toLocaleString('es-AR'), plataforma: platforms.labelOf(pid, { emoji: false }) };
+    const text = await renderSystemCommand('/sys_install_gift_credited', INSTALL_GIFT_CREDITED_DEFAULT, vars);
+    if (text) await _sendUserSystemMessage(user, text, { metadata: { kind: 'deposit_credited', platform: pid, amount, bonus: 0, gift: 'install' } });
+    await _emitAdminOnlyChatNote(user.id, user.username, `🎁 CARGA GRATIS por instalar la app ACREDITADA: $${vars.monto} en ${platforms.labelOf(pid)} (regalo, ref ${reference}). No hay que hacer nada.`).catch(() => {});
+    logger.info(`[install-gift] acreditada user=${user.username} $${amount} platform=${pid} tx=${txId}`);
+    res.json({ success: true, amount, platform: pid, message: `🎁 ¡Listo! Te acreditamos $${vars.monto} sin cargo en ${vars.plataforma}.` });
+  } catch (e) {
+    logger.error(`Error en install-gift/claim: ${e.message}`);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });

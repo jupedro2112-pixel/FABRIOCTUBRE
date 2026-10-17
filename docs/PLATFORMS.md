@@ -102,7 +102,8 @@ como `{success:false, error:'<texto para el usuario>', code, httpStatus}`; env l
   `PendingPayout.platform`.
 - `Message.metadata`: `{kind:'platform_choice', movementId, amount, options[], expiresAt, chosen?}`
   o `{kind:'platform_link', platform, name, emoji, url}` o, desde #275, `{kind:'deposit_credited',
-  platform, amount, bonus}` (botón "Jugar ahora" + cartel en la PWA). El `GET /api/messages/:userId`
+  platform, amount, bonus}` (botón "Jugar ahora" + cartel en la PWA) o, desde #283, `{kind:'install_gift_offer',
+  amount, baseAmount, pct, expiresAt}` (oferta de carga GRATIS por instalar la app). El `GET /api/messages/:userId`
   proyecta `metadata`.
 - Comandos editables: `/sys_platform_choice` (`${amount}`, `{options}`, `{timeout}`, `{default}`)
   y `/sys_platform_redirect` (`{platform}`, `{name}`, `{url}`, `${amount}`).

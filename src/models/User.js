@@ -593,6 +593,23 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: null
   },
+  // #283 (2026-10-17): CARGA GRATIS por instalar la app, ofrecida en la PRIMERA carga de un cliente sin
+  // la app. status: none → offered (cartel) → deferred ("ahora quiero jugar": botón pendiente abajo)
+  // → claimed (acreditada desde la app instalada) | expired. Una sola vez en la vida (ref vip-igift-<id>).
+  installGift: {
+    status: { type: String, enum: ['none', 'offered', 'deferred', 'claimed', 'expired'], default: 'none' },
+    amount: { type: Number, default: 0 },      // regalo en $ (pct% de la primera carga, con tope)
+    baseAmount: { type: Number, default: 0 },  // la primera carga
+    pct: { type: Number, default: null },
+    offeredAt: { type: Date, default: null },
+    expiresAt: { type: Date, default: null },
+    deferredAt: { type: Date, default: null },
+    claimedAt: { type: Date, default: null },
+    claimTxId: { type: String, default: null },
+    platform: { type: String, default: null },
+    source: { type: String, default: null },
+    lastError: { type: String, default: null }
+  },
   // RULETA DIARIA v2 (2026-09-18): % EXTRA ganado y todavía sin usar. Lo consume
   // la próxima carga (manual o hgcash) vía resolveAutoBonus (server.js); un
   // premio nuevo en % pisa uno anterior sin usar. 0 = nada pendiente.

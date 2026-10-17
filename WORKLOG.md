@@ -8,6 +8,35 @@
 
 ## Sesión 2026-10-17
 
+### 283. 🎁 CARGA GRATIS por instalar la app, ofrecida en la PRIMERA carga (retención) — SW v175, admin-sw v62
+**Pedido (owner):** "en la primera carga ofrecer una carga gratis si no instaló la app, para retención: darle la
+opción 'quiero jugar y luego vengo a instalar la app para reclamar una carga sin cargo' → botón grande abajo
+como PENDIENTE; o instalar en el momento y reclamar al instante. Para no sacarlo de su apuesta".
+- **Cuándo:** al acreditarse la PRIMERA carga real (hgcash o manual) de un cliente que NO tiene la app (sin
+  token FCM standalone). `maybeOfferInstallGift` (server.js): regalo = `pct`% de esa carga con tope
+  (`Config['installGift']` = { enabled true, pct 100, capArs 20000, days 7 }; panel → COMANDOS → Bonos
+  automáticos). Guarda `User.installGift {status, amount, baseAmount, pct, offeredAt, expiresAt…}` y manda el
+  mensaje `/sys_install_gift_offer` con `metadata.kind='install_gift_offer'` (+ push si está offline). En la
+  carga manual REEMPLAZA al cartel genérico "instalá la app" (`/sys_install_app`) cuando se ofrece.
+- **PWA:** hoja `#installGiftCard` (misma estética que "Jugar ahora", encima de ella): monto grande + dos
+  caminos. *Instalar ahora y reclamar* → en navegador dispara `VIP.ui.installApp()` y deja la oferta
+  `deferred`; en la app instalada → reclama. *Ahora quiero jugar · la instalo después* → `POST
+  /api/install-gift/defer` y aparece el **botón grande naranja fijo abajo** `#installGiftBar` ("PENDIENTE ·
+  Instalá la app para reclamar tu última carga sin cargo · $X"; en la app instalada dice "Reclamá…") hasta
+  que reclame/venza. La hoja se muestra una vez por apertura si sigue `offered` (`/api/install-gift/status`
+  en `VIP.home.init`). En el chat el mensaje lleva el botón "🎁 Ver mi carga sin cargo".
+- **Reclamo** `POST /api/install-gift/claim`: sólo con app instalada + notificaciones (`_rouletteHasAppInstalled`,
+  si no → `NOT_STANDALONE` y la app pide permiso/instalar), no vencida, anti-multicuenta por token FCM
+  (`DEVICE_ALREADY_CLAIMED`), reserva atómica del status. Acredita como REGALO (`creditGift`, bono 0) en la
+  plataforma fija/última del cliente si tiene API (si no, girox), reference **`vip-igift-<userId>`** (una vez
+  en la vida), Transaction tipo nuevo **`install_gift`** (sumado a `CASHBACK_GIFT_TX_TYPES` y a las etiquetas
+  del panel: "🎁 Carga gratis (app)"), mensaje `/sys_install_gift_credited` con `deposit_credited` ⇒ sale el
+  cartel "Jugar ahora". Si falla la acreditación vuelve al status anterior (reintentable). Se honra aunque
+  después apaguen la oferta en el panel.
+- Test: botón chiquito "test · carga gratis por instalar" en la carga automática (hoja con $10.000, no toca el server).
+- ⚠️ Requiere redeploy del backend. Pendiente: decidir si se exige también teléfono verificado (hoy NO, para
+  no frenar al cliente en su primera carga).
+
 ### 282. 🎯 "Cargá acá" centrada, en 2 pasos; botón "Cargá aquí (adjuntá la foto aquí)" — SW v174
 **Pedido (owner, captura):** "centralo y ponele un paso 2 explicando que tiene que adjuntar la foto abajo; en
 cargar poné 'cargá aquí (adjuntá la foto aquí)'".

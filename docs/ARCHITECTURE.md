@@ -414,6 +414,7 @@ Prefijos en uso hoy:
 | `vip-lvl-<userId>-<idx>` | Bono por alcanzar un nivel VIP | userId + índice del nivel (cada nivel se paga UNA vez en la vida; por eso NO se pueden reordenar los idx de vipLevels.js) |
 | `vip-rake-<fromDateStr>-<userId>` | Rakeback semanal VIP | lunes de la semana reclamada + userId (derivada del PERÍODO, igual que los reembolsos y por el mismo motivo) |
 | `vip-welcome-<userId>` | Bono sorpresa del código de bienvenida (tipo cash) | userId (uno por cuenta para siempre, como el de instalación) |
+| `vip-igift-<userId>` | Carga GRATIS por instalar la app (#283, ofrecida en la 1ª carga) | userId (una vez en la vida; Transaction `install_gift`) |
 | `vip-cbk-<userId>-<día>-<seq>` | Reembolso ACUMULATIVO de por vida | userId + día ART + `seq` del índice único de CashbackClaim (un fallo borra el doc y el reintento recalcula el MISMO seq ⇒ misma reference) |
 
 ⚠️ **Por qué la del reembolso sale del período y no del id del claim** (`_refundReference`,
@@ -872,6 +873,19 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   migración `migration_autoloadpct_10_v1_done` (#281) la fuerza a 10 una sola vez,
   **#282:** `#autoLoadCard` va centrada y en 2 pasos (1 transferir · 2 adjuntar la foto con el botón verde
   "Cargá aquí (adjuntá la foto aquí)" = `#loadHereBtn` → `VIP.autoload.sendReceipt()`).
+  **#283 — carga GRATIS por instalar la app (retención en la 1ª carga):** al acreditarse la PRIMERA carga real
+  (hgcash o manual) de un cliente SIN app instalada, `maybeOfferInstallGift` guarda `User.installGift`
+  (status offered, amount = pct% de la carga con tope; `Config['installGift']` {enabled, pct, capArs, days},
+  panel → Bonos automáticos) y manda `/sys_install_gift_offer` con `metadata.kind='install_gift_offer'`.
+  La PWA (home.js `installGift*`) abre la hoja `#installGiftCard`: "Instalar ahora y reclamar" (navegador →
+  `VIP.ui.installApp()` + defer; app instalada → claim) o "Ahora quiero jugar" (`POST /api/install-gift/defer`
+  → status deferred + botón grande fijo abajo `#installGiftBar`, body.ig-pending). `GET /api/install-gift/status`
+  al iniciar (hoja una vez por apertura si sigue offered; botón si offered/deferred; marca expired al vencer).
+  `POST /api/install-gift/claim`: exige token FCM standalone (`_rouletteHasAppInstalled`), no vencida,
+  anti-multicuenta por token, reserva atómica, `creditGift` (regalo bono 0) en la plataforma fija/última con
+  API o girox, ref `vip-igift-<userId>`, Transaction `install_gift` (en `CASHBACK_GIFT_TX_TYPES`), mensaje
+  `/sys_install_gift_credited` con `deposit_credited` (→ "Jugar ahora"). Falla de acreditación ⇒ vuelve al
+  status anterior. En la carga manual la oferta reemplaza al cartel genérico `/sys_install_app`.
   **#275:** el mensaje de depósito acreditado (hgcash y manual) lleva `metadata.kind='deposit_credited'`
   (`platform, amount, bonus`); chat.js pinta "🎰 Jugar ahora" y home.js muestra la hoja `#playNowCard` si el
   mensaje es reciente (< 3 min). `VIP.home.playNow` abre la plataforma embebida (SSO si hay API).

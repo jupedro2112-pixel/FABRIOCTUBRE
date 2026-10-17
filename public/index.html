@@ -1137,7 +1137,7 @@
                 <button class="withdraw-row-btn" id="withdrawChatBtn" title="Completá tus datos y se retira automáticamente">Retirar premio</button>
             </div>
             <!-- #275: botón chiquito de prueba del cartel "Jugar ahora" (modo carga automática) -->
-            <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora"</button></div>
+            <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora"</button><button type="button" class="test-mini" onclick="VIP.home.installGiftTest()">test · carga gratis por instalar</button></div>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
             <!-- #262: una sola línea abajo: Referidos + ¿Cómo funciona? (Instalar app subió al lado del saldo) -->
@@ -1218,6 +1218,26 @@
                     <button type="button" class="pn-later" onclick="VIP.home.hidePlayNow()">Después</button>
                 </div>
             </div>
+            <!-- ===== #283: CARGA GRATIS por instalar la app (primera carga). Hoja con la oferta (la manda el server con
+                 metadata.kind='install_gift_offer' o la trae /api/install-gift/status) + botón GRANDE pendiente abajo
+                 hasta que instale y reclame. JS: VIP.home.installGift* ===== -->
+            <div id="installGiftCard" class="play-now-card ig-card" aria-hidden="true">
+                <div class="pn-sheet ig-sheet">
+                    <span class="pn-test" id="igTest" style="display:none;">TEST · así se ve la oferta</span>
+                    <div class="pn-ico" aria-hidden="true">🎁</div>
+                    <div class="pn-title ig-title" id="igTitle">¡Tu primera carga, GRATIS!</div>
+                    <div class="ig-amount" id="igAmount">$0 sin cargo</div>
+                    <div class="pn-sub" id="igSub">Instalá la app y te acreditamos esta carga sin cargo. Podés hacerlo ahora o seguir jugando y volver después.</div>
+                    <button type="button" class="pn-btn ig-btn-main" id="igMainBtn" onclick="VIP.home.installGiftMain()">📲 Instalar ahora y reclamar</button>
+                    <button type="button" class="ig-btn-later" id="igLaterBtn" onclick="VIP.home.installGiftLater()">🎰 Ahora quiero jugar · la instalo después</button>
+                    <div class="ig-note" id="igNote">Te queda un botón grande abajo para reclamarla cuando quieras.</div>
+                </div>
+            </div>
+            <button type="button" id="installGiftBar" class="ig-bar" style="display:none;" onclick="VIP.home.installGiftOpen()">
+                <span class="ig-bar-k">PENDIENTE</span>
+                <span class="ig-bar-t" id="igBarText">Instalá la app para reclamar tu última carga sin cargo</span>
+                <span class="ig-bar-amt" id="igBarAmt">$0</span>
+            </button>
             <div id="supportBubble" class="support-bubble compact" role="button" aria-label="Soporte en vivo">
                 <button type="button" class="sb-main" onclick="VIP.home.openSupport()">
                     <!-- #246: ícono de CHAT de soporte (el logo queda oculto: chat.js le sigue poniendo src a #chatTopbarAvatar) -->

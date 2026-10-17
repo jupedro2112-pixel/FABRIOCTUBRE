@@ -314,6 +314,20 @@
                 if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); showPlayNow({ platform: md.platform, amount: md.amount, bonus: md.bonus }); }
             } catch (_) {}
         }
+        // #283: oferta de carga GRATIS por instalar la app (primera carga) → hoja al instante si es reciente.
+        if (md && md.kind === 'install_gift_offer') {
+            try {
+                const ts = new Date(message.timestamp || 0).getTime();
+                const fresh = !ts || (Date.now() - ts) < 3 * 60000;
+                if (fresh && !_igSeen.has(message.id)) {
+                    _igSeen.add(message.id);
+                    _ig = Object.assign({}, _ig || {}, { status: 'offered', amount: md.amount, expiresAt: md.expiresAt || null });
+                    _igPaintBar();
+                    try { sessionStorage.setItem('vip_ig_shown', '1'); } catch (_) {}
+                    showInstallGift({ amount: md.amount });
+                }
+            } catch (_) {}
+        }
         if (!_open) { _unread++; _paintBadge(); }
     }
 
@@ -355,6 +369,136 @@
         const pid = (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform || _platforms.defaultPlatform)) || 'girox';
         showPlayNow({ platform: pid, amount: 10000, bonus: 0, test: true });
     }
+
+    // ---------------- #283: CARGA GRATIS POR INSTALAR LA APP (primera carga) ----------------
+    // (owner: "en la primera carga ofrecer una carga gratis si no instaló la app, para retención: 'quiero
+    //  jugar y después vengo a instalar' → botón grande abajo PENDIENTE; o instalar en el momento y
+    //  reclamar al instante"). El server ofrece (metadata.kind='install_gift_offer') y acredita SOLO desde
+    //  la app instalada con notificaciones (token FCM standalone). Estados: offered → deferred → claimed.
+    let _ig = null;              // último estado conocido ({status, amount, expiresAt, …})
+    const _igSeen = new Set();   // ids de mensajes de oferta ya mostrados
+    function _igFmt(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+    async function _igFetch(path, method) {
+        const r = await fetch(VIP.config.API_URL + path, {
+            method: method || 'GET',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (VIP.state && VIP.state.currentToken) },
+            body: method === 'POST' ? '{}' : undefined
+        });
+        const j = await r.json().catch(() => ({}));
+        return { ok: r.ok, j };
+    }
+    async function _igInit() {
+        if (!VIP.state || !VIP.state.currentToken) return;
+        try {
+            const { ok, j } = await _igFetch('/api/install-gift/status');
+            if (!ok || !j) return;
+            _ig = j;
+            _igPaintBar();
+            // Oferta sin responder → la hoja se muestra una vez por apertura de la app.
+            if (j.status === 'offered' && Number(j.amount) > 0) {
+                let shown = false;
+                try { shown = !!sessionStorage.getItem('vip_ig_shown'); sessionStorage.setItem('vip_ig_shown', '1'); } catch (_) {}
+                if (!shown) showInstallGift(j);
+            }
+        } catch (_) {}
+    }
+    function _igPending() { return !!(_ig && (_ig.status === 'deferred' || _ig.status === 'offered') && Number(_ig.amount) > 0); }
+    function _igPaintBar() {
+        const bar = _el('installGiftBar'); if (!bar) return;
+        const pending = _igPending();
+        bar.style.display = pending ? '' : 'none';
+        document.body.classList.toggle('ig-pending', pending);
+        if (!pending) return;
+        const amt = _el('igBarAmt'), t = _el('igBarText');
+        if (amt) amt.textContent = _igFmt(_ig.amount);
+        if (t) t.textContent = _isStandalone() ? 'Reclamá tu última carga sin cargo' : 'Instalá la app para reclamar tu última carga sin cargo';
+    }
+    function showInstallGift(o) {
+        o = o || {};
+        const card = _el('installGiftCard'); if (!card) return;
+        const amt = _el('igAmount'), sub = _el('igSub'), main = _el('igMainBtn'), later = _el('igLaterBtn'), note = _el('igNote'), tag = _el('igTest');
+        const inApp = _isStandalone();
+        if (amt) amt.textContent = _igFmt(o.amount) + ' sin cargo';
+        if (sub) sub.textContent = inApp
+            ? 'Ya estás en la app instalada: tocá reclamar y te acreditamos esta carga sin cargo.'
+            : 'Instalá la app y te acreditamos esta carga sin cargo. Podés hacerlo ahora o seguir jugando y volver después.';
+        if (main) { main.disabled = false; main.textContent = inApp ? '🎁 Reclamar mi carga sin cargo' : '📲 Instalar ahora y reclamar'; }
+        if (later) later.style.display = inApp ? 'none' : '';
+        if (note) note.style.display = inApp ? 'none' : '';
+        if (tag) tag.style.display = o.test ? '' : 'none';
+        card.dataset.test = o.test ? '1' : '';
+        card.classList.add('show');
+        card.setAttribute('aria-hidden', 'false');
+    }
+    function hideInstallGift() { const c = _el('installGiftCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); } }
+    function _igIsTest() { const c = _el('installGiftCard'); return !!(c && c.dataset.test === '1'); }
+    function installGiftOpen() { showInstallGift(_ig || {}); }
+    // "Ahora quiero jugar": la oferta queda PENDIENTE (botón grande abajo) hasta que instale y reclame.
+    async function installGiftLater() {
+        const test = _igIsTest();
+        hideInstallGift();
+        if (test) { try { VIP.ui.showToast('TEST: así quedaría el botón grande de abajo hasta que instale y reclame.', 'info'); } catch (_) {} return; }
+        try { const { ok, j } = await _igFetch('/api/install-gift/defer', 'POST'); if (ok && j && j.status) _ig = Object.assign({}, _ig || {}, j); } catch (_) {}
+        if (_ig && _ig.status === 'offered') _ig.status = 'deferred';
+        _igPaintBar();
+        try { VIP.ui.showToast('👌 Cuando quieras, tocá el botón de abajo para reclamar tu carga sin cargo.', 'info'); } catch (_) {}
+    }
+    // Botón principal: en la app instalada RECLAMA; en el navegador INSTALA (y la oferta queda pendiente).
+    async function installGiftMain() {
+        if (_igIsTest()) { hideInstallGift(); try { VIP.ui.showToast('TEST: acá se instala la app y se acredita la carga sin cargo.', 'info'); } catch (_) {} return; }
+        if (_isStandalone()) return installGiftClaim();
+        hideInstallGift();
+        try { await _igFetch('/api/install-gift/defer', 'POST'); } catch (_) {}
+        if (_ig && _ig.status === 'offered') _ig.status = 'deferred';
+        _igPaintBar();
+        try { await VIP.ui.installApp(); } catch (_) {}
+        try { VIP.ui.showToast('📲 Cuando termine, abrí la app desde tu pantalla de inicio y tocá el botón de abajo para reclamar.', 'info'); } catch (_) {}
+    }
+    async function installGiftClaim() {
+        const btn = _el('igMainBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Acreditando…'; }
+        try {
+            const { ok, j } = await _igFetch('/api/install-gift/claim', 'POST');
+            if (ok && j && j.success) {
+                _ig = Object.assign({}, _ig || {}, { status: 'claimed' });
+                hideInstallGift(); _igPaintBar();
+                try { VIP.ui.showToast(j.message || ('🎁 ¡Listo! Te acreditamos ' + _igFmt(j.amount) + ' sin cargo.'), 'success'); } catch (_) {}
+                setTimeout(() => { try { VIP.ui.syncBalance(); } catch (_) {} }, 1000);
+                showPlayNow({ platform: j.platform, amount: j.amount, bonus: 0 });
+                return;
+            }
+            const code = j && j.code;
+            if (code === 'NOT_STANDALONE') {
+                if (_isStandalone()) {
+                    // Instalada, pero el server todavía no tiene su token de notificaciones → pedir permiso y reintentar.
+                    try { VIP.ui.showToast('🔔 Activá las notificaciones para acreditarte la carga y volvé a tocar Reclamar.', 'info'); } catch (_) {}
+                    try { VIP.notifications.requestNotificationPermission(); } catch (_) {}
+                } else {
+                    hideInstallGift();
+                    try { VIP.ui.showToast('📲 La carga sin cargo se reclama desde la app instalada.', 'info'); } catch (_) {}
+                    try { VIP.ui.installApp(); } catch (_) {}
+                }
+            } else if (code === 'EXPIRED' || code === 'ALREADY_CLAIMED' || code === 'NOT_OFFERED' || code === 'DEVICE_ALREADY_CLAIMED') {
+                _ig = Object.assign({}, _ig || {}, { status: code === 'EXPIRED' ? 'expired' : 'claimed' });
+                hideInstallGift(); _igPaintBar();
+                try { VIP.ui.showToast((j && j.error) || 'Esta oferta ya no está disponible.', 'info'); } catch (_) {}
+            } else {
+                try { VIP.ui.showToast((j && j.error) || 'No se pudo acreditar. Probá de nuevo en un rato.', 'error'); } catch (_) {}
+            }
+        } catch (_) {
+            try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {}
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = _isStandalone() ? '🎁 Reclamar mi carga sin cargo' : '📲 Instalar ahora y reclamar'; }
+        }
+    }
+    // Botón chiquito "test" (carga automática): muestra la oferta como la vería el cliente ($10.000 de ejemplo).
+    function installGiftTest() { showInstallGift({ amount: 10000, test: true }); }
+    // Instaló desde el navegador con la oferta pendiente → recordatorio de cómo reclamar.
+    try {
+        window.addEventListener('appinstalled', () => {
+            if (_igPending()) setTimeout(() => { try { VIP.ui.showToast('✅ App instalada. Abrila desde tu pantalla de inicio y tocá el botón de abajo para reclamar tu carga sin cargo.', 'success'); } catch (_) {} }, 1500);
+        });
+    } catch (_) {}
 
     // ---------------- PRUEBAS DE PLATAFORMA (#235/#236): SIEMPRE dentro de la app ----------------
     // (owner: "esas páginas de prueba para jugar siempre adentro de la app, sin salir").
@@ -995,6 +1139,7 @@
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         _paintWaHeadName();
+        try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
         try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();
@@ -1037,7 +1182,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

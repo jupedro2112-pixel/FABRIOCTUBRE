@@ -70,6 +70,10 @@ VIP.chat = (function () {
             const pid = escapeHtml(String(md.platform || 'girox'));
             return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="VIP.home.playNow('${pid}')">🎰 Jugar ahora</button></div>`;
         }
+        // #283: oferta de carga GRATIS por instalar la app → botón que vuelve a abrir la hoja.
+        if (md.kind === 'install_gift_offer') {
+            return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="VIP.home.installGiftOpen()">🎁 Ver mi carga sin cargo</button></div>`;
+        }
         if (md.kind === 'platform_link' && md.url) {
             const url = encodeURI(String(md.url));
             const label = escapeHtml(_platLabel({ emoji: md.emoji, name: md.name || 'la plataforma' }));

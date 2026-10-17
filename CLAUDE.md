@@ -175,6 +175,12 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   como burbuja/overlay. Los ids del chat (`chatMessages`, `messageInput`, `attachBtn`…) siguen siendo
   los mismos: no moverlos.
 
+- **Carga GRATIS por instalar la app (#283, 2026-10-17):** en la PRIMERA carga de un cliente sin la app se le
+  ofrece pct% de esa carga (tope) si la instala; queda como botón grande pendiente abajo hasta que reclame
+  desde la app instalada (`User.installGift`, rutas `/api/install-gift/*`, `Config['installGift']`, ref
+  `vip-igift-<userId>`, Transaction `install_gift` — un tipo de regalo nuevo va SIEMPRE a
+  `CASHBACK_GIFT_TX_TYPES`). Detalle: ARCHITECTURE Home 2.0 (#283).
+
 - **Multi-plataforma (#219, 2026-10-16):** con 2+ plataformas habilitadas en Configuración →
   "Plataformas de juego", la auto-carga hgcash **pregunta al cliente dónde jugar** (botones en el
   chat) y deja el movimiento en `awaiting_platform`; elige / el agente elige / timeout → se carga en
