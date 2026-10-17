@@ -1870,3 +1870,21 @@ body.home-full #autoLoadCard { margin-top: 4px; }
 .fire-home-top .fh-text b { font-size: 12px; }
 .fire-home-top .fh-text small { font-size: 10px; }
 .fire-home-top .fh-flame { font-size: 24px; }
+
+/* ══ #273: reseñas más disimuladas (sin blanco), "Dejá tu opinión" primero · sin aviso de verificar teléfono ══ */
+#verifyPhoneBanner { display: none !important; }
+.ev-reviews { padding: 0 0 2px; gap: 3px; }
+.rv-g { font-size: 9.5px; color: #8f98ad; }
+.rv-avg { font-size: 11px; color: #c9d1e3; }
+.rv-avg small { color: #7f879a; }
+.rv-track { gap: 6px; padding: 1px 2px 3px; }
+.rv-card { flex: 0 0 64%; max-width: 240px; background: rgba(255,255,255,.055); color: #dfe4ef; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 7px 9px; box-shadow: none; gap: 4px; font-family: 'Montserrat', system-ui, sans-serif; }
+.rv-avatar { width: 24px; height: 24px; font-size: 11px; opacity: .85; }
+.rv-who b { font-size: 11px; color: #dfe4ef; }
+.rv-stars { font-size: 10.5px; color: rgba(255,255,255,.18); }
+.rv-stars .on { color: #e2b23a; }
+.rv-text { font-size: 10.5px; color: #b9c2d6; -webkit-line-clamp: 2; }
+.rv-add { flex-basis: 40%; background: rgba(0,229,255,.05); border: 1px dashed rgba(0,229,255,.35); gap: 1px; }
+.rv-add-star { font-size: 16px; color: #e2b23a; }
+.rv-add b { font-size: 11px; color: #4de1ff; }
+.rv-add small { font-size: 9px; color: #8f98ad; }

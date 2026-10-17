@@ -11056,7 +11056,60 @@ async function initializeData() {
       await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés \"Ver todo\": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
       console.log('✅ /sys_welcome: texto del chat principal (#266)');
     }
-    // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
+    // #273 (owner 2026-10-17): "agregá 33 reseñas y que en total promedie 4,7 estrellas". Se siembran UNA
+  // vez (flag en Config) como reseñas aprobadas: 26×5 + 4×4 + 3×3 = 155 puntos / 33 = 4,70. Usuarios
+  // ficticios (userId 'seed-review-NN', nunca chocan con clientes reales); el feed los enmascara igual.
+  try {
+    if (!(await getConfig('migration_reviews_seed_v1_done', false))) {
+      const SEED = [
+        ['marcelo.g', 5, 'Cargué y en menos de un minuto ya tenía las fichas. Muy rápido.'],
+        ['lucia_fer', 5, 'El reembolso de los lunes me salvó más de una vez. Recomendadísimo.'],
+        ['tano1988', 5, 'Atienden a cualquier hora, siempre responden al toque.'],
+        ['vale.rodriguez', 4, 'Todo bien, sólo que un retiro me tardó un rato. Después perfecto.'],
+        ['nachocba', 5, 'La ruleta diaria es un golazo, ya gané varias veces.'],
+        ['romi_22', 5, 'Me pagaron el premio en el acto. Confianza total.'],
+        ['seba.mza', 5, 'Carga automática con el comprobante y listo, sin hablar con nadie.'],
+        ['flor.ok', 5, 'Hace meses que juego acá y nunca tuve un problema.'],
+        ['gusti_lp', 3, 'Está bien, me gustaría que hubiera más plataformas.'],
+        ['caro.benitez', 5, 'Súper fácil de usar, hasta mi vieja carga sola.'],
+        ['elpibe_rosario', 5, 'Retiré dos veces esta semana y los dos pagos entraron en minutos.'],
+        ['andy.sl', 4, 'Muy buen servicio. El reembolso podría ser un poco más alto.'],
+        ['juli.martinez', 5, 'Me gustó que te avisen cuando entra la carga. Muy prolijo.'],
+        ['pablo_tuc', 5, 'Los referidos me dejan una platita todos los meses. Excelente.'],
+        ['mica.sj', 5, 'Instalé la app y es mucho más cómodo que por WhatsApp.'],
+        ['leo.salta', 5, 'Cumplen con lo que prometen. Nada que decir.'],
+        ['dani_quilmes', 3, 'Funciona bien pero la página del casino a veces anda lenta.'],
+        ['agus.neuquen', 5, 'La mejor sala en la que estuve, de verdad.'],
+        ['sol.pereyra', 5, 'Cobré el reembolso mensual y era más de lo que esperaba.'],
+        ['maxi_bb', 5, 'Carga en segundos y retiro al toque. Qué más pedir.'],
+        ['belu.ar', 4, 'Buena atención. Me costó un poco encontrar el CBU al principio.'],
+        ['fede.corrientes', 5, 'Soporte de diez, me ayudaron con la clave un domingo a la noche.'],
+        ['cami.luna', 5, 'La ruleta me dio un 100% en la próxima carga. Impresionante.'],
+        ['rodri_mdq', 5, 'Transparente, te muestran todo. Así da gusto.'],
+        ['nati.gomez', 5, 'Ideal para jugar tranquila, los retiros siempre llegan.'],
+        ['tomi.sf', 3, 'Bien en general. Me gustaría cobrar el reembolso más seguido.'],
+        ['pau.chaco', 5, 'Me recomendaron un amigo y ahora yo recomiendo a todos.'],
+        ['ivan_ok', 5, 'Fueguito diario todos los días, una locura los premios.'],
+        ['lau.formosa', 4, 'Muy buena experiencia, la app es rápida y clara.'],
+        ['ezequiel.v', 5, 'Hice la carga automática y en un minuto estaba jugando.'],
+        ['meli.rios', 5, 'Cero vueltas. Cargás, jugás y retirás. Simple.'],
+        ['santi_jujuy', 5, 'Lo que más valoro es que pagan siempre, sin excusas.'],
+        ['vicky.caba', 5, 'Reembolso y ruleta en la misma app. Me encanta.']
+      ];
+      const now = Date.now();
+      const docs = SEED.map(([username, stars, comment], i) => {
+        const when = new Date(now - (i + 1) * 36 * 3600 * 1000 - (i * 7919) % 3600000); // uno cada ~día y medio hacia atrás
+        return { id: uuidv4(), userId: 'seed-review-' + String(i + 1).padStart(2, '0'), username, stars, comment: String(comment).slice(0, 100),
+          approved: true, approvedBy: 'seed', approvedAt: when, createdAt: when, updatedAt: when };
+      });
+      const have = await Review.countDocuments({ userId: { $in: docs.map((d) => d.userId) } });
+      if (!have) await Review.insertMany(docs, { ordered: false });
+      await Config.set('migration_reviews_seed_v1_done', true, 'startup-migration');
+      console.log('✅ Reseñas sembradas (#273): 33 aprobadas, promedio 4,7');
+    }
+  } catch (e) { console.warn('[startup-migration] reseñas seed:', e.message); }
+
+  // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
     const hb = await Command.findOne({ name: '/sys_home_banner' }).lean();
     if (hb && String(hb.response || '') === 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.') {
       await Command.updateOne({ name: '/sys_home_banner' }, { $set: { response: 'Cargando de forma automática tenés un {pct}% en todas tus cargas.' } });

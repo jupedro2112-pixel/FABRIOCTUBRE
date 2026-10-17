@@ -890,6 +890,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   suelta), y `#fireHomeCard` (Fueguito diario, desde #272 debajo del saldo a todo el ancho) — es un espejo: el `#fireBtn` real
   sigue en Perfil y fire.js le cuelga el listener ahí. El cartel del chat es una frase (`/sys_home_banner`)
   con "Ir a carga automática".
+  **#273:** `#verifyPhoneBanner` oculto por CSS (no borrar: auth.js lo referencia). Reseñas: 33 sembradas al
+  boot (`seed-review-NN`, flag `migration_reviews_seed_v1_done`), promedio 4,70; carrusel con "Dejá tu opinión" primero.
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo

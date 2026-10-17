@@ -197,6 +197,8 @@
         let html = '<div class="rv-head"><span class="rv-g">Opiniones de jugadores</span>' +
             (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStars(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
         html += '<div class="rv-track">';
+        // #273 (owner): la tarjeta "Dejá tu opinión" va PRIMERO.
+        html += '<button type="button" class="rv-card rv-add" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b><small>Contale a otros cómo te fue</small></button>';
         for (const it of items) {
             const name = it.maskedUsername || '***';
             html += '<div class="rv-card">' +
@@ -204,7 +206,6 @@
                 '<div class="rv-text">' + _esc(it.comment) + '</div>' +
                 '</div>';
         }
-        html += '<button type="button" class="rv-card rv-add" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b><small>Contale a otros cómo te fue</small></button>';
         html += '</div>';
         box.innerHTML = html;
         box.style.display = '';
