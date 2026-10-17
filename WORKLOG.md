@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 320. 🔴 Botón de cargar más chico (una línea) — SW v206
+**Pedido (owner):** "el botón no tan grande, tapa la mitad de las fotos". Queda en una sola línea ("⚡ PARA CARGAR
+AHORA MISMO · APRETÁ AQUÍ ›"), 12 px, con menos alto; el carrusel recupera el espacio.
+
 ### 319. 📸 Marcar que son FOTOS (no se juega ahí) — SW v205
 **Pedido (owner):** "marcando bien que son fotos y que la gente no se piense que de ahí se juega". Etiqueta dorada
 arriba de cada foto ("📸 FOTO ILUSTRATIVA · acá no se juega"), leyenda abajo "Son fotos ilustrativas de Girox · para
