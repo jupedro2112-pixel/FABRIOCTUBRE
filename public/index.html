@@ -965,16 +965,8 @@
                     <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('full')">⚡ Carga automática</a> o
                     <a href="#" onclick="event.preventDefault();VIP.home.setHomeMode('mini')">💬 Carga manual</a>.</div>
                 <div class="ev-frame-wrap">
-                    <!-- #277 (owner): "dejá las fotos del logo de la página, modo visión para que no ralentice; si quieren
-                         verla, 'Ver página' abajo del logo después del 2º ingreso". El iframe sólo se carga al tocar Ver página. -->
-                    <div class="ev-logo" id="entryLogo">
-                        <img id="entryLogoImg" src="/images/soporte-1girox.png" alt="">
-                        <div class="ev-logo-name" id="entryLogoName">Girox</div>
-                        <div class="ev-logo-sub" id="entryLogoSub">Plataforma activa</div>
-                        <button type="button" class="ev-view-site" id="entryViewSiteBtn" style="display:none;" onclick="VIP.home.entryShowSite()">Ver página ›</button>
-                        <div class="test-mini-row ev-test-row"><button type="button" class="test-mini" onclick="VIP.home.entryTestSecondVisit()">test · simular 2º ingreso</button></div>
-                    </div>
-                    <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer" style="display:none;"></iframe>
+                    <!-- #278 (owner): el modo logo (#277) quedó mal → las páginas vuelven a verse embebidas al entrar. -->
+                    <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
                     <div class="ev-status" id="entryStatus">
                         <div class="ev-st-t">🎰 Abriendo la plataforma…</div>
                         <button type="button" class="ev-st-open" style="display:none" onclick="VIP.home.entryOpen()">Abrir la plataforma ›</button>

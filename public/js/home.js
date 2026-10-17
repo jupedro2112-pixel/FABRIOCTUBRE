@@ -184,46 +184,13 @@
             (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
             '</button>').join('');
     }
-    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryUnload(); _entryLoad(); }
-    // #277: cuántas veces abrió la app (una por sesión). "Ver página" aparece recién en el 2º ingreso.
-    const ENTRY_VISITS_KEY = 'vip_entry_visits';
-    let _entryTestSecond = false;
-    function _entryVisits() {
-        try {
-            if (!sessionStorage.getItem('vip_entry_counted')) {
-                const n = (parseInt(localStorage.getItem(ENTRY_VISITS_KEY) || '0', 10) || 0) + 1;
-                localStorage.setItem(ENTRY_VISITS_KEY, String(n));
-                sessionStorage.setItem('vip_entry_counted', '1');
-            }
-            return parseInt(localStorage.getItem(ENTRY_VISITS_KEY) || '0', 10) || 0;
-        } catch (_) { return 0; }
-    }
-    function _entryReturning() { return _entryTestSecond || _entryVisits() >= 2; }
-    function entryTestSecondVisit() {
-        _entryTestSecond = true;
-        _entryLoad();
-        try { VIP.ui.showToast('TEST: así lo ve alguien que entra por 2ª vez (aparece "Ver página").', 'info'); } catch (_) {}
-    }
-    // Modo LOGO (default): el logo grande de la plataforma, sin cargar su web.
-    function _entryRenderLogo(p) {
-        const box = _el('entryLogo'), img = _el('entryLogoImg'), nm = _el('entryLogoName'), sub = _el('entryLogoSub'), vb = _el('entryViewSiteBtn'), f = _el('entryFrame');
-        if (!box) return;
-        const logo = p.logoUrl || (p.id === 'ganamos' ? '/images/ganamos.svg' : '/images/soporte-1girox.png');
-        if (img && img.getAttribute('src') !== logo) img.src = logo;
-        if (nm) nm.textContent = p.name || '';
-        if (sub) sub.textContent = p.connected ? 'Plataforma activa · entrás con tu usuario' : 'Plataforma activa';
-        if (vb) vb.style.display = _entryReturning() && (p.playUrl || p.externalUrl) ? '' : 'none';
-        box.style.display = '';
-        if (f) f.style.display = 'none';
-        _entryStatus(null);
-    }
-    // "Ver página ›": recién acá se carga la web adentro.
+    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); }
+    // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     function entryShowSite() {
-        const f = _el('entryFrame'), box = _el('entryLogo'); if (!f) return;
+        const f = _el('entryFrame'); if (!f) return;
         const p = _entryList().find((x) => x.id === _entryPlat) || {};
         const url = p.playUrl || p.externalUrl || '';
         if (!url) { _entryStatus((p.name || 'Esa plataforma') + ' todavía no está disponible.', false); return; }
-        if (box) box.style.display = 'none';
         f.style.display = '';
         if (url === _entryUrl && f.getAttribute('src') === url) return;
         _entryUrl = url;
@@ -239,11 +206,9 @@
         const t = st.querySelector('.ev-st-t'); if (t) t.textContent = text;
         const b = st.querySelector('.ev-st-open'); if (b) b.style.display = showOpen ? '' : 'none';
     }
-    // #277: al entrar se muestra el LOGO (no la web); la web sólo con "Ver página" (entryShowSite).
     function _entryLoad() {
         if (_homeMode !== 'play') return;
-        const p = _entryList().find((x) => x.id === _entryPlat) || {};
-        _entryRenderLogo(p);
+        entryShowSite();
     }
     function _entryUnload() {
         clearTimeout(_entryTimer);
@@ -1072,7 +1037,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, entryShowSite, entryTestSecondVisit, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

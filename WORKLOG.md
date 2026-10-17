@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 278. ↩️ Vuelven las páginas embebidas al entrar (modo logo descartado) — SW v171
+**Pedido (owner):** "retomá lo último y dejá las dos páginas como estaba en Inicio, que se vean; quedó mal".
+- Se descartó el modo LOGO / "Ver página" / contador de ingresos / test de #277: `_entryLoad` vuelve a
+  cargar la web de la plataforma en el iframe al entrar y al cambiar de pestaña (comportamiento de #267).
+  Quedan el texto explicativo grande con los links a Carga automática / Carga manual y la nota ilustrativa.
+
 ### 277. 🖼️ Inicio en modo LOGO (no carga la web) · "Ver página" desde el 2º ingreso · texto con links · test — SW v170
 **Pedido (owner):** "en las 2 páginas dejá las fotos del logo; agrandá el texto explicativo y que Carga
 manual / Carga automática se puedan tocar y te deriven; dejalo modo visión el logo para que no ralentice;
