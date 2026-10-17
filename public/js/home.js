@@ -317,7 +317,8 @@
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
     // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
-    const ENTRY_SLIDES = ['/images/girox-slides/1.jpg', '/images/girox-slides/2.jpg', '/images/girox-slides/3.jpg', '/images/girox-slides/4.jpg', '/images/girox-slides/5.jpg'];
+    // #331: nombres nuevos (g1..g5) para que ningún caché viejo muestre fotos anteriores. Orden del owner: Jokers, Fire Joker, Starburst, Sugar Rush, Money Time.
+    const ENTRY_SLIDES = ['/images/girox-slides/g1.jpg', '/images/girox-slides/g2.jpg', '/images/girox-slides/g3.jpg', '/images/girox-slides/g4.jpg', '/images/girox-slides/g5.jpg'];
     let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');

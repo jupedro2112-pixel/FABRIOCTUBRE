@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 331. 🖼️ Fotos del Inicio: sólo las últimas, nombres nuevos y orden del owner — SW v217
+**Pedido (owner, 5 capturas):** "borrá todas las otras y dejá estas, sin expandir, con recuadro". Son las mismas 5 de #327;
+se renombraron a `g1..g5.jpg` (así ningún caché viejo puede mostrar una anterior con el mismo nombre) y quedaron en el
+orden pedido: Jokers · Fire Joker · Starburst · Sugar Rush · Money Time. Sin botón de expandir (#329), con recuadro.
+
 ### 330. 🔗 "LINK CASINO AQUÍ · www.1girox.com" como botón — SW v216
 **Pedido (owner):** "el link de la plataforma es www.1girox.com; ponelo en forma de botón y poné 'link casino aquí'".
 En el Inicio la leyenda del carrusel es ahora un botón píldora (abre la web pública aparte, con "Volver a cargas");
