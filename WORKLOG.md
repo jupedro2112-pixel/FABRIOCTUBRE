@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 318. 🖼️ Foto principal (página completa de Girox) primera, con recuadro fino — SW v204
+**Pedido (owner, captura):** "esta foto es la principal de la página completa; ponele un recuadro bien, que quede
+fina y entendible". Ahora es `girox-slides/1.jpg` (las anteriores pasan a 2..6, seis fotos en total) y todas las fotos
+llevan un recuadro tipo pantalla de teléfono: bisel oscuro fino, línea cian y sombra.
+
 ### 317. ⭐ Opiniones de jugadores con más vida (mismo estilo) — SW v203
 **Pedido (owner):** "dale más vida y remarcalo; así como está está bueno pero que se diferencie, cumpliendo el estilo".
 Sección en recuadro de vidrio con línea cian arriba (como las tarjetas del home), título con estrella dorada,

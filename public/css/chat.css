@@ -2253,3 +2253,7 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 #entryReviews .rv-add-star { color: #ffd166; text-shadow: 0 0 10px rgba(255,209,102,.7); font-size: 24px; }
 #entryReviews .rv-add b { color: #fff; font: 900 12px var(--dx-font); letter-spacing: .4px; text-transform: uppercase; }
 #entryReviews .rv-add small { color: #e1e6f0; }
+
+/* ══ #318: recuadro fino tipo pantalla de teléfono para las fotos del Inicio ══ */
+.ev-slide { padding: 8px 10px 4px; }
+.ev-slide img { border-radius: 18px; border: 3px solid #161a27; box-shadow: 0 0 0 1px rgba(0,229,255,.45), 0 0 22px rgba(0,229,255,.18), 0 14px 36px rgba(0,0,0,.65); background: #000; }
