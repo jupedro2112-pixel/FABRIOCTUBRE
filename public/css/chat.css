@@ -2231,3 +2231,25 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .ev-cta-b { font: 900 18px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; text-shadow: 0 1px 0 rgba(255,255,255,.3); }
 @keyframes evCta { 0%, 100% { box-shadow: 0 10px 28px rgba(255,23,68,.45), inset 0 1px 0 rgba(255,255,255,.35); } 50% { box-shadow: 0 10px 34px rgba(255,23,68,.7), 0 0 0 3px rgba(255,209,102,.25), inset 0 1px 0 rgba(255,255,255,.35); } }
 @media (prefers-reduced-motion: reduce) { .ev-cta { animation: none; } }
+
+/* ══ #317 (owner): "Opiniones de jugadores" con más vida y remarcado, en el estilo de la app (vidrio, cian/dorado) ══ */
+#entryReviews.ev-reviews { position: relative; margin: 4px 6px 6px; padding: 8px 8px 8px; border-radius: 14px; background: var(--dx-glass); border: 1px solid rgba(0,229,255,.28); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 24px rgba(0,229,255,.08); overflow: hidden; }
+#entryReviews.ev-reviews::before { content: ''; position: absolute; left: 0; top: 0; width: 46px; height: 2px; background: var(--dx-cyan); box-shadow: 0 0 12px rgba(0,229,255,.6); }
+#entryReviews .rv-head { padding: 0 2px 4px; }
+#entryReviews .rv-g { font: 900 11px var(--dx-font); letter-spacing: 1.6px; color: #fff; text-shadow: 0 0 10px rgba(0,229,255,.35); }
+#entryReviews .rv-g::before { content: '★ '; color: #ffd166; text-shadow: 0 0 8px rgba(255,209,102,.7); }
+#entryReviews .rv-avg { font: 900 12px var(--dx-font); color: #06070d; background: linear-gradient(135deg, #ffd166, #ffb347); border-radius: 999px; padding: 3px 9px; box-shadow: 0 4px 14px rgba(255,179,71,.35); }
+#entryReviews .rv-avg .rv-stars { color: rgba(6,7,13,.25); font-size: 11px; }
+#entryReviews .rv-avg .rv-stars .on { color: #06070d; }
+#entryReviews .rv-avg small { color: rgba(6,7,13,.7); font-weight: 800; }
+#entryReviews .rv-card { position: relative; background: linear-gradient(160deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 8px 10px 9px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+#entryReviews .rv-card:not(.rv-add)::after { content: '”'; position: absolute; right: 8px; top: -2px; font: 900 30px Georgia, serif; color: rgba(0,229,255,.22); line-height: 1; }
+#entryReviews .rv-avatar { width: 28px; height: 28px; font-size: 12px; opacity: 1; box-shadow: 0 0 0 2px rgba(0,229,255,.45), 0 0 10px rgba(0,229,255,.35); }
+#entryReviews .rv-who b { font: 800 11.5px var(--dx-font); color: #fff; }
+#entryReviews .rv-stars { font-size: 11px; color: rgba(255,255,255,.16); }
+#entryReviews .rv-stars .on { color: #ffd166; text-shadow: 0 0 6px rgba(255,209,102,.6); }
+#entryReviews .rv-text { font-size: 11px; line-height: 1.4; color: #e1e6f0; }
+#entryReviews .rv-add { background: linear-gradient(135deg, rgba(255,23,68,.22), rgba(255,107,107,.1)); border: 1px dashed rgba(255,107,107,.6); }
+#entryReviews .rv-add-star { color: #ffd166; text-shadow: 0 0 10px rgba(255,209,102,.7); font-size: 24px; }
+#entryReviews .rv-add b { color: #fff; font: 900 12px var(--dx-font); letter-spacing: .4px; text-transform: uppercase; }
+#entryReviews .rv-add small { color: #e1e6f0; }

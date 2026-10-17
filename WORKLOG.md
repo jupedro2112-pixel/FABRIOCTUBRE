@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 317. ⭐ Opiniones de jugadores con más vida (mismo estilo) — SW v203
+**Pedido (owner):** "dale más vida y remarcalo; así como está está bueno pero que se diferencie, cumpliendo el estilo".
+Sección en recuadro de vidrio con línea cian arriba (como las tarjetas del home), título con estrella dorada,
+promedio en insignia dorada, tarjetas con comillas cian, avatar con aro cian, estrellas doradas con brillo y
+"Dejá tu opinión" en rojo. Sólo CSS (`#entryReviews …`).
+
 ### 316. 🧹 Sin la línea "Vista ilustrativa" en el Inicio — SW v202
 **Pedido (owner).** Se quitó `.ev-note-line` (la leyenda ya está en el carrusel y el botón grande lleva a cargar).
 
