@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 352. 🖼️ Inicio: pase automático sin puntitos ni etiqueta; el botón de cargar donde estaban los puntos — SW v238
+**Pedido (owner, captura):** "el deslizante automático sí, pero sacá la parte inferior (los puntos no van); ahí mismo
+poné el botón de cargar ahora mismo; y la etiqueta 'foto ilustrativa' de arriba sacala". Se ocultan `.ev-slides-dots`
+y `.ev-slide-tag` (y no se generan), el pase sigue cada 2 s y `.ev-cta` baja al borde inferior del recuadro.
+
 ### 351. 🤝 Referidos: 5% (no 8) y editable en el panel — SW v237, admin-sw v75
 **Pedido (owner):** "en referidos es un 5%, ajustalo; no un 8". El 8% estaba fijo en `referralRate.js` (default) y en 3
 textos del HTML. Ahora: default **5%**, override desde el panel (Referidos → "% de comisión del referidor",

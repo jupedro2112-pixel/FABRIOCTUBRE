@@ -344,8 +344,8 @@
         if (!tr || _slBuilt) return;
         // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").
         // #319: cada foto lleva la etiqueta "FOTO ILUSTRATIVA · acá no se juega" para que nadie intente tocarla.
-        tr.innerHTML = ENTRY_SLIDES.map((u0, i) => { const u = _slideUrl(u0); return '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"><span class="ev-slide-tag">📸 FOTO ILUSTRATIVA · acá no se juega</span></div>'; }).join('');
-        if (dots) dots.innerHTML = ENTRY_SLIDES.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
+        tr.innerHTML = ENTRY_SLIDES.map((u0, i) => { const u = _slideUrl(u0); return '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"></div>'; }).join('');
+        if (dots) dots.innerHTML = ''; // #352 (owner): sin puntitos — el botón de cargar va en su lugar; el pase sigue automático
         const pause = () => { _slPausedUntil = Date.now() + 5000; };
         ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
         tr.addEventListener('scroll', () => { const w = tr.clientWidth || 1; const i = Math.round(tr.scrollLeft / w); if (i !== _slIdx) { _slIdx = i; _slidesDots(); } }, { passive: true });
