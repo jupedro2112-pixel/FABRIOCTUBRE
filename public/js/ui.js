@@ -85,7 +85,7 @@ VIP.ui = (function () {
     function showLoginScreen() {
         document.getElementById('loginScreen').classList.remove('hidden');
         // #283: sin sesión no hay carga gratis pendiente que mostrar.
-        try { document.body.classList.remove('ig-pending'); const b = document.getElementById('installGiftBar'); if (b) b.style.display = 'none'; } catch (_) {}
+        try { document.body.classList.remove('ig-pending'); document.body.classList.remove('is-tester'); const b = document.getElementById('installGiftBar'); if (b) b.style.display = 'none'; } catch (_) {}
         document.getElementById('chatScreen').classList.add('hidden');
     }
 

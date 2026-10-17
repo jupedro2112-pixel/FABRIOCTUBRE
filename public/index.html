@@ -1962,7 +1962,7 @@
                      config real (home.js completa infoWeeklyMax / infoMonthlyMax). -->
                 <div class="info-card info-card-wide">
                     <div class="info-card-icon">💎</div>
-                    <div class="info-card-title">¿Por qué elegir Girox o Ganamos?</div>
+                    <div class="info-card-title" id="infoCardWhyTitle">¿Por qué elegir Girox?</div>
                     <div class="info-card-desc">Servicio <b>personalizado</b>: cargás solo en minutos, elegís en qué plataforma jugar con el mismo usuario y clave, retirás a tu CBU y tenés soporte en vivo 24 hs. Y lo más importante: <b>somos la plataforma mejor paga de internet</b>.</div>
                 </div>
                 <div class="info-card info-card-wide info-card-new">
@@ -1974,10 +1974,11 @@
                         <div class="info-point">Se calcula sobre lo que perdés <b>con tu plata</b> (los bonos no cuentan) y <b>se cobra solo</b> desde "Cobrá tu reembolso acá", sin pedirle a nadie.</div>
                     </div>
                 </div>
-                <div class="info-card">
+                <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
+                <div class="info-card" id="infoCardTwoPlats" style="display:none;">
                     <div class="info-card-icon">🎮</div>
                     <div class="info-card-title">Dos plataformas</div>
-                    <div class="info-card-desc">Girox y Ganamos con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.</div>
+                    <div class="info-card-desc" id="infoCardTwoPlatsDesc">Girox y Ganamos con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.</div>
                 </div>
                 <div class="info-card">
                     <div class="info-card-icon">🤝</div>

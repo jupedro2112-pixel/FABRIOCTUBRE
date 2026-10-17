@@ -2127,3 +2127,9 @@ body.home-mini .ig-bar { bottom: 62px; padding-bottom: 11px; }
 #vipLevelsModal .vl-gift { color: var(--dx-money); font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 #vipLevelsModal .vl-rake { color: #c9d1e3; text-align: right; white-space: nowrap; }
 #vipLevelsModal .vl-empty { color: #ff9d76; font-size: 12px; }
+
+/* ══ #296: los botones "test" sólo para el usuario de prueba (body.is-tester, lo pone home.js) ══ */
+.test-mini-row, .test-mini-bs { display: none !important; }
+body.is-tester.home-full .test-mini-row:not(.test-mini-manual) { display: flex !important; }
+body.is-tester.home-mini .test-mini-manual { display: flex !important; }
+body.is-tester.home-full .test-mini-bs { display: inline-block !important; }

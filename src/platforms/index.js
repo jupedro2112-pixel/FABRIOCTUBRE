@@ -41,7 +41,8 @@ const CONFIG_KEY = 'platforms';
 // Ganamos arranca sin logo → se muestra un badge con el nombre hasta que el panel cargue uno.
 const DEFAULT_ITEMS = {
   girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
-  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.svg' }
+  // #296 (owner 2026-10-17): Ganamos APAGADA hasta tener la API (se prende con el tilde del panel: COMANDOS o Configuración).
+  ganamos: { enabled: false, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.svg' }
 };
 
 const DEFAULT_SETTINGS = {

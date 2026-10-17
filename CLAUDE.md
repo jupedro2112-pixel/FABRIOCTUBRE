@@ -187,6 +187,11 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   `vip-igift-<userId>`, Transaction `install_gift` — un tipo de regalo nuevo va SIEMPRE a
   `CASHBACK_GIFT_TX_TYPES`). Detalle: ARCHITECTURE Home 2.0 (#283).
 
+- **Ganamos APAGADA hasta tener la API (#296, 2026-10-17):** `DEFAULT_ITEMS.ganamos.enabled=false` + migración
+  `migration_ganamos_off_v1_done`; se prende con el tilde de COMANDOS → "Plataformas ofrecidas" (o Configuración).
+  El usuario `lalodj` recibe `role:'admin'` en cada arranque (cuenta de prueba; la clave la pone el owner, nunca en
+  el código) y es el único que ve los botones "test" de la PWA (`TESTER_USERNAMES` en home.js).
+
 - **Multi-plataforma (#219, 2026-10-16):** con 2+ plataformas habilitadas en Configuración →
   "Plataformas de juego", la auto-carga hgcash **pregunta al cliente dónde jugar** (botones en el
   chat) y deja el movimiento en `awaiting_platform`; elige / el agente elige / timeout → se carga en

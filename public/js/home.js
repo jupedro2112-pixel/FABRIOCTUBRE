@@ -196,6 +196,26 @@
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
+    // #296: los botoncitos "test" sólo los ve el usuario de prueba (owner: "que la página quede original; el test sólo en lalodj").
+    const TESTER_USERNAMES = ['lalodj'];
+    function _applyTesterClass() {
+        const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
+        document.body.classList.toggle('is-tester', TESTER_USERNAMES.includes(u));
+    }
+    // #296: con UNA sola plataforma habilitada (Ganamos apagada hasta tener la API) los textos no la nombran.
+    function _paintPlatformTexts() {
+        const list = (_platforms && _platforms.platforms) || [];
+        if (!list.length) return;
+        const one = list.length === 1 ? list[0] : null;
+        const names = list.map((p) => p.name);
+        const why = _el('infoCardWhyTitle');
+        if (why) why.textContent = one ? ('¿Por qué elegir ' + one.name + '?') : ('¿Por qué elegir ' + names.join(' o ') + '?');
+        const two = _el('infoCardTwoPlats'); if (two) two.style.display = one ? 'none' : '';
+        const twoDesc = _el('infoCardTwoPlatsDesc'); if (twoDesc && !one) twoDesc.textContent = names.join(' y ') + ' con el mismo usuario y clave. Fijá tu favorita o elegí en cada carga.';
+        const sub = _el('platformsSub');
+        if (sub && one) sub.textContent = 'Tus cargas van a ' + one.name + '. Para verla, andá a Inicio.';
+        const pt = document.querySelector('#platformsCard .home-card-title'); if (pt) pt.textContent = one ? 'Tu plataforma' : '¿Dónde querés jugar?';
+    }
     function renderEntryTabs() {
         const box = _el('entryTabs'); if (!box) return;
         const list = _entryList();
@@ -409,12 +429,13 @@
         hidePlayNow();
     }
     function hidePlayNow() { const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); c.dataset.gift = ''; c.dataset.test = ''; } }
+    // #296 (owner): "Jugar ahora" abre la plataforma AFUERA de la página (ventana aparte /jugar.html con el login
+    // automático ya hecho y una línea finita arriba "‹ Volver a cargas") — así no ven el delay de la app. Vale con y
+    // sin la app instalada.
     function playNow(pid) {
         hidePlayNow();
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
-        _playOnEmbedded(pid || 'girox'); // adentro de la app: SSO si hay API, si no su web embebida
-        _setCasinoTestMode(false);
-        setTimeout(() => { try { _setupCasinoQuick(); } catch (_) {} }, 80);
+        openPlatformTab(pid || 'girox');
     }
     // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.
     function playNowTest() {
@@ -1260,6 +1281,8 @@
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
         try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();
+        try { _applyTesterClass(); } catch (_) {} // #296: botones de test sólo para el usuario de prueba
+        try { _paintPlatformTexts(); } catch (_) {} // #296: textos según cuántas plataformas hay
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
 
@@ -1299,7 +1322,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

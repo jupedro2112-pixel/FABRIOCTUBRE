@@ -11258,6 +11258,22 @@ async function initializeData() {
       await Config.set('migration_autoloadpct_10_v1_done', true, 'startup-migration');
     }
   } catch (e) { console.warn('[startup-migration] autoLoadBonusPct:', e.message); }
+  // #296 (owner 2026-10-17): Ganamos se APAGA una vez (hasta tener la API): no aparece en Inicio ni en las cargas.
+  // Se vuelve a prender con el tilde del panel (COMANDOS → Plataformas ofrecidas, o Configuración → Plataformas).
+  try {
+    if (!(await getConfig('migration_ganamos_off_v1_done', false))) {
+      await platforms.saveSettings({ items: { ganamos: { enabled: false } } }, 'startup-migration');
+      await Config.set('migration_ganamos_off_v1_done', true, 'startup-migration');
+      console.log('✅ Ganamos apagada hasta tener la API (#296)');
+    }
+  } catch (e) { console.warn('[startup-migration] ganamos off:', e.message); }
+  // #296 (owner): el usuario de PRUEBA "lalodj" tiene acceso TOTAL al panel (role admin) para probar los ajustes.
+  // La clave NO vive en el código: la cuenta se crea desde el panel (Usuarios → crear) o registrándose en la app,
+  // y en cada arranque se le asegura el rol admin. Cuando termine la etapa de pruebas: bajarle el rol o borrarla.
+  try {
+    const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
+    if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
+  } catch (e) { console.warn('[startup] tester lalodj:', e.message); }
   // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
     const hb = await Command.findOne({ name: '/sys_home_banner' }).lean();
     if (hb && String(hb.response || '') === 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.') {

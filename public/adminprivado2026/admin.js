@@ -5721,6 +5721,7 @@ async function loadInstallBonusPct() {
     const form = document.getElementById('installBonusPctForm');
     if (!form) return;
     try {
+        try { loadPlatToggles(); } catch (_) {} // #296
         const r = await authFetch('/api/admin/install-bonus-config');
         if (!r.ok) { form.style.display = 'none'; return; }
         const j = await r.json();
@@ -14628,3 +14629,32 @@ async function resetVipLevelsTable() {
 }
 window.saveVipLevelsTable = saveVipLevelsTable;
 window.resetVipLevelsTable = resetVipLevelsTable;
+
+
+// ═══ #296: tilde de plataformas ofrecidas (COMANDOS) — reusa /api/admin/platforms ═══
+async function loadPlatToggles() {
+    const row = document.getElementById('platTogglesRow'); if (!row) return;
+    try {
+        const r = await authFetch('/api/admin/platforms'); const j = await r.json();
+        if (!r.ok) { row.textContent = 'Sin permiso'; return; }
+        const canEdit = j.canEdit === true;
+        row.innerHTML = (j.platforms || []).map((p) => '<label style="display:flex;align-items:center;gap:5px;cursor:pointer;margin:0;"><input type="checkbox" class="plat-toggle" data-plat="' + escapeHtml(p.id) + '" style="width:auto;" ' + (p.enabled ? 'checked' : '') + (canEdit ? '' : ' disabled') + '> ' + escapeHtml(p.emoji + ' ' + p.name) + ' <span style="font-size:10.5px;color:' + (p.connected ? '#00c853' : '#ffb300') + '">' + (p.connected ? 'API ok' : 'sin API') + '</span></label>').join('');
+        const btn = document.getElementById('platTogglesSaveBtn'); if (btn) btn.style.display = canEdit ? '' : 'none';
+    } catch (e) { row.textContent = 'Error'; }
+}
+async function savePlatToggles() {
+    const items = {};
+    document.querySelectorAll('#platTogglesRow .plat-toggle').forEach((c) => { items[c.getAttribute('data-plat')] = { enabled: c.checked }; });
+    const on = Object.entries(items).filter(([, v]) => v.enabled).map(([k]) => k);
+    if (!on.length) { showToast('Tiene que quedar al menos una plataforma habilitada', 'error'); return; }
+    if (!confirm('¿Guardar? Quedan ofrecidas en la app: ' + on.join(', ') + '. Las que no tienen tilde desaparecen del Inicio y de las cargas.')) return;
+    try {
+        const r = await authFetch('/api/admin/platforms', { method: 'POST', body: JSON.stringify({ items }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Plataformas ofrecidas guardadas', 'success');
+        const m = document.getElementById('platTogglesMsg'); if (m) m.textContent = '✅ Guardado. La app lo toma en la próxima apertura.';
+        loadPlatToggles(); try { _platformsCache = null; loadPlatformsCfg(); } catch (_) {}
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.loadPlatToggles = loadPlatToggles; window.savePlatToggles = savePlatToggles;

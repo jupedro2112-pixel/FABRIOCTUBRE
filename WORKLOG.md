@@ -8,6 +8,30 @@
 
 ## Sesión 2026-10-17
 
+### 296. 🎰 Jugar ahora AFUERA con autologin · Ganamos apagada (tilde en COMANDOS) · tests sólo para el usuario de prueba · acceso admin de prueba — SW v186, admin-sw v68
+**Pedidos (owner):** "Jugar ahora tiene que abrir un link externo de la plataforma con el login ya hecho, saliendo de
+la página (así no ven el delay), con una línea finita arriba 'volver a cargas'; Ganamos: poder habilitarla o
+deshabilitarla desde COMANDOS y dejarla apagada hasta tener la API (que no aparezca ni en Inicio ni en las
+cargas); en Info 'por qué elegir Girox' si no está Ganamos; el usuario lalodj con acceso a todas las
+configuraciones; sacá los test en todos lados, que queden sólo para lalodj".
+- **Jugar ahora** (`VIP.home.playNow`): abre SIEMPRE `openPlatformTab` → ventana aparte `/jugar.html` con el link de
+  login único (SSO) ya resuelto; con y sin app instalada. La barra de `jugar.html` pasa a una **línea finita**
+  ("‹ Volver a cargas", 26 px) que cierra la ventana y vuelve a la app.
+- **Ganamos apagada:** `DEFAULT_ITEMS.ganamos.enabled=false` + migración `migration_ganamos_off_v1_done` (apaga una
+  vez la Config existente). Sin tilde no sale en `GET /api/platforms` ⇒ ni en Inicio, ni en la tarjeta de
+  plataformas, ni en la pregunta al cargar. Tilde nuevo en **COMANDOS → "🎮 Plataformas ofrecidas en la app"**
+  (reusa `POST /api/admin/platforms {items}`); el detalle sigue en Configuración → Plataformas. Cuando esté la API
+  de Ganamos: tilde + Guardar y aparece en Inicio y en las cargas.
+- **Textos según plataformas** (`_paintPlatformTexts`): con una sola, Info dice "¿Por qué elegir Girox?", se oculta
+  la tarjeta "Dos plataformas" (`#infoCardTwoPlats`) y la tarjeta del home dice "Tu plataforma · Tus cargas van a Girox".
+- **Tests sólo para el usuario de prueba:** `body.is-tester` lo pone home.js si `currentUser.username` está en
+  `TESTER_USERNAMES = ['lalodj']`; sin esa clase, TODOS los botones test están ocultos (CSS). El flujo real es
+  idéntico al test (mismo cartel, sin la etiqueta TEST).
+- **Acceso admin de prueba:** en cada arranque el server le asegura `role:'admin'` al usuario `lalodj` si existe.
+  ⚠️ La clave NO va en el código (terminaría en GitHub): crear la cuenta desde el panel (Usuarios) o registrarla en la
+  app con la clave que quieras; al próximo arranque (o redeploy) queda con acceso total. Al terminar las pruebas,
+  bajarle el rol o borrarla.
+
 ### 295. 🎛️ Lote con regalo = el formulario del gemelo (sin regalo · auto/agente · 1ª carga/todas · franja · cargadores) + "Guardar en un plan" desde el formulario + calendario del plan — admin-sw v67
 **Pedido (owner, capturas del otro panel):** "lo de programar que sea sobre ESTE formulario; había otra configuración:
 quiero poder configurar esto así mismo, programarlo y, una vez guardado, expandir un cronograma mensual sobre lo
