@@ -1704,3 +1704,41 @@ body.home-play #supportBubble, body.home-play #headerSupportBtn { display: none 
 /* Chip "Plataformas" del cartel (vuelve a la pantalla de entrada desde el chat / la app completa). */
 .svb-plat { flex: 0 0 auto; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; padding: 6px 9px; font-size: 10px; font-weight: 800; color: #f4f6fb; white-space: nowrap; cursor: pointer; }
 body:not(.home-mini) .svb-plat { padding: 3px 8px; font-size: 9.5px; }
+
+/* ══ #268: BARRA DE ARRIBA — Inicio (destacado) · Carga automática · Carga manual · Info · Perfil ══ */
+.header.topnav { display: flex; align-items: stretch; justify-content: space-between; gap: 4px !important; padding: 4px 6px 4px !important; padding-top: max(4px, env(safe-area-inset-top, 4px)) !important; }
+.tn-btn {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 4px 2px; border-radius: 10px; border: 1px solid transparent; background: none; color: var(--dx-text, #f4f6fb);
+  font-weight: 800; font-size: 8.5px; text-transform: uppercase; letter-spacing: .3px; line-height: 1.05; text-align: center; cursor: pointer;
+  -webkit-tap-highlight-color: rgba(255,255,255,.15); touch-action: manipulation;
+}
+.tn-ico { position: relative; font-size: 16px; line-height: 1; }
+.tn-ico .support-unread { position: absolute; top: -7px; right: -11px; }
+.tn-lbl { display: block; }
+.tn-btn.active { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.22); }
+.tn-home { flex: 1.6 1 0; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #06070d; border-color: transparent; box-shadow: 0 6px 18px rgba(255,23,68,.3); }
+.tn-home .tn-ico { font-size: 20px; }
+.tn-home .tn-lbl { font-size: 11px; letter-spacing: .8px; }
+.tn-home.active { box-shadow: 0 0 0 2px rgba(255,107,107,.65), 0 6px 18px rgba(255,23,68,.4); }
+.tn-btn:active { transform: scale(.97); }
+/* Modal Perfil (formato simple, blanco). */
+.profile-modal .pf-main { background: #f0f2f5; border-radius: 12px; padding: 8px 12px; margin: 6px 0 12px; }
+.profile-modal .pf-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #e3e6ea; }
+.profile-modal .pf-row:last-of-type { border-bottom: 0; }
+.profile-modal .pf-k { font-size: 10.5px; color: #667781; text-transform: uppercase; letter-spacing: .5px; min-width: 76px; font-weight: 700; }
+.profile-modal .pf-v { flex: 1 1 auto; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; color: #111b21; word-break: break-all; }
+.profile-modal .pf-copy { flex: 0 0 auto; border: 1px solid #cfd4da; background: #fff; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 800; color: #111b21; cursor: pointer; }
+.profile-modal .pf-hint { font-size: 11px; color: #667781; padding-top: 6px; line-height: 1.35; }
+.profile-modal .pf-actions { display: flex; flex-direction: column; gap: 6px; }
+.profile-modal .pf-act { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; text-align: left; background: #fff; border: 1px solid #e3e6ea; border-radius: 12px; padding: 8px 11px; color: #111b21; font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer; position: relative; }
+.profile-modal .pf-act > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+.profile-modal .pf-act small { font-size: 11px; color: #667781; font-weight: 500; line-height: 1.25; }
+.profile-modal .pf-act .support-unread { position: static; margin-left: auto; }
+.profile-modal .pf-wrap { cursor: default; }
+.profile-modal .pf-wrap > span { cursor: pointer; }
+.profile-modal .pf-act .pf-ico-btn { position: relative !important; flex: 0 0 auto; width: 36px !important; height: 36px !important; min-width: 0 !important; border-radius: 50% !important; border: 0 !important; background: #f0f2f5 !important; color: #111b21; font-size: 18px !important; display: inline-flex !important; align-items: center; justify-content: center; padding: 0 !important; cursor: pointer; box-shadow: none !important; }
+.profile-modal .pf-act .pf-ico-btn.active { background: #d9fdd3 !important; }
+.profile-modal .pf-act .fire-streak-badge { top: -4px; right: -4px; }
+/* La "carga rápida" de la pantalla de entrada ya no tiene botones abajo (#268). */
+.ev-loads { display: none !important; }

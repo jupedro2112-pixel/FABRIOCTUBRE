@@ -478,33 +478,27 @@
              en el menú desplegable — pedido del owner 2026-08-03).
              ⚠️ Los IDs de los botones NO cambian: el cableado JS (app.js /
              ui.js / inline de notificaciones) los busca por id. -->
-        <header class="header header-toolbar tb-circles">
-            <!-- #222 (owner): "arriba quiero un círculo con el canal de Telegram, info, código, cómo
-                 instalar app y un botón de la llave para cambiar clave" — y chau menú desplegable.
-                 Los ids históricos se conservan (infoBtn, canalTelegramHeaderBtn): app.js/chat.js los cablean. -->
-            <a class="tb-circle" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer" title="Canal de Telegram">
-                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 3.5 2.8 10.7c-.9.4-.9 1.1 0 1.4l4.8 1.5 1.8 5.6c.2.7.9.9 1.4.4l2.6-2.5 5 3.7c.8.5 1.5.2 1.7-.8L23 4.8c.2-1-.5-1.6-1.5-1.3z"/><path d="M7.6 13.6 19.5 6.2"/></svg></span><span class="tb-circle-lbl">Canal</span>
-            </a>
-            <button type="button" class="tb-circle" id="infoBtn" title="Información del servicio">
-                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tb-circle-lbl">Info</span>
+        <header class="header header-toolbar tb-circles topnav">
+            <!-- #268 (owner 2026-10-17): "arriba primero INICIO con más predominancia, al lado Carga
+                 automática y Carga manual, después Info y al final Perfil (cambio de clave, notificaciones y
+                 el usuario con clave como principal)". Los círculos viejos (Canal, Código, Instalar, 🔔, 🔥,
+                 Clave, Soporte aquí) pasaron ADENTRO del modal Perfil con sus ids históricos (los cablean
+                 app.js / chat.js / fire.js / el inline de FCM). #infoBtn conserva el id: app.js le cuelga el
+                 listener y el botón "¿Cómo funciona?" de abajo le hace click. -->
+            <button type="button" class="tn-btn tn-home" id="navInicio" onclick="VIP.home.setHomeMode('play')" title="Inicio: ver las plataformas">
+                <span class="tn-ico">🏠</span><span class="tn-lbl">Inicio</span>
             </button>
-            <button type="button" class="tb-circle" title="Canjear un código" onclick="if(window.openWelcomeCodeModal)openWelcomeCodeModal()">
-                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5h17v3a2 2 0 0 0 0 4v3h-17v-3a2 2 0 0 0 0-4z"/><path d="M9.5 8.5v10" stroke-dasharray="2 2"/></svg></span><span class="tb-circle-lbl">Código</span>
+            <button type="button" class="tn-btn" id="navAuto" onclick="VIP.home.setHomeMode('full')" title="Carga automática: transferís, mandás el comprobante y se acredita solo">
+                <span class="tn-ico">⚡</span><span class="tn-lbl">Carga<br>automática</span>
             </button>
-            <button type="button" class="tb-circle" id="headerInstallBtn" title="Cómo instalar la app" onclick="VIP.ui.installApp()">
-                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M12 7v7M9.3 11.3 12 14l2.7-2.7M10 18.5h4"/></svg></span><span class="tb-circle-lbl">Instalar</span>
+            <button type="button" class="tn-btn" id="navManual" onclick="VIP.home.setHomeMode('mini')" title="Carga manual: chat con un agente, tipo WhatsApp">
+                <span class="tn-ico">💬<span id="navManualUnread" class="support-unread" style="display:none;">0</span></span><span class="tn-lbl">Carga<br>manual</span>
             </button>
-            <!-- #229: campanita y fueguito vienen de la vieja barra de soporte (ids históricos: los cablea
-                 app.js / fire.js / el inline de FCM, que reescribe el innerHTML de #notificationBtn). -->
-            <button class="tb-circle tb-circle-plain notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
-            <button class="tb-circle tb-circle-plain fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-            <!-- #252: sin logo de Girox — ícono de chat + "Soporte aquí" -->
-            <button type="button" class="tb-circle tb-support" id="headerSupportBtn" style="display:none;" title="Volver a mostrar el soporte en vivo" onclick="VIP.home.restoreBubble()">
-                <span class="tb-circle-ico tb-support-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></svg><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></span>
-                <span class="tb-circle-lbl">Soporte aquí</span>
+            <button type="button" class="tn-btn" id="infoBtn" title="Información del servicio">
+                <span class="tn-ico">ℹ️</span><span class="tn-lbl">Info</span>
             </button>
-            <button type="button" class="tb-circle" title="Cambiar mi contraseña" onclick="VIP.home.openChangePassword()">
-                <span class="tb-circle-ico"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="14" r="4.2"/><path d="M11 11 20.5 1.5M16 6l2.5 2.5M13.5 8.5 16 11"/></svg></span><span class="tb-circle-lbl">Clave</span>
+            <button type="button" class="tn-btn" id="navPerfil" onclick="VIP.home.openProfile()" title="Tu perfil: usuario, clave, notificaciones">
+                <span class="tn-ico">👤</span><span class="tn-lbl">Perfil</span>
             </button>
             <!-- 🪦 Hamburguesa + "Info del servicio" + pill de Telegram: reemplazados por los círculos
                  (#222). El botón queda oculto porque app.js le cuelga el listener del menú. -->
@@ -952,14 +946,7 @@
                         <button type="button" class="ev-st-open" style="display:none" onclick="VIP.home.entryOpen()">Abrir la plataforma ›</button>
                     </div>
                 </div>
-                <div class="ev-loads">
-                    <button type="button" class="ev-load manual" onclick="VIP.home.setHomeMode('mini')" title="Cargar por chat con un agente, como en WhatsApp">
-                        <b>💬 Carga manual</b><small>chat con un agente · tipo WhatsApp</small><span id="evManualUnread" class="support-unread" style="display:none;">0</span>
-                    </button>
-                    <button type="button" class="ev-load auto" onclick="VIP.home.setHomeMode('full')" title="Carga automática: transferís, mandás el comprobante y se acredita solo">
-                        <b>⚡ Carga automática</b><small id="evAutoSub">bono extra en todas tus cargas</small>
-                    </button>
-                </div>
+                <!-- #268: Carga manual / Carga automática viven SOLO en la barra de arriba. -->
             </div>
             <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
@@ -1986,6 +1973,40 @@
     </div>
 
     <!-- Modal Configuración -->
+    <!-- ===== PERFIL (#268): usuario + clave como principal; abajo cambiar clave, notificaciones y el resto
+         de accesos que antes eran círculos de la cabecera (ids históricos conservados). Formato "simple"
+         (blanco, como el modal de reembolso). Lo llena VIP.home.openProfile(). ===== -->
+    <div id="profileModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target===this)hideModal('profileModal')">
+        <div class="modal-content" style="max-width: 420px; position: relative;" onclick="event.stopPropagation()">
+            <button onclick="hideModal('profileModal')" class="rs-close" aria-label="Cerrar">✕</button>
+            <div class="modal-header">
+                <h2>👤 Tu perfil</h2>
+                <p>Tus datos de acceso a la app y a las plataformas</p>
+            </div>
+            <div class="pf-main">
+                <div class="pf-row"><span class="pf-k">Usuario</span><b class="pf-v" id="pfUser">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('user')">Copiar</button></div>
+                <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ver</button><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button></div>
+                <div class="pf-hint" id="pfHint"></div>
+            </div>
+            <div class="pf-actions">
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
+                <div class="pf-act pf-wrap">
+                    <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
+                    <span onclick="var b=document.getElementById('notificationBtn'); if(b) b.click();">Notificaciones<small>Activá los avisos de cargas, reembolsos y premios</small></span>
+                </div>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()">📲 <span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()">🎁 <span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
+                <a class="pf-act" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer">📣 <span>Canal de Telegram<small>Novedades y promos</small></span></a>
+                <div class="pf-act pf-wrap">
+                    <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
+                    <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · reclamá tu premio cada día</small></span>
+                </div>
+                <button type="button" class="pf-act" id="headerSupportBtn" onclick="hideModal('profileModal');VIP.home.setHomeMode('mini')">💬 <span>Soporte en vivo<small>Hablá con un agente</small></span><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}">⚙️ <span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>
+            </div>
+        </div>
+    </div>
+
     <div id="settingsModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">

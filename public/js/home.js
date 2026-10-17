@@ -56,6 +56,7 @@
         document.body.classList.toggle('home-mini', mode === 'mini');
         document.body.classList.toggle('home-play', mode === 'play');
         document.body.classList.remove('support-open');
+        _paintNav();
         if (mode === 'play') {
             if (p) p.classList.add('hidden');
             _open = false;
@@ -84,6 +85,36 @@
         if (!opts || opts.persist !== false) { try { sessionStorage.setItem(HOME_MODE_KEY, mode); } catch (_) {} }
     }
     function toggleHomeMode() { setHomeMode(_homeMode === 'mini' ? 'full' : 'mini'); }
+    // #268: barra de arriba — resalta la sección activa.
+    function _paintNav() {
+        const map = { navInicio: 'play', navAuto: 'full', navManual: 'mini' };
+        Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode); });
+    }
+    // ---------------- #268: PERFIL ----------------
+    let _pfShown = false;
+    function _pfPaint() {
+        const u = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '—';
+        const pw = (VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '';
+        const eu = _el('pfUser'), ep = _el('pfPass'), eye = _el('pfEye'), hint = _el('pfHint');
+        if (eu) eu.textContent = u;
+        if (ep) ep.textContent = pw ? (_pfShown ? pw : '•'.repeat(Math.min(12, Math.max(6, pw.length)))) : 'no guardada';
+        if (eye) { eye.textContent = _pfShown ? 'Ocultar' : 'Ver'; eye.style.display = pw ? '' : 'none'; }
+        if (hint) {
+            hint.textContent = !pw ? 'Tu clave no está guardada en este dispositivo. Si la cambiás desde acá, queda guardada.'
+                : (pw === 'asd123' ? 'Es la clave inicial: te recomendamos cambiarla desde "Cambiar clave".' : 'Es la misma clave para entrar a la app y a las plataformas.');
+        }
+    }
+    function openProfile() {
+        _pfShown = false;
+        _pfPaint();
+        try { VIP.ui.showModal('profileModal'); } catch (_) { const m = _el('profileModal'); if (m) m.classList.remove('hidden'); }
+    }
+    function profileTogglePw() { _pfShown = !_pfShown; _pfPaint(); }
+    function profileCopy(which) {
+        const v = which === 'pass' ? ((VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '') : ((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '');
+        if (!v) { try { VIP.ui.showToast('No hay nada para copiar', 'info'); } catch (_) {} return; }
+        try { VIP.ui.copyText(v); } catch (_) { try { navigator.clipboard.writeText(v); } catch (__) {} }
+    }
     function _initHomeMode() {
         let m = 'play';
         try { const v = sessionStorage.getItem(HOME_MODE_KEY); if (v === 'full' || v === 'mini') m = v; } catch (_) {}
@@ -215,7 +246,7 @@
     function isSupportOpen() { return _open; }
 
     function _paintBadge() {
-        ['supportUnread', 'headerSupportUnread', 'evManualUnread'].forEach((id) => {
+        ['supportUnread', 'headerSupportUnread', 'navManualUnread'].forEach((id) => {
             const b = _el(id);
             if (!b) return;
             if (_unread > 0) { b.textContent = _unread > 99 ? '99+' : String(_unread); b.style.display = ''; }
@@ -224,15 +255,15 @@
     }
     // #243: sacar la burbuja → queda el círculo de soporte arriba, al lado del fueguito (sólo en la sesión).
     // #248: tocar el círculo de arriba vuelve a mostrar la burbuja movible (y la deja abierta al chat).
+    // #268: ya no hay círculo "Soporte aquí" en la cabecera (el chat es "Carga manual" arriba);
+    // #headerSupportBtn vive como fila del modal Perfil y no se toca.
     function restoreBubble() {
         const b = _el('supportBubble'); if (b) b.style.display = '';
-        const h = _el('headerSupportBtn'); if (h) h.style.display = 'none';
         _paintBadge();
     }
     function dismissBubble(ev) {
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         const b = _el('supportBubble'); if (b) b.style.display = 'none';
-        const h = _el('headerSupportBtn'); if (h) h.style.display = '';
     }
 
     // Mensajes que llegan con el chat CERRADO → contador. La pregunta de
@@ -926,7 +957,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

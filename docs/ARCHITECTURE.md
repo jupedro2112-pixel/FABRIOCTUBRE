@@ -875,6 +875,11 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hasta que responda `/api/platforms`, "Abrir la plataforma ›" a los 15 s si no embebe) y abajo
   "Carga manual" (→ mini) / "Carga automática" (→ full). Al salir el iframe se vacía. `openSupport()`
   en play = mini. El cartel tiene el chip "🎰 Plataformas" para volver.
+  **#268:** la cabecera es la barra `header.topnav`: Inicio (play, destacado) · Carga automática (full) ·
+  Carga manual (mini) · Info (`#infoBtn`) · Perfil (`#profileModal`: usuario + clave guardada, Cambiar
+  clave, Notificaciones = `#notificationBtn` del inline FCM, Instalar, Código, Canal `#canalTelegramHeaderBtn`,
+  Fueguito `#fireBtn`, Soporte `#headerSupportBtn`, Más ajustes = settingsModal). Los círculos de #222 ya no
+  existen; sus ids viven dentro del Perfil — no borrarlos.
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo

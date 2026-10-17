@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-17
 
+### 268. 🧭 Barra de arriba: INICIO (destacado) · Carga automática · Carga manual · Info · Perfil — SW v161
+**Pedido (owner):** "arriba primero Inicio con más predominancia, al lado Carga automática y Carga manual,
+después Info y al final Configuración (mejor 'Perfil') con el cambio de clave, activar notificaciones y
+el usuario con clave como principal; poné todo lo otro bien sin que la gente se pierda; sacá de abajo
+el carga manual / automática, dejalo sólo arriba".
+- **Cabecera nueva** (`header.topnav`, 5 botones `.tn-btn`): 🏠 **Inicio** (rojo, más grande → modo play),
+  ⚡ Carga automática (→ full), 💬 Carga manual (→ mini, con contador de no leídos `#navManualUnread`),
+  ℹ️ Info (**conserva el id `infoBtn`**: app.js le cuelga el listener y "¿Cómo funciona?" le hace click),
+  👤 Perfil (`VIP.home.openProfile`). `_paintNav()` resalta la sección activa en cada `setHomeMode`.
+- **Modal Perfil** (`#profileModal`, formato simple blanco): arriba **Usuario y Contraseña** (clave guardada
+  en el dispositivo vía `VIP.autoload.getPassword`, oculta con Ver/Ocultar, Copiar; aviso si es la inicial
+  o si no está guardada) y abajo las filas: Cambiar clave, **Notificaciones** (el `#notificationBtn` del
+  inline de FCM, ahora botón redondo en la fila), Instalar la app, Canjear un código, Canal de Telegram
+  (`#canalTelegramHeaderBtn`), Fueguito (`#fireBtn`/`#fireStreak`), Soporte en vivo (`#headerSupportBtn`),
+  Más ajustes (abre el modal de Configuración de siempre: modo oscuro, plan de notificaciones).
+  Los círculos viejos desaparecieron de la cabecera pero sus ids siguen vivos ahí adentro.
+- `dismissBubble/restoreBubble` ya no muestran/ocultan `#headerSupportBtn` (es una fila del Perfil).
+- Pantalla de entrada (#267): se quitaron los botones de abajo (sólo tabs + plataforma embebida).
+- Verificado: `node --check`, balance HTML, sin ids duplicados, ids históricos presentes.
+
 ### 267. 🎰 Pantalla de ENTRADA: Girox abierto adentro, Ganamos para cambiar, Carga manual / Carga automática — SW v160
 **Pedido (owner):** "cuando entre la gente que aparezca de entrada 3 botones: Girox y que automáticamente
 esté abierta esa página para que vean cómo es la plataforma; abajo Ganamos para cambiar y ver la de
