@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 368. 📽️ Historia nueva: "La novedad llegó · El futuro está acá · Cargas automática · Bienvenidos"
+**Pedido (owner):** "en historias cambiá la foto y poné: la novedad llegó, el futuro está acá, cargas automática,
+bienvenidos". Imagen nueva `public/images/stories/novedad-1.png` (1080×1920, generada con PIL: pica de la app con
+resplandor rojo, grilla futurista, barra roja "CARGAS AUTOMÁTICA", "BIENVENIDOS" cian); `prueba-1.png` se borró.
+En Render se publicó por API (`POST /api/admin/stories` con `mediaDataUrl`, 72 h) y se borró la de prueba — ya está
+activa sin redeploy. El seed del boot (`migration_story_seed_v1_done`, para producción que aún no corrió) apunta a
+la imagen y el texto nuevos. Sin cambios de PWA (no se bumpea el SW).
+
 ### 367. ☰ El selector fácil / completo pregunta en CADA arranque y tras 10 min afuera — SW v255
 **Pedido (owner):** "adentro del fácil que haya una forma de pasar al completo; una vez que reiniciás la app o salís
 y volvés a los 10 minutos que vuelva a preguntar". `maybeShowMenuChooser` (en `showChatScreen`) abre `#menuChooser`

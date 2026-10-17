@@ -11459,8 +11459,8 @@ async function initializeData() {
     if (!(await getConfig('migration_story_seed_v1_done', false))) {
       const now = new Date();
       await Story.create({
-        id: uuidv4(), title: 'CARGAS AUTOMATIC', text: 'Prueba historias · 1girox · Ganamos · Nuevo sistema de cargas',
-        mediaType: 'image', mediaUrl: '/images/stories/prueba-1.png', bgColor: '#06070d', durationSec: 7, hours: 72,
+        id: uuidv4(), title: 'CARGAS AUTOMATIC', text: '🆕 La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA · ¡Bienvenidos!', // #368
+        mediaType: 'image', mediaUrl: '/images/stories/novedad-1.png', bgColor: '#06070d', durationSec: 7, hours: 72,
         publishedAt: now, expiresAt: new Date(now.getTime() + 72 * 36e5), isActive: true, createdBy: 'seed'
       });
       await Config.set('migration_story_seed_v1_done', true, 'startup-migration');
