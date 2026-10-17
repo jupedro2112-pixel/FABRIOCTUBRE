@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 329. 🧹 Sin el botón "Ver completas" de las fotos — SW v215
+**Pedido (owner):** "sacá la parte de agrandar fotos, ahora se ve bien". Se quitó `#entryExpandBtn` del HTML; la lógica
+`toggleEntryExpand` queda inerte (sin botón) por si vuelve a hacer falta.
+
 ### 328. 🔗 Botón "Link plataforma" en carga auto y carga manual — SW v214
 **Pedido (owner):** "en cargas auto y cargas manual poné 'link plataforma' como botón abajo de todo, donde dice test; al
 apretarlo abre el casino para jugar". `.plat-link-btn` (visible para TODOS, no es test) → `VIP.home.playNow('girox')`:
