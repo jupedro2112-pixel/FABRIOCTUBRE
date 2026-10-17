@@ -75,6 +75,15 @@
             if (bn) { bn.setAttribute('aria-expanded', 'false'); bn.title = 'Ver la app completa'; }
             try { VIP.chat.markReceivedAsRead(); } catch (_) {}
             setTimeout(() => { try { VIP.chat.scrollToBottom(); } catch (_) {} }, 80);
+            // #365 (owner): "cuando la gente aprieta Carga manual que se apriete CBU solo": la tarjeta del CBU aparece
+            // en el chat al entrar. Como máximo una vez cada 30 min por dispositivo (no llena el chat de tarjetas).
+            try {
+                const K = 'vip_cbu_auto_at', last = Number(localStorage.getItem(K) || 0);
+                if (VIP.state && VIP.state.currentToken && Date.now() - last > 30 * 60 * 1000) {
+                    localStorage.setItem(K, String(Date.now()));
+                    setTimeout(() => { try { VIP.ui.loadAndShowCBU(null, { silent: true }); } catch (_) {} }, 600);
+                }
+            } catch (_) {}
         } else {
             if (p) p.classList.add('hidden');
             _open = false;

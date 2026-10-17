@@ -377,10 +377,11 @@ VIP.ui = (function () {
 
     // ---- CBU ----
 
-    async function loadAndShowCBU() {
+    async function loadAndShowCBU(ev, opts) {
+        const silent = !!(opts && opts.silent) || (ev && ev.silent === true);
         const now = Date.now();
         if (now - VIP.state.lastCbuClickTime < VIP.config.CBU_CLICK_COOLDOWN_MS) {
-            showToast('Espera unos segundos antes de volver a solicitar el CBU.', 'info');
+            if (!silent) showToast('Espera unos segundos antes de volver a solicitar el CBU.', 'info');
             return;
         }
         VIP.state.lastCbuClickTime = now;
@@ -405,7 +406,7 @@ VIP.ui = (function () {
 
                 // #364 (owner): sin modal — el CBU aparece directo en el chat como tarjeta con botones.
                 setTimeout(() => { VIP.chat.loadMessages(); try { VIP.chat.scrollToBottom && VIP.chat.scrollToBottom(); } catch (_) {} }, 400);
-                showToast('💳 CBU enviado al chat 👇', 'success');
+                if (!silent) showToast('💳 CBU enviado al chat 👇', 'success');
 
                 // Meta Pixel — InitiateCheckout (usuario va a depositar).
                 if (VIP.pixel) VIP.pixel.trackWithId(metaEventId, 'InitiateCheckout', { content_name: 'cbu_request' });

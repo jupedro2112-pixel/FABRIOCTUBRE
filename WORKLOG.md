@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 365. 💳 Al entrar a Carga manual, el CBU aparece solo — SW v253
+**Pedido (owner):** "dejalo fijo: cuando la gente aprieta Carga manual que se apriete CBU solo, así aparece el CBU y la
+tarjeta". `setHomeMode('mini')` dispara `loadAndShowCBU(null, {silent:true})` (sin toasts) como máximo una vez cada
+30 min por dispositivo (`localStorage vip_cbu_auto_at`), respetando el cooldown de 10 s. El botón CBU de abajo sigue
+para pedirlo de nuevo.
+
 ### 364. 💳 Carga manual: el CBU aparece en el chat como tarjeta + "Por favor enviar comprobante aquí" — SW v252
 **Pedido (owner, captura de la gemela):** "cuando aprieten ahí que aparezca el CBU directamente, con el texto como la
 automática, y el botón 'por favor enviar comprobante aquí'". El mensaje del CBU (`/api/cbu/request` y el envío del
