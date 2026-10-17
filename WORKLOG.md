@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 301. 🔧 Girox NUNCA "próximamente" (regla fija) — SW v190
+**Pedido (owner):** "me aparece que Girox no se puede elegir; está configurada toda la API: dejala para elegir y cargar".
+- Regla fija en los tres lugares: la PWA (pestaña y tarjeta) nunca marca `girox` ni la default como "próximamente"
+  aunque el server informe `connected:false`; `POST /api/platforms/preferred` siempre deja fijar Girox; y
+  `decideForDeposit` siempre ofrece la default. "Próximamente" queda SOLO para Ganamos sin API.
+- Si el aviso "Girox: próximamente" todavía aparece, es la app con un service worker viejo: cerrar y volver a abrir
+  (o refrescar dos veces) para tomar el v190.
+
 ### 300. 🔧 Girox siempre seleccionable · Ganamos como estaba + etiqueta "Próximamente" — SW v189
 **Pedido (owner):** "lo del próximamente no era para sacarlo de Girox: Girox queda para seleccionar; volvé a agregar
 Ganamos como estaba y ponele próximamente; cuando configure bien la API te digo y lo sacás".

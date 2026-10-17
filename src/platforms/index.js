@@ -204,7 +204,7 @@ async function decideForDeposit(user) {
   const s = await getSettings();
   const enabled = await listEnabled();
   // #298: una plataforma habilitada pero SIN API es "Próximamente": se ve en la app pero no se ofrece al cargar.
-  const offer = enabled.filter((p) => p.connected);
+  const offer = enabled.filter((p) => p.connected || p.id === DEFAULT_ID); // #301: Girox (default) siempre se ofrece
   const isOffered = (id) => offer.some((p) => p.id === id);
   if (offer.length < 2 || s.askMode === 'never') {
     const def = await resolveDefaultFor(user);

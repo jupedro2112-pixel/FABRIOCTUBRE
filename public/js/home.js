@@ -229,7 +229,7 @@
         // #298/#300: la plataforma default (Girox) SIEMPRE se puede elegir; una sin API se ve con "Próximamente" pero la
         // pestaña sigue abriendo su página como antes (owner: "agregá Ganamos como estaba y ponele próximamente").
         const defId = (_platforms && _platforms.defaultPlatform) || 'girox';
-        const isSoon = (p) => p.connected === false && p.id !== defId;
+        const isSoon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox'; // #301: Girox NUNCA
         const avail = list.filter((p) => !isSoon(p));
         if (!_entryPlat || !avail.some((p) => p.id === _entryPlat)) {
             const def = (_platforms && _platforms.defaultPlatform) || 'girox';
@@ -980,7 +980,7 @@
     function _platBtn(p, preferred) {
         const label = _esc(p.name);
         const isPref = preferred === p.id;
-        const soon = p.connected === false && p.id !== ((_platforms && _platforms.defaultPlatform) || 'girox'); // #298/#300: sin API → "Próximamente" (la default nunca)
+        const soon = p.connected === false && p.id !== 'girox' && p.id !== ((_platforms && _platforms.defaultPlatform) || 'girox'); // #298/#300/#301: sin API → "Próximamente" (Girox y la default NUNCA)
         const onSelect = soon ? "VIP.ui.showToast('🔜 " + _esc(p.name) + ": próximamente', 'info')" : "VIP.home.choosePlatform('" + _esc(p.id) + "')";
         const logo = p.logoUrl ? '<img class="plat-logo" src="' + _esc(p.logoUrl) + '" alt="">' : '';
         return '<div class="plat-play-wrap' + (isPref ? ' is-pref' : '') + (soon ? ' soon' : '') + '">' +
