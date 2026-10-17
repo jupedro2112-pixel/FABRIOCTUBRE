@@ -2158,3 +2158,7 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .chat-screen::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .035;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120' fill='%23ffffff'><path d='M30 14c-3 4-7 6.5-7 10.2 0 2.4 1.8 3.8 3.8 3.8 1.1 0 2.1-.4 2.7-1.1-.2 1.9-1 3.4-2.5 4.6h6c-1.5-1.2-2.3-2.7-2.5-4.6.6.7 1.6 1.1 2.7 1.1 2 0 3.8-1.4 3.8-3.8C37 20.5 33 18 30 14z'/><path d='M90 72c-1.8 0-3.3 1-4 2.4-.7-1.4-2.2-2.4-4-2.4-2.5 0-4.5 2-4.5 4.5 0 4.6 8.5 9.5 8.5 9.5s8.5-4.9 8.5-9.5c0-2.5-2-4.5-4.5-4.5z'/><path d='M30 70l6 8-6 8-6-8z'/><circle cx='86' cy='22' r='4'/><circle cx='94' cy='30' r='4'/><circle cx='78' cy='30' r='4'/><path d='M85 30h2v8h-2z'/></svg>"); background-size: 120px 120px; }
 .chat-screen > * { position: relative; z-index: 1; }
+
+/* ══ #302: aclaración de carga mínima bien visible ══ */
+.al-minline { display: inline-block; margin: 6px auto 0; padding: 4px 10px; border-radius: 999px; background: rgba(255,209,102,.1); border: 1px solid rgba(255,209,102,.45); color: #f4f6fb; font: 700 11px var(--dx-font); letter-spacing: .3px; }
+.al-minline b { color: var(--dx-money); font-weight: 900; }

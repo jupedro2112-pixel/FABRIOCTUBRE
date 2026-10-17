@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-17
 
+### 302. 💵 Carga mínima: siempre visible — SW v191
+**Pedido (owner):** "la carga mínima de 5000 no la estoy viendo como aclaración".
+- Causa: sin el redeploy el server no manda `minDeposit` y `_paintMinDeposit` borraba el texto por defecto. Ahora
+  si no llega valor queda el default del HTML ($5.000); sólo un 0 explícito la oculta.
+- Línea de aclaración nueva y visible en el paso 1 de la carga automática: "💵 Carga mínima: $5.000" (`#alMinLine`),
+  además del botón verde y del "· mínimo $5.000" junto a "Transferí a este CBU".
+
 ### 301. 🔧 Girox NUNCA "próximamente" (regla fija) — SW v190
 **Pedido (owner):** "me aparece que Girox no se puede elegir; está configurada toda la API: dejala para elegir y cargar".
 - Regla fija en los tres lugares: la PWA (pestaña y tarjeta) nunca marca `girox` ni la default como "próximamente"

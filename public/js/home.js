@@ -204,10 +204,13 @@
     }
     // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
     function _paintMinDeposit(n) {
+        // #302: si el server (todavía) no manda el valor, queda el default del HTML ($5.000). Sólo 0 explícito lo oculta.
+        if (n == null || n === '' || !Number.isFinite(Number(n))) return;
         const v = Math.round(Number(n));
         const txt = v > 0 ? '$' + v.toLocaleString('es-AR') : '';
         const a = _el('loadHereMin'); if (a) a.textContent = txt ? ('carga mínima ' + txt + ' · se acredita solo') : 'se acredita solo';
         const b = _el('alMinDep'); if (b) { b.textContent = txt ? ('· mínimo ' + txt) : ''; b.style.display = txt ? '' : 'none'; }
+        const c = _el('alMinLine'); if (c) { const bb = c.querySelector('b'); if (bb) bb.textContent = txt; c.style.display = txt ? '' : 'none'; }
     }
     // #296: con UNA sola plataforma habilitada (Ganamos apagada hasta tener la API) los textos no la nombran.
     function _paintPlatformTexts() {
