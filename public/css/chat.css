@@ -2195,3 +2195,7 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 #avatarModal .av-opt[style*="--av-c"] { border-color: var(--av-c); }
 #avatarModal .av-opt.sel { border-color: var(--dx-cyan); box-shadow: 0 0 12px rgba(0,229,255,.4); background: rgba(0,229,255,.08); }
 #avatarModal .av-opt.locked { opacity: .4; cursor: not-allowed; filter: grayscale(.6); }
+
+/* ══ #305: cabecera del chat — asistente ══ */
+.wa-head .wa-assist { display: inline-flex; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px rgba(37,211,102,.45); flex: 0 0 auto; }
+.wa-head .wa-assist svg { width: 40px; height: 40px; display: block; }

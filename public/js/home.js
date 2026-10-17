@@ -155,7 +155,7 @@
             if (sub && st) sub.textContent = st.canClaim ? '¡Tenés premio para reclamar!' : 'Ya reclamaste hoy · volvé mañana';
             _paintFireLevels(st); // #291
         } catch (_) {}
-        try { const av = _el('chatTopbarAvatar'), wa = _el('waHeadAvatar'); const u = av && av.getAttribute('src'); if (u && wa && wa.getAttribute('src') !== u) wa.src = u; } catch (_) {}
+        // #305: el avatar de la cabecera es el asistente fijo (ya no se espeja el logo de #chatTopbarAvatar).
     }
     // #291: barra con los niveles de fueguito (hitos) + regla de cargas mínimas en el plazo.
     function _paintFireLevels(st) {
@@ -359,11 +359,8 @@
     }
 
     function _paintWaHeadName() {
-        try {
-            const n = _el('waHeadName'); if (!n || !_platforms || !Array.isArray(_platforms.platforms)) return;
-            const d = _platforms.platforms.find((p) => p.id === _platforms.defaultPlatform) || _platforms.platforms[0];
-            if (d && d.name) n.textContent = 'Cargas ' + d.name;
-        } catch (_) {}
+        // #305 (owner): la cabecera dice "Carga manual" (antes "Cargas <plataforma>") y el avatar es un asistente fijo.
+        try { const n = _el('waHeadName'); if (n) n.textContent = 'Carga manual'; } catch (_) {}
     }
 
     // ---------------- SOPORTE (chat) ----------------

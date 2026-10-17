@@ -1285,9 +1285,10 @@
                      "en línea", modo claro/oscuro y fueguito. Sólo se ve con el home plegado (body.home-mini);
                      con el home desplegado el chat es la burbuja y usa .support-head de abajo. -->
                 <div class="chat-topbar wa-head" id="waHead">
-                    <img class="chat-topbar-avatar" id="waHeadAvatar" src="/images/soporte-1girox.png" alt="" width="40" height="40">
+                    <!-- #305 (owner): "Carga manual" con un asistente (persona con vincha) en vez del logo de la plataforma -->
+                    <span class="chat-topbar-avatar wa-assist" id="waHeadAvatar" aria-hidden="true"><svg viewBox="0 0 48 48" width="40" height="40"><defs><linearGradient id="waAsG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f2c33"/><stop offset="1" stop-color="#0b141a"/></linearGradient></defs><circle cx="24" cy="24" r="24" fill="url(#waAsG)"/><circle cx="24" cy="19" r="7.5" fill="#f4f6fb"/><path d="M11 41c1.5-7.5 7-11.5 13-11.5S35.5 33.5 37 41z" fill="#f4f6fb"/><path d="M15.5 20.5a8.5 8.5 0 0 1 17 0" fill="none" stroke="#25d366" stroke-width="2.4" stroke-linecap="round"/><rect x="13.3" y="19" width="3.6" height="6" rx="1.6" fill="#25d366"/><rect x="31.1" y="19" width="3.6" height="6" rx="1.6" fill="#25d366"/><path d="M32.9 25v2.2a3 3 0 0 1-3 3H27" fill="none" stroke="#25d366" stroke-width="2" stroke-linecap="round"/><circle cx="26.5" cy="30.2" r="1.6" fill="#25d366"/></svg></span>
                     <div class="chat-topbar-info" onclick="VIP.home.setHomeMode('full')" title="Ver la app completa">
-                        <span class="chat-topbar-name" id="waHeadName">Cargas 1Girox</span>
+                        <span class="chat-topbar-name" id="waHeadName">Carga manual</span>
                         <span class="chat-topbar-status"><i class="chat-topbar-dot"></i> en línea</span>
                     </div>
                     <button type="button" class="wa-head-btn" id="waThemeBtn" onclick="var b=document.getElementById('themeToggleBtn'); if(b) b.click(); VIP.home.syncWaHead();" title="Cambiar modo claro / oscuro" aria-label="Cambiar modo claro u oscuro">☀️</button>

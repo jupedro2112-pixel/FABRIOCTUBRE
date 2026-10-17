@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 305. 🎧 Cabecera del chat: "Carga manual" con asistente — SW v194
+**Pedido (owner, captura):** "cambiá 'Cargas Girox' por 'Cargas manual' y ponele un logo de una persona tipo asistente".
+- `#waHeadName` fijo "Carga manual" (`_paintWaHeadName` ya no usa la plataforma) y `#waHeadAvatar` pasa a ser un SVG
+  inline de asistente con vincha (verde WhatsApp); se dejó de espejar el logo de `#chatTopbarAvatar`.
+
 ### 304. 🙂 Perfil con avatar: recuadro de usuario, selector de íconos y los íconos de nivel que se desbloquean — SW v193
 **Pedido (owner):** "en Perfil una personita tipo avatar en el nombre, que se pueda abrir y ajustar con diferentes
 íconos; según el nivel: nivel 1 avatar común, al avanzar el ícono del nivel que le corresponda (bronce…); un buen
