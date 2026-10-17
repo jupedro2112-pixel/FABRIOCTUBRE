@@ -176,7 +176,7 @@
         // #340: la regla de cargas mínimas se pinta aunque no haya barra (tarjeta simple del home).
         if (rule && st && st.minDeposits != null) {
             const min = Number(st.minDeposits) || 0;
-            if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas entre racha y racha</b> para reclamar · si no, el fueguito vuelve a 0'; rule.style.display = ''; }
+            if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas</b> entre racha y racha · si no, vuelve a 0'; rule.style.display = ''; } // #354: una sola línea
             else rule.style.display = 'none';
         }
         if (!fill || !dots) return;

@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 354. 🔥 Regla del fueguito en una línea — SW v240
+**Pedido (owner):** "resumí todo eso de 10 cargas mínimo en 1 línea". Tarjeta del home: "⚠️ Mínimo 10 cargas entre
+racha y racha · si no, vuelve a 0" (nowrap, 10 px). El detalle largo sigue dentro del modal.
+
 ### 353. 🔜 "Próximamente" visible debajo de Ganamos — SW v239
 **Pedido (owner, captura):** "ahí (tarjeta de plataformas) y en Inicio poné 'próximamente' abajo de Ganamos sin apretar,
 para que la gente entienda ya viendo". El texto existía pero el modo compacto ocultaba el subtítulo. Ahora la tarjeta
