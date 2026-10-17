@@ -39,8 +39,24 @@ function _partsOf(formatter, date) {
   };
 }
 
-// 🪦 getYesterdayRangeArgentinaEpoch ELIMINADA (2026-08-07): solo la usaba el
-// reembolso DIARIO, que se sacó del producto. Está en el historial de git.
+/**
+ * Ayer, de 00:00:00 a 23:59:59 hora argentina. (#349: vuelve con el reembolso DIARIO, 2026-10-17.)
+ * @returns {{fromEpoch:number, toEpoch:number, dateStr:string}}
+ */
+function getYesterdayRangeArgentinaEpoch() {
+  const formatter = _formatter();
+  const today = _partsOf(formatter, new Date());
+  const todayLocal = new Date(`${today.y}-${today.m}-${today.d}T00:00:00-03:00`);
+  const yesterdayLocal = new Date(todayLocal.getTime() - 24 * 60 * 60 * 1000);
+  const y = _partsOf(formatter, yesterdayLocal);
+  const from = new Date(`${y.y}-${y.m}-${y.d}T00:00:00-03:00`);
+  const to = new Date(`${y.y}-${y.m}-${y.d}T23:59:59-03:00`);
+  return {
+    fromEpoch: Math.floor(from.getTime() / 1000),
+    toEpoch: Math.floor(to.getTime() / 1000),
+    dateStr: `${y.y}-${y.m}-${y.d}`
+  };
+}
 
 /**
  * Hoy, de 00:00:00 a 23:59:59 hora argentina.
@@ -126,6 +142,7 @@ function getLastMonthRangeArgentinaEpoch() {
 }
 
 module.exports = {
+  getYesterdayRangeArgentinaEpoch,
   getTodayRangeArgentinaEpoch,
   getLastWeekRangeArgentinaEpoch,
   getLastMonthRangeArgentinaEpoch

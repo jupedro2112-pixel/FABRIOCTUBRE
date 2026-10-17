@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 349. 📅 Reembolso DIARIO de vuelta (25%) · semanal 3% · mensual 1% · NOVEDAD en el Inicio — SW v235, admin-sw v74
+**Pedidos (owner):** "ajustá reembolso diario 25%, semanal 3% y mensual 1%" + "en el inicio, donde dice la app que paga,
+poné hasta diciembre reembolso diario de 25% NOVEDAD" + "ajustá desde Comandos todo para después poder modificarlo".
+- **Diario (lo había sacado #153 el 2026-08-07):** `getYesterdayRangeArgentinaEpoch` (periodRanges),
+  `canClaimDailyRefund` (por periodKey `daily:<ayer>`, próximo = mañana 00:00 AR), `POST /api/refunds/claim/daily`
+  completo (calco del semanal: netwin − bono de AYER, escalera diaria, descuento del acumulativo, mínimo
+  configurable, reserva atómica del claim, reference `vip-rf-daily-<fecha>-<userId>`), `daily` real en
+  `/api/refunds/status`, ticker y stats del panel con diarios, `/api/refunds/all` con `dailyCount`.
+- **Porcentajes:** `DEFAULT_TIERS_BY_PERIOD` (refundTiers.js) = diario 25 / semanal 3 / mensual 1 planos (un rango
+  sin techo) + migración única `migration_refund_flat_25_3_1_done` que pisa lo guardado. Después manda el panel:
+  Comandos → "Rangos de reembolso" ahora tiene las tres escaleras y el mínimo diario (default 0).
+- **PWA:** botón 📅 Diario de vuelta en la fila de reembolsos (+ en el picker), modal con contador hasta mañana,
+  perfil con la escalera diaria, textos "diario, semanal y mensual".
+- **NOVEDAD en el Inicio:** chip verde debajo de "La única app que paga…": texto de `/sys_entry_news` (COMANDOS,
+  default "🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%", {pct} = % máximo de la escalera diaria; vacío
+  ⇒ no se muestra). Viaja en `GET /api/platforms` como `entryNews`; lo pinta `_paintEntryNews` (home.js).
+- Fueguito: su configuración (premios, rollover, mínimo de cargas) YA vive en Comandos → "Premios del Fueguito".
+
 ### 348. 🚀 Deploys visibles en la PRIMERA apertura + regla del fueguito arriba del modal — SW v234
 **Contexto:** el owner seguía viendo textos viejos aun con Render ya en v233. Causa: el SW servía el JS propio
 stale-while-revalidate (primero del caché, se actualizaba para la vez siguiente). Ahora JS y CSS propios van

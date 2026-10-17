@@ -2475,3 +2475,8 @@ html.has-session body { background: #06070d; }
 /* ══ #348: regla del fueguito arriba del modal ══ */
 .fire-rule-top { margin: 6px 0 0 !important; padding: 6px 10px; border-radius: 10px; background: rgba(255,140,0,.1); border: 1px solid rgba(255,140,0,.4); color: #e6c9a8 !important; font: 700 11px/1.4 var(--dx-font) !important; text-align: center; }
 .fire-rule-top b { color: #ffb347; }
+
+/* ══ #349: NOVEDAD en el Inicio (reembolso diario) ══ */
+.ev-hero-new { display: inline-block; margin-top: 4px; padding: 4px 10px; border-radius: 999px; background: linear-gradient(135deg, #00c46a, #00ff88); color: #052e16; font: 900 10.5px/1.3 var(--dx-font); letter-spacing: .3px; text-transform: uppercase; box-shadow: 0 2px 10px rgba(0,255,136,.35); }
+.ev-hero-new b { color: #052e16; }
+.ev-hero-new[hidden] { display: none; }

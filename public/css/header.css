@@ -59,7 +59,12 @@
     text-align: center;
 }
 
-/* 🪦 .refund-btn.daily eliminado (2026-08-07): el reembolso diario se sacó
+/* #349: el reembolso diario vuelve (2026-10-17) */
+.refund-btn.daily {
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #000;
+}
+/* (antes: .refund-btn.daily eliminado (2026-08-07): el reembolso diario se sacó
    del producto — quedan semanal y mensual. */
 
 .refund-btn.weekly {

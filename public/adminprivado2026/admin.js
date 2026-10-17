@@ -6194,6 +6194,7 @@ window.loadPlatformBanner = loadPlatformBanner;
 // pérdida, con escalera PROPIA por período (semanal/mensual distintas).
 // 🪦 El período DIARIO se eliminó el 2026-08-07 (junto con el reembolso diario).
 const REFUND_TIER_PERIODS = [
+    { key: 'daily', label: '📅 Diario (sobre lo perdido AYER)' }, // #349
     { key: 'weekly', label: '📆 Semanal' },
     { key: 'monthly', label: '🗓️ Mensual' }
 ];
@@ -6226,6 +6227,8 @@ function renderRefundTiersEditor(tiersByPeriod, minimums) {
         <div style="font-weight:bold;font-size:13px;margin-bottom:6px;">💵 Mínimo para cobrar</div>
         <div style="color:#aaa;font-size:11px;margin-bottom:8px;">Si el reembolso calculado del período da MENOS que esto, el cliente no puede reclamarlo (le sale el aviso con el monto). 0 = sin mínimo.</div>
         <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;">📅 Diario: $
+                <input type="number" id="refundMinDaily" value="${minVal('daily', 0)}" min="0" step="1" style="width:100px;"></label>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;">📆 Semanal: $
                 <input type="number" id="refundMinWeekly" value="${minVal('weekly', 1500)}" min="0" step="1" style="width:100px;"></label>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;">🗓️ Mensual: $
@@ -6295,16 +6298,18 @@ async function loadRefundTiers() {
 
 async function saveRefundTiers() {
     const msg = document.getElementById('refundTiersMsg');
+    const minDaily = Number(document.getElementById('refundMinDaily')?.value || 0);
     const minWeekly = Number(document.getElementById('refundMinWeekly')?.value);
     const minMonthly = Number(document.getElementById('refundMinMonthly')?.value);
-    if (!Number.isFinite(minWeekly) || minWeekly < 0 || !Number.isFinite(minMonthly) || minMonthly < 0) {
+    if (!Number.isFinite(minDaily) || minDaily < 0 || !Number.isFinite(minWeekly) || minWeekly < 0 || !Number.isFinite(minMonthly) || minMonthly < 0) {
         showToast('Los mínimos para cobrar tienen que ser números de 0 en adelante (0 = sin mínimo)', 'error');
         return;
     }
     const body = {
+        daily: _collectRefundTiers('daily'),
         weekly: _collectRefundTiers('weekly'),
         monthly: _collectRefundTiers('monthly'),
-        minimums: { weekly: minWeekly, monthly: minMonthly }
+        minimums: { daily: minDaily, weekly: minWeekly, monthly: minMonthly }
     };
     if (!confirm('¿Guardar los rangos y mínimos de reembolso? Se aplican AL INSTANTE a los reclamos nuevos y a lo que el cliente ve en su perfil.')) return;
     try {
@@ -10863,8 +10868,9 @@ async function loadReembolsos() {
         const recent = j.recent || [];
         // 'daily' quedó SOLO como etiqueta de los claims HISTÓRICOS de la tabla:
         // el reembolso diario se eliminó el 2026-08-07 (su card ya no se muestra).
-        const typeLabels = { daily: 'Diario (histórico)', weekly: 'Semanal', monthly: 'Mensual' };
+        const typeLabels = { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual' };
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:18px;">';
+        html += _centRefundCard('📅 Diarios', types.daily, '#4caf50');
         html += _centRefundCard('📆 Semanales', types.weekly, '#2196f3');
         html += _centRefundCard('🗓️ Mensuales', types.monthly, '#d4af37');
         html += '</div>';

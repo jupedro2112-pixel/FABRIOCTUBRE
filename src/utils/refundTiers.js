@@ -52,6 +52,17 @@ const DEFAULT_TIERS = normalizeTiers([
 ]);
 
 /**
+ * #349 (owner 2026-10-17): % FIJOS por período cuando el panel no guardó nada —
+ * DIARIO 25% · SEMANAL 3% · MENSUAL 1% (un solo rango sin techo = porcentaje plano).
+ * Se editan en el panel (Comandos → Rangos de reembolso): se puede volver a escalonar.
+ */
+const DEFAULT_TIERS_BY_PERIOD = {
+  daily: normalizeTiers([{ name: 'Diario', pct: 25, max: null }]),
+  weekly: normalizeTiers([{ name: 'Semanal', pct: 3, max: null }]),
+  monthly: normalizeTiers([{ name: 'Mensual', pct: 1, max: null }])
+};
+
+/**
  * Normaliza y VALIDA una escalera cruda (del panel o de la config guardada).
  * Devuelve los tiers completos (con key/emoji/color/min derivados) o TIRA un
  * Error con mensaje en castellano para mostrarle al admin.
@@ -178,6 +189,7 @@ function listTiers(tiers = DEFAULT_TIERS) {
 
 module.exports = {
   DEFAULT_TIERS,
+  DEFAULT_TIERS_BY_PERIOD,
   // 🪦 Alias del nombre viejo (pre panel-configurable), por si quedó algún import.
   REFUND_TIERS: DEFAULT_TIERS,
   MAX_TIERS,

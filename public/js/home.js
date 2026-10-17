@@ -134,6 +134,17 @@
     }
     // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
     // COMANDOS → sólo el título. El "N%" se resalta en verde.
+    // #349: cartel NOVEDAD del Inicio (texto /sys_entry_news; sin texto o sin % diario → se oculta).
+    function _paintEntryNews(en) {
+        const el = document.getElementById('evHeroNew');
+        if (!el) return;
+        if (!en || !en.text) { el.hidden = true; return; }
+        const pct = Number(en.pct) || 0;
+        const safe = String(en.text).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+        el.innerHTML = pct > 0 ? safe.replace(pct + '%', '<b>' + pct + '%</b>') : safe;
+        el.hidden = false;
+    }
+
     function _paintHomeBanner(hb) {
         const msg = _el('serviceBannerMsg');
         if (!msg || !hb || typeof hb !== 'object') return;
@@ -1421,6 +1432,7 @@
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
+        try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada

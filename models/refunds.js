@@ -25,8 +25,23 @@ async function getAllRefunds() {
   }
 }
 
-// 🪦 canClaimDailyRefund ELIMINADA (2026-08-07): el reembolso diario se sacó
-// del producto — quedan solo el semanal y el mensual.
+// Reembolso DIARIO (#349, vuelve el 2026-10-17): una vez por día, sobre la pérdida de AYER
+// (hora argentina). "Ya reclamado" = existe el claim con periodKey 'daily:<ayer>' (mismo
+// candado que usa el claim: índice único userId+type+periodKey). Próximo: mañana 00:00 AR.
+async function canClaimDailyRefund(userId) {
+  try {
+    const periodRanges = require('../src/utils/periodRanges');
+    const y = periodRanges.getYesterdayRangeArgentinaEpoch();
+    const t = periodRanges.getTodayRangeArgentinaEpoch();
+    const nextClaim = new Date((t.toEpoch + 1) * 1000).toISOString();
+    const claimed = await RefundClaim.findOne({ userId, type: 'daily', periodKey: 'daily:' + y.dateStr }).lean();
+    if (!claimed) return { canClaim: true, nextClaim: null, lastClaim: null, availableDays: 'Todos los días' };
+    return { canClaim: false, nextClaim, lastClaim: claimed.claimedAt, availableDays: 'Todos los días' };
+  } catch (error) {
+    console.error('Error verificando reembolso diario:', error);
+    return { canClaim: false, nextClaim: null, availableDays: 'Todos los días' };
+  }
+}
 
 // Verificar si el usuario puede reclamar reembolso semanal
 async function canClaimWeeklyRefund(userId) {
@@ -167,6 +182,7 @@ function calculateRefundFromNetwin(netwin, percentage) {
 module.exports = {
   getUserRefunds,
   getAllRefunds,
+  canClaimDailyRefund,
   canClaimWeeklyRefund,
   canClaimMonthlyRefund,
   recordRefund,

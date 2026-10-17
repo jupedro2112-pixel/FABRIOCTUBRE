@@ -133,7 +133,7 @@ function setupEventListeners() {
         const _vipFmtMoney = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
         // (Sin 'daily': el reembolso diario se eliminó 2026-08-07 y el server ya
         // filtra los claims históricos de ese tipo del feed.)
-        const _vipRefundLabel = { weekly: 'semanal', monthly: 'mensual' };
+        const _vipRefundLabel = { daily: 'diario', weekly: 'semanal', monthly: 'mensual' }; // #349
         function _vipClaimText(it) {
             const name = it.name || '***';
             if (it.kind === 'ruleta') return '🎰 ' + name + ' ganó ' + _vipFmtMoney(it.amount) + ' en la ruleta diaria';
@@ -376,7 +376,9 @@ function setupEventListeners() {
         const fileInput = document.getElementById('fileInput');
         if (fileInput) fileInput.addEventListener('change', VIP.chat.handleFileSelect);
 
-        // Refund buttons (el diario se eliminó 2026-08-07 — solo semanal y mensual)
+        // Refund buttons (#349: el diario vuelve)
+        const dailyRefundBtn = document.getElementById('dailyRefundBtn');
+        if (dailyRefundBtn) dailyRefundBtn.addEventListener('click', () => VIP.refunds.showRefundModal('daily'));
         const weeklyRefundBtn = document.getElementById('weeklyRefundBtn');
         if (weeklyRefundBtn) weeklyRefundBtn.addEventListener('click', () => VIP.refunds.showRefundModal('weekly'));
         const monthlyRefundBtn = document.getElementById('monthlyRefundBtn');

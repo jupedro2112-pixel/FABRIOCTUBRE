@@ -51,7 +51,7 @@ El sistema VIPCARGAS:
 - Gestiona **cargas** (manuales por agente, o AUTOMÁTICAS vía banco hgcash + IA de
   comprobantes) y **retiros** (self-service con confirmación de agente y pago
   automático por hgcash).
-- Da **reembolsos** sobre la pérdida real/NETWIN (semanal/mensual — el diario se
+- Da **reembolsos** sobre la pérdida real/NETWIN (DIARIO desde #349 2026-10-17 · semanal/mensual — el diario se había
   eliminó el 2026-08-07), **ruleta
   diaria**, **fueguito** (racha), **bono instalación $5.000**, **referidos** (8% de
   netwin → owner-revenue, y 7% de eso al referidor) y **campañas/publicistas** con

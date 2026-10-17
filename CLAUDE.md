@@ -92,8 +92,11 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   en hora argentina del lado de la plataforma. Para varios jugadores está el batch
   (`POST /players/stats/batch`, hasta 100) — es lo que hace viable el cálculo de
   comisiones de referidos sin comerse el límite de 60 req/min.
-- **Reembolsos por RANGO** (Bronce 3% / Plata 6% / Oro 10%), según lo perdido EN EL
-  PERÍODO que se reclama — no un acumulado. Ver `src/utils/refundTiers.js`.
+- **Reembolsos por RANGO**, según lo perdido EN EL PERÍODO que se reclama — no un acumulado.
+  Ver `src/utils/refundTiers.js`. **Desde #349 (2026-10-17) hay TRES períodos: DIARIO (sobre lo
+  perdido ayer, todos los días) 25% · SEMANAL 3% · MENSUAL 1%**, planos (un solo rango sin techo),
+  editables en Comandos → Rangos de reembolso. El diario había sido eliminado el 2026-08-07 (#153).
+  Cartel "NOVEDAD" del Inicio: `/sys_entry_news` ({pct} = % diario).
   **Desde 2026-09-11 la base es la pérdida sobre plata REAL** (`netwin −
   bonus.granted` del período) y además existe el **reembolso ACUMULATIVO de por
   vida** (`_cashbackStateToday`, `src/utils/cashbackFormula.js`, modelo
