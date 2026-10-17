@@ -11115,6 +11115,19 @@ async function initializeData() {
     }
   } catch (e) { console.warn('[startup-migration] reseñas seed:', e.message); }
 
+  // #281 (owner 2026-10-17, "ponele 10 %"): en producción Config['autoLoadBonusPct'] quedó en 0 y el cartel
+  // del chat decía "0% en todas tus cargas" (y la carga hgcash no bonificaba). Se fuerza UNA vez a 10;
+  // después el panel (COMANDOS → Bonos automáticos) manda, incluso si lo ponen en 0 a propósito.
+  try {
+    if (!(await getConfig('migration_autoloadpct_10_v1_done', false))) {
+      const cur = Number(await getConfig('autoLoadBonusPct', null));
+      if (!Number.isFinite(cur) || cur <= 0) {
+        await Config.set('autoLoadBonusPct', AUTO_LOAD_BONUS_PCT_DEFAULT, 'startup-migration');
+        console.log(`✅ autoLoadBonusPct: ${Number.isFinite(cur) ? cur : 'sin valor'} → ${AUTO_LOAD_BONUS_PCT_DEFAULT}% (#281)`);
+      }
+      await Config.set('migration_autoloadpct_10_v1_done', true, 'startup-migration');
+    }
+  } catch (e) { console.warn('[startup-migration] autoLoadBonusPct:', e.message); }
   // #271: el cartel de arriba del chat pasa a una sola frase (sólo si todavía tiene el texto de #266).
     const hb = await Command.findOne({ name: '/sys_home_banner' }).lean();
     if (hb && String(hb.response || '') === 'Si usás la carga automática tenés un {pct}% en todas tus cargas. Si preferís la carga tipo WhatsApp, seguimos en este chat.') {

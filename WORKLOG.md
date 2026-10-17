@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 281. 🔟 El cartel del chat decía "0% en todas tus cargas" → migración a 10%
+**Pedido (owner, captura):** el cartel "Recomendable" mostraba **0%**; "ponele 10 %".
+- El texto lo arma el server: `{pct}` = `Config['autoLoadBonusPct']` (default 10 en código). Que diga 0%
+  significa que en producción esa Config **quedó guardada en 0** (panel → COMANDOS → Bonos automáticos,
+  campo "Servicio completo"). Y desde #274 ese mismo % es el bono REAL de la carga hgcash ⇒ también cargaba sin bono.
+- Migración de arranque (`migration_autoloadpct_10_v1_done`): si la Config está en 0 o no existe, la pone
+  en **10** una sola vez. Después manda el panel (incluso 0 a propósito).
+- Sin redeploy también se arregla **ya** desde el panel: COMANDOS → Bonos automáticos → "Servicio completo" = 10
+  → Guardar. La app lo toma en la próxima apertura (viene en `GET /api/platforms`, cache en localStorage).
+- Sin cambios en la PWA (no hay bump de SW).
+
 ### 280. 🎠 Opiniones: deslizan solas y también a mano — SW v173
 **Pedido (owner):** "que se vayan deslizando automático y que el que entra también pueda deslizar".
 - `_startAutoSlide` (reviews.js): avanza una tarjeta cada 3,5 s con scroll suave y vuelve al principio al
