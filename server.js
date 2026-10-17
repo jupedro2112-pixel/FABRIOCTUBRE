@@ -1120,6 +1120,10 @@ async function landingPageHandler(req, res, next) {
 app.get('/l/:code', landingPageHandler);
 app.get('/landing/:code', landingPageHandler);
 app.get('/landing', landingPageHandler);
+// #306 (owner): link corto de INGRESO general — vipcargas.com/ingreso (y /landing/ingreso, /l/ingreso) sirve la
+// landing con la campaña "INGRESO" (orgánica, la crea el boot si no existe), así todo lo que entra por ahí queda
+// atribuido y medido como cualquier pauta. Va ANTES de /:code para que no lo tome el link corto de publicistas.
+app.get('/ingreso', (req, res, next) => { req.params = Object.assign({}, req.params, { code: 'INGRESO' }); return landingPageHandler(req, res, next); });
 
 // Info PÚBLICA para la landing (sin datos sensibles): plataformas habilitadas y escalera de reembolsos.
 app.get('/api/landing/info', async (req, res) => {
@@ -11276,6 +11280,16 @@ async function initializeData() {
   } catch (e) { console.warn('[startup-migration] autoLoadBonusPct:', e.message); }
   // #298 (owner): Ganamos queda HABILITADA y visible ("Próximamente" mientras no tenga API; no se puede elegir).
   // La migración de #296 que la apagaba se quitó antes de salir a producción.
+  // #306: campaña orgánica "INGRESO" para el link vipcargas.com/ingreso (landing de entrada general).
+  try {
+    const ex = await Campaign.findOne({ code: 'INGRESO' }).select('id isActive').lean();
+    if (!ex) {
+      await Campaign.create({ id: uuidv4(), code: 'INGRESO', publisher: 'Orgánico', name: 'Ingreso general (landing /ingreso)', isActive: true, createdBy: 'startup', notes: 'Creada sola (#306): link de entrada general vipcargas.com/ingreso. No borrar: si no existe, /ingreso da 404.' });
+      console.log('✅ Campaña INGRESO creada para /ingreso (#306)');
+    } else if (ex.isActive === false) {
+      await Campaign.updateOne({ code: 'INGRESO' }, { $set: { isActive: true } });
+    }
+  } catch (e) { console.warn('[startup] campaña INGRESO:', e.message); }
   // #296 (owner): el usuario de PRUEBA "lalodj" tiene acceso TOTAL al panel (role admin) para probar los ajustes.
   // La clave NO vive en el código: la cuenta se crea desde el panel (Usuarios → crear) o registrándose en la app,
   // y en cada arranque se le asegura el rol admin. Cuando termine la etapa de pruebas: bajarle el rol o borrarla.

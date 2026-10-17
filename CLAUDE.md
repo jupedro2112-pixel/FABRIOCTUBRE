@@ -156,7 +156,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   acoplada a `USERS_LIST_FIELDS` del backend (columna nueva ⇒ sumar campo al select).
   Detalle completo de trampas en `docs/ARCHITECTURE.md` §7.
 
-- **Landing de pauta en el repo (#224):** `public/landing/index.html` servida en `GET /l/:code`; el alta
+- **Landing de pauta en el repo (#224):** `public/landing/index.html` servida en `GET /l/:code` (y `/ingreso` = campaña
+  orgánica `INGRESO` que crea el boot, #306; `/l/demo` = vista previa sin cuentas); el alta
   crea el usuario en TODAS las plataformas con API conectada. **Plataforma fija (#225):**
   `User.preferredPlatform` evita la pregunta al cargar. ⚠️ En scripts de edición usar
   `s.replace(from, () => to)`: un `$'` en el texto nuevo rompe el archivo (pasó con server.js).

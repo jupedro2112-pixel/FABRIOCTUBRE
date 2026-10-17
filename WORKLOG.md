@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-17
 
+### 306. 🔗 Link de ingreso general: vipcargas.com/ingreso (landing con campaña INGRESO)
+**Pedido (owner):** "¿no me podés generar un link sobre el que tenemos con un / y agregar 'landing ingreso', y pasarme
+cómo quedó?".
+- Ruta nueva `GET /ingreso` (antes de `/:code`) → `landingPageHandler` con código **INGRESO**. También sirven
+  `/landing/ingreso` y `/l/ingreso`. La campaña `INGRESO` (publisher "Orgánico", activa) la crea el boot si no existe
+  ⇒ todo lo que entra por ese link queda atribuido y medido como una pauta más (no borrarla).
+- Vista previa sin crear cuentas: `vipcargas.com/l/demo` (ya existía, #234) y la página publicada para el owner
+  (artefacto "Landing Cargas Girox", regenerado desde `public/landing/index.html` en modo DEMO).
+
 ### 305. 🎧 Cabecera del chat: "Carga manual" con asistente — SW v194
 **Pedido (owner, captura):** "cambiá 'Cargas Girox' por 'Cargas manual' y ponele un logo de una persona tipo asistente".
 - `#waHeadName` fijo "Carga manual" (`_paintWaHeadName` ya no usa la plataforma) y `#waHeadAvatar` pasa a ser un SVG
