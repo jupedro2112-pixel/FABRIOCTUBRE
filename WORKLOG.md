@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 321. 🎨 Fondo azul profundo (tono del mockup del owner) — SW v207
+**Pedido (owner, mockup):** "poné este tono para darle más claridad al fondo". Base `--dx-bg` #141c33 con degradé
+azul→azul oscuro y radiales violeta/cian/rojo más presentes; vidrio (`--dx-glass`) y bordes un poco más claros; barra
+superior en el mismo azul; patrón de palos al 5%. Los acentos (cian, violeta, rojo, dorado) no cambian.
+
 ### 320. 🔴 Botón de cargar más chico (una línea) — SW v206
 **Pedido (owner):** "el botón no tan grande, tapa la mitad de las fotos". Queda en una sola línea ("⚡ PARA CARGAR
 AHORA MISMO · APRETÁ AQUÍ ›"), 12 px, con menos alto; el carrusel recupera el espacio.
