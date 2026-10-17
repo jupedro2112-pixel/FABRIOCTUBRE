@@ -232,6 +232,8 @@ const userSchema = new mongoose.Schema({
   // Es el fallback cuando no responde la pregunta "¿dónde querés jugar?" (timeout)
   // y la que se usa cuando el panel está en askMode 'first_time' / 'never'.
   // null = nunca eligió → se usa la default de Config['platforms'].
+  // #304: avatar elegido en el perfil de la app (clave del set de la PWA; los íconos de nivel se desbloquean por vipLevel).
+  avatar: { type: String, default: null },
   lastPlatform: {
     type: String,
     default: null,

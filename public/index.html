@@ -1219,6 +1219,15 @@
             <!-- ===== BURBUJA DE SOPORTE (#229): "que parezca un botón, un círculo que se mueva, que se pueda
                  minimizar pero al principio quede abierto". Arrastrable (home.js), abre el chat. ===== -->
             <!-- #243: compacta — sólo la foto con "Soporte en vivo"; ✕ la saca y pasa al círculo de arriba (al lado del fueguito). -->
+            <!-- ===== #304: selector de avatar del perfil ===== -->
+            <div id="avatarModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('avatarModal')">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <div class="modal-header"><h2>🙂 Tu avatar</h2></div>
+                    <p class="vl-intro">Elegí tu ícono. Los de <b>nivel</b> (bronce, plata, oro…) se desbloquean cuando llegás a ese nivel.</p>
+                    <div id="avatarGrid" class="av-grid"></div>
+                    <div class="modal-actions" style="margin-top:12px;"><button type="button" class="btn btn-secondary" style="width:100%;" onclick="hideModal('avatarModal')">Cerrar</button></div>
+                </div>
+            </div>
             <!-- ===== #294: escalera de niveles VIP (se abre desde el nivel junto al saldo; en el test también, con datos de ejemplo) ===== -->
             <div id="vipLevelsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('vipLevelsModal')">
                 <div class="modal-content" onclick="event.stopPropagation()">
@@ -2088,6 +2097,15 @@
             <div class="modal-header">
                 <h2>👤 Tu perfil</h2>
                 <p>Tus datos de acceso a la app y a las plataformas</p>
+            </div>
+            <!-- #304 (owner): recuadro de USUARIO con avatar (tocar = elegir ícono; los de nivel se desbloquean al subir). -->
+            <div class="pf-userbox" id="pfUserBox">
+                <button type="button" class="pf-avatar" id="pfAvatarBtn" onclick="VIP.home.openAvatarPicker()" title="Cambiar avatar"><span id="pfAvatar">👤</span><span class="pf-avatar-edit" aria-hidden="true">✎</span></button>
+                <div class="pf-userinfo">
+                    <div class="pf-username" id="pfUserName">—</div>
+                    <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
+                    <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
+                </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
             <div class="pf-main pf-main-big">

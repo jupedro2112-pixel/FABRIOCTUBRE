@@ -2176,3 +2176,22 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .bs-balance { flex-direction: column !important; align-items: flex-start !important; gap: 0 !important; line-height: 1.05; }
 .balance-strip .dash-balance-label { font-size: 8.5px !important; }
 .balance-strip .dash-balance-amount { font-size: 14px !important; }
+
+/* ══ #304: perfil de usuario con avatar (recuadro diferenciado) + selector de íconos ══ */
+.profile-modal .pf-userbox { --pf-ring: #00e5ff; display: flex; align-items: center; gap: 12px; margin: 4px 0 10px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(160deg, rgba(0,229,255,.10), rgba(124,77,255,.08)); border: 1px solid rgba(0,229,255,.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.profile-modal .pf-avatar { position: relative; flex: 0 0 auto; width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--pf-ring); background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(0,0,0,.4)); font-size: 30px; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 14px rgba(0,229,255,.3); padding: 0; }
+.profile-modal .pf-avatar:active { transform: scale(.96); }
+.profile-modal .pf-avatar-edit { position: absolute; right: -3px; bottom: -3px; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #ff1744, #ff6b6b); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center; border: 2px solid #0b0d16; }
+.profile-modal .pf-userinfo { min-width: 0; }
+.profile-modal .pf-username { font: 900 17px var(--dx-font); color: #fff; letter-spacing: .3px; word-break: break-all; }
+.profile-modal .pf-userlvl { font: 800 11.5px var(--dx-font); color: #c9d1e3; margin-top: 2px; }
+.profile-modal .pf-userhint { font: 600 9.5px var(--dx-font); color: #8f98ad; margin-top: 2px; }
+#avatarModal .vl-intro { font-size: 12.5px; line-height: 1.45; color: #c9d1e3; margin: 0 0 8px; }
+#avatarModal .vl-intro b { color: #fff; }
+#avatarModal .av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; max-height: 52vh; overflow-y: auto; }
+#avatarModal .av-opt { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); color: #c9d1e3; cursor: pointer; }
+#avatarModal .av-opt .av-e { font-size: 26px; line-height: 1; }
+#avatarModal .av-opt small { font: 700 9px var(--dx-font); text-transform: uppercase; letter-spacing: .4px; text-align: center; }
+#avatarModal .av-opt[style*="--av-c"] { border-color: var(--av-c); }
+#avatarModal .av-opt.sel { border-color: var(--dx-cyan); box-shadow: 0 0 12px rgba(0,229,255,.4); background: rgba(0,229,255,.08); }
+#avatarModal .av-opt.locked { opacity: .4; cursor: not-allowed; filter: grayscale(.6); }

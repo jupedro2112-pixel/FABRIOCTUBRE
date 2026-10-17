@@ -8594,6 +8594,19 @@ function _vipLevelsPublic() {
   }));
 }
 
+// #304: avatar del perfil (la PWA guarda la clave del ícono; los de nivel se validan en la app por vipLevel).
+app.get('/api/me/avatar', authMiddleware, async (req, res) => {
+  try { const u = await User.findOne({ id: req.user.userId }).select('avatar').lean(); res.json({ avatar: (u && u.avatar) || null }); }
+  catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/me/avatar', authMiddleware, async (req, res) => {
+  try {
+    const key = String((req.body || {}).avatar || '').trim().toLowerCase();
+    if (key && !/^[a-z0-9_-]{1,24}$/.test(key)) return res.status(400).json({ error: 'Avatar inválido.' });
+    await User.updateOne({ id: req.user.userId }, { $set: { avatar: key || null } });
+    res.json({ success: true, avatar: key || null });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #294: escalera pública (sin datos del jugador) para el modal de niveles de la PWA (y su test).
 app.get('/api/vip/levels', async (req, res) => {
   try { res.json({ levels: _vipLevelsPublic() }); } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }

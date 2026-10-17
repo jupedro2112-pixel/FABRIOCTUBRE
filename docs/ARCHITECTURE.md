@@ -885,6 +885,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   `Config['fireMinDeposits']` (10 cargas reales en los últimos N días del hito, si no el premio se pierde y la
   racha se reinicia — se valida en `POST /api/fire/claim-reward`; el modal la explica abajo y "Premios por racha"
   es plegable). El modal Info ya no muestra opiniones ni ruleta (ocultos por CSS).
+  **#304:** Perfil con avatar (`#pfUserBox`, `openAvatarPicker`/`pickAvatar`; `User.avatar` vía `GET/POST /api/me/avatar`);
+  los íconos de nivel se desbloquean por `vipStatus.levelIndex`.
   **#296:** `playNow` abre SIEMPRE afuera (`openPlatformTab` → `/jugar.html` con SSO, barra finita "‹ Volver a cargas");
   `body.is-tester` (username en `TESTER_USERNAMES`, home.js) es lo único que muestra los botones test; `_paintPlatformTexts`
   adapta Info/tarjeta de plataformas a la cantidad de plataformas habilitadas (tilde en COMANDOS → "Plataformas

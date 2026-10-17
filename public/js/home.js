@@ -110,6 +110,7 @@
         _pfShown = false;
         try { if (VIP.autoload && VIP.autoload.hidePreview) VIP.autoload.hidePreview(); } catch (_) {}
         _pfPaint();
+        try { _paintAvatar(); } catch (_) {} // #304
         try { VIP.ui.showModal('profileModal'); } catch (_) { const m = _el('profileModal'); if (m) m.classList.remove('hidden'); }
     }
     function profileTogglePw() { _pfShown = !_pfShown; _pfPaint(); }
@@ -196,6 +197,64 @@
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
+    // ---------------- #304: AVATAR DEL PERFIL ----------------
+    // (owner: "una personita tipo avatar en el nombre, que se pueda abrir y ajustar con diferentes íconos; según el
+    //  nivel: nivel 1 avatar común, al avanzar el ícono del nivel que le corresponda"). La clave se guarda en el
+    //  server (POST /api/me/avatar) y en localStorage; los íconos de nivel salen de la escalera VIP real.
+    const AVATARS_BASE = [['persona', '👤'], ['hombre', '🧔'], ['mujer', '👩'], ['joven', '🧑'], ['incognito', '🕶️'], ['dado', '🎲'], ['carta', '🃏'], ['slot', '🎰'], ['trebol', '🍀'], ['fuego', '🔥'], ['corona', '👑'], ['rayo', '⚡']];
+    let _avatar = null;
+    function _avatarKey() { return 'vip_avatar_' + String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase(); }
+    function _curLevelIdx() { const v = VIP.state && VIP.state.vipStatus; return v ? (Number(v.levelIndex) || (v.level && v.level.idx) || 0) : 0; }
+    // Un ícono por tier (bronce/plata/oro/platino/diamante/black): se desbloquea al llegar al PRIMER nivel del tier.
+    function _vipTiers() {
+        const v = VIP.state && VIP.state.vipStatus;
+        const levels = (v && Array.isArray(v.levels) && v.levels.length) ? v.levels : (_vipLevelsCache || []);
+        const seen = new Map();
+        for (const l of levels) { if (!seen.has(l.emoji)) seen.set(l.emoji, { key: 'lvl' + l.idx, emoji: l.emoji, name: String(l.name || '').replace(/\s+[IVX]+$/, ''), idx: l.idx, color: l.color }); }
+        return Array.from(seen.values());
+    }
+    function _avatarOptions() {
+        const cur = _curLevelIdx();
+        return AVATARS_BASE.map(([key, emoji]) => ({ key, emoji, locked: false }))
+            .concat(_vipTiers().map((t) => ({ key: t.key, emoji: t.emoji, name: t.name, locked: cur < t.idx, idx: t.idx, color: t.color })));
+    }
+    function _avatarEmoji(key) { const o = _avatarOptions().find((x) => x.key === key); return o && !o.locked ? o.emoji : null; }
+    function _defaultAvatar() { const v = VIP.state && VIP.state.vipStatus; return (v && v.level && v.level.emoji) || '👤'; }
+    function _paintAvatar() {
+        const em = (_avatar && _avatarEmoji(_avatar)) || _defaultAvatar();
+        const a = _el('pfAvatar'); if (a) a.textContent = em;
+        const n = _el('pfUserName'); if (n) n.textContent = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '—';
+        const v = VIP.state && VIP.state.vipStatus;
+        const lv = _el('pfUserLvl'); if (lv) { lv.textContent = v && v.level ? ('Nivel ' + v.level.emoji + ' ' + v.level.name) : 'Jugador · sin nivel todavía'; lv.style.color = (v && v.level && v.level.color) || ''; }
+        const box = _el('pfUserBox'); if (box) box.style.setProperty('--pf-ring', (v && v.level && v.level.color) || '#00e5ff');
+    }
+    async function _avatarInit() {
+        try { _avatar = localStorage.getItem(_avatarKey()) || null; } catch (_) {}
+        _paintAvatar();
+        if (!VIP.state || !VIP.state.currentToken) return;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/me/avatar', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const j = await r.json().catch(() => ({}));
+            if (r.ok && j && j.avatar) { _avatar = j.avatar; try { localStorage.setItem(_avatarKey(), _avatar); } catch (_) {} _paintAvatar(); }
+        } catch (_) {}
+    }
+    function openAvatarPicker() {
+        const grid = _el('avatarGrid'); if (!grid) return;
+        const cur = (_avatar && _avatarEmoji(_avatar)) ? _avatar : null;
+        grid.innerHTML = _avatarOptions().map((o) =>
+            '<button type="button" class="av-opt' + (o.key === cur ? ' sel' : '') + (o.locked ? ' locked' : '') + '"' +
+            (o.locked ? ' title="Se desbloquea en ' + _esc(o.name || 'ese nivel') + '"' : ' onclick="VIP.home.pickAvatar(\'' + _esc(o.key) + '\')"') +
+            (o.color ? ' style="--av-c:' + _esc(o.color) + '"' : '') + '>' +
+            '<span class="av-e">' + o.emoji + '</span>' + (o.name ? '<small>' + _esc(o.name) + (o.locked ? ' 🔒' : '') + '</small>' : '') + '</button>').join('');
+        try { VIP.ui.showModal('avatarModal'); } catch (_) { const m = _el('avatarModal'); if (m) m.classList.remove('hidden'); }
+    }
+    async function pickAvatar(key) {
+        if (!_avatarEmoji(key)) { try { VIP.ui.showToast('🔒 Ese ícono se desbloquea subiendo de nivel', 'info'); } catch (_) {} return; }
+        _avatar = key; try { localStorage.setItem(_avatarKey(), key); } catch (_) {}
+        _paintAvatar();
+        try { VIP.ui.hideModal('avatarModal'); } catch (_) { const m = _el('avatarModal'); if (m) m.classList.add('hidden'); }
+        try { await fetch(VIP.config.API_URL + '/api/me/avatar', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (VIP.state && VIP.state.currentToken) }, body: JSON.stringify({ avatar: key }) }); } catch (_) {}
+    }
     // #296: los botoncitos "test" sólo los ve el usuario de prueba (owner: "que la página quede original; el test sólo en lalodj").
     const TESTER_USERNAMES = ['lalodj'];
     function _applyTesterClass() {
@@ -895,6 +954,7 @@
                 }).join('');
         }
         try { _paintInstallStrip(); } catch (_) {} // #291: nivel al lado del saldo (app instalada)
+        try { _paintAvatar(); } catch (_) {} // #304: avatar/nivel en el perfil
     }
     try {
         const _origVip = VIP.refunds && VIP.refunds.loadVipStatus;
@@ -1302,6 +1362,7 @@
         try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();
         try { _applyTesterClass(); } catch (_) {} // #296: botones de test sólo para el usuario de prueba
+        try { _avatarInit(); } catch (_) {} // #304
         try { _paintPlatformTexts(); } catch (_) {} // #296: textos según cuántas plataformas hay
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
     }
@@ -1342,7 +1403,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

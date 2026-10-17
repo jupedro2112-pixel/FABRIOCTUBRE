@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-17
 
+### 304. 🙂 Perfil con avatar: recuadro de usuario, selector de íconos y los íconos de nivel que se desbloquean — SW v193
+**Pedido (owner):** "en Perfil una personita tipo avatar en el nombre, que se pueda abrir y ajustar con diferentes
+íconos; según el nivel: nivel 1 avatar común, al avanzar el ícono del nivel que le corresponda (bronce…); un buen
+recuadro de perfil de usuario para que tenga bien diferenciado el acceso a la app".
+- Recuadro `#pfUserBox` arriba de los datos: avatar grande redondo con aro del color del nivel, nombre de usuario,
+  "Nivel 🥈 Plata I" (o "Jugador · sin nivel todavía") y el hint. Tocar el avatar abre `#avatarModal`.
+- Set de íconos: 12 comunes (persona, dado, carta, slot, trébol, fuego, corona…) + uno por **tier de nivel** (🥉
+  Bronce, 🥈 Plata, 🥇 Oro, 💠 Platino, 💎 Diamante, 🖤 Black) tomados de la escalera VIP real; el de un tier se
+  desbloquea al llegar a su primer nivel (bloqueados: grises con 🔒). Sin elección, el avatar por defecto es el emoji
+  del nivel actual (o 👤).
+- Persistencia: `User.avatar` (`GET/POST /api/me/avatar`, clave validada) + localStorage por usuario.
+
 ### 303. 🔄 Recarga automática al actualizar · tarjetas de plataforma compactas · saldo apilado — SW v192
 **Pedidos (owner):** "la carga mínima se ve y desaparece"; "achicá el recuadro de Girox y Ganamos en carga auto así
 no tengo que deslizar"; "el saldo dejalo pero poné el número abajo así no se junta con lo de la derecha".
