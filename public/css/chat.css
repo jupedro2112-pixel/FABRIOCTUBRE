@@ -2564,3 +2564,19 @@ body.story-open { overflow: hidden; }
 .tn-stories.has-active .st-ring { background: linear-gradient(#1a0a2e, #1a0a2e) padding-box, linear-gradient(135deg, #ffd166, #fff) border-box; }
 .tn-btn:not(.tn-home).tn-stories .tn-lbl, .tn-btn:not(.tn-home).tn-telegram .tn-lbl { font-size: 6.8px !important; letter-spacing: .2px !important; color: #fff !important; white-space: nowrap; }
 @media (min-width: 400px) { .tn-btn:not(.tn-home).tn-stories .tn-lbl, .tn-btn:not(.tn-home).tn-telegram .tn-lbl { font-size: 7.5px !important; } }
+
+/* ══ #363 (owner): 7 botones arriba — letras más chicas y sin cortes (entran enteras en cada recuadro) ══ */
+.header.topnav { gap: 2px !important; padding-left: 4px !important; padding-right: 4px !important; }
+.header.topnav .tn-btn { padding: 4px 1px !important; min-width: 0; overflow: hidden; }
+.header.topnav .tn-btn:not(.tn-home) .tn-lbl { font-size: 7px !important; letter-spacing: 0 !important; line-height: 1.05 !important; word-break: keep-all; overflow-wrap: normal; hyphens: none; }
+.header.topnav .tn-btn:not(.tn-home) .tn-ico { font-size: 15px; }
+.header.topnav .tn-btn:not(.tn-home) .tn-ico svg { width: 16px; height: 16px; }
+.header.topnav .tn-home { flex: 1.25 1 0 !important; }
+.header.topnav .tn-home.tn-retro .tn-lbl { font-size: 8.5px !important; letter-spacing: 1.2px !important; }
+.header.topnav .tn-sep { margin: 4px 0 !important; }
+@media (max-width: 370px) {
+  .header.topnav .tn-btn:not(.tn-home) .tn-lbl { font-size: 6.3px !important; }
+  .header.topnav .tn-home.tn-retro .tn-lbl { font-size: 7.5px !important; letter-spacing: .8px !important; }
+  .header.topnav .tn-btn:not(.tn-home) .tn-ico svg { width: 15px; height: 15px; }
+}
+@media (min-width: 430px) { .header.topnav .tn-btn:not(.tn-home) .tn-lbl { font-size: 7.8px !important; } }

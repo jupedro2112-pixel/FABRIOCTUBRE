@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 363. 🔤 Barra de arriba: letras más chicas, sin cortes — SW v251
+**Pedido (owner):** "achicá las letras de los recuadros superiores para que se vean dentro del recuadro y no se corte la
+palabra". Con 7 botones: etiquetas a 7 px (6,3 px en ≤370 px, 7,8 px en ≥430 px), sin letter-spacing, sin partir
+palabras, íconos 16 px, gap 2 px, Inicio un poco menos ancho.
+
 ### 362. ✈️ Telegram a la izquierda de la barra · colores en las puntas · "Historias" más chico — SW v249
 **Pedido (owner):** "del otro lado agregá el Telegram así Inicio queda centrado; ponele color de Telegram así los 2 de la
 punta quedan con color; achicá la palabra Historias así se ve completa". `#navTelegram` (izquierda, celeste Telegram,
