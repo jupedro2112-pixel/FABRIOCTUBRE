@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-17
 
+### 355. 🖼️ Fotos del Inicio más grandes + verificación general + seguridad — SW v241
+**Pedidos (owner):** "todo ok? verificá errores y demás", "seguridad", "se achicaron las fotos, agrandalas en el mismo
+recuadro". Verificación: `node --check` en TODO el JS (server, PWA, SWs, panel, src/, models/), 4 HTML balanceados, sin
+ids duplicados, 54 handlers inline resueltos, Render en v240 con 200 en públicos y 401 sin token en admin/privados.
+- **Fotos:** el chip NOVEDAD (#349) le robó alto al recuadro → menos relleno alrededor de la foto y hero más compacto.
+- **Seguridad:** (1) la promoción a admin de `lalodj` ahora SOLO corre con `RENDER=true` (entorno de prueba) o
+  `TESTER_ADMIN_PROMOTE=1` — en producción una cuenta de prueba con clave simple NO queda como admin del panel;
+  (2) la clave literal que quedó en los clientes muertos de JUGAYGANA (`jugaygana*.js`) se reemplazó por
+  `process.env.LEGACY_DEFAULT_PASSWORD` (sigue en el historial de git: cambiar esa clave donde se use).
+  Pendiente sugerido: `helmet` (cabeceras) — hoy no está.
+
 ### 354. 🔥 Regla del fueguito en una línea — SW v240
 **Pedido (owner):** "resumí todo eso de 10 cargas mínimo en 1 línea". Tarjeta del home: "⚠️ Mínimo 10 cargas entre
 racha y racha · si no, vuelve a 0" (nowrap, 10 px). El detalle largo sigue dentro del modal.

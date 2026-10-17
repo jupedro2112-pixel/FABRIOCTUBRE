@@ -197,8 +197,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
 - **Ganamos "Próximamente" hasta tener la API (#298, 2026-10-17):** sigue habilitada y visible, pero con
   `connected:false` no se puede elegir ni se ofrece al cargar (`decideForDeposit` filtra por API). Se vuelve
   seleccionable sola al configurar `GANAMOS_API_URL/KEY`. El tilde de COMANDOS la esconde del todo si hace falta.
-  El usuario `lalodj` recibe `role:'admin'` en cada arranque (cuenta de prueba; la clave la pone el owner, nunca en
-  el código) y es el único que ve los botones "test" de la PWA (`TESTER_USERNAMES` en home.js).
+  El usuario `lalodj` recibe `role:'admin'` en cada arranque **sólo en el entorno de prueba** (`RENDER=true`, que Render
+  pone solo, o `TESTER_ADMIN_PROMOTE=1`; en AWS/producción NO — #355 seguridad). La clave la pone el owner, nunca en
+  el código. Es el único que ve los botones "test" de la PWA (`TESTER_USERNAMES` en home.js).
 
 - **Multi-plataforma (#219, 2026-10-16):** con 2+ plataformas habilitadas en Configuración →
   "Plataformas de juego", la auto-carga hgcash **pregunta al cliente dónde jugar** (botones en el

@@ -247,7 +247,7 @@ async function makeDeposit(username, amount, description = '') {
     console.log('👤 Usuario no encontrado, intentando crear:', username);
     const createResult = await jugaygana.createPlatformUser({
       username: username,
-      password: 'asd123',
+      password: (process.env.LEGACY_DEFAULT_PASSWORD || ''),
       userrole: 'player',
       currency: 'ARS'
     });
@@ -336,7 +336,7 @@ async function makeWithdrawal(username, amount, description = '') {
     console.log('👤 Usuario no encontrado, intentando crear:', username);
     const createResult = await jugaygana.createPlatformUser({
       username: username,
-      password: 'asd123',
+      password: (process.env.LEGACY_DEFAULT_PASSWORD || ''),
       userrole: 'player',
       currency: 'ARS'
     });

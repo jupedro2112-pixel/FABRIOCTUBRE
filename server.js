@@ -11443,10 +11443,13 @@ async function initializeData() {
   // #296 (owner): el usuario de PRUEBA "lalodj" tiene acceso TOTAL al panel (role admin) para probar los ajustes.
   // La clave NO vive en el código: la cuenta se crea desde el panel (Usuarios → crear) o registrándose en la app,
   // y en cada arranque se le asegura el rol admin. Cuando termine la etapa de pruebas: bajarle el rol o borrarla.
+  // #355 (seguridad): SOLO en el entorno de prueba (Render pone RENDER=true) o con TESTER_ADMIN_PROMOTE=1. En producción
+  // (AWS) no se toca: una cuenta de prueba con clave simple NO puede quedar como admin del panel.
   try {
+    if (!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1')) throw Object.assign(new Error('skip'), { skip: true });
     const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
-  } catch (e) { console.warn('[startup] tester lalodj:', e.message); }
+  } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #349 (owner 2026-10-17): reembolsos DIARIO 25% · SEMANAL 3% · MENSUAL 1% (planos). Una sola vez: pisa
   // las escaleras guardadas en el panel; después manda el panel (Comandos → Rangos de reembolso).
   try {
