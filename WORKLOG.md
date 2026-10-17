@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 286. 🏷️ "Recomendado" debajo de Girox — SW v178
+**Pedido (owner, captura):** "el recomendado dejalo abajo de Girox". La etiqueta flotaba arriba a la izquierda
+del recuadro; ahora va en flujo, debajo del nombre (`_platBtn` en home.js + CSS #286).
+
 ### 285. 🐛 Carga gratis: "la instalo después" no mostraba el botón grande de abajo — SW v177
 **Pedido (owner):** "si aprieto reclamar después, dice que aparecerá abajo pero después no aparece".
 - Causa: en el **modo test** (botón "test · carga gratis por instalar") "la instalo después" sólo mostraba un
