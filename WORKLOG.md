@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 356. 🔥 Tarjeta del fueguito más baja — SW v242
+**Pedido (owner):** "achicá el recuadro del fueguito un poco de altura, mínimo, para que la página principal no tenga
+deslizante". Menos relleno, llama/título/racha/regla más chicos (CSS `#fireHomeCard`, mismo contenido).
+
 ### 355. 🖼️ Fotos del Inicio más grandes + verificación general + seguridad — SW v241
 **Pedidos (owner):** "todo ok? verificá errores y demás", "seguridad", "se achicaron las fotos, agrandalas en el mismo
 recuadro". Verificación: `node --check` en TODO el JS (server, PWA, SWs, panel, src/, models/), 4 HTML balanceados, sin
