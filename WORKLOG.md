@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 337. 📐 Recuadro de fotos al espacio sobrante: Inicio sin deslizar — SW v223
+**Pedido (owner):** "el recuadro hizo que haya que deslizar y se pierden las reseñas; ajustalo al borde máximo así no
+hay que deslizar, antes entraba bien". Se deshace la altura fija de #322 (64 vh): `.ev-frame-wrap` vuelve a `flex:1`
+(toma lo que sobra entre servicios/plataformas y opiniones), las fotos se adaptan a ese alto y el Inicio no scrollea
+(sólo en pantallas ≤640 px de alto se habilita el scroll de respaldo).
+
 ### 336. 🧹 Sin el botón "LINK CASINO AQUÍ" en el Inicio — SW v222
 **Pedido (owner).** Se quita del carrusel (vuelve la leyenda chica "Fotos ilustrativas de Girox"); el botón "Link casino
 aquí" de carga auto / manual sigue. `entryViewSite` queda disponible sin uso.

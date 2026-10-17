@@ -2433,3 +2433,9 @@ body.home-mini .ig-bar { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); 
 .ev-slides-dots { bottom: 48px; }
 .ev-cta { bottom: 22px; }
 .ev-slides-cap { padding: 4px 10px 5px; font-size: 9px; color: #8f98ad; text-transform: uppercase; letter-spacing: .6px; }
+
+/* ══ #337 (owner): el recuadro de fotos vuelve a tomar EXACTAMENTE el espacio que sobra (como antes de #322): el Inicio
+   entra completo sin deslizar y las opiniones quedan a la vista. Las fotos se achican a ese alto (contain). ══ */
+.ev-frame-wrap { flex: 1 1 auto !important; height: auto !important; min-height: 150px !important; }
+.entry-view { overflow-y: hidden; }
+@media (max-height: 640px) { .entry-view { overflow-y: auto; } }
