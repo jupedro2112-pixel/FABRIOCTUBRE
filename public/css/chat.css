@@ -2303,3 +2303,10 @@ body.ev-expanded { overflow: hidden; }
 .plat-link-btn .plb-t { font: 700 11px var(--dx-font); color: #e1e6f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.home-full .plat-link-full { display: flex; }
 body.home-mini .plat-link-manual { display: flex; }
+
+/* ══ #330: "LINK CASINO AQUÍ · www.1girox.com" como botón en el carrusel ══ */
+.ev-slides-cap { padding: 0 10px 6px; }
+.ev-link-btn { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(0,229,255,.55); background: linear-gradient(160deg, rgba(0,229,255,.16), rgba(124,77,255,.12)); color: #fff; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.12); max-width: 100%; }
+.ev-link-btn:active { transform: scale(.97); }
+.ev-link-btn b { font: 900 10.5px var(--dx-font); letter-spacing: 1.2px; text-transform: uppercase; color: var(--dx-cyan); white-space: nowrap; }
+.ev-link-btn span { font: 700 10.5px var(--dx-font); color: #e1e6f0; white-space: nowrap; }

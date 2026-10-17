@@ -938,7 +938,7 @@
             <!-- #275: botón chiquito de prueba del cartel "Jugar ahora" (modo carga manual) -->
             <div class="test-mini-row test-mini-manual"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora"</button></div>
             <!-- #328 (owner): link de la plataforma como botón (abre el casino para JUGAR, con login) -->
-            <button type="button" class="plat-link-btn plat-link-manual" onclick="VIP.home.playNow('girox')"><span class="plb-k">🔗 Link plataforma</span><span class="plb-t">Jugar en Girox · entrás con tu sesión ›</span></button>
+            <button type="button" class="plat-link-btn plat-link-manual" onclick="VIP.home.playNow('girox')"><span class="plb-k">🔗 Link casino aquí</span><span class="plb-t">www.1girox.com · entrás con tu sesión ›</span></button>
             <!-- ===== #267 (owner 2026-10-17): PANTALLA DE ENTRADA = la plataforma abierta adentro.
                  "De entrada 3 botones: Girox con la página ya abierta para que vean cómo es, Ganamos abajo
                  para cambiar, y la opción Carga manual / Carga automática, aparte de todo lo que está".
@@ -976,7 +976,8 @@
                         <div class="ev-slides-track" id="entrySlidesTrack"></div>
                         <div class="ev-slides-dots" id="entrySlidesDots"></div>
                         <!-- #324 (owner): link de la plataforma para verla antes de jugar (abre aparte, adentro de la app, con "Volver a cargas") -->
-                        <div class="ev-slides-cap">🔗 Link plataforma: <a href="#" class="ev-plat-link" onclick="event.preventDefault();VIP.home.entryViewSite()">www.1girox.com</a> (mirala)</div>
+                        <!-- #330 (owner): el link del casino como BOTÓN: "LINK CASINO AQUÍ · www.1girox.com" -->
+                        <div class="ev-slides-cap"><button type="button" class="ev-link-btn" onclick="VIP.home.entryViewSite()"><b>🔗 LINK CASINO AQUÍ</b><span>www.1girox.com</span></button></div>
                         <!-- #329 (owner): el botón "Ver completas" (#323) se sacó: las fotos ya se ven bien. -->
                         <!-- #322 (owner): botón chiquito sobre el final de la foto (no tapa el resto) -->
                         <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ Para cargar ahora mismo · apretá aquí ›</span></button>
@@ -1166,7 +1167,7 @@
             <!-- #275: botón chiquito de prueba del cartel "Jugar ahora" (modo carga automática) -->
             <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora" (con el extra por instalar)</button></div>
             <!-- #328 (owner): link de la plataforma como botón (abre el casino para JUGAR, con login) -->
-            <button type="button" class="plat-link-btn plat-link-full" onclick="VIP.home.playNow('girox')"><span class="plb-k">🔗 Link plataforma</span><span class="plb-t">Jugar en Girox · entrás con tu sesión ›</span></button>
+            <button type="button" class="plat-link-btn plat-link-full" onclick="VIP.home.playNow('girox')"><span class="plb-k">🔗 Link casino aquí</span><span class="plb-t">www.1girox.com · entrás con tu sesión ›</span></button>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
             <!-- #262: una sola línea abajo: Referidos + ¿Cómo funciona? (Instalar app subió al lado del saldo) -->
@@ -2122,7 +2123,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v215</div>
+                    <div class="pf-build" id="appBuildTag">app v216</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

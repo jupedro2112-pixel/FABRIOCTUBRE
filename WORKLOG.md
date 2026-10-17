@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-17
 
+### 330. 🔗 "LINK CASINO AQUÍ · www.1girox.com" como botón — SW v216
+**Pedido (owner):** "el link de la plataforma es www.1girox.com; ponelo en forma de botón y poné 'link casino aquí'".
+En el Inicio la leyenda del carrusel es ahora un botón píldora (abre la web pública aparte, con "Volver a cargas");
+los botones de abajo de carga auto/manual pasan a decir "🔗 Link casino aquí · www.1girox.com · entrás con tu sesión"
+(abren el casino con login).
+
 ### 329. 🧹 Sin el botón "Ver completas" de las fotos — SW v215
 **Pedido (owner):** "sacá la parte de agrandar fotos, ahora se ve bien". Se quitó `#entryExpandBtn` del HTML; la lógica
 `toggleEntryExpand` queda inerte (sin botón) por si vuelve a hacer falta.
