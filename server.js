@@ -8591,6 +8591,10 @@ function _vipLevelsPublic() {
   }));
 }
 
+// #294: escalera pública (sin datos del jugador) para el modal de niveles de la PWA (y su test).
+app.get('/api/vip/levels', async (req, res) => {
+  try { res.json({ levels: _vipLevelsPublic() }); } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/vip/status', authMiddleware, async (req, res) => {
   try {
     if (await vipLevelService.isDisabled(Config)) return res.json({ enabled: false });

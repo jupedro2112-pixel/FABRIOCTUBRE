@@ -336,7 +336,7 @@
             try {
                 const ts = new Date(message.timestamp || 0).getTime();
                 const fresh = !ts || (Date.now() - ts) < 3 * 60000;
-                if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); showPlayNow({ platform: md.platform, amount: md.amount, bonus: md.bonus }); }
+                if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); _lastDeposit = { platform: md.platform, amount: md.amount, bonus: md.bonus }; showPlayNow(Object.assign({}, _lastDeposit, (_ig && _ig.status === 'offered' && Number(_ig.amount) > 0) ? { gift: _ig } : {})); }
             } catch (_) {}
         }
         // #283: oferta de carga GRATIS por instalar la app (primera carga) → hoja al instante si es reciente.
@@ -361,6 +361,7 @@
     //  tipo link aparte dentro de la app, entrando a la página original adentro"). Hoja inferior fija;
     // el botón abre la plataforma EMBEBIDA (login automático si tiene API; si no, su web) — siempre adentro.
     const _playNowShown = new Set();
+    let _lastDeposit = null; // #294: última carga acreditada en esta sesión (para pegarle la oferta del extra)
     function _platName(pid) {
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find((x) => x.id === pid);
@@ -378,10 +379,36 @@
         if (s) s.textContent = 'Ya tenés las fichas en ' + _platName(pid) + bon + '. Entrás con tu sesión, sin salir de la app.';
         if (b) { b.onclick = function () { playNow(pid); }; b.textContent = '🎰 Jugar ahora en ' + _platName(pid); }
         if (tag) tag.style.display = o.test ? '' : 'none';
+        // #294: la oferta del % EXTRA por instalar la app va ADENTRO de este cartel (un solo cartel).
+        const g = o.gift, gb = _el('pnGift'), later = _el('playNowLater');
+        card.dataset.test = o.test ? '1' : '';
+        if (gb) {
+            if (g && Number(g.amount) > 0) {
+                const pct = _igPct(g), inApp = _isStandalone();
+                const gt = _el('pnGiftTitle'), ga = _el('pnGiftAmt'), gs = _el('pnGiftSub'), gbtn = _el('pnGiftBtn');
+                if (gt) gt.textContent = '🎁 ' + (pct ? '+' + pct + ' EXTRA' : 'EXTRA') + ' por instalar la app';
+                if (ga) ga.textContent = '+' + _igFmt(g.amount) + ' extra';
+                if (gs) gs.textContent = inApp ? 'Ya estás en la app: tocá y te lo cargamos ahora.' : 'Instalala ahora y te lo cargamos al instante, o seguí jugando y cargalo después: te queda un botón abajo.';
+                if (gbtn) { gbtn.disabled = false; gbtn.textContent = inApp ? ('🎁 Cargar mi ' + (pct || 'extra') + (pct ? ' extra' : '') + ' ahora') : ('📲 Instalar ahora y cargar el ' + (pct || 'extra') + (pct ? ' extra' : '')); }
+                gb.style.display = ''; card.dataset.gift = '1'; _igSheet = g;
+                if (later) later.textContent = inApp ? 'Después' : '🎰 Seguir jugando · lo cargo después';
+                if (o.giftOnly) {
+                    if (t) t.textContent = '🎁 Tu extra por instalar la app';
+                    if (s) s.textContent = 'Te lo cargamos sobre tu última carga apenas instales la app.';
+                }
+            } else { gb.style.display = 'none'; card.dataset.gift = ''; if (later) later.textContent = 'Después'; }
+        }
+        if (b) b.style.display = o.giftOnly ? 'none' : '';
         card.classList.add('show');
         card.setAttribute('aria-hidden', 'false');
     }
-    function hidePlayNow() { const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); } }
+    // #294: "Después" / "Seguir jugando": si el cartel trae la oferta del extra, queda PENDIENTE (barra de abajo).
+    function playNowLater() {
+        const card = _el('playNowCard');
+        if (card && card.dataset.gift === '1') return installGiftLater();
+        hidePlayNow();
+    }
+    function hidePlayNow() { const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); c.dataset.gift = ''; c.dataset.test = ''; } }
     function playNow(pid) {
         hidePlayNow();
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
@@ -392,7 +419,8 @@
     // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.
     function playNowTest() {
         const pid = (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform || _platforms.defaultPlatform)) || 'girox';
-        showPlayNow({ platform: pid, amount: 10000, bonus: 0, test: true });
+        // #294: el test muestra el cartel COMPLETO: carga de ejemplo + el % extra por instalar la app (50% de $10.000).
+        showPlayNow({ platform: pid, amount: 10000, bonus: 0, gift: { amount: 5000, pct: 50, baseAmount: 10000 }, test: true });
     }
 
     // ---------------- #283/#290: % EXTRA POR INSTALAR LA APP (primera carga) ----------------
@@ -441,29 +469,14 @@
         const pb = _igPct(_ig);
         if (t) t.textContent = _isStandalone() ? ('Cargá tu ' + (pb || 'extra') + (pb ? ' extra' : '') + ' ahora') : ('Instalá la app y cargá tu ' + (pb || 'extra') + (pb ? ' extra' : ''));
     }
-    let _igSheet = null; // oferta que muestra la hoja ahora ({amount, test})
+    let _igSheet = null; // oferta que muestra el cartel ahora ({amount, pct})
+    // #294: la oferta se muestra ADENTRO del cartel "Jugar ahora" (con la última carga si la hubo en esta sesión).
     function showInstallGift(o) {
         o = o || {};
-        _igSheet = o;
-        const card = _el('installGiftCard'); if (!card) return;
-        const amt = _el('igAmount'), sub = _el('igSub'), main = _el('igMainBtn'), later = _el('igLaterBtn'), note = _el('igNote'), tag = _el('igTest');
-        const inApp = _isStandalone();
-        const pct = _igPct(o), title = _el('igTitle');
-        if (title) title.textContent = pct ? ('¡' + pct + ' EXTRA por instalar la app!') : '¡EXTRA por instalar la app!';
-        if (amt) amt.textContent = '+' + _igFmt(o.amount) + ' extra';
-        if (sub) sub.textContent = inApp
-            ? ('Ya estás en la app: tocá y te cargamos ' + _igFmt(o.amount) + ' extra ahora.')
-            : ('Instalá la app y te cargamos ' + _igFmt(o.amount) + ' extra sobre tu carga. Podés hacerlo ahora o seguir jugando y cargarlo después, sin perder el ritmo.');
-        if (main) { main.disabled = false; main.textContent = inApp ? ('🎁 Cargar mi ' + (pct || 'extra') + (pct ? ' extra' : '') + ' ahora') : ('📲 Instalar ahora y cargar el ' + (pct || 'extra') + (pct ? ' extra' : '')); }
-        if (later) later.style.display = inApp ? 'none' : '';
-        if (note) note.style.display = inApp ? 'none' : '';
-        if (tag) tag.style.display = o.test ? '' : 'none';
-        card.dataset.test = o.test ? '1' : '';
-        card.classList.add('show');
-        card.setAttribute('aria-hidden', 'false');
+        showPlayNow(Object.assign({}, _lastDeposit || {}, { gift: o, test: !!o.test, giftOnly: !_lastDeposit }));
     }
-    function hideInstallGift() { const c = _el('installGiftCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); } }
-    function _igIsTest() { const c = _el('installGiftCard'); return !!(c && c.dataset.test === '1'); }
+    function hideInstallGift() { hidePlayNow(); }
+    function _igIsTest() { const c = _el('playNowCard'); return !!(c && c.dataset.test === '1' && c.dataset.gift === '1'); }
     function installGiftOpen() { showInstallGift(_ig || {}); }
     function _igClearTest() { if (_ig && _ig.test) { _ig = null; _igPaintBar(); } }
     // "Ahora quiero jugar": la oferta queda PENDIENTE (botón grande abajo) hasta que instale y reclame.
@@ -492,7 +505,7 @@
     }
     async function installGiftClaim() {
         if (_ig && _ig.test) { hideInstallGift(); _igClearTest(); return; }
-        const btn = _el('igMainBtn');
+        const btn = _el('pnGiftBtn');
         if (btn) { btn.disabled = true; btn.textContent = 'Cargando tu extra…'; }
         try {
             const { ok, j } = await _igFetch('/api/install-gift/claim', 'POST');
@@ -529,7 +542,7 @@
         }
     }
     // Botón chiquito "test" (carga automática): muestra la oferta como la vería el cliente ($10.000 de ejemplo).
-    function installGiftTest() { showInstallGift({ amount: 5000, baseAmount: 10000, pct: 50, test: true }); } // 50% de una carga de $10.000
+    function installGiftTest() { playNowTest(); } // #294: un solo test (el cartel "Jugar ahora" con el extra adentro)
     // Instaló desde el navegador con la oferta pendiente → recordatorio de cómo reclamar.
     try {
         window.addEventListener('appinstalled', () => {
@@ -719,6 +732,13 @@
         const v = VIP.state && VIP.state.vipStatus;
         const lvl = _el('hvLevel'), sub = _el('hvSub'), fill = _el('hvFill'), pc = _el('hvPct');
         if (!v || v.enabled === false || !Array.isArray(v.levels) || !v.levels.length) {
+            if (_installedTest) { // #294: en el test se ve como si fuera real (ejemplo), y se puede abrir la escalera
+                if (lvl) { lvl.textContent = '🥈 Plata I'; lvl.style.color = '#c0c0c0'; }
+                if (sub) sub.textContent = '40% hacia Plata II';
+                if (fill) { fill.style.width = '40%'; fill.style.background = 'linear-gradient(90deg, #c0c0c0, #ffd700)'; }
+                if (pc) pc.textContent = '40%';
+                return;
+            }
             if (lvl) { lvl.textContent = 'Nivel VIP'; lvl.style.color = ''; }
             if (sub) sub.textContent = 'cargando…';
             if (fill) fill.style.width = '0%';
@@ -736,11 +756,32 @@
         _paintInstallStrip();
         try { VIP.ui.showToast(_installedTest ? 'TEST: así se ve con la app instalada (nivel VIP al lado del saldo)' : 'TEST: vista normal (Instalar app)', 'info'); } catch (_) {}
     }
-    function vipStripOpen() {
-        const card = _el('vipCard'); if (!card) return;
-        try { const body = _el('vipCardBody'); if (body && body.style.display === 'none') toggleVipCard(); } catch (_) {}
-        try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) { card.scrollIntoView(); }
+    // #294 (owner): tocar el nivel abre la ESCALERA completa (modal), también en el test (datos de ejemplo si
+    // el server todavía no mandó el estado VIP). Niveles: VIP.state.vipStatus.levels o GET /api/vip/levels.
+    let _vipLevelsCache = null;
+    async function openVipLevels() {
+        const v = VIP.state && VIP.state.vipStatus;
+        let levels = (v && Array.isArray(v.levels) && v.levels.length) ? v.levels : _vipLevelsCache;
+        if (!levels) {
+            try { const r = await fetch(VIP.config.API_URL + '/api/vip/levels'); const j = await r.json(); levels = _vipLevelsCache = (j && j.levels) || []; } catch (_) { levels = []; }
+        }
+        const sample = !v && _installedTest;
+        const curIdx = v ? (Number(v.levelIndex) || (v.level && v.level.idx) || 0) : (sample ? 3 : 0);
+        const nextIdx = curIdx + 1;
+        const pct = v ? Math.round(Math.max(0, Math.min(100, Number(v.progressPct) || 0))) : (sample ? 40 : 0);
+        const cur = levels.find((l) => l.idx === curIdx), nx = levels.find((l) => l.idx === nextIdx);
+        const mine = _el('vipLevelsMine'), list = _el('vipLevelsList');
+        if (mine) mine.innerHTML = (cur ? 'Tu nivel: <b style="color:' + _esc(cur.color || '#fff') + '">' + _esc(cur.emoji + ' ' + cur.name) + '</b>' : 'Todavía sin nivel') + (nx ? ' · <b>' + pct + '%</b> hacia ' + _esc(nx.emoji + ' ' + nx.name) : ' · nivel máximo') + (sample ? ' <small>(ejemplo del test)</small>' : '');
+        if (list) list.innerHTML = levels.length ? levels.map((l) =>
+            '<div class="vl-row' + (l.idx <= curIdx ? ' on' : '') + (l.idx === nextIdx ? ' next' : '') + '">' +
+            '<span class="vl-st">' + (l.idx <= curIdx ? '✓' : '🔒') + '</span>' +
+            '<span class="vl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + (l.idx === nextIdx ? ' <small>próximo</small>' : '') + '</span>' +
+            '<span class="vl-gift">' + (Number(l.levelUpBonusArs) > 0 ? '🎁 $' + Math.round(Number(l.levelUpBonusArs)).toLocaleString('es-AR') : '') + '</span>' +
+            '<span class="vl-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span></div>').join('')
+            : '<p class="vl-empty">No pudimos cargar los niveles. Probá de nuevo.</p>';
+        try { VIP.ui.showModal('vipLevelsModal'); } catch (_) { const m = _el('vipLevelsModal'); if (m) m.classList.remove('hidden'); }
     }
+    function vipStripOpen() { openVipLevels(); }
     try {
         window.addEventListener('beforeinstallprompt', () => setTimeout(paintInstallButtons, 0));
         window.addEventListener('appinstalled', () => setTimeout(paintInstallButtons, 0));
@@ -1258,7 +1299,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, installedTestToggle, vipStripOpen, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, installedTestToggle, vipStripOpen, openVipLevels, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

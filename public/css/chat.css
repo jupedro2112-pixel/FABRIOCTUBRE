@@ -2096,3 +2096,34 @@ body.home-full .test-mini-bs { display: inline-block; }
 
 /* ══ #292: escalera VIP — plata que desbloquea cada nivel ══ */
 #vipCard .vip-lvl-win { font-size: 10px; white-space: nowrap; }
+
+/* ══ #294: un solo cartel (Jugar ahora + extra por instalar), barra pendiente de punta a punta, fueguito como estaba,
+   premios del fueguito plegables, modal de niveles VIP ══ */
+.pn-gift { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(160deg, rgba(46,230,107,.12), rgba(0,229,255,.05)); border: 1px solid rgba(46,230,107,.45); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pn-gift-t { font: 900 12.5px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; color: #ffd166; }
+.pn-gift-amt { font: 900 26px var(--dx-font); color: #2ee66b; text-shadow: 0 0 16px rgba(46,230,107,.45); line-height: 1.1; }
+.pn-gift-sub { font-size: 11px; line-height: 1.35; color: #d6dbe8; max-width: 36ch; }
+.pn-gift-btn { width: 100%; margin-top: 4px; background: linear-gradient(135deg, #2ee66b, #00c853); color: #06070d; border: 0; border-radius: 999px; padding: 11px 14px; font: 900 12.5px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; cursor: pointer; box-shadow: 0 8px 22px rgba(46,230,107,.35); }
+.pn-gift-btn:disabled { opacity: .7; }
+.ig-bar { left: 0; right: 0; bottom: 0; max-width: none; margin: 0; border-radius: 16px 16px 0 0; padding: 11px 14px; padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px)); justify-content: center; animation: none; box-shadow: 0 -8px 30px rgba(255,109,0,.4), inset 0 1px 0 rgba(255,255,255,.25); }
+.ig-bar-in { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 560px; }
+.ig-bar-t { flex: 0 1 auto; text-align: center; }
+.ig-bar-k { font-size: 8.5px; letter-spacing: 1.4px; text-transform: uppercase; }
+body.home-mini .ig-bar { bottom: 62px; padding-bottom: 11px; }
+#fireHomeCard { flex-direction: row; align-items: center; gap: 8px; }
+.fire-ms-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--dx-border); border-radius: 10px; padding: 8px 10px; color: var(--dx-text); cursor: pointer; margin-bottom: 6px; }
+.fire-ms-sum { flex: 1; text-align: left; font: 700 10.5px var(--dx-font); color: #ffb347; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fire-ms-chev { font: 800 10px var(--dx-font); color: var(--dx-cyan); white-space: nowrap; }
+#vipLevelsModal .vl-intro { font-size: 12.5px; line-height: 1.45; color: #c9d1e3; margin: 0 0 8px; }
+#vipLevelsModal .vl-intro b { color: #fff; }
+#vipLevelsModal .vl-mine { font-size: 12.5px; color: #f4f6fb; background: rgba(0,229,255,.08); border: 1px solid rgba(0,229,255,.3); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+#vipLevelsModal .vl-mine small { color: #8f98ad; }
+#vipLevelsModal .vl-list { max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+#vipLevelsModal .vl-row { display: grid; grid-template-columns: 18px 1.2fr 1fr .9fr; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.03); font-size: 11.5px; opacity: .6; }
+#vipLevelsModal .vl-row.on { opacity: 1; background: rgba(46,230,107,.08); }
+#vipLevelsModal .vl-row.next { opacity: 1; border: 1px solid rgba(0,229,255,.4); }
+#vipLevelsModal .vl-name { font-weight: 800; }
+#vipLevelsModal .vl-name small { color: var(--dx-cyan); font-weight: 700; }
+#vipLevelsModal .vl-gift { color: var(--dx-money); font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#vipLevelsModal .vl-rake { color: #c9d1e3; text-align: right; white-space: nowrap; }
+#vipLevelsModal .vl-empty { color: #ff9d76; font-size: 12px; }

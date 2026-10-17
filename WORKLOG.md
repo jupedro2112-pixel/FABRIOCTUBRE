@@ -8,6 +8,32 @@
 
 ## Sesión 2026-10-17
 
+### 294. 🧩 Un solo cartel (Jugar ahora + extra por instalar), barra pendiente de punta a punta, fueguito como estaba, niveles VIP abribles, sin Soporte en vivo — SW v185
+**Pedidos (owner):** "en Carga auto poné 'Adjuntar comprobante aquí'; que el test del extra por instalar sea el de
+'ver cartel Jugar ahora' y que exista UN solo cartel: el 50% figura ahí, sólo en la primera carga, y después queda
+el botón pendiente, más prolijo, abajo centrado y de punta a punta; lo del fueguito en el inicio dejalo como estaba;
+adentro del modal que el detalle de todos los días se pueda achicar/agrandar y abajo el texto de las 10 cargas
+mínimas (ajustable desde el admin); el test del nivel tiene que abrir los niveles como si fuera real; sacá Soporte
+en vivo del perfil".
+- **Botón verde:** "Adjuntar comprobante aquí · se acredita solo" (y el paso 2 lo nombra así).
+- **Un solo cartel:** `#installGiftCard` se eliminó. La oferta del % extra vive adentro de `#playNowCard` (bloque
+  `#pnGift`: título "+50% EXTRA por instalar la app", monto, botón "Instalar ahora y cargar el extra"). Llega la
+  carga → `showPlayNow(última carga + gift)`; "Seguir jugando · lo cargo después" (`playNowLater`) deja la oferta
+  `deferred` y aparece la barra. Desde la barra o al abrir la app con oferta `offered` se muestra el mismo cartel en
+  modo "sólo extra" (sin botón Jugar ahora). Test único: "ver cartel Jugar ahora (con el extra por instalar)".
+- **Barra pendiente** `#installGiftBar`: ahora de punta a punta abajo (sin márgenes, esquinas superiores
+  redondeadas, contenido centrado, sin animación); en el chat queda arriba de la barra de escribir.
+- **Fueguito:** la tarjeta del inicio vuelve a la fila simple (sin barra de hitos). En el modal, "Premios por racha"
+  es un plegable (`VIP.fire.toggleMilestones`, arranca plegado con "próximo: día N · $X") y la condición va ABAJO:
+  "al llegar al fueguito del día 10 necesitás mínimo 10 cargas en esos 10 días; si no, no podés reclamar y perdés
+  el fueguito" (el mínimo sale de `fireStatus.minDeposits` = `Config['fireMinDeposits']`, panel).
+- **Niveles VIP:** tocar el nivel junto al saldo abre el modal `#vipLevelsModal` con la escalera completa (nivel,
+  🎁 plata que desbloquea, rakeback; tu nivel y el próximo resaltados). Datos de `vipStatus.levels` o del nuevo
+  `GET /api/vip/levels` (público, sirve aunque los niveles estén apagados). En el **test** (app instalada
+  simulada) el nivel junto al saldo muestra "Plata I · 40% hacia Plata II (ejemplo)" y el modal abre igual.
+- **Perfil:** fila "💬 Soporte en vivo" eliminada (el chat se abre desde Carga manual); `#headerSupportUnread`
+  queda como span oculto porque home.js lo actualiza.
+
 ### 293. 🧭 Planes de estrategia del mes + análisis de impacto REAL (cargas siguientes, recuperados, día a día, por plan) — admin-sw v66
 **Pedido (owner):** "armar un plan de estrategia programable para programar todo el mes, guardarlo y tener el
 análisis de cómo va sirviendo cada día y semana a semana; medir no sólo la primera carga sino cuánto impulsó

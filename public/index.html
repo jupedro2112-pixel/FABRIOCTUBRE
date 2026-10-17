@@ -998,14 +998,10 @@
                  Abre el modal del fueguito (click en #fireBtn, que vive en Perfil); racha y estado los espeja
                  home.js (_mirrorHeadBits) desde #fireStreak / VIP.state.fireStatus. -->
             <button type="button" class="fire-home-card fire-home-top" id="fireHomeCard" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito diario: reclamá tu premio cada día">
-                <span class="fh-row">
-                    <span class="fh-flame" aria-hidden="true">🔥</span>
-                    <span class="fh-text"><b>Fueguito diario</b><small id="fireHomeSub">Reclamá tu premio de hoy</small></span>
-                    <span class="fh-streak"><b id="fireHomeStreak">0</b><small>días</small></span>
-                </span>
-                <!-- #291: barra con los niveles de fueguito a desbloquear (hitos de VIP.state.fireStatus) + regla de cargas -->
-                <span class="fh-track" id="fireHomeTrack"><span class="fh-fill" id="fireHomeFill"></span><span class="fh-dots" id="fireHomeDots"></span></span>
-                <small class="fh-rule" id="fireHomeRule">Para desbloquear cada premio: mínimo 10 cargas dentro del plazo. Si no, la racha se reinicia.</small>
+                <!-- #294 (owner): la tarjeta vuelve a ser la fila simple (la barra de hitos de #291 se descartó: el detalle vive en el modal). -->
+                <span class="fh-flame" aria-hidden="true">🔥</span>
+                <span class="fh-text"><b>Fueguito diario</b><small id="fireHomeSub">Reclamá tu premio de hoy</small></span>
+                <span class="fh-streak"><b id="fireHomeStreak">0</b><small>días</small></span>
             </button>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
@@ -1104,7 +1100,7 @@
                     <div class="al-step al-step-c al-step-2">
                         <div class="al-step-h"><span class="al-n">2</span><span class="al-step-t">Adjuntá la foto del comprobante</span></div>
                         <div class="al-step-body">
-                            <div class="al-step-sub">Tocá el botón verde <b>«Cargá aquí»</b> de abajo 👇 y mandá la captura. Se acredita sola.</div>
+                            <div class="al-step-sub">Tocá el botón verde <b>«Adjuntar comprobante aquí»</b> de abajo 👇 y mandá la captura. Se acredita sola.</div>
                         </div>
                     </div>
                 </div>
@@ -1145,12 +1141,12 @@
             <div class="home-actions-row">
                 <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
-                    <span class="lr-text"><b>Cargá aquí</b><small>(adjuntá la foto aquí)</small></span>
+                    <span class="lr-text"><b>Adjuntar comprobante aquí</b><small>se acredita solo</small></span>
                 </button>
                 <button class="withdraw-row-btn" id="withdrawChatBtn" title="Completá tus datos y se retira automáticamente">Retirar premio</button>
             </div>
             <!-- #275: botón chiquito de prueba del cartel "Jugar ahora" (modo carga automática) -->
-            <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora"</button><button type="button" class="test-mini" onclick="VIP.home.installGiftTest()">test · carga gratis por instalar</button></div>
+            <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora" (con el extra por instalar)</button></div>
             <!-- ===== BARRA INFERIOR (#221): donde antes estaba la barra de escribir del chat.
                  Izquierda: sistema de referidos. Derecha: instalar la app (sin regalo). ===== -->
             <!-- #262: una sola línea abajo: Referidos + ¿Cómo funciona? (Instalar app subió al lado del saldo) -->
@@ -1218,6 +1214,16 @@
             <!-- ===== BURBUJA DE SOPORTE (#229): "que parezca un botón, un círculo que se mueva, que se pueda
                  minimizar pero al principio quede abierto". Arrastrable (home.js), abre el chat. ===== -->
             <!-- #243: compacta — sólo la foto con "Soporte en vivo"; ✕ la saca y pasa al círculo de arriba (al lado del fueguito). -->
+            <!-- ===== #294: escalera de niveles VIP (se abre desde el nivel junto al saldo; en el test también, con datos de ejemplo) ===== -->
+            <div id="vipLevelsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('vipLevelsModal')">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <div class="modal-header"><h2>👑 Niveles VIP</h2></div>
+                    <p class="vl-intro">Cuanto más jugás, más subís. Cada nivel te <b>desbloquea plata</b> (la reclamás desde la app) y un <b>rakeback semanal</b> sobre lo que apostás. Nunca bajás de nivel.</p>
+                    <div id="vipLevelsMine" class="vl-mine"></div>
+                    <div id="vipLevelsList" class="vl-list"></div>
+                    <div class="modal-actions" style="margin-top:12px;"><button type="button" class="btn btn-primary" style="width:100%;" onclick="hideModal('vipLevelsModal')">Entendido</button></div>
+                </div>
+            </div>
             <!-- ===== #275: CARTEL "JUGAR AHORA" (hoja inferior). Lo muestra home.js al llegar el mensaje de carga
                  acreditada (metadata.kind = 'deposit_credited') o el botón test. El botón abre la plataforma
                  embebida adentro de la app (VIP.home.playNow). ===== -->
@@ -1227,29 +1233,22 @@
                     <div class="pn-ico" aria-hidden="true">💰</div>
                     <div class="pn-title" id="playNowTitle">¡Entró tu carga!</div>
                     <div class="pn-sub" id="playNowSub">Ya tenés las fichas. Entrás con tu sesión, sin salir de la app.</div>
+                    <!-- #294 (owner): la oferta del % EXTRA por instalar la app va ADENTRO de este cartel (sólo en la
+                         primera carga; después queda la barra PENDIENTE de abajo). Un solo cartel. -->
+                    <div class="pn-gift" id="pnGift" style="display:none;">
+                        <div class="pn-gift-t" id="pnGiftTitle">🎁 EXTRA por instalar la app</div>
+                        <div class="pn-gift-amt" id="pnGiftAmt">+$0 extra</div>
+                        <div class="pn-gift-sub" id="pnGiftSub">Instalala ahora y te lo cargamos al instante, o seguí jugando y cargalo después: te queda un botón abajo.</div>
+                        <button type="button" class="pn-gift-btn" id="pnGiftBtn" onclick="VIP.home.installGiftMain()">📲 Instalar ahora y cargar el extra</button>
+                    </div>
                     <button type="button" class="pn-btn" id="playNowBtn">🎰 Jugar ahora</button>
-                    <button type="button" class="pn-later" onclick="VIP.home.hidePlayNow()">Después</button>
+                    <button type="button" class="pn-later" id="playNowLater" onclick="VIP.home.playNowLater()">Después</button>
                 </div>
             </div>
-            <!-- ===== #283/#290: % EXTRA por instalar la app (primera carga). Hoja con la oferta (la manda el server con
-                 metadata.kind='install_gift_offer' o la trae /api/install-gift/status) + botón GRANDE pendiente abajo
-                 hasta que instale y reclame. JS: VIP.home.installGift* ===== -->
-            <div id="installGiftCard" class="play-now-card ig-card" aria-hidden="true">
-                <div class="pn-sheet ig-sheet">
-                    <span class="pn-test" id="igTest" style="display:none;">TEST · así se ve la oferta</span>
-                    <div class="pn-ico" aria-hidden="true">🎁</div>
-                    <div class="pn-title ig-title" id="igTitle">¡EXTRA por instalar la app!</div>
-                    <div class="ig-amount" id="igAmount">+$0 extra</div>
-                    <div class="pn-sub" id="igSub">Instalá la app y te cargamos el extra sobre tu carga. Podés hacerlo ahora o seguir jugando y cargarlo después.</div>
-                    <button type="button" class="pn-btn ig-btn-main" id="igMainBtn" onclick="VIP.home.installGiftMain()">📲 Instalar ahora y cargar el extra</button>
-                    <button type="button" class="ig-btn-later" id="igLaterBtn" onclick="VIP.home.installGiftLater()">🎰 Seguir jugando · lo cargo después</button>
-                    <div class="ig-note" id="igNote">Te queda un botón grande abajo para cargarlo cuando quieras. No perdés el ritmo.</div>
-                </div>
-            </div>
+            <!-- #283/#290/#294: la hoja propia del extra por instalar se ELIMINÓ: la oferta va adentro de #playNowCard (#pnGift).
+                 Queda la barra PENDIENTE de abajo (de punta a punta) hasta que instale y lo cargue. JS: VIP.home.installGift* -->
             <button type="button" id="installGiftBar" class="ig-bar" style="display:none;" onclick="VIP.home.installGiftOpen()">
-                <span class="ig-bar-k">PENDIENTE</span>
-                <span class="ig-bar-t" id="igBarText">Instalá la app y cargá tu extra</span>
-                <span class="ig-bar-amt" id="igBarAmt">+$0</span>
+                <span class="ig-bar-in"><span class="ig-bar-k">Pendiente</span><span class="ig-bar-t" id="igBarText">Instalá la app y cargá tu extra</span><span class="ig-bar-amt" id="igBarAmt">+$0</span></span>
             </button>
             <div id="supportBubble" class="support-bubble compact" role="button" aria-label="Soporte en vivo">
                 <button type="button" class="sb-main" onclick="VIP.home.openSupport()">
@@ -1887,22 +1886,29 @@
                         </div>
                     </div>
                 </div>
-                <!-- Condición de actividad mensual -->
-                <div id="fireActivityCondition" style="background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #ccc;">
-                    📋 <strong>Condición:</strong> Para acceder a las recompensas necesitás tener movimientos de cargas y retiros durante el mes.
-                </div>
                 <!-- Premio pendiente 100% próxima carga -->
                 <div id="firePendingBonus" style="display:none; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px;"></div>
                 <!-- Premio en efectivo pendiente de reclamo -->
                 <div id="firePendingCashReward" style="display:none; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.4); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; text-align:center;"></div>
                 <!-- Menú de recompensas / milestones -->
                 <div style="margin-bottom: 10px;">
-                    <p class="fire-prizes-title" style="color: #ff8c00; font-weight: bold; font-size: 13px; margin-bottom: 6px;">Premios por racha</p>
+                    <!-- #294 (owner): el detalle de todos los días se achica/agranda con esta barra; arranca plegado -->
+                    <button type="button" class="fire-ms-toggle" id="fireMsToggle" onclick="VIP.fire.toggleMilestones()">
+                        <span class="fire-prizes-title" style="margin:0 !important;">Premios por racha</span>
+                        <span class="fire-ms-sum" id="fireMsSummary"></span>
+                        <span class="fire-ms-chev" id="fireMsChevron">▼ ver todos</span>
+                    </button>
+                    <div id="fireMilestonesWrap" style="display:none;">
                     <div id="fireMilestonesMenu">
                         <div style="padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">🔒 <strong>Día 10</strong>: $10.000 <span style="font-size:10px;color:#aaa;">(requiere actividad del mes)</span></div>
                         <div style="padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">🔒 <strong>Día 20</strong>: $50.000 <span style="font-size:10px;color:#aaa;">(requiere actividad del mes)</span></div>
                         <div style="padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);">🔒 <strong>Día 30</strong>: $200.000 <span style="font-size:10px;color:#aaa;">(requiere actividad del mes)</span></div>
                     </div>
+                    </div>
+                </div>
+                <!-- #294 (owner): condición ABAJO — mínimo de cargas en el plazo del premio (Config fireMinDeposits, panel). Texto: fire.js -->
+                <div id="fireActivityCondition" style="background: rgba(255,140,0,0.08); border: 1px solid rgba(255,140,0,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 4px; font-size: 12px; color: #e6c9a8; line-height: 1.45;">
+                    📋 <strong>Condición:</strong> para cobrar el premio de cada día tenés que tener cargas dentro del plazo.
                 </div>
             </div>
             <div id="fireCondition" style="color: #00ff88; text-align: center; margin-bottom: 15px; font-size: 12px;">
@@ -2099,7 +2105,8 @@
                     <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
                     <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · reclamá tu premio cada día</small></span>
                 </div>
-                <button type="button" class="pf-act" id="headerSupportBtn" onclick="hideModal('profileModal');VIP.home.setHomeMode('mini')">💬 <span>Soporte en vivo<small>Hablá con un agente</small></span><span id="headerSupportUnread" class="support-unread" style="display:none;">0</span></button>
+                <!-- #294 (owner): "Soporte en vivo" se sacó del Perfil (el chat se abre desde Carga manual). El id del globito queda oculto para home.js. -->
+                <span id="headerSupportUnread" class="support-unread" style="display:none;">0</span>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}">⚙️ <span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>
             </div>
         </div>

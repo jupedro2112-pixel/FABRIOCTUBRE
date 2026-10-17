@@ -72,8 +72,9 @@ VIP.fire = (function () {
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
             const _md = Number(VIP.state.fireStatus.minDeposits) || 0; // #291
+            const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
             activityConditionEl.innerHTML = _md > 0
-                ? '📋 <strong>Condición:</strong> para que el premio de cada día se acredite automático tenés que tener <strong>mínimo ' + _md + ' cargas</strong> dentro del plazo (día 10 = últimos 10 días). Si no llegás, el fueguito se reinicia.'
+                ? '📋 <strong>Condición para cobrar:</strong> al llegar al fueguito del día ' + _d1 + ' necesitás tener <strong>mínimo ' + _md + ' cargas</strong> en esos ' + _d1 + ' días. Si no las tenés, <strong>no podés reclamar el premio y perdés el fueguito</strong> (la racha vuelve a 0 y arrancás de nuevo). Vale igual para cada premio: día N = mínimo ' + _md + ' cargas en los últimos N días.'
                 : '📋 <strong>Condición:</strong> Para acceder a las recompensas Fueguito diario necesitás tener movimientos de cargas durante el mes.';
         }
 
@@ -111,6 +112,13 @@ VIP.fire = (function () {
             }
         }
 
+        // #294: resumen del plegable "Premios por racha" (el detalle de todos los días se achica/agranda).
+        try {
+            const ms = VIP.state.fireStatus.milestones || [];
+            const nxt = ms.find((m) => m.status !== 'completed');
+            const sum = document.getElementById('fireMsSummary');
+            if (sum) sum.textContent = nxt ? ('próximo: día ' + nxt.day + (nxt.reward ? ' · $' + Number(nxt.reward).toLocaleString('es-AR') : '')) : 'todos desbloqueados';
+        } catch (_) {}
         const milestonesEl = document.getElementById('fireMilestonesMenu');
         if (milestonesEl && VIP.state.fireStatus.milestones) {
             milestonesEl.innerHTML = VIP.state.fireStatus.milestones.map(m => {
@@ -275,13 +283,22 @@ VIP.fire = (function () {
         }
     }
 
+    // #294: achicar/agrandar el detalle de todos los días.
+    function toggleMilestones() {
+        const w = document.getElementById('fireMilestonesWrap'), ch = document.getElementById('fireMsChevron');
+        if (!w) return;
+        const open = w.style.display === 'none';
+        w.style.display = open ? '' : 'none';
+        if (ch) ch.textContent = open ? '▲ achicar' : '▼ ver todos';
+    }
     return {
         loadFireStatus,
         updateFireButton,
         showFireModal,
         startFireCountdown,
         claimFire,
-        claimFireReward
+        claimFireReward,
+        toggleMilestones
     };
 
 })();
