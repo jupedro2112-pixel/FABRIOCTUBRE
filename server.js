@@ -1557,9 +1557,9 @@ async function maybeSendRecoveryMessage(user) {
 // Se acredita SOLO al reclamar desde la app instalada (token FCM standalone, igual que la ruleta),
 // como regalo (bono 0) vía creditGift, reference `vip-igift-<userId>` (una vez en la vida).
 // Config['installGift'] = { enabled, pct, capArs, days } (panel → COMANDOS → Bonos automáticos).
-const INSTALL_GIFT_DEFAULT = { enabled: true, pct: 100, capArs: 20000, days: 7 };
-const INSTALL_GIFT_OFFER_DEFAULT = '🎁 ¡{username}, tu primera carga te la devolvemos GRATIS!\n\nInstalá la app y reclamá *${monto} sin cargo* (el {pct}% de tu primera carga). Tenés {dias} días.\n\n👉 Podés instalarla ahora y reclamarla al instante, o seguir jugando y hacerlo después: te queda el botón abajo en la app.';
-const INSTALL_GIFT_CREDITED_DEFAULT = '🎁 ¡Listo {username}! Te acreditamos *${monto} sin cargo* en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰';
+const INSTALL_GIFT_DEFAULT = { enabled: true, pct: 50, capArs: 20000, days: 7 }; // #290: 50% EXTRA (owner)
+const INSTALL_GIFT_OFFER_DEFAULT = '🎁 ¡{username}, instalando la app tenés un *{pct}% EXTRA* en tu carga!\n\nSon *${monto} extra* sobre tu carga de ${carga}. Tenés {dias} días.\n\n👉 Podés instalarla ahora y cargarlo al instante, o seguir jugando y cargarlo después: te queda un botón abajo en la app. No perdés el ritmo.';
+const INSTALL_GIFT_CREDITED_DEFAULT = '🎁 ¡Listo {username}! Te cargamos *${monto} extra* ({pct}%) en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰';
 async function getInstallGiftConfig() {
   let raw = null;
   try { raw = await getConfig('installGift', null); } catch (_) { raw = null; }
@@ -1607,11 +1607,11 @@ async function maybeOfferInstallGift(userIn, { amount, platform = null, source =
     );
     if (!reserved) return false;
     const vars = { username: user.username, monto: gift.toLocaleString('es-AR'), pct: cfg.pct, dias: cfg.days, carga: base.toLocaleString('es-AR') };
-    const text = (await renderSystemCommand('/sys_install_gift_offer', INSTALL_GIFT_OFFER_DEFAULT, vars)) || _renderVars('🎁 Instalá la app y reclamá ${monto} sin cargo.', vars);
+    const text = (await renderSystemCommand('/sys_install_gift_offer', INSTALL_GIFT_OFFER_DEFAULT, vars)) || _renderVars('🎁 Instalando la app tenés un {pct}% extra: ${monto} sobre tu carga.', vars);
     const md = { kind: 'install_gift_offer', amount: gift, baseAmount: base, pct: cfg.pct, expiresAt: expiresAt.toISOString() };
-    await _sendUserSystemMessage(user, text, { metadata: md, push: { title: '🎁 Tu primera carga, GRATIS', body: `Instalá la app y reclamá $${vars.monto} sin cargo.` } });
+    await _sendUserSystemMessage(user, text, { metadata: md, push: { title: `🎁 ${cfg.pct}% extra por instalar la app`, body: `Instalá la app y cargá $${vars.monto} extra sobre tu carga.` } });
     await _emitAdminOnlyChatNote(user.id, user.username,
-      `🎁 CARGA GRATIS por instalar la app OFRECIDA: $${vars.monto} (${cfg.pct}% de su primera carga de $${vars.carga}; tope $${cfg.capArs.toLocaleString('es-AR')}). Vence en ${cfg.days} días. Se acredita SOLA cuando reclama desde la app instalada: no hay que hacer nada.`
+      `🎁 ${cfg.pct}% EXTRA por instalar la app OFRECIDO: $${vars.monto} (${cfg.pct}% de su primera carga de $${vars.carga}; tope $${cfg.capArs.toLocaleString('es-AR')}). Vence en ${cfg.days} días. Se acredita SOLA cuando reclama desde la app instalada: no hay que hacer nada.`
     ).catch(() => {});
     logger.info(`[install-gift] ofrecida user=${user.username} gift=$${gift} base=$${base} via=${source || '?'}`);
     return true;
@@ -11246,15 +11246,15 @@ async function initializeData() {
       // #283 (2026-10-17): oferta de CARGA GRATIS por instalar la app al acreditarse la PRIMERA carga de un
       // cliente sin la app. Los botones ("Instalar ahora" / "Ahora quiero jugar") los pone la PWA (metadata).
       name: '/sys_install_gift_offer',
-      description: 'Carga GRATIS por instalar la app: mensaje al acreditarse la PRIMERA carga de un cliente que no tiene la app (los botones "Instalar ahora y reclamar" / "Ahora quiero jugar" los pone la app). Variables: {username}, {monto} (sin $), {pct}, {dias}, {carga}. Vacío = texto corto por defecto (el cartel igual sale). El % / tope / días se editan en Bonos automáticos.',
+      description: '% EXTRA por instalar la app: mensaje al acreditarse la PRIMERA carga de un cliente que no tiene la app (los botones "Instalar ahora y cargar el extra" / "Seguir jugando, lo cargo después" los pone la app). Variables: {username}, {monto} (sin $, el extra), {pct}, {dias}, {carga} (la carga). Vacío = texto corto por defecto (el cartel igual sale). El % / tope / días se editan en Bonos automáticos.',
       type: 'message',
-      response: '🎁 ¡{username}, tu primera carga te la devolvemos GRATIS!\n\nInstalá la app y reclamá *${monto} sin cargo* (el {pct}% de tu primera carga). Tenés {dias} días.\n\n👉 Podés instalarla ahora y reclamarla al instante, o seguir jugando y hacerlo después: te queda el botón abajo en la app.'
+      response: '🎁 ¡{username}, instalando la app tenés un *{pct}% EXTRA* en tu carga!\n\nSon *${monto} extra* sobre tu carga de ${carga}. Tenés {dias} días.\n\n👉 Podés instalarla ahora y cargarlo al instante, o seguir jugando y cargarlo después: te queda un botón abajo en la app. No perdés el ritmo.'
     },
     {
       name: '/sys_install_gift_credited',
-      description: 'Carga GRATIS por instalar la app: mensaje cuando se acredita (el cliente la reclamó desde la app instalada). Variables: {username}, {monto} (sin $), {plataforma}. Vacío = no se manda mensaje.',
+      description: '% EXTRA por instalar la app: mensaje cuando se acredita (el cliente lo cargó desde la app instalada). Variables: {username}, {monto} (sin $), {pct}, {plataforma}. Vacío = no se manda mensaje.',
       type: 'message',
-      response: '🎁 ¡Listo {username}! Te acreditamos *${monto} sin cargo* en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰'
+      response: '🎁 ¡Listo {username}! Te cargamos *${monto} extra* ({pct}%) en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰'
     },
     {
       // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
@@ -11930,13 +11930,36 @@ async function getAutoLoadBonusPct() {
   } catch (_) { /* fallback */ }
   return AUTO_LOAD_BONUS_PCT_DEFAULT;
 }
+// #290 (owner 2026-10-17): "la publi va a venir con un 50% automático en la primera carga". % que lleva la
+// PRIMERA carga real de cada cliente (manual o hgcash) cuando no tiene otro bono pendiente, con el tope de
+// siempre. Config['firstDepositBonusPct'] (default 50), editable en COMANDOS → Bonos automáticos. 0 = apagado.
+const FIRST_DEPOSIT_BONUS_PCT_DEFAULT = 50;
+async function getFirstDepositBonusPct() {
+  try {
+    const n = Number(await getConfig('firstDepositBonusPct', null));
+    if (Number.isFinite(n) && n >= 0 && n <= 500) return Math.round(n);
+  } catch (_) { /* fallback */ }
+  return FIRST_DEPOSIT_BONUS_PCT_DEFAULT;
+}
+// ¿Es la primera carga real del cliente? Se evalúa ANTES de persistir la Transaction de la carga en curso
+// (así lo hacen /api/admin/deposit y _hgcashCreditToPlatform) ⇒ 0 cargas previas = primera.
+async function _isFirstRealDeposit(user) {
+  try {
+    const n = await Transaction.countDocuments({
+      $or: [{ userId: user.id }, { username: user.username }],
+      type: 'deposit',
+      'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] }
+    });
+    return n === 0;
+  } catch (_) { return false; } // ante duda, no regalar
+}
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), installGift: await getInstallGiftConfig(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -11979,7 +12002,15 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
       logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
     }
-    // #283: carga GRATIS por instalar la app (primera carga): activa / % / tope / días.
+    // #290: % automático de la PRIMERA carga (publicidad).
+    const fdRaw = req.body && req.body.firstDepositPct;
+    if (fdRaw != null && fdRaw !== '') {
+      const fd = Number(fdRaw);
+      if (!Number.isFinite(fd) || fd < 0 || fd > 500) return res.status(400).json({ error: 'El % de la primera carga tiene que ser un número entre 0 y 500.' });
+      await Config.set('firstDepositBonusPct', Math.round(fd), req.user.username);
+      logger.info(`[first-deposit] % de la primera carga cambiado a ${Math.round(fd)}% por ${req.user.username}`);
+    }
+    // #283: % EXTRA por instalar la app (primera carga): activa / % / tope / días.
     const igRaw = req.body && req.body.installGift;
     if (igRaw && typeof igRaw === 'object') {
       const cur = await getInstallGiftConfig();
@@ -11991,7 +12022,7 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('installGift', { enabled: next.enabled, pct: Math.round(next.pct), capArs: Math.round(next.capArs), days: Math.round(next.days) }, req.user.username);
       logger.info(`[install-gift] config ${JSON.stringify(next)} por ${req.user.username}`);
     }
-    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct(), installGift: await getInstallGiftConfig() });
+    res.json({ success: true, pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -12122,6 +12153,13 @@ async function resolveAutoBonus(user, amount, usedBy) {
   if (!c.claimed) c = await claimWelcomeCodePercent(user, usedBy);
   if (!c.claimed) c = await claimDailyRoulettePercent(user, usedBy);
   if (!c.claimed) c = await claimPromoBonusPercent(user, usedBy, amount);
+  // #290 (owner 2026-10-17): la PUBLICIDAD promete un % automático en la PRIMERA carga. Si es la primera
+  // carga real del cliente y no tenía otro bono pendiente, lleva Config['firstDepositBonusPct'] (manual o
+  // hgcash), con el tope. Va ANTES del 10% de carga automática (#274): en la primera carga manda éste.
+  if (!c.claimed) {
+    const fp = await getFirstDepositBonusPct();
+    if (fp > 0 && await _isFirstRealDeposit(user)) c = { pct: fp, claimed: true, source: 'first_deposit', label: `bono de bienvenida de la primera carga (${fp}%)`, revert: async () => {} };
+  }
   // #274 (owner 2026-10-17): "la bonificación de la carga automática es del 10%, dice 0%". Toda carga
   // AUTOMÁTICA (hgcash) sin otro bono pendiente lleva el % de Config['autoLoadBonusPct'] (el mismo que
   // anuncia el cartel del chat), con el tope de bonos de siempre. No aplica a la carga manual del agente.
@@ -12435,7 +12473,7 @@ app.post('/api/install-gift/claim', authMiddleware, async (req, res) => {
     let adapter = platforms.getAdapter(pid);
     if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
     const reference = `vip-igift-${user.id}`;
-    const credit = await adapter.creditGift(user.username, amount, { description: 'Carga GRATIS por instalar la app (primera carga)', reference });
+    const credit = await adapter.creditGift(user.username, amount, { description: `${ig.pct != null ? ig.pct : ''}% extra por instalar la app (sobre la primera carga)`, reference });
     if (!credit || !credit.success) {
       await User.updateOne({ id: user.id }, { $set: { 'installGift.status': prevStatus, 'installGift.claimedAt': null, 'installGift.lastError': String((credit && credit.error) || 'unknown').slice(0, 200) } }).catch(() => {});
       logger.error(`[install-gift] credit FAIL user=${user.username} $${amount}: ${(credit && credit.error) || 'unknown'}`);
@@ -12445,17 +12483,17 @@ app.post('/api/install-gift/claim', authMiddleware, async (req, res) => {
     await User.updateOne({ id: user.id }, { $set: { 'installGift.claimTxId': txId, 'installGift.platform': pid } }).catch(() => {});
     await Transaction.create({
       id: uuidv4(), type: 'install_gift', platform: pid, userId: user.id, username: user.username, amount,
-      description: `Carga GRATIS por instalar la app (${ig.pct != null ? ig.pct : '?'}% de su primera carga de $${Number(ig.baseAmount || 0).toLocaleString('es-AR')})`,
+      description: `Extra por instalar la app (${ig.pct != null ? ig.pct : '?'}% de su primera carga de $${Number(ig.baseAmount || 0).toLocaleString('es-AR')})`,
       adminUsername: 'auto-install-gift', adminRole: 'system', transactionId: txId,
       metadata: { source: 'install_gift', creditedAs: credit.creditedAs || null, baseAmount: ig.baseAmount || null, pct: ig.pct != null ? ig.pct : null },
       timestamp: new Date()
     }).catch((e) => logger.warn(`[install-gift] no se pudo registrar la Transaction (${user.username}): ${e.message}`));
-    const vars = { username: user.username, monto: amount.toLocaleString('es-AR'), plataforma: platforms.labelOf(pid, { emoji: false }) };
+    const vars = { username: user.username, monto: amount.toLocaleString('es-AR'), pct: ig.pct != null ? ig.pct : '', plataforma: platforms.labelOf(pid, { emoji: false }) };
     const text = await renderSystemCommand('/sys_install_gift_credited', INSTALL_GIFT_CREDITED_DEFAULT, vars);
     if (text) await _sendUserSystemMessage(user, text, { metadata: { kind: 'deposit_credited', platform: pid, amount, bonus: 0, gift: 'install' } });
-    await _emitAdminOnlyChatNote(user.id, user.username, `🎁 CARGA GRATIS por instalar la app ACREDITADA: $${vars.monto} en ${platforms.labelOf(pid)} (regalo, ref ${reference}). No hay que hacer nada.`).catch(() => {});
+    await _emitAdminOnlyChatNote(user.id, user.username, `🎁 EXTRA por instalar la app ACREDITADO: $${vars.monto} (${vars.pct}%) en ${platforms.labelOf(pid)} (regalo, ref ${reference}). No hay que hacer nada.`).catch(() => {});
     logger.info(`[install-gift] acreditada user=${user.username} $${amount} platform=${pid} tx=${txId}`);
-    res.json({ success: true, amount, platform: pid, message: `🎁 ¡Listo! Te acreditamos $${vars.monto} sin cargo en ${vars.plataforma}.` });
+    res.json({ success: true, amount, platform: pid, message: `🎁 ¡Listo! Te cargamos $${vars.monto} extra en ${vars.plataforma}.` });
   } catch (e) {
     logger.error(`Error en install-gift/claim: ${e.message}`);
     res.status(500).json({ error: 'Error del servidor' });

@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 290. 🥇 50% automático en la PRIMERA carga (publicidad) + la oferta por instalar pasa a "% EXTRA" (50%) — SW v182, admin-sw v63
+**Pedido (owner):** "la publi va a venir con un 50% automático en la primera carga: cargalo y que se ajuste desde
+el panel; y saquemos lo de regalar la última carga: instalando la app tenés un 50% extra, con la opción de
+cargarlo ahora o después de jugar, para que no pierda el ritmo".
+- **Bono de la primera carga** (`Config['firstDepositBonusPct']`, default **50**, panel → COMANDOS → Bonos
+  automáticos → "% automático en la PRIMERA carga"): `resolveAutoBonus` lo aplica a la primera carga real
+  (manual o hgcash; `_isFirstRealDeposit` cuenta Transactions 'deposit' antes de persistir la actual) cuando no
+  hay otro bono pendiente, con el tope de siempre; va ANTES del 10% de carga automática (#274). Fuente
+  `first_deposit`. 0 = apagado.
+- **Extra por instalar la app** (ex "carga gratis", #283): mismo mecanismo (oferta en la primera carga sin app,
+  "cargarlo ahora" / "seguir jugando, lo cargo después" con el botón grande pendiente, reclamo desde la app
+  instalada), pero ahora se comunica como **{pct}% EXTRA sobre tu carga** con default **50%**
+  (`INSTALL_GIFT_DEFAULT.pct`). Textos `/sys_install_gift_offer` / `_credited` reescritos con `{pct}`; la hoja
+  de la PWA muestra "¡50% EXTRA por instalar la app!" y "+$X extra" (el % viaja en `metadata.pct` y en
+  `/api/install-gift/status`). Etiqueta del panel: "Extra por instalar (app)". Test: 50% de $10.000 = +$5.000.
+- ⚠️ Los dos % son independientes: en la primera carga sin app el cliente puede tener el 50% automático Y el 50%
+  extra si instala. Si no se quiere eso, poner uno de los dos en 0 desde el panel. Requiere redeploy.
+
 ### 289. 🪟 "Información del servicio" con el estilo de la barra de arriba — SW v181
 **Pedido (owner, captura):** "armalo más con el estilo de la parte superior, pero que tenga su recuadro y todo
 como es y no lo pierda tanto; que tenga predominancia el texto".

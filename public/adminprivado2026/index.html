@@ -621,17 +621,24 @@ document.addEventListener('change', function (ev) {
                                 </button>
                                 <span style="font-size:11.5px;color:#888;">Se aplica de verdad en cada carga automática (hgcash) que no tenga otro bono pendiente, con el tope de abajo. La carga manual del agente no lo lleva.</span>
                             </div>
-                            <!-- #283: CARGA GRATIS por instalar la app (se ofrece al acreditarse la PRIMERA carga de un cliente sin la app) -->
+                            <!-- #290: % automático en la PRIMERA carga (lo que promete la publicidad) -->
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-                                <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer;" title="Al acreditarse la PRIMERA carga de un cliente que no tiene la app instalada, la app le ofrece una carga sin cargo si la instala (ahora, o después: le queda un botón grande pendiente abajo). Se acredita sola cuando reclama desde la app instalada con notificaciones."><input type="checkbox" id="installGiftEnabledChk" style="width:auto;"> 🎁 Carga GRATIS por instalar la app (1ª carga) ACTIVA</label>
-                                <label style="margin:0;">% de la 1ª carga:</label>
+                                <label style="margin:0;" title="La PRIMERA carga real de cada cliente (manual o automática) lleva este % de bono automático cuando no tiene otro bono pendiente, con el tope de abajo. 0 = apagado.">🥇 % automático en la PRIMERA carga (publicidad):</label>
+                                <input type="number" id="firstDepositPctInput" min="0" max="500" step="1" style="width:90px;">
+                                <button class="btn-primary btn-small" id="firstDepositPctSaveBtn" onclick="saveInstallBonusPct()"><span class="icon icon-save"></span> Guardar</button>
+                                <span style="font-size:11.5px;color:#888;">Se aplica solo en la primera carga de cada cliente (manual o hgcash), con el tope de abajo. Manda sobre el % de "Servicio completo".</span>
+                            </div>
+                            <!-- #283/#290: % EXTRA por instalar la app (se ofrece al acreditarse la PRIMERA carga de un cliente sin la app) -->
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                                <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer;" title="Al acreditarse la PRIMERA carga de un cliente que no tiene la app instalada, la app le ofrece este % EXTRA sobre esa carga si la instala (ahora, o después de jugar: le queda un botón grande pendiente abajo). Se acredita solo cuando lo carga desde la app instalada con notificaciones."><input type="checkbox" id="installGiftEnabledChk" style="width:auto;"> 🎁 % EXTRA por instalar la app (sobre la 1ª carga) ACTIVO</label>
+                                <label style="margin:0;">% extra:</label>
                                 <input type="number" id="installGiftPctInput" min="0" max="500" step="1" style="width:80px;">
                                 <label style="margin:0;">tope $:</label>
                                 <input type="number" id="installGiftCapInput" min="0" step="500" style="width:100px;">
                                 <label style="margin:0;">vence en (días):</label>
                                 <input type="number" id="installGiftDaysInput" min="1" max="365" step="1" style="width:70px;">
                                 <button class="btn-primary btn-small" id="installGiftSaveBtn" onclick="saveInstallBonusPct()"><span class="icon icon-save"></span> Guardar</button>
-                                <span style="font-size:11.5px;color:#888;">Textos en COMANDOS: /sys_install_gift_offer y /sys_install_gift_credited. Figura en Transacciones como "Carga gratis (app)".</span>
+                                <span style="font-size:11.5px;color:#888;">Textos en COMANDOS: /sys_install_gift_offer y /sys_install_gift_credited. Figura en Transacciones como "Extra por instalar (app)".</span>
                             </div>
                             <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">
                                 <b>Tope de TODOS los bonos automáticos</b> (app, código de bienvenida, ruleta diaria, lotes): el % del bono

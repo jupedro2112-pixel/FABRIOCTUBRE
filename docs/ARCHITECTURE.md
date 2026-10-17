@@ -799,7 +799,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
 - **BONO AUTOMÁTICO EN LA CARGA** (2026-09-18, #210): `resolveAutoBonus(user, amount,
   usedBy)` (server.js) reserva atómico UN bono pendiente por carga, en orden: bono por
   instalar la app (% congelado) → código de bienvenida `next_charge` → % de la ruleta
-  diaria → `PromoBonus` activo en %. Monto con TOPE (`src/utils/bonusCap.js`,
+  diaria → `PromoBonus` activo en % → **#290: `Config['firstDepositBonusPct']` (50%) si es la PRIMERA carga
+  real del cliente (`_isFirstRealDeposit`, manual o hgcash)** → #274: `Config['autoLoadBonusPct']` sólo hgcash. Monto con TOPE (`src/utils/bonusCap.js`,
   `Config['bonusCap']` {enabled, capArs 20000, restPct 20}): `pct% × min(carga, cap) +
   restPct% × exceso` cuando pct > restPct. Lo usan la carga MANUAL (`/api/admin/deposit`:
   pisa el bonus tipeado por el agente y deja nota interna con el motivo; sin bono
@@ -875,7 +876,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   el chat se abre sólo desde "Carga manual" de la barra.
   **#282:** `#autoLoadCard` va centrada y en 2 pasos (1 transferir · 2 adjuntar la foto con el botón verde
   "Cargá aquí (adjuntá la foto aquí)" = `#loadHereBtn` → `VIP.autoload.sendReceipt()`).
-  **#283 — carga GRATIS por instalar la app (retención en la 1ª carga):** al acreditarse la PRIMERA carga real
+  **#283/#290 — % EXTRA por instalar la app (retención en la 1ª carga; antes "carga gratis", hoy 50% extra, `INSTALL_GIFT_DEFAULT`):** al acreditarse la PRIMERA carga real
   (hgcash o manual) de un cliente SIN app instalada, `maybeOfferInstallGift` guarda `User.installGift`
   (status offered, amount = pct% de la carga con tope; `Config['installGift']` {enabled, pct, capArs, days},
   panel → Bonos automáticos) y manda `/sys_install_gift_offer` con `metadata.kind='install_gift_offer'`.

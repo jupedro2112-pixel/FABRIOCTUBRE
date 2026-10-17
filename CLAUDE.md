@@ -115,7 +115,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   carga manual y en hgcash — X% hasta `Config['bonusCap'].capArs` ($20.000) y `restPct`
   (20%) sobre el resto (`src/utils/bonusCap.js`, test `scripts/test-bonus-cap.js`). Pisa
   el bonus del agente y deja nota interna. Registro manual (`createdByAgent` /
-  `acquisitionSource:'manual'`) = sin bonos de bienvenida. Ruleta diaria: premios en
+  `acquisitionSource:'manual'`) = sin bonos de bienvenida. **#290:** la PRIMERA carga real lleva
+  `Config['firstDepositBonusPct']` (50%, panel) si no hay otro bono pendiente. Ruleta diaria: premios en
   `Config['dailyRoulette']` (panel), % pendiente en `User.dailyRoulettePendingPct`.
 - **Roles:** `user`, `admin` (todo), `depositor` (solo cargas), `withdrawer` (solo
   retiros), `publisher_admin` (solo crea usuarios de su publicista — lockdown via
@@ -175,8 +176,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   como burbuja/overlay. Los ids del chat (`chatMessages`, `messageInput`, `attachBtn`…) siguen siendo
   los mismos: no moverlos.
 
-- **Carga GRATIS por instalar la app (#283, 2026-10-17):** en la PRIMERA carga de un cliente sin la app se le
-  ofrece pct% de esa carga (tope) si la instala; queda como botón grande pendiente abajo hasta que reclame
+- **% EXTRA por instalar la app (#283/#290, 2026-10-17):** en la PRIMERA carga de un cliente sin la app se le
+  ofrece pct% (50%) de esa carga (tope) como EXTRA si la instala; queda como botón grande pendiente abajo hasta que reclame
   desde la app instalada (`User.installGift`, rutas `/api/install-gift/*`, `Config['installGift']`, ref
   `vip-igift-<userId>`, Transaction `install_gift` — un tipo de regalo nuevo va SIEMPRE a
   `CASHBACK_GIFT_TX_TYPES`). Detalle: ARCHITECTURE Home 2.0 (#283).

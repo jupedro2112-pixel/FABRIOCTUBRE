@@ -5545,7 +5545,7 @@ function getTransactionTypeLabel(type) {
         rakeback: '💎 Rakeback VIP',
         vip_levelup: '👑 Nivel VIP',
         roulette: '🎡 Ruleta',
-        install_gift: '🎁 Carga gratis (app)',
+        install_gift: '🎁 Extra por instalar (app)',
         transfer: 'Transferencia'
     };
     return labels[type] || type;
@@ -5737,11 +5737,16 @@ async function loadInstallBonusPct() {
         if (alIn) { alIn.value = j.autoLoadPct != null ? j.autoLoadPct : 10; alIn.disabled = !j.canEdit; }
         const alBtn = document.getElementById('autoLoadPctSaveBtn');
         if (alBtn) alBtn.style.display = j.canEdit ? '' : 'none';
-        // #283: carga GRATIS por instalar la app (primera carga)
+        // #290: % automático de la primera carga (publicidad)
+        const fdIn = document.getElementById('firstDepositPctInput');
+        if (fdIn) { fdIn.value = j.firstDepositPct != null ? j.firstDepositPct : 50; fdIn.disabled = !j.canEdit; }
+        const fdBtn = document.getElementById('firstDepositPctSaveBtn');
+        if (fdBtn) fdBtn.style.display = j.canEdit ? '' : 'none';
+        // #283/#290: % EXTRA por instalar la app (primera carga)
         const ig = j.installGift || {};
         const igEn = document.getElementById('installGiftEnabledChk'), igP = document.getElementById('installGiftPctInput'), igC = document.getElementById('installGiftCapInput'), igD = document.getElementById('installGiftDaysInput'), igB = document.getElementById('installGiftSaveBtn');
         if (igEn) { igEn.checked = ig.enabled === true; igEn.disabled = !j.canEdit; }
-        if (igP) { igP.value = ig.pct != null ? ig.pct : 100; igP.disabled = !j.canEdit; }
+        if (igP) { igP.value = ig.pct != null ? ig.pct : 50; igP.disabled = !j.canEdit; }
         if (igC) { igC.value = ig.capArs != null ? ig.capArs : 20000; igC.disabled = !j.canEdit; }
         if (igD) { igD.value = ig.days != null ? ig.days : 7; igD.disabled = !j.canEdit; }
         if (igB) igB.style.display = j.canEdit ? '' : 'none';
@@ -5790,12 +5795,16 @@ async function saveInstallBonusPct() {
     const alIn = document.getElementById('autoLoadPctInput');
     const autoLoadPct = alIn && alIn.value !== '' ? Number(alIn.value) : undefined;
     if (autoLoadPct !== undefined && (!Number.isFinite(autoLoadPct) || autoLoadPct < 0 || autoLoadPct > 500)) { showToast('El % de "Servicio completo" tiene que ser un número entre 0 y 500', 'error'); return; }
-    // #283: carga GRATIS por instalar la app (va en el mismo POST)
+    // #290: % automático de la primera carga
+    const fdIn = document.getElementById('firstDepositPctInput');
+    const firstDepositPct = fdIn && fdIn.value !== '' ? Number(fdIn.value) : undefined;
+    if (firstDepositPct !== undefined && (!Number.isFinite(firstDepositPct) || firstDepositPct < 0 || firstDepositPct > 500)) { showToast('El % de la primera carga tiene que ser un número entre 0 y 500', 'error'); return; }
+    // #283/#290: % EXTRA por instalar la app (va en el mismo POST)
     const igEn = document.getElementById('installGiftEnabledChk'), igP = document.getElementById('installGiftPctInput'), igC = document.getElementById('installGiftCapInput'), igD = document.getElementById('installGiftDaysInput');
     const installGift = igEn ? { enabled: igEn.checked, pct: igP && igP.value !== '' ? Number(igP.value) : undefined, capArs: igC && igC.value !== '' ? Number(igC.value) : undefined, days: igD && igD.value !== '' ? Number(igD.value) : undefined } : undefined;
     if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%${autoLoadPct !== undefined ? ` y el cartel "Servicio completo" en ${autoLoadPct}%` : ''}?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
     try {
-        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct, installGift }) });
+        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct, firstDepositPct, installGift }) });
         const j = await r.json();
         if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         if (msg) msg.textContent = `${j.enabled ? 'ACTIVO' : 'APAGADO'} · ${j.pct}%`;

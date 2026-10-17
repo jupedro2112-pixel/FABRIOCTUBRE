@@ -321,10 +321,10 @@
                 const fresh = !ts || (Date.now() - ts) < 3 * 60000;
                 if (fresh && !_igSeen.has(message.id)) {
                     _igSeen.add(message.id);
-                    _ig = Object.assign({}, _ig || {}, { status: 'offered', amount: md.amount, expiresAt: md.expiresAt || null });
+                    _ig = Object.assign({}, _ig || {}, { status: 'offered', amount: md.amount, pct: md.pct, baseAmount: md.baseAmount, expiresAt: md.expiresAt || null });
                     _igPaintBar();
                     try { sessionStorage.setItem('vip_ig_shown', '1'); } catch (_) {}
-                    showInstallGift({ amount: md.amount });
+                    showInstallGift({ amount: md.amount, pct: md.pct });
                 }
             } catch (_) {}
         }
@@ -370,7 +370,7 @@
         showPlayNow({ platform: pid, amount: 10000, bonus: 0, test: true });
     }
 
-    // ---------------- #283: CARGA GRATIS POR INSTALAR LA APP (primera carga) ----------------
+    // ---------------- #283/#290: % EXTRA POR INSTALAR LA APP (primera carga) ----------------
     // (owner: "en la primera carga ofrecer una carga gratis si no instaló la app, para retención: 'quiero
     //  jugar y después vengo a instalar' → botón grande abajo PENDIENTE; o instalar en el momento y
     //  reclamar al instante"). El server ofrece (metadata.kind='install_gift_offer') y acredita SOLO desde
@@ -378,6 +378,8 @@
     let _ig = null;              // último estado conocido ({status, amount, expiresAt, …})
     const _igSeen = new Set();   // ids de mensajes de oferta ya mostrados
     function _igFmt(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+    function _igPct(o) { const p = (o && o.pct != null ? o.pct : (_ig && _ig.pct)); return p != null && p !== '' ? Math.round(Number(p)) + '%' : ''; }
+    function _igPctTxt(o, withSpace) { const p = _igPct(o); return p ? (withSpace ? p + ' ' : p) : ''; }
     async function _igFetch(path, method) {
         const r = await fetch(VIP.config.API_URL + path, {
             method: method || 'GET',
@@ -410,8 +412,9 @@
         document.body.classList.toggle('ig-pending', pending);
         if (!pending) return;
         const amt = _el('igBarAmt'), t = _el('igBarText');
-        if (amt) amt.textContent = _igFmt(_ig.amount);
-        if (t) t.textContent = _isStandalone() ? 'Reclamá tu última carga sin cargo' : 'Instalá la app para reclamar tu última carga sin cargo';
+        if (amt) amt.textContent = '+' + _igFmt(_ig.amount);
+        const pb = _igPct(_ig);
+        if (t) t.textContent = _isStandalone() ? ('Cargá tu ' + (pb || 'extra') + (pb ? ' extra' : '') + ' ahora') : ('Instalá la app y cargá tu ' + (pb || 'extra') + (pb ? ' extra' : ''));
     }
     let _igSheet = null; // oferta que muestra la hoja ahora ({amount, test})
     function showInstallGift(o) {
@@ -420,11 +423,13 @@
         const card = _el('installGiftCard'); if (!card) return;
         const amt = _el('igAmount'), sub = _el('igSub'), main = _el('igMainBtn'), later = _el('igLaterBtn'), note = _el('igNote'), tag = _el('igTest');
         const inApp = _isStandalone();
-        if (amt) amt.textContent = _igFmt(o.amount) + ' sin cargo';
+        const pct = _igPct(o), title = _el('igTitle');
+        if (title) title.textContent = pct ? ('¡' + pct + ' EXTRA por instalar la app!') : '¡EXTRA por instalar la app!';
+        if (amt) amt.textContent = '+' + _igFmt(o.amount) + ' extra';
         if (sub) sub.textContent = inApp
-            ? 'Ya estás en la app instalada: tocá reclamar y te acreditamos esta carga sin cargo.'
-            : 'Instalá la app y te acreditamos esta carga sin cargo. Podés hacerlo ahora o seguir jugando y volver después.';
-        if (main) { main.disabled = false; main.textContent = inApp ? '🎁 Reclamar mi carga sin cargo' : '📲 Instalar ahora y reclamar'; }
+            ? ('Ya estás en la app: tocá y te cargamos ' + _igFmt(o.amount) + ' extra ahora.')
+            : ('Instalá la app y te cargamos ' + _igFmt(o.amount) + ' extra sobre tu carga. Podés hacerlo ahora o seguir jugando y cargarlo después, sin perder el ritmo.');
+        if (main) { main.disabled = false; main.textContent = inApp ? ('🎁 Cargar mi ' + (pct || 'extra') + (pct ? ' extra' : '') + ' ahora') : ('📲 Instalar ahora y cargar el ' + (pct || 'extra') + (pct ? ' extra' : '')); }
         if (later) later.style.display = inApp ? 'none' : '';
         if (note) note.style.display = inApp ? 'none' : '';
         if (tag) tag.style.display = o.test ? '' : 'none';
@@ -444,32 +449,32 @@
         // Primero se pinta el botón grande (local): no depende de que el server conteste.
         _ig = Object.assign({}, _ig || {}, { status: 'deferred', amount, test: !!test });
         _igPaintBar();
-        if (test) { try { VIP.ui.showToast('TEST: abajo quedó el botón grande. Tocalo para volver a ver la oferta; al apretar "Instalar/Reclamar" se borra el test.', 'info'); } catch (_) {} return; }
+        if (test) { try { VIP.ui.showToast('TEST: abajo quedó el botón grande. Tocalo para volver a ver la oferta; al apretar "Instalar/Cargar" se borra el test.', 'info'); } catch (_) {} return; }
         try { const { ok, j } = await _igFetch('/api/install-gift/defer', 'POST'); if (ok && j && j.status && j.status !== 'none') _ig = Object.assign({}, _ig, j); } catch (_) {}
         _igPaintBar();
-        try { VIP.ui.showToast('👌 Cuando quieras, tocá el botón de abajo para reclamar tu carga sin cargo.', 'info'); } catch (_) {}
+        try { VIP.ui.showToast('👌 Seguí jugando tranquilo. Cuando quieras, tocá el botón de abajo para cargar tu extra.', 'info'); } catch (_) {}
     }
     // Botón principal: en la app instalada RECLAMA; en el navegador INSTALA (y la oferta queda pendiente).
     async function installGiftMain() {
-        if (_igIsTest()) { hideInstallGift(); _igClearTest(); try { VIP.ui.showToast('TEST: acá se instala la app y se acredita la carga sin cargo (fin del test).', 'info'); } catch (_) {} return; }
+        if (_igIsTest()) { hideInstallGift(); _igClearTest(); try { VIP.ui.showToast('TEST: acá se instala la app y se carga el extra (fin del test).', 'info'); } catch (_) {} return; }
         if (_isStandalone()) return installGiftClaim();
         hideInstallGift();
         try { await _igFetch('/api/install-gift/defer', 'POST'); } catch (_) {}
         if (_ig && _ig.status === 'offered') _ig.status = 'deferred';
         _igPaintBar();
         try { await VIP.ui.installApp(); } catch (_) {}
-        try { VIP.ui.showToast('📲 Cuando termine, abrí la app desde tu pantalla de inicio y tocá el botón de abajo para reclamar.', 'info'); } catch (_) {}
+        try { VIP.ui.showToast('📲 Cuando termine, abrí la app desde tu pantalla de inicio y tocá el botón de abajo para cargar tu extra.', 'info'); } catch (_) {}
     }
     async function installGiftClaim() {
         if (_ig && _ig.test) { hideInstallGift(); _igClearTest(); return; }
         const btn = _el('igMainBtn');
-        if (btn) { btn.disabled = true; btn.textContent = 'Acreditando…'; }
+        if (btn) { btn.disabled = true; btn.textContent = 'Cargando tu extra…'; }
         try {
             const { ok, j } = await _igFetch('/api/install-gift/claim', 'POST');
             if (ok && j && j.success) {
                 _ig = Object.assign({}, _ig || {}, { status: 'claimed' });
                 hideInstallGift(); _igPaintBar();
-                try { VIP.ui.showToast(j.message || ('🎁 ¡Listo! Te acreditamos ' + _igFmt(j.amount) + ' sin cargo.'), 'success'); } catch (_) {}
+                try { VIP.ui.showToast(j.message || ('🎁 ¡Listo! Te cargamos ' + _igFmt(j.amount) + ' extra.'), 'success'); } catch (_) {}
                 setTimeout(() => { try { VIP.ui.syncBalance(); } catch (_) {} }, 1000);
                 showPlayNow({ platform: j.platform, amount: j.amount, bonus: 0 });
                 return;
@@ -478,11 +483,11 @@
             if (code === 'NOT_STANDALONE') {
                 if (_isStandalone()) {
                     // Instalada, pero el server todavía no tiene su token de notificaciones → pedir permiso y reintentar.
-                    try { VIP.ui.showToast('🔔 Activá las notificaciones para acreditarte la carga y volvé a tocar Reclamar.', 'info'); } catch (_) {}
+                    try { VIP.ui.showToast('🔔 Activá las notificaciones para cargarte el extra y volvé a tocar el botón.', 'info'); } catch (_) {}
                     try { VIP.notifications.requestNotificationPermission(); } catch (_) {}
                 } else {
                     hideInstallGift();
-                    try { VIP.ui.showToast('📲 La carga sin cargo se reclama desde la app instalada.', 'info'); } catch (_) {}
+                    try { VIP.ui.showToast('📲 El extra se carga desde la app instalada.', 'info'); } catch (_) {}
                     try { VIP.ui.installApp(); } catch (_) {}
                 }
             } else if (code === 'EXPIRED' || code === 'ALREADY_CLAIMED' || code === 'NOT_OFFERED' || code === 'DEVICE_ALREADY_CLAIMED') {
@@ -495,15 +500,15 @@
         } catch (_) {
             try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {}
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = _isStandalone() ? '🎁 Reclamar mi carga sin cargo' : '📲 Instalar ahora y reclamar'; }
+            if (btn) { const pct = _igPct(_ig); btn.disabled = false; btn.textContent = _isStandalone() ? ('🎁 Cargar mi ' + (pct || 'extra') + (pct ? ' extra' : '') + ' ahora') : ('📲 Instalar ahora y cargar el ' + (pct || 'extra') + (pct ? ' extra' : '')); }
         }
     }
     // Botón chiquito "test" (carga automática): muestra la oferta como la vería el cliente ($10.000 de ejemplo).
-    function installGiftTest() { showInstallGift({ amount: 10000, test: true }); }
+    function installGiftTest() { showInstallGift({ amount: 5000, baseAmount: 10000, pct: 50, test: true }); } // 50% de una carga de $10.000
     // Instaló desde el navegador con la oferta pendiente → recordatorio de cómo reclamar.
     try {
         window.addEventListener('appinstalled', () => {
-            if (_igPending()) setTimeout(() => { try { VIP.ui.showToast('✅ App instalada. Abrila desde tu pantalla de inicio y tocá el botón de abajo para reclamar tu carga sin cargo.', 'success'); } catch (_) {} }, 1500);
+            if (_igPending()) setTimeout(() => { try { VIP.ui.showToast('✅ App instalada. Abrila desde tu pantalla de inicio y tocá el botón de abajo para cargar tu extra.', 'success'); } catch (_) {} }, 1500);
         });
     } catch (_) {}
 
