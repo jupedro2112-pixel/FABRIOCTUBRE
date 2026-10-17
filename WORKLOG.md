@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 334. 📐 Ajuste y centrado por modelo de teléfono (Inicio · Carga auto · Carga manual) — SW v220
+**Pedido (owner):** "ajustá y centrá viendo los distintos modelos: iPhone grande o chico, Android chico o grande".
+Reglas por ancho: ≤360 (SE/mini, Android chico: letras y botones más chicos, recuadro de fotos 60 vh), ≥431 (Plus/
+Max, Android grande: un paso más grande), ≥600 (tablet/PC: la app se centra como un teléfono de 520 px con bordes;
+barra pendiente, cartel y fotos expandidas centrados). Por alto: ≤700 (fotos 54 vh, opiniones de 2 líneas) + #333
+(≥780/≥900 más grande). Safe areas: fondo del home, barra de escribir y barra pendiente respetan la barra de gestos
+del iPhone. Márgenes laterales unificados (6 px Inicio, 8 px carga auto). Sin cambios de lógica.
+
 ### 333. 📱 Carga automática a pantalla completa en todos los teléfonos — SW v219
 **Pedido (owner, captura Samsung A56):** "se ve así (vacío abajo); ajustalo en todos los modelos, maximizar o ajustar
 si es más grande o más chico". `#homeFull` / `#homePanel` / `.home-dash` crecen (`flex:1`) y reparten el espacio

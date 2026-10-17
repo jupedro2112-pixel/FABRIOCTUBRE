@@ -2351,3 +2351,70 @@ body.home-full .home-dash { flex: 1 1 auto; justify-content: space-evenly; }
   body.home-full #autoLoadCard .al-step-h .al-step-t { font-size: 15px; }
   body.home-full .lr-text b { font-size: 15px; }
 }
+
+/* ══ #334 (owner): ajuste y centrado por modelo de teléfono — Inicio, Carga auto y Carga manual.
+   Anchos: ≤360 (iPhone SE/mini, Android chico) · 361–430 (estándar) · ≥431 (iPhone Plus/Max, Android grande)
+   · ≥600 (tablet/PC: la app se centra como un teléfono). Alturas: ≤700 (bajos) · ≥780/≥900 (#333). Safe areas iPhone. ══ */
+
+/* — Teléfonos CHICOS (≤360 px de ancho) — */
+@media (max-width: 360px) {
+  .tn-btn { font-size: 7.5px; padding: 3px 1px; letter-spacing: .2px; }
+  .tn-home .tn-lbl { font-size: 10px; letter-spacing: .6px; }
+  .ev-hero { margin: 2px 4px 3px; padding: 7px 9px 8px; }
+  .ev-hero-k { font-size: 8px; letter-spacing: 1.4px; }
+  .ev-hero-t { font-size: 11px; }
+  .ev-services { gap: 4px; }
+  .ev-svc { padding: 5px 3px; }
+  .ev-svc b { font-size: 10px; }
+  .ev-svc small { font-size: 7.5px; }
+  .ev-tab { font-size: 11px; padding: 6px 8px; }
+  .ev-frame-wrap { height: min(60vh, 500px); min-height: min(60vh, 500px); }
+  .ev-slide-tag { font-size: 8px; padding: 3px 7px; left: 14px; top: 14px; }
+  .ev-cta-b { font-size: 9.5px; }
+  .ev-link-btn b, .ev-link-btn span { font-size: 9.5px; }
+  #entryReviews .rv-card { flex: 0 0 80%; }
+  #serviceBanner .svb-cta { font-size: 11px; padding: 8px 12px; }
+  body.home-full .balance-strip .dash-balance-amount { font-size: 13px !important; }
+  #autoLoadCard .al-cbu .mono { font-size: 12px !important; letter-spacing: .1px !important; }
+  #autoLoadCard .al-step-h .al-step-t { font-size: 11.5px !important; }
+  .lr-text b { font-size: 11.5px !important; }
+  .withdraw-row-btn .lr-text b { font-size: 11px !important; }
+  .plat-link-btn .plb-k { font-size: 9px; }
+  .plat-link-btn .plb-t { font-size: 10px; }
+}
+/* — Teléfonos GRANDES (≥431 px de ancho: iPhone Plus/Max, Android grande) — */
+@media (min-width: 431px) {
+  .tn-btn { font-size: 9px; }
+  .tn-home .tn-lbl { font-size: 12px; }
+  .ev-hero-t { font-size: 13.5px; }
+  .ev-svc b { font-size: 12px; }
+  .ev-svc small { font-size: 9.5px; }
+  .ev-tab { font-size: 13px; }
+  #entryReviews .rv-card { flex: 0 0 58%; max-width: 280px; }
+  #entryReviews .rv-text { font-size: 11.5px; }
+}
+/* — Tablet / PC: la app se ve centrada como un teléfono (no estirada) — */
+@media (min-width: 600px) {
+  body { background: #06070d; }
+  .chat-screen { max-width: 520px; margin: 0 auto; border-left: 1px solid rgba(255,255,255,.07); border-right: 1px solid rgba(255,255,255,.07); }
+  .chat-screen::before { left: 50%; width: 520px; transform: translateX(-50%); }
+  .ig-bar { left: 50%; right: auto; width: 520px; transform: translateX(-50%); }
+  .ig-bar:active { transform: translateX(-50%) scale(.985); }
+  .play-now-card .pn-sheet { max-width: 520px; }
+  .ev-frame-wrap.is-expanded { left: 50%; right: auto; width: 520px; transform: translateX(-50%); }
+}
+/* — Pantallas BAJAS (≤700 px de alto) — */
+@media (max-height: 700px) {
+  .ev-hero { padding: 6px 10px 7px; }
+  .ev-hero-k { font-size: 8.5px; }
+  .ev-frame-wrap { height: min(54vh, 460px); min-height: min(54vh, 460px); }
+  #entryReviews .rv-text { -webkit-line-clamp: 2; }
+}
+/* — Centrado fino y safe areas (iPhone con notch / barra de gestos) — */
+.entry-view { align-items: stretch; }
+.ev-hero, .ev-services, .ev-tabs, .ev-frame-wrap, #entryReviews.ev-reviews { margin-left: 6px; margin-right: 6px; }
+body.home-full #homeFull { padding-bottom: env(safe-area-inset-bottom, 0px); }
+body.home-mini .chat-input-container { padding-bottom: max(7px, env(safe-area-inset-bottom, 7px)); }
+body.home-mini .ig-bar { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
+.balance-strip, .fire-home-card, .home-dash, .home-actions-row, .plat-link-btn, .test-mini-row { margin-left: 8px; margin-right: 8px; }
+.plat-link-btn { width: auto; }
