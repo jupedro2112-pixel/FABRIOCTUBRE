@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-17
 
+### 269. 🕹️ Inicio al centro (retro, separado) · servicios arriba del Inicio · carga automática sencilla — SW v162
+**Pedido (owner):** "el Inicio dejalo en el medio con una separación al resto, en forma retro del mismo
+formato; en el Inicio arriba de la página poné el reembolso, la ruleta diaria y el sistema de referidos
+como servicio para que vean; el menú de carga rápida bien sencillo sin tanta info; carga manual modo
+WhatsApp como está".
+- **Barra:** Carga automática · Carga manual · │ 🏠 **INICIO** │ · Info · Perfil. Inicio en el centro con
+  separadores (`.tn-sep`) y look **retro arcade** (`.tn-retro`: borde dorado, doble aro, relieve, rótulo en
+  'Press Start 2P' — sumada al link de Google Fonts, el CSP ya permitía gstatic). Activo = brillo suave.
+- **Inicio:** fila `#entryServices` arriba de las pestañas: 💸 Reembolso ("hasta N% de lo que perdés", N =
+  máximo real de la escalera, lo llena `renderHowItWorks`), 🎰 Ruleta diaria, 👥 Referidos. Abren los
+  flujos de siempre (`VIP.refunds.showUnifiedRefundModal`, `VIP.roulette.open`, `VIP.ui.openReferralModal`).
+- **Carga automática sencilla:** `body.home-full` (nuevo en `setHomeMode`) esconde cartel, reembolsos/ruleta
+  (`.dash-top`), "Guardá tu acceso", nivel VIP y la barra Referidos/¿Cómo funciona?. Queda: saldo + Instalar,
+  ¿Dónde querés jugar?, CBU, Cargar aquí / Retirar premio (y el reclamo de bono VIP si hay uno pendiente).
+  Esa info sigue accesible desde Inicio (servicios), Info y Perfil.
+- Carga manual (modo mini) sin cambios.
+
 ### 268. 🧭 Barra de arriba: INICIO (destacado) · Carga automática · Carga manual · Info · Perfil — SW v161
 **Pedido (owner):** "arriba primero Inicio con más predominancia, al lado Carga automática y Carga manual,
 después Info y al final Configuración (mejor 'Perfil') con el cambio de clave, activar notificaciones y

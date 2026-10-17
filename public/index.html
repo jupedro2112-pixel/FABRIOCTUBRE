@@ -212,7 +212,7 @@
     <link rel="stylesheet" href="/css/header.css">
     <!-- #223: tipografía geométrica del tema futurista (fallback system-ui si no carga) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Press+Start+2P&display=swap">
     <link rel="stylesheet" href="/css/chat.css">
     <link rel="stylesheet" href="/css/modals.css">
     <link rel="stylesheet" href="/css/responsive.css">
@@ -485,15 +485,18 @@
                  Clave, Soporte aquí) pasaron ADENTRO del modal Perfil con sus ids históricos (los cablean
                  app.js / chat.js / fire.js / el inline de FCM). #infoBtn conserva el id: app.js le cuelga el
                  listener y el botón "¿Cómo funciona?" de abajo le hace click. -->
-            <button type="button" class="tn-btn tn-home" id="navInicio" onclick="VIP.home.setHomeMode('play')" title="Inicio: ver las plataformas">
-                <span class="tn-ico">🏠</span><span class="tn-lbl">Inicio</span>
-            </button>
+            <!-- #269 (owner): "el Inicio dejalo en el medio y ponele una separación al resto, en forma retro". -->
             <button type="button" class="tn-btn" id="navAuto" onclick="VIP.home.setHomeMode('full')" title="Carga automática: transferís, mandás el comprobante y se acredita solo">
                 <span class="tn-ico">⚡</span><span class="tn-lbl">Carga<br>automática</span>
             </button>
             <button type="button" class="tn-btn" id="navManual" onclick="VIP.home.setHomeMode('mini')" title="Carga manual: chat con un agente, tipo WhatsApp">
                 <span class="tn-ico">💬<span id="navManualUnread" class="support-unread" style="display:none;">0</span></span><span class="tn-lbl">Carga<br>manual</span>
             </button>
+            <span class="tn-sep" aria-hidden="true"></span>
+            <button type="button" class="tn-btn tn-home tn-retro" id="navInicio" onclick="VIP.home.setHomeMode('play')" title="Inicio: ver las plataformas">
+                <span class="tn-ico">🏠</span><span class="tn-lbl">Inicio</span>
+            </button>
+            <span class="tn-sep" aria-hidden="true"></span>
             <button type="button" class="tn-btn" id="infoBtn" title="Información del servicio">
                 <span class="tn-ico">ℹ️</span><span class="tn-lbl">Info</span>
             </button>
@@ -938,6 +941,20 @@
                  plataforma (sin login: el link SSO es de un solo uso) + abajo Carga manual (chat WhatsApp,
                  modo mini) y Carga automática (app completa, modo full). -->
             <div id="entryView" class="entry-view">
+                <!-- #269 (owner): "en el inicio, arriba de la página, el reembolso, la ruleta diaria y el sistema
+                     de referidos como servicio para que vean". Tres accesos compactos; el % de reembolso lo llena
+                     home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
+                <div class="ev-services" id="entryServices">
+                    <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
+                        <b>💸 Reembolso</b><small id="evSvcRefund">de lo que perdés</small>
+                    </button>
+                    <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
+                        <b>🎰 Ruleta diaria</b><small>premios todos los días</small>
+                    </button>
+                    <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
+                        <b>👥 Referidos</b><small>cobrá todos los meses</small>
+                    </button>
+                </div>
                 <div class="ev-tabs" id="entryTabs"></div>
                 <div class="ev-frame-wrap">
                     <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>

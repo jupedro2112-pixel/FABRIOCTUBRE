@@ -880,6 +880,10 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   clave, Notificaciones = `#notificationBtn` del inline FCM, Instalar, Código, Canal `#canalTelegramHeaderBtn`,
   Fueguito `#fireBtn`, Soporte `#headerSupportBtn`, Más ajustes = settingsModal). Los círculos de #222 ya no
   existen; sus ids viven dentro del Perfil — no borrarlos.
+  **#269:** orden de la barra: Carga automática · Carga manual · │ Inicio (retro, `.tn-retro`) │ · Info · Perfil.
+  El Inicio lleva `#entryServices` (Reembolso con % real, Ruleta diaria, Referidos) arriba de las pestañas.
+  `body.home-full` = carga automática SENCILLA: CSS esconde `.dash-top`, `#accessCard`, `#vipCard`,
+  `.home-bottom-bar` y el cartel; el DOM queda intacto (los módulos siguen pintando ahí).
   **#222:** cabecera = 5 círculos (Canal/Info/Código/Instalar/Clave), menú desplegable oculto; sin
   acordeón; carga compacta SOLO CBU, clave de solo lectura; barra `#casinoTopBar` dentro del casino
   (volver al menú de cargas + tabs de plataforma, `VIP.home.renderCasinoTabs`); chat = soporte en vivo

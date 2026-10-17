@@ -55,6 +55,7 @@
         const bn = _el('serviceBanner');
         document.body.classList.toggle('home-mini', mode === 'mini');
         document.body.classList.toggle('home-play', mode === 'play');
+        document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
         document.body.classList.remove('support-open');
         _paintNav();
         if (mode === 'play') {
@@ -206,6 +207,16 @@
         f.addEventListener('load', () => { if (_entryUrl && f.getAttribute('src') === _entryUrl) { clearTimeout(_entryTimer); _entryStatus(null); } });
     }
     function entryOpen() { openPlatform(_entryPlat || 'girox', { test: true }); }
+
+    // #269: servicios del Inicio → mismos flujos de siempre.
+    function svcRefund() {
+        try { if (VIP.refunds && typeof VIP.refunds.showUnifiedRefundModal === 'function') return VIP.refunds.showUnifiedRefundModal(); } catch (_) {}
+        const b = _el('weeklyRefundBtn'); if (b) b.click();
+    }
+    function svcRoulette() {
+        try { if (VIP.roulette && typeof VIP.roulette.open === 'function') return VIP.roulette.open(); } catch (_) {}
+        try { VIP.ui.showToast('La ruleta diaria se activa para clientes activos con la app instalada.', 'info'); } catch (_) {}
+    }
 
     function _paintWaHeadName() {
         try {
@@ -854,6 +865,9 @@
                 const w = _el('infoWeeklyMax'), m = _el('infoMonthlyMax');
                 if (w && mx(tbp.weekly)) w.textContent = mx(tbp.weekly);
                 if (m && mx(tbp.monthly)) m.textContent = mx(tbp.monthly);
+                // #269: tarjeta "Reembolso" del Inicio — % máximo real entre semanal y mensual.
+                const top = Math.max(mx(tbp.weekly), mx(tbp.monthly));
+                const sv = _el('evSvcRefund'); if (sv && top) sv.textContent = 'hasta ' + top + '% de lo que perdés';
             }
         } catch (_) {}
         if (ref) {
@@ -957,7 +971,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
