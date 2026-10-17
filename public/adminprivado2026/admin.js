@@ -11982,7 +11982,17 @@ async function toggleNotifBatchDetail(id) {
                 (sm.cancelados ? '<span style="color:#888;">✕ cancelados/reemplazados <b>' + sm.cancelados + '</b></span>' : '') +
               '</div>'
             : '';
-        box.innerHTML = resumen + '<div style="max-height:260px;overflow-y:auto;background:rgba(0,0,0,0.25);border-radius:6px;padding:.5rem;">' +
+        // #293: impacto real del aviso (no sólo la primera carga).
+        const imp = j.impact;
+        const nf = (n) => Number(n || 0).toLocaleString('es-AR');
+        const impacto = imp ? '<div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);border-radius:8px;padding:.5rem .7rem;font-size:.78rem;margin-bottom:.5rem;line-height:1.65;">' +
+            '<b style="color:#7fd7ff">📈 Impacto real del aviso</b> <span style="color:#888">(cargas reales, sin contar regalos)</span><br>' +
+            '🥇 Primera carga en 48 h: <b>' + nf(imp.first48.users) + '</b> clientes · $' + nf(imp.first48.amount) + ' <span style="color:#aaa">(todas las cargas en 48 h: ' + nf(imp.deposits48h.count) + ' por $' + nf(imp.deposits48h.amount) + ')</span><br>' +
+            '🔁 ¿Fue una sola o siguieron? <b>' + nf(imp.repeaters) + '</b> repitieron (2+ cargas en 7 días) · ' + nf(imp.single) + ' una sola · ese mismo día volvieron a cargar ' + nf(imp.sameDayExtra.count) + ' veces más ($' + nf(imp.sameDayExtra.amount) + ')<br>' +
+            '💰 Escalado: 1ª carga $' + nf(imp.first48.amount) + ' → con el resto del día $' + nf(imp.first48.amount + imp.sameDayExtra.amount) + ' → en 7 días <b>$' + nf(imp.within7d.amount) + '</b> (' + nf(imp.within7d.count) + ' cargas de ' + nf(imp.within7d.users) + ' clientes)<br>' +
+            '♻️ Recuperados (no cargaban hace ≥10 días): avisados ' + nf(imp.recovered.targets) + ' → al otro día <b>' + nf(imp.recovered.nextDay) + '</b> · en 48 h ' + nf(imp.recovered.in48h) + ' · en 7 días ' + nf(imp.recovered.in7d) + ' · siguen activos ' + nf(imp.recovered.stayed) + ' · cargaron $' + nf(imp.recovered.amount7d) + '<br>' +
+            '<span style="color:#aaa">Volvieron a cargar en 48 h según cuánto hacía que no cargaban: ' + ['<10', '10-19', '20-29', '30+', 'nuevo'].map((k) => { const b = (imp.buckets || {})[k] || { dep48h: 0, targets: 0 }; return (k === 'nuevo' ? 'nunca habían cargado' : k + ' días') + ' ' + nf(b.dep48h) + '/' + nf(b.targets); }).join(' · ') + '</span></div>' : '';
+        box.innerHTML = resumen + impacto + '<div style="max-height:260px;overflow-y:auto;background:rgba(0,0,0,0.25);border-radius:6px;padding:.5rem;">' +
             shown.map((u) => {
                 let estado;
                 const canje = u.claimedAt ? '<span style="color:#aaa;">canjeó ' + fx(u.claimedAt) + '</span> · ' : '';
@@ -14151,6 +14161,7 @@ async function loadCronograma() {
         const l = document.getElementById('cronList'); if (l) l.innerHTML = '<span style="color:#f87171">No se pudo cargar el cronograma</span>';
     }
     loadCronReport();
+    loadCronPlans(); // #293
 }
 function _cronRenderCalendar() {
     const el = document.getElementById('cronCalendar'); if (!el) return;
@@ -14307,22 +14318,108 @@ async function loadCronReport() {
         const r = await authFetch('/api/admin/cronograma-report?month=' + (_cronMonth || ''));
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'error');
-        const pct = (n) => (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + '%';
+        const pct = (n) => (n == null ? '—' : (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + '%');
         const num = (n) => Number(n || 0).toLocaleString('es-AR');
-        let html = '<table class="cron-tbl"><thead><tr><th>Semana</th><th>Campañas</th><th>Avisados</th><th>Les llegó</th><th>Cargaron (48 h)</th><th>Conversión</th><th>$ cargado</th><th>Bonos usados</th><th>Costo</th></tr></thead><tbody>';
-        for (const w of j.weeks || []) html += '<tr class="' + (j.bestWeek === w.week && w.campaigns ? 'cron-best' : '') + '"><td>' + escHtml(w.label) + (j.bestWeek === w.week && w.campaigns ? ' 🏆' : '') + '</td><td>' + num(w.campaigns) + '</td><td>' + num(w.recipients) + '</td><td>' + num(w.delivered) + '</td><td>' + num(w.depositors48h) + '</td><td><strong>' + pct(w.conv) + '</strong></td><td>' + fmtARS(w.deposits48h) + '</td><td>' + num(w.bonusUsed) + '</td><td>' + fmtARS(w.cost) + '</td></tr>';
+        const x = (n) => (n != null ? 'x' + n : '—');
+        // #293: semana a semana con impulso real (7 días) y recuperados.
+        let html = '<div style="overflow:auto"><table class="cron-tbl"><thead><tr><th>Semana</th><th>Campañas</th><th>Avisados</th><th>Cargaron (48 h)</th><th>Conv.</th><th>$ 1ª carga</th><th>$ 48 h</th><th>$ 7 días</th><th>Siguieron (2+ cargas)</th><th>Recuperados ≥10 d</th><th>Costo</th><th>x 48 h / x 7 d</th></tr></thead><tbody>';
+        for (const w of j.weeks || []) html += '<tr class="' + (j.bestWeek === w.week && w.campaigns ? 'cron-best' : '') + '"><td>' + escHtml(w.label) + (j.bestWeek === w.week && w.campaigns ? ' 🏆' : '') + (j.bestWeek7d === w.week && w.campaigns && j.bestWeek7d !== j.bestWeek ? ' 💰' : '') + '</td><td>' + num(w.campaigns) + '</td><td>' + num(w.recipients) + '</td><td>' + num(w.depositors48h) + '</td><td><strong>' + pct(w.conv) + '</strong></td><td>' + fmtARS(w.firstAmount48h) + '</td><td>' + fmtARS(w.deposits48h) + '</td><td><strong>' + fmtARS(w.deposits7d) + '</strong></td><td>' + num(w.repeaters) + ' <span style="color:#888">/ ' + num(w.single) + ' una sola</span></td><td>' + num(w.recovered48h) + ' <span style="color:#888">de ' + num(w.recoveredTargets) + '</span>' + (w.recoveryRate != null ? ' <span style="color:#8fd3a8">(' + pct(w.recoveryRate) + ')</span>' : '') + '</td><td>' + fmtARS(w.cost) + '</td><td>' + x(w.roi) + ' / ' + x(w.roi7d) + '</td></tr>';
         const t = j.totals || {};
-        html += '<tr style="font-weight:700;border-top:2px solid rgba(255,255,255,0.2)"><td>Mes completo</td><td>' + num(t.campaigns) + '</td><td>' + num(t.recipients) + '</td><td></td><td>' + num(t.depositors48h) + '</td><td>' + pct(t.conv) + '</td><td>' + fmtARS(t.deposits48h) + '</td><td></td><td>' + fmtARS(t.cost) + (t.roi != null ? ' <span style="color:#8fd3a8;font-weight:400">(x' + t.roi + ')</span>' : '') + '</td></tr></tbody></table>';
-        html += '<div style="margin-top:.8rem"><strong>🧭 Resumen y recomendaciones</strong><ul style="margin:.3rem 0 0 1rem;padding:0;font-size:.82rem;line-height:1.5">' + (j.recommendations || []).map((x) => '<li>' + escHtml(x.text) + '</li>').join('') + '</ul></div>';
+        html += '<tr style="font-weight:700;border-top:2px solid rgba(255,255,255,0.2)"><td>Mes completo</td><td>' + num(t.campaigns) + '</td><td>' + num(t.recipients) + '</td><td>' + num(t.depositors48h) + '</td><td>' + pct(t.conv) + '</td><td>' + fmtARS(t.firstAmount48h) + '</td><td>' + fmtARS(t.deposits48h) + '</td><td>' + fmtARS(t.deposits7d) + '</td><td>' + num(t.repeaters) + ' <span style="color:#888;font-weight:400">/ ' + num(t.single) + '</span></td><td>' + num(t.recovered48h) + ' <span style="color:#888;font-weight:400">de ' + num(t.recoveredTargets) + '</span></td><td>' + fmtARS(t.cost) + '</td><td>' + x(t.roi) + ' / ' + x(t.roi7d) + '</td></tr></tbody></table></div>';
+        html += '<div style="color:#888;font-size:.74rem;margin-top:.3rem">🏆 mejor conversión inmediata · 💰 la que más plata movió en 7 días. "$ 1ª carga" = sólo la primera carga de cada cliente que respondió; "$ 7 días" = todo lo que cargaron esos clientes en la semana siguiente (impulso real). "Recuperados" = clientes que no cargaban hace 10 días o más y volvieron a cargar en 48 h.</div>';
+        // #293: planes aplicados en el mes.
+        if ((j.plans || []).length) {
+            html += '<div style="margin-top:.8rem"><strong>🧭 Por plan de estrategia</strong><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.3rem"><thead><tr><th>Plan</th><th>Campañas</th><th>Avisados</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ 7 días</th><th>Recuperados</th><th>Costo</th><th>x 7 d</th></tr></thead><tbody>';
+            for (const p of j.plans) html += '<tr><td>' + escHtml(p.plan) + '</td><td>' + num(p.campaigns) + '</td><td>' + num(p.recipients) + '</td><td>' + num(p.depositors48h) + '</td><td>' + pct(p.conv) + '</td><td>' + fmtARS(p.deposits7d) + '</td><td>' + num(p.recovered48h) + ' de ' + num(p.recoveredTargets) + '</td><td>' + fmtARS(p.cost) + '</td><td>' + x(p.roi7d) + '</td></tr>';
+            html += '</tbody></table></div></div>';
+        }
+        // #293: día a día.
+        if ((j.days || []).length) {
+            html += '<details style="margin-top:.8rem" open><summary style="cursor:pointer;color:#a5b4fc;font-size:.85rem">📅 Día a día: cómo rindió la estrategia cada día (' + j.days.length + ' días con envíos)</summary><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.4rem"><thead><tr><th>Día</th><th>Campañas</th><th>Avisados</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ 48 h</th><th>$ 7 días</th><th>Siguieron</th><th>Recuperados</th><th>Costo</th></tr></thead><tbody>';
+            const bestDay = j.days.filter((d) => d.recipients >= 30).sort((a, b) => b.conv - a.conv)[0];
+            for (const d of j.days) html += '<tr class="' + (bestDay && bestDay.day === d.day ? 'cron-best' : '') + '"><td>' + d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + '<div style="color:#888;font-size:.7rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml((d.names || []).join(' · ')) + '</div></td><td>' + num(d.campaigns) + '</td><td>' + num(d.recipients) + '</td><td>' + num(d.depositors48h) + '</td><td><strong>' + pct(d.conv) + '</strong></td><td>' + fmtARS(d.deposits48h) + '</td><td>' + fmtARS(d.deposits7d) + '</td><td>' + num(d.repeaters) + '</td><td>' + num(d.recovered48h) + ' de ' + num(d.recoveredTargets) + '</td><td>' + fmtARS(d.cost) + '</td></tr>';
+            html += '</tbody></table></div></details>';
+        }
+        html += '<div style="margin-top:.8rem"><strong>🧭 Resumen y recomendaciones</strong><ul style="margin:.3rem 0 0 1rem;padding:0;font-size:.82rem;line-height:1.5">' + (j.recommendations || []).map((xx) => '<li>' + escHtml(xx.text) + '</li>').join('') + '</ul></div>';
         if ((j.campaigns || []).length) {
-            html += '<details style="margin-top:.8rem"><summary style="cursor:pointer;color:#a5b4fc;font-size:.85rem">Ver campaña por campaña (' + j.campaigns.length + ')</summary><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.4rem"><thead><tr><th>Día / hora</th><th>Campaña</th><th>Audiencia</th><th>Regalo</th><th>Avisados</th><th>Canjearon</th><th>Usaron bono</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ cargado</th><th>Costo</th><th>x</th></tr></thead><tbody>';
+            html += '<details style="margin-top:.8rem"><summary style="cursor:pointer;color:#a5b4fc;font-size:.85rem">Ver campaña por campaña (' + j.campaigns.length + ')</summary><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.4rem"><thead><tr><th>Día / hora</th><th>Campaña</th><th>Audiencia</th><th>Regalo</th><th>Avisados</th><th>Canjearon</th><th>Usaron bono</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ 48 h</th><th>$ 7 días</th><th>Siguieron</th><th>Recuperados</th><th>Costo</th><th>x 48 h / 7 d</th></tr></thead><tbody>';
             const best = j.campaigns.filter((c) => c.recipients >= 30).sort((a, b) => b.conv - a.conv)[0];
-            for (const c of j.campaigns) html += '<tr class="' + (best && best.batchId === c.batchId ? 'cron-best' : '') + '"><td>' + c.day.slice(8, 10) + '/' + c.day.slice(5, 7) + ' ' + String(c.hour).padStart(2, '0') + 'h</td><td>' + escHtml(c.campaignName || c.name || c.batchId.slice(0, 8)) + (c.scheduled ? ' 📅' : '') + '</td><td>' + escHtml(c.audienceLabel || c.audienceType) + '</td><td>' + (c.giftType === 'percent' ? '+' + c.amount + '%' + (c.applyMode === 'auto' ? ' auto' : '') : '$' + num(c.amount)) + '</td><td>' + num(c.recipients) + '</td><td>' + num(c.claimed) + '</td><td>' + num(c.bonusUsed + c.credited) + '</td><td>' + num(c.depositors48h) + '</td><td><strong>' + pct(c.conv) + '</strong></td><td>' + fmtARS(c.deposits48h) + '</td><td>' + fmtARS(c.cost) + '</td><td>' + (c.roi != null ? 'x' + c.roi : '—') + '</td></tr>';
+            for (const c of j.campaigns) html += '<tr class="' + (best && best.batchId === c.batchId ? 'cron-best' : '') + '"><td>' + c.day.slice(8, 10) + '/' + c.day.slice(5, 7) + ' ' + String(c.hour).padStart(2, '0') + 'h</td><td>' + escHtml(c.campaignName || c.name || c.batchId.slice(0, 8)) + (c.scheduled ? ' 📅' : '') + (c.planName ? ' <span style="color:#a5b4fc" title="Plan">🧭 ' + escHtml(c.planName) + '</span>' : '') + ' <a href="#" onclick="cronGoBatch(\'' + c.batchId + '\');return false" style="color:#a5b4fc;font-size:.75rem">ver lote</a></td><td>' + escHtml(c.audienceLabel || c.audienceType) + '</td><td>' + (c.giftType === 'percent' ? '+' + c.amount + '%' + (c.applyMode === 'auto' ? ' auto' : '') : '$' + num(c.amount)) + '</td><td>' + num(c.recipients) + '</td><td>' + num(c.claimed) + '</td><td>' + num(c.bonusUsed + c.credited) + '</td><td>' + num(c.depositors48h) + '</td><td><strong>' + pct(c.conv) + '</strong></td><td>' + fmtARS(c.deposits48h) + '</td><td>' + fmtARS(c.deposits7d) + '</td><td>' + num(c.repeaters) + '<span style="color:#888"> / ' + num(c.single) + '</span></td><td>' + num(c.recovered48h) + ' de ' + num(c.recoveredTargets) + (c.recoveryRate != null ? ' (' + pct(c.recoveryRate) + ')' : '') + '</td><td>' + fmtARS(c.cost) + '</td><td>' + x(c.roi) + ' / ' + x(c.roi7d) + '</td></tr>';
             html += '</tbody></table></div></details>';
         }
         el.innerHTML = html;
     } catch (e) { el.innerHTML = '<span style="color:#f87171">No se pudo calcular el comparativo</span>'; }
 }
+// ═══ #293: planes de estrategia (plantillas del mes) ═══
+let _cronPlans = [];
+async function loadCronPlans() {
+    const el = document.getElementById('cronPlans'); if (!el) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans');
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        _cronPlans = j.plans || [];
+        if (!_cronPlans.length) { el.innerHTML = '<span style="color:#888">Todavía no hay planes guardados. Programá las campañas del mes (manual o desde Notificaciones → "📅 Programar") y tocá "Guardar este mes como plan".</span>'; return; }
+        el.innerHTML = _cronPlans.map((p) => {
+            const items = (p.items || []).slice(0, 8).map((it) => 'día ' + it.day + ' ' + escHtml(it.time) + (it.parts > 1 ? ' (' + it.parts + ' tandas)' : '') + ' · ' + escHtml(it.name || ((it.payload || {}).giftType === 'percent' ? '+' + (it.payload || {}).amount + '%' : '$' + (it.payload || {}).amount))).join(' · ');
+            return '<div class="cron-row"><div style="flex:1;min-width:220px"><div><strong>' + escHtml(p.name) + '</strong> <span style="color:#a5b4fc">· ' + p.itemsCount + ' campaña(s)</span>' + (p.lastAppliedMonth ? ' <span style="color:#8fd3a8;font-size:.76rem">· aplicado a ' + escHtml(p.lastAppliedMonth) + (p.appliedCount > 1 ? ' (' + p.appliedCount + ' veces)' : '') + '</span>' : '') + '</div>' +
+                '<div style="font-size:.76rem;color:#cbd5e1;margin-top:2px">' + items + ((p.items || []).length > 8 ? ' · …' : '') + '</div>' +
+                (p.notes ? '<div style="font-size:.74rem;color:#a5b4fc;margin-top:2px">📝 ' + escHtml(p.notes) + '</div>' : '') + '</div>' +
+                '<div class="acts"><input type="month" id="cronPlanMonth_' + p.id + '" class="form-input" value="' + escHtml(_cronMonth || '') + '" style="width:150px">' +
+                '<button class="btn btn-primary" onclick="cronApplyPlan(\'' + p.id + '\')">▶ Aplicar al mes</button>' +
+                '<button class="btn btn-secondary" onclick="cronRenamePlan(\'' + p.id + '\')">✏️</button>' +
+                '<button class="btn btn-secondary" style="color:#f87171" onclick="cronDeletePlan(\'' + p.id + '\')">🗑️</button></div></div>';
+        }).join('');
+    } catch (e) { el.innerHTML = '<span style="color:#f87171">No se pudieron cargar los planes</span>'; }
+}
+async function cronSaveMonthAsPlan() {
+    const name = prompt('Nombre del plan (ej. "Mes fuerte: bonos a inactivos + fichas finde").\nSe arma con TODAS las campañas programadas/enviadas de ' + _cronMonth + '.', 'Plan ' + _cronMonth);
+    if (!name) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/from-month', { method: 'POST', body: JSON.stringify({ month: _cronMonth, name }) });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo guardar el plan', 'error'); return; }
+        showToast('Plan guardado: ' + j.plan.itemsCount + ' campaña(s)', 'success');
+        loadCronPlans();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+async function cronApplyPlan(id) {
+    const p = _cronPlans.find((x) => x.id === id);
+    const m = ((document.getElementById('cronPlanMonth_' + id) || {}).value || _cronMonth || '').slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(m)) { showToast('Elegí el mes', 'error'); return; }
+    if (!confirm('¿Programar las ' + (p ? p.itemsCount : '') + ' campañas del plan "' + (p ? p.name : '') + '" en ' + m + '?\n\nLas fechas que ya pasaron se saltean. Después podés editar, pausar o borrar cada campaña desde el calendario.')) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/' + id + '/apply', { method: 'POST', body: JSON.stringify({ month: m }) });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo aplicar', 'error'); return; }
+        showToast(j.created.length + ' campaña(s) programadas' + (j.skipped.length ? ' · ' + j.skipped.length + ' salteadas' : ''), 'success');
+        if (j.skipped.length) alert('Salteadas:\n' + j.skipped.map((s) => '• ' + s.label + ' → ' + s.reason).join('\n'));
+        _cronMonth = m; _cronDayFilter = null; loadCronograma();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+async function cronRenamePlan(id) {
+    const p = _cronPlans.find((x) => x.id === id); if (!p) return;
+    const name = prompt('Nombre del plan', p.name); if (name == null) return;
+    const notes = prompt('Notas (opcional)', p.notes || ''); if (notes == null) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/' + id, { method: 'PUT', body: JSON.stringify({ name: name.trim(), notes: notes.trim() }) });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        loadCronPlans();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+async function cronDeletePlan(id) {
+    const p = _cronPlans.find((x) => x.id === id);
+    if (!confirm('¿Eliminar el plan "' + (p ? p.name : '') + '"? Las campañas ya programadas con él NO se tocan.')) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/' + id, { method: 'DELETE' });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo eliminar', 'error'); return; }
+        loadCronPlans();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.loadCronPlans = loadCronPlans; window.cronSaveMonthAsPlan = cronSaveMonthAsPlan; window.cronApplyPlan = cronApplyPlan; window.cronRenamePlan = cronRenamePlan; window.cronDeletePlan = cronDeletePlan;
+
 window.updateGiftBatchScheduleUI = updateGiftBatchScheduleUI; window.cronMonthShift = cronMonthShift; window.loadCronograma = loadCronograma; window.cronPickDay = cronPickDay;
 window.cronGoBatch = cronGoBatch; window.cronNewCampaign = cronNewCampaign; window.cronAction = cronAction; window.cronDuplicate = cronDuplicate; window.cronDelete = cronDelete;
 window.cronOpenEdit = cronOpenEdit; window.cronCloseEdit = cronCloseEdit; window.cronSaveEdit = cronSaveEdit; window.loadCronReport = loadCronReport;

@@ -8,6 +8,31 @@
 
 ## Sesión 2026-10-17
 
+### 293. 🧭 Planes de estrategia del mes + análisis de impacto REAL (cargas siguientes, recuperados, día a día, por plan) — admin-sw v66
+**Pedido (owner):** "armar un plan de estrategia programable para programar todo el mes, guardarlo y tener el
+análisis de cómo va sirviendo cada día y semana a semana; medir no sólo la primera carga sino cuánto impulsó
+realmente con las próximas cargas del día de esa persona (una sola o siguieron); y cuando mando lotes a
+clientes que no entran hace 10/20/30 días, cuántos cargaron al otro día y volvieron a ser activos (clientes
+recuperados). Convertir pero dejar también la forma manual".
+- **Planes** (`src/models/StrategyPlan.js`, rutas `/api/admin/cronograma-plans`): plantilla reutilizable con
+  campañas por DÍA del mes + hora (+ tandas y horas entre tandas) y el mismo `payload` del lote. "💾 Guardar
+  este mes como plan" (`/from-month`) lo arma con lo programado/enviado del mes; "▶ Aplicar al mes"
+  (`/:id/apply {month}`) crea una ScheduledCampaign por ítem (fechas pasadas y audiencias vacías se saltean y
+  se listan). Las campañas creadas llevan `notes = 'Plan "<nombre>" (aplicado a YYYY-MM)'`, que el reporte usa
+  para agrupar "por plan". **El envío manual de lotes y la programación campaña por campaña siguen igual.**
+- **Impacto real** (`_batchImpact(batch, depMatch)` en server.js, cargas reales sin regalos): por lote →
+  primera carga en 48 h (clientes y $), TODAS las cargas en 48 h, cargas extra el MISMO día de la primera,
+  total 7 días (clientes/cargas/$), repetidores (2+ cargas en 7 d) vs una sola, y **recuperados**: cada
+  destinatario se clasifica por cuánto hacía que no cargaba antes del aviso (nunca / <10 / 10-19 / 20-29 /
+  30+ días) y se cuenta quién volvió a cargar al otro día (24 h), en 48 h, en 7 días y quién siguió activo.
+  Va en `GET /api/admin/notif-batches/:id` (`impact`) → bloque "📈 Impacto real del aviso" en el detalle del lote.
+- **Comparativo** (`GET /api/admin/cronograma-report`): filas por campaña con esos campos (`firstAmount48h`,
+  `deposits7d`, `repeaters/single`, `recovered*`, `roi7d`), semanas con lo mismo, **día a día** (`days[]`),
+  **por plan** (`plans[]`), `bestWeek7d` y recomendaciones nuevas: impulso real (qué % de la plata vino DESPUÉS
+  de la primera carga), recuperados del mes y el aviso que más inactivos recuperó. Panel: tablas nuevas en
+  📅 Cronograma (semana · plan · día a día · campaña por campaña con "ver lote").
+- Requiere redeploy. Los datos salen de Transaction (permanente): el análisis también vale para lotes viejos.
+
 ### 292. 👑 Niveles VIP: escalera de 1win (19 niveles) editable desde el panel; la app muestra la plata que desbloquea cada nivel — SW v184, admin-sw v65
 **Pedido (owner):** "que el progreso se pueda expandir para ver los niveles y qué plata se desbloquea en cada uno,
 sin marcar cómo sube de nivel; que el rollover por nivel y la plata por nivel se ajusten desde el admin; usar los

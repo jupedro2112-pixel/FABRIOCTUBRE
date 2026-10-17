@@ -2026,6 +2026,15 @@ document.addEventListener('change', function (ev) {
                     <h3 style="margin:0 0 .6rem 0;font-size:1rem">🗂️ Campañas del mes</h3>
                     <div id="cronList" style="font-size:.85rem">Cargando…</div>
                 </div>
+                <!-- #293: planes de estrategia del mes (plantillas reutilizables). El envío manual sigue en Notificaciones. -->
+                <div class="card" style="margin-bottom:1rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+                        <h3 style="margin:0;font-size:1rem">🧭 Planes de estrategia (mes completo, reutilizables)</h3>
+                        <button class="btn btn-secondary" onclick="cronSaveMonthAsPlan()">💾 Guardar este mes como plan</button>
+                    </div>
+                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Un plan guarda las campañas del mes por día y hora (día 1 → bono a inactivos, día 5 → fichas, finde → código…). Lo aplicás a cualquier mes y queda todo programado; abajo, el comparativo te dice cómo rindió cada día, cada semana y cada plan. El envío manual de lotes y la programación campaña por campaña siguen igual.</div>
+                    <div id="cronPlans" style="font-size:.85rem">Cargando…</div>
+                </div>
                 <div id="cronEditCard" class="card" style="display:none;margin-bottom:1rem;border:1px solid rgba(165,180,252,0.5)">
                     <h3 style="margin:0 0 .6rem 0;font-size:1rem">✏️ Editar campaña <span id="cronEditName" style="color:#a5b4fc"></span></h3>
                     <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
@@ -2043,7 +2052,7 @@ document.addEventListener('change', function (ev) {
                 </div>
                 <div class="card">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
-                        <h3 style="margin:0;font-size:1rem">📊 Comparativo del mes: semana 1 · 2 · 3 · 4 y resumen</h3>
+                        <h3 style="margin:0;font-size:1rem">📊 Comparativo del mes: semana a semana, día a día y por plan</h3>
                         <button class="btn btn-secondary" onclick="loadCronReport()">🔄 Recalcular</button>
                     </div>
                     <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Entran TODOS los lotes enviados en el mes (programados 📅 o a mano). "Cargaron" = clientes del lote que hicieron una carga real en las 48 h siguientes al envío. Costo = $ de bono usado + fichas acreditadas. "x" = $ cargado sobre el costo.</div>

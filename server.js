@@ -21364,8 +21364,11 @@ app.get('/api/admin/notif-batches/:id', authMiddleware, adminMiddleware, async (
         cargaMonto: pb ? (pb.cargaMonto || 0) : 0
       };
     });
+    // #293: impacto real (primera carga, cargas siguientes, recuperados).
+    let impact = null;
+    try { impact = await _batchImpact(batch, SCHED_ADAPTER.realDepositMatch()); } catch (e) { logger.warn(`[notif-batch] impacto ${batch.id}: ${e.message}`); }
     delete batch.recipients;
-    res.json({ batch, recipients, summary });
+    res.json({ batch, recipients, summary, impact });
   } catch (err) {
     logger.error(`GET /api/admin/notif-batches/:id: ${err.message}`);
     res.status(500).json({ error: 'Error del servidor' });
@@ -21687,6 +21690,67 @@ app.delete('/api/admin/cronograma/:id', authMiddleware, adminMiddleware, async (
 // Métricas por lote: destinatarios, notificados, canjes, acreditados (fichas), usaron el bono
 // (% en una carga), cargaron en 48 h (clientes y $ reales), conversión = cargaron/destinatarios,
 // costo = bono $ usado + fichas acreditadas.
+// #293 (owner 2026-10-17): IMPACTO REAL de un lote/aviso. No sólo "cargaron en 48 h": también las cargas
+// SIGUIENTES de esos mismos clientes (el mismo día y en 7 días: ¿fue una sola carga o siguieron?) y los
+// clientes RECUPERADOS (no cargaban hace ≥10/20/30 días antes del aviso y volvieron a cargar al otro día /
+// en 48 h / en 7 días, y si siguieron activos). Todo sobre cargas REALES (depMatch = sin regalos).
+async function _batchImpact(batch, depMatch) {
+  const recs = batch.recipients || [];
+  const uids = [...new Set(recs.map(r => r.userId).filter(Boolean))];
+  const sentAt = new Date(batch.sentAt || Date.now());
+  const H = 3600 * 1000;
+  const t24 = sentAt.getTime() + 24 * H, t48 = sentAt.getTime() + 48 * H, t7 = sentAt.getTime() + 7 * 24 * H;
+  const BUCKETS = ['nuevo', '<10', '10-19', '20-29', '30+'];
+  const out = {
+    recipients: recs.length, users: uids.length,
+    first48: { users: 0, amount: 0 },            // primera carga (dentro de 48 h) de cada cliente que respondió
+    deposits48h: { count: 0, amount: 0 },        // TODAS las cargas en 48 h
+    sameDayExtra: { count: 0, amount: 0 },       // cargas ADEMÁS de la primera, el mismo día (ART) de esa primera
+    within7d: { users: 0, count: 0, amount: 0 }, // todo lo cargado en 7 días por los que respondieron
+    repeaters: 0, single: 0,                     // ≥2 cargas en 7 d / una sola
+    buckets: {}, recovered: null, windowDays: 7
+  };
+  for (const k of BUCKETS) out.buckets[k] = { targets: 0, dep24h: 0, dep48h: 0, dep7d: 0, stayed: 0, amount7d: 0 };
+  if (!uids.length) { out.recovered = { targets: 0, nextDay: 0, in48h: 0, in7d: 0, stayed: 0, amount7d: 0 }; return out; }
+  const before = await Transaction.aggregate([
+    { $match: Object.assign({ userId: { $in: uids }, timestamp: { $lt: sentAt } }, depMatch) },
+    { $group: { _id: '$userId', last: { $max: '$timestamp' } } }
+  ]);
+  const lastBefore = new Map(before.map(b => [b._id, new Date(b.last).getTime()]));
+  const after = await Transaction.aggregate([
+    { $match: Object.assign({ userId: { $in: uids }, timestamp: { $gte: sentAt, $lte: new Date(t7) } }, depMatch) },
+    { $sort: { timestamp: 1 } },
+    { $group: { _id: '$userId', deps: { $push: { t: '$timestamp', a: '$amount' } } } }
+  ]);
+  const afterBy = new Map(after.map(a => [a._id, a.deps]));
+  for (const uid of uids) {
+    const lb = lastBefore.get(uid);
+    const days = lb == null ? null : Math.floor((sentAt.getTime() - lb) / (24 * H));
+    const bk = days == null ? 'nuevo' : days < 10 ? '<10' : days < 20 ? '10-19' : days < 30 ? '20-29' : '30+';
+    const B = out.buckets[bk]; B.targets++;
+    const deps = afterBy.get(uid) || [];
+    if (!deps.length) continue;
+    const first = deps[0]; const ft = new Date(first.t).getTime();
+    const in48 = deps.filter(d => new Date(d.t).getTime() <= t48);
+    out.deposits48h.count += in48.length; out.deposits48h.amount += in48.reduce((s, d) => s + (Number(d.a) || 0), 0);
+    const amount7 = deps.reduce((s, d) => s + (Number(d.a) || 0), 0);
+    out.within7d.users++; out.within7d.count += deps.length; out.within7d.amount += amount7;
+    B.dep7d++; B.amount7d += amount7;
+    if (ft <= t24) B.dep24h++;
+    if (ft <= t48) { B.dep48h++; out.first48.users++; out.first48.amount += Number(first.a) || 0; }
+    if (deps.length >= 2) { out.repeaters++; B.stayed++; } else out.single++;
+    const fday = _schedArtKey(first.t);
+    for (const d of deps.slice(1)) if (_schedArtKey(d.t) === fday) { out.sameDayExtra.count++; out.sameDayExtra.amount += Number(d.a) || 0; }
+  }
+  const R = ['10-19', '20-29', '30+'].map(k => out.buckets[k]);
+  const sum = (f) => R.reduce((s, b) => s + b[f], 0);
+  out.recovered = { targets: sum('targets'), nextDay: sum('dep24h'), in48h: sum('dep48h'), in7d: sum('dep7d'), stayed: sum('stayed'), amount7d: Math.round(sum('amount7d')) };
+  out.first48.amount = Math.round(out.first48.amount); out.deposits48h.amount = Math.round(out.deposits48h.amount);
+  out.sameDayExtra.amount = Math.round(out.sameDayExtra.amount); out.within7d.amount = Math.round(out.within7d.amount);
+  for (const k of BUCKETS) out.buckets[k].amount7d = Math.round(out.buckets[k].amount7d);
+  return out;
+}
+
 app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
@@ -21696,7 +21760,7 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
     const next = `${mo === 12 ? y + 1 : y}-${String(mo === 12 ? 1 : mo + 1).padStart(2, '0')}`;
     const to = new Date(new Date(next + '-01T00:00:00Z').getTime() + SCHED_ART_OFFSET_MS);
     const batches = await NotifBatch.find({ sentAt: { $gte: from, $lt: to } }).select('id name mode giftType amount applyMode audienceType audienceLabel sentAt sentBy recipients.userId recipients.delivery recipients.claimedAt recipients.creditedAt isPublic claimRequired').sort({ sentAt: 1 }).lean();
-    const sched = await ScheduledCampaign.find({ 'parts.batchId': { $in: batches.map(b => b.id) } }).select('id name parts.batchId').lean();
+    const sched = await ScheduledCampaign.find({ 'parts.batchId': { $in: batches.map(b => b.id) } }).select('id name parts.batchId notes').lean();
     const schedByBatch = new Map(); for (const c of sched) for (const p of c.parts || []) if (p.batchId) schedByBatch.set(p.batchId, c);
     const ids = batches.map(b => b.id);
     const pbAgg = ids.length ? await PromoBonus.aggregate([
@@ -21708,50 +21772,74 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
     const rows = [];
     for (const b of batches) {
       const recs = b.recipients || [];
-      const uids = recs.map(r => r.userId).filter(Boolean);
-      const sentAt = new Date(b.sentAt), until = new Date(sentAt.getTime() + 48 * 3600 * 1000);
-      let dep = { users: 0, amount: 0, count: 0 };
-      if (uids.length) {
-        const agg = await Transaction.aggregate([
-          { $match: Object.assign({ userId: { $in: uids }, timestamp: { $gte: sentAt, $lte: until } }, depMatch) },
-          { $group: { _id: '$userId', amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-          { $group: { _id: null, users: { $sum: 1 }, amount: { $sum: '$amount' }, count: { $sum: '$count' } } }
-        ]);
-        if (agg[0]) dep = { users: agg[0].users, amount: Math.round(agg[0].amount), count: agg[0].count };
-      }
+      const sentAt = new Date(b.sentAt);
+      // #293: impacto real (primera carga + cargas siguientes + recuperados), una sola pasada por lote.
+      const imp = await _batchImpact(b, depMatch);
       const pb = pbBy.get(b.id) || { used: 0, bonoTotal: 0, cargaTotal: 0 };
       const credited = recs.filter(r => r.creditedAt).length;
       const fichasCost = b.giftType === 'fixed' ? credited * (Number(b.amount) || 0) : 0;
+      const cost = Math.round(pb.bonoTotal) + fichasCost;
       const sc = schedByBatch.get(b.id);
       const day = _schedArtKey(sentAt); const dom = Number(day.slice(8, 10));
+      const planName = sc && /^Plan "(.+)"/.exec(String(sc.notes || '')) ? /^Plan "(.+)"/.exec(String(sc.notes || ''))[1] : null;
       rows.push({
-        batchId: b.id, name: b.name || '', scheduled: !!sc, campaignName: sc ? sc.name : null, sentAt: b.sentAt, day, hour: _schedArtHour(sentAt), week: Math.min(5, Math.ceil(dom / 7)),
+        batchId: b.id, name: b.name || '', scheduled: !!sc, campaignName: sc ? sc.name : null, planName, sentAt: b.sentAt, day, hour: _schedArtHour(sentAt), week: Math.min(5, Math.ceil(dom / 7)),
         mode: b.mode, giftType: b.giftType, amount: b.amount, applyMode: b.applyMode, audienceType: b.isPublic ? 'public' : (b.audienceType || 'list'), audienceLabel: b.audienceLabel || '',
         recipients: recs.length, delivered: recs.filter(r => r.delivery === 'socket' || r.delivery === 'push').length,
-        claimed: recs.filter(r => r.claimedAt).length, credited, bonusUsed: pb.used, bonusCost: Math.round(pb.bonoTotal), fichasCost,
-        cost: Math.round(pb.bonoTotal) + fichasCost, depositors48h: dep.users, deposits48h: dep.amount, depositCount48h: dep.count,
-        conv: recs.length ? Math.round(dep.users / recs.length * 1000) / 10 : 0,
-        roi: (Math.round(pb.bonoTotal) + fichasCost) > 0 ? Math.round(dep.amount / (Math.round(pb.bonoTotal) + fichasCost) * 10) / 10 : null
+        claimed: recs.filter(r => r.claimedAt).length, credited, bonusUsed: pb.used, bonusCost: Math.round(pb.bonoTotal), fichasCost, cost,
+        depositors48h: imp.first48.users, deposits48h: imp.deposits48h.amount, depositCount48h: imp.deposits48h.count, firstAmount48h: imp.first48.amount,
+        extraSameDayCount: imp.sameDayExtra.count, extraSameDayAmount: imp.sameDayExtra.amount,
+        depositors7d: imp.within7d.users, depositCount7d: imp.within7d.count, deposits7d: imp.within7d.amount,
+        repeaters: imp.repeaters, single: imp.single,
+        recoveredTargets: imp.recovered.targets, recoveredNextDay: imp.recovered.nextDay, recovered48h: imp.recovered.in48h, recovered7d: imp.recovered.in7d, recoveredStayed: imp.recovered.stayed, recoveredAmount7d: imp.recovered.amount7d,
+        buckets: imp.buckets,
+        conv: recs.length ? Math.round(imp.first48.users / recs.length * 1000) / 10 : 0,
+        recoveryRate: imp.recovered.targets ? Math.round(imp.recovered.in48h / imp.recovered.targets * 1000) / 10 : null,
+        roi: cost > 0 ? Math.round(imp.deposits48h.amount / cost * 10) / 10 : null,
+        roi7d: cost > 0 ? Math.round(imp.within7d.amount / cost * 10) / 10 : null
       });
     }
+    const SUMK = ['recipients', 'delivered', 'depositors48h', 'deposits48h', 'depositCount48h', 'firstAmount48h', 'extraSameDayCount', 'extraSameDayAmount', 'depositors7d', 'depositCount7d', 'deposits7d', 'repeaters', 'single', 'recoveredTargets', 'recoveredNextDay', 'recovered48h', 'recovered7d', 'recoveredStayed', 'recoveredAmount7d', 'bonusUsed', 'cost'];
+    const agg = (rs) => {
+      const o = { campaigns: rs.length };
+      for (const k of SUMK) o[k] = rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+      o.conv = o.recipients ? Math.round(o.depositors48h / o.recipients * 1000) / 10 : 0;
+      o.recoveryRate = o.recoveredTargets ? Math.round(o.recovered48h / o.recoveredTargets * 1000) / 10 : null;
+      o.roi = o.cost > 0 ? Math.round(o.deposits48h / o.cost * 10) / 10 : null;
+      o.roi7d = o.cost > 0 ? Math.round(o.deposits7d / o.cost * 10) / 10 : null;
+      return o;
+    };
     const weeks = [1, 2, 3, 4, 5].map(w => {
       const rs = rows.filter(r => r.week === w);
-      const sum = (k) => rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
-      const rec = sum('recipients'), du = sum('depositors48h');
-      return { week: w, label: w === 5 ? 'Semana 5 (29→fin)' : `Semana ${w} (${(w - 1) * 7 + 1}→${w * 7})`, campaigns: rs.length, recipients: rec, delivered: sum('delivered'), depositors48h: du, deposits48h: sum('deposits48h'), bonusUsed: sum('bonusUsed'), cost: sum('cost'), conv: rec ? Math.round(du / rec * 1000) / 10 : 0 };
+      return Object.assign({ week: w, label: w === 5 ? 'Semana 5 (29→fin)' : `Semana ${w} (${(w - 1) * 7 + 1}→${w * 7})` }, agg(rs));
     }).filter(w => w.campaigns > 0 || w.week <= 4);
+    // #293: día a día ("cómo va sirviendo cada día la estrategia programada").
+    const dayKeys = [...new Set(rows.map(r => r.day))].sort();
+    const days = dayKeys.map(d => Object.assign({ day: d, names: rows.filter(r => r.day === d).map(r => r.campaignName || r.name || r.batchId.slice(0, 8)) }, agg(rows.filter(r => r.day === d))));
     const withData = weeks.filter(w => w.campaigns > 0);
     const bestWeek = withData.length ? withData.reduce((a, b2) => (b2.conv > a.conv ? b2 : a)) : null;
     const worstWeek = withData.length > 1 ? withData.reduce((a, b2) => (b2.conv < a.conv ? b2 : a)) : null;
+    const bestWeek7d = withData.length ? withData.reduce((a, b2) => (b2.deposits7d > a.deposits7d ? b2 : a)) : null;
     // Recomendaciones (heurísticas simples sobre lotes con ≥ 30 destinatarios).
     const big = rows.filter(r => r.recipients >= 30);
     const convs = big.map(r => r.conv).sort((a, b2) => a - b2);
     const median = convs.length ? convs[Math.floor(convs.length / 2)] : 0;
     const recs = [];
     const top = big.slice().sort((a, b2) => b2.conv - a.conv).slice(0, 3);
-    for (const r of top) if (r.conv > 0) recs.push({ kind: 'repeat', text: `✅ REPETIR "${r.campaignName || r.name || r.batchId.slice(0, 8)}" (${r.day} ${String(r.hour).padStart(2, '0')}h · ${r.audienceLabel || r.audienceType} · ${r.giftType === 'percent' ? '+' + r.amount + '%' : '$' + r.amount}): ${r.conv}% cargó en 48 h ($${r.deposits48h.toLocaleString('es-AR')}${r.roi != null ? ', x' + r.roi + ' sobre el costo' : ''}).` });
+    for (const r of top) if (r.conv > 0) recs.push({ kind: 'repeat', text: `✅ REPETIR "${r.campaignName || r.name || r.batchId.slice(0, 8)}" (${r.day} ${String(r.hour).padStart(2, '0')}h · ${r.audienceLabel || r.audienceType} · ${r.giftType === 'percent' ? '+' + r.amount + '%' : '$' + r.amount}): ${r.conv}% cargó en 48 h ($${r.deposits48h.toLocaleString('es-AR')}${r.roi != null ? ', x' + r.roi + ' sobre el costo' : ''}); en 7 días esos clientes cargaron $${r.deposits7d.toLocaleString('es-AR')}${r.roi7d != null ? ' (x' + r.roi7d + ')' : ''}.` });
     const low = big.filter(r => r.conv < median * 0.5 && r.recipients >= 100).sort((a, b2) => a.conv - b2.conv).slice(0, 3);
     for (const r of low) recs.push({ kind: 'review', text: `⚠️ REVISAR "${r.campaignName || r.name || r.batchId.slice(0, 8)}" (${r.day} · ${r.audienceLabel || r.audienceType}): ${r.conv}% de conversión, la mitad o menos que la mediana del mes (${median}%). Cambiá segmento, regalo u horario antes de repetirla.` });
+    // #293: impulso real más allá de la primera carga + recuperación de inactivos.
+    const T = agg(rows);
+    if (T.depositors48h > 0) {
+      const extraPct = T.deposits7d > 0 ? Math.round(Math.max(0, T.deposits7d - T.firstAmount48h) / T.deposits7d * 100) : 0;
+      recs.push({ kind: 'followup', text: `🔁 Impulso real: de los ${T.depositors48h.toLocaleString('es-AR')} que cargaron tras un aviso, ${T.repeaters.toLocaleString('es-AR')} siguieron cargando (≥2 cargas en 7 días) y ${T.single.toLocaleString('es-AR')} hicieron una sola. La primera carga fue $${T.firstAmount48h.toLocaleString('es-AR')}; con las cargas siguientes del mismo día sumaron $${(T.firstAmount48h + T.extraSameDayAmount).toLocaleString('es-AR')} y en 7 días $${T.deposits7d.toLocaleString('es-AR')} (${extraPct}% del total vino DESPUÉS de la primera carga).` });
+    }
+    if (T.recoveredTargets > 0) {
+      recs.push({ kind: 'recovery', text: `♻️ Recuperados: se avisó a ${T.recoveredTargets.toLocaleString('es-AR')} clientes que no cargaban hace 10 días o más; ${T.recoveredNextDay.toLocaleString('es-AR')} cargaron al otro día, ${T.recovered48h.toLocaleString('es-AR')} en 48 h y ${T.recovered7d.toLocaleString('es-AR')} en 7 días (${T.recoveryRate != null ? T.recoveryRate + '%' : '—'}); ${T.recoveredStayed.toLocaleString('es-AR')} siguieron activos (2+ cargas) y en total cargaron $${T.recoveredAmount7d.toLocaleString('es-AR')}.` });
+      const bestRec = big.filter(r => r.recoveredTargets >= 30 && r.recoveryRate != null).sort((a, b2) => b2.recoveryRate - a.recoveryRate)[0];
+      if (bestRec && bestRec.recoveryRate > 0) recs.push({ kind: 'recovery-best', text: `🏅 El aviso que más inactivos recuperó: "${bestRec.campaignName || bestRec.name || bestRec.batchId.slice(0, 8)}" (${bestRec.day} · ${bestRec.audienceLabel || bestRec.audienceType}): ${bestRec.recovered48h} de ${bestRec.recoveredTargets} volvieron a cargar en 48 h (${bestRec.recoveryRate}%).` });
+    }
     const byHour = {}; for (const r of big) { const k = r.hour < 12 ? 'mañana (antes de 12)' : r.hour < 18 ? 'tarde (12–18)' : 'noche (18–24)'; byHour[k] = byHour[k] || { rec: 0, du: 0 }; byHour[k].rec += r.recipients; byHour[k].du += r.depositors48h; }
     const hourRank = Object.entries(byHour).map(([k, v]) => ({ k, conv: v.rec ? Math.round(v.du / v.rec * 1000) / 10 : 0, rec: v.rec })).filter(x => x.rec >= 100).sort((a, b2) => b2.conv - a.conv);
     if (hourRank.length > 1) recs.push({ kind: 'hour', text: `🕒 Mejor franja del mes: ${hourRank[0].k} (${hourRank[0].conv}% cargó) vs ${hourRank[hourRank.length - 1].k} (${hourRank[hourRank.length - 1].conv}%). Programá las próximas en la franja que más convierte.` });
@@ -21762,12 +21850,154 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
     const audRank = Object.entries(byAud).map(([k, v]) => ({ k, conv: v.rec ? Math.round(v.du / v.rec * 1000) / 10 : 0, rec: v.rec })).filter(x => x.rec >= 100).sort((a, b2) => b2.conv - a.conv);
     if (audRank.length > 1) recs.push({ kind: 'audience', text: `🎯 Segmento que mejor respondió: ${audRank[0].k} (${audRank[0].conv}%); el que peor: ${audRank[audRank.length - 1].k} (${audRank[audRank.length - 1].conv}%).` });
     if (bestWeek && worstWeek && bestWeek.week !== worstWeek.week) recs.push({ kind: 'week', text: `📆 ${bestWeek.label} fue la mejor (${bestWeek.conv}% cargó de ${bestWeek.recipients.toLocaleString('es-AR')} avisados) y ${worstWeek.label} la peor (${worstWeek.conv}%). Fijate qué cambió (segmento, regalo, horario, día) y repetí lo de la buena.` });
+    if (bestWeek7d && bestWeek && bestWeek7d.week !== bestWeek.week) recs.push({ kind: 'week7d', text: `💰 Ojo: mirando los 7 días siguientes (cargas posteriores incluidas), la que más plata movió fue ${bestWeek7d.label} ($${bestWeek7d.deposits7d.toLocaleString('es-AR')}), no la de mejor conversión inmediata.` });
+    // #293: planes aplicados este mes (para comparar estrategia guardada vs. resultado).
+    const plans = {}; for (const r of rows) if (r.planName) { plans[r.planName] = plans[r.planName] || []; plans[r.planName].push(r); }
+    const planRows = Object.keys(plans).map(n => Object.assign({ plan: n }, agg(plans[n])));
     if (!rows.length) recs.push({ kind: 'none', text: 'Todavía no hay lotes enviados en este mes.' });
-    const sum = (k) => rows.reduce((a, r) => a + (Number(r[k]) || 0), 0);
-    const totals = { campaigns: rows.length, recipients: sum('recipients'), depositors48h: sum('depositors48h'), deposits48h: sum('deposits48h'), cost: sum('cost'), conv: sum('recipients') ? Math.round(sum('depositors48h') / sum('recipients') * 1000) / 10 : 0, roi: sum('cost') > 0 ? Math.round(sum('deposits48h') / sum('cost') * 10) / 10 : null };
-    res.json({ month: m, weeks, bestWeek: bestWeek ? bestWeek.week : null, campaigns: rows, totals, median, recommendations: recs });
+    const totals = Object.assign({}, T);
+    res.json({ month: m, weeks, days, plans: planRows, bestWeek: bestWeek ? bestWeek.week : null, bestWeek7d: bestWeek7d ? bestWeek7d.week : null, campaigns: rows, totals, median, recommendations: recs });
   } catch (err) { logger.error(`GET /api/admin/cronograma/report: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+
+// ============================================================================
+// #293 PLANES DE ESTRATEGIA — plantillas del mes completo, reutilizables (owner 2026-10-17)
+// ============================================================================
+// "Programar todo el mes con diferentes estrategias, guardarlo y después ver cómo rindió cada día y
+// cada semana". Un plan = lista de campañas por día del mes y hora con el payload del lote. Aplicarlo
+// a un mes crea las ScheduledCampaign (las fechas pasadas se saltean). El envío MANUAL y la programación
+// campaña por campaña siguen igual: esto es una capa encima.
+const StrategyPlan = require('./src/models/StrategyPlan');
+function _planPublic(p) {
+  return {
+    id: p.id, name: p.name, notes: p.notes || '', itemsCount: (p.items || []).length,
+    items: (p.items || []).map(it => ({ day: it.day, time: it.time, parts: it.parts || 1, gapHours: it.gapHours || 5, name: it.name || '', payload: it.payload })),
+    createdBy: p.createdBy, lastAppliedMonth: p.lastAppliedMonth || null, lastAppliedAt: p.lastAppliedAt || null, appliedCount: p.appliedCount || 0, updatedAt: p.updatedAt
+  };
+}
+function _planNormalizeItems(arr) {
+  if (!Array.isArray(arr) || !arr.length) return { error: 'El plan necesita al menos una campaña.' };
+  if (arr.length > 60) return { error: 'Máximo 60 campañas por plan.' };
+  const items = [];
+  for (let i = 0; i < arr.length; i++) {
+    const it = arr[i] || {};
+    const day = parseInt(it.day, 10), parts = Math.min(SCHED_MAX_PARTS, Math.max(1, parseInt(it.parts, 10) || 1)), gap = Math.min(24, Math.max(1, Number(it.gapHours) || 5));
+    const time = String(it.time || '').trim();
+    if (!(day >= 1 && day <= 31)) return { error: `Campaña ${i + 1}: el día tiene que estar entre 1 y 31.` };
+    if (!/^\d{2}:\d{2}$/.test(time)) return { error: `Campaña ${i + 1}: la hora tiene que ser HH:mm.` };
+    const pl = it.payload && typeof it.payload === 'object' ? it.payload : null;
+    if (!pl) return { error: `Campaña ${i + 1}: falta el contenido del lote.` };
+    if (!['code', 'window'].includes(pl.mode)) return { error: `Campaña ${i + 1}: modo inválido.` };
+    if (!['percent', 'fixed'].includes(pl.giftType)) return { error: `Campaña ${i + 1}: tipo de regalo inválido.` };
+    if (!(Number(pl.amount) > 0)) return { error: `Campaña ${i + 1}: falta el monto del regalo.` };
+    if (pl.audienceType !== 'public' && String(pl.message || '').trim().length < 5) return { error: `Campaña ${i + 1}: el mensaje tiene que tener al menos 5 caracteres.` };
+    items.push({ day, time, parts, gapHours: gap, name: String(it.name || '').trim().slice(0, 80), payload: pl });
+  }
+  items.sort((a, b) => a.day - b.day || a.time.localeCompare(b.time));
+  return { items };
+}
+app.get('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const rows = await StrategyPlan.find({}).sort({ updatedAt: -1 }).limit(100).lean();
+    res.json({ plans: rows.map(_planPublic) });
+  } catch (err) { logger.error(`GET /api/admin/cronograma-plans: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const b = req.body || {};
+    const name = String(b.name || '').trim().slice(0, 80);
+    if (!name) return res.status(400).json({ error: 'Poné un nombre al plan.' });
+    const n = _planNormalizeItems(b.items);
+    if (n.error) return res.status(400).json({ error: n.error });
+    const p = await StrategyPlan.create({ id: uuidv4(), name, notes: String(b.notes || '').slice(0, 500), items: n.items, createdBy: req.user.username });
+    res.json({ success: true, plan: _planPublic(p.toObject()) });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-plans: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Arma un plan con lo YA programado/enviado en un mes ("guardar este mes como plan").
+app.post('/api/admin/cronograma-plans/from-month', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const b = req.body || {};
+    const m = /^\d{4}-\d{2}$/.test(String(b.month || '')) ? String(b.month) : _schedArtKey(new Date()).slice(0, 7);
+    const name = String(b.name || '').trim().slice(0, 80) || `Plan ${m}`;
+    const from = new Date(new Date(m + '-01T00:00:00Z').getTime() + SCHED_ART_OFFSET_MS);
+    const [y, mo] = m.split('-').map(Number);
+    const nextM = `${mo === 12 ? y + 1 : y}-${String(mo === 12 ? 1 : mo + 1).padStart(2, '0')}`;
+    const to = new Date(new Date(nextM + '-01T00:00:00Z').getTime() + SCHED_ART_OFFSET_MS);
+    const camps = await ScheduledCampaign.find({ cancelled: { $ne: true }, 'parts.runAt': { $gte: from, $lt: to } }).sort({ runAt: 1 }).lean();
+    if (!camps.length) return res.status(400).json({ error: `No hay campañas programadas en ${m} para armar el plan.` });
+    const items = camps.map(c => {
+      const parts = (c.parts || []).slice().sort((a, b2) => new Date(a.runAt) - new Date(b2.runAt));
+      const first = new Date(parts[0].runAt);
+      const art = new Date(first.getTime() - SCHED_ART_OFFSET_MS);
+      const gap = parts.length > 1 ? Math.max(1, Math.min(24, Math.round((new Date(parts[1].runAt) - first) / 3600000))) : 5;
+      return { day: art.getUTCDate(), time: `${String(art.getUTCHours()).padStart(2, '0')}:${String(art.getUTCMinutes()).padStart(2, '0')}`, parts: parts.length, gapHours: gap, name: c.name || '', payload: c.payload };
+    });
+    const n = _planNormalizeItems(items);
+    if (n.error) return res.status(400).json({ error: n.error });
+    const p = await StrategyPlan.create({ id: uuidv4(), name, notes: String(b.notes || `Armado desde el mes ${m}`).slice(0, 500), items: n.items, createdBy: req.user.username });
+    logger.info(`[plan] ${req.user.username} guardó el mes ${m} como plan "${name}" (${n.items.length} campañas)`);
+    res.json({ success: true, plan: _planPublic(p.toObject()) });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-plans/from-month: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.put('/api/admin/cronograma-plans/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const p = await StrategyPlan.findOne({ id: String(req.params.id || '') });
+    if (!p) return res.status(404).json({ error: 'Plan no encontrado' });
+    const b = req.body || {};
+    if (typeof b.name === 'string' && b.name.trim()) p.name = b.name.trim().slice(0, 80);
+    if (typeof b.notes === 'string') p.notes = b.notes.slice(0, 500);
+    if (Array.isArray(b.items)) { const n = _planNormalizeItems(b.items); if (n.error) return res.status(400).json({ error: n.error }); p.items = n.items; p.markModified('items'); }
+    p.updatedBy = req.user.username;
+    await p.save();
+    res.json({ success: true, plan: _planPublic(p.toObject()) });
+  } catch (err) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/cronograma-plans/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const r = await StrategyPlan.deleteOne({ id: String(req.params.id || '') });
+    res.json({ success: true, deleted: r.deletedCount > 0 });
+  } catch (err) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Aplica el plan a un mes: una ScheduledCampaign por ítem (fechas pasadas → salteadas; audiencia vacía → salteada).
+app.post('/api/admin/cronograma-plans/:id/apply', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const p = await StrategyPlan.findOne({ id: String(req.params.id || '') });
+    if (!p) return res.status(404).json({ error: 'Plan no encontrado' });
+    const m = /^\d{4}-\d{2}$/.test(String((req.body || {}).month || '')) ? String(req.body.month) : _schedArtKey(new Date()).slice(0, 7);
+    const [y, mo] = m.split('-').map(Number);
+    const daysIn = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    const created = [], skipped = [];
+    for (const it of p.items || []) {
+      const dd = Math.min(it.day, daysIn);
+      const label = `día ${it.day} ${it.time} · ${it.name || (it.payload.giftType === 'percent' ? '+' + it.payload.amount + '%' : '$' + it.payload.amount)}`;
+      const first = _schedParseRunAt(`${m}-${String(dd).padStart(2, '0')}T${it.time}`);
+      if (!first) { skipped.push({ label, reason: 'fecha inválida' }); continue; }
+      if (first.getTime() < Date.now() - 60 * 1000) { skipped.push({ label, reason: 'la fecha ya pasó' }); continue; }
+      const partsIn = Array.from({ length: it.parts || 1 }, (_, i) => ({ runAt: new Date(first.getTime() + i * (it.gapHours || 5) * 3600000).toISOString() }));
+      const pr = _schedBuildParts({ parts: partsIn });
+      if (pr.error) { skipped.push({ label, reason: pr.error }); continue; }
+      const est = await _schedEstimate(it.payload);
+      if (est.error) { skipped.push({ label, reason: 'audiencia: ' + est.error }); continue; }
+      if (it.payload.audienceType !== 'public' && !(est.count > 0)) { skipped.push({ label, reason: 'la audiencia quedó vacía hoy (se vuelve a evaluar si la programás a mano)' }); continue; }
+      const c = await ScheduledCampaign.create({
+        id: uuidv4(), name: (it.name || `${p.name} · día ${it.day}`).slice(0, 80), payload: it.payload, audienceLabel: est.label, estimatedCount: est.count,
+        parts: pr.parts, runAt: pr.parts[0].runAt, createdBy: req.user.username, createdByRole: req.user.role, notes: `Plan "${p.name}" (aplicado a ${m})`.slice(0, 500)
+      });
+      created.push({ id: c.id, label, runAt: c.runAt, estimated: est.count });
+    }
+    p.lastAppliedMonth = m; p.lastAppliedAt = new Date(); p.appliedCount = (p.appliedCount || 0) + 1; p.updatedBy = req.user.username;
+    await p.save();
+    logger.info(`[plan] ${req.user.username} aplicó "${p.name}" a ${m}: ${created.length} programadas, ${skipped.length} salteadas`);
+    res.json({ success: true, month: m, created, skipped, plan: _planPublic(p.toObject()) });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-plans/:id/apply: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 
 const BonusStrategyConfig = require('./src/models/BonusStrategyConfig');
 const StrategyEnrollment = require('./src/models/StrategyEnrollment');

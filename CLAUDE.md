@@ -195,6 +195,11 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   Todo lo que mueva plata "a la plataforma" en un flujo nuevo resuelve el adaptador y escribe
   `Transaction.platform`; reembolsos/VIP/lotes/referidos siguen `girox.*` directo a propósito.
 
+- **Planes de estrategia e impacto real (#293, 2026-10-17):** `StrategyPlan` (plantilla del mes) se aplica
+  creando ScheduledCampaign con `notes = 'Plan "<nombre>" …'` (el reporte agrupa por eso: no cambiar el formato).
+  `_batchImpact` mide primera carga + cargas siguientes (mismo día / 7 d) + recuperados por antigüedad sin
+  cargar; lo usan el detalle del lote y `cronograma-report`. El envío manual de lotes sigue intacto.
+
 - **Lotes y Cronograma (#218):** el POST `/api/admin/notif-batches` es un wrapper de
   `_createNotifBatchFromBody(body, user)`; cualquier validación/efecto nuevo del lote va en esa
   función (así lo heredan las campañas programadas). Las rutas del cronograma son

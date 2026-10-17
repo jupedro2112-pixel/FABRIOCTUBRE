@@ -1194,3 +1194,10 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
 - **Rangos de audiencia**: `_notifInactiveRange` sobre la audiencia "inactivos"; campos `audienceDaysMax/dateFrom/dateTo/audienceLabel` en NotifBatch.
 - **Panel**: sección 📅 Cronograma (calendario, lista con acciones, edición, comparativo semanal) +
   bloque "📅 Cuándo sale" en el formulario del lote.
+- **#293 Planes de estrategia** (`StrategyPlan`: items {day, time, parts, gapHours, name, payload}; rutas
+  `/api/admin/cronograma-plans` GET/POST/PUT/DELETE, `/from-month` arma el plan con lo del mes, `/:id/apply`
+  programa el mes — ScheduledCampaign.notes = 'Plan "<nombre>" (aplicado a YYYY-MM)' es lo que agrupa el
+  reporte por plan). **`_batchImpact(batch, depMatch)`**: primera carga 48 h · todas las cargas 48 h · extra
+  del mismo día · 7 días · repetidores vs una sola · recuperados por antigüedad sin cargar (nunca/<10/10-19/
+  20-29/30+ → al otro día / 48 h / 7 d / siguen activos). Lo exponen `GET /api/admin/notif-batches/:id`
+  (`impact`) y `cronograma-report` (campañas, `weeks`, `days`, `plans`, `bestWeek7d`, recomendaciones).
