@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-17
 
+### 341. 🧹 Sin el botón "Link casino aquí" en carga auto y manual — SW v227
+**Pedido (owner).** Se quitaron los dos botones de #328. El casino se abre con "Jugar ahora" al acreditarse la carga
+(y desde el mensaje del chat).
+
 ### 340. 🔥 Regla del fueguito a la vista (fuera del modal) — SW v226
 **Pedido (owner):** "aclará afuera de la parte expandida que hay un mínimo de 10 cargas en cada racha para reclamar; si
 no, se reinicia a 0". Línea en la tarjeta `#fireHomeCard` del home ("⚠️ Mínimo 10 cargas en cada racha para reclamar el
