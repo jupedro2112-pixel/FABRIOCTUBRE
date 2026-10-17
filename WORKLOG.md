@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-17
 
+### 314. 🖼️ Fotos del Inicio a todo el ancho con recuadro — SW v200
+**Pedido (owner):** "ensanchá las fotos al ancho de la app o ponele un recuadro, que no quede incompleta". Cada foto
+ocupa todo el ancho dentro de un recuadro con borde cian (recorte `cover` anclado arriba) y el fondo del recuadro es
+la misma foto desenfocada y oscurecida: no quedan bandas vacías.
+
 ### 313. 🧪 Tests también con la app instalada (solo usuario de prueba) — SW v199
 **Pedido (owner):** "habilitá de nuevo los tests de cargas y todo lo que teníamos también en la app, así puedo
 testear todo desde la app: la carga, lo del nivel, etc.". Deshace #308: `body.is-tester` depende sólo del

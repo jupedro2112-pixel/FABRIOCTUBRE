@@ -2218,3 +2218,8 @@ body.is-tester.home-full .test-mini-bs { display: inline-block !important; }
 .ev-slides-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.22); transition: all .25s; }
 .ev-slides-dots i.on { width: 16px; border-radius: 999px; background: var(--dx-cyan); box-shadow: 0 0 8px rgba(0,229,255,.6); }
 .ev-slides-cap { flex: 0 0 auto; text-align: center; font: 700 9.5px var(--dx-font); letter-spacing: .6px; text-transform: uppercase; color: #8f98ad; padding: 0 0 6px; }
+
+/* ══ #314: fotos del carrusel a todo el ancho, con recuadro y fondo desenfocado ══ */
+.ev-slide { position: relative; padding: 8px 8px 4px; background-size: cover; background-position: center; align-items: flex-start; }
+.ev-slide::before { content: ''; position: absolute; inset: 0; background: rgba(6,7,13,.62); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.ev-slide img { position: relative; width: 100%; max-width: 100%; height: 100%; max-height: 100%; object-fit: cover; object-position: top center; border-radius: 14px; border: 1px solid rgba(0,229,255,.35); box-shadow: 0 12px 34px rgba(0,0,0,.6), 0 0 24px rgba(0,229,255,.12); }

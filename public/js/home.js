@@ -321,7 +321,8 @@
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
         if (!tr || _slBuilt) return;
-        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide"><img src="' + u + '" alt="Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async"></div>').join('');
+        // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").
+        tr.innerHTML = ENTRY_SLIDES.map((u, i) => '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async"></div>').join('');
         if (dots) dots.innerHTML = ENTRY_SLIDES.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
         const pause = () => { _slPausedUntil = Date.now() + 5000; };
         ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
