@@ -7,7 +7,9 @@ const TZ = 'America/Argentina/Buenos_Aires';
 const GIFT_SOURCES = ['install_bonus', 'welcome_gift', 'payout_refund'];
 const DAY = 86400000;
 
-function dateKeyART(d) { return new Date(d).toLocaleDateString('en-CA', { timeZone: TZ }); }
+// #463: Argentina es UTC−3 fijo (sin horario de verano): se calcula por desplazamiento. Intl.toLocaleDateString por cada
+// movimiento era lentísimo y reventaba la memoria (268 MB de heap en Render) con 30+ días.
+function dateKeyART(d) { const t = (d instanceof Date ? d.getTime() : new Date(d).getTime()) - 3 * 3600000; return new Date(t).toISOString().slice(0, 10); }
 function bucketOf(d, gran) {
   const k = dateKeyART(d);
   if (gran === 'month') return k.slice(0, 7);

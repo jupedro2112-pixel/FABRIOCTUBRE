@@ -18712,7 +18712,7 @@ process.on('unhandledRejection', (e) => { _diagPush('unhandledRejection', e); tr
 process.on('uncaughtException', (e) => { _diagPush('uncaughtException', e); try { logger.error('[uncaughtException] ' + (e && e.stack || e)); console.error('[uncaughtException]', e); } catch (_) {} setTimeout(() => process.exit(1), 1500); });
 app.get('/api/admin/diag', authMiddleware, adminMiddleware, async (req, res) => {
   const m = process.memoryUsage();
-  res.json({ uptimeSec: Math.round(process.uptime()), rssMb: Math.round(m.rss / 1048576), heapMb: Math.round(m.heapUsed / 1048576), heapLimitMb: Math.round(require('v8').getHeapStatistics().heap_size_limit / 1048576), node: process.version, errors: _diagErrors.slice(-20) });
+  res.json({ build: '#463', uptimeSec: Math.round(process.uptime()), rssMb: Math.round(m.rss / 1048576), heapMb: Math.round(m.heapUsed / 1048576), heapLimitMb: Math.round(require('v8').getHeapStatistics().heap_size_limit / 1048576), node: process.version, errors: _diagErrors.slice(-20) });
 });
 // ============================================================
 // #459: DATOS IA — medidor de sesiones de la app + análisis por reglas + comparativa con la otra página
