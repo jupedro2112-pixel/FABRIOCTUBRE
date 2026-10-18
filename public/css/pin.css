@@ -835,8 +835,8 @@ body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 .home-actions-row .load-row-btn svg { flex: 0 0 auto; width: 16px; height: 16px; }
 /* ── #412: "Cerrar sesión" en Perfil sólo para el usuario de prueba ── */
 .profile-modal .pf-logout { display: none !important; }
-body.is-tester .profile-modal .pf-logout { display: flex !important; color: var(--p-red) !important; }
-body.is-tester .profile-modal .pf-logout small { color: var(--p-muted) !important; }
+body.is-tester .profile-modal .pf-logout, body.can-logout .profile-modal .pf-logout { display: flex !important; color: var(--p-red) !important; } /* #437 */
+body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .pf-logout small { color: var(--p-muted) !important; }
 /* ── #414: pantalla de ingreso = REGISTRO primero; "Ya tengo cuenta" despliega el login ── */
 .lg-reg { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .lg-reg-main { display: flex !important; flex-direction: column; align-items: center; gap: 2px; padding: 13px 14px !important; font-size: 16px !important; margin: 0 !important; }

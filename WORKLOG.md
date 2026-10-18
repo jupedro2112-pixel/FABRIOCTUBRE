@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 437. 🚪 "Cerrar sesión" en Perfil también para `diego294290` — SW v309
+**Pedido (owner):** "diego294290, de ahí también quiero que pueda cerrar sesión".
+**Qué se hizo:** lista aparte `LOGOUT_USERNAMES = ['lalodj','diego294290']` en home.js → `body.can-logout`; el botón
+`#pfLogoutBtn` se muestra con `is-tester` o `can-logout`. Así diego294290 ve Cerrar sesión sin recibir los botones "test"
+(que siguen sólo en `TESTER_USERNAMES`). Para sumar otra cuenta: agregarla a esa lista.
+**Archivos:** `public/js/home.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 436. 🚪 Inicio: la parte superior baja un poco (centrada con la de abajo) — SW v308
 **Pedido (owner):** "la parte superior bajala un poquito para centrarla con la parte de abajo".
 **Qué se hizo:** padding superior de la tarjeta 16px (+safe area) e inferior 12px; la cabecera con 2px extra. La sección de

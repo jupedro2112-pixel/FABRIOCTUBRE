@@ -442,8 +442,11 @@
     }
     // #296: los botoncitos "test" sólo los ve el usuario de prueba (owner: "que la página quede original; el test sólo en lalodj").
     const TESTER_USERNAMES = ['lalodj'];
+    // #437 (owner): cuentas que ven "Cerrar sesión" al pie de Perfil (body.can-logout). Los testers también lo ven.
+    const LOGOUT_USERNAMES = ['lalodj', 'diego294290'];
     function _applyTesterClass() {
         const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
+        try { document.body.classList.toggle('can-logout', LOGOUT_USERNAMES.includes(u)); } catch (_) {}
         // #313 (owner): el usuario de prueba ve los tests también con la app INSTALADA (para probar carga, nivel, etc.
         // desde la app). El resto de los usuarios nunca los ve.
         const tester = TESTER_USERNAMES.includes(u);
