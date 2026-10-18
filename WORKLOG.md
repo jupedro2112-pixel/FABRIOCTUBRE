@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 492. 🎨 Menú fácil: vuelve el formato viejo (grilla 2×2); lo nuevo son los ÍCONOS realistas — SW v343
+**Pedido (owner):** "no, el formato como el viejo; yo digo los íconos: el estilo de los íconos más realistas".
+**Qué se hizo:** se quitó la lista de tarjetas anchas de #490 (la grilla 2×2 queda como estaba). Los íconos de Reembolso 💰,
+Ruleta 🎰, Referidos 🤝, Ver la plataforma 🎮, Soporte 🎧 y CARGAR AHORA ⚡ pasan a emoji a color sobre un disco con brillo y
+sombra (`data-emoji` en el `.ez-ico`; el SVG de líneas queda oculto por CSS, no se borró). Negro por defecto y la pastilla
+"+X% en tu primera carga" se mantienen.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 491. 🎰 Tarjetas de juegos completas y más chicas — SW v342
 **Pedido (owner):** "las fotos de los juegos se ven cortadas; que queden completas y achicar".
 **Qué se hizo:** cada foto va COMPLETA (`object-fit: contain`) en una caja de proporción fija 300×330 (las fotos recortadas de las
