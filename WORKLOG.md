@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 518. ℹ️ Info: cómo funcionan las Misiones de la semana, arriba de todo — SW v364
+**Pedido (owner):** "en Info poné en la parte superior el detalle de cómo funcionan las misiones de la semana". Sección nueva al tope del
+modal Info (qué son, niveles VIP, cómo se sube/baja, reglas anti-estafa con rollover y tope reales, y la línea "Vos hoy: nivel X · N de 3
+cumplidas · premios de tu nivel"), alimentada por `/api/strategy/me` al pintar la estrategia.
+
 ### 517. ▭ Básico compacto: Cargar/Retirar más chicos y "¿Querés ver más?" en dos columnas — SW v363
 **Pedido (owner):** "achicá el cargar y retirar y juntá lo de abajo así entra todo en una pantalla". Botones de 64 px, chips más chicos y las
 dos tarjetas de otro menú lado a lado, con menos separación.

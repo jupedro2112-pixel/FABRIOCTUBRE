@@ -2278,6 +2278,14 @@
                  notificaciones, que ahora viven sólo en Perfil). Los % salen de la config real (home.js llena
                  infoDailyMax / infoWeeklyMax / infoMonthlyMax; infoCardWhyTitle e infoCardTwoPlats según plataformas). -->
             <div class="info-msg" id="infoMsg">
+                <!-- #518 (owner): cómo funcionan las MISIONES DE LA SEMANA, arriba de todo. Los números salen del server (/api/strategy/me). -->
+                <p class="im-sec im-missions"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones de la semana</b>
+                    <span class="im-line"><b>¿Qué son?</b> Metas de carga de <b>lunes a domingo</b> (por ejemplo: 3 cargas en la semana, cargar 3 días distintos, llegar a un total). Cuando cumplís una, el premio <b>se acredita solo</b> en tu saldo y te avisamos.</span>
+                    <span class="im-line"><b>Niveles.</b> Las misiones van con tu <b>nivel VIP</b>: Bronce, Plata, Oro, Platino, Diamante y Black. A más nivel, metas más difíciles y <b>premios más grandes</b>.</span>
+                    <span class="im-line"><b>¿Cómo subo?</b> Subiendo de nivel VIP, o <b>completando las misiones de tu nivel en una semana</b>: la semana siguiente jugás un nivel más arriba. Si pasás <span id="infoMsDemote">2</span> semanas sin cumplir ninguna, volvés al nivel anterior.</span>
+                    <span class="im-line"><b>Reglas.</b> El premio se juega <b>×<span id="infoMsRoll">5</span></b> antes de poder retirarlo, es de hasta el <b><span id="infoMsCap">20</span>%</b> de lo que cargaste en la semana y cuenta solo si no retiraste más de lo que cargaste. Una cuenta por persona.</span>
+                    <span class="im-line" id="infoMsMine" style="display:none;"></span>
+                </p>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Servicio <b>personalizado</b>: cargás solo en minutos, elegís en qué plataforma jugar con el mismo usuario y clave, retirás a tu CBU y tenés soporte en vivo 24 hs. Y lo más importante: <b>somos la plataforma mejor paga de internet</b>.</p>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolsos <span class="info-badge">Novedad</span></b>
                     <span class="im-line"><b>¿Perdiste ayer?</b> Todos los días recuperás hasta el <b><span id="infoDailyMax">…</span>%</b> de lo que perdiste el día anterior.</span>
@@ -2412,7 +2420,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v363</div>
+                    <div class="pf-build" id="appBuildTag">app v364</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
