@@ -49,6 +49,9 @@ function buildOtpMessage(purpose, code) {
     return `VIPCARGAS: codigo para cambiar contrasena ${code}. Valido 5 min. vipcargas .com`;
   } else if (purpose === 'login') {
     return `VIPCARGAS: codigo de inicio de sesion ${code}. Valido 5 min. vipcargas .com`;
+  } else if (purpose === 'withdraw') {
+    // #382: confirmacion de CADA retiro (anti-estafa). ASCII puro, 1 SMS.
+    return `PICAROJA: codigo para confirmar tu RETIRO ${code}. Si no fuiste vos NO lo compartas. Valido 5 min.`;
   } else {
     return `VIPCARGAS: codigo de verificacion ${code}. Valido 5 min. vipcargas .com`;
   }

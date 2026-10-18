@@ -14,6 +14,8 @@ VIP.withdraw = (function () {
     let _balance = 0;
     let _otpPhone = null;        // teléfono al que se envió el OTP
     let _pendingWithdraw = null; // { titular, cbu, alias, amount, saveData }
+    let _otpMode = 'phone';      // #382: 'phone' = verificar teléfono (una vez) · 'withdraw' = código de ESTE retiro
+    function _otpRequired() { try { const d = VIP.home && VIP.home.platformsData; return !(d && d.withdrawOtp === false); } catch (_) { return true; } }
 
     function _el(id) { return document.getElementById(id); }
 
@@ -157,13 +159,45 @@ VIP.withdraw = (function () {
         // de procesar el retiro (el registro de inicio es sin SMS, opcional).
         const verified = VIP.state.currentUser && VIP.state.currentUser.phoneVerified === true;
         if (!verified) {
+            _otpMode = 'phone';
             _clearError('withdrawOtpPhoneError');
             _showStep('otp-phone');
             return;
         }
 
+        // #382: con el teléfono verificado, cada retiro se confirma con un código SMS.
+        if (_otpRequired()) { await sendWithdrawConfirmOtp(); return; }
         await _doWithdraw();
     }
+
+    // #382: pide el código SMS de ESTE retiro (va al teléfono verificado de la cuenta).
+    async function sendWithdrawConfirmOtp() {
+        const submitBtn = _el('withdrawSubmitBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando SMS...'; }
+        try {
+            const res = await fetch(`${VIP.config.API_URL}/api/withdrawal/send-otp`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${VIP.state.currentToken}` }, body: JSON.stringify({ amount: _pendingWithdraw && _pendingWithdraw.amount })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success && data.required === false) { await _doWithdraw(); return; }
+            if (res.ok && data.success) {
+                _otpMode = 'withdraw';
+                const amt = _pendingWithdraw ? '$' + Number(_pendingWithdraw.amount).toLocaleString('es-AR') : '';
+                _el('withdrawOtpMsg').textContent = '🔒 Para confirmar el retiro de ' + amt + ' te enviamos un código SMS al ' + (data.phone || 'tu teléfono') + '. Si no fuiste vos, no lo compartas.';
+                _el('withdrawOtpCode').value = '';
+                _clearError('withdrawOtpCodeError');
+                const vb = _el('withdrawOtpVerifyBtn'); if (vb) vb.textContent = '✅ Confirmar retiro';
+                _showStep('otp-code');
+                setTimeout(() => _el('withdrawOtpCode').focus(), 50);
+            } else if (data.code === 'PHONE_VERIFICATION_REQUIRED') {
+                _otpMode = 'phone'; _showStep('otp-phone');
+            } else {
+                _showError('withdrawError', data.error || 'No se pudo enviar el SMS. Probá de nuevo en un momento.');
+            }
+        } catch (_) { _showError('withdrawError', 'Error de conexión.'); }
+        finally { if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '💸 Continuar'; } }
+    }
+    function resendOtp() { if (_otpMode === 'withdraw') sendWithdrawConfirmOtp(); else sendWithdrawOtp(); }
 
     async function sendWithdrawOtp() {
         _clearError('withdrawOtpPhoneError');
@@ -215,6 +249,8 @@ VIP.withdraw = (function () {
             _showError('withdrawOtpCodeError', 'Ingresá el código de 6 dígitos.');
             return;
         }
+        // #382: código de confirmación de ESTE retiro → va directo al pedido con el código.
+        if (_otpMode === 'withdraw') { await _doWithdraw(code); return; }
         if (!_otpPhone) {
             _showError('withdrawOtpCodeError', 'Volvé al paso anterior y reenviá el código.');
             return;
@@ -238,8 +274,8 @@ VIP.withdraw = (function () {
                     VIP.state.currentUser.phoneVerified = true;
                     VIP.state.currentUser.phoneVerificationPending = false;
                 }
-                // Teléfono verificado → ejecutar el retiro.
-                await _doWithdraw();
+                // Teléfono verificado → código SMS de este retiro (#382) o el retiro directo.
+                if (_otpRequired()) { _showStep('form'); await sendWithdrawConfirmOtp(); } else await _doWithdraw();
             } else {
                 _showError('withdrawOtpCodeError', data.error || 'Código incorrecto o expirado.');
                 if (btn) { btn.disabled = false; btn.textContent = '✅ Verificar y retirar'; }
@@ -250,7 +286,7 @@ VIP.withdraw = (function () {
         }
     }
 
-    async function _doWithdraw() {
+    async function _doWithdraw(otpCode) {
         if (!_pendingWithdraw) return;
 
         const onOtpStep = _el('withdrawOtpStep') && _el('withdrawOtpStep').style.display !== 'none';
@@ -274,6 +310,7 @@ VIP.withdraw = (function () {
                     alias: _pendingWithdraw.alias,
                     amount: _pendingWithdraw.amount,
                     saveData: _pendingWithdraw.saveData,
+                    otpCode: otpCode || undefined, // #382
                     metaEventId
                 })
             });
@@ -294,8 +331,14 @@ VIP.withdraw = (function () {
                 return;
             }
 
-            if (data.code === 'PHONE_VERIFICATION_REQUIRED') {
+            if (data.code === 'WITHDRAW_OTP_REQUIRED') { // #382
+                await sendWithdrawConfirmOtp();
+            } else if (data.code === 'WITHDRAW_OTP_INVALID') {
+                _showStep('otp-code');
+                _showError('withdrawOtpCodeError', data.error || 'Código incorrecto o expirado.');
+            } else if (data.code === 'PHONE_VERIFICATION_REQUIRED') {
                 // No debería pasar (ya verificamos), pero por las dudas reabrimos el paso SMS.
+                _otpMode = 'phone';
                 _showStep('otp-phone');
                 _showError('withdrawOtpPhoneError', data.error || 'Verificá tu teléfono para poder retirar.');
             } else {
@@ -316,6 +359,7 @@ VIP.withdraw = (function () {
 
     function backToPhone() {
         _clearError('withdrawOtpCodeError');
+        if (_otpMode === 'withdraw') { _showStep('form'); return; } // #382: el código del retiro vuelve al formulario
         _showStep('otp-phone');
     }
 
@@ -324,6 +368,8 @@ VIP.withdraw = (function () {
         handleWithdrawSubmit,
         sendWithdrawOtp,
         verifyWithdrawOtp,
+        sendWithdrawConfirmOtp,
+        resendOtp,
         backToForm,
         backToPhone
     };

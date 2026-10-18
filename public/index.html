@@ -1808,7 +1808,7 @@
                 <h2>💸 Retirar Premio</h2>
                 <p>Saldo disponible: <strong id="withdrawBalanceAmount" style="color: #00ff88;">—</strong></p>
                 <!-- #379 (owner): pago automático + retiro mínimo configurable -->
-                <p class="wd-auto">💸 <b>Pago automático</b> a tu CBU · Retiro mínimo <b class="wd-min">$10.000</b></p>
+                <p class="wd-auto">💸 <b>Pago automático</b> a tu CBU · Retiro mínimo <b class="wd-min">$10.000</b> · 📱 confirmación por SMS</p>
             </div>
 
             <!-- Aviso: sin saldo suficiente -->
@@ -1895,6 +1895,8 @@
                         <input type="text" inputmode="numeric" pattern="[0-9]{6}" id="withdrawOtpCode" placeholder="Código de 6 dígitos" maxlength="6" style="font-size: 22px; text-align: center; letter-spacing: 8px;">
                     </div>
                     <div id="withdrawOtpCodeError" class="error-message"></div>
+                    <!-- #382: reenviar el código (verificación de teléfono o confirmación del retiro, según el paso) -->
+                    <div style="text-align:center;margin:-4px 0 8px;"><button type="button" class="lg-link" onclick="VIP.withdraw.resendOtp()">Reenviar código</button></div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-secondary" id="withdrawOtpCodeBackBtn">Volver</button>
                         <button type="button" class="btn btn-primary" id="withdrawOtpVerifyBtn" style="background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%); color: #fff;">✅ Verificar y retirar</button>
@@ -2202,7 +2204,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v268</div>
+                    <div class="pf-build" id="appBuildTag">app v269</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -5602,6 +5602,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       // Config['autoLoadBonusPct']). text === null ⇒ el comando se vació en COMANDOS → la app muestra sólo el título.
       minDeposit: await getMinDepositArs(), // #299
       withdrawMinArs: await getWithdrawMinArs(), // #379: retiro mínimo (modal de retiro de la app)
+      withdrawOtp: await getWithdrawOtpRequired(), // #382: la app pide el código SMS antes de crear el retiro
       homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })(),
       // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
       entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
@@ -12184,6 +12185,21 @@ app.get('/api/withdrawal/account', authMiddleware, async (req, res) => {
 // Verifica el saldo real en JugaYGana, ejecuta el retiro, guarda los datos
 // bancarios (opcional) y manda un mensaje automático al chat para que el agente
 // procese la transferencia bancaria.
+// #382: código SMS para confirmar el retiro. Va SIEMPRE al teléfono verificado de la cuenta (no se puede elegir otro).
+app.post('/api/withdrawal/send-otp', authMiddleware, sensitiveLimiter, smsIpLimiter, async (req, res) => {
+  try {
+    if (!(await getWithdrawOtpRequired())) return res.json({ success: true, required: false });
+    const user = await User.findOne({ id: req.user.userId }).select('phone phoneVerified').lean();
+    if (!user || user.phoneVerified !== true || !user.phone) {
+      return res.status(400).json({ error: 'Para retirar tu premio necesitás verificar tu teléfono por SMS.', code: 'PHONE_VERIFICATION_REQUIRED' });
+    }
+    const result = await generateAndSendOTP(user.phone, 'withdraw');
+    if (!result.success) return res.status(429).json({ error: result.error || 'No se pudo enviar el SMS. Esperá un momento y probá de nuevo.' });
+    const maskedPhone = String(user.phone).replace(/(\+\d{1,4})\d+(\d{4})$/, '$1****$2');
+    res.json({ success: true, required: true, phone: maskedPhone });
+  } catch (e) { logger.error(`/api/withdrawal/send-otp: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
   let withdrawLockAcquired = false;
   try {
@@ -12220,6 +12236,13 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
         error: 'Para retirar tu premio necesitás verificar tu teléfono por SMS.',
         code: 'PHONE_VERIFICATION_REQUIRED'
       });
+    }
+    // #382: código SMS de ESTE retiro (anti-estafa). Se valida antes del lock y del saldo.
+    if (await getWithdrawOtpRequired()) {
+      const otpCode = String((req.body && req.body.otpCode) || '').trim();
+      if (!/^\d{6}$/.test(otpCode)) return res.status(400).json({ error: 'Ingresá el código SMS de 6 dígitos para confirmar el retiro.', code: 'WITHDRAW_OTP_REQUIRED' });
+      const v = await verifyOTP(user.phone, otpCode, 'withdraw');
+      if (!v.valid) return res.status(400).json({ error: v.error || 'Código incorrecto o expirado.', code: 'WITHDRAW_OTP_INVALID' });
     }
 
     // Lock anti-doble-retiro: serializa los retiros concurrentes del mismo
@@ -12466,6 +12489,11 @@ async function _isFirstRealDeposit(user) {
 const MIN_DEPOSIT_ARS_DEFAULT = 5000;
 // #379 (owner 2026-10-18): RETIRO MÍNIMO (antes $4.999 fijo). Config['withdrawMinArs'], editable en COMANDOS → Bonos automáticos.
 const WITHDRAW_MIN_ARS_DEFAULT = 10000;
+// #382 (owner 2026-10-18): código SMS en CADA retiro (anti-estafa). Config['withdrawOtpRequired'], default true.
+async function getWithdrawOtpRequired() {
+  try { const v = await getConfig('withdrawOtpRequired', null); if (v === false || v === 'false' || v === 0) return false; } catch (_) {}
+  return true;
+}
 async function getWithdrawMinArs() {
   try {
     const raw = await getConfig('withdrawMinArs', null);
@@ -12523,7 +12551,7 @@ const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica a
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs(), withdrawMinArs: await getWithdrawMinArs(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs(), withdrawMinArs: await getWithdrawMinArs(), withdrawOtpRequired: await getWithdrawOtpRequired(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -12566,6 +12594,8 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
       logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
     }
+    // #382: código SMS en cada retiro.
+    if (req.body && typeof req.body.withdrawOtpRequired === 'boolean') await Config.set('withdrawOtpRequired', req.body.withdrawOtpRequired, req.user.username);
     // #379: retiro mínimo.
     const wmRaw = req.body && req.body.withdrawMinArs;
     if (wmRaw != null && wmRaw !== '') {

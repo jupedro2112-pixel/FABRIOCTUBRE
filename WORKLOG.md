@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-17
 
+### 382. 📱 Código SMS en CADA retiro (anti-estafa) — SW v269, admin-sw v81
+**Pedido (owner):** "implementemos nuevamente el SMS por retiro de plata para que no haya estafa". Antes el SMS era
+sólo la verificación del teléfono (una vez); ahora **cada retiro se confirma con un código SMS** al teléfono verificado:
+- **Server:** `POST /api/withdrawal/send-otp` (auth + `sensitiveLimiter` + `smsIpLimiter`): exige teléfono verificado y
+  manda un OTP `purpose:'withdraw'` ("PICAROJA: codigo para confirmar tu RETIRO…", 5 min, 3 intentos, 60 s entre
+  envíos) al número de la cuenta (no se puede elegir otro). `POST /api/withdrawal/request` exige `otpCode` y lo valida
+  con `verifyOTP(user.phone, code, 'withdraw')` ANTES del lock/saldo (`WITHDRAW_OTP_REQUIRED` / `WITHDRAW_OTP_INVALID`).
+  Flag `Config['withdrawOtpRequired']` (default **true**; checkbox en COMANDOS → Bonos automáticos "📱 Código SMS en cada
+  retiro"); `GET /api/platforms.withdrawOtp` se lo dice a la app.
+- **App (`withdraw.js`):** flujo = datos + monto → (si el teléfono no está verificado, verificación SMS como antes) →
+  **"🔒 Para confirmar el retiro de $X te enviamos un código al +54****1234"** (mismo paso de código, modo
+  `withdraw`) → código → se crea el retiro. "Volver" vuelve al formulario; botón "Reenviar código".
+- Los agentes siguen confirmando el pago en Pagos (stand-by); el SMS protege la solicitud del lado del cliente.
+
 ### 381. 🚪 Pantalla de ingreso "tope de gama" con el estilo de la app: servicio, reembolsos, plataformas, carga mínima y reseñas — SW v268
 **Pedido (owner):** "el inicio de registro que vaya de la mano con el estilo de la app; las reseñas en el inicio;
 avisar del servicio, del reembolso, las plataformas y el mínimo de carga; armalo tope de gama, es la visión principal".

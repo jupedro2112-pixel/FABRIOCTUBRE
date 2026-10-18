@@ -5752,6 +5752,8 @@ async function loadInstallBonusPct() {
         if (mdIn) { mdIn.value = j.minDepositArs != null ? j.minDepositArs : 5000; mdIn.disabled = !j.canEdit; }
         const wmIn = document.getElementById('withdrawMinArsInput'); // #379
         if (wmIn) { wmIn.value = j.withdrawMinArs != null ? j.withdrawMinArs : 10000; wmIn.disabled = !j.canEdit; }
+        const woChk = document.getElementById('withdrawOtpChk'); // #382
+        if (woChk) { woChk.checked = j.withdrawOtpRequired !== false; woChk.disabled = !j.canEdit; }
         // #290: % automático de la primera carga (publicidad)
         const fdIn = document.getElementById('firstDepositPctInput');
         if (fdIn) { fdIn.value = j.firstDepositPct != null ? j.firstDepositPct : 50; fdIn.disabled = !j.canEdit; }
@@ -5815,6 +5817,8 @@ async function saveInstallBonusPct() {
     const minDepositArs = mdIn && mdIn.value !== '' ? Number(mdIn.value) : undefined;
     const wmIn = document.getElementById('withdrawMinArsInput'); // #379
     const withdrawMinArs = wmIn && wmIn.value !== '' ? Number(wmIn.value) : undefined;
+    const woChk = document.getElementById('withdrawOtpChk'); // #382
+    const withdrawOtpRequired = woChk ? !!woChk.checked : undefined;
     // #290: % automático de la primera carga
     const fdIn = document.getElementById('firstDepositPctInput');
     const firstDepositPct = fdIn && fdIn.value !== '' ? Number(fdIn.value) : undefined;
@@ -5824,7 +5828,7 @@ async function saveInstallBonusPct() {
     const installGift = igEn ? { enabled: igEn.checked, pct: igP && igP.value !== '' ? Number(igP.value) : undefined, capArs: igC && igC.value !== '' ? Number(igC.value) : undefined, days: igD && igD.value !== '' ? Number(igD.value) : undefined } : undefined;
     if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%${autoLoadPct !== undefined ? ` y el cartel "Servicio completo" en ${autoLoadPct}%` : ''}?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
     try {
-        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct, firstDepositPct, installGift, minDepositArs, withdrawMinArs }) });
+        const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct, firstDepositPct, installGift, minDepositArs, withdrawMinArs, withdrawOtpRequired }) });
         const j = await r.json();
         if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         if (msg) msg.textContent = `${j.enabled ? 'ACTIVO' : 'APAGADO'} · ${j.pct}%`;
