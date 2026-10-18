@@ -59,7 +59,8 @@
             if (row && list2.length) {
                 // Igual que las pestañas de adentro (#301): Girox NUNCA es "Próximamente" (aunque en el entorno de prueba no haya API).
                 const isSoon = (p) => p.connected === false && p.id !== 'girox';
-                row.innerHTML = list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (isSoon(p) ? '<small>Próximamente</small>' : '') + '</span>').join('');
+                const _nm = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'jugaygana' : String(n || '')); // #428: jugaygana en minúscula
+                row.innerHTML = list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(_nm(p.name)) + '</b>' + (isSoon(p) ? '<small>Próximamente</small>' : '') + '</span>').join('');
                 row.style.display = '';
             }
         } catch (_) {}

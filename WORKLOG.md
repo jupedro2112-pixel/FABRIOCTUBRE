@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 428. 🚪 Inicio: recuadro "Elegí dónde jugar" debajo de Registrarse (jugaygana en minúscula) · opiniones a la vista — SW v300
+**Pedido (owner):** "dale un mejor recuadro a donde dice a dónde jugar, y jugaygana en minúscula; poné ese rectángulo abajo
+del Registrarse y, borrando todo lo otro, hacé que se vean las opiniones de la gente".
+**Qué se hizo:** la tarjeta "Elegí dónde jugar" salió de la grilla de beneficios (quedan Programa VIP, Reembolsos y
+Referidos) y es un recuadro propio `.lg-play-box` (borde, ícono sobre rojo suave, bajada "Mismo usuario y clave en todas ·
+cada una configurada aparte", píldoras con logo más grandes) ubicado debajo del formulario de registro (y del paso "¡Te
+registraste con éxito!"). JUGAYGANA se muestra "jugaygana" en esa fila. Se ocultó la línea "★ 4,8 · N opiniones"; a
+continuación va el carrusel de opiniones con los comentarios.
+**Orden final:** cabecera · título · beneficios (VIP, Reembolsos, Referidos) · "Completá tu nombre → Registrarse ya" ·
+Elegí dónde jugar · Opiniones de jugadores · pie.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 427. 🚪 Inicio = sólo "Completá tu nombre para registrarte" → "Registrarse ya" — SW v299
 **Pedido (owner):** "sacá el olvidé contraseña y soporte, todo eso no va; el ya tengo cuenta tampoco va; es 'completá tu
 nombre para registrarte' y en Entrar 'Registrarse ya'".

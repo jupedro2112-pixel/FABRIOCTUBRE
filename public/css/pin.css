@@ -1021,4 +1021,18 @@ body.reg-quick .lg-quick-alt { display: inline-block; }
    sin "Ya tengo cuenta" (los clientes con sesión guardada entran directo). ── */
 .lg-app .lg-alt, .lg-app .lg-quick-alt { display: none !important; }
 body.reg-quick #loginForm { display: none !important; }
+/* ── #428: recuadro "Elegí dónde jugar" debajo de Registrarse · sin línea de estrellas · opiniones a la vista ── */
+.lg-play-box { background: var(--p-card); border: 1.5px solid var(--p-border); border-radius: 18px; padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 0 rgba(0, 0, 0, .02); }
+.lg-play-h { display: flex; align-items: center; gap: 9px; }
+.lg-play-h .lg-fi { background: var(--p-red-soft); width: 34px; height: 34px; flex-basis: 34px; border-radius: 11px; }
+.lg-play-h .lg-fi svg { width: 20px; height: 20px; }
+.lg-play-h b { display: block; font: 800 13.5px var(--p-font); color: var(--p-text); } .lg-play-h small { font: 500 10.5px var(--p-font); color: var(--p-muted); }
+.lg-play-box .lg-plats-row { gap: 6px; }
+.lg-play-box .lg-plat-pill { background: var(--p-surface); border: 1px solid var(--p-border); padding: 5px 10px 5px 5px; }
+.lg-play-box .lg-plat-pill img, .lg-play-box .lg-plat-pill i { width: 22px; height: 22px; }
+.lg-play-box .lg-plat-pill b { font-size: 12px; }
+.lg-app .lg-trust { display: none !important; }
+.lg-app .lg-sec-reviews { margin-top: 2px; }
+.lg-app #loginReviews .rv-head .rv-g { font-size: 11px; }
+.lg-app #loginReviews .rv-card { flex: 0 0 68%; max-width: 240px; }
 
