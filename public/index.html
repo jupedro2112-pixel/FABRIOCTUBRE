@@ -1112,7 +1112,7 @@
                     <button type="button" class="ez-hello ez-hello-btn" id="ezHelloBtn" onclick="VIP.home.easyToggleMore()" aria-expanded="false" title="Ver más">
                         <span class="ez-av" id="easyAvatar">👤</span>
                         <span class="ez-hello-t"><span id="easyHello">Hola</span><small>¿Qué querés hacer hoy?</small></span>
-                        <span class="ez-chev" aria-hidden="true">▾</span>
+                        <span class="ez-chev" aria-hidden="true">menú</span>
                     </button>
                     <div class="ez-bal"><small>Tu saldo</small><b id="easyBalance">$0</b></div>
                 </div>
@@ -1149,14 +1149,8 @@
                 <button type="button" class="ez-chat" onclick="VIP.home.setHomeMode('mini')" title="Soporte por chat">
                     <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg></span><span class="ez-chat-txt"><b>Soporte · Ayuda</b><small>Hablá con una persona · responde en minutos</small></span>
                 </button>
-                <!-- #480 (owner): MENÚ OPCIÓN 2 = barra inferior fija (Carga auto · Inicio · Info · Soporte). Se elige en el panel
-                     (Elegir menú → Config['menuLayout']); con la opción 1 esta barra no existe y el menú fácil queda como está. -->
-                <nav class="ez-bar" id="ezBar" aria-label="Menú inferior">
-                    <button type="button" class="ezb ezb-load" onclick="VIP.home.easyLoad()"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span>Carga auto</span></button>
-                    <button type="button" class="ezb ezb-home" onclick="VIP.home.goHome()"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></i><span>Inicio</span></button>
-                    <button type="button" class="ezb ezb-info" onclick="VIP.ui.showModal('infoModal')"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></svg></i><span>Info</span></button>
-                    <button type="button" class="ezb ezb-chat" onclick="VIP.home.setHomeMode('mini')"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></i><span>Soporte</span></button>
-                </nav>
+                <!-- #480/#481 (owner): MENÚ OPCIÓN 2 = la barra de abajo son los MISMOS botones de la barra superior (Carga auto · Inicio ·
+                     Soporte) movidos por home.js (_setMenuLayout) a #bottomNav, un header igual al de arriba al final de la pantalla. -->
                 <button type="button" class="ez-switch" onclick="VIP.home.setMenuPref('full')"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></i><b>Pasar al menú completo</b> ›<small>Plataformas, fueguito, niveles VIP, historias y todo lo demás</small></button>
             </div>
             <div id="menuChooser" class="menu-chooser" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
@@ -2358,7 +2352,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v333</div>
+                    <div class="pf-build" id="appBuildTag">app v334</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

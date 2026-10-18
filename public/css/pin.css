@@ -1167,8 +1167,8 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .ez-hello-t { display: flex; flex-direction: column; min-width: 0; }
 .ez-hello-t span { font: 900 15px var(--p-font); color: var(--p-text) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ez-hello-t small { font: 600 11px var(--p-font); color: var(--p-muted) !important; }
-.ez-chev { color: var(--p-muted); font-size: 13px; transition: transform .2s; margin-left: 2px; }
-.ez-hello-btn[aria-expanded="true"] .ez-chev { transform: rotate(180deg); }
+.ez-chev { color: var(--p-muted); font: 800 9px var(--p-font); letter-spacing: .6px; text-transform: uppercase; border: 1px solid var(--p-border); border-radius: 999px; padding: 2px 7px; margin-left: 2px; } /* #481: "menú" chiquito en vez de la flecha */
+.ez-hello-btn[aria-expanded="true"] .ez-chev { background: var(--p-red); color: #fff; border-color: var(--p-red); }
 .ez-more { background: var(--p-card); border: 1px solid var(--p-border); border-radius: 14px; padding: 8px 12px; margin: -2px 0 8px; display: flex; flex-direction: column; gap: 6px; }
 .ez-more[hidden] { display: none; }
 .ez-more-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 600 12px var(--p-font); color: var(--p-muted); }
@@ -1300,14 +1300,9 @@ html[data-theme="dark"] .cond-sec.cond-black, html[data-theme="dark"] #vipLevels
   background-position: right 14px top 6px, right 58px bottom 6px, left 14px bottom 4px, right 108px top 10px, left 60px top 6px; }
 .ez-top > * { position: relative; z-index: 1; }
 html[data-theme="dark"] .ez-top::before { opacity: .14; }
-/* ── #480: MENÚ OPCIÓN 2 — barra inferior fija (sólo con body.menu2) ── */
-.ez-bar { display: none; }
-body.menu2.home-easy .ez-bar { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; left: 0; right: 0; bottom: 0; z-index: 9400; background: var(--p-card); border-top: 1px solid var(--p-border); padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -6px 18px rgba(0,0,0,.06); }
-body.menu2.home-easy .easy-view { padding-bottom: 86px; }
-body.menu2.home-easy .ez-chat, body.menu2.home-easy .ez-main { display: none !important; } /* viven en la barra */
-.ezb { border: 0; background: transparent; color: var(--p-muted); display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border-radius: 14px; font: 800 10.5px var(--p-font); cursor: pointer; }
-.ezb i { width: 24px; height: 24px; display: inline-flex; } .ezb i svg { width: 24px; height: 24px; }
-.ezb-load { color: #fff; background: var(--p-red); border-radius: 16px; }
-.ezb-home { color: var(--p-text); }
-.ezb:active { transform: scale(.96); }
+/* ── #480/#481: MENÚ OPCIÓN 2 — #bottomNav = header idéntico al superior, al final de la columna (debajo del chat en Soporte) ── */
+#bottomNav.bottom-nav { order: 99; position: sticky; bottom: 0; top: auto; z-index: 60; border-top: 1px solid var(--p-border) !important; border-bottom: 0 !important; padding-top: 4px !important; padding-bottom: max(6px, env(safe-area-inset-bottom, 6px)) !important; justify-content: center; }
+#bottomNav .tn-btn { flex: 1 1 0; }
+#bottomNav .tn-home.tn-retro { flex: 1.6 1 0; }
+body.menu2.home-easy .ez-chat { display: none !important; } /* soporte vive abajo a la derecha */
 

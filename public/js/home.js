@@ -169,10 +169,29 @@
     // Pinta el menú fácil con datos reales: usuario, saldo (espejo de #userBalance), % de reembolso por período
     // (escalera real del server, nada hardcodeado), plata reclamable y % de referidos.
     // #480: opción de menú elegida en el panel (1 = actual, 2 = barra inferior). Se lee una vez por sesión (y al volver al Inicio).
-    let _menuLayoutAt = 0;
+    let _menuLayoutAt = 0, _navPh = null;
+    // #481: opción 2 = los botones Carga auto · Inicio · Soporte (con sus separadores) pasan de la barra de arriba a #bottomNav,
+    // un <header> con las mismas clases al final de #chatScreen (columna flex: queda abajo de todo, debajo del chat también).
+    // Se dejan comentarios-marcador para devolverlos a su lugar exacto si se vuelve a la opción 1.
+    function _setMenuLayout(layout) {
+        const on = Number(layout) === 2; document.body.classList.toggle('menu2', on);
+        const top = document.querySelector('.header.header-toolbar.tb-circles.topnav'); const screen = _el('chatScreen'); if (!top || !screen) return;
+        const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual');
+        let bar = _el('bottomNav');
+        if (on) {
+            if (bar) return;
+            const seps = Array.from(top.querySelectorAll('.tn-sep')).slice(0, 2);
+            const nodes = [auto, seps[0], ini, seps[1], man].filter(Boolean);
+            _navPh = nodes.map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
+            bar = document.createElement('header'); bar.id = 'bottomNav'; bar.className = top.className + ' bottom-nav'; bar.setAttribute('aria-label', 'Menú inferior');
+            nodes.forEach((n) => bar.appendChild(n)); screen.appendChild(bar);
+        } else if (bar) {
+            (_navPh || []).forEach(({ n, ph }) => { if (ph.parentNode) ph.parentNode.replaceChild(n, ph); }); _navPh = null; bar.remove();
+        }
+    }
     async function _applyMenuLayout() {
         if (Date.now() - _menuLayoutAt < 120000) return; _menuLayoutAt = Date.now();
-        try { const r = await fetch(VIP.config.API_URL + '/api/public/menu-layout'); const j = await r.json(); document.body.classList.toggle('menu2', Number(j && j.layout) === 2); } catch (_) {}
+        try { const r = await fetch(VIP.config.API_URL + '/api/public/menu-layout'); const j = await r.json(); _setMenuLayout(j && j.layout); } catch (_) {}
     }
     function _easyPaint() {
         const v = _el('easyView'); if (!v) return;

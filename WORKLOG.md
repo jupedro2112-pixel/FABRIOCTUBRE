@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 481. 🧭 Opción 2 afinada: la barra de abajo es la misma de arriba (Carga auto · Inicio · Soporte), Info queda arriba, "menú" en el saludo — SW v334, admin-sw v104
+**Pedido (owner):** "la parte inferior tiene que quedar como la superior y lo que bajás sacalo de arriba; el recuadro de Inicio
+igual y en la misma ubicación, a ambos lados Carga auto y Soporte; Info dejalo arriba con Perfil, Historias y Telegram a la punta;
+la flecha del cartel del inicio que se expande ponele chiquito 'menú'".
+**Qué se hizo:** `_setMenuLayout` (home.js) con la opción 2 MUEVE los nodos reales `#navAuto`, los dos `.tn-sep`, `#navInicio`
+y `#navManual` a `#bottomNav` (un `<header>` con las mismas clases que el superior, agregado al final de `#chatScreen`, que es
+columna flex → queda abajo de todo, también debajo del chat en Soporte; `position: sticky; bottom: 0`). Deja comentarios-marcador
+para devolverlos al lugar exacto si se vuelve a la opción 1. Arriba quedan Telegram · Info · Perfil · Historias. El `#ezBar`
+de #480 se eliminó. `.ez-chev` ahora dice "menú" (pastilla chiquita; en rojo cuando está expandido).
+**Archivos:** `public/js/home.js`, `public/index.html`, `public/css/pin.css`, `public/adminprivado2026/index.html`, SWs.
+
 ### 478/479/480. 📸 Captura con logo y clave visible · fondo del saludo con íconos · MENÚ OPCIÓN 2 (barra inferior) elegible desde el panel — SW v333, admin-sw v103
 **Pedidos (owner, con capturas):** (478) "la captura de datos: mismo formato, de título el logo de la marca, la clave siempre la del
 acceso, asd123 la predeterminada y que se vea siempre". (479) "en el fondo del saludo poné íconos sobre juego/apuestas, que es una
