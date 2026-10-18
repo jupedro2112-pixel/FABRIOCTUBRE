@@ -4965,6 +4965,7 @@ function switchSection(section) {
     if (section === 'datosIa') diaInit(); // #459
     if (section === 'menuLayout') loadMenuLayout(); // #480
     if (section === 'cierres') cierresLoad(); // #500
+    if (section === 'strategy') stratLoad(); // #504
     if (section === 'datos2') loadDatos2();
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
@@ -5790,6 +5791,33 @@ async function setBankOutageUI(active) {
 }
 window.loadBankOutage = loadBankOutage; window.setBankOutageUI = setBankOutageUI;
 // #421: modo de registro (tilde en Configuración → Registro de clientes)
+// #504: estrategia clientes · publicidad
+let _stTypes = {}, _stWeek = [];
+async function stratLoad() {
+    try {
+        const r = await authFetch('/api/admin/strategy'); const j = await r.json(); if (!r.ok) { showToast(j.error || 'Error', 'error'); return; }
+        _stTypes = j.missionTypes || {}; _stWeek = (j.stats && j.stats.missionsWeek) || [];
+        const g = (id) => document.getElementById(id);
+        g('stFdPct').value = j.firstDeposit.pct; g('stIgOn').checked = !!j.firstDeposit.installExtraEnabled; g('stIgPct').value = j.firstDeposit.installExtraPct;
+        g('stFdInfo').textContent = 'Hoy: ' + j.firstDeposit.pct + '% · con la app instalada ' + j.firstDeposit.withApp + '%';
+        g('stSdOn').checked = !!j.secondDeposit.enabled; g('stSdPct').value = j.secondDeposit.pct; g('stSdAfter').value = j.secondDeposit.afterHours; g('stSdValid').value = j.secondDeposit.validHours;
+        const s = j.stats.secondDeposit; g('stSdInfo').textContent = 'Últimos 30 días: ' + s.offered30 + ' ofrecidos · ' + s.used30 + ' usados · ' + s.expired30 + ' vencidos';
+        g('stMsOn').checked = !!j.missions.enabled; g('stMsInfo').textContent = 'Semana ' + j.stats.weekKey + ': ' + _stWeek.reduce((a, x) => a + x.n, 0) + ' misiones cumplidas · últimos 30 días ' + j.stats.missions30.n + ' por $' + Number(j.stats.missions30.amt || 0).toLocaleString('es-AR');
+        _stRows(j.missions.items || []);
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+function _stRows(items) {
+    const tb = document.getElementById('stMsRows'); if (!tb) return;
+    tb.innerHTML = items.map(function (m, i) { const w = _stWeek.find((x) => x._id === m.id); return '<tr data-id="' + escapeHtml(m.id) + '"><td><input type="checkbox" class="st-act" ' + (m.active !== false ? 'checked' : '') + ' style="width:auto;"></td><td><input type="text" class="st-title" value="' + escapeHtml(m.title || '') + '" maxlength="60" style="width:220px;"></td><td><select class="st-type">' + Object.keys(_stTypes).map((t) => '<option value="' + t + '"' + (m.type === t ? ' selected' : '') + '>' + escapeHtml(_stTypes[t]) + '</option>').join('') + '</select></td><td><input type="number" class="st-target" value="' + (m.target || 1) + '" min="1" style="width:90px;"></td><td><input type="number" class="st-min" value="' + (m.minAmount || 0) + '" min="0" style="width:100px;"></td><td><input type="number" class="st-reward" value="' + (m.rewardArs || 0) + '" min="0" style="width:100px;"></td><td>' + (w ? w.n + ' · $' + Number(w.amt).toLocaleString('es-AR') : '0') + '</td><td><button class="btn-secondary btn-small" onclick="this.closest(\'tr\').remove()">🗑</button></td></tr>'; }).join('');
+}
+function stratAddMission() { const tb = document.getElementById('stMsRows'); const id = 'm' + Date.now().toString(36); const tr = document.createElement('tr'); tr.dataset.id = id; tr.innerHTML = '<td><input type="checkbox" class="st-act" checked style="width:auto;"></td><td><input type="text" class="st-title" value="" placeholder="Ej.: 3 cargas en la semana" maxlength="60" style="width:220px;"></td><td><select class="st-type">' + Object.keys(_stTypes).map((t) => '<option value="' + t + '">' + escapeHtml(_stTypes[t]) + '</option>').join('') + '</select></td><td><input type="number" class="st-target" value="3" min="1" style="width:90px;"></td><td><input type="number" class="st-min" value="5000" min="0" style="width:100px;"></td><td><input type="number" class="st-reward" value="3000" min="0" style="width:100px;"></td><td>0</td><td><button class="btn-secondary btn-small" onclick="this.closest(\'tr\').remove()">🗑</button></td>'; tb.appendChild(tr); }
+async function stratSave() {
+    const g = (id) => document.getElementById(id);
+    const items = Array.from(document.querySelectorAll('#stMsRows tr')).map(function (tr) { return { id: tr.dataset.id, active: tr.querySelector('.st-act').checked, title: tr.querySelector('.st-title').value.trim(), type: tr.querySelector('.st-type').value, target: Number(tr.querySelector('.st-target').value), minAmount: Number(tr.querySelector('.st-min').value), rewardArs: Number(tr.querySelector('.st-reward').value) }; }).filter((m) => m.title);
+    const body = { firstDeposit: { pct: g('stFdPct').value, installExtraEnabled: g('stIgOn').checked, installExtraPct: g('stIgPct').value }, secondDeposit: { enabled: g('stSdOn').checked, pct: Number(g('stSdPct').value), afterHours: Number(g('stSdAfter').value), validHours: Number(g('stSdValid').value) }, missions: { enabled: g('stMsOn').checked, items: items } };
+    try { const r = await authFetch('/api/admin/strategy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Estrategia guardada y en marcha', 'success'); const si = g('stSaveInfo'); if (si) si.textContent = 'Guardado ' + new Date().toLocaleTimeString('es-AR'); stratLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.stratLoad = stratLoad; window.stratSave = stratSave; window.stratAddMission = stratAddMission;
 // #500: cierres automáticos
 let _clItems = [], _clUsdt = null;
 const _clM = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');

@@ -8,8 +8,8 @@
 'use strict';
 const GIFT_SOURCES = ['install_bonus', 'welcome_gift', 'payout_refund'];
 // #469: lo que la casa REGALA (todo lo que no es carga ni retiro)
-const PROMO_TYPES = ['bonus', 'refund', 'roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission'];
-const PROMO_LABEL = { bonus: 'bonos de carga', refund: 'reembolsos', roulette: 'ruleta', fire_reward: 'fueguito', rakeback: 'rakeback', vip_levelup: 'nivel VIP', install_gift: 'extra por instalar', referral_commission: 'referidos' };
+const PROMO_TYPES = ['bonus', 'refund', 'roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission', 'mission'];
+const PROMO_LABEL = { bonus: 'bonos de carga', refund: 'reembolsos', roulette: 'ruleta', fire_reward: 'fueguito', rakeback: 'rakeback', vip_levelup: 'nivel VIP', install_gift: 'extra por instalar', referral_commission: 'referidos', mission: 'misiones' };
 const DAY = 86400000;
 const TZ = '-03:00';
 
@@ -306,7 +306,7 @@ function project(base, opts) {
   const fut = { bonus1: pick(opts.futBonus, cur.bonus1), refund: pick(opts.futRefund, cur.refund), rec: pick(opts.futRec, cur.rec) };
   const capCost = (amount, p) => (p / 100) * Math.min(amount, capArs) + (restPct / 100) * Math.max(0, amount - capArs);
   const tasaReclamo = t.tasaReclamoReembolso != null ? t.tasaReclamoReembolso : 0.6;
-  const fixedTypes = ['fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission']; // #486: la ruleta ya va en el % de cargas siguientes (no se cuenta dos veces)
+  const fixedTypes = ['fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission', 'mission']; // #486: la ruleta ya va en el % de cargas siguientes (no se cuenta dos veces)
   const otrosPct = t.montoCargas > 0 ? fixedTypes.reduce((s, k) => s + ((t.promos && t.promos[k] && t.promos[k].amt) || 0), 0) / t.montoCargas : 0;
   // Economía de UN cliente nuevo en el horizonte, con las condiciones FUTURAS
   const ventaCli = montoPorCliente * horizon;

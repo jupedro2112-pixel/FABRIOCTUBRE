@@ -619,6 +619,15 @@ const userSchema = new mongoose.Schema({
   // RULETA DIARIA v2 (2026-09-18): % EXTRA ganado y todavía sin usar. Lo consume
   // la próxima carga (manual o hgcash) vía resolveAutoBonus (server.js); un
   // premio nuevo en % pisa uno anterior sin usar. 0 = nada pendiente.
+  // #504 (owner): BONO DE SEGUNDA CARGA. A las N horas de la primera carga, si no volvió a cargar, se le ofrece pct% EXTRA en su
+  // próxima carga por `validHours`. Lo consume resolveAutoBonus (claimSecondDepositPercent). Config['strategyClientes'].secondDeposit.
+  secondDepositOffer: {
+    status: { type: String, enum: ['none', 'offered', 'used', 'expired'], default: 'none' },
+    pct: { type: Number, default: null },
+    offeredAt: { type: Date, default: null },
+    expiresAt: { type: Date, default: null },
+    usedAt: { type: Date, default: null }
+  },
   dailyRoulettePendingPct: { type: Number, default: 0 },
   dailyRoulettePendingLabel: { type: String, default: null },
   dailyRouletteWonAt: { type: Date, default: null },

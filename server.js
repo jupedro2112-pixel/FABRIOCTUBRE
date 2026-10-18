@@ -8620,7 +8620,7 @@ async function _cashbackPaidBetween(userId, fromDate, toDate) {
 // reembolsos por período ('refund'), el rakeback, el nivel VIP, la ruleta, el
 // fueguito, las comisiones y TODO 'bonus' (incluido el propio reembolso
 // acumulativo, metadata.source 'instant_cashback' — §3.2).
-const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette', 'install_gift']; // install_gift (#283): carga gratis por instalar la app
+const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette', 'install_gift', 'mission']; // install_gift (#283): carga gratis por instalar la app
 
 /**
  * Estado del reembolso acumulativo de un jugador. `opts.fresh` → netwin sin
@@ -13129,6 +13129,20 @@ async function claimWelcomeCodePercent(user, usedBy) {
         { $set: { welcomeCodeBonusStatus: 'pending', welcomeCodeBonusUsedAt: null, welcomeCodeBonusUsedBy: null } }).catch(() => {}) };
   } catch (e) { logger.warn(`[auto-bonus] claim welcome-code falló: ${e.message}`); return { pct: 0, claimed: false }; }
 }
+// #504: consume el bono de SEGUNDA CARGA si está ofrecido y vigente (atómico; revert si el crédito falla).
+async function claimSecondDepositPercent(user, usedBy) {
+  try {
+    const now = new Date();
+    const prev = await User.findOneAndUpdate(
+      { id: user.id, 'secondDepositOffer.status': 'offered', 'secondDepositOffer.expiresAt': { $gt: now } },
+      { $set: { 'secondDepositOffer.status': 'used', 'secondDepositOffer.usedAt': now } }, { new: false }
+    ).select('secondDepositOffer').lean();
+    if (!prev || !prev.secondDepositOffer || !(prev.secondDepositOffer.pct > 0)) return { pct: 0, claimed: false };
+    const pct = Number(prev.secondDepositOffer.pct);
+    return { pct, claimed: true, source: 'second_deposit', label: `bono de SEGUNDA carga (${pct}%)`,
+      revert: () => User.updateOne({ id: user.id, 'secondDepositOffer.status': 'used' }, { $set: { 'secondDepositOffer.status': 'offered', 'secondDepositOffer.usedAt': null } }).catch(() => {}) };
+  } catch (e) { logger.warn(`[auto-bonus] claim segunda carga falló: ${e.message}`); return { pct: 0, claimed: false }; }
+}
 async function claimDailyRoulettePercent(user, usedBy) {
   try {
     const prev = await User.findOneAndUpdate(
@@ -13183,6 +13197,7 @@ async function resolveAutoBonus(user, amount, usedBy) {
   if (!user || !(Number(amount) > 0)) return none;
   let c = await claimInstallBonusPercent(user, usedBy);
   if (!c.claimed) c = await claimWelcomeCodePercent(user, usedBy);
+  if (!c.claimed) c = await claimSecondDepositPercent(user, usedBy); // #504
   if (!c.claimed) c = await claimDailyRoulettePercent(user, usedBy);
   if (!c.claimed) c = await claimPromoBonusPercent(user, usedBy, amount);
   // #290 (owner 2026-10-17): la PUBLICIDAD promete un % automático en la PRIMERA carga. Si es la primera
@@ -19085,6 +19100,143 @@ app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (
     logger.info('[cierres] ' + dk + ' ' + (b.finalize ? 'FINALIZADO' : 'actualizado') + ' por ' + req.user.username + ' comisión $' + doc.bankCommissionArs + ' usdt ' + doc.usdtRate);
     res.json({ success: true, item: doc.toObject() });
   } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// ============================================================
+// #504 (owner): ESTRATEGIA CLIENTES · PUBLICIDAD — automática y ajustable desde el panel (sección debajo de Cierres).
+//   1) Primera carga: Config['firstDepositBonusPct'] + extra por instalar la app (Config['installGift']) → "100 % con la app".
+//   2) Segunda carga: a las N horas de la primera carga, si no volvió a cargar, pct % EXTRA en la próxima carga por M horas
+//      (User.secondDepositOffer; lo consume resolveAutoBonus). Aviso por chat + push. Cron cada 10 min.
+//   3) Misiones semanales (lunes–domingo ART): metas de cargas; al cumplirse se ACREDITA sola como regalo (Transaction 'mission',
+//      MissionClaim único por usuario/misión/semana). Cron cada 15 min. La app muestra el progreso.
+// Config['strategyClientes'] = { secondDeposit: { enabled, pct, afterHours, validHours }, missions: { enabled, items: [...] } }
+// ============================================================
+const MissionClaim = require('./src/models/MissionClaim');
+const STRATEGY_DEFAULT = {
+  secondDeposit: { enabled: true, pct: 50, afterHours: 24, validHours: 72 },
+  missions: { enabled: true, items: [
+    { id: 'm3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
+    { id: 'm4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 5000, rewardArs: 5000, active: true },
+    { id: 'm50k', title: 'Cargá $50.000 en la semana', type: 'deposit_total', target: 50000, minAmount: 0, rewardArs: 4000, active: true }
+  ] }
+};
+const MISSION_TYPES = { deposits_count: 'cantidad de cargas (de al menos el mínimo)', deposit_days: 'días distintos con carga', deposit_total: 'total cargado en la semana ($)' };
+async function getStrategyConfig() {
+  let raw = null; try { raw = await getConfig('strategyClientes', null); } catch (_) {}
+  const r = raw && typeof raw === 'object' ? raw : {};
+  const sd = Object.assign({}, STRATEGY_DEFAULT.secondDeposit, r.secondDeposit || {});
+  sd.pct = Math.min(500, Math.max(0, Number(sd.pct) || 0)); sd.afterHours = Math.min(168, Math.max(1, Number(sd.afterHours) || 24)); sd.validHours = Math.min(720, Math.max(1, Number(sd.validHours) || 72)); sd.enabled = sd.enabled !== false;
+  const ms = { enabled: !(r.missions && r.missions.enabled === false), items: Array.isArray(r.missions && r.missions.items) ? r.missions.items : STRATEGY_DEFAULT.missions.items };
+  ms.items = ms.items.filter((m) => m && m.id && MISSION_TYPES[m.type]).map((m) => ({ id: String(m.id).slice(0, 30), title: String(m.title || '').slice(0, 60), type: m.type, target: Math.max(1, Number(m.target) || 1), minAmount: Math.max(0, Number(m.minAmount) || 0), rewardArs: Math.max(0, Math.round(Number(m.rewardArs) || 0)), active: m.active !== false })).slice(0, 12);
+  return { secondDeposit: sd, missions: ms };
+}
+function weekKeyART(d) { const k = datosIa.dateKeyART(d || new Date()); const [y, m, dd] = k.split('-').map(Number); const dt = new Date(Date.UTC(y, m - 1, dd)); dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7)); return dt.toISOString().slice(0, 10); }
+function weekRangeART(wk) { const s = new Date(wk + 'T03:00:00.000Z'); return { start: s, end: new Date(s.getTime() + 7 * 86400000 - 1) }; }
+const _REAL_DEP = { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } };
+// Métricas de la semana por usuario: cargas (≥ mínimo), días distintos, total. Si userId viene, sólo ese.
+async function _missionWeekStats(wk, userId) {
+  const { start, end } = weekRangeART(wk);
+  const match = { ..._REAL_DEP, timestamp: { $gte: start, $lte: end } }; if (userId) match.userId = userId;
+  const rows = await Transaction.aggregate([{ $match: match }, { $group: { _id: '$userId', username: { $first: '$username' }, txs: { $push: { a: '$amount', t: '$timestamp' } }, total: { $sum: '$amount' } } }]);
+  return rows.map((r) => ({ userId: r._id, username: r.username, total: r.total, txs: r.txs, days: new Set(r.txs.map((x) => datosIa.dateKeyART(x.t))).size }));
+}
+function _missionProgress(m, st) {
+  if (!st) return { value: 0, done: false };
+  let v = 0;
+  if (m.type === 'deposits_count') v = st.txs.filter((x) => x.a >= (m.minAmount || 0)).length;
+  else if (m.type === 'deposit_days') v = new Set(st.txs.filter((x) => x.a >= (m.minAmount || 0)).map((x) => datosIa.dateKeyART(x.t))).size;
+  else if (m.type === 'deposit_total') v = Math.round(st.total);
+  return { value: v, done: v >= m.target };
+}
+async function _missionCredit(m, st, wk) {
+  const user = await User.findOne({ id: st.userId }).lean(); if (!user) return null;
+  const reference = `vip-mis-${user.id}-${m.id}-${wk}`;
+  let claim; try { claim = await MissionClaim.create({ id: uuidv4(), userId: user.id, username: user.username, missionId: m.id, weekKey: wk, title: m.title, rewardArs: m.rewardArs, status: 'credited' }); } catch (e) { if (e && e.code === 11000) return null; throw e; }
+  let pid = user.preferredPlatform || 'girox'; let adapter = platforms.getAdapter(pid);
+  if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
+  const credit = await adapter.creditGift(user.username, m.rewardArs, { description: `Misión semanal: ${m.title}`, reference });
+  if (!credit || !credit.success) { await MissionClaim.updateOne({ id: claim.id }, { $set: { status: 'failed', error: String((credit && credit.error) || 'unknown').slice(0, 200) } }); logger.error(`[misiones] credit FAIL ${user.username} ${m.id}: ${(credit && credit.error) || 'unknown'}`); return null; }
+  const tx = await Transaction.create({ id: uuidv4(), type: 'mission', userId: user.id, username: user.username, amount: m.rewardArs, platform: pid, description: `Misión semanal cumplida: ${m.title}`, transactionId: credit.data && (credit.data.transfer_id || credit.data.transferId) || null, metadata: { source: 'mission', missionId: m.id, weekKey: wk, creditedAs: credit.creditedAs || null }, timestamp: new Date() });
+  await MissionClaim.updateOne({ id: claim.id }, { $set: { txId: tx.id } });
+  const vars = { username: user.username, titulo: m.title, monto: m.rewardArs.toLocaleString('es-AR') };
+  const text = await renderSystemCommand('/sys_mission_done', '🎯 ¡Misión cumplida! "{titulo}": te acreditamos ${monto} de regalo. Ya lo tenés en tu saldo.', vars);
+  await _sendUserSystemMessage(user, text, { metadata: { kind: 'mission', missionId: m.id, weekKey: wk }, push: { title: '🎯 Misión cumplida', body: `"${m.title}": $${vars.monto} acreditados.` } });
+  logger.info(`[misiones] ${user.username} cumplió ${m.id} (${wk}) → $${m.rewardArs}`);
+  return tx;
+}
+let _missionsBusy = false;
+async function _missionsTick() {
+  if (_missionsBusy) return; _missionsBusy = true;
+  try {
+    const cfg = await getStrategyConfig(); if (!cfg.missions.enabled) return;
+    const items = cfg.missions.items.filter((m) => m.active && m.rewardArs > 0); if (!items.length) return;
+    const wk = weekKeyART(new Date()); const stats = await _missionWeekStats(wk);
+    const claimed = new Set((await MissionClaim.find({ weekKey: wk }).select('userId missionId').lean()).map((c) => c.userId + '|' + c.missionId));
+    let n = 0;
+    for (const st of stats) { for (const m of items) { if (n >= 100) break; if (claimed.has(st.userId + '|' + m.id)) continue; if (_missionProgress(m, st).done) { await _missionCredit(m, st, wk); n++; } } }
+  } catch (e) { logger.warn('[misiones] tick: ' + e.message); } finally { _missionsBusy = false; }
+}
+setTimeout(() => { _missionsTick(); setInterval(_missionsTick, 15 * 60 * 1000); }, 120 * 1000);
+// Segunda carga: ofrece a los que hicieron UNA sola carga hace entre afterHours y afterHours+48 h; expira los vencidos.
+async function _secondDepositTick() {
+  try {
+    const cfg = await getStrategyConfig(); const sd = cfg.secondDeposit; const now = new Date();
+    await User.updateMany({ 'secondDepositOffer.status': 'offered', 'secondDepositOffer.expiresAt': { $lt: now } }, { $set: { 'secondDepositOffer.status': 'expired' } });
+    if (!sd.enabled || !(sd.pct > 0)) return;
+    const lo = new Date(now.getTime() - (sd.afterHours + 48) * 3600000), hi = new Date(now.getTime() - sd.afterHours * 3600000);
+    const cands = await Transaction.aggregate([{ $match: { ..._REAL_DEP, timestamp: { $gte: new Date(lo.getTime() - 400 * 86400000) } } }, { $group: { _id: '$userId', first: { $min: '$timestamp' }, n: { $sum: 1 } } }, { $match: { n: 1, first: { $gte: lo, $lte: hi } } }, { $limit: 300 }]);
+    let n = 0;
+    for (const c of cands) {
+      if (!c._id) continue;
+      const user = await User.findOneAndUpdate({ id: c._id, role: 'user', $or: [{ 'secondDepositOffer.status': { $exists: false } }, { 'secondDepositOffer.status': 'none' }] }, { $set: { secondDepositOffer: { status: 'offered', pct: sd.pct, offeredAt: now, expiresAt: new Date(now.getTime() + sd.validHours * 3600000), usedAt: null } } }, { new: true });
+      if (!user) continue;
+      const vars = { username: user.username, pct: sd.pct, hours: sd.validHours };
+      const text = await renderSystemCommand('/sys_second_deposit_offer', '🎁 {username}, tu PRÓXIMA carga tiene un {pct}% EXTRA de regalo. Vale por {hours} horas: cargá ahora y se acredita solo.', vars);
+      await _sendUserSystemMessage(user, text, { metadata: { kind: 'second_deposit', pct: sd.pct }, push: { title: `🎁 ${sd.pct}% extra en tu próxima carga`, body: `Vale ${sd.validHours} horas. Cargá y se acredita solo.` } });
+      n++; if (n >= 150) break;
+    }
+    if (n) logger.info('[segunda-carga] ofrecidos: ' + n);
+  } catch (e) { logger.warn('[segunda-carga] tick: ' + e.message); }
+}
+setTimeout(() => { _secondDepositTick(); setInterval(_secondDepositTick, 10 * 60 * 1000); }, 150 * 1000);
+// ── API cliente: estado de la estrategia para la app (segunda carga vigente + misiones con progreso)
+app.get('/api/strategy/me', authMiddleware, async (req, res) => {
+  try {
+    const cfg = await getStrategyConfig(); const user = await User.findOne({ id: req.user.userId }).select('id username secondDepositOffer').lean();
+    const sd = user && user.secondDepositOffer && user.secondDepositOffer.status === 'offered' && user.secondDepositOffer.expiresAt > new Date() ? { pct: user.secondDepositOffer.pct, expiresAt: user.secondDepositOffer.expiresAt } : null;
+    const wk = weekKeyART(new Date()); const { end } = weekRangeART(wk);
+    let missions = [];
+    if (cfg.missions.enabled) {
+      const st = (await _missionWeekStats(wk, req.user.userId))[0] || null;
+      const claims = await MissionClaim.find({ userId: req.user.userId, weekKey: wk }).select('missionId status rewardArs').lean();
+      missions = cfg.missions.items.filter((m) => m.active && m.rewardArs > 0).map((m) => { const p = _missionProgress(m, st); const c = claims.find((x) => x.missionId === m.id); return { id: m.id, title: m.title, type: m.type, target: m.target, minAmount: m.minAmount, rewardArs: m.rewardArs, value: p.value, done: p.done || !!c, credited: !!(c && c.status === 'credited') }; });
+    }
+    res.set('Cache-Control', 'no-store'); res.json({ secondDeposit: sd, missions, weekKey: wk, weekEndsAt: end });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// ── API admin: configuración + estadísticas
+app.get('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const cfg = await getStrategyConfig(); const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig();
+    const since30 = new Date(Date.now() - 30 * 86400000); const wk = weekKeyART(new Date());
+    const [offered, used, expired, claimsWeek, claims30] = await Promise.all([
+      User.countDocuments({ 'secondDepositOffer.offeredAt': { $gte: since30 } }), User.countDocuments({ 'secondDepositOffer.status': 'used', 'secondDepositOffer.usedAt': { $gte: since30 } }), User.countDocuments({ 'secondDepositOffer.status': 'expired', 'secondDepositOffer.offeredAt': { $gte: since30 } }),
+      MissionClaim.aggregate([{ $match: { weekKey: wk, status: 'credited' } }, { $group: { _id: '$missionId', n: { $sum: 1 }, amt: { $sum: '$rewardArs' } } }]),
+      MissionClaim.aggregate([{ $match: { createdAt: { $gte: since30 }, status: 'credited' } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$rewardArs' } } }])
+    ]);
+    res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, weekKey: wk } });
+  } catch (e) { logger.error('[strategy] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {};
+    if (b.firstDeposit) { const p = Number(b.firstDeposit.pct); if (Number.isFinite(p) && p >= 0 && p <= 500) await Config.set('firstDepositBonusPct', Math.round(p), req.user.username); const cur = (await getConfig('installGift', null)) || {}; const ep = Number(b.firstDeposit.installExtraPct); await Config.set('installGift', Object.assign({}, cur, { enabled: b.firstDeposit.installExtraEnabled !== false, pct: Number.isFinite(ep) && ep >= 0 && ep <= 500 ? Math.round(ep) : (cur.pct != null ? cur.pct : 50) }), req.user.username); }
+    const cur = await getStrategyConfig();
+    const next = { secondDeposit: Object.assign({}, cur.secondDeposit, b.secondDeposit || {}), missions: { enabled: b.missions && b.missions.enabled != null ? b.missions.enabled !== false : cur.missions.enabled, items: b.missions && Array.isArray(b.missions.items) ? b.missions.items : cur.missions.items } };
+    await Config.set('strategyClientes', next, req.user.username);
+    res.json({ success: true, config: await getStrategyConfig() });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 // #499: CIERRE DIARIO de la base retenida (ayer por defecto; sin clientes nuevos). Costo por cliente = el promedio histórico (#468).
 app.get('/api/admin/datos-ia/daily', authMiddleware, adminMiddleware, async (req, res) => {

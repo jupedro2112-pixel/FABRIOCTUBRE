@@ -135,6 +135,11 @@ document.addEventListener('change', function (ev) {
                     <span>Cierres</span>
                     <span id="cierresBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:auto;">0</span>
                 </a>
+                <!-- #504 (owner): estrategia de clientes y publicidad, automática y ajustable -->
+                <a href="#" class="nav-item" data-section="strategy">
+                    <span>🎯</span>
+                    <span>Estrategia clientes · publicidad</span>
+                </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
@@ -1257,6 +1262,34 @@ document.addEventListener('change', function (ev) {
                 <div class="dia-card"><div class="dia-card-h"><b>📅 Últimos 30 días</b><small>Depósitos − retiros = VENTA (netwin) · − regalos = NETO · − comisión del banco = RESULTADO · ÷ USDT = resultado en dólares. <b>Arqueo:</b> lo que entró y salió del BANCO (automático desde los movimientos del banco; si el resumen dice otra cosa, escribilo "según banco") contra lo que dice el sistema → la <b>diferencia</b> queda en 0 si cuadra, negativa = faltante, positiva = sobrante. Además, todas las noches a las 00:00 se guarda el <b>saldo del banco</b> por API: con saldo inicial y final, el arqueo real es (saldo fin − saldo inicio) − (depósitos − retiros) + comisión; si la API no lo informa, se escribe a mano. La comisión se puede cambiar por día (% o monto).</small></div>
                     <div id="cierresList" style="overflow-x:auto;"></div>
                 </div>
+            </section>
+            <section id="strategySection" class="section dia">
+                <div class="panel-header cfg-head">
+                    <div><h2>🎯 Estrategia clientes · publicidad</h2><div class="cfg-sub">Todo corre solo. Acá ajustás los números. Los textos que ve el cliente se editan en COMANDOS (<code>/sys_second_deposit_offer</code>, <code>/sys_mission_done</code>, <code>/sys_first_deposit_popup</code>).</div></div>
+                    <button class="refresh-btn" onclick="stratLoad()" title="Actualizar">🔄</button>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Primera carga</b><small>Bono de bienvenida en la primera carga real + extra si instala la app (con notificaciones). El cliente lo ve al entrar y sobre CARGAR AHORA.</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label>Bono 1ª carga %<input type="number" id="stFdPct" min="0" max="500" style="width:80px;"></label>
+                        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stIgOn" style="width:auto;"> Extra por instalar la app</label>
+                        <label>Extra %<input type="number" id="stIgPct" min="0" max="500" style="width:80px;"></label>
+                        <span class="dia-pill" id="stFdInfo">…</span>
+                    </div>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>2️⃣ Segunda carga</b><small>A las N horas de la primera carga, si no volvió a cargar, se le ofrece un % EXTRA en su próxima carga por un tiempo limitado. Aviso por chat y push; se acredita solo en la próxima carga (manual o automática).</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stSdOn" style="width:auto;"> Activo</label>
+                        <label>% extra<input type="number" id="stSdPct" min="0" max="500" style="width:80px;"></label>
+                        <label>A las (horas) de la 1ª carga<input type="number" id="stSdAfter" min="1" max="168" style="width:80px;"></label>
+                        <label>Vale (horas)<input type="number" id="stSdValid" min="1" max="720" style="width:80px;"></label>
+                        <span class="dia-pill" id="stSdInfo">…</span>
+                    </div>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>3️⃣ Misiones semanales</b><small>Lunes a domingo (hora argentina). Cuando el cliente cumple la meta, el premio se acredita solo como regalo y se le avisa. La app muestra el progreso de cada misión.</small></div>
+                    <div class="dia-bar dia-bar-in"><label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stMsOn" style="width:auto;"> Misiones activas</label><span class="dia-pill" id="stMsInfo">…</span><button class="btn-secondary btn-small" onclick="stratAddMission()">+ Agregar misión</button></div>
+                    <div style="overflow-x:auto;"><table class="data-table" style="width:100%;"><thead><tr><th>Activa</th><th>Título (lo ve el cliente)</th><th>Tipo de meta</th><th>Meta</th><th>Carga mínima $</th><th>Premio $</th><th>Cumplidas esta semana</th><th></th></tr></thead><tbody id="stMsRows"></tbody></table></div>
+                </div>
+                <div class="dia-bar"><button class="btn-primary" onclick="stratSave()">💾 Guardar estrategia</button><span id="stSaveInfo" class="dia-pill"></span></div>
             </section>
             <section id="menuLayoutSection" class="section">
                 <div class="panel-header cfg-head">

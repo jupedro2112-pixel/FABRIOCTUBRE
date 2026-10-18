@@ -1131,6 +1131,8 @@
                     <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo</small></span>
                     <span class="ez-main-arrow">›</span>
                 </button>
+                <!-- #504: bono de SEGUNDA carga vigente (lo pinta home.js con /api/strategy/me) -->
+                <button type="button" class="sd-banner" id="sdBanner" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPct">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeft"></small><span>Cargar ›</span></button>
                 <div class="ez-grid">
                     <button type="button" class="ez-btn ez-refund" onclick="VIP.home.svcRefund()" title="Reembolsos">
                         <span class="ez-badge" id="easyRefundBadge" style="display:none"></span>
@@ -1141,6 +1143,12 @@
                     </button>
                     <button type="button" class="ez-btn ez-ref" onclick="VIP.ui.openReferralModal()" title="Referidos">
                         <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></span><b>Referidos</b><small>Ganás el <span class="ref-pct">5</span>% de lo que juegan</small>
+                    </button>
+                    <!-- #504: MISIONES semanales (progreso real; el premio se acredita solo) -->
+                    <button type="button" class="ez-btn ez-missions" id="ezMissions" onclick="VIP.home.openMissions()" title="Misiones de la semana" hidden>
+                        <span class="ez-badge" id="ezMissionsBadge" style="display:none"></span>
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span><b>Misiones de la semana</b><small id="ezMissionsSub">Cumplí metas y cobrá premios</small>
+                        <div class="ez-mis-bars" id="ezMissionsBars"></div>
                     </button>
                     <button type="button" class="ez-btn ez-play" onclick="VIP.home.easyPlay()" title="Ver la plataforma">
                         <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></span><b>Ver la plataforma</b><small>Entrá a jugar con tu usuario</small>
@@ -1264,6 +1272,8 @@
                 <!-- ===== NIVEL VIP (#253): barra de progreso plegable debajo de "Guardá tu acceso". Lo pinta home.js
                      con /api/vip/status; cada nivel alcanzado aparece desbloqueado (✓) y los que faltan con 🔒. ===== -->
                 <!-- #257: ¡Felicidades por tu nuevo nivel! → reclamar el bono eligiendo plataforma (lo pinta home.js) -->
+                <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPctFull">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeftFull"></small><span>Cargar ›</span></button>
+                <div class="home-card ms-card" id="missionsCard" hidden onclick="VIP.home.openMissions()"><div class="ms-card-h"><b>🎯 Misiones de la semana</b><small id="missionsCardSub"></small></div><div id="missionsCardList"></div></div>
                 <div class="home-card vip-claim" id="vipClaimCard" style="display:none;"></div>
                 <div class="home-card vip-card" id="vipCard" style="display:none;">
                     <button type="button" class="vip-head" onclick="VIP.home.toggleVipCard()">
@@ -1456,6 +1466,14 @@
                     <p class="fd-txt" id="fdTxt"></p>
                     <button type="button" class="btn btn-primary fd-btn" onclick="VIP.home.fdGo()">Cargar ahora ›</button>
                     <button type="button" class="fd-later" onclick="VIP.home.fdClose()">Ahora no</button>
+                </div>
+            </div>
+            <!-- #504: modal de MISIONES semanales -->
+            <div id="missionsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('missionsModal')">
+                <div class="modal-content" style="max-width:400px;" onclick="event.stopPropagation()">
+                    <div class="modal-header"><h2>🎯 Misiones de la semana</h2><p id="missionsSub">Lunes a domingo · el premio se acredita solo cuando cumplís la meta</p></div>
+                    <div id="missionsList" class="ms-list"></div>
+                    <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn btn-primary" style="width:100%;" onclick="hideModal('missionsModal');VIP.home.easyLoad()">Cargar ahora ›</button><button type="button" class="btn btn-secondary" style="width:100%;margin-top:6px;" onclick="hideModal('missionsModal')">Cerrar</button></div>
                 </div>
             </div>
             <div id="vipLevelsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('vipLevelsModal')">
@@ -2356,7 +2374,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v349</div>
+                    <div class="pf-build" id="appBuildTag">app v350</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
