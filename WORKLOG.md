@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 406. 👤 Perfil: el link de "Página de la app" va recto debajo del título, en una línea — SW v281
+**Pedido (owner, con captura):** "quiero que el link de la página lo dejes en forma recta abajo del título así entra
+completo en una línea y no se pierde".
+**Qué se hizo:** la fila lleva clase `pf-row-link` (index.html); en pin.css la fila hace `flex-wrap`: título + Copiar en la
+primera línea (Copiar a la derecha) y el link ocupa el 100% debajo, `nowrap` con elipsis, 12px.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 405. 🔥 Fueguito: el requisito es por MONTO cargado en N días (no por cantidad de cargas) — SW v280, admin-sw v85
 **Pedido (owner, con captura del panel):** "cambiar el detalle y la cantidad de cargas, que sea por monto depositado; que
 sea así, no por cantidad de carga sino por monto".

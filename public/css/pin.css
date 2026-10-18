@@ -821,4 +821,9 @@ body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 .pf-compact .pf-main-big .pf-v { font-size: 13px !important; }
 .pf-compact .pf-hint { font-size: 10.5px !important; }
 .pf-compact .pf-capture { padding: 9px 12px !important; font-size: 12px !important; margin-top: 6px !important; }
+/* ── #406 (owner): "Página de la app" — el link va RECTO debajo del título, en una sola línea (no se parte) ── */
+.profile-modal .pf-row.pf-row-link { flex-wrap: wrap !important; row-gap: 3px !important; }
+.profile-modal .pf-row.pf-row-link .pf-k { order: 1; min-width: 0 !important; flex: 1 1 auto; }
+.profile-modal .pf-row.pf-row-link .pf-copy { order: 2; margin-left: auto; }
+.profile-modal .pf-row.pf-row-link .pf-link { order: 3; flex: 1 1 100% !important; width: 100%; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; word-break: normal !important; font-size: 12px !important; font-weight: 700 !important; letter-spacing: 0 !important; }
 
