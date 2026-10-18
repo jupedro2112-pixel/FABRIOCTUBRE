@@ -64,6 +64,18 @@ VIP.withdraw = (function () {
         try { const d = VIP.home && VIP.home.platformsData; const n = Number(d && d.withdrawMinArs); if (Number.isFinite(n) && n > 0) return n; } catch (_) {}
         return 10000;
     }
+    // #442: BANCO CON FALLAS → alerta en el modal y botón deshabilitado (el server igual rechaza con 503 BANK_OUTAGE).
+    let _bankOutage = false;
+    async function _checkBankStatus() {
+        const box = _el('withdrawBankAlert'); const btn = _el('withdrawSubmitBtn');
+        try {
+            const r = await fetch(`${VIP.config.API_URL}/api/withdrawal/bank-status`, { headers: { 'Authorization': `Bearer ${VIP.state.currentToken}` } });
+            const d = r.ok ? await r.json() : { outage: false };
+            _bankOutage = !!(d && d.outage);
+            if (box) { box.textContent = _bankOutage ? (d.message || 'El banco está con fallas. Apenas se normalice te avisamos. Disculpá las molestias.') : ''; box.style.display = _bankOutage ? '' : 'none'; }
+            if (btn) { btn.disabled = _bankOutage; if (_bankOutage) btn.textContent = 'Retiros pausados por el banco'; else if (btn.textContent === 'Retiros pausados por el banco') btn.textContent = '💸 Continuar'; }
+        } catch (_) { _bankOutage = false; }
+    }
     async function openWithdrawModal() {
         _clearError('withdrawError');
         _clearError('withdrawOtpPhoneError');
@@ -77,6 +89,7 @@ VIP.withdraw = (function () {
         if (balEl) balEl.textContent = '...';
 
         VIP.ui.showModal('withdrawModal');
+        _checkBankStatus(); // #442
         await _loadAccountAndBalance();
     }
 

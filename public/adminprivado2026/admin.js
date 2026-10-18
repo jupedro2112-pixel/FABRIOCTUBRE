@@ -5728,6 +5728,28 @@ async function loadCommands() {
 }
 
 // ====== % del bono por instalar la app (COMANDOS, solo admin general edita) ======
+// #442: banco con fallas (retiros)
+async function loadBankOutage() {
+    try {
+        const r = await authFetch('/api/admin/bank-outage'); if (!r.ok) return; const j = await r.json();
+        const st = document.getElementById('bankOutageState'), meta = document.getElementById('bankOutageMeta'), on = document.getElementById('bankOutageOnBtn'), off = document.getElementById('bankOutageOffBtn');
+        if (st) { st.textContent = j.active ? '🔴 ALERTA ACTIVA — retiros pausados' : '🟢 Banco OK — retiros normales'; st.style.color = j.active ? '#ff6b6b' : '#26e07f'; }
+        if (meta) meta.textContent = (j.active ? ('desde ' + new Date(j.since).toLocaleString('es-AR') + ' · ' + (j.mode === 'auto' ? 'automática' : 'manual') + (j.reason ? ' · ' + j.reason : '') + ' · ') : '') + (j.waiters || 0) + ' esperando aviso' + (j.failStreak ? ' · fallos seguidos: ' + j.failStreak : '');
+        if (on) { on.style.display = j.active || !j.canEdit ? 'none' : ''; }
+        if (off) { off.style.display = !j.active || !j.canEdit ? 'none' : ''; }
+    } catch (_) {}
+}
+async function setBankOutageUI(active) {
+    if (active && !confirm('¿Activar la alerta "banco con fallas"? Los clientes no van a poder pedir retiros hasta que la desactives.')) return;
+    if (!active && !confirm('¿Marcar el banco como normalizado? Se les avisa por chat y push a todos los que intentaron retirar.')) return;
+    try {
+        const r = await authFetch('/api/admin/bank-outage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: active, reason: active ? 'manual desde el panel' : '' }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
+        showToast(active ? 'Alerta activada: retiros pausados' : 'Banco normalizado: avisando a los que esperaban', 'success');
+        loadBankOutage();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadBankOutage = loadBankOutage; window.setBankOutageUI = setBankOutageUI;
 // #421: modo de registro (tilde en Configuración → Registro de clientes)
 async function loadRegistrationMode() {
     try {
@@ -5750,6 +5772,7 @@ async function saveRegistrationMode() {
 window.loadRegistrationMode = loadRegistrationMode; window.saveRegistrationMode = saveRegistrationMode;
 async function loadInstallBonusPct() {
     try { loadRegistrationMode(); } catch (_) {} // #421
+    try { loadBankOutage(); } catch (_) {} // #442
     const form = document.getElementById('installBonusPctForm');
     if (!form) return;
     try {
@@ -15280,6 +15303,7 @@ window.gsLoad = gsLoad; window.gsSelect = gsSelect; window.gsSend = gsSend; wind
 // cada uno con tarjeta propia (franja de color a la izquierda, icono, título grande y descripción completa) y un índice de
 // chips arriba para saltar al sector. Siguen plegables con un clic en la cabecera.
 const CMD_ACC_DESC = [
+    [/banco con fallas/i, 'Alerta de retiros pausados: manual o automática al fallar pagos; aviso al normalizarse', '🏦', '#b45309'],
     [/registro de clientes/i, 'Tilde: registro con SMS (usuario, clave, teléfono) o entrada rápida sólo con el nombre', '👤', '#0ea5e9'],
     [/bonos autom/i, '% de la primera carga, "servicio completo", tope de bonos, extra por instalar, carga mínima, retiro mínimo y SMS en retiros', '🎁', '#e60023'],
     [/comandos personalizados/i, 'Mensajes automáticos del sistema (/sys_*) y respuestas rápidas del chat', '💬', '#6366f1'],
@@ -15304,7 +15328,7 @@ function initCommandsAccordion() {
     panels.forEach(function (panel) {
         let cur = null;
         Array.from(panel.children).forEach(function (el) {
-            const self = el.id === 'installBonusPctForm' || el.id === 'hgcashMovementsPanel' || el.id === 'registrationModeForm'; // #421
+            const self = el.id === 'installBonusPctForm' || el.id === 'hgcashMovementsPanel' || el.id === 'registrationModeForm' || el.id === 'bankOutageForm'; // #421/#442
             if (self) { groups.push({ head: el, body: [], self: true }); cur = null; return; }
             if (el.classList.contains('panel-subheader')) { cur = { head: el, body: [], self: false }; groups.push(cur); return; }
             if (cur) cur.body.push(el);

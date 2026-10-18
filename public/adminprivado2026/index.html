@@ -633,6 +633,18 @@ document.addEventListener('change', function (ev) {
                         <!-- % del bono por instalar la app (solo admin general edita). Se usa
                              como variable {pct} en /sys_install_bonus, /sys_install_bonus_banner
                              y /sys_install_bonus_banner_note, y en el cartel de la app. -->
+                        <!-- #442 (owner): BANCO CON FALLAS (retiros) — manual o automático -->
+                        <div class="cbu-form" id="bankOutageForm" style="margin-bottom:14px;">
+                            <h3 style="margin:0 0 6px;">🏦 Banco con fallas (retiros)</h3>
+                            <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Con la alerta <b>activada</b>, el que quiere retirar ve el aviso de <code>/sys_bank_down</code> ("el banco está fallando, apenas se normalice te avisamos, disculpá las molestias") y el retiro no se toma. Al <b>desactivarla</b>, a todos los que intentaron retirar se les manda <code>/sys_bank_up</code> por chat + push para que vuelvan a intentarlo.<br>
+                                <b>Automático:</b> 2 pagos de hgcash fallidos seguidos la activan solos; el primer pago que sale bien la desactiva (sólo si la activó el automático). La manual la desactivás vos.</p>
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <span id="bankOutageState" style="font-size:12.5px;color:#fff;font-weight:800;">…</span>
+                                <button class="btn-primary btn-small" id="bankOutageOnBtn" onclick="setBankOutageUI(true)">⚠️ Activar alerta</button>
+                                <button class="btn-secondary btn-small" id="bankOutageOffBtn" onclick="setBankOutageUI(false)">✅ Banco normalizado (desactivar y avisar)</button>
+                                <span id="bankOutageMeta" style="font-size:11px;color:#9ab;"></span>
+                            </div>
+                        </div>
                         <!-- #421 (owner): modo de REGISTRO de la app (tilde). Sólo admin general. -->
                         <div class="cbu-form" id="registrationModeForm" style="margin-bottom:14px;">
                             <h3 style="margin:0 0 6px;">👤 Registro de clientes</h3>

@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-18
 
+### 442. 🏦 "Banco con fallas" para retiros: alerta manual/automática, bloqueo con aviso y aviso al normalizarse — SW v314, admin-sw v91
+**Pedido (owner):** "va a estar conectado un banco; quiero avisar tipo alerta al que quiere retirar que está fallando el
+banco, apenas se normalice le avisaremos; que se active/desactive desde el admin o sea automático cuando detecte que no
+sale el pago; cuando se normaliza avisar así vuelve a intentarlo, disculpe las molestias".
+**Qué se hizo:**
+- **Estado:** `Config['bankOutage']` {active, mode 'manual'|'auto', since, reason}; `getBankOutage()/setBankOutage()`.
+- **Manual (panel):** Configuración → "🏦 Banco con fallas (retiros)" (`#bankOutageForm`, admin general o pagos): estado, "⚠️
+  Activar alerta" / "✅ Banco normalizado (desactivar y avisar)", cuántos esperan aviso. Rutas `GET/POST /api/admin/bank-outage`.
+- **Automático:** `_bankPayoutFailed()` en los dos caminos de fallo de hgcash (webhook ERROR/CANCELLED y el POST de confirmar
+  pago): 2 fallos seguidos activan la alerta (`mode:'auto'`); `_bankPayoutOk()` (webhook DONE o pago aceptado) resetea el
+  contador y, si la alerta era automática, la desactiva. La manual sólo la saca el panel. El contador es por proceso.
+- **Cliente:** `GET /api/withdrawal/bank-status` (al abrir el modal de retiro: banner ámbar `#withdrawBankAlert` con
+  `/sys_bank_down` y botón "Retiros pausados por el banco" deshabilitado; además lo anota en `Config['bankOutageWaiters']`).
+  `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE` con el mismo texto y también lo anota.
+- **Normalización:** `_notifyBankOutageWaiters()` manda `/sys_bank_up` por chat de sistema + push a todos los anotados y
+  vacía la lista. Textos editables: `/sys_bank_down`, `/sys_bank_up` (COMANDOS).
+**Archivos:** `server.js`, `public/js/withdraw.js`, `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`,
+`public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`, `CLAUDE.md`.
+
 ### 441. 🎨 INICIO (después de iniciar sesión) con íconos de línea en vez de emojis — SW v313
 **Pedido (owner):** "esto que te digo es en Inicio de cuando iniciás sesión" (íconos modernos estilo Pinterest, no WhatsApp).
 **Qué se hizo (index.html + pin.css):** en la **pantalla de entrada** los servicios Reembolso / Ruleta diaria / Referidos, el

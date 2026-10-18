@@ -232,6 +232,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (`/sys_support_names`, rota cada 8 h). No borres ese Config: volvería a mostrar todo el chat viejo a los clientes.
   **#380:** el cliente ve SOLO canal support + mensajes de sistema; lo que un agente escribe desde la sección Chats NO le
   llega (ni al recargar ni por socket). Responder soporte = columna 💬 Soporte del panel.
+  **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
+  Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
   **#421:** `Config['registrationMode']` ('sms' | 'quick', tilde en Configuración → Registro de clientes). En 'quick' la pantalla
   de ingreso pide sólo el nombre y `POST /api/auth/quick-entry` reutiliza `_landingSignupHandler` (campaña INGRESO) + link de
   acceso = autologin. Cambios en el alta de la landing afectan también a la entrada rápida.
