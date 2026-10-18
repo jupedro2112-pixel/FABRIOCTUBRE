@@ -43,7 +43,7 @@
             if (rf.monthlyMax) parts.push('Mensual ' + rf.monthlyMax + '%');
             const chip = _el('lgChipRefund');
             if (chip) chip.textContent = rf.dailyMax ? ('💸 Reembolso diario ' + rf.dailyMax + '%') : (rf.maxPct ? '💸 Reembolsos hasta ' + rf.maxPct + '%' : '💸 Reembolsos');
-            const txt = _el('lgRefunds'); if (txt && parts.length) txt.textContent = parts.join(' · ') + ' de lo que perdés con tu plata. Se cobra solo desde la app.';
+            const txt = _el('lgRefunds'); if (txt && parts.length) txt.textContent = parts.join(' · ') + ' de tu NETWIN. Se cobra solo desde la app.'; // #458
             const promo = _el('lgRefundPromo'); if (promo) { promo.textContent = info.refundPromo || ''; promo.hidden = !info.refundPromo; }
         } catch (_) {}
         try {
