@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 498. ⬛ JUGAYGANA con fondo negro · primera tarjeta de juegos sin el título "Top 10 Juegos" — SW v349
+**Pedidos (owner):** "el de Jugaygana ponele fondo negro también"; "la primera foto del Inicio dice Top 10 juegos, sacala".
+**Qué se hizo:** mismo esquema que Ganamos (#496) para `plat-jugaygana` / `ep-jugaygana` / `data-plat="jugaygana"` con degradé
+negro y texto blanco (borde sutil en modo nocturno). La tarjeta de Fortune Garuda 1000 se recortó de nuevo desde el tope real de
+la fila (se había llevado el encabezado "TOP 10 Juegos" de la captura).
+**Archivos:** `public/css/pin.css`, `public/images/games/fortune-garuda-1000.jpg`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 497. 💸 Selector de reembolsos prolijo: título, % como detalle, estado y RECLAMAR directo — SW v348
 **Pedido (owner, con captura):** "armalo con título en reembolso, prolijo (tan encimado no va), que se pueda reclamar desde ahí y
 que el % figure como detalle".

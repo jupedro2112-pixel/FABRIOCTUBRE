@@ -1374,4 +1374,16 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ur-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
 .ur-claim { flex: 1 1 auto; padding: 10px 12px !important; font-size: 13px !important; }
 .ur-detail { margin-left: auto; border: 0; background: transparent; color: var(--p-text); font: 800 12px var(--p-font); padding: 8px 4px; cursor: pointer; }
+/* ── #498 (owner): JUGAYGANA con fondo NEGRO donde aparezca (misma lógica que Ganamos violeta) ── */
+.ev-tab.plat-jugaygana, .ev-tab.plat-jugaygana.soon, .ev-tab.plat-jugaygana.active { background: linear-gradient(135deg, #000, #262626) !important; color: #fff !important; box-shadow: 0 6px 16px rgba(0,0,0,.3) !important; }
+.ev-tab.plat-jugaygana *, .ev-tab.plat-jugaygana.active * { color: #fff !important; }
+.ev-tab.plat-jugaygana img { background: #fff !important; }
+.ev-tab.plat-jugaygana .ev-soon, .ev-tab.plat-jugaygana .plat-soon-badge { background: rgba(255,255,255,.2) !important; color: #fff !important; }
+.plat-play-btn.plat-jugaygana, .plat-play-btn.plat-jugaygana.is-pref, .plat-play-btn.plat-jugaygana.soon { background: linear-gradient(160deg, #000, #262626) !important; border-color: transparent !important; }
+.plat-play-btn.plat-jugaygana .plat-play-name, .plat-play-btn.plat-jugaygana .plat-play-sub { color: #fff !important; }
+.ep-item.ep-jugaygana, .ep-item.ep-jugaygana.soon { background: linear-gradient(135deg, #000, #262626) !important; border-color: transparent !important; color: #fff !important; opacity: 1 !important; }
+.ep-item.ep-jugaygana b, .ep-item.ep-jugaygana small, .ep-item.ep-jugaygana em { color: #fff !important; }
+.ep-item.ep-jugaygana.soon em { background: rgba(255,255,255,.2) !important; }
+.plat-btn[data-plat="jugaygana"] { background: linear-gradient(135deg, #000, #262626) !important; color: #fff !important; border-color: transparent !important; }
+html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-play-btn.plat-jugaygana, html[data-theme="dark"] .ep-item.ep-jugaygana { border: 1px solid rgba(255,255,255,.22) !important; }
 
