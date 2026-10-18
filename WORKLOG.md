@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 387. 🧭 Panel: Soporte arriba de todo del menú (grupo "Atención"), Chat viejo sigue abajo — admin-sw v83
+**Pedido (owner):** "el soporte dejalo en atención pero arriba de todo, chat viejo abajo está ok".
+**Qué se hizo (`public/adminprivado2026/index.html`):** el rótulo "💬 Atención" + el ítem Soporte (con su
+`#supportBadge`) pasaron al PRINCIPIO de `.sidebar-nav`, antes de "Principal". "Chat viejo (interno)" quedó donde
+estaba, al final del menú, ahora bajo un rótulo propio "Interno" (atenuado). No cambió ningún id ni `data-section`
+(admin.js sigue igual). `admin-sw.js` → v83 para que el panel tome el HTML nuevo.
+**Archivos:** `public/adminprivado2026/index.html`, `public/admin-sw.js`, `WORKLOG.md`.
+
 ### 386. 🔑 Acceso admin COMPLETO al panel para `iginte1000` (seed one-shot al arranque)
 **Pedido (owner):** "ingreso panel de admin dame ingreso con iginte1000 y pepsi100 completo".
 **Qué se hizo (server.js, bloque de startup junto al de `lalodj` #296):** migración one-shot
