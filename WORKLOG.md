@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 502. 🏦 Cierres: diferencia explícita (0 · faltante negativo · sobrante positivo), SALDO DEL BANCO a las 00:00 por API, estado "Pendiente" — admin-sw v112
+**Pedidos (owner):** "en el cierre final tiene que quedar 0 de diferencia si no hubo faltantes, o el monto: negativo = faltante,
+positivo = sobrante"; "¿podés ver a las 00 hs cuánta plata tenía el banco?"; "en estado poné Pendiente solo".
+**Qué se hizo:** `BankBalanceSnapshot` (uno por día): un cron cada minuto, apenas cambia el día argentino, consulta la API del
+banco (`hgcashService.getAccounts`) y guarda el saldo de la cuenta ARS (`_bankBalanceFromAccount` busca `balance` /
+`availableBalance` / `available` / … o `balances[]`; guarda la cuenta cruda sin token para ver qué campos informa; `late` si se
+tomó después de las 00:30). El cierre del día D engancha saldo inicial (00:00 de D) y final (00:00 de D+1); con los dos, el arqueo
+real es `(fin − inicio) − (depósitos − retiros) + comisión`; si no, usa entradas/salidas; sin datos del banco la diferencia queda
+en 0. Columna "Saldo banco 00:00 → 24:00" con carga manual si la API no informa saldo; botón "🏦 Saldo del banco" (consulta ahora
++ último guardado + campos que devuelve). Arqueo muestra siempre la diferencia con signo. Estado: "⏳ Pendiente".
+⚠️ En Render no hay API del banco configurada → "sin saldo"; en producción se ve recién después de la primera medianoche.
+**Archivos:** `src/models/BankBalanceSnapshot.js`, `src/models/DailyClose.js`, `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `pin-admin.css`, `public/admin-sw.js`.
+
 ### 501. 🧾 Cierres: ARQUEO (¿da faltante o diferencia?) y comisión del banco editable por día — admin-sw v111
 **Pedidos (owner):** "en el cierre es revisar si da faltante o diferencia"; "la comisión por defecto dejámela modificar en el
 cierre porque puede variar en el día".

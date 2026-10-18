@@ -22,6 +22,9 @@ const schema = new mongoose.Schema({
   bankIn: { type: Number, default: 0 }, bankOut: { type: Number, default: 0 },
   difIn: { type: Number, default: 0 }, difOut: { type: Number, default: 0 }, diferencia: { type: Number, default: 0 },
   arqueo: { type: String, enum: ['sin_datos', 'cuadra', 'faltante', 'sobrante'], default: 'sin_datos' },
+  // #502 saldo del banco a las 00:00 (inicio del día) y a las 00:00 del día siguiente (fin); manual pisa lo de la API
+  bankBalanceStart: { type: Number, default: null }, bankBalanceEnd: { type: Number, default: null }, bankBalanceDelta: { type: Number, default: null },
+  bankBalanceStartManual: { type: Number, default: null }, bankBalanceEndManual: { type: Number, default: null }, bankBalanceSource: { type: String, default: null },
   // Lo que completa el admin
   bankCommissionPct: { type: Number, default: null },   // % sobre los depósitos (si se usa el % por defecto)
   bankCommissionArs: { type: Number, default: 0 },      // monto final de comisión (pesos)

@@ -234,4 +234,4 @@ a { color: var(--p-red); }
 tr.fin td { opacity: .92; }
 .cl-st.bad { background: rgba(230,0,35,.14); color: var(--p-red); } .cl-st.warn { background: rgba(255,179,71,.18); color: #b86e00; } .cl-st.none { background: var(--p-surface); color: var(--p-muted); }
 .cl-table .cl-in.cl-pct { width: 62px; }
-
+.cl-table .cl-in.cl-bal { width: 96px; }

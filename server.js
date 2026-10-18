@@ -18942,6 +18942,44 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
 // (o aplica el % por defecto) y la cotización USDT → 'finalizado'. Config['closeConfig'] = { bankCommissionPct, autoUsdt }.
 // ============================================================
 const DailyClose = require('./src/models/DailyClose');
+const BankBalanceSnapshot = require('./src/models/BankBalanceSnapshot');
+// #502: saldo del banco por API (hgcash GET /accounts). Busca el primer campo numérico que parezca saldo; guarda la cuenta cruda para ver qué informa.
+function _bankBalanceFromAccount(acc) {
+  if (!acc || typeof acc !== 'object') return null;
+  const keys = ['balance', 'availableBalance', 'available_balance', 'available', 'currentBalance', 'current_balance', 'saldo', 'amount', 'total'];
+  for (const k of keys) { const v = acc[k]; if (v != null && v !== '' && Number.isFinite(Number(v))) return Number(v); if (v && typeof v === 'object') { for (const kk of ['available', 'amount', 'total', 'current', 'value']) if (Number.isFinite(Number(v[kk]))) return Number(v[kk]); } }
+  if (Array.isArray(acc.balances)) { const b = acc.balances.find((x) => !x.currency || /ARS/i.test(x.currency)) || acc.balances[0]; if (b) return _bankBalanceFromAccount(b); }
+  return null;
+}
+async function _bankBalanceNow() {
+  try {
+    const hg = require('./src/services/hgcashService'); if (!hg.isEnabled()) return { ok: false, error: 'API del banco no configurada' };
+    const r = await hg.getAccounts(); if (!r.ok) return { ok: false, error: r.error || 'sin respuesta' };
+    const accs = r.data || []; const acc = accs.find((a) => !a.currency || /ARS/i.test(String(a.currency))) || accs[0];
+    if (!acc) return { ok: false, error: 'la API no devolvió cuentas' };
+    const safe = JSON.parse(JSON.stringify(acc)); ['token', 'apiKey', 'secret'].forEach((k) => { delete safe[k]; });
+    const balance = _bankBalanceFromAccount(acc);
+    return { ok: true, balance, currency: acc.currency || null, accountId: acc.id || null, raw: safe, error: balance == null ? 'la API no informa saldo en la cuenta (ver campos)' : null };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+async function _bankBalanceSnapshotTick() {
+  try {
+    const now = new Date(); const dk = datosIa.dateKeyART(now);
+    if (await BankBalanceSnapshot.exists({ dateKey: dk })) return;
+    const artMin = ((now.getUTCHours() * 60 + now.getUTCMinutes()) - 180 + 1440) % 1440; // minutos desde las 00:00 ART
+    const r = await _bankBalanceNow();
+    try { await BankBalanceSnapshot.create({ dateKey: dk, takenAt: now, late: artMin > 30, balance: r.ok ? r.balance : null, currency: r.currency || null, accountId: r.accountId || null, source: 'api', raw: r.raw || null, error: r.error || null }); } catch (e) { if (!(e && e.code === 11000)) throw e; }
+    logger.info('[cierres] saldo del banco ' + dk + ' 00:00 → ' + (r.ok && r.balance != null ? r.balance : ('sin saldo: ' + r.error)));
+    // engancha el saldo a los cierres de ayer (fin) y de hoy (inicio)
+    const y = datosIa.dateKeyART(new Date(now.getTime() - 86400000)); for (const d of [y, dk]) { const c = await DailyClose.findOne({ dateKey: d }); if (c && c.status !== 'finalizado') { await _closeAttachBalances(c); _closeApply(c, await _closeConfig()); await c.save(); } }
+  } catch (e) { logger.warn('[cierres] saldo banco: ' + e.message); }
+}
+async function _closeAttachBalances(doc) {
+  const next = datosIa.dateKeyART(new Date(new Date(doc.dateKey + 'T03:00:00.000Z').getTime() + 86400000));
+  const [s0, s1] = await Promise.all([BankBalanceSnapshot.findOne({ dateKey: doc.dateKey }).lean(), BankBalanceSnapshot.findOne({ dateKey: next }).lean()]);
+  doc.bankBalanceStart = s0 && s0.balance != null ? s0.balance : null; doc.bankBalanceEnd = s1 && s1.balance != null ? s1.balance : null;
+}
+setTimeout(() => { _bankBalanceSnapshotTick(); setInterval(_bankBalanceSnapshotTick, 60 * 1000); }, 60 * 1000);
 async function _closeConfig() { const c = (await getConfig('closeConfig', null)) || {}; return { bankCommissionPct: Number(c.bankCommissionPct) || 0, autoUsdt: c.autoUsdt !== false }; }
 function _closeApply(doc, cfg) {
   // comisión: monto a mano > % del día (a mano) > % por defecto sobre depósitos (#501: el % se puede cambiar en cada cierre)
@@ -18955,7 +18993,14 @@ function _closeApply(doc, cfg) {
   doc.difIn = Math.round(doc.bankIn - doc.depositos); doc.difOut = Math.round(doc.bankOut - doc.retiros);
   doc.diferencia = Math.round((doc.bankIn - doc.bankOut) - (doc.depositos - doc.retiros));
   const tol = Math.max(1000, Math.round(doc.depositos * 0.001));
-  doc.arqueo = !hasBank ? 'sin_datos' : (Math.abs(doc.diferencia) <= tol ? 'cuadra' : (doc.diferencia < 0 ? 'faltante' : 'sobrante'));
+  // #502: si hay saldo del banco al inicio y al fin del día, el arqueo REAL es (saldo fin − saldo inicio) − (depósitos − retiros)
+  const bs = doc.bankBalanceStartManual != null ? doc.bankBalanceStartManual : doc.bankBalanceStart, be = doc.bankBalanceEndManual != null ? doc.bankBalanceEndManual : doc.bankBalanceEnd;
+  doc.bankBalanceSource = (doc.bankBalanceStartManual != null || doc.bankBalanceEndManual != null) ? 'manual' : (bs != null || be != null ? 'api' : null);
+  doc.bankBalanceDelta = bs != null && be != null ? Math.round(be - bs) : null;
+  if (doc.bankBalanceDelta != null) doc.diferencia = Math.round(doc.bankBalanceDelta - (doc.depositos - doc.retiros) + (doc.bankCommissionArs || 0));
+  const hasAny = hasBank || doc.bankBalanceDelta != null;
+  if (!hasAny) doc.diferencia = 0; // sin datos del banco no hay faltante que reportar: queda en 0 (owner #502)
+  doc.arqueo = !hasAny ? 'sin_datos' : (Math.abs(doc.diferencia) <= tol ? 'cuadra' : (doc.diferencia < 0 ? 'faltante' : 'sobrante'));
   doc.resultadoUsd = doc.usdtRate > 0 ? Math.round((doc.resultado / doc.usdtRate) * 100) / 100 : null;
   return doc;
 }
@@ -18967,7 +19012,7 @@ async function _closeEnsure(dayKey, recalc) {
   if (!doc) {
     try { doc = await DailyClose.create({ id: uuidv4(), ...t }); } catch (e) { if (e && e.code === 11000) doc = await DailyClose.findOne({ dateKey: dayKey }); else throw e; }
   } else if (doc.status !== 'finalizado' || recalc) { Object.assign(doc, t, { recalculatedAt: new Date() }); }
-  _closeApply(doc, cfg); await doc.save(); return doc;
+  await _closeAttachBalances(doc); _closeApply(doc, cfg); await doc.save(); return doc;
 }
 // Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).
 async function _closeTick() {
@@ -18985,6 +19030,10 @@ app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) 
     const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0), diferencia: a.diferencia + (c.arqueo && c.arqueo !== 'sin_datos' ? (c.diferencia || 0) : 0), faltantes: a.faltantes + (c.arqueo === 'faltante' ? 1 : 0), sobrantes: a.sobrantes + (c.arqueo === 'sobrante' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0, diferencia: 0, faltantes: 0, sobrantes: 0 });
     res.json({ success: true, items, totals: tot, config: cfg, usdtRate: usdt && Number(usdt.rate) || null });
   } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #502: ver el saldo del banco AHORA (prueba de la API) y los últimos saldos de las 00:00
+app.get('/api/admin/cierres/bank-balance', authMiddleware, adminMiddleware, async (req, res) => {
+  try { if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' }); const now = await _bankBalanceNow(); const snaps = await BankBalanceSnapshot.find({}).sort({ dateKey: -1 }).limit(10).lean(); res.json({ success: true, now, snapshots: snaps }); } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -19008,6 +19057,9 @@ app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (
     else if (b.bankCommissionArs != null && b.bankCommissionArs !== '') { const v = Number(b.bankCommissionArs); if (!(v >= 0)) return res.status(400).json({ error: 'Comisión inválida' }); doc.bankCommissionArs = Math.round(v); doc.bankCommissionPct = doc.depositos > 0 ? Math.round((v / doc.depositos) * 10000) / 100 : null; doc.bankCommissionSource = 'manual'; }
     if (b.bankInManual !== undefined) { doc.bankInManual = b.bankInManual === '' || b.bankInManual == null ? null : Math.round(Number(b.bankInManual) || 0); }
     if (b.bankOutManual !== undefined) { doc.bankOutManual = b.bankOutManual === '' || b.bankOutManual == null ? null : Math.round(Number(b.bankOutManual) || 0); }
+    if (b.bankBalanceStartManual !== undefined) { doc.bankBalanceStartManual = b.bankBalanceStartManual === '' || b.bankBalanceStartManual == null ? null : Math.round(Number(b.bankBalanceStartManual) || 0); }
+    if (b.bankBalanceEndManual !== undefined) { doc.bankBalanceEndManual = b.bankBalanceEndManual === '' || b.bankBalanceEndManual == null ? null : Math.round(Number(b.bankBalanceEndManual) || 0); }
+    await _closeAttachBalances(doc);
     if (b.useDefaultCommission) { doc.bankCommissionSource = null; }
     if (b.usdtRate != null && b.usdtRate !== '') { const r = Number(b.usdtRate); if (!(r > 0)) return res.status(400).json({ error: 'Cotización inválida' }); doc.usdtRate = Math.round(r); }
     if (b.notes != null) doc.notes = String(b.notes).slice(0, 500);
