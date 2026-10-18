@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 439. ℹ️ Info: "Girox" separado del título y sólo las plataformas en negrita — SW v311
+**Pedido (owner):** "separá un poco Girox, y después dejá sólo remarcado las plataformas: Girox, Ganamos y Jugaygana".
+**Qué se hizo:** el texto de `#infoCardTwoPlatsDesc` pasa a su propia línea debajo del título recuadrado (ya no pegado a
+"La plataforma que quieras") y va en peso normal; sólo <b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b> en negrita (HTML
+inicial y `_paintPlatformTexts` en home.js, con escape). Reemplaza el "todo en negrita" de #438.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 438. ℹ️ Info: el texto de "La plataforma que quieras" en negrita — SW v310
 **Pedido (owner, con captura):** "eso ponelo en negrita".
 **Qué se hizo:** `#infoCardTwoPlatsDesc` con `font-weight:700` y color del texto (pin.css).
