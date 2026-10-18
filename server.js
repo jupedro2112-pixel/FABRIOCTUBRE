@@ -12462,14 +12462,18 @@ const MIN_DEPOSIT_ARS_DEFAULT = 5000;
 const WITHDRAW_MIN_ARS_DEFAULT = 10000;
 async function getWithdrawMinArs() {
   try {
-    const n = Number(await getConfig('withdrawMinArs', null));
+    const raw = await getConfig('withdrawMinArs', null);
+    if (raw === null || raw === undefined || raw === '') return WITHDRAW_MIN_ARS_DEFAULT; // sin config → default (Number(null) sería 0)
+    const n = Number(raw);
     if (Number.isFinite(n) && n >= 0 && n <= 10000000) return Math.round(n);
   } catch (_) { /* fallback */ }
   return WITHDRAW_MIN_ARS_DEFAULT;
 }
 async function getMinDepositArs() {
   try {
-    const n = Number(await getConfig('minDepositArs', null));
+    const raw = await getConfig('minDepositArs', null);
+    if (raw === null || raw === undefined || raw === '') return MIN_DEPOSIT_ARS_DEFAULT; // #379 fix: Number(null) era 0 y pisaba el default
+    const n = Number(raw);
     if (Number.isFinite(n) && n >= 0 && n <= 10000000) return Math.round(n);
   } catch (_) { /* fallback */ }
   return MIN_DEPOSIT_ARS_DEFAULT;

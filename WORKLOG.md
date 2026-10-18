@@ -28,7 +28,9 @@ hardcodeado en $4.999 (server y app). Ahora: `Config['withdrawMinArs']` (default
 editable en COMANDOS → Bonos automáticos (campo "💸 Retiro mínimo $", mismo POST `/api/admin/install-bonus-config`).
 El server lo exige en `POST /api/withdrawal/request` (y en la variante por chat) con el mensaje dinámico; la app lo
 recibe en `GET /api/platforms.withdrawMinArs` y lo usa en el modal de retiro (bloqueo por saldo, validación del monto,
-placeholder) y en el texto: "💸 Pago automático a tu CBU · Retiro mínimo $10.000".
+placeholder) y en el texto: "💸 Pago automático a tu CBU · Retiro mínimo $10.000". **Fix:** `getWithdrawMinArs` y
+`getMinDepositArs` devolvían 0 cuando el Config no existía (`Number(null) === 0` pasaba la validación): ahora sin
+config vale el default (por eso en Render la carga mínima figuraba $0 hasta que se guardó a mano en #374).
 
 ### 378. 🃏 JUGAYGANA como tercera plataforma, "Próximamente" (igual que Ganamos) — SW v265
 **Pedido (owner):** "agregá en la app una nueva plataforma, también Próximamente: JUGAYGANA; te paso el logo".
