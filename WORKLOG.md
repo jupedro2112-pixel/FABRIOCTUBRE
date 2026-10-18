@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 513. 🎲 Logo original de Ganamos — SW v359
+**Pedido (owner, con imagen):** "logo de Ganamos para que lo cambies y pongas el original". Guardado como `public/images/ganamos-net.png`
+(512×512, el cuadrado violeta con G♠NAMOS .NET); `_normalizeLogo` mapea las rutas viejas (`ganamos.svg` / `ganamos.png`) a la nueva,
+así la config guardada también lo toma y no queda caché del logo anterior.
+
 ### 512. ▭ MENÚ BÁSICO: Cargar · Retirar · elegir plataforma, y debajo pasar a Fácil o Completo — SW v358
 **Pedido (owner):** "agregá en el Inicio un extra básico con 2 botones, carga y retiro, y que pueda elegir la plataforma, nada
 más; y ahí abajo elegir otro menú, detallado/completo y fácil".

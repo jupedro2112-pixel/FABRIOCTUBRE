@@ -488,7 +488,7 @@
     // webs públicas; después se re-renderiza con la lista real (misma URL ⇒ no se recarga el iframe).
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
-        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos.png' },
+        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos-net.png' },
         { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: false, logoUrl: '/images/jugaygana.png' } // #378
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;

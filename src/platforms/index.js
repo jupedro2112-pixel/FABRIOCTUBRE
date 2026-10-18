@@ -43,7 +43,7 @@ const CONFIG_KEY = 'platforms';
 const DEFAULT_ITEMS = {
   girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
   // #298 (owner): Ganamos HABILITADA y visible, pero sin API se muestra "Próximamente" y no se puede elegir (connected=false).
-  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.png' }, // #350: logo real (pica violeta)
+  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos-net.png' }, // #350: logo real (pica violeta)
   // #378 (owner 2026-10-18): JUGAYGANA visible como "Próximamente" (sin API ni web pública todavía; la URL se carga en el panel).
   jugaygana: { enabled: true, name: 'JUGAYGANA', emoji: '🃏', order: 3, externalUrl: '', logoUrl: '/images/jugaygana.png' }
 };
@@ -83,7 +83,7 @@ function _normalizeUrl(u) {
 
 function _normalizeLogo(u) {
   let s = String(u || '').trim().slice(0, 300);
-  if (s === '/images/ganamos.svg') s = '/images/ganamos.png'; // #350: config guardada con el placeholder viejo
+  if (s === '/images/ganamos.svg' || s === '/images/ganamos-net.png') s = '/images/ganamos-net.png'; // #350/#513: logo original de Ganamos (archivo nuevo = sin caché vieja)
   if (!s) return '';
   if (/^\/[A-Za-z0-9_\-./]+$/.test(s)) return s;           // ruta del repo (/images/x.png)
   if (/^https:\/\/[^\s"'<>]+$/i.test(s)) return s;             // https externo
