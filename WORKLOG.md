@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 511. ✨ "Pronto" sutil en todos lados para las plataformas sin API — SW v357
+**Pedido (owner):** "el Próximamente de las plataformas extras ponelo más sutil, poné Pronto en todos lados". Texto "Pronto" en la pestaña
+del Inicio, la tarjeta del menú completo, la fila del ingreso, el selector del menú fácil y el mensaje del server; estilo: pastilla
+chica transparente con borde fino y gris (blanca translúcida sobre Ganamos violeta y Jugaygana negro).
+
 ### 510. 🧩 Menú fácil: Reembolso · Misiones / Referidos · Ruleta; sin "Ver la plataforma" ni "Soporte" — SW v355
 **Pedido (owner, con captura):** "Misiones arriba al lado de Reembolso, bajá Ruleta al lado de Referidos, sacá Ver la plataforma y el Soporte".
 Markup reordenado (la función `easyPlay` sigue para el selector de plataforma del menú completo); Misiones pasa a recuadro de media columna. (Fix inmediato: el primer commit había duplicado Reembolso en lugar de Referidos.)

@@ -5733,7 +5733,7 @@ app.post('/api/platforms/preferred', authMiddleware, async (req, res) => {
       const enabled = await platforms.listEnabled();
       if (!enabled.some((p) => p.id === pid)) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
       const adp = platforms.getAdapter(pid); // #298/#301: "Próximamente" (sin API) no se puede fijar — Girox SIEMPRE se puede
-      if (pid !== platforms.DEFAULT_ID && (!adp || typeof adp.isConnected !== 'function' || !adp.isConnected())) return res.status(400).json({ error: 'Próximamente: esa plataforma todavía no se puede elegir.' });
+      if (pid !== platforms.DEFAULT_ID && (!adp || typeof adp.isConnected !== 'function' || !adp.isConnected())) return res.status(400).json({ error: 'Pronto: esta plataforma todavía no está disponible.' });
     }
     await User.updateOne({ id: req.user.userId }, { $set: { preferredPlatform: pid } });
     logger.info(`[platforms] ${req.user.username} fijó plataforma: ${pid || '(ninguna, pregunta en cada carga)'}`);

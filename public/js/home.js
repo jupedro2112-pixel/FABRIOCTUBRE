@@ -624,7 +624,7 @@
             return '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + (soon ? ' soon' : '') + '" onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')"' + (soon ? ' title="Próximamente"' : '') + '>' +
             (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + _esc(p.name) +
             (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
-            (soon ? '<span class="ev-soon">Próximamente</span>' : '') +
+            (soon ? '<span class="ev-soon">Pronto</span>' : '') + // #511: sutil
             '</button>';
         }).join('');
     }
@@ -729,7 +729,7 @@
         }
         _slidesStop();
         const url = p.playUrl || p.externalUrl || '';
-        if (!url) { _entryStatus((p.name || 'Esa plataforma') + (p.connected === false ? ' · Próximamente ✨' : ' todavía no está disponible.'), false); return; } // #378: sin web pública aún
+        if (!url) { _entryStatus((p.name || 'Esa plataforma') + (p.connected === false ? ' · Pronto' : ' todavía no está disponible.'), false); return; } // #378: sin web pública aún
         f.style.display = '';
         if (url === _entryUrl && f.getAttribute('src') === url) return;
         _entryUrl = url;
@@ -1470,9 +1470,9 @@
             '<span class="plat-play-name">' + label + '</span>' +
             // #255 (owner): Girox lleva un "Recomendado" chiquito en rojo; #286: DEBAJO del nombre (antes flotaba arriba).
             (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') +
-            (soon ? '<span class="plat-soon-badge">🔜 Próximamente</span>' : '') + // #353 (owner): se entiende sin tocar
+            (soon ? '<span class="plat-soon-badge">Pronto</span>' : '') + // #353 (owner): se entiende sin tocar · #511: sutil
             // #271: sin "Entrar" acá (verlas = Inicio). Tocar la fija la suelta (vuelve el cartel al cargar).
-            '<span class="plat-play-sub">' + (soon ? '🔜 Próximamente' : (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija')) + '</span>' +
+            '<span class="plat-play-sub">' + (soon ? 'Pronto' : (isPref ? 'Fija · tus cargas van acá' : 'Tocá para dejarla fija')) + '</span>' +
             '</button></div>';
     }
     function choosePlatform(platformId) {

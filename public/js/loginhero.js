@@ -77,7 +77,7 @@
             const box = _el('lgPlats');
             const list = Array.isArray(info.platforms) ? info.platforms : [];
             if (box && list.length) {
-                box.innerHTML = list.map((p) => '<span class="lg-plat' + (p.connected ? '' : ' soon') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name) + '</b>' + (p.connected ? '' : '<small>Próximamente</small>') + '</span>').join('');
+                box.innerHTML = list.map((p) => '<span class="lg-plat' + (p.connected ? '' : ' soon') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name) + '</b>' + (p.connected ? '' : '<small>Pronto</small>') + '</span>').join('');
             }
         } catch (_) {}
     }

@@ -1431,4 +1431,7 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ez-btn.ez-missions { grid-column: auto !important; align-items: center !important; text-align: center !important; padding: 10px 8px 12px !important; }
 .ez-btn.ez-missions > b { margin-top: 0; }
 .ez-mis-bars { margin-top: 6px; }
+/* ── #511 (owner): "Pronto" sutil en todos lados (pestañas del Inicio, tarjetas de plataformas, ingreso, selector del menú fácil) ── */
+.ev-tab.soon .ev-soon, .ev-tab .ev-soon, .plat-soon-badge, .lg-plat small, .ep-item.soon em { background: transparent !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; font: 700 8px/1.2 var(--p-font) !important; letter-spacing: .4px !important; text-transform: uppercase !important; padding: 2px 7px !important; border-radius: 999px !important; box-shadow: none !important; opacity: .85; }
+.ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-jugaygana .ev-soon, .plat-play-btn.plat-ganamos .plat-soon-badge, .plat-play-btn.plat-jugaygana .plat-soon-badge, .ep-item.ep-ganamos.soon em, .ep-item.ep-jugaygana.soon em { color: rgba(255,255,255,.85) !important; border-color: rgba(255,255,255,.35) !important; }
 
