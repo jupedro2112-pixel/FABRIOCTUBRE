@@ -18822,6 +18822,23 @@ app.post('/api/admin/datos-ia/compare', authMiddleware, adminMiddleware, async (
     res.json({ success: true, snapshotId, ours, comparison, day: b.day || null });
   } catch (e) { logger.error('[datos-ia/compare] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #468: GASTO TOTAL desde que empezó la página → costo promedio por cliente (gasto total / clientes que cargaron alguna vez).
+app.get('/api/admin/datos-ia/spend-total', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const st = (await getConfig('adSpendTotal', null)) || null;
+    const clients = await Transaction.distinct('userId', { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] } });
+    const n = clients.length; const amount = st ? Number(st.amount) || 0 : 0;
+    res.json({ success: true, amount, since: st ? st.since || null : null, updatedAt: st ? st.updatedAt : null, clientesTotales: n, costoPromedio: amount > 0 && n ? Math.round(amount / n) : null });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+app.post('/api/admin/datos-ia/spend-total', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const amount = Math.max(0, Math.round(Number(req.body && req.body.amount) || 0));
+    await Config.set('adSpendTotal', { amount, since: String((req.body && req.body.since) || '').slice(0, 10) || null, updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
 app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
@@ -18830,7 +18847,12 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     const spendBase = await _diaSpendFor(from, to, q.campaign);
     const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase });
     let calibration = 1; try { const c = await getConfig('projectionCalibration', null); if (c && Number(c.factor) > 0) calibration = Number(c.factor); } catch (_) {}
-    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac, calibration, organicPct: q.organicPct });
+    let cacIn = Number(q.cac) > 0 ? Number(q.cac) : null, cacOrigen = cacIn ? 'indicado' : null;
+    if (!cacIn && !(base.totals.cac > 0)) { // #468: costo promedio histórico (gasto total / clientes que cargaron alguna vez)
+      try { const st = (await getConfig('adSpendTotal', null)) || null; const n = base.totals.baseCargadores; if (st && Number(st.amount) > 0 && n) { cacIn = Math.round(Number(st.amount) / n); cacOrigen = 'promedio histórico'; } } catch (_) {}
+    }
+    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: cacIn, calibration, organicPct: q.organicPct });
+    if (cacOrigen) projection.supuestos.cacOrigen = cacOrigen;
     const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || '', q.organicPct || ''].join('|'), organicPct: q.organicPct || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
     const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, netwin: projection.base.netwin, resultado: projection.base.resultado, roi: projection.base.roi });
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
