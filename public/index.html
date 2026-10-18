@@ -2220,17 +2220,30 @@
     <!-- ===== PERFIL (#268): usuario + clave como principal; abajo cambiar clave, notificaciones y el resto
          de accesos que antes eran círculos de la cabecera (ids históricos conservados). Formato "simple"
          (blanco, como el modal de reembolso). Lo llena VIP.home.openProfile(). ===== -->
-    <div id="profileModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target===this)hideModal('profileModal')">
+    <div id="profileModal" class="modal hidden refund-simple profile-modal pf-compact" onclick="if(event.target===this)hideModal('profileModal')">
         <div class="modal-content" style="max-width: 420px; position: relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('profileModal')" class="rs-close" aria-label="Cerrar">✕</button>
             <div class="modal-header">
                 <h2>👤 Tu perfil</h2>
                 <p>Tus datos de acceso a la app y a las plataformas</p>
             </div>
+            <!-- #404 (owner): orden del Perfil — Canjear código arriba de todo · Menú fácil/completo · Modo nocturno + Notificaciones
+                 · usuario + datos + Capturar · Fueguito · el resto. Todo más compacto (.pf-compact). -->
+            <div class="pf-actions pf-actions-top">
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()">🎁 <span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
+                <!-- #366: elegir menú fácil / completo cuando quieran -->
+                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()">☰ <span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
+            </div>
             <!-- #399 (owner): modo nocturno ARRIBA de todo de Perfil, con botón Activar / Desactivar (default: desactivado) -->
             <div class="pf-theme-row">
                 <span class="pf-theme-k"><b>🌙 Modo nocturno</b><small id="pfThemeHint">Desactivado</small></span>
                 <button type="button" class="pf-theme-btn" id="pfThemeBtn" onclick="vipToggleTheme()">Activar</button>
+            </div>
+            <div class="pf-actions pf-actions-top">
+                <div class="pf-act pf-wrap">
+                    <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
+                    <span onclick="var b=document.getElementById('notificationBtn'); if(b) b.click();">Notificaciones<small>Activá los avisos de cargas, reembolsos y premios</small></span>
+                </div>
             </div>
             <!-- #304 (owner): recuadro de USUARIO con avatar (tocar = elegir ícono; los de nivel se desbloquean al subir). -->
             <div class="pf-userbox" id="pfUserBox">
@@ -2242,7 +2255,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v278</div>
+                    <div class="pf-build" id="appBuildTag">app v279</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2255,20 +2268,13 @@
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
             <div class="pf-actions">
-                <!-- #366: elegir menú fácil / completo cuando quieran -->
-                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()">☰ <span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
-                <div class="pf-act pf-wrap">
-                    <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
-                    <span onclick="var b=document.getElementById('notificationBtn'); if(b) b.click();">Notificaciones<small>Activá los avisos de cargas, reembolsos y premios</small></span>
-                </div>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()">📲 <span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()">🎁 <span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
-                <a class="pf-act" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer">📣 <span>Canal de Telegram<small>Novedades y promos</small></span></a>
                 <div class="pf-act pf-wrap">
                     <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
                     <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · reclamá tu premio cada día</small></span>
                 </div>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()">📲 <span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>
+                <a class="pf-act" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer">📣 <span>Canal de Telegram<small>Novedades y promos</small></span></a>
                 <!-- #294 (owner): "Soporte en vivo" se sacó del Perfil (el chat se abre desde Carga manual). El id del globito queda oculto para home.js. -->
                 <span id="headerSupportUnread" class="support-unread" style="display:none;">0</span>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}">⚙️ <span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>

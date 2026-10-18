@@ -798,3 +798,27 @@ body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 .header .tn-btn:not(.tn-home) { overflow: visible !important; min-width: 0; }
 .header .tn-btn:not(.tn-home) .tn-lbl { font-size: 7.5px !important; letter-spacing: .2px !important; white-space: nowrap; overflow: visible; }
 .header .tn-telegram .tn-lbl, .header .tn-stories .tn-lbl, .header .tn-btn:not(.tn-home).tn-telegram .tn-lbl, .header .tn-btn:not(.tn-home).tn-stories .tn-lbl { font-size: 6.8px !important; letter-spacing: 0 !important; }
+/* ── #404 (owner): Perfil más COMPACTO ("achicá un poco todo así queda más centralizado") ── */
+.pf-compact .modal-content { padding: 14px 14px 12px !important; }
+.pf-compact .modal-header { margin-bottom: 8px !important; }
+.pf-compact .modal-header h2 { font-size: 18px !important; }
+.pf-compact .modal-header p { font-size: 11.5px !important; margin: 2px 0 0 !important; }
+.pf-compact .pf-actions { gap: 5px !important; margin: 0 0 8px !important; }
+.pf-compact .pf-actions-top { margin: 0 0 8px !important; }
+.pf-compact .pf-act { padding: 8px 11px !important; min-height: 0 !important; font-size: 12.5px !important; border-radius: 12px !important; gap: 8px !important; }
+.pf-compact .pf-act small { font-size: 10.5px !important; }
+.pf-compact .pf-act .pf-ico-btn { width: 30px !important; height: 30px !important; font-size: 15px !important; }
+.pf-compact .pf-theme-row { padding: 7px 11px; margin: 0 0 6px; border-radius: 12px; }
+.pf-compact .pf-theme-k b { font-size: 12.5px; }
+.pf-compact .pf-theme-btn { padding: 6px 12px; font-size: 11.5px; }
+.pf-compact .pf-userbox { padding: 9px 11px !important; margin: 0 0 8px !important; gap: 10px !important; border-radius: 14px !important; }
+.pf-compact .pf-avatar { width: 54px !important; height: 54px !important; }
+.pf-compact .pf-username { font-size: 16px !important; }
+.pf-compact .pf-userlvl { font-size: 11px !important; }
+.pf-compact .pf-userhint { font-size: 9.5px !important; }
+.pf-compact .pf-main-big { padding: 6px 11px 10px !important; margin: 0 0 8px !important; border-radius: 14px !important; }
+.pf-compact .pf-main-big .pf-row { padding: 5px 0 !important; }
+.pf-compact .pf-main-big .pf-v { font-size: 13px !important; }
+.pf-compact .pf-hint { font-size: 10.5px !important; }
+.pf-compact .pf-capture { padding: 9px 12px !important; font-size: 12px !important; margin-top: 6px !important; }
+

@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 404. 👤 Perfil reordenado y más compacto — SW v279
+**Pedido (owner):** "sacá de perfil: notificaciones ponelo abajo de modo nocturno, fueguito ponelo abajo de capturar datos,
+después dejá menú fácil/completo también en la parte superior y arriba de todo el canjear código; y achicá un poco todo
+así queda todo más centralizado".
+**Orden nuevo (index.html, mismos ids y onclicks, sólo se movieron nodos):** 1) 🎁 Canjear un código · 2) ☰ Menú fácil /
+completo · 3) 🌙 Modo nocturno (Activar/Desactivar) · 4) 🔔 Notificaciones · 5) recuadro de usuario (avatar, nombre,
+código, nivel) · 6) usuario / clave / página + Capturar mis datos · 7) 🔥 Fueguito · 8) Cambiar clave · Instalar la app ·
+Canal de Telegram · Más ajustes. **Compacto:** clase `pf-compact` en el modal (pin.css): paddings, tipografías y avatar
+un poco más chicos (acciones 8px/12,5px, avatar 54px, título 18px…).
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 403. 🔝 Barra: "Telegram" e "Historias" ya no se cortan — SW v278
 **Pedido (owner):** "telegram y historias la palabra se corta, achicala un poco".
 **Qué se hizo (pin.css):** etiquetas de los botones de la barra (no Inicio) a 7,5px con menos tracking; Telegram e
