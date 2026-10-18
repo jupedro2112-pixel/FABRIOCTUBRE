@@ -1766,6 +1766,74 @@ async function _sendUserSystemMessage(user, content, { metadata = null, senderUs
   }
 }
 
+// ============================================================
+// #376 (owner 2026-10-18): CARGAS PENDIENTES — red de seguridad de la carga automática.
+// Cada comprobante válido entra en una COLA de revisión (Comprobante.reviewStatus='pending'):
+//   · el cliente recibe "recibimos tu comprobante, se acredita sola" (/sys_receipt_received);
+//   · si la auto-carga hgcash lo acredita → se cierra solo (reviewStatus='confirmed', 'auto');
+//   · si pasan N minutos sin acreditarse (Config['depositReview'].escalateMinutes, default 8) o el banco automático
+//     está apagado / en sombra → ESCALA: el cliente ve "carga pendiente, un agente la está revisando"
+//     (/sys_deposit_pending_review) y el panel la muestra en "⏳ Cargas pendientes" para CONFIRMAR (= la misma carga
+//     manual de siempre; el cliente la ve como automática) o RECHAZAR (/sys_deposit_rejected).
+//   · un comprobante DUPLICADO (misma imagen o mismo N° de operación) NO entra en la cola: el cliente recibe
+//     /sys_receipt_duplicate ("ese comprobante ya fue usado").
+// Los retiros ya tenían su stand-by (PendingPayout.pending_review → sección Pagos → pagar / rechazar).
+// ============================================================
+const RECEIPT_RECEIVED_DEFAULT = '✅ Recibimos tu comprobante{amount}. Estamos verificando la transferencia: en cuanto entra al banco se acredita sola (normalmente en pocos minutos). Te avisamos acá.';
+const RECEIPT_DUPLICATE_DEFAULT = '⚠️ Ese comprobante ya fue usado{amount}. Cada transferencia se acredita UNA sola vez. Si creés que es un error, contanos acá en Soporte y lo revisamos.';
+const DEPOSIT_PENDING_REVIEW_DEFAULT = '⏳ Tu carga{amount} sigue pendiente: un agente la está verificando ahora mismo. No hace falta que hagas nada, te avisamos acá en cuanto se acredite.';
+const DEPOSIT_REJECTED_DEFAULT = '❌ No pudimos acreditar tu carga{amount}: {motivo}. Si tenés dudas, escribinos acá en Soporte.';
+const DEPOSIT_REJECT_REASONS = { no_llego: 'la transferencia no entró en nuestra cuenta', duplicado: 'ese comprobante ya había sido acreditado', ilegible: 'el comprobante no se lee completo (mandalo de nuevo, entero)', monto: 'el monto no coincide con lo que entró', otro: 'no pudimos validarla' };
+async function getDepositReviewConfig() {
+  const raw = await getConfig('depositReview', null);
+  const m = Number(raw && raw.escalateMinutes);
+  return { escalateMinutes: Number.isFinite(m) && m >= 0 && m <= 240 ? m : 8 };
+}
+function _amtStr(a) { const n = Number(a); return Number.isFinite(n) && n > 0 ? ' de $' + n.toLocaleString('es-AR') : ''; }
+function _emitDepositReviewUpdate(userId, extra) {
+  try { io.to(`user_${userId}`).emit('deposit_review_update', extra || {}); } catch (_) {}
+  try { notifyAdmins('deposit_review', Object.assign({ userId }, extra || {})); } catch (_) {}
+}
+// Escala un comprobante pendiente: aviso al cliente + nota interna + panel.
+async function _depositReviewEscalate(c, why) {
+  try {
+    const r = await Comprobante.findOneAndUpdate(
+      { id: c.id, reviewStatus: 'pending', reviewEscalatedAt: null },
+      { $set: { reviewEscalatedAt: new Date(), reviewEscalateReason: String(why || '').slice(0, 80) } }, { new: true }).lean();
+    if (!r) return false;
+    const txt = await renderSystemCommand('/sys_deposit_pending_review', DEPOSIT_PENDING_REVIEW_DEFAULT, { amount: _amtStr(c.amount) });
+    if (txt) await _sendUserSystemMessage({ id: c.userId, username: c.username }, txt, { metadata: { kind: 'deposit_pending', comprobanteId: c.id, amount: c.amount || 0, escalated: true } });
+    await _emitAdminOnlyChatNote(c.userId, c.username, `⏳ CARGA PENDIENTE${_amtStr(c.amount)} — ${why || 'sin acreditación automática'}. Revisala en "Cargas pendientes": confirmar (carga) o rechazar.`);
+    _emitDepositReviewUpdate(c.userId, { action: 'escalated', id: c.id, username: c.username, amount: c.amount });
+    logger.info(`[deposit-review] escalado ${c.id} user=${c.username} $${c.amount} (${why})`);
+    return true;
+  } catch (e) { logger.warn(`[deposit-review] escalar falló: ${e.message}`); return false; }
+}
+// Cron (cada minuto): escala lo que lleva demasiado sin acreditarse y cierra lo que ya se cargó por otro camino.
+async function _depositReviewTick() {
+  try {
+    const cfg = await getDepositReviewConfig();
+    await Comprobante.updateMany({ reviewStatus: 'pending', autoCharged: true },
+      { $set: { reviewStatus: 'confirmed', reviewResolution: 'auto', reviewedBy: 'auto', reviewedAt: new Date() } });
+    const since = new Date(Date.now() - 72 * 3600 * 1000);
+    const limit = new Date(Date.now() - cfg.escalateMinutes * 60 * 1000);
+    const due = await Comprobante.find({ reviewStatus: 'pending', reviewEscalatedAt: null, autoCharged: { $ne: true }, createdAt: { $gte: since, $lte: limit } }).limit(50).lean();
+    for (const c of due) await _depositReviewEscalate(c, `sin acreditación automática en ${cfg.escalateMinutes} min`);
+  } catch (e) { logger.warn(`[deposit-review] tick: ${e.message}`); }
+}
+// Una carga manual del agente (misma persona, mismo monto) cierra el comprobante pendiente más viejo que coincide.
+async function _depositReviewConsume(userId, amount, by) {
+  try {
+    const cands = await Comprobante.find({ userId, reviewStatus: 'pending', autoCharged: { $ne: true } }).sort({ createdAt: 1 }).limit(10).lean();
+    const c = cands.find((x) => _amountsEqual(x.amount, amount)) || (cands.length === 1 ? cands[0] : null);
+    if (!c) return false;
+    const r = await Comprobante.findOneAndUpdate({ id: c.id, reviewStatus: 'pending' },
+      { $set: { reviewStatus: 'confirmed', reviewResolution: 'manual', reviewedBy: by || 'agente', reviewedAt: new Date(), bankMatchStatus: 'manual_charged', autoCharged: true } }, { new: true }).lean();
+    if (r) _emitDepositReviewUpdate(userId, { action: 'confirmed', id: c.id });
+    return !!r;
+  } catch (_) { return false; }
+}
+
 // Analiza una imagen enviada por un cliente: detecta si es comprobante, lo
 // registra (colección Comprobante) y avisa SÓLO a los admins si es duplicado o
 // no. Pensado para correr fire-and-forget: NUNCA frena la entrega del mensaje.
@@ -1886,6 +1954,11 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
         await _emitAdminOnlyChatNote(userId, username,
           `🚨 COMPROBANTE YA UTILIZADO POR: @${original.username || original.userId}\n${dataDesc}\n⚠️ Ya lo había enviado otro usuario. NO cargar sin verificar.`);
       }
+      // #376 (owner): avisarle también al CLIENTE que ese comprobante ya fue usado (antes sólo lo veía el admin).
+      try {
+        const dupTxt = await renderSystemCommand('/sys_receipt_duplicate', RECEIPT_DUPLICATE_DEFAULT, { amount: _amtStr(result.amount) });
+        if (dupTxt) await _sendUserSystemMessage({ id: userId, username }, dupTxt, { metadata: { kind: 'receipt_duplicate', amount: result.amount || 0 } });
+      } catch (_) {}
       return;
     }
 
@@ -1893,7 +1966,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
     // Si no hay NINGUNA (ni N° de operación ni hash de imagen) → avisar verificá a mano.
     const hasDedup = !!dedupeKey || !!imageHash;
     const status = dedupeKey ? 'unique' : 'no_key';
-    try { await Comprobante.create({ ...base, status }); } catch (_) {}
+    try { await Comprobante.create({ ...base, status, reviewStatus: 'pending', reviewQueuedAt: new Date() }); } catch (_) {} // #376: entra en la cola
     if (hasDedup) {
       await _emitAdminOnlyChatNote(userId, username,
         `✅ Comprobante verificado — no es duplicado (${dataDesc}).`);
@@ -1903,6 +1976,19 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
     }
     // Banco automático: si fue al CBU con API, intentar matchear + cargar.
     hgcashMatchFromComprobante({ ...base, status }).catch(() => {});
+    // #376: acuse al cliente. Si el banco automático está apagado o en sombra no va a acreditarse solo → escala YA
+    // (el cliente ve "carga pendiente, un agente la revisa" y el panel la lista); si está en auto, el cron escala
+    // sólo si pasan los minutos configurados sin acreditación.
+    try {
+      const hg = await getHgcashConfig();
+      if (!hg.enabled || hg.mode !== 'auto') {
+        await _depositReviewEscalate({ ...base, status }, !hg.enabled ? 'banco automático apagado' : 'banco automático en modo sombra');
+      } else {
+        const ackTxt = await renderSystemCommand('/sys_receipt_received', RECEIPT_RECEIVED_DEFAULT, { amount: _amtStr(result.amount) });
+        if (ackTxt) await _sendUserSystemMessage({ id: userId, username }, ackTxt, { metadata: { kind: 'deposit_pending', comprobanteId: base.id, amount: result.amount || 0 } });
+        _emitDepositReviewUpdate(userId, { action: 'queued', id: base.id, username, amount: result.amount || 0 });
+      }
+    } catch (e) { logger.warn(`[deposit-review] acuse: ${e.message}`); }
   } catch (e) {
     // Defensa total: este análisis NUNCA debe romper nada del chat.
     logger.warn(`[comprobante] analyzeComprobanteFromMessage falló: ${e.message}`);
@@ -2083,7 +2169,7 @@ async function hgcashConsumeOnManualDeposit(userId, username, amount) {
 
     if (target.matchedComprobanteId) {
       await Comprobante.updateOne({ id: target.matchedComprobanteId },
-        { $set: { bankMatchStatus: 'manual_charged', autoCharged: true } });
+        { $set: { bankMatchStatus: 'manual_charged', autoCharged: true, reviewStatus: 'confirmed', reviewResolution: 'manual', reviewedBy: 'agente', reviewedAt: new Date() } }); // #376
     }
     await _emitAdminOnlyChatNote(userId, username,
       `🏦 Transferencia hgcash marcada como CARGADA MANUAL ($${Number(target.amount).toLocaleString('es-AR')}). Ese comprobante no se va a auto-cargar de nuevo.`);
@@ -2637,7 +2723,8 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     await BankMovement.updateOne({ movementId: movement.movementId }, {
       $set: { matchStatus: 'auto_charged', matchedUserId: user.id, matchedUsername: user.username, matchedComprobanteId: comprobante.id, chargedAt: new Date() }
     });
-    await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'auto_charged', matchedMovementId: movement.movementId, autoCharged: true } });
+    await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'auto_charged', matchedMovementId: movement.movementId, autoCharged: true, reviewStatus: 'confirmed', reviewResolution: 'auto', reviewedBy: 'auto', reviewedAt: new Date() } }); // #376
+    _emitDepositReviewUpdate(user.id, { action: 'confirmed', id: comprobante.id });
     charged = true; // ya acreditó: cualquier error posterior NO debe disparar reintento
     // Multi-plataforma: recordar dónde cargó (fallback de la próxima pregunta / timeout).
     try { await User.updateOne({ id: user.id }, { $set: { lastPlatform: pid } }); } catch (_) {}
@@ -9354,9 +9441,12 @@ async function getGiroxBonusMultiplier() {
   return envOk ? envVal : 0;
 }
 
-app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, res) => {
+app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, (req, res) => _agentDepositHandler(req, res, req.body));
+// #376: la carga manual vive en una función para que "Confirmar" de Cargas pendientes la reuse tal cual
+// (bonos automáticos, consumo del movimiento hgcash, mensajes al cliente, SLA, auditoría).
+async function _agentDepositHandler(req, res, body) {
   try {
-    const { userId, username, amount, bonus = 0, description } = req.body;
+    const { userId, username, amount, bonus = 0, description } = body || {};
     
     // Buscar usuario por ID o username
     let user;
@@ -9398,7 +9488,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
     // (`body.platform`). Sin el campo (panel viejo) → la última que eligió el cliente
     // o la default. Sólo se puede cargar por API en una plataforma CONECTADA: una sin
     // API (Ganamos hoy) rebota con mensaje claro — ahí el cliente se maneja por link.
-    const _platformId = platforms.normalizeId(req.body.platform) || await platforms.resolveDefaultFor(user);
+    const _platformId = platforms.normalizeId(body && body.platform) || await platforms.resolveDefaultFor(user);
     const _adapter = platforms.getAdapter(_platformId) || girox;
     if (typeof _adapter.isConnected === 'function' && !_adapter.isConnected()) {
       return res.status(400).json({ error: `${platforms.labelOf(_platformId)} no tiene API conectada todavía: no se puede cargar desde acá. Cargalo en su panel o mandale el link al cliente.`, code: 'platform_not_connected', platform: _platformId });
@@ -9465,6 +9555,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
       // de ese usuario (mismo monto), marcarla como cargada → no se auto-carga después.
       // Fire-and-forget: no frena la respuesta de la carga.
       hgcashConsumeOnManualDeposit(user.id, user.username, parseFloat(amount)).catch(() => {});
+      _depositReviewConsume(user.id, parseFloat(amount), req.user && req.user.username).catch(() => {}); // #376: cierra la carga pendiente del mismo monto
 
       // Nota interna: bono automático aplicado (y corrección de lo que puso el agente).
       if (_auto.claimed && bonusActuallyApplied) {
@@ -9843,7 +9934,7 @@ app.post('/api/admin/deposit', authMiddleware, depositorMiddleware, async (req, 
     console.error('Error realizando depósito:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
-});
+}
 
 app.get('/api/admin/balance/:username', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -11610,6 +11701,31 @@ async function initializeData() {
       description: 'Soporte: plazo de respuesta que se muestra debajo de la presentación (ej. "Responde dentro de los 10 minutos"). Vacío = no se muestra.',
       type: 'message',
       response: 'Responde dentro de los 10 minutos'
+    },
+    {
+      // #376 (2026-10-18): CARGAS PENDIENTES — avisos al cliente del ciclo del comprobante.
+      name: '/sys_receipt_received',
+      description: 'Carga automática: acuse al cliente cuando manda un comprobante válido (se acredita sola). Variable: {amount} (" de $X" o vacío). Vacío = no se manda.',
+      type: 'message',
+      response: RECEIPT_RECEIVED_DEFAULT
+    },
+    {
+      name: '/sys_receipt_duplicate',
+      description: 'Carga automática: aviso al cliente cuando el comprobante YA FUE USADO (misma imagen o mismo N° de operación). Variable: {amount}. Vacío = no se manda.',
+      type: 'message',
+      response: RECEIPT_DUPLICATE_DEFAULT
+    },
+    {
+      name: '/sys_deposit_pending_review',
+      description: 'Carga automática: aviso "carga pendiente, un agente la está revisando" (banco automático apagado / sin acreditación en N minutos). Variable: {amount}. Vacío = no se manda.',
+      type: 'message',
+      response: DEPOSIT_PENDING_REVIEW_DEFAULT
+    },
+    {
+      name: '/sys_deposit_rejected',
+      description: 'Carga automática: aviso cuando el agente RECHAZA una carga pendiente. Variables: {amount}, {motivo}. Vacío = no se manda.',
+      type: 'message',
+      response: DEPOSIT_REJECTED_DEFAULT
     },
     {
       // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
@@ -17821,6 +17937,107 @@ app.post('/api/admin/hgcash/config', authMiddleware, adminMiddleware, async (req
 });
 
 // Movimientos recientes del banco (para auditar matches y reconciliar).
+// ============================================
+// #376: CARGAS PENDIENTES — cola de revisión de comprobantes (panel → "⏳ Cargas pendientes")
+// ============================================
+app.get('/api/admin/deposit-reviews/count', authMiddleware, depositorMiddleware, async (req, res) => {
+  try { res.json({ pending: await Comprobante.countDocuments({ reviewStatus: 'pending', autoCharged: { $ne: true } }) }); }
+  catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/deposit-reviews', authMiddleware, depositorMiddleware, async (req, res) => {
+  try {
+    const tab = req.query.status === 'resolved' ? 'resolved' : 'pending';
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const q = tab === 'pending' ? { reviewStatus: 'pending', autoCharged: { $ne: true } } : { reviewStatus: { $in: ['confirmed', 'rejected'] } };
+    const items = await Comprobante.find(q).sort(tab === 'pending' ? { createdAt: 1 } : { reviewedAt: -1 }).limit(limit).lean();
+    const since = new Date(Date.now() - 24 * 3600 * 1000);
+    const amounts = [...new Set(items.map((c) => Number(c.amount)).filter((n) => n > 0))];
+    const movs = amounts.length ? await BankMovement.find({ direction: 'Inbound', amount: { $in: amounts }, createdAt: { $gte: since } }).sort({ createdAt: -1 }).limit(200).lean() : [];
+    const hg = await getHgcashConfig();
+    const now = Date.now();
+    res.json({
+      tab, hgcash: { enabled: !!hg.enabled, mode: hg.mode }, escalateMinutes: (await getDepositReviewConfig()).escalateMinutes,
+      items: items.map((c) => ({
+        id: c.id, userId: c.userId, username: c.username, amount: c.amount, bank: c.bank, originHolder: c.originHolder, operationNumber: c.operationNumber,
+        paymentDate: c.paymentDate, createdAt: c.createdAt, waitingMin: Math.round((now - new Date(c.createdAt).getTime()) / 60000),
+        escalatedAt: c.reviewEscalatedAt || null, escalateReason: c.reviewEscalateReason || null,
+        reviewStatus: c.reviewStatus, reviewResolution: c.reviewResolution || null, reviewedBy: c.reviewedBy || null, reviewedAt: c.reviewedAt || null, reviewNote: c.reviewNote || null,
+        bankMatchStatus: c.bankMatchStatus, status: c.status, aiConfidence: c.aiConfidence || 0,
+        imageUrl: c.messageId ? `/api/admin/deposit-reviews/${encodeURIComponent(c.id)}/image` : null,
+        candidates: movs.filter((m) => _amountsEqual(m.amount, c.amount)).slice(0, 5).map((m) => ({ movementId: m.movementId, fromName: m.fromName, amount: m.amount, date: m.date || m.createdAt, matchStatus: m.matchStatus, matchedUsername: m.matchedUsername || null }))
+      }))
+    });
+  } catch (e) { logger.error(`/api/admin/deposit-reviews: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/deposit-reviews/:id/image', authMiddleware, depositorMiddleware, async (req, res) => {
+  try {
+    const c = await Comprobante.findOne({ id: String(req.params.id) }).select('messageId').lean();
+    if (!c || !c.messageId) return res.status(404).send('Sin imagen');
+    const m = await Message.findOne({ id: c.messageId }).select('content type').lean();
+    if (!m || !m.content) return res.status(404).send('Sin imagen');
+    const content = String(m.content);
+    if (content.startsWith('data:')) {
+      const mm = content.match(/^data:([^;,]+)(;base64)?,(.*)$/s);
+      if (!mm) return res.status(415).send('Formato no soportado');
+      const buf = mm[2] ? Buffer.from(mm[3], 'base64') : Buffer.from(decodeURIComponent(mm[3]), 'utf8');
+      res.set('Content-Type', mm[1] || 'image/jpeg'); res.set('Cache-Control', 'private, max-age=3600');
+      return res.send(buf);
+    }
+    if (/^https?:\/\//i.test(content)) return res.redirect(content);
+    return res.status(404).send('Sin imagen');
+  } catch (e) { res.status(500).send('Error'); }
+});
+app.post('/api/admin/deposit-reviews/:id/confirm', authMiddleware, depositorMiddleware, async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    const c = await Comprobante.findOne({ id }).lean();
+    if (!c) return res.status(404).json({ error: 'Comprobante no encontrado' });
+    if (c.reviewStatus !== 'pending' || c.autoCharged) return res.status(409).json({ error: 'Esa carga ya fue resuelta (' + (c.reviewResolution || c.reviewStatus || c.bankMatchStatus) + ').' });
+    const amount = Number(req.body && req.body.amount) > 0 ? Number(req.body.amount) : Number(c.amount);
+    if (!(amount > 0)) return res.status(400).json({ error: 'Monto inválido: el comprobante no tiene monto legible, ingresalo a mano.' });
+    // Claim atómico: si dos agentes confirman a la vez, el segundo rebota.
+    const claimed = await Comprobante.findOneAndUpdate({ id, reviewStatus: 'pending' },
+      { $set: { reviewStatus: 'confirmed', reviewResolution: 'manual', reviewedBy: req.user.username || 'agente', reviewedAt: new Date(), reviewNote: String((req.body && req.body.note) || '').slice(0, 200) } }, { new: true }).lean();
+    if (!claimed) return res.status(409).json({ error: 'Otro agente ya resolvió esta carga.' });
+    // La carga en sí es la carga manual de siempre (bonos automáticos, consumo hgcash, mensajes, SLA): mismo handler.
+    const out = { status: 200, json: null };
+    const proxy = { status(s) { out.status = s; return proxy; }, json(j) { out.json = j; return proxy; } };
+    await _agentDepositHandler(req, proxy, { userId: c.userId, amount, bonus: Number(req.body && req.body.bonus) || 0, platform: req.body && req.body.platform, description: `Carga automática · confirmada por ${req.user.username || 'agente'}` });
+    if (out.status !== 200 || !out.json || out.json.error) {
+      await Comprobante.updateOne({ id }, { $set: { reviewStatus: 'pending', reviewResolution: null, reviewedBy: null, reviewedAt: null } });
+      return res.status(out.status && out.status !== 200 ? out.status : 400).json({ error: (out.json && out.json.error) || 'No se pudo cargar' });
+    }
+    await Comprobante.updateOne({ id }, { $set: { bankMatchStatus: 'manual_charged', autoCharged: true, reviewTxId: out.json.transactionId || null } });
+    await _emitAdminOnlyChatNote(c.userId, c.username, `✅ CARGA PENDIENTE confirmada por ${req.user.username}${_amtStr(amount)} (el cliente la ve como carga automática).`);
+    _emitDepositReviewUpdate(c.userId, { action: 'confirmed', id });
+    res.json({ success: true, deposit: out.json });
+  } catch (e) { logger.error(`confirm deposit-review: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/deposit-reviews/:id/reject', authMiddleware, depositorMiddleware, async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    const reason = String((req.body && req.body.reason) || 'otro');
+    const motivo = DEPOSIT_REJECT_REASONS[reason] || DEPOSIT_REJECT_REASONS.otro;
+    const note = String((req.body && req.body.note) || '').slice(0, 200);
+    const c = await Comprobante.findOneAndUpdate({ id, reviewStatus: 'pending' },
+      { $set: { reviewStatus: 'rejected', reviewResolution: 'rejected', reviewedBy: req.user.username || 'agente', reviewedAt: new Date(), reviewNote: (reason + (note ? ': ' + note : '')).slice(0, 200) } }, { new: true }).lean();
+    if (!c) return res.status(409).json({ error: 'Esa carga ya no está pendiente.' });
+    const txt = await renderSystemCommand('/sys_deposit_rejected', DEPOSIT_REJECTED_DEFAULT, { amount: _amtStr(c.amount), motivo: (reason === 'otro' && note) ? note : motivo });
+    if (txt) await _sendUserSystemMessage({ id: c.userId, username: c.username }, txt, { metadata: { kind: 'deposit_rejected', comprobanteId: id, amount: c.amount || 0, reason } });
+    await _emitAdminOnlyChatNote(c.userId, c.username, `❌ CARGA PENDIENTE rechazada por ${req.user.username}${_amtStr(c.amount)} — ${motivo}${note ? ' (' + note + ')' : ''}.`);
+    _emitDepositReviewUpdate(c.userId, { action: 'rejected', id });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Cliente: sus cargas pendientes (la app muestra "⏳ Carga pendiente" hasta que se resuelve).
+app.get('/api/deposits/pending', authMiddleware, async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 48 * 3600 * 1000);
+    const items = await Comprobante.find({ userId: req.user.userId, reviewStatus: 'pending', autoCharged: { $ne: true }, createdAt: { $gte: since } }).sort({ createdAt: -1 }).limit(5).lean();
+    res.json({ items: items.map((c) => ({ id: c.id, amount: c.amount || 0, createdAt: c.createdAt, escalated: !!c.reviewEscalatedAt })) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/api/admin/hgcash/movements', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
@@ -22133,6 +22350,7 @@ setInterval(() => { _schedTick().catch(() => {}); }, SCHED_TICK_MS);
 // Multi-plataforma: preguntas "¿dónde querés jugar?" vencidas → carga en la última/default.
 setTimeout(() => { _platformChoiceTick().catch(() => {}); }, 30 * 1000);
 setInterval(() => { _platformChoiceTick().catch(() => {}); }, 60 * 1000);
+setInterval(() => { _depositReviewTick().catch(() => {}); }, 60 * 1000); // #376: cargas pendientes (escalar / cerrar)
 
 function _schedCanManage(role) { return NOTIF_BATCH_SEND_ROLES.includes(role); }
 function _schedCanView(role) { return NOTIF_BATCH_VIEW_ROLES.includes(role); }

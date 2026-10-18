@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-17
 
+### 376. ⏳ CARGAS PENDIENTES: duplicados avisados al cliente, cola de revisión con Confirmar / Rechazar, "carga pendiente" en la app — SW v263, admin-sw v77
+**Pedido (owner):** "si detecta un comprobante duplicado o ya usado que le avise al cliente; del lado admin algo copado
+como la carga automática de los casinos oficiales: si falla la app que al cliente le aparezca como carga pendiente y el
+admin la detecte y confirme (manual atrás, automática para el cliente); pagos siempre en stand-by para confirmar o no".
+- **Modelo:** `Comprobante` suma `reviewStatus` (none | pending | confirmed | rejected), `reviewQueuedAt`,
+  `reviewEscalatedAt` / `reviewEscalateReason`, `reviewResolution` (auto | manual | rejected), `reviewedBy/At/Note/TxId`.
+- **Ciclo (server, `analyzeComprobanteFromMessage`):** comprobante válido → `reviewStatus:'pending'`. Si el banco
+  automático está en `auto`: acuse al cliente `/sys_receipt_received` (tarjeta "⏳ En verificación · se acredita sola") y
+  el cron `_depositReviewTick` (1 min) ESCALA si pasan `Config['depositReview'].escalateMinutes` (default 8) sin
+  acreditar. Si está apagado / en sombra: escala en el acto. Escalar = cliente recibe `/sys_deposit_pending_review`
+  ("un agente la está revisando"), nota interna, evento `deposit_review` al panel. La auto-carga hgcash
+  (`_hgcashCreditToPlatform`), el consumo por carga manual (`hgcashConsumeOnManualDeposit`) y la carga manual del
+  agente del mismo monto (`_depositReviewConsume`) cierran la revisión como confirmada.
+- **Duplicado** (misma imagen o mismo N° de operación, propio o de otro): además de la nota interna de siempre, el
+  cliente recibe `/sys_receipt_duplicate` ("ese comprobante ya fue usado") con tarjeta roja; no entra en la cola.
+- **Panel → "⏳ Cargas pendientes"** (nuevo, con badge y refresco por socket): tarjeta por comprobante con foto
+  (`GET /api/admin/deposit-reviews/:id/image` sirve la imagen del Message), usuario, monto, banco/titular/N°/fecha,
+  tiempo de espera, si YA figura una transferencia de ese monto en el banco automático (candidatos `BankMovement`),
+  **✅ Confirmar y cargar** (monto editable + plataforma; llama a `_agentDepositHandler`, la MISMA función de la carga
+  manual `/api/admin/deposit` — bonos automáticos, consumo hgcash, mensajes "acreditado", SLA — así el cliente la ve
+  como automática) y **❌ Rechazar** (motivo + nota → `/sys_deposit_rejected`). Pestaña "Resueltas". Rutas
+  `GET /api/admin/deposit-reviews[?status=resolved]`, `/count`, `POST …/:id/confirm|reject` (depositor o admin).
+- **App:** tarjetas de estado en el chat (`deposit_pending`, `receipt_duplicate`, `deposit_rejected`), franja
+  "⏳ Carga pendiente · $X" arriba de la carga automática y en el Menú fácil (`GET /api/deposits/pending`, socket
+  `deposit_review_update`, `VIP.home.refreshPendingDeposits`).
+- **Pagos:** ya funcionaban en stand-by (PendingPayout `pending_review` → sección Pagos → pagar / rechazar); sin cambios.
+
 ### 375. 💬 Soporte es SOLO soporte: sin cartel de carga automática, sin botones extra, bienvenida nueva — SW v262
 **Pedido (owner):** "en el soporte sacá la carga manual, limpiemos eso y el 'Recomendable' de carga automática; soporte
 es soporte 100%, así como está pero que no haya nada más". En modo Soporte (`body.home-mini`) se ocultan el cartel

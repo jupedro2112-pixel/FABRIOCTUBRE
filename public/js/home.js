@@ -229,6 +229,25 @@
     // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
     // COMANDOS → sólo el título. El "N%" se resalta en verde.
     // #349: cartel NOVEDAD del Inicio (texto /sys_entry_news; sin texto o sin % diario → se oculta).
+    // #376: franja "⏳ Carga pendiente" (carga automática y Menú fácil) mientras un comprobante espera acreditación.
+    let _pendTimer = null;
+    async function refreshPendingDeposits() {
+        if (!VIP.state || !VIP.state.currentToken) return;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/deposits/pending', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            if (!r.ok) return;
+            const j = await r.json(); const items = Array.isArray(j.items) ? j.items : [];
+            document.querySelectorAll('.dep-pending-strip').forEach((el) => {
+                if (!items.length) { el.hidden = true; return; }
+                const it = items[0]; const amt = Number(it.amount) > 0 ? '$' + Number(it.amount).toLocaleString('es-AR') : '';
+                el.innerHTML = '<span class="dps-ico">⏳</span><span class="dps-t"><b>Carga pendiente' + (amt ? ' · ' + amt : '') + (items.length > 1 ? ' (+' + (items.length - 1) + ')' : '') + '</b><small>' +
+                    (it.escalated ? 'Un agente la está verificando · te avisamos en Soporte' : 'En verificación · se acredita sola en minutos') + '</small></span>';
+                el.hidden = false;
+            });
+        } catch (_) {}
+        clearInterval(_pendTimer);
+        _pendTimer = setInterval(() => { if (!document.hidden) refreshPendingDeposits(); }, 60 * 1000);
+    }
     // #373: SOPORTE — presentación de la persona (nombre / texto / plazo), textos de COMANDOS vía /api/platforms.
     function _paintSupportIntro(si) {
         if (!si) return;
@@ -1573,6 +1592,7 @@
         try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
         try { _paintRefundPromo(_platforms && _platforms.refundPromo); } catch (_) {} // #372
         try { _paintSupportIntro(_platforms && _platforms.supportIntro); } catch (_) {} // #373
+        try { refreshPendingDeposits(); } catch (_) {} // #376
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
@@ -1621,7 +1641,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

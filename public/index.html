@@ -1023,6 +1023,7 @@
                     <div class="ez-hello"><span id="easyHello">Hola</span><small>¿Qué querés hacer hoy?</small></div>
                     <div class="ez-bal"><small>Tu saldo</small><b id="easyBalance">$0</b></div>
                 </div>
+                <div class="dep-pending-strip" hidden></div>
                 <button type="button" class="ez-main" onclick="VIP.home.easyLoad()" title="Carga automática">
                     <span class="ez-main-ico">⚡</span>
                     <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo</small></span>
@@ -1180,6 +1181,8 @@
 
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
                 <div class="home-card al-card" id="autoLoadCard">
+                    <!-- #376: comprobante esperando acreditación (lo pinta home.js refreshPendingDeposits) -->
+                    <div class="dep-pending-strip" hidden></div>
                     <div class="home-card-title"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Cargá acá <span class="hc-tag">automático</span></div>
                     <!-- #282 (owner 2026-10-17): tarjeta CENTRADA y en 2 pasos: 1) transferir, 2) adjuntar la foto
                          con el botón verde "Cargá aquí" de abajo. Mismos ids (autoload.js). -->
@@ -2188,7 +2191,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v262</div>
+                    <div class="pf-build" id="appBuildTag">app v263</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

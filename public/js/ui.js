@@ -105,6 +105,7 @@ VIP.ui = (function () {
         sendWelcomeMessages();
         if (VIP.stories && VIP.stories.load) VIP.stories.load(); // #361: historias activas (anillo arriba a la derecha)
         try { if (VIP.home && VIP.home.maybeShowMenuChooser) VIP.home.maybeShowMenuChooser(); } catch (_) {} // #366: ¿menú fácil o completo?
+        try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (_) {} // #376: ¿hay una carga pendiente?
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).
         if (VIP.installBonus && typeof VIP.installBonus.init === 'function') {

@@ -648,3 +648,15 @@ body.sp-sent .sp-intro:not(.sp-open) .sp-sla { padding: 3px 8px; font-size: 10px
 body.home-mini .service-banner, body.home-mini .test-mini-manual, body.home-mini #supportTests, body.home-mini .plat-link-manual, body.home-mini .ig-bar { display: none !important; }
 body.home-mini #waThemeBtn, body.home-mini .wa-head-fire { display: none !important; }
 body.home-mini .wa-head .chat-topbar-info { cursor: default; }
+/* #376: estado de la carga automática (chat + franja) */
+.dep-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 5px 11px; border-radius: 999px; font: 800 11.5px var(--p-font); background: #fff; color: var(--p-text); border: 1px solid var(--p-border); }
+.dep-pill.dep-wait { color: #8a5a00; background: #fff6e0; border-color: #ffe0a3; }
+.dep-pill.dep-dup, .dep-pill.dep-rej { color: var(--p-red); background: var(--p-red-soft); border-color: #ffc2cb; }
+.message.agente .dep-pill { background: #fff; }
+.dep-pending-strip { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; padding: 9px 12px; border-radius: 14px; background: #fff6e0; border: 1px solid #ffe0a3; color: #5a3d00; }
+.dep-pending-strip[hidden] { display: none !important; }
+.dep-pending-strip .dps-ico { font-size: 20px; line-height: 1; }
+.dep-pending-strip .dps-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dep-pending-strip b { font: 800 13px var(--p-font); color: #5a3d00; }
+.dep-pending-strip small { font: 600 11px var(--p-font); color: #8a5a00; }
+.easy-view .dep-pending-strip { flex: 0 0 auto; margin: 0; }

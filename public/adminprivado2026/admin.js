@@ -1342,6 +1342,11 @@ function initSocket() {
     socket.on('hgcash_movement', () => {
         if (typeof hgcashLiveRefresh === 'function') hgcashLiveRefresh(false);
     });
+    // #376: cambió una carga pendiente (nueva / escalada / confirmada / rechazada) → badge + lista en vivo.
+    socket.on('deposit_review', () => {
+        try { pollDepositReviewsBadge(); } catch (_) {}
+        try { if (document.getElementById('depositReviewsSection')?.classList.contains('active')) loadDepositReviews(); } catch (_) {}
+    });
 
     // USER TYPING
     socket.on('user_typing', (data) => {
@@ -4959,6 +4964,7 @@ function switchSection(section) {
     if (section === 'cronograma') loadCronograma(); // #190
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
+    if (section === 'depositReviews') loadDepositReviews(); // #376
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -14930,3 +14936,130 @@ async function deleteStory(id) {
     showToast('Historia borrada', 'success'); loadStories();
 }
 window.loadStories = loadStories; window.publishStory = publishStory; window.saveStoriesConfig = saveStoriesConfig; window.extendStory = extendStory; window.toggleStory = toggleStory; window.deleteStory = deleteStory;
+
+// =====================================================================
+// #376: CARGAS PENDIENTES — cola de revisión de comprobantes
+// =====================================================================
+let _drvTab = 'pending';
+let _drvPlatforms = null;
+async function _drvPlatformOptions() {
+    if (_drvPlatforms) return _drvPlatforms;
+    try {
+        const r = await authFetch('/api/platforms');
+        const j = r.ok ? await r.json() : null;
+        _drvPlatforms = ((j && j.platforms) || []).filter(function (p) { return p.enabled !== false && p.connected; });
+    } catch (_) { _drvPlatforms = []; }
+    return _drvPlatforms;
+}
+function _drvAgo(d) {
+    const m = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000));
+    if (m < 60) return 'hace ' + m + ' min';
+    const h = Math.round(m / 60); if (h < 24) return 'hace ' + h + ' h';
+    return 'hace ' + Math.round(h / 24) + ' d';
+}
+async function loadDepositReviews(tab) {
+    if (tab) _drvTab = tab;
+    const list = document.getElementById('depositReviewsList');
+    if (!list) return;
+    const tp = document.getElementById('drvTabPending'), tr = document.getElementById('drvTabResolved');
+    if (tp && tr) { tp.className = (_drvTab === 'pending' ? 'btn-primary' : 'btn-secondary') + ' btn-small'; tr.className = (_drvTab === 'resolved' ? 'btn-primary' : 'btn-secondary') + ' btn-small'; }
+    list.innerHTML = '<div style="color:#888;padding:14px;">Cargando…</div>';
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews?status=' + _drvTab + '&limit=60');
+        const j = await r.json();
+        if (!r.ok) { list.innerHTML = '<div style="color:#ff8080;padding:14px;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
+        const hg = document.getElementById('drvHgStatus');
+        if (hg) hg.innerHTML = '🏦 Banco automático: ' + (j.hgcash && j.hgcash.enabled ? ('<b style="color:#26e07f;">activo</b> (modo ' + escapeHtml(j.hgcash.mode || '?') + ')') : '<b style="color:#ff6b6b;">apagado</b> → todas las cargas caen acá para confirmar a mano') + ' · escala al cliente a los <b style="color:#fff;">' + (j.escalateMinutes != null ? j.escalateMinutes : 8) + ' min</b> sin acreditación.';
+        const items = j.items || [];
+        const cnt = document.getElementById('drvCount'); if (cnt) cnt.textContent = items.length + (_drvTab === 'pending' ? ' pendiente(s)' : ' resuelta(s) recientes');
+        _drvSetBadge(_drvTab === 'pending' ? items.length : null);
+        if (!items.length) { list.innerHTML = '<div style="color:#888;padding:18px;text-align:center;">' + (_drvTab === 'pending' ? '✅ No hay cargas pendientes.' : 'Todavía no hay cargas resueltas.') + '</div>'; return; }
+        const plats = await _drvPlatformOptions();
+        list.innerHTML = items.map(function (c) { return _drvCard(c, plats); }).join('');
+    } catch (e) { list.innerHTML = '<div style="color:#ff8080;padding:14px;">Error de conexión</div>'; }
+}
+function _drvCard(c, plats) {
+    const amt = Number(c.amount) > 0 ? '$' + Number(c.amount).toLocaleString('es-AR') : 'sin monto legible';
+    const pend = c.reviewStatus === 'pending';
+    const chip = pend
+        ? (c.escalatedAt ? '<span style="background:#b5651d;color:#fff;border-radius:9px;padding:2px 9px;font-size:10.5px;">⏳ Esperando agente · ' + escapeHtml(c.escalateReason || '') + '</span>' : '<span style="background:#2a6df0;color:#fff;border-radius:9px;padding:2px 9px;font-size:10.5px;">🕐 Esperando al banco automático</span>')
+        : (c.reviewStatus === 'confirmed' ? '<span style="background:#0f8a2f;color:#fff;border-radius:9px;padding:2px 9px;font-size:10.5px;">✅ Cargada (' + escapeHtml(c.reviewResolution === 'auto' ? 'automática' : 'confirmada por ' + (c.reviewedBy || 'agente')) + ')</span>' : '<span style="background:#7a1010;color:#fff;border-radius:9px;padding:2px 9px;font-size:10.5px;">❌ Rechazada por ' + escapeHtml(c.reviewedBy || 'agente') + '</span>');
+    const cands = (c.candidates || []).length
+        ? c.candidates.map(function (m) { return '<div style="font-size:11.5px;color:#cfe;">🏦 Entró <b>$' + Number(m.amount).toLocaleString('es-AR') + '</b> de <b>' + escapeHtml(m.fromName || '?') + '</b> ' + _drvAgo(m.date) + ' · ' + hgcashStatusBadge(m.matchStatus) + (m.matchedUsername ? ' <span style="color:#aaa;">(asignado a @' + escapeHtml(m.matchedUsername) + ')</span>' : '') + '</div>'; }).join('')
+        : '<div style="font-size:11.5px;color:#f0b;">🏦 Todavía no figura una transferencia de ese monto en el banco automático (últimas 24 h).</div>';
+    const platSel = plats && plats.length > 1
+        ? '<select class="drv-plat" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px;border-radius:7px;">' + plats.map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name || p.id) + '</option>'; }).join('') + '</select>'
+        : '';
+    const actions = pend
+        ? '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;">' +
+            '<input class="drv-amount" type="number" min="1" step="1" value="' + (Number(c.amount) > 0 ? Math.round(Number(c.amount)) : '') + '" placeholder="monto $" style="width:120px;background:rgba(0,0,0,0.45);border:1px solid rgba(38,224,127,0.5);color:#26e07f;padding:7px 9px;border-radius:7px;font-weight:800;">' +
+            platSel +
+            '<button type="button" class="btn-primary btn-small" onclick="drvConfirm(\'' + escapeHtml(c.id) + '\', this)">✅ Confirmar y cargar</button>' +
+            '<select class="drv-reason" style="background:rgba(0,0,0,0.45);border:1px solid rgba(255,107,107,0.5);color:#fff;padding:7px;border-radius:7px;"><option value="no_llego">No entró la transferencia</option><option value="duplicado">Ya estaba acreditado</option><option value="ilegible">Comprobante incompleto</option><option value="monto">El monto no coincide</option><option value="otro">Otro motivo (nota)</option></select>' +
+            '<input class="drv-note" placeholder="nota (opcional)" style="flex:1;min-width:140px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:7px 9px;border-radius:7px;">' +
+            '<button type="button" class="btn-small btn-danger" onclick="drvReject(\'' + escapeHtml(c.id) + '\', this)">❌ Rechazar</button>' +
+          '</div>'
+        : (c.reviewNote ? '<div style="font-size:11px;color:#aaa;margin-top:6px;">Nota: ' + escapeHtml(c.reviewNote) + '</div>' : '');
+    return '<div class="drv-card" data-id="' + escapeHtml(c.id) + '" style="display:flex;gap:12px;background:rgba(255,255,255,0.04);border:1px solid ' + (pend && c.escalatedAt ? 'rgba(255,170,0,0.55)' : 'rgba(255,255,255,0.12)') + ';border-radius:12px;padding:12px;margin-bottom:10px;">' +
+        '<div style="flex:0 0 96px;">' + (c.imageUrl ? '<a href="' + escapeHtml(c.imageUrl) + '" target="_blank" rel="noopener" title="Ver comprobante grande"><img src="' + escapeHtml(c.imageUrl) + '" alt="comprobante" style="width:96px;height:120px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#000;"></a>' : '<div style="width:96px;height:120px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#666;font-size:11px;">sin imagen</div>') + '</div>' +
+        '<div style="flex:1;min-width:0;">' +
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
+                '<b style="color:#fff;font-size:15px;cursor:pointer;" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')" title="Abrir el chat">@' + escapeHtml(c.username || c.userId || '?') + '</b>' +
+                '<b style="color:#26e07f;font-size:16px;">' + escapeHtml(amt) + '</b>' + chip +
+                '<span style="color:#888;font-size:11px;margin-left:auto;">' + _drvAgo(c.createdAt) + (pend ? ' · esperando ' + (c.waitingMin || 0) + ' min' : '') + '</span>' +
+            '</div>' +
+            '<div style="font-size:11.5px;color:#bbb;margin-top:4px;">' + [c.bank ? '🏛 ' + escapeHtml(c.bank) : '', c.originHolder ? '👤 ' + escapeHtml(c.originHolder) : '', c.operationNumber ? 'N° ' + escapeHtml(c.operationNumber) : '', c.paymentDate ? '📅 ' + escapeHtml(c.paymentDate) : ''].filter(Boolean).join(' · ') + '</div>' +
+            '<div style="margin-top:6px;">' + cands + '</div>' +
+            actions +
+            '<div style="margin-top:6px;"><button type="button" class="btn-secondary btn-small" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')">💬 Abrir chat</button></div>' +
+        '</div></div>';
+}
+async function drvConfirm(id, btn) {
+    const card = btn.closest('.drv-card');
+    const amount = Number(card.querySelector('.drv-amount').value) || 0;
+    const platEl = card.querySelector('.drv-plat'); const platform = platEl ? platEl.value : undefined;
+    if (!(amount > 0)) { showToast('Ingresá el monto', 'error'); return; }
+    if (!confirm('¿Confirmar y CARGAR $' + amount.toLocaleString('es-AR') + ' a este cliente?\n\nSe aplican los bonos automáticos de siempre y el cliente la ve como carga automática.')) return;
+    btn.disabled = true;
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/' + encodeURIComponent(id) + '/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount, platform }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo cargar', 'error'); btn.disabled = false; return; }
+        showToast('✅ Carga acreditada' + (j.deposit && j.deposit.newBalance != null ? ' · saldo $' + j.deposit.newBalance : ''), 'success');
+        loadDepositReviews();
+    } catch (e) { showToast('Error de conexión', 'error'); btn.disabled = false; }
+}
+async function drvReject(id, btn) {
+    const card = btn.closest('.drv-card');
+    const reason = card.querySelector('.drv-reason').value; const note = card.querySelector('.drv-note').value.trim();
+    if (!confirm('¿Rechazar esta carga? El cliente va a recibir el motivo en el chat.')) return;
+    btn.disabled = true;
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/' + encodeURIComponent(id) + '/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason, note }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo rechazar', 'error'); btn.disabled = false; return; }
+        showToast('Carga rechazada', 'success'); loadDepositReviews();
+    } catch (e) { showToast('Error de conexión', 'error'); btn.disabled = false; }
+}
+function drvOpenChat(userId, username) {
+    if (!userId) return;
+    try { switchSection('chats'); } catch (_) {}
+    setTimeout(function () { try { selectConversation(userId, username); } catch (_) {} }, 250);
+}
+function _drvSetBadge(n) {
+    const b = document.getElementById('depositReviewsBadge'); if (!b) return;
+    if (n == null) return;
+    b.textContent = n > 99 ? '99+' : String(n); b.style.display = n > 0 ? '' : 'none';
+}
+async function pollDepositReviewsBadge() {
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/count');
+        if (!r.ok) return; const j = await r.json(); _drvSetBadge(Number(j.pending) || 0);
+    } catch (_) {}
+}
+setTimeout(pollDepositReviewsBadge, 5000);
+setInterval(pollDepositReviewsBadge, 30 * 1000);
+window.loadDepositReviews = loadDepositReviews;
+window.drvConfirm = drvConfirm;
+window.drvReject = drvReject;
+window.drvOpenChat = drvOpenChat;

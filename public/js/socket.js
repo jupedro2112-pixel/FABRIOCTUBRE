@@ -201,6 +201,11 @@ VIP.socket = (function () {
             }
         });
 
+        // #376: cambió el estado de una carga pendiente (acreditada / rechazada / escalada) → refrescar la franja.
+        VIP.state.socket.on('deposit_review_update', function () {
+            try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (e) { /* nunca romper el socket */ }
+        });
+
         VIP.state.socket.on('messages_read_by_admin', function () {
             document.querySelectorAll('#chatMessages .msg-ticks').forEach(function (el) {
                 el.classList.add('msg-read');

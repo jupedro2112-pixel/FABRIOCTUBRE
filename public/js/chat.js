@@ -88,6 +88,12 @@ VIP.chat = (function () {
                 </div>
             </div>`;
         }
+        // #376: ciclo del comprobante en la carga automática.
+        if (md.kind === 'deposit_pending') {
+            return `<div class="dep-pill dep-wait">⏳ ${md.escalated ? 'Un agente la está revisando' : 'En verificación · se acredita sola'}</div>`;
+        }
+        if (md.kind === 'receipt_duplicate') return '<div class="dep-pill dep-dup">⚠️ Comprobante ya usado · no se acredita</div>';
+        if (md.kind === 'deposit_rejected') return '<div class="dep-pill dep-rej">❌ Carga no acreditada</div>';
         if (md.kind === 'platform_link' && md.url) {
             const url = encodeURI(String(md.url));
             const label = escapeHtml(_platLabel({ emoji: md.emoji, name: md.name || 'la plataforma' }));

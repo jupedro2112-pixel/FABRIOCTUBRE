@@ -221,6 +221,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   `_batchImpact` mide primera carga + cargas siguientes (mismo día / 7 d) + recuperados por antigüedad sin
   cargar; lo usan el detalle del lote y `cronograma-report`. El envío manual de lotes sigue intacto.
 
+- **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
+  (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
+  válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de
+  comprobantes/hgcash, mantené esos cierres (`reviewStatus`), si no el cliente ve "carga pendiente" para siempre.
 - **Lotes y Cronograma (#218):** el POST `/api/admin/notif-batches` es un wrapper de
   `_createNotifBatchFromBody(body, user)`; cualquier validación/efecto nuevo del lote va en esa
   función (así lo heredan las campañas programadas). Las rutas del cronograma son

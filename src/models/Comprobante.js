@@ -71,6 +71,18 @@ const comprobanteSchema = new mongoose.Schema({
   // Meta
   model: { type: String, default: null },        // modelo de IA que lo analizó
   errorReason: { type: String, default: null },  // si status==='error'
+  // #376: COLA DE REVISIÓN ("Cargas pendientes" del panel). none = no aplica (duplicado / no comprobante);
+  // pending = esperando acreditación (automática o del agente); confirmed = cargado (auto | manual);
+  // rejected = el agente lo rechazó (el cliente recibió el motivo).
+  reviewStatus: { type: String, enum: ['none', 'pending', 'confirmed', 'rejected'], default: 'none', index: true },
+  reviewQueuedAt: { type: Date, default: null },
+  reviewEscalatedAt: { type: Date, default: null },   // cuándo se le avisó al cliente "pendiente, un agente la revisa"
+  reviewEscalateReason: { type: String, default: null },
+  reviewResolution: { type: String, default: null },  // 'auto' | 'manual' | 'rejected'
+  reviewedBy: { type: String, default: null },
+  reviewedAt: { type: Date, default: null },
+  reviewNote: { type: String, default: null },
+  reviewTxId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now, index: true }
 }, {
   timestamps: true

@@ -940,6 +940,13 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   **#374 — Ruleta:** premios por defecto `ROULETTE_PRIZES_2026_10_18` (20/50/100% · $5.000 · $100.000 1 cada 1.000 ·
   sin premio), migración `migration_roulette_v4_done`; la carga de la semana que desbloquea debe ser ≥ carga mínima;
   `status.minDepositArs` alimenta los textos (`.rl-min`) y el modal muestra el premio mayor con su chance real.
+  **#376 — CARGAS PENDIENTES (red de seguridad de la auto-carga):** todo comprobante válido queda
+  `Comprobante.reviewStatus='pending'`; la auto-carga hgcash / la carga manual del mismo monto lo cierran
+  (`confirmed`, auto | manual). Si el banco automático está apagado/sombra o pasan `Config['depositReview'].escalateMinutes`
+  (8) sin acreditar, `_depositReviewEscalate` avisa al cliente ("un agente la está revisando") y el panel lo lista en
+  "⏳ Cargas pendientes" (`/api/admin/deposit-reviews*`): Confirmar = `_agentDepositHandler` (la función de
+  `POST /api/admin/deposit`, extraída para reusarla) · Rechazar = `/sys_deposit_rejected`. Duplicados → el cliente recibe
+  `/sys_receipt_duplicate`. Cliente: `GET /api/deposits/pending` + socket `deposit_review_update` → franja "⏳ Carga pendiente".
   **#366 (2026-10-17):** cuarto modo **easy** = MENÚ FÁCIL para quien se pierde con tantos botones. En CADA arranque
   (#367; y de nuevo tras ≥ 10 min en segundo plano, `_menuReaskInit`), `ui.showChatScreen` → `VIP.home.maybeShowMenuChooser` abre `#menuChooser` ("¿Cómo querés ver
   la app?" fácil / completo); la elección vive en `localStorage vip_menu_pref` ('easy' | 'full') y se cambia en
