@@ -41,7 +41,7 @@ function fmt(opts) {
 
 const _cache = new Map(); // key → { at, value } (5 min; multi-instancia: cada proceso tiene la suya)
 async function analyze(models, opts) {
-  const key = JSON.stringify([opts.from, opts.to, opts.granularity, opts.campaign, opts.spend, opts.cur, opts.usdRate]);
+  const key = JSON.stringify([dateKeyART(opts.from), dateKeyART(opts.to), opts.granularity, opts.campaign, opts.spend, opts.cur, opts.usdRate]); // #486: clave por día → la caché pega
   const c = _cache.get(key); if (c && Date.now() - c.at < 300000) return c.value;
   const value = await _analyze(models, opts);
   _cache.set(key, { at: Date.now(), value }); if (_cache.size > 40) _cache.delete(_cache.keys().next().value);
@@ -50,8 +50,9 @@ async function analyze(models, opts) {
 
 async function _analyze(models, opts) {
   const { Transaction, User, RefundClaim, DailyRouletteSpin, Message, AppSession } = models;
-  const from = new Date(opts.from); from.setUTCHours(3, 0, 0, 0);
-  const to = new Date(opts.to); to.setUTCHours(27, 0, 0, 0); to.setTime(to.getTime() - 1);
+  // #486: el rango se corta por DÍA ARGENTINO (00:00 → 23:59:59 ART) aunque venga con hora: entre 21 y 24 h la fecha UTC ya es mañana.
+  const from = new Date(dateKeyART(opts.from) + 'T03:00:00.000Z');
+  const to = new Date(new Date(dateKeyART(opts.to) + 'T03:00:00.000Z').getTime() + DAY - 1);
   const gran = ['day', 'week', 'month'].includes(opts.granularity) ? opts.granularity : 'day';
   const campaign = String(opts.campaign || '').toUpperCase().trim();
   const spend = Number(opts.spend) || 0;
@@ -232,7 +233,7 @@ function narrative(t, r, g, gran, rp, pc, F) {
       t.promosPct == null ? null : (t.promosPct <= 15 ? 'Los regalos pesan poco sobre la venta.' : (t.promosPct <= 30 ? 'Los regalos pesan bastante: es el precio de captar. Los clientes que quedan después de la primera carga dejan más margen (ya no llevan ese bono).' : 'Los regalos se comen gran parte del margen: revisar el % de primera carga y los reembolsos.')));
   }
   // Inversión
-  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Por cada $1 invertido se vendieron $${t.ventaPorPeso} y quedaron $${t.netoPorPeso} netos. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin bruto en el período (${money(t.netwinPorNuevo)} por cliente).`,
+  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Por cada ${F && F.usd ? 'US$ 1' : '$1'} invertido se vendieron ${t.ventaPorPeso} y quedaron ${t.netoPorPeso} netos. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin bruto en el período (${money(t.netwinPorNuevo)} por cliente).`,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'bien' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'regular' : 'flojo')) : null,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'La inversión RINDE: cada cliente nuevo deja más de lo que costó traerlo, ya dentro del período.' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'Al límite: el cliente nuevo paga casi lo que costó; depende de que vuelva a cargar.' : 'No se recupera en el período: cada cliente nuevo cuesta más de lo que deja. Si la retención es buena puede cerrar después; si no, bajar el gasto o cambiar la pauta.')) : null);
   else sec('📣', 'Inversión', 'Cargá el gasto en publicidad del período para calcular el costo por cliente nuevo y si se recupera.', null, null);
@@ -305,7 +306,7 @@ function project(base, opts) {
   const fut = { bonus1: pick(opts.futBonus, cur.bonus1), refund: pick(opts.futRefund, cur.refund), rec: pick(opts.futRec, cur.rec) };
   const capCost = (amount, p) => (p / 100) * Math.min(amount, capArs) + (restPct / 100) * Math.max(0, amount - capArs);
   const tasaReclamo = t.tasaReclamoReembolso != null ? t.tasaReclamoReembolso : 0.6;
-  const fixedTypes = ['roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission'];
+  const fixedTypes = ['fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission']; // #486: la ruleta ya va en el % de cargas siguientes (no se cuenta dos veces)
   const otrosPct = t.montoCargas > 0 ? fixedTypes.reduce((s, k) => s + ((t.promos && t.promos[k] && t.promos[k].amt) || 0), 0) / t.montoCargas : 0;
   // Economía de UN cliente nuevo en el horizonte, con las condiciones FUTURAS
   const ventaCli = montoPorCliente * horizon;
@@ -363,7 +364,7 @@ function project(base, opts) {
   const promo = { cur, fut, promoNowPct: t.promosPct, promoNowPctNuevos: t.promosPctNuevos, promoNowPctRecurrentes: t.promosPctRecurrentes, promoFutPctCliente: ventaCli > 0 ? Math.round((promosCli / ventaCli) * 1000) / 10 : null, promoHoyPctCliente: ventaCli > 0 ? Math.round((promosCliHoy / ventaCli) * 1000) / 10 : null };
   // Explicación del cierre, paso a paso (lo que se guarda con el panorama)
   const E = [];
-  E.push(`BASE (${base.from} → ${base.to}, ${baseDays} días): invertiste ${money(t.spend || 0)} y entraron ${t.primerasCargas} clientes nuevos → costo por cliente ${cac ? money(cac) : '—'} (${cacOrigen}). Venta ${money(t.montoCargas)} (${t.cargas} cargas), retiros ${money(t.montoRetiros)} (${Math.round(wdRatio * 100)}%), netwin bruto ${money(t.netwin)}, regalos ${money(t.promosTotal)} (${t.promosPct ?? 0}% de la venta: nuevos ${t.promosPctNuevos ?? 0}%, de antes ${t.promosPctRecurrentes ?? 0}%) → neto ${money(t.netwinNeto)}.` + (t.spend > 0 ? ` Por cada $1 invertido: $${t.ventaPorPeso} de venta y $${t.netoPorPeso} netos.` : ''));
+  E.push(`BASE (${base.from} → ${base.to}, ${baseDays} días): invertiste ${money(t.spend || 0)} y entraron ${t.primerasCargas} clientes nuevos → costo por cliente ${cac ? money(cac) : '—'} (${cacOrigen}). Venta ${money(t.montoCargas)} (${t.cargas} cargas), retiros ${money(t.montoRetiros)} (${Math.round(wdRatio * 100)}%), netwin bruto ${money(t.netwin)}, regalos ${money(t.promosTotal)} (${t.promosPct ?? 0}% de la venta: nuevos ${t.promosPctNuevos ?? 0}%, de antes ${t.promosPctRecurrentes ?? 0}%) → neto ${money(t.netwinNeto)}.` + (t.spend > 0 ? ` Por cada ${F.usd ? 'US$ 1' : '$1'} invertido: ${t.ventaPorPeso} de venta y ${t.netoPorPeso} netos.` : ''));
   E.push(`CADA CLIENTE NUEVO de la base dejó ${money(montoPorCliente)} en ${cargasPorCliente} cargas (primera carga ${money(primeraCarga)}). Para ${days} días se toma ×${supuestos.horizonte} → ${money(ventaCli)} de venta, ${money(netwinBrutoCli)} de netwin bruto.`);
   E.push(`REGALOS por cliente nuevo con las condiciones FUTURAS (bono 1ª carga ${fut.bonus1}% con tope ${money(capArs)} y ${restPct}% sobre el resto · ${fut.rec}% en cargas siguientes · reembolso ${fut.refund}% sobre lo perdido, que se cobra el ${supuestos.tasaReclamo}% · otros regalos ${supuestos.otrosPct}% de la venta): ${money(promosCli)} (hoy, con ${cur.bonus1}% / ${cur.rec}% / ${cur.refund}%, serían ${money(promosCliHoy)}). Queda NETO por cliente: ${money(netoCli)}.`);
   E.push(`INVERSIÓN ${money(spend)} en ${days} días a ${cac ? money(cac) : '—'} por cliente → ${b.clientesPorPauta} clientes por pauta + ${b.clientesOrganicos} orgánicos (ritmo de la base) = ${b.clientesNuevos} nuevos (panorama base). Venta de los nuevos ${money(b.montoCargas)}, netwin bruto ${money(b.netwin)}, regalos ${money(b.promos)}, neto ${money(b.netwinNeto)}.`);

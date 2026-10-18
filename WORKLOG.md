@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-18
 
+### 486. 🔎 Revisión de punta a punta: correcciones de la auditoría — SW v337, admin-sw v107
+**Pedido (owner):** "revisá todo de punta a punta". Se corrió sintaxis de TODO el JS del repo, chequeos estáticos (ids, handlers,
+secciones del panel), todas las rutas públicas/admin/usuario en Render (con un cliente de prueba creado por entrada rápida y
+logueado por link de acceso), y una revisión independiente del diff del día. Hallazgos corregidos:
+- **Moneda del panel:** al cambiar Pesos ↔ USDT los montos ya escritos se convierten (antes quedaba el número viejo y se
+  multiplicaba por la cotización → gasto total corrupto o inversiones absurdas); el default de "plata a invertir" se adapta; la
+  etiqueta de la cotización no se toca.
+- **Fechas:** el servicio recorta el rango por día ARGENTINO aunque venga con hora (entre 21 y 24 h la fecha UTC ya es mañana y
+  el panorama sumaba un día); la clave de caché es por día → las llamadas repetidas pegan en caché.
+- **Historial limpio:** las llamadas automáticas del panorama (abrir pestaña, cambiar moneda/cotización, guardar gasto) van con
+  `nosave=1`; sólo "Calcular panorama" y "Ver la base" guardan.
+- **Ruleta sin doble conteo:** ya iba en el % de cargas siguientes; se sacó de los "otros regalos".
+- **Captura de acceso:** si muestra la clave inicial (no hay guardada) agrega "(clave inicial: si la cambiaste, usá la tuya)".
+- Textos "por cada $1 invertido" respetan la moneda.
+**Observación:** durante las pruebas el server de Render se reinició una vez (uptime volvió a 90 s) sin error registrado en
+`/api/admin/diag`; la misma secuencia de llamadas no lo reprodujo. Render corre con heap límite 268 MB (el `--max-old-space-size=400`
+de `npm start` no se aplica ahí) y RSS llegó a 283 MB: si se repite, revisar logs de Render y el comando de inicio / tamaño de instancia.
+**Archivos:** `src/services/datosIaService.js`, `public/adminprivado2026/admin.js`, `public/js/autoload.js`, `public/index.html`, SWs.
+
 ### 485. 📐 Inicio completo: entra la línea "pasar al menú fácil" (todo apenas más chico; deslizable si no entra) — SW v336
 **Pedido (owner, con captura):** "abajo no se ve el texto para pasar al menú fácil; achicá un poco todo para que entre, apenas".
 **Qué se hizo:** en `pin.css` (#485) el `.entry-view` pasa a `overflow-y: auto` con padding inferior (el `overflow: hidden` de #337

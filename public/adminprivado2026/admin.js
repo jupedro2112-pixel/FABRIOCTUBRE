@@ -15447,12 +15447,15 @@ async function diaUsdtFetch() { await diaLoadUsdt(true); if (_diaRate) showToast
 async function diaUsdtSave() { const v = Number(document.getElementById('diaUsdt').value); if (!(v > 0)) { showToast('Escribí la cotización', 'error'); return; } try { const r = await authFetch('/api/admin/datos-ia/usdt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rate: v }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Cotización guardada', 'success'); await diaLoadUsdt(false); _diaRefresh(); } catch (_) { showToast('Error de conexión', 'error'); } }
 function _diaCurUI() { const a = document.getElementById('diaCurArs'), u = document.getElementById('diaCurUsd'); if (a) a.classList.toggle('on', _diaCur === 'ars'); if (u) { u.classList.toggle('on', _diaCur === 'usd'); u.disabled = !_diaRate; u.title = _diaRate ? '' : 'Cargá la cotización primero'; }
     // #483: los campos de plata se escriben en la moneda elegida (la etiqueta cambia "$" ↔ "US$")
-    document.querySelectorAll('#datosIaSection label').forEach(function (l) { const tn = l.firstChild; if (!tn || tn.nodeType !== 3) return; if (!l.dataset.t) l.dataset.t = tn.textContent; if (/\$/.test(l.dataset.t)) tn.textContent = l.dataset.t.replace(/US\$|\$/, _diaCur === 'usd' && _diaRate ? 'US$' : '$'); });
+    document.querySelectorAll('#datosIaSection label').forEach(function (l) { if (l.closest('.dia-money')) return; const tn = l.firstChild; if (!tn || tn.nodeType !== 3) return; if (!l.dataset.t) l.dataset.t = tn.textContent; if (/\$/.test(l.dataset.t)) tn.textContent = l.dataset.t.replace(/US\$|\$/, _diaCur === 'usd' && _diaRate ? 'US$' : '$'); });
 }
 // #483: un monto escrito en la moneda elegida → pesos para el server
 const _diaIn = (v) => { const n = Number(v); if (!(n > 0)) return ''; return String(Math.round(_diaCur === 'usd' && _diaRate > 0 ? n * _diaRate : n)); };
-function diaSetCur(c) { if (c === 'usd' && !_diaRate) { showToast('Cargá la cotización del USDT primero', 'error'); return; } _diaCur = c === 'usd' ? 'usd' : 'ars'; try { localStorage.setItem('dia_cur', _diaCur); } catch (_) {} _diaCurUI(); _diaRefresh(); }
-function _diaRefresh() { const pa = document.getElementById('diaPaneA'), pc = document.getElementById('diaPaneC'); if (pa && pa.style.display !== 'none') diaRun(); if (pc && pc.style.display !== 'none') diaProject(); }
+function diaSetCur(c) { if (c === 'usd' && !_diaRate) { showToast('Cargá la cotización del USDT primero', 'error'); return; } const nc = c === 'usd' ? 'usd' : 'ars'; if (nc === _diaCur) return;
+    // #486: lo ya escrito en los campos de plata se convierte a la moneda nueva (antes quedaba el número viejo y se multiplicaba mal)
+    ['diaSpend', 'prSpend', 'prBaseSpend', 'prCac', 'stAmount', 'spAmount', 'opSum'].forEach(function (id) { const el = document.getElementById(id); if (!el || !el.value) return; const v = Number(el.value); if (!(v > 0)) return; el.value = nc === 'usd' ? Math.round(v / _diaRate) : Math.round(v * _diaRate); });
+    _diaCur = nc; try { localStorage.setItem('dia_cur', _diaCur); } catch (_) {} _diaCurUI(); _diaRefresh(); }
+function _diaRefresh() { const pa = document.getElementById('diaPaneA'), pc = document.getElementById('diaPaneC'); if (pa && pa.style.display !== 'none') diaRun(); if (pc && pc.style.display !== 'none') { _diaAuto = true; diaProject(); } }
 let _diaRanA = false;
 window.diaLoadUsdt = diaLoadUsdt; window.diaUsdtFetch = diaUsdtFetch; window.diaUsdtSave = diaUsdtSave; window.diaSetCur = diaSetCur;
 const _diaN = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
@@ -15464,11 +15467,12 @@ async function diaInit() {
         diaPreset(30, 'day');
         try { const r = await authFetch('/api/admin/campaigns'); if (r.ok) { const j = await r.json(); const list = j.campaigns || []; ['diaCampaign', 'opCampaign', 'prCampaign'].forEach(function (id) { const sel = document.getElementById(id); if (!sel) return; list.forEach(function (c) { const o = document.createElement('option'); o.value = c.code; o.textContent = (c.code || '') + (c.name ? ' · ' + c.name : ''); sel.appendChild(o); }); }); } } catch (_) {}
     }
-    await diaLoadUsdt(false); diaLoadSpendTotal(); diaProject(); diaLoadSpend(); diaLoadOthers(); // #484: abre en el Panorama; el análisis por fechas se calcula al entrar a su pestaña
+    await diaLoadUsdt(false); try { const ps = document.getElementById('prSpend'); if (ps && _diaCur === 'usd' && _diaRate > 0 && Number(ps.value) === 400000000) ps.value = Math.round(400000000 / _diaRate); } catch (_) {} // #486
+    _diaAuto = true; diaLoadSpendTotal(); diaProject(); diaLoadSpend(); diaLoadOthers(); // #484: abre en el Panorama; el análisis por fechas se calcula al entrar a su pestaña
 }
 function diaTab(t) {
     ['a', 'b', 'c', 'd'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.classList.toggle('on', t === k); });
-    if (t === 'c') { diaLoadSpendTotal(); diaProject(); } if (t === 'd') diaLoadHistory(); if (t === 'a' && !_diaRanA) { _diaRanA = true; diaRun(); }
+    if (t === 'c') { diaLoadSpendTotal(); _diaAuto = true; diaProject(); } if (t === 'd') diaLoadHistory(); if (t === 'a' && !_diaRanA) { _diaRanA = true; diaRun(); }
 }
 function diaPreset(days, gran) {
     const to = new Date(); const from = new Date(to.getTime() - (days - 1) * 86400000);
@@ -15573,17 +15577,17 @@ async function diaLoadSpendTotal() {
     } catch (_) {}
 }
 async function diaSaveSpendTotal() {
-    try { const r = await authFetch('/api/admin/datos-ia/spend-total', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: _diaIn(document.getElementById('stAmount').value), since: document.getElementById('stSince').value }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Gasto total guardado', 'success'); diaLoadSpendTotal(); diaProject(); } catch (_) { showToast('Error de conexión', 'error'); }
+    try { const r = await authFetch('/api/admin/datos-ia/spend-total', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: _diaIn(document.getElementById('stAmount').value), since: document.getElementById('stSince').value }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Gasto total guardado', 'success'); diaLoadSpendTotal(); _diaAuto = true; diaProject(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.diaLoadSpendTotal = diaLoadSpendTotal; window.diaSaveSpendTotal = diaSaveSpendTotal; window.diaBaseModeUI = diaBaseModeUI; window.diaProjPreset = diaProjPreset;
-let _diaProjSnapshot = null;
+let _diaProjSnapshot = null, _diaAuto = false; // #486: _diaAuto = llamada automática (abrir pestaña, moneda, cotización) → nosave
 async function diaProject() {
     const g = function (id) { const el = document.getElementById(id); return el ? el.value : ''; };
     const out = document.getElementById('diaProjOut'), bo = document.getElementById('diaBaseOut'); if (!out) return;
     out.innerHTML = '<div class="dia-note">Calculando el panorama… (unos segundos)</div>'; if (bo && !bo.innerHTML) bo.innerHTML = '<div class="dia-note">Leyendo la base…</div>';
     try {
         const qs = '?spend=' + (_diaIn(g('prSpend')) || 0) + '&days=' + (g('prDays') || 30) + '&baseMode=' + (g('prBaseMode') || 'inicio') + '&base=' + (g('prBase') || 60) + (_diaIn(g('prBaseSpend')) ? '&baseSpend=' + _diaIn(g('prBaseSpend')) : '') + (_diaIn(g('prCac')) ? '&cac=' + _diaIn(g('prCac')) : '') + (g('prOrg') !== '' ? '&organicPct=' + g('prOrg') : '') + (g('prBonus') !== '' ? '&futBonus=' + g('prBonus') : '') + (g('prRefund') !== '' ? '&futRefund=' + g('prRefund') : '') + (g('prRec') !== '' ? '&futRec=' + g('prRec') : '') + (g('prCampaign') ? '&campaign=' + encodeURIComponent(g('prCampaign')) : '') + _diaQS();
-        const r = await authFetch('/api/admin/datos-ia/projection' + qs);
+        const r = await authFetch('/api/admin/datos-ia/projection' + qs + (_diaAuto ? '&nosave=1' : '')); _diaAuto = false;
         const j = await r.json(); if (!r.ok) { out.textContent = j.error || 'Error'; return; }
         const p = j.projection, su = p.supuestos, pr = p.promo || {}, t = j.base.totals, b = p.base;
         _diaProjSnapshot = j.snapshotId || null; const ps = document.getElementById('diaProjSave'); if (ps) ps.style.display = _diaProjSnapshot ? '' : 'none';

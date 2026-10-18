@@ -190,8 +190,9 @@
         }
         row('Link de la app', appLink().replace(/^https?:\/\//, ''), '#ff6b6b');
         row('Usuario', username(), '#ffffff');
-        const pw = getPassword() || DEFAULT_ACCESS_PW;
+        const pwSaved = getPassword(); const pw = pwSaved || DEFAULT_ACCESS_PW;
         row('Contraseña', pw, '#ffd166');
+        if (!pwSaved) { ctx.fillStyle = '#9aa0b2'; ctx.font = '600 24px Montserrat, system-ui, sans-serif'; ctx.fillText('(clave inicial: si la cambiaste, usá la tuya)', pad, y - 20); y += 20; } // #486
         ctx.fillStyle = '#6f7790'; ctx.font = '500 24px Montserrat, system-ui, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('Generada el ' + new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
         return c;
