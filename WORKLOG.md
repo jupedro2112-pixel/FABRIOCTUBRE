@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 398. 🔥 Fueguito: VUELTA a la versión anterior (3 hitos) — descarta #395/#397
+**Pedido (owner):** "lo del fueguito está mal, quiero que vuelva a la versión anterior".
+**Qué se hizo (server.js):** `FIRE_MILESTONES_DEFAULT` vuelve a los 3 hitos de #346 (10 d $50.000 · 20 d $250.000 ·
+30 d $1.000.000, con la misma actividad requerida). Migración one-shot `migration_fire_restore_v3_done` que pisa
+`Config['fireMilestones']` con esos 3 (deshace lo que #395/#397 habían guardado) y deja `fireMinDeposits`=10 y
+`fireRolloverMultiplier`=5. Las migraciones v1/v2 se quitaron del código (ya corrieron; sus flags quedan en Config sin uso).
+**Archivos:** `server.js`.
+
 ### 397. 🔥 Fueguito: los montos de siempre, repetidos en orden hasta el día 100 (corrige #395)
 **Pedido (owner):** "los regalos del fueguito los subiste, dejalo como estaba los montos de los premios, solo cambiá el
 rollover, así como está x5 está ok".

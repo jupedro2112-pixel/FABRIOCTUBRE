@@ -11663,17 +11663,17 @@ async function initializeData() {
       await setConfig('migration_admin_iginte1000_v1_done', true);
     }
   } catch (e) { console.warn('[startup] admin iginte1000 (#386):', e.message); }
-  // #395 (owner 2026-10-18): fueguito — hitos cada 10 días hasta el 100 (escalera FIRE_MILESTONES_DEFAULT), 10 cargas entre
-  // racha y racha y rollover x5. One-shot: pisa lo guardado en el panel UNA vez; después el panel manda.
+  // #398 (owner 2026-10-18): fueguito de vuelta a la versión anterior (3 hitos). One-shot que deshace lo que #395/#397
+  // habían escrito en Config['fireMilestones']; min. de cargas 10 y rollover x5 quedan igual. Después manda el panel.
   try {
-    if (!(await getConfig('migration_fire_10to100_v2_done', false))) { // v2 (#397): montos de siempre repetidos, no la escalera inventada de v1
+    if (!(await getConfig('migration_fire_restore_v3_done', false))) {
       await Config.set('fireMilestones', FIRE_MILESTONES_DEFAULT, 'startup-migration');
       await Config.set('fireMinDeposits', 10, 'startup-migration');
       await Config.set('fireRolloverMultiplier', 5, 'startup-migration');
-      await Config.set('migration_fire_10to100_v2_done', true, 'startup-migration');
-      console.log('✅ Fueguito (#395/#397): 10 hitos (día 10 → 100) con los montos de siempre en ciclo, 10 cargas entre rachas, rollover x5');
+      await Config.set('migration_fire_restore_v3_done', true, 'startup-migration');
+      console.log('✅ Fueguito (#398): restaurados los 3 hitos de siempre (10/20/30 días), 10 cargas entre rachas, rollover x5');
     }
-  } catch (e) { console.warn('[startup-migration] fueguito 10→100 (#395):', e.message); }
+  } catch (e) { console.warn('[startup-migration] fueguito restore (#398):', e.message); }
   // #391 (owner 2026-10-18): textos nuevos de los botones de carga automática. Pisa SOLO si todavía tienen el default
   // viejo (si el owner ya los editó en COMANDOS, se respetan). One-shot.
   try {
@@ -13884,22 +13884,13 @@ async function _countRealDepositsDays(userId, username, days) {
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
 // #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
-// #395/#397 (owner 2026-10-18): "las rachas cada 10 días hasta el día 100 y respetá el orden de los regalos … dejá los
-// montos como estaban, sólo el rollover x5". Hitos cada 10 días hasta el 100; los premios se REPITEN en el orden de
-// siempre: $50.000 → $250.000 → $1.000.000 → $50.000 → … (sin inventar montos nuevos). Editables en el panel → Fueguito.
-const FIRE_MILESTONES_DEFAULT = (() => {
-  const cycle = [
-    { reward: 50000,   requireDeposits: 20000,  depositDays: 30 },
-    { reward: 250000,  requireDeposits: 100000, depositDays: 30 },
-    { reward: 1000000, requireDeposits: 300000, depositDays: 45 }
-  ];
-  const out = [];
-  for (let day = 10, i = 0; day <= 100; day += 10, i++) {
-    const c = cycle[i % cycle.length];
-    out.push({ day, reward: c.reward, type: 'cash', requireDeposits: c.requireDeposits, depositDays: c.depositDays, desc: 'Recompensa Fueguito ' + day + ' días' });
-  }
-  return out;
-})();
+// #398 (owner 2026-10-18): "lo del fueguito está mal, quiero que vuelva a la versión anterior" → se vuelve a los 3 hitos
+// de siempre (lo de #395/#397 —hitos hasta el día 100— quedó descartado). Editables en el panel → Fueguito.
+const FIRE_MILESTONES_DEFAULT = [
+  { day: 10, reward: 50000,   type: 'cash', requireDeposits: 20000,  depositDays: 30, desc: 'Recompensa Fueguito 10 días' },
+  { day: 20, reward: 250000,  type: 'cash', requireDeposits: 100000, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 1000000, type: 'cash', requireDeposits: 300000, depositDays: 45, desc: 'Recompensa Fueguito 30 días' }
+];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
 // válida, usa los defaults. Normaliza/clampea y ordena por día. Todos los premios son
