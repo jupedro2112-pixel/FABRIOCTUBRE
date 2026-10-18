@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 519. 🏠 El tipo de menú se elige tocando INICIO (no desde abajo) — SW v365
+**Pedido (owner):** "en Inicio poné que cuando apretás elija el tipo de menú desde ahí, no desde abajo". `goHome()`: si ya estás en un
+modo de Inicio abre el selector (Básico · Fácil · Completo); si venías del chat, primero te lleva al Inicio. Los pases de abajo
+("Pasar al menú completo", el link al fácil y "¿Querés ver más?" del básico) quedan ocultos por CSS. El selector dice "La cambiás
+cuando quieras tocando INICIO arriba".
+
 ### 518. ℹ️ Info: cómo funcionan las Misiones de la semana, arriba de todo — SW v364
 **Pedido (owner):** "en Info poné en la parte superior el detalle de cómo funcionan las misiones de la semana". Sección nueva al tope del
 modal Info (qué son, niveles VIP, cómo se sube/baja, reglas anti-estafa con rollover y tope reales, y la línea "Vos hoy: nivel X · N de 3

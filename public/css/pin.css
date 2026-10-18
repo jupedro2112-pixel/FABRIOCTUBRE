@@ -1493,3 +1493,7 @@ body.home-basic #easyView { display: none !important; }
 /* ── #518: misiones en Info ── */
 .im-sec.im-missions { border: 1px solid var(--p-red) !important; }
 .im-sec.im-missions > b { color: var(--p-red) !important; }
+/* ── #519: el tipo de menú se elige desde INICIO (arriba); los pases de abajo se van ── */
+.ez-switch, .ev-easy-link, .bv-switch2 { display: none !important; }
+.menu-chooser .mc-sub { font-weight: 600; }
+

@@ -118,7 +118,13 @@
     function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); return (v === 'easy' || v === 'full' || v === 'basic') ? v : null; } catch (_) { return null; } } // #512: + basic
     const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : 'play'));
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
-    function goHome() { setHomeMode(_modeFor(getMenuPref())); }
+    // #519 (owner): el botón INICIO es donde cada uno elige su tipo de menú. Si ya estás en el Inicio, abre el selector
+    // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
+    function goHome() {
+        const atHome = _homeMode === 'easy' || _homeMode === 'basic' || _homeMode === 'play' || _homeMode === 'full';
+        if (atHome) { try { openMenuChooser(); return; } catch (_) {} }
+        setHomeMode(_modeFor(getMenuPref()));
+    }
     function setMenuPref(pref, opts) {
         pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
