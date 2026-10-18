@@ -198,9 +198,10 @@
         return '<span class="rv-stars">' + h + '</span>';
     }
 
-    async function renderEntrySlider() {
-        const box = document.getElementById('entryReviews');
+    async function renderEntrySlider(boxId, opts) {
+        const box = document.getElementById(boxId || 'entryReviews'); // #381: también en la pantalla de ingreso (#loginReviews)
         if (!box) return;
+        const noAdd = !!(opts && opts.noAdd);
         const pub = await _loadPublic();
         const avg = Number((pub && pub.avgStars) || 0);
         const total = Number((pub && pub.total) || 0);
@@ -213,7 +214,7 @@
             (total ? '<span class="rv-avg">' + avg.toFixed(1) + ' ' + _gStarsFrac(avg) + ' <small>(' + total + ')</small></span>' : '') + '</div>';
         // #360 (owner): "Dejá tu opinión" FIJA a la izquierda (chica) y las reseñas deslizando al lado — nunca se pierde.
         html += '<div class="rv-row">';
-        html += '<button type="button" class="rv-card rv-add rv-add-fixed" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b></button>';
+        if (!noAdd) html += '<button type="button" class="rv-card rv-add rv-add-fixed" onclick="VIP.reviews.openModal()"><span class="rv-add-star">★</span><b>Dejá tu opinión</b></button>';
         html += '<div class="rv-track">';
         for (const it of items) {
             const name = it.maskedUsername || '***';

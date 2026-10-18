@@ -1140,12 +1140,18 @@ app.get('/api/landing/info', async (req, res) => {
         return `${rango} → <b>${t.pct}%</b>`;
       }).join(' · ');
       let maxPct = 0;
-      [tbp.weekly, tbp.monthly].forEach((ts) => (ts || []).forEach((t) => { if (t && t.pct > maxPct) maxPct = t.pct; }));
+      const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0);
+      [tbp.daily, tbp.weekly, tbp.monthly].forEach((ts) => (ts || []).forEach((t) => { if (t && t.pct > maxPct) maxPct = t.pct; }));
       const same = JSON.stringify((tbp.weekly || []).map((t) => [t.pct, t.max])) === JSON.stringify((tbp.monthly || []).map((t) => [t.pct, t.max]));
-      refunds = { maxPct, same, weekly: linea(tbp.weekly), monthly: linea(tbp.monthly) };
+      // #381: también el DIARIO y los máximos por período (pantalla de ingreso de la app).
+      refunds = { maxPct, same, daily: linea(tbp.daily), weekly: linea(tbp.weekly), monthly: linea(tbp.monthly), dailyMax: mx(tbp.daily), weeklyMax: mx(tbp.weekly), monthlyMax: mx(tbp.monthly) };
     } catch (_) {}
+    // #381: mínimos y aviso promocional (públicos, sin datos sensibles) para la pantalla de ingreso.
+    let minDepositArs = null, withdrawMinArs = null, refundPromo = null;
+    try { minDepositArs = await getMinDepositArs(); withdrawMinArs = await getWithdrawMinArs(); } catch (_) {}
+    try { const pct = await getDailyRefundPct(); refundPromo = await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) {}
     res.setHeader('Cache-Control', 'public, max-age=60');
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds });
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

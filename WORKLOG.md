@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-17
 
+### 381. 🚪 Pantalla de ingreso "tope de gama" con el estilo de la app: servicio, reembolsos, plataformas, carga mínima y reseñas — SW v268
+**Pedido (owner):** "el inicio de registro que vaya de la mano con el estilo de la app; las reseñas en el inicio;
+avisar del servicio, del reembolso, las plataformas y el mínimo de carga; armalo tope de gama, es la visión principal".
+`#loginScreen` rehecho (mismo `<form id="loginForm">` y todos los ids que cablea app.js/auth.js: username, password,
+registerBtn, findUserBtn, helpTelegramBtn, loginClaimsTicker/Text, loginGiftsBtn, loginReviewsBtn oculto, grupos de
+login por teléfono/código ocultos): cabecera con el ícono y "PICA ROJA · oficial" + botón Telegram; titular "La app
+que paga en el momento" y bajada; chips con datos reales (⚡ carga automática · 💸 reembolso diario X% · 🎰 ruleta ·
+💵 carga mínima $X); ticker "EN VIVO" rediseñado; tarjeta gris con el ingreso (botón rojo); "¿Primera vez acá? Crear
+mi cuenta" + recuperar contraseña; grilla "Lo que te damos": Reembolsos (diario/semanal/mensual reales + aviso
+promocional), Plataformas (logos + Próximamente), Carga automática (carga mínima real), Soporte real (retiro mínimo
+real con pago automático); reseñas públicas deslizando (`reviews.js renderEntrySlider('loginReviews', {noAdd:true})`,
+ahora parametrizable); pie "juego responsable · +18". Datos: `public/js/loginhero.js` lee `GET /api/landing/info`,
+que ahora devuelve también `refunds.daily/dailyMax/weeklyMax/monthlyMax`, `minDepositArs`, `withdrawMinArs` y
+`refundPromo` (todo público, nada sensible). Estilos `.lg-*` en pin.css.
+
 ### 380. 🟦 Pestañas de plataformas iguales (3 cuadrados) · Soporte 100% independiente del chat viejo — SW v267, admin-sw v80
 **Pedido (owner):** "las 3 plataformas en forma recta, cuadrados iguales con la altura que ya tiene Ganamos; y el
 soporte: hablé y me contestaron del chat anterior; quiero otro chat 100% independiente, el otro dejalo como está".

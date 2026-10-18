@@ -356,42 +356,30 @@
          pintar y el CSS oculta #loginScreen hasta que auth.js confirma (showChatScreen) o rechaza (showLoginScreen) el token. -->
     <script>try { if (localStorage.getItem('userToken')) document.documentElement.classList.add('has-session'); } catch (e) {}</script>
     <div id="loginScreen" class="login-screen">
-        <div class="login-box">
-            <!-- Soporte arriba del logo. 🪦 Acá había también un botón "Soporte
-                 WhatsApp" (helpWhatsappBtn): ELIMINADO 2026-08-05 (owner: el
-                 soporte por WhatsApp ya no existe, queda solo Telegram). -->
-            <div style="display:flex;gap:8px;margin-bottom:8px;">
-                <button id="helpTelegramBtn" class="btn btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 6px;font-size:12px;font-weight:700;background:rgba(0,136,204,0.12);border-color:rgba(0,136,204,0.5);color:#3aa0e0;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="#229ed9" style="flex-shrink:0;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                    Soporte Telegram
-                </button>
+        <div class="login-box lg">
+            <!-- #381 (owner): pantalla de ingreso con el estilo de la app: marca, promesa, chips con datos reales
+                 (js/loginhero.js desde /api/landing/info), ingreso / registro, "lo que te damos" (reembolsos,
+                 plataformas, carga mínima, soporte) y las reseñas públicas (reviews.js → #loginReviews). -->
+            <header class="lg-head">
+                <img src="/icons/icon-192x192.png" class="lg-logo" alt="PICA ROJA">
+                <div class="lg-brand"><b>PICA ROJA</b><small>oficial · cargas automáticas</small></div>
+                <button id="helpTelegramBtn" type="button" class="lg-tg" title="Soporte por Telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="#229ed9" style="flex-shrink:0;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span>Telegram</span></button>
+            </header>
+            <h1 class="lg-title">La app que paga <span>en el momento</span></h1>
+            <p class="lg-sub">Cargás solo en minutos, jugás en la plataforma que elijas y cobrás reembolsos por lo que perdés. Soporte las 24 hs.</p>
+            <div class="lg-chips">
+                <span class="lg-chip">⚡ Carga automática</span>
+                <span class="lg-chip lg-chip-red" id="lgChipRefund">💸 Reembolso diario</span>
+                <span class="lg-chip">🎰 Ruleta diaria</span>
+                <span class="lg-chip" id="lgChipMin">💵 Carga mínima $5.000</span>
             </div>
-            <!-- Logo VIPCARGAS flanqueado por Reseñas (izq) y Regalos (der). -->
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <button id="loginReviewsBtn" type="button" style="flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:rgba(212,175,55,0.10);border:1px solid rgba(212,175,55,0.45);border-radius:11px;color:#d4af37;cursor:pointer;-webkit-tap-highlight-color:rgba(212,175,55,.3);touch-action:manipulation;">
-                    <span style="font-size:19px;line-height:1;">⭐</span>
-                    <span style="font-size:9px;font-weight:800;letter-spacing:.3px;">Reseñas</span>
-                </button>
-                <div style="flex:1;min-width:0;">
-                    <!-- 🪦 Acá estaba el logo tipográfico "♛ V I P / VIPCARGAS" con el
-                         divisor dorado: REEMPLAZADO 2026-08-05 por el banner de 1girox. -->
-                    <img src="/images/banner-inicio-1girox.jpg" alt="1GIROX"
-                         style="width:100%;max-width:230px;display:block;margin:0 auto;border-radius:12px;border:1px solid rgba(212,175,55,0.35);">
-                </div>
-                <button id="loginGiftsBtn" type="button" style="flex:0 0 64px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;background:rgba(106,13,173,0.18);border:1px solid rgba(157,78,221,0.55);border-radius:11px;color:#d9b8ff;cursor:pointer;-webkit-tap-highlight-color:rgba(157,78,221,.3);touch-action:manipulation;">
-                    <span style="font-size:19px;line-height:1;">🎁</span>
-                    <span style="font-size:9px;font-weight:800;letter-spacing:.3px;">Regalos</span>
-                </button>
-            </div>
-            <p style="margin-top:0;margin-bottom:6px;">Sala de juegos VIP</p>
             <!-- Ticker en vivo de lo que reclama la gente (se llena desde app.js). -->
-            <div id="loginClaimsTicker" style="display:none;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(157,78,221,0.16),rgba(212,175,55,0.10));border:1px solid rgba(157,78,221,0.4);border-radius:10px;padding:6px 10px;margin-bottom:8px;overflow:hidden;">
-                <span style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-size:8.5px;font-weight:900;color:#25d366;letter-spacing:.5px;">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#25d366;box-shadow:0 0 6px #25d366;animation:winners-pulse 1.4s ease-in-out infinite;"></span>EN VIVO
-                </span>
-                <span id="loginClaimsText" style="flex:1;min-width:0;font-size:11px;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .25s ease;">—</span>
+            <div id="loginClaimsTicker" class="lg-ticker" style="display:none;">
+                <span class="lg-live"><i></i>EN VIVO</span>
+                <span id="loginClaimsText" class="lg-ticker-t">—</span>
+                <button id="loginGiftsBtn" type="button" class="lg-gifts" title="Regalos de hoy">🎁</button>
             </div>
-            
+            <div class="lg-form">
             <form id="loginForm" autocomplete="on">
                 <div style="display:none;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid rgba(212,175,55,0.3);">
                     <!-- Modos de login por celular/SMS ocultos: el acceso es solo
@@ -458,20 +446,41 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Ingresar a la Sala</button>
             </form>
-
-            <!-- 🪦 #273 (owner): "sacale el aviso de verificá tu teléfono" — se quitó la cajita de la pantalla de ingreso. -->
-
-            <div style="margin: 8px 0; text-align: center;">
-                <span style="color: #888; font-size: 13px;">¿No tienes cuenta?</span>
-                <button id="registerBtn" class="btn btn-secondary" style="margin-top: 6px; width: 100%;">📝 Registrarse</button>
             </div>
-
-            <div style="margin: 7px 0;">
-                <button id="findUserBtn" class="btn btn-secondary" style="width:100%; font-size: 12px;" onclick="showModal('resetPassModal')">🔑 Recuperar Contraseña</button>
-                <p style="color:#888; font-size:10.5px; margin:4px 0 0; text-align:center;">Solo para clientes con SMS verificado.</p>
+            <div class="lg-alt">
+                <span class="lg-alt-q">¿Primera vez acá?</span>
+                <button id="registerBtn" class="btn btn-secondary lg-register">📝 Crear mi cuenta</button>
+                <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Recuperar contraseña</button>
+                <span class="lg-alt-note">Solo para clientes con SMS verificado.</span>
             </div>
-
+            <button id="loginReviewsBtn" type="button" hidden aria-hidden="true"></button>
             <div id="errorMessage" class="error-message"></div>
+            <section class="lg-sec">
+                <h3 class="lg-h3">Lo que te damos</h3>
+                <div class="lg-grid">
+                    <div class="lg-card">
+                        <b>💸 Reembolsos</b>
+                        <small id="lgRefunds">Diario, semanal y mensual sobre lo que perdés con tu plata. Se cobran solos desde la app.</small>
+                        <em class="lg-promo" id="lgRefundPromo" hidden></em>
+                    </div>
+                    <div class="lg-card">
+                        <b>🎮 Plataformas</b>
+                        <div class="lg-plats" id="lgPlats"><span class="lg-plat"><b>Girox</b></span><span class="lg-plat soon"><b>Ganamos</b><small>Próximamente</small></span></div>
+                    </div>
+                    <div class="lg-card">
+                        <b>⚡ Carga automática</b>
+                        <small>Transferís al CBU, mandás la foto del comprobante y se acredita sola. Carga mínima <b id="lgMin">$5.000</b>.</small>
+                    </div>
+                    <div class="lg-card">
+                        <b>💬 Soporte real</b>
+                        <small>Una persona te responde en minutos. <span id="lgWithdrawMin">Retiros con pago automático a tu CBU.</span></small>
+                    </div>
+                </div>
+            </section>
+            <section class="lg-sec">
+                <div id="loginReviews" class="ev-reviews lg-reviews" style="display:none;"></div>
+            </section>
+            <p class="lg-foot">PICA ROJA oficial · juego responsable · solo mayores de 18 años</p>
         </div>
     </div>
 
@@ -2193,7 +2202,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v267</div>
+                    <div class="pf-build" id="appBuildTag">app v268</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2597,6 +2606,7 @@
     <script src="/js/fire.js"></script>
     <script src="/js/roulette.js"></script>
     <script src="/js/reviews.js"></script>
+    <script src="/js/loginhero.js"></script>
     <script src="/js/stories.js"></script>
     <script src="/js/promobonus.js"></script>
     <script src="/js/notifications.js"></script>
