@@ -11691,7 +11691,7 @@ async function initializeData() {
   // (AWS) no se toca: una cuenta de prueba con clave simple NO puede quedar como admin del panel.
   try {
     if (!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1')) throw Object.assign(new Error('skip'), { skip: true });
-    const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
+    const r = await User.updateOne({ username: { $in: ['lalodj', 'lalodj499910'] } }, { $set: { role: 'admin', isActive: true, isBlocked: false } }); // #476: también lalodj499910
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
@@ -20230,7 +20230,7 @@ function _prizesClient(prizes) {
   return _prizesPublic(prizes).map((p) => ({ id: p.id, type: p.type, value: p.value, label: p.label, emoji: p.emoji, rolloverX: p.rolloverX }));
 }
 // #390 (owner): a los usuarios de PRUEBA se les reinicia la ruleta en cada apertura/giro para testear sin esperar al otro día.
-const ROULETTE_TESTERS = ['lalodj'];
+const ROULETTE_TESTERS = ['lalodj', 'lalodj499910']; // #476
 // #413 (seguridad): sólo en el entorno de prueba (Render) o con TESTER_ADMIN_PROMOTE=1, igual que #355. En producción NO.
 const _isRouletteTester = (username) => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
 function _pickWeightedPrize(prizes) {
@@ -21892,7 +21892,7 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     }
     if (mediaType === 'none' && !text) return res.status(400).json({ error: 'Poné un texto o una imagen/video.' });
     const linkUrl = String(b.linkUrl || '').trim().slice(0, 500);
-    if (linkUrl && !/^(https?:\/\/|\/)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /.' });
+    if (linkUrl && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso)$)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso.' });
     const bgColor = /^#[0-9a-f]{3,8}$/i.test(String(b.bgColor || '')) ? String(b.bgColor) : '#06070d';
     const now = new Date();
     const doc = await Story.create({
@@ -21912,6 +21912,9 @@ app.patch('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req,
     if (b.isActive != null) set.isActive = !!b.isActive;
     if (b.text != null) set.text = String(b.text).trim().slice(0, 300);
     if (b.title != null) set.title = String(b.title).trim().slice(0, 60);
+    // #474: también se puede cambiar el botón de una historia ya publicada
+    if (b.linkUrl != null) { const lu = String(b.linkUrl).trim().slice(0, 500); if (lu && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso)$)/i.test(lu)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso.' }); set.linkUrl = lu; }
+    if (b.linkLabel != null) set.linkLabel = String(b.linkLabel).trim().slice(0, 40);
     if (b.hours != null) {
       const h = Number(b.hours); if (!Number.isFinite(h) || h < 1 || h > 720) return res.status(400).json({ error: 'Horas: entre 1 y 720.' });
       // "Extender": las horas cuentan desde AHORA (así una vencida vuelve a estar activa).

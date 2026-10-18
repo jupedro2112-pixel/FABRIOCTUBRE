@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 474/475/476. 📖 Botón "Me interesa" en la historia de referidos · ruleta nueva (10/20/50/100 %, $5.000, $100.000) · usuario de prueba lalodj499910 — SW v332
+**Pedidos (owner):** "en la historia de referidos poné un botón 'Me interesa' que vaya al menú de referidos"; "la ruleta con
+10% 20% 50% 100% $5.000 y $100.000: 1 de cada 10.000 giros el $100.000, 1 de cada 100 el $5.000, del resto 30% el 10%,
+sin premio 20%, 10% el 20%, 20% el 50% y 20% el 100%"; "en lalodj499910 reiniciá la ruleta y activá el modo test".
+**Qué se hizo:**
+- **#474:** las historias aceptan links internos `app:referidos` / `app:cargar` / `app:ruleta` / `app:reembolso`
+  (`stories.js`: el botón cierra la historia y abre esa sección; el server los valida en POST y ahora también en PATCH, que
+  además acepta `linkLabel`). La historia 5 quedó con "Me interesa ›" → modal de Referidos. Placeholder del panel actualizado.
+- **#475:** premios de la ruleta guardados desde la API del panel (pesos sobre 10.000 giros): $100.000 = 1 · $5.000 = 100 ·
+  10% EXTRA = 2.970 · 20% EXTRA = 990 · 50% EXTRA = 1.980 · 100% EXTRA = 1.979 · sin premio = 1.980. Costo esperado en
+  efectivo: $60 por giro ($10 del grande + $50 del chico); los % van sobre la próxima carga con el tope de `bonusCap`.
+- **#476:** `lalodj499910` sumado a `ROULETTE_TESTERS` (siempre puede girar; el giro se borra al instante), al promote
+  admin del arranque (sólo entorno de prueba, #355) y a `TESTER_USERNAMES` / `LOGOUT_USERNAMES` de la PWA.
+**Archivos:** `server.js`, `public/js/stories.js`, `public/js/home.js`, `public/adminprivado2026/index.html`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 473. 🖼️ Deslizante del Inicio: dos fotos nuevas (slots 3×2 y lobbies en vivo armados en 2×2) — SW v331
 **Pedido (owner, con capturas):** "agregá esta foto en el inicio en el deslizante que ya está; la segunda editala y armá 2
 filas de 2 en vez de 1 de 3 y otra de 1, que quede cuadrada, y que entre con el mismo formato del resto".
