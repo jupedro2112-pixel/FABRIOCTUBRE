@@ -794,3 +794,7 @@ body.sp-sent .sp-intro, body.sp-sent #supportIntro { display: none !important; }
    tape "Comprobante aquí" / "Retirar premio" ── */
 body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
 body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
+/* ── #403 (owner): "Telegram" e "Historias" se cortaban en la barra → etiquetas un poco más chicas y sin recorte ── */
+.header .tn-btn:not(.tn-home) { overflow: visible !important; min-width: 0; }
+.header .tn-btn:not(.tn-home) .tn-lbl { font-size: 7.5px !important; letter-spacing: .2px !important; white-space: nowrap; overflow: visible; }
+.header .tn-telegram .tn-lbl, .header .tn-stories .tn-lbl, .header .tn-btn:not(.tn-home).tn-telegram .tn-lbl, .header .tn-btn:not(.tn-home).tn-stories .tn-lbl { font-size: 6.8px !important; letter-spacing: 0 !important; }

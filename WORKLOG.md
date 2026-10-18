@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 403. 🔝 Barra: "Telegram" e "Historias" ya no se cortan — SW v278
+**Pedido (owner):** "telegram y historias la palabra se corta, achicala un poco".
+**Qué se hizo (pin.css):** etiquetas de los botones de la barra (no Inicio) a 7,5px con menos tracking; Telegram e
+Historias (las más largas) a 6,8px sin tracking, `white-space: nowrap` y `overflow: visible` en el botón.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 402. 📲 La barra fija "PENDIENTE · Instalá la app" ya no tapa "Comprobante aquí" / "Retirar premio" — SW v277
 **Pedido (owner, con captura):** "si pasa eso con lo de la app en la primera carga quiero que no me tapes la parte de
 adjuntar comprobante".
