@@ -15448,7 +15448,7 @@ function _diaRenderReport(inf) {
 }
 async function diaRun() {
     const from = document.getElementById('diaFrom').value, to = document.getElementById('diaTo').value, gran = document.getElementById('diaGran').value, camp = document.getElementById('diaCampaign').value, spend = document.getElementById('diaSpend').value;
-    const inf = document.getElementById('diaInforme'); if (inf) inf.innerHTML = '<div class="dia-note">Calculando…</div>';
+    const inf = document.getElementById('diaInforme'); if (inf) inf.innerHTML = '<div class="dia-note">Calculando… (hasta 1 minuto si el rango es largo)</div>';
     try {
         const r = await authFetch('/api/admin/datos-ia/analysis?from=' + from + '&to=' + to + '&granularity=' + gran + (camp ? '&campaign=' + encodeURIComponent(camp) : '') + (spend ? '&spend=' + spend : ''));
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'Error', 'error'); if (inf) inf.textContent = j.error || 'Error'; return; }

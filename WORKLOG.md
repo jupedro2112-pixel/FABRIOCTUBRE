@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 462/463. 🩺 Diagnóstico del server + Datos IA sin OOM — admin-sw v96
+**Qué pasó:** la primera versión de Datos IA cargaba todo el historial de transacciones y colgaba el proceso; la segunda
+(agregaciones) seguía tirando el servidor con 30+ días: el heap de Node en Render es de 268 MB y `toLocaleDateString` con
+`timeZone` (Intl) por cada movimiento (decenas de miles) era lentísimo y reventaba la memoria → 502 y reinicio.
+**Qué se hizo:**
+- **#462 Diagnóstico:** `GET /api/admin/diag` (build, uptime, RSS/heap, últimos 20 errores en memoria), handlers de
+  `unhandledRejection` / `uncaughtException` (loguean y salen limpio) y tiempos por paso en el análisis (`timings` en la
+  respuesta + log `[datos-ia] analysis … ms`).
+- **#463 Fix:** `dateKeyART` por desplazamiento fijo (Argentina = UTC−3 sin horario de verano). Medido en Render con datos
+  reales (17.497 cargadores, 70 mil cargas en 90 d): 1 día 4,7 s · 30 días 20 s (heap 84 MB) · 90 días por semana 42 s
+  (heap 141 MB). `start` con `--max-old-space-size=400` para tener margen. El panel avisa "hasta 1 minuto si el rango es largo".
+**Archivos:** `server.js`, `src/services/datosIaService.js`, `package.json`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 461. 🧠 Datos IA v2: cálculo con agregaciones (antes se colgaba), formato premium, historial de cálculos, revisión contra lo real y calibración — admin-sw v95
 **Pedido (owner):** "armalo en formato premium y bien detallado para entender el análisis, sencillo de ver; todo lo que se
 calcula que deje historial para después comparar la estadística con lo real y, si no coincide, ir ajustándose".

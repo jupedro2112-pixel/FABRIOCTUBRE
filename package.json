@@ -4,7 +4,7 @@
   "description": "Backend profesional para Sala de Juegos Chat con MongoDB - Arquitectura refactorizada",
   "main": "server.js",
   "scripts": {
-    "start": "NODE_ENV=production node server.js",
+    "start": "NODE_ENV=production node --max-old-space-size=400 server.js",
     "dev": "NODE_ENV=development nodemon server.js",
     "test": "jest",
     "lint": "eslint src/"
