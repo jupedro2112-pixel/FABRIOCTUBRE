@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 418. 📝 Registro SIEMPRE visible · "Olvidé mi contraseña" · registro = usuario + contraseña + teléfono (SMS sí o sí) — SW v289
+**Pedido (owner):** "activá el registro, ahí sólo aparece Entrá YA y enviá comprobante; armá el registrarse, olvidé la
+contraseña; adentro del registrarse pedí los datos que piden todos: usuario, contraseña, teléfono para verificar SMS,
+confirmar y entrar, sí o sí SMS".
+**Causa:** `publisherwelcome.js applyLoginCustomizations` (modo "link de publicista", que el owner tenía activo en su
+dispositivo) ocultaba todo el bloque `.lg-alt` (Crear mi cuenta + recuperación) y ponía el botón "⚡ Entrá YA…".
+**Qué se hizo:** ese ocultamiento se eliminó (el botón llamativo se mantiene). Login: "📝 Crear mi cuenta" + "🔑 Olvidé mi
+contraseña" + "💬 Soporte" siempre visibles. Modal de registro: título "Crear tu cuenta" con bajada; **sólo** usuario,
+contraseña, repetir contraseña y teléfono (Email oculto; código de referido sólo si viene `?ref=CODE`, en app.js y en
+`applyRegisterModalMode`). Botón: "📲 Crear cuenta · te llega un SMS" → al recibir el código "✅ Confirmar y entrar". El SMS
+ya era obligatorio del lado del server (`POST /api/auth/register` exige teléfono + OTP).
+**Archivos:** `public/js/publisherwelcome.js`, `public/js/auth.js`, `public/js/app.js`, `public/index.html`,
+`public/firebase-messaging-sw.js`.
+
 ### 417. 🚪 Ingreso: registro como estaba · reseñas deslizándose · historias como anillo Instagram arriba a la derecha — SW v288
 **Pedido (owner):** "sacaste la forma de registrarse; las historias ponelas arriba a la derecha con formato tipo Instagram
 cuando sube historias; el registro dejalo como estaba; que vaya deslizando las reseñas de la gente como cuando estás

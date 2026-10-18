@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (refCode) {
         const refInput = document.getElementById('registerReferralCode');
         if (refInput) refInput.value = refCode.toUpperCase();
+        try { const g = document.getElementById('registerReferralGroup'); if (g) g.style.display = ''; } catch (_) {} // #418
         const registerBtn = document.getElementById('registerBtn');
         if (registerBtn) {
             registerBtn.style.background = 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)';

@@ -465,9 +465,9 @@
             <div class="lg-alt">
                 <span class="lg-alt-q">¿Primera vez acá?</span>
                 <button id="registerBtn" class="btn btn-secondary lg-register">📝 Crear mi cuenta</button>
-                <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Recuperar contraseña</button>
+                <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Olvidé mi contraseña</button>
                 <button type="button" class="lg-link" onclick="if(window.VIP&&VIP.guestSupport)VIP.guestSupport.open()">💬 Soporte</button>
-                <span class="lg-alt-note">Registro con celular verificado por SMS · recuperación solo para clientes verificados.</span>
+                <span class="lg-alt-note">Registro: usuario, contraseña y celular verificado por SMS (obligatorio).</span>
             </div>
             <button id="loginReviewsBtn" type="button" hidden aria-hidden="true"></button>
             <div id="errorMessage" class="error-message"></div>
@@ -1581,7 +1581,8 @@
         <div class="modal-content" style="position: relative;">
             <button onclick="hideModal('registerModal')" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; z-index: 10;">✕</button>
             <div class="modal-header">
-                <h2>📝 Crear Cuenta</h2>
+                <h2>📝 Crear tu cuenta</h2>
+                <p style="margin:4px 0 0;font-size:12.5px;color:#888;">Usuario · contraseña · celular verificado por SMS. En 1 minuto estás adentro.</p>
                 <p>Regístrate para acceder a la Sala de Juegos</p>
             </div>
             <!-- Banner de pauta: visible sólo cuando VIP.campaign.getActive() devuelve algo.
@@ -1608,11 +1609,11 @@
                     <label>Repetir Contraseña *</label>
                     <input type="password" id="registerPasswordConfirm" name="confirm-password" placeholder="Repite tu contraseña" required minlength="6" autocomplete="new-password">
                 </div>
-                <div class="input-group">
+                <div class="input-group" style="display:none;"><!-- #418: fuera del registro (queda por compatibilidad) -->
                     <label>Email (opcional)</label>
                     <input type="email" id="registerEmail" name="email" placeholder="tu@email.com" autocomplete="email">
                 </div>
-                <div class="input-group" id="registerReferralGroup">
+                <div class="input-group" id="registerReferralGroup" style="display:none;"><!-- #418: sólo si viene ?ref=CODE -->
                     <label>Código de Referido (opcional)</label>
                     <input type="text" id="registerReferralCode" name="referralCode" placeholder="Ej: VIP3X7" autocomplete="off" maxlength="12" style="text-transform:uppercase;letter-spacing:2px;">
                     <span style="font-size: 11px; color: #888;">Si te invitó alguien, ingresá su código para vincularte.</span>
@@ -1656,7 +1657,7 @@
                 <div id="registerError" class="error-message"></div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" id="closeRegisterModal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="registerSendOtpBtn">📝 Crear Cuenta</button>
+                    <button type="button" class="btn btn-primary" id="registerSendOtpBtn">📲 Crear cuenta · te llega un SMS</button>
                 </div>
             </form>
             </div>
@@ -2276,7 +2277,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v288</div>
+                    <div class="pf-build" id="appBuildTag">app v289</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -85,7 +85,7 @@ VIP.auth = (function () {
         const btn = document.getElementById('registerSendOtpBtn');
         if (otpGroup) otpGroup.style.display = 'none';
         if (otpCode) otpCode.value = '';
-        if (btn) btn.textContent = '📲 Enviarme el código SMS';
+        if (btn) btn.textContent = '📲 Crear cuenta · te llega un SMS';
         window._registerFullPhone = null;
     }
 
@@ -152,18 +152,18 @@ VIP.auth = (function () {
                     if (otpGroup) otpGroup.style.display = '';
                     const msg = document.getElementById('registerOtpMsg');
                     if (msg) msg.textContent = `✅ Código enviado a ${d.phone || fullPhone}`;
-                    if (btn) btn.textContent = '✅ Confirmar y crear cuenta';
+                    if (btn) btn.textContent = '✅ Confirmar y entrar';
                     const otpInput = document.getElementById('registerOtpCode');
                     if (otpInput) { otpInput.value = ''; otpInput.focus(); }
                 } else {
                     errorDiv.textContent = d.error || 'No se pudo enviar el código SMS';
                     errorDiv.classList.add('show');
-                    if (btn) btn.textContent = '📲 Enviarme el código SMS';
+                    if (btn) btn.textContent = '📲 Crear cuenta · te llega un SMS';
                 }
             } catch (e) {
                 errorDiv.textContent = 'Error de conexión al enviar el SMS';
                 errorDiv.classList.add('show');
-                if (btn) btn.textContent = '📲 Enviarme el código SMS';
+                if (btn) btn.textContent = '📲 Crear cuenta · te llega un SMS';
             } finally {
                 if (btn) btn.disabled = false;
             }
@@ -237,12 +237,12 @@ VIP.auth = (function () {
             } else {
                 errorDiv.textContent = data.error || 'Error al crear cuenta';
                 errorDiv.classList.add('show');
-                if (btn) btn.textContent = '✅ Confirmar y crear cuenta';
+                if (btn) btn.textContent = '✅ Confirmar y entrar';
             }
         } catch (error) {
             errorDiv.textContent = 'Error de conexión. Intenta más tarde.';
             errorDiv.classList.add('show');
-            if (btn) btn.textContent = '✅ Confirmar y crear cuenta';
+            if (btn) btn.textContent = '✅ Confirmar y entrar';
         } finally {
             if (btn) btn.disabled = false;
         }
@@ -1441,7 +1441,9 @@ VIP.auth = (function () {
             if (referralGroup) referralGroup.style.display = 'none';
             if (referralInput) referralInput.value = '';
         } else {
-            if (referralGroup) referralGroup.style.display = '';
+            // #418 (owner): el registro pide SOLO usuario, contraseña y teléfono (SMS). El código de referido aparece
+            // únicamente si vino cargado por el link (?ref=CODE).
+            if (referralGroup) referralGroup.style.display = (referralInput && referralInput.value.trim()) ? '' : 'none';
         }
         // Registro con SMS obligatorio en 2 fases: arranca en la fase de envío.
         resetRegisterOtp();

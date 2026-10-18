@@ -153,12 +153,8 @@ VIP.publisherWelcome = (function () {
             loginBtn.classList.add('publisher-cta');
         }
 
-        // Ocultar el bloque "¿No tienes cuenta? — Registrarse". Este público ya
-        // recibió usuario+contraseña por WhatsApp, no debería registrarse.
-        const registerBtn = document.getElementById('registerBtn');
-        if (registerBtn && registerBtn.parentElement) {
-            registerBtn.parentElement.style.display = 'none';
-        }
+        // #418 (owner): el bloque "Crear mi cuenta / Olvidé mi contraseña" YA NO se oculta para los visitantes de
+        // publicista ("activá el registro"): el que llega por pauta también puede registrarse (SMS obligatorio).
     }
 
     // Bind events. Se llama una sola vez desde app.js.
