@@ -18705,6 +18705,15 @@ app.post('/api/admin/guest-support/:id/close', authMiddleware, async (req, res) 
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
+// #462: DIAGNÓSTICO — últimos errores/crashes en memoria (ring buffer) y endpoint /api/admin/diag (memoria, uptime).
+const _diagErrors = [];
+function _diagPush(kind, err) { try { _diagErrors.push({ at: new Date().toISOString(), kind, msg: String(err && err.message || err).slice(0, 400), stack: String(err && err.stack || '').split('\n').slice(0, 6).join(' | ').slice(0, 900) }); if (_diagErrors.length > 40) _diagErrors.shift(); } catch (_) {} }
+process.on('unhandledRejection', (e) => { _diagPush('unhandledRejection', e); try { logger.error('[unhandledRejection] ' + (e && e.stack || e)); } catch (_) {} });
+process.on('uncaughtException', (e) => { _diagPush('uncaughtException', e); try { logger.error('[uncaughtException] ' + (e && e.stack || e)); console.error('[uncaughtException]', e); } catch (_) {} setTimeout(() => process.exit(1), 1500); });
+app.get('/api/admin/diag', authMiddleware, adminMiddleware, async (req, res) => {
+  const m = process.memoryUsage();
+  res.json({ uptimeSec: Math.round(process.uptime()), rssMb: Math.round(m.rss / 1048576), heapMb: Math.round(m.heapUsed / 1048576), heapLimitMb: Math.round(require('v8').getHeapStatistics().heap_size_limit / 1048576), node: process.version, errors: _diagErrors.slice(-20) });
+});
 // ============================================================
 // #459: DATOS IA — medidor de sesiones de la app + análisis por reglas + comparativa con la otra página
 // ============================================================
@@ -18746,7 +18755,9 @@ app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (
     if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
     if ((to - from) > 400 * 86400000) return res.status(400).json({ error: 'Máximo 400 días' });
     const spend = Number(q.spend) || (await _diaSpendFor(from, to, q.campaign));
+    const _t0 = Date.now();
     const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend });
+    out.ms = Date.now() - _t0; logger.info('[datos-ia] analysis ' + out.from + '→' + out.to + ' ' + out.granularity + ' en ' + out.ms + ' ms ' + JSON.stringify(out.timings || {}));
     const params = { key: [out.from, out.to, out.granularity, out.campaign || '', spend].join('|'), from: out.from, to: out.to, granularity: out.granularity, campaign: out.campaign, spend };
     const summary = { registros: out.totals.registros, primerasCargas: out.totals.primerasCargas, cargas: out.totals.cargas, montoCargas: out.totals.montoCargas, netwin: out.totals.netwin, d30: out.retention.d30, pctSiguieron: out.repeat.pctSiguieron, veredicto: out.informe.veredicto.nivel };
     const snapshotId = q.nosave ? null : await _diaSnapshot('analysis', req.user.username, params, { totals: out.totals, retention: out.retention, repeat: out.repeat, growth: out.growth, informe: out.informe }, summary);

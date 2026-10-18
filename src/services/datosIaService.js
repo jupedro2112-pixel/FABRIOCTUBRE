@@ -38,6 +38,7 @@ async function _analyze(models, opts) {
   const spend = Number(opts.spend) || 0;
   const days = Math.max(1, Math.round((to - from) / DAY));
   const now = new Date();
+  const T = {}; let _tk = Date.now(); const lap = (k) => { T[k] = Date.now() - _tk; _tk = Date.now(); };
 
   // Alcance por campaña → ids
   const userFilter = { role: 'user' }; if (campaign) userFilter.acquisitionCampaign = campaign;
@@ -48,12 +49,14 @@ async function _analyze(models, opts) {
   const realWd = scope({ type: 'withdrawal', status: { $nin: ['failed', 'cancelled'] } });
 
   // (1) Por usuario, todo el histórico de cargas reales: primera, última, cantidad, monto — UNA agregación.
-  const perUser = await Transaction.aggregate([{ $match: realDep }, { $group: { _id: '$userId', first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }]);
+  const perUser = await Transaction.aggregate([{ $match: realDep }, { $group: { _id: '$userId', first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }]).allowDiskUse(true);
+  lap('perUser');
   const firstIn = (a, b) => perUser.filter((u) => u.first >= a && u.first <= b);
   const cohort = firstIn(from, to);
   const cohortIds = cohort.map((u) => u._id);
   // (2) Fechas de cargas de la cohorte (sólo esos usuarios) para retención y escalera.
   const cohortTx = cohortIds.length ? await Transaction.find({ ...realDep, userId: { $in: cohortIds } }).select('userId timestamp amount').sort({ timestamp: 1 }).lean() : [];
+  lap('cohortTx');
   const datesBy = new Map(); cohortTx.forEach((t) => { if (!datesBy.has(t.userId)) datesBy.set(t.userId, []); datesBy.get(t.userId).push(new Date(t.timestamp)); });
   // (3) Movimientos del rango.
   const [depsR, wdsR, regs, logins, sessR, refundsR, spinsR, supportMsgs] = await Promise.all([
@@ -66,6 +69,7 @@ async function _analyze(models, opts) {
     DailyRouletteSpin.find(scope({ spunAt: { $gte: from, $lte: to } })).select('userId spunAt prizeARS').lean(),
     Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } })
   ]);
+  lap('rango');
   const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
   const sessMin = (s) => Math.max(1, (new Date(s.lastPingAt) - new Date(s.startedAt)) / 60000);
 
@@ -101,6 +105,7 @@ async function _analyze(models, opts) {
   spinsR.forEach((s) => { const r = get(s.spunAt); r.giros++; r.premiosRuleta += Number(s.prizeARS) || 0; });
   const rows = Object.keys(series).sort().map((b) => { const r = series[b]; return { bucket: b, registros: r.registros, primerasCargas: r.primerasCargas, cargas: r.cargas, montoCargas: r0(r.montoCargas), cargadores: r.cargadores.size, retiros: r.retiros, montoRetiros: r0(r.montoRetiros), netwin: r0(r.montoCargas - r.montoRetiros), sesiones: r.sesiones, usuariosApp: r.usuariosApp.size, minPorSesion: r.sesiones ? r1(r.minutos / r.sesiones) : null, reembolsos: r.reembolsos, montoReembolsos: r0(r.montoReembolsos), giros: r.giros, premiosRuleta: r0(r.premiosRuleta) }; });
 
+  lap('series');
   // Totales
   const depositors = new Set(depsR.map((t) => t.userId));
   const appUsers = new Set([...sessR.map((s) => s.userId), ...logins.map((u) => u.id)]);
@@ -124,7 +129,9 @@ async function _analyze(models, opts) {
   const prevFirst = firstIn(prevFrom, prevTo).length; const prevAmt = (prevDepAgg[0] && prevDepAgg[0].amt) || 0;
   const growth = { primerasCargas: pct(n - prevFirst, prevFirst), registros: pct(regs.length - prevRegs, prevRegs), montoCargas: pct(montoCargas - prevAmt, prevAmt), prev: { primerasCargas: prevFirst, registros: prevRegs, montoCargas: r0(prevAmt) } };
 
-  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, informe: narrative(totals, retention, growth, gran, repeat), calculadoEn: now.toISOString() };
+  lap('prev');
+  T.counts = { perUser: perUser.length, cohort: cohort.length, cohortTx: cohortTx.length, depsR: depsR.length, wdsR: wdsR.length, regs: regs.length, logins: logins.length, sess: sessR.length };
+  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, informe: narrative(totals, retention, growth, gran, repeat), calculadoEn: now.toISOString(), timings: T };
 }
 
 function grade(v, good, ok) { if (v == null) return null; return v >= good ? 'bien' : (v >= ok ? 'regular' : 'flojo'); }
