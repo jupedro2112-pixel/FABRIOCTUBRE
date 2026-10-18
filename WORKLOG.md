@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 423. 🚪 Ingreso: fila "Jugás en" con las 3 plataformas · Ganamos y jugaygana "Próximamente" — SW v294
+**Pedido (owner, con captura):** "agregá las 3 plataformas que ofrecemos y dejá Ganamos y jugaygana con lo mismo, próximamente".
+**Qué se hizo:** `#lgPlatsRow` debajo de la bajada (index.html); loginhero.js la llena desde `/api/landing/info` (las
+plataformas habilitadas en el panel, con logo) y marca `Próximamente` a las que no tienen API (`connected:false`), igual que
+las pestañas de adentro. Si se conecta la API de Ganamos/JUGAYGANA, la etiqueta desaparece sola.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 422. 📣 Entrada rápida (sólo nombre) AUTOMÁTICA para quien llega por link de publicidad — SW v293, admin-sw v89
 **Pedido (owner):** "activá el modo registro automático si desde el admin con el link de publicidad la gente entra y que tenga
 sólo para completar el nombre así se registra; para el inicio normal original dejamos Iniciar sesión y Crear mi cuenta".

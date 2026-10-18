@@ -980,4 +980,12 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-quick-btn { padding: 13px !important; font-size: 16px !important; margin: 0 !important; }
 .lg-quick-n { font: 500 11px var(--p-font); color: var(--p-muted); text-align: center; }
 .lg-quick-alt { border: 0; background: transparent; color: var(--p-text); font: 700 12px var(--p-font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 0 4px; }
+/* ── #423: ingreso — fila de plataformas (logo + nombre; "Próximamente" las que no tienen API) ── */
+.lg-plats-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
+.lg-plats-k { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .6px; text-transform: uppercase; margin-right: 2px; }
+.lg-plat-pill { display: inline-flex; align-items: center; gap: 5px; background: var(--p-surface); border-radius: 999px; padding: 4px 9px 4px 5px; font-family: var(--p-font); }
+.lg-plat-pill img, .lg-plat-pill i { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; background: var(--p-card); font-style: normal; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.lg-plat-pill b { font: 800 11.5px var(--p-font); color: var(--p-text); }
+.lg-plat-pill small { font: 700 9px var(--p-font); color: var(--p-muted); background: var(--p-card); border-radius: 999px; padding: 1px 6px; letter-spacing: .2px; }
+.lg-plat-pill.soon { opacity: .85; } .lg-plat-pill.soon b { color: var(--p-muted); }
 

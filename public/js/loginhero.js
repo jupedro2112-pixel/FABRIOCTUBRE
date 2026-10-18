@@ -52,6 +52,15 @@
             const wm = Number(info.withdrawMinArs);
             if (wm > 0) { const w = _el('lgWithdrawMin'); if (w) w.textContent = 'Retiros desde ' + _money(wm) + ' con pago automático a tu CBU.'; }
         } catch (_) {}
+        // #423: fila visible de plataformas (Girox · Ganamos · jugaygana) con "Próximamente" para las que no tienen API.
+        try {
+            const row = _el('lgPlatsRow');
+            const list2 = Array.isArray(info.platforms) ? info.platforms : [];
+            if (row && list2.length) {
+                row.innerHTML = '<span class="lg-plats-k">Jugás en</span>' + list2.map((p) => '<span class="lg-plat-pill' + (p.connected ? '' : ' soon') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (p.connected ? '' : '<small>Próximamente</small>') + '</span>').join('');
+                row.style.display = '';
+            }
+        } catch (_) {}
         try {
             const box = _el('lgPlats');
             const list = Array.isArray(info.platforms) ? info.platforms : [];

@@ -391,6 +391,8 @@
             </header>
             <h1 class="lg-title">Cargá, jugá y cobrá <span>en el momento</span></h1>
             <p class="lg-sub">Cargas automáticas en minutos · reembolsos por lo que perdés · soporte 24 hs.</p>
+            <!-- #423 (owner): las 3 plataformas que ofrecemos (loginhero.js desde /api/landing/info; sin API = "Próximamente") -->
+            <div class="lg-plats-row" id="lgPlatsRow" style="display:none;"></div>
             <div class="lg-form">
             <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
                  sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
@@ -2287,7 +2289,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v293</div>
+                    <div class="pf-build" id="appBuildTag">app v294</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
