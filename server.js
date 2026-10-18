@@ -11457,12 +11457,20 @@ async function initializeData() {
   // #361 (owner 2026-10-17): historia de PRUEBA ("prueba historias 1girox ganamos nuevo sistema de cargas" + logo). 72 h.
   try {
     if (!(await getConfig('migration_story_seed_v1_done', false))) {
-      const now = new Date();
-      await Story.create({
-        id: uuidv4(), title: 'CARGAS AUTOMATIC', text: '🆕 La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA · ¡Bienvenidos!', // #368
-        mediaType: 'image', mediaUrl: '/images/stories/novedad-1.png', bgColor: '#06070d', durationSec: 7, hours: 72,
-        publishedAt: now, expiresAt: new Date(now.getTime() + 72 * 36e5), isActive: true, createdBy: 'seed'
-      });
+      // #371: tres historias con el estilo nuevo (blanco / rojo), con picaroja.com al pie.
+      const seedStories = [
+        ['/images/stories/pin-1.png', '🆕 La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA · picaroja.com'],
+        ['/images/stories/pin-2.jpg', '🎰 Todos los slots que buscás · Cargá y jugá en minutos · picaroja.com'],
+        ['/images/stories/pin-3.png', '⚡ Carga automática en 3 pasos: transferís, mandás la foto, se acredita solo · picaroja.com']
+      ];
+      for (let i = 0; i < seedStories.length; i++) {
+        const now = new Date(Date.now() + i * 1000);
+        await Story.create({
+          id: uuidv4(), title: 'PICA ROJA oficial', text: seedStories[i][1],
+          mediaType: 'image', mediaUrl: seedStories[i][0], bgColor: '#ffffff', durationSec: 7, hours: 72,
+          publishedAt: now, expiresAt: new Date(now.getTime() + 72 * 36e5), isActive: true, createdBy: 'seed'
+        });
+      }
       await Config.set('migration_story_seed_v1_done', true, 'startup-migration');
       console.log('✅ Historia de prueba publicada (#361, 72 h)');
     }

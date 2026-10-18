@@ -1,7 +1,7 @@
 {
-  "name": "CARGAS AUTOMATIC",
-  "short_name": "CARGAS AUTOMATIC",
-  "description": "CARGAS AUTOMATIC - Cargas automáticas, reembolsos y chat con notificaciones push",
+  "name": "PICA ROJA oficial",
+  "short_name": "PICA ROJA",
+  "description": "PICA ROJA oficial - Cargas automáticas, reembolsos y chat con notificaciones push",
   "id": "/",
   "start_url": "/?source=pwa",
   "display": "standalone",

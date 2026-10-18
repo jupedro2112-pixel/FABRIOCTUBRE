@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-17
 
+### 371. 📽️ Historias con el estilo nuevo (3 fotos, picaroja.com) · nombre "PICA ROJA oficial" · logo real de Telegram — SW v258
+**Nombre (owner): "ponele nombre de la página PICA ROJA oficial".** `<title>`, metas `apple-mobile-web-app-title` /
+`application-name`, manifest (`name` "PICA ROJA oficial", `short_name` "PICA ROJA"), título por defecto de las
+historias (stories.js, visor, seed) y el pie de las 3 imágenes ("PICA ROJA OFICIAL · PAGA EN EL MOMENTO · 24 HS").
+Las funciones siguen diciendo "Carga automática" (es la función, no la marca).
+**Pedido (owner):** "a la foto de historia dale el mismo estilo, dale lugar a picaroja.com como link, armá varias
+fotos, alguna con las fotos de los slots que ya tenés; al logo de Telegram ponele el logo de Telegram". Tres
+imágenes 1080×1920 generadas con PIL (`public/images/stories/pin-1.png`, `pin-2.jpg`, `pin-3.png`; se borró
+`novedad-1.png`): fondo blanco, tarjetas gris #f1f1f1, texto #111, píldora roja, ícono de la app como app-icon
+redondeado y pie "picaroja.com" en rojo. 1) "La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA";
+2) "Los slots que buscás" con grilla de las capturas `girox-slides/g1..g5`; 3) "Carga automática" en 3 pasos
+(transferís / mandás la foto / se acredita solo). Publicadas en Render por API (72 h, en ese orden; la anterior
+se borró) y el seed del boot (`migration_story_seed_v1_done`, para producción) crea las tres. El dominio
+picaroja.com es sólo texto en la imagen (no hay `linkUrl` hasta que exista). Telegram: `pin.css` pinta el círculo
+del ícono en azul Telegram (#229ed9) con el avión blanco (antes había quedado gris con el avión azul).
+
 ### 370. 🎨 Tema "Pinterest": blanco, grises, un rojo — toda la app salvo la Carga manual (WhatsApp) — SW v257
 **Pedido (owner, captura de Pinterest):** "rediseñá la página más estilo Pinterest, más aesthetic y profesional, no
 tanto color y que no te pierdas; de punta a punta: desde que entrás hasta Info, cambio de clave, carga automática.

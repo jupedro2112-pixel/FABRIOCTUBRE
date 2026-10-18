@@ -83,7 +83,7 @@
         if (bars) bars.innerHTML = _items.map((_, i) => '<i class="' + (i < _idx ? 'done' : (i === _idx ? 'cur' : '')) + '"><b></b></i>').join('');
         // cabecera
         const when = _el('storyWhen'); if (when) when.textContent = _ago(s.publishedAt);
-        const ttl = _el('storyTitle'); if (ttl) ttl.textContent = s.title || 'CARGAS AUTOMATIC';
+        const ttl = _el('storyTitle'); if (ttl) ttl.textContent = s.title || 'PICA ROJA oficial';
         // media
         const media = _el('storyMedia');
         media.style.background = s.bgColor || '#06070d';
