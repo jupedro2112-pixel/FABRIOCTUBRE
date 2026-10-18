@@ -144,6 +144,21 @@
         try { await setPreferred(id); } catch (_) {}
         _basicPaint();
     }
+    // #516: paneles desplegables del básico (uno abierto a la vez); al abrir CARGAR se cargan CBU/alias y mínimos
+    let _bvCbu = null;
+    async function basicToggle(which) {
+        const lp = _el('bvLoadPanel'), wp = _el('bvWdPanel'); const lb = document.querySelector('#basicView .bv-load'), wb = document.querySelector('#basicView .bv-wd');
+        const openLoad = which === 'load' ? lp.hidden : false, openWd = which === 'wd' ? wp.hidden : false;
+        if (lp) lp.hidden = !openLoad; if (wp) wp.hidden = !openWd; if (lb) lb.setAttribute('aria-expanded', openLoad ? 'true' : 'false'); if (wb) wb.setAttribute('aria-expanded', openWd ? 'true' : 'false');
+        try { const md = _platforms && _platforms.minDepositArs; if (md > 0) { const e = _el('bvMinDep'); if (e) e.textContent = _m$(md); } const mw = _platforms && _platforms.withdrawMinArs; if (mw > 0) { const e2 = _el('bvMinWd'); if (e2) e2.textContent = _m$(mw); } } catch (_) {}
+        if (openLoad && !_bvCbu) {
+            try { const r = await fetch(VIP.config.API_URL + '/api/config/cbu', { headers: { Authorization: 'Bearer ' + VIP.state.currentToken } }); if (r.ok) _bvCbu = await r.json(); } catch (_) {}
+            const c = _bvCbu || {}; const set = (id, v) => { const e = _el(id); if (e) e.textContent = v || 'no disponible'; };
+            set('bvAlias', c.alias); set('bvCbu', c.number || c.cbu); set('bvTitular', c.titular); set('bvBank', c.bank);
+        }
+        if (openLoad) setTimeout(() => { try { lp.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (_) {} }, 50);
+    }
+    function basicCopy(k) { const c = _bvCbu || {}; const v = k === 'alias' ? c.alias : (c.number || c.cbu); if (!v) return; try { navigator.clipboard.writeText(String(v)); VIP.ui.showToast((k === 'alias' ? 'Alias' : 'CBU') + ' copiado ✓', 'success'); } catch (_) { try { VIP.ui.copyText(String(v)); } catch (__) {} } }
     function basicPlay() { const pref = (_platforms && _platforms.preferredPlatform) || (_platforms && _platforms.defaultPlatform) || 'girox'; openPlatform(pref); }
     // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
     let _stAt = 0, _stData = null;
@@ -1848,7 +1863,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 516. ▭ Básico: Cargar y Retirar se explican y se resuelven ahí mismo; "otro menú" con más lugar — SW v362
+**Pedido (owner):** "que los botones de cargar y retirar sean directo de ahí: explicá ahí, el retiro lo mismo, que el botón de
+adjuntar o retirar salga desde el básico, y dale más lugar abajo al otro menú".
+**Qué se hizo:** CARGAR despliega un panel con los 3 pasos (transferir al alias/CBU con botones Copiar, mínimo real de
+`platforms.minDepositArs`, titular y banco desde `/api/config/cbu`; adjuntar; se acredita solo) y el botón **📎 Adjuntar
+comprobante** (`VIP.autoload.sendReceipt`, el mismo flujo del chat/hgcash). RETIRAR despliega mínimo (`withdrawMinArs`), pasos y
+**💸 Retirar ahora** (modal de retiro). Un panel abierto a la vez. Abajo, "¿Querés ver más?" con dos tarjetas grandes: Menú fácil
+y Menú completo · detallado, cada una con su descripción.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 515. 🏅 Misiones atadas al SISTEMA DE NIVELES VIP (Bronce · Plata · Oro · Platino · Diamante · Black) — SW v361, admin-sw v119
 **Pedido (owner):** "usá el sistema de niveles".
 **Qué se hizo:** los niveles de misiones ya no se definen por carga semanal sino por la **familia del nivel VIP** del cliente

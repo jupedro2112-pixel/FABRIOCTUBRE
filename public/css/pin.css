@@ -1462,4 +1462,19 @@ body.home-basic #easyView { display: none !important; }
 /* ── #514: nivel de misiones ── */
 .ms-level { display: flex; flex-direction: column; gap: 3px; background: var(--p-red-soft); border-radius: 14px; padding: 10px 12px; margin-bottom: 4px; text-align: left; }
 .ms-level b { font: 900 14px var(--p-font); color: var(--p-red); } .ms-level small { font: 600 11.5px/1.35 var(--p-font); color: var(--p-text); }
+/* ── #516: básico — paneles de Cargar / Retirar y selector de otro menú con más lugar ── */
+.bv-btn .bv-chev { transition: transform .2s; } .bv-btn[aria-expanded="true"] .bv-chev { transform: rotate(180deg); }
+.bv-btn[aria-expanded="true"] { border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+.bv-panel { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 0 0 20px 20px; margin-top: -8px; padding: 14px 12px 12px; }
+.bv-steps { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 8px; } .bv-steps li { font: 600 12.5px/1.45 var(--p-font); color: var(--p-text); }
+.bv-cbu { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 12px; padding: 8px 10px; margin-top: 6px; }
+.bv-cbu small { display: block; font: 700 9.5px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: .4px; } .bv-cbu b { font: 800 13px var(--p-font); color: var(--p-text); word-break: break-all; }
+.bv-copy { border: 0; background: var(--p-red); color: #fff; border-radius: 999px; padding: 7px 12px; font: 800 11px var(--p-font); cursor: pointer; flex: 0 0 auto; }
+.bv-tit { display: block; margin-top: 5px; color: var(--p-muted); font-weight: 600; }
+.bv-action { width: 100%; border: 0; border-radius: 999px; padding: 14px; background: var(--p-red); color: #fff; font: 900 14px var(--p-font); cursor: pointer; box-shadow: 0 6px 16px rgba(230,0,35,.25); }
+.bv-action-wd { background: var(--p-green); box-shadow: 0 6px 16px rgba(10,122,62,.22); }
+.bv-switch2 { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--p-border); display: flex; flex-direction: column; gap: 8px; }
+.bv-switch2-h { font: 800 12px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+.bv-sw { width: 100%; text-align: left; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 16px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; font-family: var(--p-font); }
+.bv-sw b { font: 900 14px var(--p-font); } .bv-sw small { font: 600 11.5px/1.35 var(--p-font); color: var(--p-muted); }
 
