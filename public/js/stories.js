@@ -108,7 +108,7 @@
             else link.style.display = 'none';
         }
         _markSeen(s.id);
-        try { fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(s.id) + '/view', { method: 'POST', headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }).catch(() => {}); } catch (_) {}
+        try { if (VIP.state && VIP.state.currentToken) fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(s.id) + '/view', { method: 'POST', headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }).catch(() => {}); } catch (_) {}
         _arm(dur);
     }
 
@@ -167,5 +167,23 @@
         document.addEventListener('keydown', (e) => { if (!v.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') prev(); });
     }
 
-    VIP.stories = { init, load, open, close, next, prev, pause, resume };
+    // #416: tira de historias en la PANTALLA DE INGRESO (sin sesión): /api/stories/public → círculos; tocar abre el visor.
+    async function loadPublic(boxId) {
+        const box = _el(boxId || 'lgStories'); if (!box) return;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/stories/public');
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const j = await r.json();
+            _items = Array.isArray(j.items) ? j.items : [];
+        } catch (_) { _items = []; }
+        if (!_items.length) { box.style.display = 'none'; return; }
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        box.innerHTML = '<div class="lg-stories-t">Historias</div><div class="lg-stories-row">' + _items.map((s, i) => {
+            const thumb = s.mediaType === 'image' && s.mediaUrl ? '<img src="' + esc(s.mediaUrl) + '" alt="">' : (s.mediaType === 'video' ? '<i>🎬</i>' : '<i>' + esc((s.title || 'PR').trim().slice(0, 2).toUpperCase()) + '</i>');
+            const lbl = (s.title || s.text || 'Historia').trim().slice(0, 14);
+            return '<button type="button" class="lg-story" onclick="VIP.stories.open(' + i + ')" title="' + esc(s.title || '') + '"><span class="lg-story-ring" style="--bg:' + esc(s.bgColor || '#06070d') + '">' + thumb + '</span><small>' + esc(lbl) + '</small></button>';
+        }).join('') + '</div>';
+        box.style.display = '';
+    }
+    VIP.stories = { init, load, loadPublic, open, close, next, prev, pause, resume };
 })();

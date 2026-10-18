@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 416. 🚪 Ingreso: fuera chips y ticker de premios · historias publicadas + opinión de la gente — SW v287
+**Pedido (owner):** "carga automática / reembolso / carga mínima así siento que está poco profesional; los regalos en vivo
+no nos interesan; sí un poco la opinión de la gente y las historias que publicamos".
+**Qué se hizo:** se quitaron del HTML los chips (`.lg-chips`) y el ticker `#loginClaimsTicker` (app.js ya no consulta
+`/api/claims-feed` si no existe el ticker). En su lugar: **tira de Historias** `#lgStories` (círculos con anillo rojo, abre el
+visor `#storyViewer`, que vive a nivel body → funciona sin sesión) desde el endpoint nuevo `GET /api/stories/public`
+(sin auth, cache 60 s; el POST /view sólo con sesión) via `VIP.stories.loadPublic`. Debajo del registro: línea de confianza
+(★ promedio · N opiniones) + **una reseña corta que rota** cada 5 s (`#lgQuote`, de `/api/reviews/public?limit=12&random=1`,
+sólo las que tienen texto, usuario enmascarado). Con pantallas ≤640 px la cita se oculta para seguir en una pantalla.
+**Archivos:** `server.js`, `public/index.html`, `public/js/stories.js`, `public/js/loginhero.js`, `public/js/app.js`,
+`public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 415. 🚪 Ingreso en UNA sola pantalla, estilo registro de app (sin deslizar) — SW v286
 **Pedido (owner):** "hacelo más formato de registro de cualquier aplicación de ese estilo tipo Pinterest, la explicación del
 servicio resumida y en una pantalla todo sin deslizar, es una app".

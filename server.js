@@ -21352,6 +21352,15 @@ function _storyPublic(s, req) {
     expired: new Date(s.expiresAt).getTime() <= Date.now()
   };
 }
+// #416 (owner): historias PÚBLICAS para la pantalla de ingreso (sin sesión). Mismo contenido que /active (son pauta).
+app.get('/api/stories/public', async (req, res) => {
+  try {
+    const now = new Date();
+    const items = await Story.find({ isActive: true, expiresAt: { $gt: now } }).sort({ publishedAt: 1 }).limit(12).lean();
+    res.set('Cache-Control', 'public, max-age=60');
+    res.json({ items: items.map((s) => _storyPublic(s, req)) });
+  } catch (e) { logger.warn(`[stories] public: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/stories/active', authMiddleware, async (req, res) => {
   try {
     const now = new Date();

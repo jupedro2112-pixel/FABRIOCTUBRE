@@ -389,18 +389,9 @@
             </header>
             <h1 class="lg-title">Cargá, jugá y cobrá <span>en el momento</span></h1>
             <p class="lg-sub">Cargas automáticas en minutos · reembolsos por lo que perdés · soporte 24 hs.</p>
-            <div class="lg-chips">
-                <span class="lg-chip">⚡ Carga automática</span>
-                <span class="lg-chip lg-chip-red" id="lgChipRefund">💸 Reembolso diario</span>
-                <span class="lg-chip">🎰 Ruleta diaria</span>
-                <span class="lg-chip" id="lgChipMin">💵 Carga mínima $5.000</span>
-            </div>
-            <!-- Ticker en vivo de lo que reclama la gente (se llena desde app.js). -->
-            <div id="loginClaimsTicker" class="lg-ticker" style="display:none;">
-                <span class="lg-live"><i></i>EN VIVO</span>
-                <span id="loginClaimsText" class="lg-ticker-t">—</span><!-- #414: app.js pinta nombre (final visible) · monto · tipo -->
-                <button id="loginGiftsBtn" type="button" class="lg-gifts" title="Regalos de hoy">🎁</button>
-            </div>
+            <!-- #416 (owner): fuera los chips y el ticker de premios en vivo ("poco profesional / no nos interesa").
+                 En su lugar: las HISTORIAS publicadas (stories.js → loadPublic) y, más abajo, la opinión de la gente. -->
+            <div class="lg-stories" id="lgStories" style="display:none;"></div>
             <div class="lg-form">
             <!-- #414 (owner): la pantalla figura como REGISTRO: crear cuenta (SMS obligatorio) es la acción principal;
                  "Ya tengo cuenta" despliega el ingreso de siempre. -->
@@ -477,6 +468,7 @@
             </div>
             <!-- #415: línea de confianza (reseñas reales) en vez de las secciones largas (quedan en el HTML, ocultas por CSS) -->
             <div class="lg-trust" id="lgTrust" style="display:none;"></div>
+            <div class="lg-quote" id="lgQuote" style="display:none;"></div>
             <div class="lg-alt">
                 <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Recuperar contraseña</button>
                 <button type="button" class="lg-link" onclick="if(window.VIP&&VIP.guestSupport)VIP.guestSupport.open()">💬 Hablar con Soporte</button>
@@ -2288,7 +2280,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v286</div>
+                    <div class="pf-build" id="appBuildTag">app v287</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -908,4 +908,17 @@ body.is-tester .profile-modal .pf-logout small { color: var(--p-muted) !importan
 .lg-app .lg-foot { margin: 0; }
 @media (max-height: 700px) { .lg-app .lg-title { font-size: 21px; } .lg-app .lg-sub { font-size: 12px; } .lg-app .lg-chips .lg-chip:nth-child(3) { display: none; } .lg-app .lg-reg-main { padding: 12px !important; font-size: 16px !important; } }
 @media (max-height: 620px) { .lg-app .lg-ticker { display: none !important; } .lg-app .lg-alt-note { display: none; } }
+/* ── #416: ingreso — tira de HISTORIAS y una reseña corta que rota (sin chips ni ticker) ── */
+.lg-stories { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 0; }
+.lg-stories-t { font: 800 10.5px var(--p-font); letter-spacing: 1.2px; text-transform: uppercase; color: var(--p-muted); }
+.lg-stories-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
+.lg-stories-row::-webkit-scrollbar { display: none; }
+.lg-story { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; border: 0; background: transparent; padding: 0; cursor: pointer; font-family: var(--p-font); }
+.lg-story-ring { width: 54px; height: 54px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, var(--p-red), #ff8a9a); display: flex; align-items: center; justify-content: center; }
+.lg-story-ring img, .lg-story-ring i { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--p-card); display: flex; align-items: center; justify-content: center; font: 800 14px var(--p-font); font-style: normal; color: #fff; background: var(--bg, #06070d); }
+.lg-story small { font: 600 10px var(--p-font); color: var(--p-text); max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lg-quote { display: flex; flex-direction: column; gap: 2px; background: var(--p-surface); border-radius: 14px; padding: 9px 12px; transition: opacity .25s; }
+.lg-quote-t { font: 500 12.5px/1.4 var(--p-font); color: var(--p-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lg-quote-n { font: 700 10.5px var(--p-font); color: var(--p-muted); }
+@media (max-height: 640px) { .lg-quote { display: none !important; } }
 

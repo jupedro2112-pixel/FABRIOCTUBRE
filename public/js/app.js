@@ -175,6 +175,7 @@ function setupEventListeners() {
             }, 260);
         }
         (async function _vipStartTicker() {
+            if (!document.getElementById('loginClaimsTicker')) return; // #416: el ticker se sacó del ingreso → no se consulta el feed
             await _vipFetchClaims();
             if (!_vipClaims.length) return;
             const ticker = document.getElementById('loginClaimsTicker');
