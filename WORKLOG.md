@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 457. 📖 Historia 2 (slots): sin la fila cortada, "Jugá · probá tu suerte" + botón; republicadas las 4 en orden
+**Pedido (owner, con captura):** "esa foto, abajo de Cargá y jugá, sacá ese fondo que está cortado y poné 'jugá, probá tu
+suerte'; si hay que eliminar, eliminá y volvé a subir, respetá el orden".
+**Qué se hizo:** pin-2.png regenerado desde el original en alta (recuperado de git): se quitó la fila de juegos en vivo que
+quedaba recortada, debajo de las 4 grillas va "Jugá · probá tu suerte" (76px) y el botón rojo "CARGÁ Y JUGÁ EN MINUTOS";
+franja inferior libre. Se borraron las 4 historias y se recrearon en el mismo orden (1 novedad · 2 slots · 3 pasos ·
+4 soporte), 72 h, con el cache-buster de #456.
+**Archivos:** `public/images/stories/pin-2.png`.
+
 ### 456. 📖 Historias rehechas de 0: sin pie interno (franja inferior libre), Soporte con los 3, republicadas con horario nuevo · arriba sólo el nombre — SW v325
 **Pedido (owner, con captura):** "cambiá las fotos y dejalas hasta donde aparece esta parte inferior, que no se superponga
 nada, actualizá las fotos de 0; borrar y publicar con horario actualizado; el logo arriba sacalo, dejá sólo el nombre; la
