@@ -2356,7 +2356,7 @@ async function handlePayoutStatusWebhook(p) {
     } else if (status === 'ERROR' || status === 'CANCELLED') {
       const reason = p.errorCode || p.error || status;
       await PendingPayout.updateOne({ id: payout.id }, { $set: { status: 'failed', hgStatus: status, error: String(reason).slice(0, 300) } });
-      _bankPayoutFailed(reason).catch(() => {}); // #442
+      _bankPayoutFailed(reason, payout).catch(() => {}); // #442/#443
       // Si las fichas ya se descontaron (flujo nuevo confirmado), aclararlo: NO devolver.
       const yaDescontado = (payout.deductAtPay === true && payout.debitConfirmed === true);
       await _emitAdminOnlyChatNote(payout.userId, payout.username,
@@ -11892,6 +11892,19 @@ async function initializeData() {
       response: BANK_UP_DEFAULT
     },
     {
+      // #443
+      name: '/sys_bank_fail_client',
+      description: 'Mensaje al cliente cuyo PAGO de retiro falló en el banco (chat + push). Variable: {monto}.',
+      type: 'message',
+      response: BANK_FAIL_CLIENT_DEFAULT
+    },
+    {
+      name: '/sys_bank_up_pending',
+      description: 'Aviso "banco normalizado" para el cliente cuyo pago había fallado (su retiro quedó pendiente).',
+      type: 'message',
+      response: BANK_UP_PENDING_DEFAULT
+    },
+    {
       // #384: respuestas automáticas de los chips Cargar / Retirar de Soporte (con botón al sector).
       name: '/sys_support_quick_cargar',
       description: 'Soporte: respuesta automática cuando el cliente toca "Cargar" (las cargas son automáticas + botón a Carga automática). Variables: {min} (carga mínima), {retiro_min}. Vacío = no se manda.',
@@ -12385,22 +12398,35 @@ app.get('/api/withdrawal/bank-status', authMiddleware, async (req, res) => {
   try {
     const o = await getBankOutage();
     if (o.active) _addBankOutageWaiter(req.user.userId).catch(() => {});
-    res.json({ outage: !!o.active, since: o.since, message: o.active ? await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}) : null });
+    res.json({ outage: !!o.active, since: o.since, pause: (await getBankSettings()).pauseWithdrawals, message: o.active ? await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}) : null });
   } catch (e) { res.json({ outage: false }); }
 });
 app.get('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const o = await getBankOutage(); const w = (await getConfig('bankOutageWaiters', [])) || [];
-    res.json({ success: true, ...o, waiters: w.length, failStreak: _bankFailStreak, canEdit: ['admin', 'withdrawer'].includes(req.user.role) });
+    res.json({ success: true, ...o, waiters: w.length, failedWaiters: w.filter((x) => x && x.kind === 'failed').length, failStreak: _bankFailStreak, settings: await getBankSettings(), canEdit: ['admin', 'withdrawer'].includes(req.user.role) });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!['admin', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Solo admin general o pagos.' });
-    const active = !!(req.body && req.body.active);
-    const r = await setBankOutage(active, { mode: 'manual', reason: req.body && req.body.reason, by: req.user.username });
-    if (active) _bankFailStreak = 0;
-    res.json({ success: true, changed: r.changed, state: await getBankOutage() });
+    // #443: settings editables (auto on/off, umbral, pausar retiros, avisar al que le falló) — se guardan si vienen.
+    if (req.body && req.body.settings && typeof req.body.settings === 'object') {
+      const s = req.body.settings; const cur = await getBankSettings();
+      const next = {
+        autoEnabled: typeof s.autoEnabled === 'boolean' ? s.autoEnabled : cur.autoEnabled,
+        failThreshold: Math.max(1, Math.min(10, parseInt(s.failThreshold, 10) || cur.failThreshold)),
+        pauseWithdrawals: typeof s.pauseWithdrawals === 'boolean' ? s.pauseWithdrawals : cur.pauseWithdrawals,
+        notifyFailedClient: typeof s.notifyFailedClient === 'boolean' ? s.notifyFailedClient : cur.notifyFailedClient
+      };
+      await Config.set('bankOutageSettings', next, req.user.username);
+    }
+    let r = { changed: false };
+    if (req.body && typeof req.body.active === 'boolean') {
+      r = await setBankOutage(req.body.active, { mode: 'manual', reason: req.body.reason, by: req.user.username });
+      if (req.body.active) _bankFailStreak = 0;
+    }
+    res.json({ success: true, changed: r.changed, state: await getBankOutage(), settings: await getBankSettings() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
@@ -12419,8 +12445,8 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
     // #442: banco con fallas → no se toma el retiro; se avisa y se anota al cliente para avisarle cuando se normalice.
     const _outage = await getBankOutage();
     if (_outage.active) {
-      _addBankOutageWaiter(req.user.userId).catch(() => {});
-      return res.status(503).json({ error: await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}), code: 'BANK_OUTAGE' });
+      _addBankOutageWaiter(req.user.userId, 'waiter').catch(() => {});
+      if ((await getBankSettings()).pauseWithdrawals) return res.status(503).json({ error: await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}), code: 'BANK_OUTAGE' });
     }
 
     const amountNum = Number(amount);
@@ -12707,6 +12733,24 @@ const WITHDRAW_MIN_ARS_DEFAULT = 10000;
 // /sys_bank_down y anota al cliente en Config['bankOutageWaiters']; al normalizarse se les manda /sys_bank_up por chat + push.
 const BANK_DOWN_DEFAULT = '⚠️ El banco está con fallas en este momento y no podemos procesar retiros. Apenas se normalice te avisamos por acá para que vuelvas a intentarlo. Disculpá las molestias.';
 const BANK_UP_DEFAULT = '✅ El banco ya se normalizó: podés volver a pedir tu retiro cuando quieras. Disculpá las molestias.';
+// #443: mensaje al cliente cuyo PAGO falló (sus fichas ya pueden estar descontadas → no se le pide que vuelva a pedirlo) y
+// aviso a ese mismo cliente cuando el banco vuelve.
+const BANK_FAIL_CLIENT_DEFAULT = '⚠️ El banco está con fallas y tu retiro no pudo procesarse todavía. Quedó pendiente: apenas se normalice lo procesamos y te avisamos por acá. Disculpá las molestias.';
+const BANK_UP_PENDING_DEFAULT = '✅ El banco volvió a funcionar. Tu retiro pendiente se procesa ahora; si en un rato no lo ves acreditado, escribinos por Soporte. Disculpá las molestias.';
+// Config['bankOutageSettings']: todo editable desde Configuración → Banco con fallas.
+const BANK_SETTINGS_DEFAULT = { autoEnabled: true, failThreshold: 1, pauseWithdrawals: true, notifyFailedClient: true };
+async function getBankSettings() {
+  try {
+    const v = await getConfig('bankOutageSettings', null);
+    if (v && typeof v === 'object') return {
+      autoEnabled: v.autoEnabled !== false,
+      failThreshold: Math.max(1, Math.min(10, parseInt(v.failThreshold, 10) || 1)),
+      pauseWithdrawals: v.pauseWithdrawals !== false,
+      notifyFailedClient: v.notifyFailedClient !== false
+    };
+  } catch (_) {}
+  return { ...BANK_SETTINGS_DEFAULT };
+}
 async function getBankOutage() {
   try { const v = await getConfig('bankOutage', null); if (v && typeof v === 'object') return { active: !!v.active, mode: v.mode || 'manual', since: v.since || null, reason: v.reason || null, updatedBy: v.updatedBy || null }; } catch (_) {}
   return { active: false, mode: 'manual', since: null, reason: null, updatedBy: null };
@@ -12721,23 +12765,49 @@ async function setBankOutage(active, opts = {}) {
   if (!active) _notifyBankOutageWaiters().catch((e) => logger.warn('[bank-outage] aviso: ' + e.message));
   return { changed: true, state: next };
 }
-async function _addBankOutageWaiter(userId) {
-  try { const arr = (await getConfig('bankOutageWaiters', [])) || []; if (!arr.includes(userId)) { arr.push(userId); await Config.set('bankOutageWaiters', arr.slice(-3000), 'sistema'); } } catch (_) {}
+// #443: la lista guarda { userId, kind: 'waiter' (quiso retirar durante la falla) | 'failed' (su pago falló) }.
+async function _addBankOutageWaiter(userId, kind = 'waiter') {
+  try {
+    const arr = ((await getConfig('bankOutageWaiters', [])) || []).map((x) => (typeof x === 'string' ? { userId: x, kind: 'waiter' } : x));
+    const i = arr.findIndex((x) => x && x.userId === userId);
+    if (i >= 0) { if (kind === 'failed') arr[i].kind = 'failed'; } else arr.push({ userId, kind });
+    await Config.set('bankOutageWaiters', arr.slice(-3000), 'sistema');
+  } catch (_) {}
 }
 async function _notifyBankOutageWaiters() {
-  const arr = (await getConfig('bankOutageWaiters', [])) || [];
+  const arr = ((await getConfig('bankOutageWaiters', [])) || []).map((x) => (typeof x === 'string' ? { userId: x, kind: 'waiter' } : x)).filter((x) => x && x.userId);
   if (!arr.length) return 0;
   await Config.set('bankOutageWaiters', [], 'sistema');
-  const text = await renderSystemCommand('/sys_bank_up', BANK_UP_DEFAULT, {});
-  const users = await User.find({ id: { $in: arr } }).select('id username fcmTokens fcmTokenContext').lean();
-  for (const u of users) { try { await _sendUserSystemMessage(u, text, { push: { title: 'Banco normalizado ✅', body: 'Ya podés volver a pedir tu retiro.' } }); } catch (_) {} }
-  logger.info(`[bank-outage] avisados ${users.length} clientes que esperaban retirar`);
+  const textUp = await renderSystemCommand('/sys_bank_up', BANK_UP_DEFAULT, {});
+  const textPend = await renderSystemCommand('/sys_bank_up_pending', BANK_UP_PENDING_DEFAULT, {});
+  const kinds = Object.fromEntries(arr.map((x) => [x.userId, x.kind]));
+  const users = await User.find({ id: { $in: arr.map((x) => x.userId) } }).select('id username fcmTokens fcmTokenContext').lean();
+  for (const u of users) {
+    const failed = kinds[u.id] === 'failed';
+    try { await _sendUserSystemMessage(u, failed ? textPend : textUp, { push: { title: 'Banco normalizado ✅', body: failed ? 'Tu retiro pendiente se procesa ahora.' : 'Ya podés volver a pedir tu retiro.' } }); } catch (_) {}
+  }
+  logger.info(`[bank-outage] avisados ${users.length} clientes (${arr.filter((x) => x.kind === 'failed').length} con pago fallido)`);
   return users.length;
 }
 let _bankFailStreak = 0;
-async function _bankPayoutFailed(reason) {
+// #443: pago fallido → (1) aviso al cliente afectado y queda anotado como 'failed'; (2) al llegar al umbral (default 1) se
+// activa la alerta automática. `payout` = PendingPayout (userId, username, amount).
+async function _bankPayoutFailed(reason, payout) {
   _bankFailStreak++;
-  try { const cur = await getBankOutage(); if (!cur.active && _bankFailStreak >= 2) await setBankOutage(true, { mode: 'auto', reason: 'pagos fallidos: ' + String(reason || ''), by: 'auto' }); } catch (_) {}
+  try {
+    const st = await getBankSettings();
+    if (payout && payout.userId) {
+      _addBankOutageWaiter(payout.userId, 'failed').catch(() => {});
+      if (st.notifyFailedClient) {
+        try {
+          const u = await User.findOne({ id: payout.userId }).select('id username fcmTokens fcmTokenContext').lean();
+          if (u) await _sendUserSystemMessage(u, await renderSystemCommand('/sys_bank_fail_client', BANK_FAIL_CLIENT_DEFAULT, { monto: '$' + Number(payout.amount || 0).toLocaleString('es-AR') }), { push: { title: 'Retiro demorado ⚠️', body: 'El banco está con fallas. Te avisamos apenas se normalice.' } });
+        } catch (_) {}
+      }
+    }
+    const cur = await getBankOutage();
+    if (st.autoEnabled && !cur.active && _bankFailStreak >= st.failThreshold) await setBankOutage(true, { mode: 'auto', reason: 'pagos fallidos: ' + String(reason || '').slice(0, 80), by: 'auto' });
+  } catch (_) {}
 }
 async function _bankPayoutOk() {
   _bankFailStreak = 0;
@@ -19068,7 +19138,7 @@ app.post('/api/admin/payouts/:id/pay', authMiddleware, withdrawerMiddleware, asy
         return res.json({ success: true, message: 'El pago ya estaba en curso (idempotencia).', status: 'paying' });
       }
       await PendingPayout.updateOne({ id }, { $set: { status: 'failed', error: String(result.error).slice(0, 300) } });
-      _bankPayoutFailed(result.error).catch(() => {}); // #442
+      _bankPayoutFailed(result.error, claimed).catch(() => {}); // #442/#443
       // Flujo nuevo: las fichas YA se descontaron arriba. NO se devuelven; el agente
       // paga manual ("otro banco") o reintenta. Nota interna para que quede clarísimo.
       if (claimed.deductAtPay === true) {

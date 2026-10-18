@@ -5737,8 +5737,23 @@ async function loadBankOutage() {
         if (meta) meta.textContent = (j.active ? ('desde ' + new Date(j.since).toLocaleString('es-AR') + ' · ' + (j.mode === 'auto' ? 'automática' : 'manual') + (j.reason ? ' · ' + j.reason : '') + ' · ') : '') + (j.waiters || 0) + ' esperando aviso' + (j.failStreak ? ' · fallos seguidos: ' + j.failStreak : '');
         if (on) { on.style.display = j.active || !j.canEdit ? 'none' : ''; }
         if (off) { off.style.display = !j.active || !j.canEdit ? 'none' : ''; }
+        // #443: settings
+        const s = j.settings || {};
+        const a = document.getElementById('boAutoChk'), t = document.getElementById('boThreshold'), p = document.getElementById('boPauseChk'), n = document.getElementById('boNotifyChk');
+        if (a) a.checked = s.autoEnabled !== false; if (t) t.value = s.failThreshold || 1; if (p) p.checked = s.pauseWithdrawals !== false; if (n) n.checked = s.notifyFailedClient !== false;
+        [a, t, p, n].forEach(function (el) { if (el) el.disabled = !j.canEdit; });
     } catch (_) {}
 }
+async function saveBankOutageSettings() {
+    const a = document.getElementById('boAutoChk'), t = document.getElementById('boThreshold'), p = document.getElementById('boPauseChk'), n = document.getElementById('boNotifyChk');
+    const settings = { autoEnabled: !!(a && a.checked), failThreshold: Number(t && t.value) || 1, pauseWithdrawals: !!(p && p.checked), notifyFailedClient: !!(n && n.checked) };
+    try {
+        const r = await authFetch('/api/admin/bank-outage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ settings: settings }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Configuración del banco guardada', 'success'); loadBankOutage();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.saveBankOutageSettings = saveBankOutageSettings;
 async function setBankOutageUI(active) {
     if (active && !confirm('¿Activar la alerta "banco con fallas"? Los clientes no van a poder pedir retiros hasta que la desactives.')) return;
     if (!active && !confirm('¿Marcar el banco como normalizado? Se les avisa por chat y push a todos los que intentaron retirar.')) return;

@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-18
 
+### 443. 🏦 Banco con fallas 100% automático y configurable: aviso al que le falló, umbral, pausa, avisos al volver — SW v315, admin-sw v92
+**Pedido (owner):** "que sea automático: un cliente quiere retirar y falla → mensaje de aviso que vuelva en un rato que está
+fallando el banco; si después uno cobra sin problemas, que le avise al que falló que el banco volvió, por notificación o
+cartel, que vuelva a pedir el retiro; dejalo plasmado en el admin, toda esta configuración editable".
+**Qué se hizo:**
+- `Config['bankOutageSettings']` {autoEnabled (sí), failThreshold (1), pauseWithdrawals (sí), notifyFailedClient (sí)} editable
+  en Configuración → "Banco con fallas" (tildes + número + Guardar; `POST /api/admin/bank-outage {settings}`).
+- **Pago fallido** (`_bankPayoutFailed(reason, payout)`): al cliente afectado le llega por chat + push
+  `/sys_bank_fail_client` ("tu retiro quedó pendiente, apenas se normalice lo procesamos", variable {monto}) y queda anotado
+  como `failed`; al llegar al umbral se activa la alerta automática (default: con el primer fallo).
+- **Alerta activa:** el que quiere retirar ve `/sys_bank_down`; si "pausar" está tildado, el retiro no se toma (503); si no,
+  sólo se avisa (la app muestra el cartel pero deja continuar). Queda anotado como `waiter`.
+- **Pago OK** (`_bankPayoutOk()`): apaga la alerta automática y avisa a todos: `waiter` → `/sys_bank_up` ("volvé a pedir tu
+  retiro"); `failed` → `/sys_bank_up_pending` ("tu retiro pendiente se procesa ahora; si no lo ves, Soporte"). A los que les
+  falló NO se les dice "volvé a pedirlo" porque sus fichas pueden estar ya descontadas: el agente reintenta el pago desde
+  Pagos (no hay reintento automático de pagos fallidos).
+- Lista `Config['bankOutageWaiters']` ahora con {userId, kind}; compatible con la anterior.
+**Archivos:** `server.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`,
+`public/js/withdraw.js`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 442. 🏦 "Banco con fallas" para retiros: alerta manual/automática, bloqueo con aviso y aviso al normalizarse — SW v314, admin-sw v91
 **Pedido (owner):** "va a estar conectado un banco; quiero avisar tipo alerta al que quiere retirar que está fallando el
 banco, apenas se normalice le avisaremos; que se active/desactive desde el admin o sea automático cuando detecte que no

@@ -73,7 +73,8 @@ VIP.withdraw = (function () {
             const d = r.ok ? await r.json() : { outage: false };
             _bankOutage = !!(d && d.outage);
             if (box) { box.textContent = _bankOutage ? (d.message || 'El banco está con fallas. Apenas se normalice te avisamos. Disculpá las molestias.') : ''; box.style.display = _bankOutage ? '' : 'none'; }
-            if (btn) { btn.disabled = _bankOutage; if (_bankOutage) btn.textContent = 'Retiros pausados por el banco'; else if (btn.textContent === 'Retiros pausados por el banco') btn.textContent = '💸 Continuar'; }
+            const pause = _bankOutage && d.pause !== false; // #443: si el panel no pausa, sólo se avisa
+            if (btn) { btn.disabled = pause; if (pause) btn.textContent = 'Retiros pausados por el banco'; else if (btn.textContent === 'Retiros pausados por el banco') btn.textContent = '💸 Continuar'; }
         } catch (_) { _bankOutage = false; }
     }
     async function openWithdrawModal() {
