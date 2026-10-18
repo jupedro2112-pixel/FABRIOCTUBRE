@@ -18898,7 +18898,10 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     // escrito a mano > gasto total desde el inicio (Config adSpendTotal, si la base es desde el inicio) > gasto por día guardado.
     const to = new Date(); let from, baseMode = q.baseMode === 'dias' ? 'dias' : 'inicio';
     const st = (await getConfig('adSpendTotal', null)) || null;
-    if (baseMode === 'inicio') { const fd = await _diaFirstDepositDate(); const since = st && st.since ? new Date(st.since) : null; from = since && !isNaN(since) ? since : (fd || new Date(to.getTime() - 29 * 86400000)); if (to - from > 400 * 86400000) from = new Date(to.getTime() - 400 * 86400000); }
+    if (baseMode === 'inicio') { // #484: siempre desde que la plataforma empezó a recibir clientes (primera carga real). Una fecha más vieja se recorta a esa.
+      const fd = await _diaFirstDepositDate(); const since = st && st.since ? new Date(st.since) : null;
+      from = since && !isNaN(since) ? since : (fd || new Date(to.getTime() - 29 * 86400000)); if (fd && from < fd) from = fd;
+      if (to - from > 400 * 86400000) from = new Date(to.getTime() - 400 * 86400000); }
     else { const bd = Math.max(7, Math.min(400, parseInt(q.base, 10) || 30)); from = new Date(to.getTime() - (bd - 1) * 86400000); }
     let spendBase = Number(q.baseSpend) > 0 ? Number(q.baseSpend) : 0, spendOrigen = spendBase ? 'escrito' : null;
     if (!spendBase && baseMode === 'inicio' && st && Number(st.amount) > 0) { spendBase = Number(st.amount); spendOrigen = 'gasto total desde el inicio'; }

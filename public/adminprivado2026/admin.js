@@ -15453,6 +15453,7 @@ function _diaCurUI() { const a = document.getElementById('diaCurArs'), u = docum
 const _diaIn = (v) => { const n = Number(v); if (!(n > 0)) return ''; return String(Math.round(_diaCur === 'usd' && _diaRate > 0 ? n * _diaRate : n)); };
 function diaSetCur(c) { if (c === 'usd' && !_diaRate) { showToast('Cargá la cotización del USDT primero', 'error'); return; } _diaCur = c === 'usd' ? 'usd' : 'ars'; try { localStorage.setItem('dia_cur', _diaCur); } catch (_) {} _diaCurUI(); _diaRefresh(); }
 function _diaRefresh() { const pa = document.getElementById('diaPaneA'), pc = document.getElementById('diaPaneC'); if (pa && pa.style.display !== 'none') diaRun(); if (pc && pc.style.display !== 'none') diaProject(); }
+let _diaRanA = false;
 window.diaLoadUsdt = diaLoadUsdt; window.diaUsdtFetch = diaUsdtFetch; window.diaUsdtSave = diaUsdtSave; window.diaSetCur = diaSetCur;
 const _diaN = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
 const _diaPct = (n) => (n == null ? '—' : (n >= 0 ? '+' : '') + n + '%');
@@ -15463,11 +15464,11 @@ async function diaInit() {
         diaPreset(30, 'day');
         try { const r = await authFetch('/api/admin/campaigns'); if (r.ok) { const j = await r.json(); const list = j.campaigns || []; ['diaCampaign', 'opCampaign', 'prCampaign'].forEach(function (id) { const sel = document.getElementById(id); if (!sel) return; list.forEach(function (c) { const o = document.createElement('option'); o.value = c.code; o.textContent = (c.code || '') + (c.name ? ' · ' + c.name : ''); sel.appendChild(o); }); }); } } catch (_) {}
     }
-    await diaLoadUsdt(false); diaRun(); diaLoadSpend(); diaLoadOthers();
+    await diaLoadUsdt(false); diaLoadSpendTotal(); diaProject(); diaLoadSpend(); diaLoadOthers(); // #484: abre en el Panorama; el análisis por fechas se calcula al entrar a su pestaña
 }
 function diaTab(t) {
     ['a', 'b', 'c', 'd'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.classList.toggle('on', t === k); });
-    if (t === 'c') { diaLoadSpendTotal(); diaProject(); } if (t === 'd') diaLoadHistory();
+    if (t === 'c') { diaLoadSpendTotal(); diaProject(); } if (t === 'd') diaLoadHistory(); if (t === 'a' && !_diaRanA) { _diaRanA = true; diaRun(); }
 }
 function diaPreset(days, gran) {
     const to = new Date(); const from = new Date(to.getTime() - (days - 1) * 86400000);

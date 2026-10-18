@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 484. 🧮 Panorama = pestaña principal de Datos IA · base SIEMPRE desde que la página empezó a recibir clientes — admin-sw v106
+**Pedido (owner):** "este final hacelo como análisis principal en Datos IA, es el que más voy a ver; siempre un análisis completo
+desde que empezó hasta la fecha; la fecha es cuando empezó la plataforma a recibir clientes; si selecciono una fecha vieja tomá
+la del primer registro".
+**Qué se hizo:** pestañas reordenadas (🧮 Panorama abre por defecto; "Análisis por fechas" se calcula recién al entrar). La base
+del panorama es siempre desde la **primera carga real** hasta hoy (selector "últimos N días" quitado de la UI; la API lo sigue
+aceptando); si "Empezó el" es más vieja que el primer cliente, el server la recorta a esa fecha (`_diaFirstDepositDate`).
+**Archivos:** `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`.
+
 ### 483. 📈 Panorama: "después de la inversión, sin pauta" con la curva de retención real · campos en la moneda elegida — admin-sw v105
 **Pedido (owner, con captura):** "si invierto 426.829 es imposible meter 70.000.000 clientes; hacé el análisis sobre la retención:
 dame la respuesta en el día final del tiempo que seleccioné, no cuánto voy a vender sino cuánto vendería por día o por mes a partir

@@ -1251,13 +1251,14 @@ document.addEventListener('change', function (ev) {
                 </div>
                 <!-- #477: cotización USDT y moneda de TODA la sección -->
                 <div class="dia-bar dia-money"><span class="dia-money-t">💵 Dólar USDT</span><label>$<input type="number" id="diaUsdt" min="1" step="1" placeholder="cotización" style="width:110px;"></label><button class="btn-secondary btn-small" onclick="diaUsdtFetch()" title="Trae la cotización actual (mediana de los exchanges)">⟳ Automático</button><button class="btn-primary btn-small" onclick="diaUsdtSave()">Guardar</button><span id="diaUsdtInfo" class="dia-pill">…</span><span class="dia-cur"><b>Ver todo en</b><button type="button" id="diaCurArs" class="on" onclick="diaSetCur('ars')">Pesos $</button><button type="button" id="diaCurUsd" onclick="diaSetCur('usd')">USDT US$</button></span></div>
+                <!-- #484 (owner): el PANORAMA es la pestaña principal (abre por defecto); siempre analiza desde que empezó la página -->
                 <div class="dia-tabs">
-                    <button type="button" id="diaTabA" class="on" onclick="diaTab('a')">📊 Análisis</button>
+                    <button type="button" id="diaTabC" class="on" onclick="diaTab('c')">🧮 Panorama (principal)</button>
+                    <button type="button" id="diaTabA" onclick="diaTab('a')">📊 Análisis por fechas</button>
                     <button type="button" id="diaTabB" onclick="diaTab('b')">⚖️ Comparativa</button>
-                    <button type="button" id="diaTabC" onclick="diaTab('c')">🧮 Panorama de inversión</button>
                     <button type="button" id="diaTabD" onclick="diaTab('d')">📜 Historial</button>
                 </div>
-                <div id="diaPaneA">
+                <div id="diaPaneA" style="display:none;">
                     <div class="dia-bar">
                         <label>Desde<input type="date" id="diaFrom"></label>
                         <label>Hasta<input type="date" id="diaTo"></label>
@@ -1314,13 +1315,14 @@ document.addEventListener('change', function (ev) {
                         <div id="diaCompareOut"></div>
                     </div>
                 </div>
-                <div id="diaPaneC" style="display:none;">
+                <div id="diaPaneC">
                     <!-- #477 (owner): PANORAMA. 1) la base real · 2) condiciones vigentes/futuras · 3) si invertís X en N días → 3 panoramas -->
-                    <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Tu negocio hasta hoy (la base)</b><small>Lo que pasó de verdad: inversión, clientes nuevos, venta (cargas), retiros, regalos y lo que quedó. De acá salen el costo por cliente y cuánto deja cada cliente nuevo.</small></div>
+                    <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Tu negocio desde que empezó hasta hoy (la base)</b><small>Siempre el análisis completo: desde la primera carga real de la página hasta hoy. Inversión, clientes nuevos, venta (cargas), retiros, regalos, lo que quedó y la retención por antigüedad. De acá salen el costo por cliente y cuánto deja cada cliente.</small></div>
                         <div class="dia-bar dia-bar-in">
-                            <label>Base<select id="prBaseMode" onchange="diaBaseModeUI()"><option value="inicio">Desde el inicio hasta hoy</option><option value="dias">Últimos N días</option></select></label>
-                            <label id="prBaseDaysL" style="display:none;">N días<input type="number" id="prBase" min="7" max="400" value="60" style="width:80px;"></label>
-                            <label>Gasto en publicidad de esa base $<input type="number" id="prBaseSpend" min="0" step="1000" placeholder="usa el gasto total" style="width:160px;" title="Si lo dejás vacío: desde el inicio usa el gasto total guardado abajo; en N días usa el gasto por día guardado en Análisis"></label>
+                            <!-- #484: la base es SIEMPRE desde que la página empezó a recibir clientes (primera carga real) hasta hoy -->
+                            <select id="prBaseMode" style="display:none;"><option value="inicio" selected>Desde el inicio</option></select><input type="hidden" id="prBase" value="60">
+                            <span class="dia-pill">Desde que empezó la página hasta hoy</span>
+                            <label>Gasto en publicidad desde el inicio $ (opcional)<input type="number" id="prBaseSpend" min="0" step="1000" placeholder="usa el gasto total guardado" style="width:160px;" title="Si lo dejás vacío usa el gasto total guardado abajo"></label>
                             <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
                             <button class="btn-primary btn-small" onclick="diaProject()">Ver la base</button>
                         </div>
@@ -1328,7 +1330,7 @@ document.addEventListener('change', function (ev) {
                         <div class="dia-sub" style="margin-top:10px;"><b>📣 Gasto total en publicidad desde que empezó la página</b> <span id="stInfo" class="dia-pill">…</span></div>
                         <div class="dia-bar dia-bar-in">
                             <label>Gasto total hasta hoy $<input type="number" id="stAmount" min="0" step="1000" style="width:160px;"></label>
-                            <label>Empezó el<input type="date" id="stSince" title="Desde cuándo contás ese gasto: es el inicio de la base"></label>
+                            <label>Empezó el (opcional)<input type="date" id="stSince" title="Desde cuándo contás ese gasto. Si es más vieja que el primer cliente, se toma la del primer cliente."></label>
                             <button class="btn-secondary btn-small" onclick="diaSaveSpendTotal()">Guardar</button>
                         </div>
                     </div>
