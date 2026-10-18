@@ -8,6 +8,40 @@
 
 ## Sesión 2026-10-18
 
+### 477. 🧠 Datos IA: 3× más rápido (agregaciones en Mongo) · PANORAMA de inversión con base desde el inicio, regalos nuevos/recurrentes, condiciones futuras, 3 panoramas, cierre explicado y USDT — admin-sw v102
+**Pedido (owner):** "revisá bien, limpiá y hacelo más rápido que no retrase la página; que se entienda la lógica porque un mal
+cálculo me tira todo mal. Necesito: con la inversión que tengo hasta la fecha (ej. 60 días gastando 200 M) cómo va el negocio en
+depósitos, venta y premios; si en 60 días invierto 400 M cuánta venta tendría, sabiendo que hoy estoy con 50% y bono al 15 y
+más adelante bonos razonables de 50/100/10/20% diario repartido; ya hoy tenés cuánto regalé en el mes, analizá lo que queda de
+regalo sacando los clientes nuevos; que el panorama se pueda guardar y explique el cierre; 3 panoramas; y un dólar USDT arriba
+para ver todo en USD".
+**Qué se hizo:**
+- **Velocidad (`src/services/datosIaService.js`):** el análisis ya no baja movimientos sueltos (30 d = 30.000 cargas, 90 d = 70.000):
+  todo se agrupa en Mongo por período (hora argentina, `$dateToString`/`$dateTrunc` tz −03:00) y por usuario; la cohorte
+  (primera carga en el rango) viene de UNA agregación con sus cargas (fecha+monto) para retención/escalera. 90 días: 34 s → ~10 s
+  en Render; mucha menos memoria en Node. Cache 5 min por proceso.
+- **Regalos separados:** Transaction de tipos regalo agrupados por tipo y usuario → `promosNuevos` (clientes con 1ª carga en el
+  período: ahí pesa el bono de 1ª carga) vs `promosRecurrentes` (clientes de antes), `% sobre lo que cargó cada grupo`,
+  `montoCargasNuevos/Recurrentes`, `netwinNeto`, `tasaReclamoReembolso` (reembolso pagado ÷ pérdida × % diario), `ventaPorPeso`
+  y `netoPorPeso`. Sección "🎁 Premios y regalos" del informe lo explica.
+- **Condiciones vigentes** (`_diaPromoConfig`): bono 1ª carga, carga automática, **ruleta = % extra promedio por giro**
+  (Σ peso × % ÷ Σ pesos), reembolsos diario/semanal/mensual, extra por instalar, tope del bono (`bonusCap`).
+- **Panorama (`project`, lógica en el comentario del código):** 1) BASE = lo real (desde el inicio = primera carga registrada o
+  `adSpendTotal.since`, tope 400 d; o últimos N días); gasto de la base: escrito > gasto total desde el inicio > gasto por día
+  guardado. 2) CONDICIONES futuras (bono 1ª carga %, reembolso diario %, bono en cargas siguientes %): los regalos del futuro se
+  CALCULAN con esos % sobre la plata proyectada (1ª carga con tope, cargas siguientes, reembolso sobre lo perdido × tasa de
+  reclamo, + regalos fijos observados como % de la venta), no se copian los de hoy. 3) INVERSIÓN X en N días: nuevos = X ÷ costo
+  por cliente (+ orgánicos), cada uno vende lo de la base × horizonte (N ÷ días base, 0.5–2), se suma la base actual (recurrentes
+  por día × N). Tres panoramas (±30 % en nuevos), resultado de la pauta (neto por pauta − X), resultado total, y
+  **`explicacion[]`: el cierre paso a paso con los números**, que se guarda en el snapshot. Nota del owner con
+  `/history/:id/note` (botón "Guardar nota" bajo el panorama). Historial muestra base, nota y detalle del cierre.
+- **USDT:** `Config['usdtRate']` + `GET/POST /api/admin/datos-ia/usdt` (`?fetch=1` trae la mediana del "ask" de criptoya,
+  con timeout 7 s; si falla queda la manual). Barra arriba de la sección: cotización + "Ver todo en Pesos / USDT"
+  (`localStorage dia_cur`); los informes del server salen en la moneda elegida (`cur`, `usdRate`) y el panel convierte todo.
+- Pestaña renombrada "🧮 Panorama de inversión" con 3 tarjetas numeradas (base · condiciones · si invertís) y presets 30/60/120/180 d.
+**Archivos:** `src/services/datosIaService.js` (reescrito), `server.js`, `public/adminprivado2026/index.html`, `admin.js`,
+`pin-admin.css`, `public/admin-sw.js`, `docs/ARCHITECTURE.md`, `CLAUDE.md`.
+
 ### 474/475/476. 📖 Botón "Me interesa" en la historia de referidos · ruleta nueva (10/20/50/100 %, $5.000, $100.000) · usuario de prueba lalodj499910 — SW v332
 **Pedidos (owner):** "en la historia de referidos poné un botón 'Me interesa' que vaya al menú de referidos"; "la ruleta con
 10% 20% 50% 100% $5.000 y $100.000: 1 de cada 10.000 giros el $100.000, 1 de cada 100 el $5.000, del resto 30% el 10%,

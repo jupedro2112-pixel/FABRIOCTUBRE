@@ -1,36 +1,50 @@
-// #459/#461 (owner 2026-10-18): DATOS IA — análisis del negocio a partir de los datos recolectados (sin IA externa).
-// Capas: (1) datos por agregaciones de Mongo (sólo lo necesario del rango + cohorte), (2) métricas, (3) informe por reglas,
-// (4) comparativa con "la otra página", (5) calculador de inversión con calibración (factor real/proyectado de revisiones
-// anteriores). Hora argentina para los cortes. Diseñado para rangos de hasta 400 días sin cargar todo el historial.
+// #459/#461/#477 (owner 2026-10-18): DATOS IA — análisis del negocio a partir de los datos recolectados (sin IA externa).
+// Capas: (1) datos por AGREGACIONES de Mongo (todo agrupado por día/usuario en la base: nunca se bajan movimientos
+// sueltos → #477 pasó de ~34 s a pocos segundos en 90 días y no infla la memoria del server), (2) métricas,
+// (3) informe por reglas, (4) comparativa con "la otra página", (5) calculador de inversión ("panorama") con
+// promociones vigentes/futuras y calibración (factor real/proyectado de revisiones anteriores).
+// Hora argentina (UTC−3 fijo) para todos los cortes. Moneda: pesos; si se pasa `usdRate` + `cur:'usd'` los textos
+// del informe salen en USDT.
 'use strict';
-const TZ = 'America/Argentina/Buenos_Aires';
 const GIFT_SOURCES = ['install_bonus', 'welcome_gift', 'payout_refund'];
 // #469: lo que la casa REGALA (todo lo que no es carga ni retiro)
 const PROMO_TYPES = ['bonus', 'refund', 'roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission'];
 const PROMO_LABEL = { bonus: 'bonos de carga', refund: 'reembolsos', roulette: 'ruleta', fire_reward: 'fueguito', rakeback: 'rakeback', vip_levelup: 'nivel VIP', install_gift: 'extra por instalar', referral_commission: 'referidos' };
 const DAY = 86400000;
+const TZ = '-03:00';
 
-// #463: Argentina es UTC−3 fijo (sin horario de verano): se calcula por desplazamiento. Intl.toLocaleDateString por cada
-// movimiento era lentísimo y reventaba la memoria (268 MB de heap en Render) con 30+ días.
+// #463: Argentina es UTC−3 fijo (sin horario de verano): se calcula por desplazamiento.
 function dateKeyART(d) { const t = (d instanceof Date ? d.getTime() : new Date(d).getTime()) - 3 * 3600000; return new Date(t).toISOString().slice(0, 10); }
-function bucketOf(d, gran) {
-  const k = dateKeyART(d);
+function bucketOfKey(k, gran) {
   if (gran === 'month') return k.slice(0, 7);
   if (gran === 'week') { const [y, m, dd] = k.split('-').map(Number); const dt = new Date(Date.UTC(y, m - 1, dd)); dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7)); return dt.toISOString().slice(0, 10); }
   return k;
 }
+function bucketOf(d, gran) { return bucketOfKey(dateKeyART(d), gran); }
 function listBuckets(from, to, gran) { const out = [], seen = new Set(); for (let t = from.getTime(); t <= to.getTime() + DAY; t += DAY) { const b = bucketOf(new Date(Math.min(t, to.getTime())), gran); if (!seen.has(b)) { seen.add(b); out.push(b); } } return out; }
+// Misma agrupación pero calculada DENTRO de Mongo (hora argentina), para que los usuarios distintos por período sean exactos.
+function bucketExpr(field, gran) {
+  if (gran === 'month') return { $dateToString: { format: '%Y-%m', date: field, timezone: TZ } };
+  if (gran === 'week') return { $dateToString: { format: '%Y-%m-%d', date: { $dateTrunc: { date: field, unit: 'week', startOfWeek: 'monday', timezone: TZ } }, timezone: TZ } };
+  return { $dateToString: { format: '%Y-%m-%d', date: field, timezone: TZ } };
+}
 const pct = (a, b) => (b > 0 ? Math.round((a / b) * 1000) / 10 : null);
-const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
 const r0 = (n) => Math.round(Number(n) || 0);
 const r1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// Formateador de plata: pesos, o USDT si `cur:'usd'` y hay cotización.
+function fmt(opts) {
+  const rate = Number(opts && opts.usdRate) > 0 ? Number(opts.usdRate) : 0, usd = !!(opts && opts.cur === 'usd' && rate);
+  const money = (n) => (usd ? 'US$ ' + Math.round((Number(n) || 0) / rate).toLocaleString('es-AR') : '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'));
+  return { money, usd, rate };
+}
 
-const _cache = new Map(); // key → { at, value } (2 min; multi-instancia: cada proceso tiene la suya)
+const _cache = new Map(); // key → { at, value } (5 min; multi-instancia: cada proceso tiene la suya)
 async function analyze(models, opts) {
-  const key = JSON.stringify([opts.from, opts.to, opts.granularity, opts.campaign, opts.spend]);
-  const c = _cache.get(key); if (c && Date.now() - c.at < 120000) return c.value;
+  const key = JSON.stringify([opts.from, opts.to, opts.granularity, opts.campaign, opts.spend, opts.cur, opts.usdRate]);
+  const c = _cache.get(key); if (c && Date.now() - c.at < 300000) return c.value;
   const value = await _analyze(models, opts);
-  _cache.set(key, { at: Date.now(), value }); if (_cache.size > 50) _cache.delete(_cache.keys().next().value);
+  _cache.set(key, { at: Date.now(), value }); if (_cache.size > 40) _cache.delete(_cache.keys().next().value);
   return value;
 }
 
@@ -44,6 +58,7 @@ async function _analyze(models, opts) {
   const spendByDay = opts.spendByDay || {};
   const days = Math.max(1, Math.round((to - from) / DAY));
   const now = new Date();
+  const F = fmt(opts);
   const T = {}; let _tk = Date.now(); const lap = (k) => { T[k] = Date.now() - _tk; _tk = Date.now(); };
 
   // Alcance por campaña → ids
@@ -51,85 +66,108 @@ async function _analyze(models, opts) {
   let scopeIds = null;
   if (campaign) scopeIds = (await User.find(userFilter).select('id').lean()).map((u) => u.id);
   const scope = (q) => (scopeIds ? { ...q, userId: { $in: scopeIds } } : q);
-  const realDep = scope({ type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: GIFT_SOURCES } });
-  const realWd = scope({ type: 'withdrawal', status: { $nin: ['failed', 'cancelled'] } });
+  const okStatus = { $nin: ['failed', 'cancelled'] };
+  const realDep = scope({ type: 'deposit', status: okStatus, 'metadata.source': { $nin: GIFT_SOURCES } });
+  const realWd = scope({ type: 'withdrawal', status: okStatus });
+  const inRange = { timestamp: { $gte: from, $lte: to } };
 
-  // (1) Por usuario, todo el histórico de cargas reales: primera, última, cantidad, monto — UNA agregación.
-  const perUser = await Transaction.aggregate([{ $match: realDep }, { $group: { _id: '$userId', first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }]).allowDiskUse(true);
+  // (1) Por usuario, todo el histórico de cargas reales: primera, última, cantidad, monto, monto de la primera. Para la COHORTE
+  // (primera carga dentro del rango) vienen además sus cargas (fecha+monto) para retención, escalera y netwin de nuevos.
+  const perUser = await Transaction.aggregate([
+    { $match: realDep }, { $sort: { timestamp: 1 } },
+    { $group: { _id: '$userId', first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' }, firstAmt: { $first: '$amount' }, tx: { $push: { t: '$timestamp', a: '$amount' } } } },
+    { $project: { first: 1, last: 1, n: 1, amt: 1, firstAmt: 1, tx: { $cond: [{ $and: [{ $gte: ['$first', from] }, { $lte: ['$first', to] }] }, '$tx', '$$REMOVE'] } } }
+  ]).allowDiskUse(true);
   lap('perUser');
+  const cohort = perUser.filter((u) => Array.isArray(u.tx));
+  const cohortSet = new Set(cohort.map((u) => u._id));
   const firstIn = (a, b) => perUser.filter((u) => u.first >= a && u.first <= b);
-  const cohort = firstIn(from, to);
-  const cohortIds = cohort.map((u) => u._id);
-  // (2) Fechas de cargas de la cohorte (sólo esos usuarios) para retención y escalera.
-  const cohortTx = cohortIds.length ? await Transaction.find({ ...realDep, userId: { $in: cohortIds } }).select('userId timestamp amount').sort({ timestamp: 1 }).lean() : [];
-  lap('cohortTx');
-  const datesBy = new Map(); cohortTx.forEach((t) => { if (!datesBy.has(t.userId)) datesBy.set(t.userId, []); datesBy.get(t.userId).push(new Date(t.timestamp)); });
-  // (3) Movimientos del rango.
-  const [depsR, wdsR, regs, logins, sessR, refundsR, spinsR, supportMsgs, promoAgg] = await Promise.all([
-    Transaction.find({ ...realDep, timestamp: { $gte: from, $lte: to } }).select('userId amount timestamp').lean(),
-    Transaction.find({ ...realWd, timestamp: { $gte: from, $lte: to } }).select('userId amount timestamp').lean(),
-    User.find({ ...userFilter, createdAt: { $gte: from, $lte: to } }).select('id createdAt').lean(),
-    User.find({ ...userFilter, lastLogin: { $gte: from, $lte: to } }).select('id lastLogin').lean(),
-    AppSession.find(scope({ startedAt: { $gte: from, $lte: to } })).select('userId startedAt lastPingAt installed').lean(),
+
+  // (2) Rango: TODO agrupado en Mongo por período (hora argentina) y por usuario.
+  const bExpr = bucketExpr('$timestamp', gran);
+  const byBucket = (match) => Transaction.aggregate([{ $match: { ...match, ...inRange } }, { $group: { _id: { b: bExpr, u: '$userId' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }, { $group: { _id: '$_id.b', n: { $sum: '$n' }, amt: { $sum: '$amt' }, users: { $sum: 1 } } }]);
+  const byUser = (match) => Transaction.aggregate([{ $match: { ...match, ...inRange } }, { $group: { _id: '$userId', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]);
+  const sessMatch = scope({ startedAt: { $gte: from, $lte: to } });
+  const [depB, depU, wdB, wdU, regB, logins, sessB, sessU, refundsR, spinsR, supportMsgs, promoAgg] = await Promise.all([
+    byBucket(realDep), byUser(realDep), byBucket(realWd), byUser(realWd),
+    User.aggregate([{ $match: { ...userFilter, createdAt: { $gte: from, $lte: to } } }, { $group: { _id: bucketExpr('$createdAt', gran), n: { $sum: 1 } } }]),
+    // lastLogin hasta 7 días después del rango: sirve para "volvió a ENTRAR en la primera semana" de los nuevos del final del rango
+    User.find({ ...userFilter, lastLogin: { $gte: from, $lte: new Date(Math.min(now.getTime(), to.getTime() + 7 * DAY)) } }).select('id lastLogin').lean(),
+    AppSession.aggregate([{ $match: sessMatch }, { $group: { _id: { b: bucketExpr('$startedAt', gran), u: '$userId' }, n: { $sum: 1 }, min: { $sum: { $max: [1, { $divide: [{ $subtract: ['$lastPingAt', '$startedAt'] }, 60000] }] } } } }, { $group: { _id: '$_id.b', sesiones: { $sum: '$n' }, usuarios: { $sum: 1 }, minutos: { $sum: '$min' } } }]),
+    AppSession.aggregate([{ $match: sessMatch }, { $group: { _id: '$userId', inst: { $max: { $cond: ['$installed', 1, 0] } }, days: { $addToSet: '$dateKey' } } }]),
     RefundClaim.find(scope({ claimedAt: { $gte: from, $lte: to } })).select('userId amount claimedAt').lean(),
     DailyRouletteSpin.find(scope({ spunAt: { $gte: from, $lte: to } })).select('userId spunAt prizeARS').lean(),
     Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } }),
-    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: { $nin: ['failed', 'cancelled'] }, timestamp: { $gte: from, $lte: to } }) }, { $group: { _id: '$type', n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
+    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: okStatus, ...inRange }) }, { $group: { _id: { t: '$type', u: '$userId' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
   ]);
   lap('rango');
   const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
-  const sessMin = (s) => Math.max(1, (new Date(s.lastPingAt) - new Date(s.startedAt)) / 60000);
 
   // Retención de la cohorte
   const lastLoginById = new Map(logins.map((u) => [u.id, new Date(u.lastLogin)]));
-  const sessByUser = new Map(); sessR.forEach((s) => { if (!sessByUser.has(s.userId)) sessByUser.set(s.userId, []); sessByUser.get(s.userId).push(new Date(s.startedAt)); });
-  const redep = (u, since, d) => (datesBy.get(u._id) || []).some((x) => x > since && x <= new Date(since.getTime() + d * DAY));
-  const nextB = (u, since) => { const b = bucketOf(since, gran); return (datesBy.get(u._id) || []).some((x) => x > since && bucketOf(x, gran) !== b); };
-  const back7 = (u, since) => { const lim = new Date(since.getTime() + 7 * DAY); const ll = lastLoginById.get(u._id); return (sessByUser.get(u._id) || []).some((x) => x > since && x <= lim) || (ll && ll > new Date(since.getTime() + 60000) && ll <= lim); };
-  const retention = { cohort: cohort.length, d7: pct(cohort.filter((u) => redep(u, new Date(u.first), 7)).length, cohort.length), d30: pct(cohort.filter((u) => redep(u, new Date(u.first), 30)).length, cohort.length), next: pct(cohort.filter((u) => nextB(u, new Date(u.first))).length, cohort.length), login7: pct(cohort.filter((u) => back7(u, new Date(u.first))).length, cohort.length) };
+  const sessDaysById = new Map(sessU.map((s) => [s._id, s.days || []]));
+  const redep = (u, d) => { const lim = u.first.getTime() + d * DAY; return u.tx.some((x) => x.t > u.first && x.t.getTime() <= lim); };
+  const nextB = (u) => { const b = bucketOf(u.first, gran); return u.tx.some((x) => x.t > u.first && bucketOf(x.t, gran) !== b); };
+  const back7 = (u) => { const since = u.first.getTime(), lim = since + 7 * DAY; const ll = lastLoginById.get(u._id); if (ll && ll.getTime() > since + 60000 && ll.getTime() <= lim) return true; const k0 = dateKeyART(u.first), k1 = dateKeyART(new Date(lim)); return (sessDaysById.get(u._id) || []).some((k) => k >= k0 && k <= k1); };
+  const retention = { cohort: cohort.length, d7: pct(cohort.filter((u) => redep(u, 7)).length, cohort.length), d30: pct(cohort.filter((u) => redep(u, 30)).length, cohort.length), next: pct(cohort.filter(nextB).length, cohort.length), login7: pct(cohort.filter(back7).length, cohort.length) };
 
   // Escalera después de la primera carga (todo lo que cargaron hasta hoy)
-  const L = { una: 0, dosTres: 0, cuatroNueve: 0, diezMas: 0, activos14: 0, enDuda: 0, perdidos30: 0, cargas: 0, monto: 0 };
-  cohort.forEach((u) => { L.cargas += u.n; L.monto += u.amt; if (u.n <= 1) L.una++; else if (u.n <= 3) L.dosTres++; else if (u.n <= 9) L.cuatroNueve++; else L.diezMas++; const ago = (now - new Date(u.last)) / DAY; if (ago <= 14) L.activos14++; else if (ago > 30) L.perdidos30++; else L.enDuda++; });
+  const L = { una: 0, dosTres: 0, cuatroNueve: 0, diezMas: 0, activos14: 0, enDuda: 0, perdidos30: 0, cargas: 0, monto: 0, primera: 0 };
+  cohort.forEach((u) => { L.cargas += u.n; L.monto += u.amt; L.primera += Number(u.firstAmt) || 0; if (u.n <= 1) L.una++; else if (u.n <= 3) L.dosTres++; else if (u.n <= 9) L.cuatroNueve++; else L.diezMas++; const ago = (now - new Date(u.last)) / DAY; if (ago <= 14) L.activos14++; else if (ago > 30) L.perdidos30++; else L.enDuda++; });
   const n = cohort.length;
-  const repeat = { cohort: n, siguieronCargando: n - L.una, pctSiguieron: pct(n - L.una, n), una: L.una, pctUna: pct(L.una, n), dosTres: L.dosTres, pctDosTres: pct(L.dosTres, n), cuatroNueve: L.cuatroNueve, pctCuatroNueve: pct(L.cuatroNueve, n), diezMas: L.diezMas, pctDiezMas: pct(L.diezMas, n), activos14: L.activos14, pctActivos14: pct(L.activos14, n), enDuda: L.enDuda, perdidos30: L.perdidos30, pctPerdidos30: pct(L.perdidos30, n), cargasPorCliente: n ? r1(L.cargas / n) : null, montoPorCliente: n ? r0(L.monto / n) : null };
+  const repeat = { cohort: n, siguieronCargando: n - L.una, pctSiguieron: pct(n - L.una, n), una: L.una, pctUna: pct(L.una, n), dosTres: L.dosTres, pctDosTres: pct(L.dosTres, n), cuatroNueve: L.cuatroNueve, pctCuatroNueve: pct(L.cuatroNueve, n), diezMas: L.diezMas, pctDiezMas: pct(L.diezMas, n), activos14: L.activos14, pctActivos14: pct(L.activos14, n), enDuda: L.enDuda, perdidos30: L.perdidos30, pctPerdidos30: pct(L.perdidos30, n), cargasPorCliente: n ? r1(L.cargas / n) : null, montoPorCliente: n ? r0(L.monto / n) : null, primeraCargaPromedio: n ? r0(L.primera / n) : null };
 
   // Abandono de toda la base del alcance
   const churn30 = pct(perUser.filter((u) => new Date(u.last) < new Date(to.getTime() - 30 * DAY)).length, perUser.length);
 
-  // Serie por bucket
+  // Serie por período (ya viene agrupada de Mongo)
   const buckets = listBuckets(from, to, gran);
-  const row = () => ({ registros: 0, primerasCargas: 0, cargas: 0, montoCargas: 0, cargadores: new Set(), retiros: 0, montoRetiros: 0, sesiones: 0, usuariosApp: new Set(), minutos: 0, reembolsos: 0, montoReembolsos: 0, giros: 0, premiosRuleta: 0 });
+  const row = () => ({ registros: 0, primerasCargas: 0, cargas: 0, montoCargas: 0, cargadores: 0, retiros: 0, montoRetiros: 0, sesiones: 0, usuariosApp: 0, usuariosLogin: new Set(), minutos: 0, reembolsos: 0, montoReembolsos: 0, giros: 0, premiosRuleta: 0 });
   const series = {}; buckets.forEach((b) => { series[b] = row(); });
-  const get = (d) => { const b = bucketOf(d, gran); if (!series[b]) series[b] = row(); return series[b]; };
-  regs.forEach((u) => { get(u.createdAt).registros++; });
-  cohort.forEach((u) => { get(u.first).primerasCargas++; });
-  depsR.forEach((t) => { const r = get(t.timestamp); r.cargas++; r.montoCargas += Number(t.amount) || 0; r.cargadores.add(t.userId); });
-  wdsR.forEach((t) => { const r = get(t.timestamp); r.retiros++; r.montoRetiros += Number(t.amount) || 0; });
-  sessR.forEach((s) => { const r = get(s.startedAt); r.sesiones++; r.usuariosApp.add(s.userId); r.minutos += sessMin(s); });
-  logins.forEach((u) => { get(u.lastLogin).usuariosApp.add(u.id); });
-  refundsR.forEach((c) => { const r = get(c.claimedAt); r.reembolsos++; r.montoReembolsos += Number(c.amount) || 0; });
-  spinsR.forEach((s) => { const r = get(s.spunAt); r.giros++; r.premiosRuleta += Number(s.prizeARS) || 0; });
-  const spendOf = {}; Object.keys(spendByDay).forEach((k) => { const bb = bucketOf(new Date(k + 'T12:00:00Z'), gran); spendOf[bb] = (spendOf[bb] || 0) + spendByDay[k]; });
-  const rows = Object.keys(series).sort().map((b) => { const r = series[b]; return { bucket: b, gasto: r0(spendOf[b] || 0), costoPorNuevo: spendOf[b] > 0 && r.primerasCargas ? r0(spendOf[b] / r.primerasCargas) : null, registros: r.registros, primerasCargas: r.primerasCargas, cargas: r.cargas, montoCargas: r0(r.montoCargas), cargadores: r.cargadores.size, retiros: r.retiros, montoRetiros: r0(r.montoRetiros), netwin: r0(r.montoCargas - r.montoRetiros), sesiones: r.sesiones, usuariosApp: r.usuariosApp.size, minPorSesion: r.sesiones ? r1(r.minutos / r.sesiones) : null, reembolsos: r.reembolsos, montoReembolsos: r0(r.montoReembolsos), giros: r.giros, premiosRuleta: r0(r.premiosRuleta) }; });
-
+  const get = (b) => { if (!series[b]) series[b] = row(); return series[b]; };
+  regB.forEach((x) => { get(x._id).registros += x.n; });
+  cohort.forEach((u) => { get(bucketOf(u.first, gran)).primerasCargas++; });
+  depB.forEach((x) => { const r = get(x._id); r.cargas += x.n; r.montoCargas += x.amt; r.cargadores += x.users; });
+  wdB.forEach((x) => { const r = get(x._id); r.retiros += x.n; r.montoRetiros += x.amt; });
+  sessB.forEach((x) => { const r = get(x._id); r.sesiones += x.sesiones; r.usuariosApp += x.usuarios; r.minutos += x.minutos; });
+  logins.forEach((u) => { if (u.lastLogin <= to) get(bucketOf(u.lastLogin, gran)).usuariosLogin.add(u.id); });
+  refundsR.forEach((c) => { const r = get(bucketOf(c.claimedAt, gran)); r.reembolsos++; r.montoReembolsos += Number(c.amount) || 0; });
+  spinsR.forEach((s) => { const r = get(bucketOf(s.spunAt, gran)); r.giros++; r.premiosRuleta += Number(s.prizeARS) || 0; });
+  const spendOf = {}; Object.keys(spendByDay).forEach((k) => { const bb = bucketOfKey(k, gran); spendOf[bb] = (spendOf[bb] || 0) + spendByDay[k]; });
+  const rows = Object.keys(series).sort().map((b) => { const r = series[b]; const ua = Math.max(r.usuariosApp, r.usuariosLogin.size); return { bucket: b, gasto: r0(spendOf[b] || 0), costoPorNuevo: spendOf[b] > 0 && r.primerasCargas ? r0(spendOf[b] / r.primerasCargas) : null, registros: r.registros, primerasCargas: r.primerasCargas, cargas: r.cargas, montoCargas: r0(r.montoCargas), cargadores: r.cargadores, retiros: r.retiros, montoRetiros: r0(r.montoRetiros), netwin: r0(r.montoCargas - r.montoRetiros), sesiones: r.sesiones, usuariosApp: ua, minPorSesion: r.sesiones ? r1(r.minutos / r.sesiones) : null, reembolsos: r.reembolsos, montoReembolsos: r0(r.montoReembolsos), giros: r.giros, premiosRuleta: r0(r.premiosRuleta) }; });
   lap('series');
+
   // Totales
-  const depositors = new Set(depsR.map((t) => t.userId));
-  const appUsers = new Set([...sessR.map((s) => s.userId), ...logins.map((u) => u.id)]);
-  const newIds = new Set(cohortIds);
-  const montoCargas = sum(depsR, (t) => t.amount), montoRetiros = sum(wdsR, (t) => t.amount);
-  const nwNew = sum(depsR.filter((t) => newIds.has(t.userId)), (t) => t.amount) - sum(wdsR.filter((t) => newIds.has(t.userId)), (t) => t.amount);
+  const montoCargas = sum(depB, (x) => x.amt), cargas = sum(depB, (x) => x.n), montoRetiros = sum(wdB, (x) => x.amt), retiros = sum(wdB, (x) => x.n);
+  const appUsers = new Set([...sessU.map((s) => s._id), ...logins.filter((u) => u.lastLogin <= to).map((u) => u.id)]);
+  const sesiones = sum(sessB, (x) => x.sesiones), minutos = sum(sessB, (x) => x.minutos);
+  // Nuevos del rango: lo que cargaron DENTRO del rango y lo que retiraron
+  const montoCargasNuevos = sum(cohort, (u) => sum(u.tx.filter((x) => x.t <= to), (x) => x.a));
+  const montoRetirosNuevos = sum(wdU.filter((w) => cohortSet.has(w._id)), (w) => w.amt);
+  const nwNew = montoCargasNuevos - montoRetirosNuevos;
+  // Promociones: por tipo y separadas entre NUEVOS del rango y RECURRENTES (clientes de antes). #477
+  const promos = {}; let promosTotal = 0, promosNuevos = 0, promosRecurrentes = 0;
+  (promoAgg || []).forEach((p) => { const t = p._id.t; if (!promos[t]) promos[t] = { n: 0, amt: 0, nuevos: 0, recurrentes: 0 }; promos[t].n += p.n; promos[t].amt += p.amt; promosTotal += p.amt; if (cohortSet.has(p._id.u)) { promos[t].nuevos += p.amt; promosNuevos += p.amt; } else { promos[t].recurrentes += p.amt; promosRecurrentes += p.amt; } });
+  Object.keys(promos).forEach((k) => { promos[k].amt = r0(promos[k].amt); promos[k].nuevos = r0(promos[k].nuevos); promos[k].recurrentes = r0(promos[k].recurrentes); });
+  const montoCargasRecurrentes = Math.max(0, montoCargas - montoCargasNuevos);
+  const netwin = montoCargas - montoRetiros;
+  const pc = opts.promoConfig || null;
+  // Tasa de reclamo del reembolso: cuánto de lo "reembolsable" (pérdida × % diario) se pagó de verdad (0..1).
+  const tasaReclamo = pc && pc.dailyRefundPct > 0 && netwin > 0 ? clamp(((promos.refund && promos.refund.amt) || 0) / (netwin * pc.dailyRefundPct / 100), 0, 1) : null;
   const totals = {
-    dias: days, registros: regs.length, primerasCargas: n, conversionRegistroCarga: pct(n, regs.length),
-    cargas: depsR.length, montoCargas: r0(montoCargas), cargadores: depositors.size, cargasPorCargador: depositors.size ? r1(depsR.length / depositors.size) : null, cargaPromedio: depsR.length ? r0(montoCargas / depsR.length) : null,
-    retiros: wdsR.length, montoRetiros: r0(montoRetiros), netwin: r0(montoCargas - montoRetiros),
-    usuariosApp: appUsers.size, sesiones: sessR.length, minPorSesion: sessR.length ? r1(sum(sessR, sessMin) / sessR.length) : null, sesionesPorUsuarioDia: appUsers.size ? Math.round(sessR.length / appUsers.size / days * 100) / 100 : null, instalados: new Set(sessR.filter((s) => s.installed).map((s) => s.userId)).size,
+    dias: days, registros: sum(regB, (x) => x.n), primerasCargas: n, conversionRegistroCarga: null,
+    cargas, montoCargas: r0(montoCargas), cargadores: depU.length, cargasPorCargador: depU.length ? r1(cargas / depU.length) : null, cargaPromedio: cargas ? r0(montoCargas / cargas) : null,
+    retiros, montoRetiros: r0(montoRetiros), netwin: r0(netwin),
+    usuariosApp: appUsers.size, sesiones, minPorSesion: sesiones ? r1(minutos / sesiones) : null, sesionesPorUsuarioDia: appUsers.size ? Math.round(sesiones / appUsers.size / days * 100) / 100 : null, instalados: sessU.filter((s) => s.inst).length,
     reembolsos: refundsR.length, montoReembolsos: r0(sum(refundsR, (x) => x.amount)), giros: spinsR.length, premiosRuleta: r0(sum(spinsR, (x) => x.prizeARS)), mensajesSoporte: supportMsgs,
-    promos: Object.fromEntries((promoAgg || []).map((p) => [p._id, { n: p.n, amt: r0(p.amt) }])), promosTotal: r0((promoAgg || []).reduce((s, p) => s + (Number(p.amt) || 0), 0)),
-    churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length
+    promos, promosTotal: r0(promosTotal), promosNuevos: r0(promosNuevos), promosRecurrentes: r0(promosRecurrentes),
+    montoCargasNuevos: r0(montoCargasNuevos), montoCargasRecurrentes: r0(montoCargasRecurrentes), montoRetirosNuevos: r0(montoRetirosNuevos),
+    promosPct: pct(promosTotal, montoCargas), promosPctNuevos: pct(promosNuevos, montoCargasNuevos), promosPctRecurrentes: pct(promosRecurrentes, montoCargasRecurrentes),
+    netwinNeto: r0(netwin - promosTotal), tasaReclamoReembolso: tasaReclamo == null ? null : Math.round(tasaReclamo * 100) / 100,
+    churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, ventaPorPeso: spend > 0 ? Math.round((montoCargas / spend) * 100) / 100 : null, netoPorPeso: spend > 0 ? Math.round(((netwin - promosTotal) / spend) * 100) / 100 : null,
+    netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length, primeraCargaPromedio: repeat.primeraCargaPromedio
   };
-  totals.promosPct = pct(totals.promosTotal, totals.montoCargas); totals.netwinNeto = r0(totals.netwin - totals.promosTotal); // #469
+  totals.conversionRegistroCarga = pct(n, totals.registros);
   // Período anterior (misma longitud)
   const prevTo = new Date(from.getTime() - 1), prevFrom = new Date(from.getTime() - (to - from) - 1);
   const [prevRegs, prevDepAgg] = await Promise.all([
@@ -137,15 +175,15 @@ async function _analyze(models, opts) {
     Transaction.aggregate([{ $match: { ...realDep, timestamp: { $gte: prevFrom, $lte: prevTo } } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
   ]);
   const prevFirst = firstIn(prevFrom, prevTo).length; const prevAmt = (prevDepAgg[0] && prevDepAgg[0].amt) || 0;
-  const growth = { primerasCargas: pct(n - prevFirst, prevFirst), registros: pct(regs.length - prevRegs, prevRegs), montoCargas: pct(montoCargas - prevAmt, prevAmt), prev: { primerasCargas: prevFirst, registros: prevRegs, montoCargas: r0(prevAmt) } };
-
+  const growth = { primerasCargas: pct(n - prevFirst, prevFirst), registros: pct(totals.registros - prevRegs, prevRegs), montoCargas: pct(montoCargas - prevAmt, prevAmt), prev: { primerasCargas: prevFirst, registros: prevRegs, montoCargas: r0(prevAmt) } };
   lap('prev');
-  T.counts = { perUser: perUser.length, cohort: cohort.length, cohortTx: cohortTx.length, depsR: depsR.length, wdsR: wdsR.length, regs: regs.length, logins: logins.length, sess: sessR.length };
-  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, promoConfig: opts.promoConfig || null, informe: narrative(totals, retention, growth, gran, repeat, opts.promoConfig || null), calculadoEn: now.toISOString(), timings: T };
+  T.counts = { perUser: perUser.length, cohort: cohort.length, depB: depB.length, depU: depU.length, logins: logins.length, sessU: sessU.length, promoAgg: (promoAgg || []).length };
+  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, promoConfig: pc, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, informe: narrative(totals, retention, growth, gran, repeat, pc, F), calculadoEn: now.toISOString(), timings: T };
 }
 
 function grade(v, good, ok) { if (v == null) return null; return v >= good ? 'bien' : (v >= ok ? 'regular' : 'flojo'); }
-function narrative(t, r, g, gran, rp, pc) {
+function narrative(t, r, g, gran, rp, pc, F) {
+  const money = (F || fmt()).money;
   const L = []; const per = gran === 'month' ? 'mes' : (gran === 'week' ? 'semana' : 'día');
   const sec = (ico, titulo, texto, estado, consejo) => L.push({ ico, titulo, texto, estado: estado || null, consejo: consejo || null });
   // Captación
@@ -159,25 +197,25 @@ function narrative(t, r, g, gran, rp, pc) {
       gd === 'bien' ? 'El producto gusta: la gente vuelve a cargar.' : (gd === 'regular' ? 'Vuelve una parte: empujar con reembolsos, fueguito y avisos a los que no vuelven.' : 'La mayoría carga una vez y no vuelve: antes de invertir más, revisar la experiencia después de la primera carga.') + (r.login7 != null && r.d7 != null && r.login7 - r.d7 >= 25 ? ' Muchos vuelven a ENTRAR pero no a CARGAR: falta un motivo para la segunda carga (bono en la 2ª carga, recordatorio).' : ''));
   } else sec('🔁', 'Retención', 'No hubo primeras cargas en el rango: no se puede medir.', null, null);
   // Escalera
-  if (rp && rp.cohort) sec('🪜', 'Después de la primera carga', `De los ${rp.cohort} nuevos del rango (contando todo lo que cargaron hasta hoy): ${rp.siguieronCargando} siguieron cargando (${rp.pctSiguieron}%) y ${rp.una} se quedaron en una sola carga (${rp.pctUna}%). 2-3 cargas: ${rp.dosTres} (${rp.pctDosTres}%) · 4-9: ${rp.cuatroNueve} (${rp.pctCuatroNueve}%) · 10 o más: ${rp.diezMas} (${rp.pctDiezMas}%). Hoy siguen activos (cargaron en los últimos 14 días) ${rp.activos14} (${rp.pctActivos14}%); perdidos (más de 30 días sin cargar) ${rp.perdidos30} (${rp.pctPerdidos30}%). Cada nuevo dejó en promedio ${rp.cargasPorCliente} cargas y ${money(rp.montoPorCliente)}.`,
+  if (rp && rp.cohort) sec('🪜', 'Después de la primera carga', `De los ${rp.cohort} nuevos del rango (contando todo lo que cargaron hasta hoy): ${rp.siguieronCargando} siguieron cargando (${rp.pctSiguieron}%) y ${rp.una} se quedaron en una sola carga (${rp.pctUna}%). 2-3 cargas: ${rp.dosTres} (${rp.pctDosTres}%) · 4-9: ${rp.cuatroNueve} (${rp.pctCuatroNueve}%) · 10 o más: ${rp.diezMas} (${rp.pctDiezMas}%). Hoy siguen activos (cargaron en los últimos 14 días) ${rp.activos14} (${rp.pctActivos14}%); perdidos (más de 30 días sin cargar) ${rp.perdidos30} (${rp.pctPerdidos30}%). Cada nuevo dejó en promedio ${rp.cargasPorCliente} cargas y ${money(rp.montoPorCliente)} (primera carga promedio ${money(rp.primeraCargaPromedio)}).`,
     grade(rp.pctSiguieron, 50, 30), rp.pctSiguieron >= 50 ? 'Quedan muchos: más de la mitad vuelve a cargar. Base sana.' : (rp.pctSiguieron >= 30 ? 'Se pierde una parte importante en el camino: entre 3 y 5 de cada 10 siguen. Trabajar la segunda carga.' : 'Se pierde la mayoría: menos de 3 de cada 10 vuelven. El problema no es traer gente sino retenerla.'));
   if (t.churn30 != null) sec('📉', 'Abandono', `El ${t.churn30}% de los ${t.baseCargadores} que alguna vez cargaron no carga hace más de 30 días.`, t.churn30 >= 70 ? 'flojo' : (t.churn30 >= 45 ? 'regular' : 'bien'), t.churn30 >= 70 ? 'Alto: la base se enfría. Campañas de recuperación.' : (t.churn30 >= 45 ? 'Normal para el rubro; vale un lote de recuperación.' : 'Bajo: la base está activa.'));
   // Uso
   if (t.sesiones) sec('📱', 'Uso de la app', `${t.usuariosApp} usuarios entraron, ${t.sesiones} sesiones, ${t.minPorSesion} min por sesión en promedio, ${t.sesionesPorUsuarioDia} sesiones por usuario por día; ${t.instalados} usaron la app instalada.`, t.minPorSesion >= 4 ? 'bien' : (t.minPorSesion >= 2 ? 'regular' : 'flojo'), t.minPorSesion >= 4 ? 'Se quedan un buen rato: la app engancha.' : (t.minPorSesion >= 2 ? 'Visitas cortas: entran, hacen lo suyo y salen (normal si vienen a cargar).' : 'Visitas muy cortas: revisar si encuentran lo que buscan.'));
   else sec('📱', 'Uso de la app', `${t.usuariosApp} usuarios entraron. Sin medición de tiempo en sesión todavía (el medidor arranca con la versión nueva de la app).`, null, null);
   // Dinero
-  sec('💰', 'Dinero', `${t.cargas} cargas por ${money(t.montoCargas)} (${t.cargadores} cargadores, ${t.cargasPorCargador ?? 0} cargas por cargador, promedio ${money(t.cargaPromedio)}), ${t.retiros} retiros por ${money(t.montoRetiros)}. NETWIN: ${money(t.netwin)}. Reembolsos pagados: ${money(t.montoReembolsos)} (${t.reembolsos}); ruleta: ${t.giros} giros, ${money(t.premiosRuleta)} en premios.`,
+  sec('💰', 'Dinero', `${t.cargas} cargas (VENTA) por ${money(t.montoCargas)} (${t.cargadores} cargadores, ${t.cargasPorCargador ?? 0} cargas por cargador, promedio ${money(t.cargaPromedio)}), ${t.retiros} retiros por ${money(t.montoRetiros)}. NETWIN bruto (cargas − retiros): ${money(t.netwin)}. De la venta, ${money(t.montoCargasNuevos)} fue de clientes nuevos del período y ${money(t.montoCargasRecurrentes)} de clientes de antes.`,
     t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'bien' : (t.cargasPorCargador >= 1.8 ? 'regular' : 'flojo')), t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'Frecuencia de carga alta: los que cargan, repiten.' : (t.cargasPorCargador >= 1.8 ? 'Frecuencia de carga media.' : 'Frecuencia baja: la mayoría carga una sola vez en el período.')));
-  // #469 Promociones vigentes + costo real
+  // #469/#477 Promociones vigentes + costo real, separando nuevos y recurrentes
   {
-    const vig = pc ? [pc.firstDepositBonusPct > 0 ? `${pc.firstDepositBonusPct}% en la PRIMERA carga` : null, pc.autoLoadBonusPct > 0 ? `${pc.autoLoadBonusPct}% en cargas automáticas` : null, pc.dailyRefundPct > 0 ? `reembolso diario ${pc.dailyRefundPct}%` : null, pc.weeklyRefundPct > 0 ? `semanal ${pc.weeklyRefundPct}%` : null, pc.monthlyRefundPct > 0 ? `mensual ${pc.monthlyRefundPct}%` : null, pc.installGiftPct > 0 ? `${pc.installGiftPct}% extra por instalar la app` : null].filter(Boolean).join(' · ') : null;
+    const vig = pc ? [pc.firstDepositBonusPct > 0 ? `${pc.firstDepositBonusPct}% en la PRIMERA carga` : null, pc.autoLoadBonusPct > 0 ? `${pc.autoLoadBonusPct}% en cargas automáticas` : null, pc.roulettePct > 0 ? `ruleta ≈ ${pc.roulettePct}% extra por giro` : null, pc.dailyRefundPct > 0 ? `reembolso diario ${pc.dailyRefundPct}%` : null, pc.weeklyRefundPct > 0 ? `semanal ${pc.weeklyRefundPct}%` : null, pc.monthlyRefundPct > 0 ? `mensual ${pc.monthlyRefundPct}%` : null, pc.installGiftPct > 0 ? `${pc.installGiftPct}% extra por instalar la app` : null].filter(Boolean).join(' · ') : null;
     const det = Object.keys(t.promos || {}).map((k) => `${PROMO_LABEL[k] || k} ${money(t.promos[k].amt)}`).join(' · ');
-    sec('🎁', 'Promociones (lo que regalás hoy)', (vig ? `Condiciones vigentes: ${vig}. ` : '') + `En el período las promociones costaron ${money(t.promosTotal)} = ${t.promosPct ?? 0}% de lo cargado` + (det ? ` (${det})` : '') + `. NETWIN neto de promociones: ${money(t.netwinNeto)}.`,
+    sec('🎁', 'Premios y regalos (lo que regalás)', (vig ? `Condiciones vigentes: ${vig}. ` : '') + `En el período regalaste ${money(t.promosTotal)} = ${t.promosPct ?? 0}% de la venta` + (det ? ` (${det})` : '') + `. A los clientes NUEVOS del período les fue ${money(t.promosNuevos)} (${t.promosPctNuevos ?? 0}% de lo que cargaron: ahí pesa el bono de primera carga) y a los de ANTES ${money(t.promosRecurrentes)} (${t.promosPctRecurrentes ?? 0}% de lo que cargaron). NETWIN NETO (bruto − regalos): ${money(t.netwinNeto)}.` + (t.tasaReclamoReembolso != null ? ` Del reembolso diario se cobró el ${Math.round(t.tasaReclamoReembolso * 100)}% de lo reembolsable.` : ''),
       t.promosPct == null ? null : (t.promosPct <= 15 ? 'bien' : (t.promosPct <= 30 ? 'regular' : 'flojo')),
-      t.promosPct == null ? null : (t.promosPct <= 15 ? 'Las promociones pesan poco sobre lo cargado.' : (t.promosPct <= 30 ? 'Las promociones pesan bastante: es el precio de captar; cuando el bono de primera carga ya pasó, los clientes que quedan dejan más margen.' : 'Las promociones se comen gran parte del margen: revisar el % de primera carga y los reembolsos.')));
+      t.promosPct == null ? null : (t.promosPct <= 15 ? 'Los regalos pesan poco sobre la venta.' : (t.promosPct <= 30 ? 'Los regalos pesan bastante: es el precio de captar. Los clientes que quedan después de la primera carga dejan más margen (ya no llevan ese bono).' : 'Los regalos se comen gran parte del margen: revisar el % de primera carga y los reembolsos.')));
   }
   // Inversión
-  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin en el período (${money(t.netwinPorNuevo)} por cliente).`,
+  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Por cada $1 invertido se vendieron $${t.ventaPorPeso} y quedaron $${t.netoPorPeso} netos. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin bruto en el período (${money(t.netwinPorNuevo)} por cliente).`,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'bien' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'regular' : 'flojo')) : null,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'La inversión RINDE: cada cliente nuevo deja más de lo que costó traerlo, ya dentro del período.' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'Al límite: el cliente nuevo paga casi lo que costó; depende de que vuelva a cargar.' : 'No se recupera en el período: cada cliente nuevo cuesta más de lo que deja. Si la retención es buena puede cerrar después; si no, bajar el gasto o cambiar la pauta.')) : null);
   else sec('📣', 'Inversión', 'Cargá el gasto en publicidad del período para calcular el costo por cliente nuevo y si se recupera.', null, null);
@@ -208,11 +246,24 @@ function compare(ours, other) {
   return { otherLabel: other.label || 'Otra página', otherDays: dOther, oursDays, rows, verdict, nivel: !nn ? 'sin-datos' : (b > w ? 'bien' : (w > b ? 'flojo' : 'regular')) };
 }
 
-// Calculador de inversión. `calibration` = factor real/proyectado promedio de revisiones anteriores (1 = sin ajuste).
-// #464: economía POR CLIENTE (netwin que deja un cliente nuevo) × clientes por pauta (inversión / costo por cliente). Lo orgánico
-// se muestra aparte y NO entra en el ROI. Si en la base no hay gasto cargado, el ritmo actual se asume mixto: `organicPct`
-// (default 30%) es orgánico y el resto venía de pauta (supuesto que se ve y se puede cambiar).
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// #477 PANORAMA (calculador de inversión). Lógica, en criollo:
+//  1. LA BASE = lo que pasó de verdad en el período base (ej. desde el inicio hasta hoy): inversión, clientes nuevos,
+//     venta (cargas), retiros, regalos (separando nuevos y recurrentes), netwin bruto y neto.
+//     De ahí salen: costo por cliente (inversión / nuevos), cuánto deja cada cliente nuevo (venta, retiros), cuánto
+//     venden por día los clientes de ANTES (recurrentes) y qué % de lo reembolsable se cobra de verdad.
+//  2. LAS CONDICIONES: las vigentes se leen del panel (bono 1ª carga, reembolso diario, bono en cargas siguientes =
+//     carga automática + promedio de la ruleta). Las FUTURAS las escribe el owner. Los regalos del futuro NO se copian de
+//     lo observado: se calculan con los % futuros sobre la plata proyectada (1ª carga con tope, cargas siguientes, reembolso
+//     sobre lo perdido × tasa de reclamo) + los regalos "fijos" observados (fueguito, VIP, referidos…) como % de la venta.
+//     Así, bajar el bono de primera carga sube el neto de los que quedan.
+//  3. SI INVERTÍS X EN N DÍAS: clientes nuevos por pauta = X / costo por cliente (+ orgánicos al ritmo de la base).
+//     Cada nuevo vende lo que vendieron los de la base, ajustado por la duración (horizonte = N / días base, entre 0.5 y 2).
+//     Se suma lo que sigue vendiendo la base actual (recurrentes por día × N). Tres panoramas: bajo (−30 %), base, alto (+30 %)
+//     sobre los clientes nuevos. Resultado de la pauta = neto de los clientes por pauta − inversión.
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 function project(base, opts) {
+  const F = fmt(opts); const money = F.money;
   const spend = Math.max(0, Number(opts.spend) || 0), days = Math.max(1, Math.min(365, parseInt(opts.days, 10) || 30));
   const t = base.totals, rp = base.repeat, baseDays = Math.max(1, t.dias);
   const calib = Number(opts.calibration) > 0 ? Number(opts.calibration) : 1;
@@ -224,30 +275,66 @@ function project(base, opts) {
   else organicPerDay = perDayFirst * organicPct;
   const cargasPorCliente = rp.cargasPorCliente || t.cargasPorCargador || 1;
   const montoPorCliente = rp.montoPorCliente || t.cargaPromedio || 0;
-  const wdRatio = t.montoCargas > 0 ? Math.min(0.95, t.montoRetiros / t.montoCargas) : 0.5;
-  const reembPct = t.montoCargas > 0 ? t.montoReembolsos / t.montoCargas : 0;
+  const primeraCarga = Math.min(montoPorCliente || Infinity, rp.primeraCargaPromedio || t.cargaPromedio || 0);
+  const cargaProm = t.cargaPromedio || primeraCarga || 1;
+  const wdRatio = t.montoCargas > 0 ? clamp(t.montoRetiros / t.montoCargas, 0, 0.95) : 0.5;
   const activePct = (rp.pctActivos14 != null ? rp.pctActivos14 : 30) / 100;
-  const horizon = Math.min(1.5, Math.max(0.5, days / 30));
-  // #469: promociones — lo observado (promos / cargado en la base) escalado por las condiciones FUTURAS vs las vigentes
-  const pc = opts.promoConfig || {}; const promoNowPct = t.montoCargas > 0 ? (t.promosTotal || 0) / t.montoCargas : 0;
-  const curLevel = (Number(pc.firstDepositBonusPct) || 0) + (Number(pc.dailyRefundPct) || 0);
-  const futBonus = (opts.futBonus !== '' && opts.futBonus != null && Number(opts.futBonus) >= 0) ? Number(opts.futBonus) : (Number(pc.firstDepositBonusPct) || 0);
-  const futRefund = (opts.futRefund !== '' && opts.futRefund != null && Number(opts.futRefund) >= 0) ? Number(opts.futRefund) : (Number(pc.dailyRefundPct) || 0);
-  const promoRatio = curLevel > 0 ? Math.max(0, (futBonus + futRefund) / curLevel) : 1;
-  const promoFutPct = promoNowPct * promoRatio;
-  const netwinPorCliente = montoPorCliente * horizon * (1 - wdRatio - reembPct);
+  const horizon = clamp(days / baseDays, 0.5, 2);
+  // Condiciones
+  const pc = opts.promoConfig || {};
+  const capArs = Number(pc.capArs) > 0 ? Number(pc.capArs) : 20000, restPct = Number(pc.restPct) >= 0 ? Number(pc.restPct) : 20;
+  const cur = { bonus1: Number(pc.firstDepositBonusPct) || 0, refund: Number(pc.dailyRefundPct) || 0, rec: (Number(pc.autoLoadBonusPct) || 0) + (Number(pc.roulettePct) || 0) };
+  const pick = (v, d) => (v !== '' && v != null && Number(v) >= 0 ? Number(v) : d);
+  const fut = { bonus1: pick(opts.futBonus, cur.bonus1), refund: pick(opts.futRefund, cur.refund), rec: pick(opts.futRec, cur.rec) };
+  const capCost = (amount, p) => (p / 100) * Math.min(amount, capArs) + (restPct / 100) * Math.max(0, amount - capArs);
+  const tasaReclamo = t.tasaReclamoReembolso != null ? t.tasaReclamoReembolso : 0.6;
+  const fixedTypes = ['roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission'];
+  const otrosPct = t.montoCargas > 0 ? fixedTypes.reduce((s, k) => s + ((t.promos && t.promos[k] && t.promos[k].amt) || 0), 0) / t.montoCargas : 0;
+  // Economía de UN cliente nuevo en el horizonte, con las condiciones FUTURAS
+  const ventaCli = montoPorCliente * horizon;
+  const recAmt = Math.max(0, ventaCli - primeraCarga), recDeps = cargaProm > 0 ? recAmt / cargaProm : 0;
+  const netwinBrutoCli = ventaCli * (1 - wdRatio);
+  const bonus1Cli = capCost(primeraCarga, fut.bonus1), bonusRecCli = recDeps * capCost(cargaProm, fut.rec), refundCli = (fut.refund / 100) * netwinBrutoCli * tasaReclamo, otrosCli = ventaCli * otrosPct;
+  const promosCli = bonus1Cli + bonusRecCli + refundCli + otrosCli;
+  const netoCli = netwinBrutoCli - promosCli;
+  // Lo mismo con las condiciones VIGENTES (para mostrar la diferencia)
+  const promosCliHoy = capCost(primeraCarga, cur.bonus1) + recDeps * capCost(cargaProm, cur.rec) + (cur.refund / 100) * netwinBrutoCli * tasaReclamo + otrosCli;
+  // La base actual (clientes de antes) sigue vendiendo al ritmo observado; sus regalos: con el % recurrente futuro
+  const recPorDia = t.montoCargasRecurrentes / baseDays;
+  const baseVenta = recPorDia * days, baseNetwin = baseVenta * (1 - wdRatio);
+  const baseDepsN = cargaProm > 0 ? baseVenta / cargaProm : 0;
+  const basePromos = baseDepsN * capCost(cargaProm, fut.rec) + (fut.refund / 100) * baseNetwin * tasaReclamo + baseVenta * otrosPct;
+  const baseActual = { venta: r0(baseVenta), retiros: r0(baseVenta * wdRatio), netwin: r0(baseNetwin), promos: r0(basePromos), neto: r0(baseNetwin - basePromos), ventaPorDiaHoy: r0(recPorDia), promosPctHoy: t.promosPctRecurrentes };
   const mk = (f) => {
     const ff = f * calib;
     const porPauta = cac ? (spend / cac) * ff : 0, organicos = organicPerDay * days * ff, nuevos = porPauta + organicos;
-    const monto = nuevos * montoPorCliente * horizon, retiros = monto * wdRatio, reemb = monto * reembPct, netwin = monto - retiros - reemb;
-    const netwinPauta = porPauta * netwinPorCliente;
-    const promos = monto * promoFutPct, promosPauta = (porPauta * montoPorCliente * horizon) * promoFutPct;
-    const netwinNeto = netwin - promos, netwinPautaNeto = netwinPauta - promosPauta;
-    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente), montoCargas: r0(monto), retiros: r0(retiros), reembolsos: r0(reemb), netwin: r0(netwin), promos: r0(promos), netwinNeto: r0(netwinNeto), netwinPauta: r0(netwinPauta), netwinPautaNeto: r0(netwinPautaNeto), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct), resultado: r0(netwinPautaNeto - spend), roi: spend > 0 ? Math.round(((netwinPautaNeto - spend) / spend) * 100) : null, recuperaEnDias: cac && netwinPorCliente * (1 - promoFutPct) > 0 ? Math.min(999, r0(cac / ((netwinPorCliente * (1 - promoFutPct)) / days))) : null };
+    const monto = nuevos * ventaCli, retiros = monto * wdRatio, netwin = monto - retiros;
+    const promos = nuevos * promosCli, bonus1 = nuevos * bonus1Cli, bonusRec = nuevos * bonusRecCli, refund = nuevos * refundCli, otros = nuevos * otrosCli;
+    const netwinNeto = netwin - promos;
+    const netwinPauta = porPauta * netwinBrutoCli, netwinPautaNeto = porPauta * netoCli;
+    const total = { venta: r0(monto + baseVenta), retiros: r0(retiros + baseVenta * wdRatio), netwin: r0(netwin + baseNetwin), promos: r0(promos + basePromos), neto: r0(netwinNeto + baseNetwin - basePromos) };
+    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente * horizon), montoCargas: r0(monto), retiros: r0(retiros), netwin: r0(netwin),
+      promos: r0(promos), promosDetalle: { bonus1: r0(bonus1), bonusRec: r0(bonusRec), refund: r0(refund), otros: r0(otros) }, netwinNeto: r0(netwinNeto), netwinPauta: r0(netwinPauta), netwinPautaNeto: r0(netwinPautaNeto), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct),
+      resultado: r0(netwinPautaNeto - spend), roi: spend > 0 ? Math.round(((netwinPautaNeto - spend) / spend) * 100) : null, recuperaEnDias: cac && netoCli > 0 ? Math.min(999, r0(cac / (netoCli / days))) : null,
+      total, resultadoTotal: r0(netwinNeto + baseNetwin - basePromos - spend) };
   };
-  // #467: "Hoy, como está": lo que pasa por día con el gasto actual, para comparar contra la inversión extra.
-  const hoy = { gastoPorDia: r0((t.spend || 0) / baseDays), nuevosPorDia: Math.round(perDayFirst * 10) / 10, cargasPorDia: r0(t.cargas / baseDays), montoPorDia: r0(t.montoCargas / baseDays), netwinPorDia: r0(t.netwin / baseDays), costoPorNuevo: t.cac || null, enDias: { dias: days, gasto: r0((t.spend || 0) / baseDays * days), nuevos: r0(perDayFirst * days), monto: r0(t.montoCargas / baseDays * days), netwin: r0(t.netwin / baseDays * days) } };
-  return { spend, days, calibration: calib, hoy, promo: { promoNowPct: Math.round(promoNowPct * 1000) / 10, curBonus: Number(pc.firstDepositBonusPct) || 0, curRefund: Number(pc.dailyRefundPct) || 0, futBonus, futRefund, promoRatio: Math.round(promoRatio * 100) / 100, promoFutPct: Math.round(promoFutPct * 1000) / 10 }, supuestos: { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, cac, cacOrigen: Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado' : 'sin dato'), primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), netwinPorCliente: r0(netwinPorCliente), pctRetirado: Math.round(wdRatio * 100), pctReembolsos: Math.round(reembPct * 100), pctActivos: Math.round(activePct * 100), gastoBase: t.spend || 0 }, bajo: mk(0.7), base: mk(1), alto: mk(1.3), nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto en publicidad de un período con pauta (Análisis → Gasto) o indicá el costo a mano. Mientras tanto sólo se proyecta lo orgánico.' };
+  // "Hoy, como está": lo que pasa por día en la base, llevado a N días (sin la inversión nueva)
+  const hoy = { gastoPorDia: r0((t.spend || 0) / baseDays), nuevosPorDia: Math.round(perDayFirst * 10) / 10, cargasPorDia: r0(t.cargas / baseDays), montoPorDia: r0(t.montoCargas / baseDays), netwinPorDia: r0(t.netwin / baseDays), promosPorDia: r0(t.promosTotal / baseDays), netoPorDia: r0(t.netwinNeto / baseDays), costoPorNuevo: t.cac || null,
+    enDias: { dias: days, gasto: r0((t.spend || 0) / baseDays * days), nuevos: r0(perDayFirst * days), monto: r0(t.montoCargas / baseDays * days), netwin: r0(t.netwin / baseDays * days), promos: r0(t.promosTotal / baseDays * days), neto: r0(t.netwinNeto / baseDays * days) } };
+  const bajo = mk(0.7), b = mk(1), alto = mk(1.3);
+  const cacOrigen = Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado en la base' : 'sin dato');
+  const supuestos = { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, gastoBase: t.spend || 0, cac, cacOrigen, primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), primeraCarga: r0(primeraCarga), cargaPromedio: r0(cargaProm), horizonte: Math.round(horizon * 100) / 100, ventaPorCliente: r0(ventaCli), netwinPorCliente: r0(netwinBrutoCli), promosPorCliente: r0(promosCli), promosPorClienteHoy: r0(promosCliHoy), netoPorCliente: r0(netoCli), pctRetirado: Math.round(wdRatio * 100), pctActivos: Math.round(activePct * 100), tasaReclamo: Math.round(tasaReclamo * 100), otrosPct: Math.round(otrosPct * 1000) / 10, capArs, restPct };
+  const promo = { cur, fut, promoNowPct: t.promosPct, promoNowPctNuevos: t.promosPctNuevos, promoNowPctRecurrentes: t.promosPctRecurrentes, promoFutPctCliente: ventaCli > 0 ? Math.round((promosCli / ventaCli) * 1000) / 10 : null, promoHoyPctCliente: ventaCli > 0 ? Math.round((promosCliHoy / ventaCli) * 1000) / 10 : null };
+  // Explicación del cierre, paso a paso (lo que se guarda con el panorama)
+  const E = [];
+  E.push(`BASE (${base.from} → ${base.to}, ${baseDays} días): invertiste ${money(t.spend || 0)} y entraron ${t.primerasCargas} clientes nuevos → costo por cliente ${cac ? money(cac) : '—'} (${cacOrigen}). Venta ${money(t.montoCargas)} (${t.cargas} cargas), retiros ${money(t.montoRetiros)} (${Math.round(wdRatio * 100)}%), netwin bruto ${money(t.netwin)}, regalos ${money(t.promosTotal)} (${t.promosPct ?? 0}% de la venta: nuevos ${t.promosPctNuevos ?? 0}%, de antes ${t.promosPctRecurrentes ?? 0}%) → neto ${money(t.netwinNeto)}.` + (t.spend > 0 ? ` Por cada $1 invertido: $${t.ventaPorPeso} de venta y $${t.netoPorPeso} netos.` : ''));
+  E.push(`CADA CLIENTE NUEVO de la base dejó ${money(montoPorCliente)} en ${cargasPorCliente} cargas (primera carga ${money(primeraCarga)}). Para ${days} días se toma ×${supuestos.horizonte} → ${money(ventaCli)} de venta, ${money(netwinBrutoCli)} de netwin bruto.`);
+  E.push(`REGALOS por cliente nuevo con las condiciones FUTURAS (bono 1ª carga ${fut.bonus1}% con tope ${money(capArs)} y ${restPct}% sobre el resto · ${fut.rec}% en cargas siguientes · reembolso ${fut.refund}% sobre lo perdido, que se cobra el ${supuestos.tasaReclamo}% · otros regalos ${supuestos.otrosPct}% de la venta): ${money(promosCli)} (hoy, con ${cur.bonus1}% / ${cur.rec}% / ${cur.refund}%, serían ${money(promosCliHoy)}). Queda NETO por cliente: ${money(netoCli)}.`);
+  E.push(`INVERSIÓN ${money(spend)} en ${days} días a ${cac ? money(cac) : '—'} por cliente → ${b.clientesPorPauta} clientes por pauta + ${b.clientesOrganicos} orgánicos (ritmo de la base) = ${b.clientesNuevos} nuevos (panorama base). Venta de los nuevos ${money(b.montoCargas)}, netwin bruto ${money(b.netwin)}, regalos ${money(b.promos)}, neto ${money(b.netwinNeto)}.`);
+  E.push(`LA BASE ACTUAL (clientes de antes) sigue vendiendo ${money(recPorDia)} por día → en ${days} días ${money(baseVenta)} de venta, neto ${money(baseActual.neto)}.`);
+  E.push(`TOTAL DEL NEGOCIO en ${days} días (panorama base): venta ${money(b.total.venta)}, netwin bruto ${money(b.total.netwin)}, regalos ${money(b.total.promos)}, neto ${money(b.total.neto)}. Resultado de la PAUTA (neto de los clientes por pauta − inversión): ${money(b.resultado)} (ROI ${b.roi ?? '—'}%). Resultado total (neto total − inversión): ${money(b.resultadoTotal)}. Panoramas bajo/alto: ±30 % en clientes nuevos.`);
+  if (calib !== 1) E.push(`Ajuste por revisiones anteriores aplicado: ×${calib}.`);
+  return { spend, days, calibration: calib, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, baseActual, promo, supuestos, bajo, base: b, alto, explicacion: E, nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto total desde el inicio (o el de la base) o escribí el costo a mano. Mientras tanto sólo se proyecta lo orgánico y la base actual.' };
 }
 
 // Revisión de una proyección contra lo REAL: `real` = analyze() del tramo transcurrido. Prorratea lo proyectado a los días
@@ -255,7 +342,7 @@ function project(base, opts) {
 function review(snapshot, real, elapsedDays) {
   const p = snapshot.result && snapshot.result.base; if (!p) return null;
   const frac = Math.max(0.05, Math.min(1, elapsedDays / snapshot.params.days));
-  const rows = [['clientesNuevos', 'Clientes nuevos', p.clientesNuevos * frac, real.totals.primerasCargas], ['cargas', 'Cargas', p.cargas * frac, real.totals.cargas], ['montoCargas', 'Monto cargado', p.montoCargas * frac, real.totals.montoCargas, true], ['netwin', 'NETWIN', p.netwin * frac, real.totals.netwin, true], ['activosAlFinal', 'Clientes activos', p.activosAlFinal * frac, real.repeat.activos14]]
+  const rows = [['clientesNuevos', 'Clientes nuevos', p.clientesNuevos * frac, real.totals.primerasCargas], ['cargas', 'Cargas', p.cargas * frac, real.totals.cargas], ['montoCargas', 'Venta de los nuevos', p.montoCargas * frac, real.totals.montoCargasNuevos != null ? real.totals.montoCargasNuevos : real.totals.montoCargas, true], ['netwin', 'NETWIN de los nuevos', p.netwin * frac, real.totals.netwinNuevos != null ? real.totals.netwinNuevos : real.totals.netwin, true], ['activosAlFinal', 'Clientes activos', p.activosAlFinal * frac, real.repeat.activos14]]
     .map(([key, label, proj, rl, isMoney]) => ({ key, label, proyectado: r0(proj), real: r0(rl), diffPct: proj > 0 ? Math.round(((rl - proj) / proj) * 1000) / 10 : null, factor: proj > 0 ? Math.round((rl / proj) * 100) / 100 : null, isMoney: !!isMoney }));
   const w = { clientesNuevos: 2, netwin: 2, cargas: 1, montoCargas: 1, activosAlFinal: 1 };
   const fs = rows.filter((r) => r.factor != null && isFinite(r.factor)); const factor = fs.length ? Math.round((fs.reduce((s, r) => s + r.factor * w[r.key], 0) / fs.reduce((s, r) => s + w[r.key], 0)) * 100) / 100 : null;

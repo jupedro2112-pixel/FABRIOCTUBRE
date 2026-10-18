@@ -1250,3 +1250,24 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   del mismo día · 7 días · repetidores vs una sola · recuperados por antigüedad sin cargar (nunca/<10/10-19/
   20-29/30+ → al otro día / 48 h / 7 d / siguen activos). Lo exponen `GET /api/admin/notif-batches/:id`
   (`impact`) y `cronograma-report` (campañas, `weeks`, `days`, `plans`, `bestWeek7d`, recomendaciones).
+
+## Datos IA (#459 → #477, 2026-10-18) — `src/services/datosIaService.js` + rutas `/api/admin/datos-ia/*`
+
+Análisis del negocio **por reglas, sin IA externa**, a partir de Transaction / User / AppSession / RefundClaim /
+DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · Comparativa · Panorama de inversión · Historial).
+
+- **Rendimiento (#477):** NUNCA bajar movimientos sueltos (30 d ≈ 30.000 cargas). Todo se agrupa en Mongo: por período en
+  hora argentina (`bucketExpr`: `$dateToString`/`$dateTrunc` con tz −03:00) y por usuario; la cohorte (primera carga en el
+  rango) sale de una agregación sobre todas las cargas reales (`$sort` + `$group` por userId con `$push` de fecha+monto sólo
+  para la cohorte, `$$REMOVE` para el resto). Cache 5 min por proceso. 90 días ≈ 10 s en Render.
+- **Regalos:** tipos `bonus, refund, roulette, fire_reward, rakeback, vip_levelup, install_gift, referral_commission`,
+  separados entre **nuevos** del período y **recurrentes**; `netwinNeto = netwin − regalos`; `tasaReclamoReembolso`.
+- **Condiciones vigentes** (`_diaPromoConfig` en server.js): bono 1ª carga, carga automática, ruleta (% extra promedio por
+  giro), reembolsos por período, extra por instalar, tope del bono.
+- **Panorama (`project`)**: la lógica completa está en el comentario del código. Base real (desde el inicio o N días, gasto:
+  escrito > `Config['adSpendTotal']` > `Config['adSpend']` prorrateado) → condiciones futuras (los regalos se CALCULAN con los
+  % futuros) → inversión X en N días → 3 panoramas (±30 % en nuevos) + base actual + `explicacion[]` (cierre paso a paso).
+  Cada cálculo se guarda en `DatosIaSnapshot` (nota del owner, revisión contra lo real, calibración).
+- **Moneda:** `Config['usdtRate']` (manual o `?fetch=1` desde criptoya); `cur=usd&usdRate=` en análisis y panorama hace que
+  los textos del server salgan en USDT; el panel convierte el resto (`_diaM`, `localStorage dia_cur`).
+- **Medidor de uso:** la PWA pinguea `POST /api/activity/ping` cada 60 s (gap > 3 min = sesión nueva) → `AppSession`.

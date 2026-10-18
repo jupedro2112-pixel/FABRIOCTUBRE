@@ -207,4 +207,15 @@ a { color: var(--p-red); }
 .dia .dia-note { font: 600 11.5px/1.45 var(--p-font); color: var(--p-muted); margin: 8px 0 0; }
 .dia .dia-warn { background: var(--p-amber-soft); color: var(--p-amber); border-radius: 12px; padding: 8px 12px; font: 700 12px var(--p-font); margin: 0 0 10px; }
 .dia .dia-note b, .dia .dia-warn b { color: inherit; }
+/* ── #477: moneda USDT, pasos del cierre, subtítulos ── */
+.dia .dia-money { align-items: center; margin-bottom: 10px; }
+.dia .dia-money-t { font: 800 13px var(--p-font); color: var(--p-text); }
+.dia .dia-cur { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--p-font); color: var(--p-muted); }
+.dia .dia-cur button { border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 999px; padding: 5px 12px; font: 800 12px var(--p-font); cursor: pointer; }
+.dia .dia-cur button.on { background: var(--p-red); color: #fff; border-color: var(--p-red); }
+.dia .dia-cur button:disabled { opacity: .45; cursor: not-allowed; }
+.dia .dia-sub { font: 800 13px var(--p-font); color: var(--p-text); margin: 6px 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dia .dia-sub small { font-weight: 600; color: var(--p-muted); }
+.dia ol.dia-steps { margin: 6px 0 10px; padding-left: 22px; display: grid; gap: 6px; }
+.dia ol.dia-steps li { font: 600 12.5px/1.5 var(--p-font); color: var(--p-text); background: var(--p-surface); border-radius: 10px; padding: 8px 10px; }
 

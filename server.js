@@ -18727,7 +18727,37 @@ async function _diaPromoConfig() {
   try { out.autoLoadBonusPct = await getAutoLoadBonusPct(); } catch (_) {}
   try { const tbp = await getRefundTiersByPeriod(); const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0); out.dailyRefundPct = mx(tbp.daily); out.weeklyRefundPct = mx(tbp.weekly); out.monthlyRefundPct = mx(tbp.monthly); } catch (_) {}
   try { const ig = await getInstallGiftConfig(); if (ig && ig.enabled) out.installGiftPct = Number(ig.pct) || 0; } catch (_) {}
+  // #477: ruleta = % extra promedio por giro (Σ peso × % / Σ pesos, sólo premios en %), tope del bono y moneda
+  try { const rc = await getDailyRouletteConfig(); const ps = (rc && rc.enabled && rc.prizes) || []; const W = ps.reduce((s, p) => s + (Number(p.weight) || 0), 0); out.roulettePct = W > 0 ? Math.round(ps.reduce((s, p) => s + (p.type === 'percent' ? (Number(p.weight) || 0) * (Number(p.value) || 0) : 0), 0) / W * 10) / 10 : 0; } catch (_) { out.roulettePct = 0; }
+  try { const bc = await getBonusCapConfig(); out.capArs = bc.capArs; out.restPct = bc.restPct; } catch (_) { out.capArs = 20000; out.restPct = 20; }
   return out;
+}
+// #477: cotización USDT para ver todo en dólares. Manual (panel) o automática desde criptoya (mediana del "ask" de los exchanges).
+async function _diaUsdt(fetchNow) {
+  let cur = null; try { cur = (await getConfig('usdtRate', null)) || null; } catch (_) {}
+  if (!fetchNow) return cur;
+  try {
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 7000);
+    const r = await fetch('https://criptoya.com/api/usdt/ars/1', { signal: ctl.signal, headers: { 'User-Agent': 'vipcargas-panel' } }); clearTimeout(tm);
+    const j = await r.json(); const vals = Object.values(j || {}).map((x) => Number(x && (x.totalAsk || x.ask))).filter((v) => v > 100 && v < 100000).sort((a, b) => a - b);
+    if (!vals.length) throw new Error('sin cotizaciones');
+    const rate = Math.round(vals[Math.floor(vals.length / 2)]);
+    const doc = { rate, updatedAt: new Date().toISOString(), source: 'criptoya (mediana de ' + vals.length + ' exchanges)' };
+    await Config.set('usdtRate', doc, 'system'); return doc;
+  } catch (e) { return cur ? { ...cur, fetchError: e.message } : { rate: 0, fetchError: e.message }; }
+}
+function _diaMoneyOpts(q) { const cur = q && q.cur === 'usd' ? 'usd' : 'ars'; const usdRate = Number(q && q.usdRate) > 0 ? Number(q.usdRate) : 0; return { cur, usdRate }; }
+app.get('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => { try { const d = await _diaUsdt(req.query.fetch === '1'); res.json({ success: true, rate: (d && Number(d.rate)) || 0, updatedAt: d && d.updatedAt || null, source: d && d.source || null, fetchError: d && d.fetchError || null }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
+app.post('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const rate = Math.round(Number(req.body && req.body.rate)); if (!(rate > 0)) return res.status(400).json({ error: 'Cotización inválida' });
+    await Config.set('usdtRate', { rate, updatedAt: new Date().toISOString(), source: 'manual (' + req.user.username + ')' }, req.user.username); res.json({ success: true, rate });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+// #477: base "desde el inicio" = desde la primera carga real registrada (tope 400 días)
+async function _diaFirstDepositDate() {
+  try { const d = await Transaction.findOne({ type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] } }).sort({ timestamp: 1 }).select('timestamp').lean(); return d ? new Date(d.timestamp) : null; } catch (_) { return null; }
 }
 // Medidor: la PWA pinguea cada 60 s mientras está abierta y visible. Gap > 3 min = sesión nueva.
 app.post('/api/activity/ping', authMiddleware, async (req, res) => {
@@ -18785,7 +18815,7 @@ app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (
       for (let x = from.getTime(); x <= to.getTime(); x += 86400000) spendByDay[datosIa.dateKeyART(new Date(x))] = spend / nd;
     }
     const _t0 = Date.now();
-    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend, spendByDay, promoConfig: await _diaPromoConfig() });
+    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend, spendByDay, promoConfig: await _diaPromoConfig(), ..._diaMoneyOpts(q) });
     out.ms = Date.now() - _t0; logger.info('[datos-ia] analysis ' + out.from + '→' + out.to + ' ' + out.granularity + ' en ' + out.ms + ' ms ' + JSON.stringify(out.timings || {}));
     const params = { key: [out.from, out.to, out.granularity, out.campaign || '', spend].join('|'), from: out.from, to: out.to, granularity: out.granularity, campaign: out.campaign, spend };
     const summary = { registros: out.totals.registros, primerasCargas: out.totals.primerasCargas, cargas: out.totals.cargas, montoCargas: out.totals.montoCargas, netwin: out.totals.netwin, d30: out.retention.d30, pctSiguieron: out.repeat.pctSiguieron, veredicto: out.informe.veredicto.nivel };
@@ -18851,20 +18881,29 @@ app.post('/api/admin/datos-ia/spend-total', authMiddleware, adminMiddleware, asy
 app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
-    const q = req.query || {}; const baseDays = Math.max(7, Math.min(365, parseInt(q.base, 10) || 30));
-    const to = new Date(); const from = new Date(to.getTime() - (baseDays - 1) * 86400000);
-    const spendBase = await _diaSpendFor(from, to, q.campaign);
-    const promoConfig = await _diaPromoConfig();
-    const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase, promoConfig });
+    const q = req.query || {};
+    // #477: la base es "desde el inicio" (primera carga real, tope 400 días) o los últimos N días. El gasto de la base:
+    // escrito a mano > gasto total desde el inicio (Config adSpendTotal, si la base es desde el inicio) > gasto por día guardado.
+    const to = new Date(); let from, baseMode = q.baseMode === 'dias' ? 'dias' : 'inicio';
+    const st = (await getConfig('adSpendTotal', null)) || null;
+    if (baseMode === 'inicio') { const fd = await _diaFirstDepositDate(); const since = st && st.since ? new Date(st.since) : null; from = since && !isNaN(since) ? since : (fd || new Date(to.getTime() - 29 * 86400000)); if (to - from > 400 * 86400000) from = new Date(to.getTime() - 400 * 86400000); }
+    else { const bd = Math.max(7, Math.min(400, parseInt(q.base, 10) || 30)); from = new Date(to.getTime() - (bd - 1) * 86400000); }
+    let spendBase = Number(q.baseSpend) > 0 ? Number(q.baseSpend) : 0, spendOrigen = spendBase ? 'escrito' : null;
+    if (!spendBase && baseMode === 'inicio' && st && Number(st.amount) > 0) { spendBase = Number(st.amount); spendOrigen = 'gasto total desde el inicio'; }
+    if (!spendBase) { spendBase = await _diaSpendFor(from, to, q.campaign); spendOrigen = spendBase ? 'gasto por día guardado' : 'sin gasto'; }
+    const promoConfig = await _diaPromoConfig(); const money = _diaMoneyOpts(q);
+    const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase, promoConfig, ...money });
     let calibration = 1; try { const c = await getConfig('projectionCalibration', null); if (c && Number(c.factor) > 0) calibration = Number(c.factor); } catch (_) {}
     let cacIn = Number(q.cac) > 0 ? Number(q.cac) : null, cacOrigen = cacIn ? 'indicado' : null;
     if (!cacIn && !(base.totals.cac > 0)) { // #468: costo promedio histórico (gasto total / clientes que cargaron alguna vez)
-      try { const st = (await getConfig('adSpendTotal', null)) || null; const n = base.totals.baseCargadores; if (st && Number(st.amount) > 0 && n) { cacIn = Math.round(Number(st.amount) / n); cacOrigen = 'promedio histórico'; } } catch (_) {}
+      const n = base.totals.baseCargadores; if (st && Number(st.amount) > 0 && n) { cacIn = Math.round(Number(st.amount) / n); cacOrigen = 'promedio histórico (gasto total / clientes de siempre)'; }
     }
-    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: cacIn, calibration, organicPct: q.organicPct, promoConfig, futBonus: q.futBonus, futRefund: q.futRefund });
+    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: cacIn, calibration, organicPct: q.organicPct, promoConfig, futBonus: q.futBonus, futRefund: q.futRefund, futRec: q.futRec, ...money });
     if (cacOrigen) projection.supuestos.cacOrigen = cacOrigen;
-    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || '', q.organicPct || '', q.futBonus || '', q.futRefund || ''].join('|'), organicPct: q.organicPct || null, futBonus: q.futBonus || null, futRefund: q.futRefund || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
-    const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, netwin: projection.base.netwin, resultado: projection.base.resultado, roi: projection.base.roi });
+    projection.supuestos.gastoBaseOrigen = spendOrigen; projection.supuestos.baseMode = baseMode;
+    const baseDays = base.totals.dias;
+    const params = { key: ['proj', q.spend || 0, q.days || 30, baseMode, baseDays, spendBase, q.cac || '', q.campaign || '', q.organicPct || '', q.futBonus || '', q.futRefund || '', q.futRec || '', money.cur].join('|'), baseMode, baseFrom: base.from, baseTo: base.to, baseSpend: spendBase, organicPct: q.organicPct || null, futBonus: q.futBonus || null, futRefund: q.futRefund || null, futRec: q.futRec || null, cur: money.cur, usdRate: money.usdRate || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
+    const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, venta: projection.base.total.venta, netwin: projection.base.netwin, neto: projection.base.total.neto, resultado: projection.base.resultado, roi: projection.base.roi });
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });

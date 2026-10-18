@@ -1232,10 +1232,12 @@ document.addEventListener('change', function (ev) {
                     <div><h2>🧠 Datos IA</h2><div class="cfg-sub">Análisis del negocio con datos reales · informe por reglas · historial y ajuste</div></div>
                     <button class="refresh-btn" onclick="diaRun()" title="Recalcular">🔄</button>
                 </div>
+                <!-- #477: cotización USDT y moneda de TODA la sección -->
+                <div class="dia-bar dia-money"><span class="dia-money-t">💵 Dólar USDT</span><label>$<input type="number" id="diaUsdt" min="1" step="1" placeholder="cotización" style="width:110px;"></label><button class="btn-secondary btn-small" onclick="diaUsdtFetch()" title="Trae la cotización actual (mediana de los exchanges)">⟳ Automático</button><button class="btn-primary btn-small" onclick="diaUsdtSave()">Guardar</button><span id="diaUsdtInfo" class="dia-pill">…</span><span class="dia-cur"><b>Ver todo en</b><button type="button" id="diaCurArs" class="on" onclick="diaSetCur('ars')">Pesos $</button><button type="button" id="diaCurUsd" onclick="diaSetCur('usd')">USDT US$</button></span></div>
                 <div class="dia-tabs">
                     <button type="button" id="diaTabA" class="on" onclick="diaTab('a')">📊 Análisis</button>
                     <button type="button" id="diaTabB" onclick="diaTab('b')">⚖️ Comparativa</button>
-                    <button type="button" id="diaTabC" onclick="diaTab('c')">🧮 Calculador de inversión</button>
+                    <button type="button" id="diaTabC" onclick="diaTab('c')">🧮 Panorama de inversión</button>
                     <button type="button" id="diaTabD" onclick="diaTab('d')">📜 Historial</button>
                 </div>
                 <div id="diaPaneA">
@@ -1296,29 +1298,44 @@ document.addEventListener('change', function (ev) {
                     </div>
                 </div>
                 <div id="diaPaneC" style="display:none;">
-                    <!-- #468: gasto total desde el inicio → costo promedio por cliente -->
-                    <div class="dia-card"><div class="dia-card-h"><b>📣 ¿Cuánto gastaste en publicidad desde que empezó la página?</b><small>Con ese total y los clientes que cargaron alguna vez sale tu costo promedio por cliente. Es lo que usa el calculador si no cargás gasto por día ni escribís un costo a mano.</small></div>
+                    <!-- #477 (owner): PANORAMA. 1) la base real · 2) condiciones vigentes/futuras · 3) si invertís X en N días → 3 panoramas -->
+                    <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Tu negocio hasta hoy (la base)</b><small>Lo que pasó de verdad: inversión, clientes nuevos, venta (cargas), retiros, regalos y lo que quedó. De acá salen el costo por cliente y cuánto deja cada cliente nuevo.</small></div>
+                        <div class="dia-bar dia-bar-in">
+                            <label>Base<select id="prBaseMode" onchange="diaBaseModeUI()"><option value="inicio">Desde el inicio hasta hoy</option><option value="dias">Últimos N días</option></select></label>
+                            <label id="prBaseDaysL" style="display:none;">N días<input type="number" id="prBase" min="7" max="400" value="60" style="width:80px;"></label>
+                            <label>Gasto en publicidad de esa base $<input type="number" id="prBaseSpend" min="0" step="1000" placeholder="usa el gasto total" style="width:160px;" title="Si lo dejás vacío: desde el inicio usa el gasto total guardado abajo; en N días usa el gasto por día guardado en Análisis"></label>
+                            <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
+                            <button class="btn-primary btn-small" onclick="diaProject()">Ver la base</button>
+                        </div>
+                        <div id="diaBaseOut"></div>
+                        <div class="dia-sub" style="margin-top:10px;"><b>📣 Gasto total en publicidad desde que empezó la página</b> <span id="stInfo" class="dia-pill">…</span></div>
                         <div class="dia-bar dia-bar-in">
                             <label>Gasto total hasta hoy $<input type="number" id="stAmount" min="0" step="1000" style="width:160px;"></label>
-                            <label>Desde (opc.)<input type="date" id="stSince"></label>
-                            <button class="btn-primary btn-small" onclick="diaSaveSpendTotal()">Guardar</button>
-                            <span id="stInfo" class="dia-pill">…</span>
+                            <label>Empezó el<input type="date" id="stSince" title="Desde cuándo contás ese gasto: es el inicio de la base"></label>
+                            <button class="btn-secondary btn-small" onclick="diaSaveSpendTotal()">Guardar</button>
                         </div>
                     </div>
-                    <div class="dia-card"><div class="dia-card-h"><b>🧮 ¿Qué deja una inversión?</b><small>Proyección aproximada con lo observado en los últimos días. Tres escenarios: bajo (−30%), base y alto (+30%). Cada cálculo queda en el Historial para revisarlo contra lo real y ajustar los próximos.</small></div>
+                    <div class="dia-card"><div class="dia-card-h"><b>2️⃣ Condiciones promocionales</b><small>Las vigentes se leen del panel. Las futuras las escribís vos: con esas se calculan los regalos del panorama (no se copian los de hoy). Bajar el bono de 1ª carga sube lo que dejan los clientes que quedan.</small></div>
+                        <div id="diaCondOut" class="dia-note" style="margin:0 0 8px;">Vigentes: …</div>
                         <div class="dia-bar dia-bar-in">
-                            <label>Plata a invertir $<input type="number" id="prSpend" min="0" step="1000" value="500000" style="width:130px;"></label>
-                            <label>Durante (días)<input type="number" id="prDays" min="1" max="365" value="30" style="width:80px;"></label>
-                            <label>Base: últimos (días)<input type="number" id="prBase" min="7" max="365" value="30" style="width:80px;"></label>
-                            <label>Costo por cliente nuevo $ (opc.)<input type="number" id="prCac" min="0" step="100" placeholder="observado" style="width:130px;"></label>
-                            <label>% orgánico del ritmo actual (si la base no tiene gasto)<input type="number" id="prOrg" min="0" max="100" value="30" style="width:80px;"></label>
-                            <!-- #469: condiciones promocionales FUTURAS (prellenadas con las vigentes) -->
                             <label>Bono 1ª carga futuro %<input type="number" id="prBonus" min="0" max="500" placeholder="vigente" style="width:90px;"></label>
                             <label>Reembolso diario futuro %<input type="number" id="prRefund" min="0" max="100" placeholder="vigente" style="width:90px;"></label>
-                            <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
-                            <button class="btn-primary btn-small" onclick="diaProject()">Calcular</button>
+                            <label>Bono en cargas siguientes futuro % (ruleta / diario repartido, promedio)<input type="number" id="prRec" min="0" max="500" placeholder="vigente" style="width:90px;"></label>
+                            <label>Costo por cliente nuevo $ (opc.)<input type="number" id="prCac" min="0" step="100" placeholder="de la base" style="width:130px;"></label>
+                            <label>% orgánico (si la base no tiene gasto)<input type="number" id="prOrg" min="0" max="100" value="30" style="width:70px;"></label>
+                        </div>
+                    </div>
+                    <div class="dia-card"><div class="dia-card-h"><b>3️⃣ Si invertís…</b><small>Clientes nuevos = inversión ÷ costo por cliente. Cada uno vende lo que vendieron los de la base (ajustado a los días). Se suma lo que sigue vendiendo la base actual. Tres panoramas: bajo (−30 %), base y alto (+30 %) en clientes nuevos. Todo queda en el Historial.</small></div>
+                        <div class="dia-bar dia-bar-in">
+                            <label>Plata a invertir $<input type="number" id="prSpend" min="0" step="1000" value="400000000" style="width:160px;"></label>
+                            <label>Durante (días)<input type="number" id="prDays" min="1" max="365" value="60" style="width:80px;"></label>
+                            <span class="dia-presets"><button onclick="diaProjPreset(30)">30 d</button><button onclick="diaProjPreset(60)">60 d</button><button onclick="diaProjPreset(120)">4 meses</button><button onclick="diaProjPreset(180)">6 meses</button></span>
+                            <button class="btn-primary btn-small" onclick="diaProject()">Calcular panorama</button>
                         </div>
                         <div id="diaProjOut"></div>
+                        <div id="diaProjSave" style="display:none;margin-top:10px;"><div class="dia-sub"><b>💾 Guardar este panorama con nota</b> <small>qué decidiste, qué esperás; queda con todo el detalle del cierre en el Historial</small></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;"><textarea id="diaProjNote" rows="2" placeholder="Ej.: panorama para noviembre con 400 M y bono de 1ª carga al 30%." style="flex:1;min-width:240px;"></textarea><button class="btn-primary btn-small" onclick="diaSaveProjNote()">Guardar nota</button></div>
+                        </div>
                     </div>
                 </div>
                 <div id="diaPaneD" style="display:none;">
