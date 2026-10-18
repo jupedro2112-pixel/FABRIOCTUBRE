@@ -4385,7 +4385,7 @@ async function _landingSignupHandler(req, res) {
     //     con API conectada (Ganamos cuando se carguen GANAMOS_API_URL/KEY). Girox ya quedó
     //     arriba. Un fallo acá NO frena el alta (el cliente ya tiene su cuenta en girox): queda
     //     `platforms.<id>.status='error'` y se reintenta al elegir esa plataforma / SSO.
-    const _platResults = [{ id: 'girox', created: true }];
+    const _platResults = [{ id: 'girox', created: girox.isEnabled(), reason: girox.isEnabled() ? null : 'not_connected' }]; // #426: en prueba sin API → created:false
     const _platState = {};
     try {
       const _enabled = await platforms.listEnabled();
