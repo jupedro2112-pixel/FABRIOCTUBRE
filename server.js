@@ -7724,6 +7724,7 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
       io.to(`user_${req.user.userId}`).emit('message_sent', message);
       // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
       maybeNotifyComunidadActivity(req.user.userId, req.user.username).catch(() => {});
+      setTimeout(() => { _supportAutoReply(req.user.userId, req.user.username); }, 1500); // #383
     } else {
       // Admin enviando mensaje - notificar al usuario
       // SLA: respuesta de texto del agente — resolver el reloj de demora (fire-and-forget).
@@ -10646,6 +10647,7 @@ io.on('connection', (socket) => {
 
         // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
         maybeNotifyComunidadActivity(socket.userId, socket.username).catch(() => {});
+        setTimeout(() => { _supportAutoReply(socket.userId, socket.username); }, 1500); // #383
       } else {
         // Admin/depositor/withdrawer enviando mensaje - notificar al usuario específico
         logger.debug(`[SEND_MESSAGE] Looking up socket for user ${receiverId}`);
@@ -11732,6 +11734,13 @@ async function initializeData() {
       response: '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.'
     },
     {
+      // #383: primera respuesta automática cuando el cliente escribe en Soporte. Variable: {nombre} (persona de turno).
+      name: '/sys_support_autoreply',
+      description: 'Soporte: respuesta automática apenas escribe el cliente (una cada 2 h; no se manda si un agente respondió hace menos de 10 min). Variable: {nombre}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_AUTOREPLY_DEFAULT
+    },
+    {
       name: '/sys_support_sla',
       description: 'Soporte: plazo de respuesta que se muestra debajo de la presentación (ej. "Responde dentro de los 10 minutos"). Vacío = no se muestra.',
       type: 'message',
@@ -12531,6 +12540,20 @@ async function getSupportAgentName(at = new Date()) {
   const names = String(raw).split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
   if (!names.length) return SUPPORT_NAME_DEFAULT;
   return names[_supportSlot(at) % names.length];
+}
+// #383 (owner): primera respuesta automática del SOPORTE cuando escribe el cliente — "en breve le responderá nuestro
+// agente disponible, gracias". Máximo una cada 2 h por cliente y no se manda si un agente respondió hace < 10 min.
+const SUPPORT_AUTOREPLY_DEFAULT = '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!';
+async function _supportAutoReply(userId, username) {
+  try {
+    const txt = await renderSystemCommand('/sys_support_autoreply', SUPPORT_AUTOREPLY_DEFAULT, { nombre: await getSupportAgentName() });
+    if (!txt) return;
+    const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'support_ack', timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
+    if (recent) return;
+    const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: ['admin', 'depositor', 'withdrawer', 'comunidad'] }, channel: 'support', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
+    if (agentRecent) return;
+    await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'support_ack', channel: 'support' } });
+  } catch (e) { logger.warn(`[support] auto-respuesta: ${e.message}`); }
 }
 // El cliente sólo ve el chat desde esta fecha (el chat viejo de cargas queda oculto para él; el panel lo ve entero).
 let _supportSinceCache = { at: 0, value: null };

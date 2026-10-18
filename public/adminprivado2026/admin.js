@@ -4958,7 +4958,7 @@ function switchSection(section) {
             loadTransactions(1);
         }
     }
-    if (section === 'commands') loadCommands();
+    if (section === 'commands') { loadCommands(); try { initCommandsAccordion(); } catch (_) {} } // #383: sectores plegables
     if (section === 'datos') loadDatos();
     if (section === 'datos2') loadDatos2();
     if (section === 'notifications') loadNotificationsPanel();
@@ -15170,3 +15170,66 @@ setTimeout(pollSupportBadge, 6000);
 setInterval(pollSupportBadge, 45 * 1000);
 document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'spInput') { e.preventDefault(); spSend(); } });
 window.loadSupport = loadSupport; window.spSelect = spSelect; window.spSend = spSend; window.spOnNewMessage = spOnNewMessage;
+
+// =====================================================================
+// #383: COMANDOS por sectores plegables (minimizado → maximizar y editar; todo en una pantalla)
+// =====================================================================
+const CMD_ACC_DESC = [
+    [/bonos autom/i, '% de la primera carga, "servicio completo", tope de bonos, extra por instalar, carga mínima, retiro mínimo y SMS en retiros'],
+    [/comandos personalizados/i, 'Mensajes automáticos del sistema (/sys_*) y respuestas rápidas del chat'],
+    [/configuraci[oó]n cbu/i, 'CBU, alias, titular y banco que se le manda al cliente'],
+    [/c[oó]digo de bienvenida/i, 'Códigos de bono para la comunidad de Telegram'],
+    [/comunidad/i, 'Links del canal de Telegram y etiquetas de comunidad'],
+    [/rangos de reembolso/i, 'Diario, semanal y mensual: % por rango y mínimos para cobrar'],
+    [/plataformas/i, 'Qué plataformas se ofrecen, orden, logos, URL externa y default'],
+    [/acumulativo/i, 'Reembolso acumulativo de por vida (%)'],
+    [/niveles vip/i, 'Escalera de 19 niveles: umbrales, bonos al subir y rakeback'],
+    [/fueguito/i, 'Premios de la racha diaria y mínimo de cargas entre rachas'],
+    [/movimientos del banco/i, 'Transferencias recibidas por hgcash y su estado de carga'],
+    [/banco autom/i, 'hgcash (sombra / auto), API de 1girox, credenciales y reenvío de avisos']
+];
+let _cmdAccDone = false;
+function initCommandsAccordion() {
+    if (_cmdAccDone) return;
+    const layout = document.querySelector('#commandsSection .commands-layout'); if (!layout) return;
+    _cmdAccDone = true;
+    const panels = [layout.querySelector('.commands-panel'), layout.querySelector('.cbu-panel')].filter(Boolean);
+    const groups = [];
+    panels.forEach(function (panel) {
+        let cur = null;
+        Array.from(panel.children).forEach(function (el) {
+            const self = el.id === 'installBonusPctForm' || el.id === 'hgcashMovementsPanel';
+            if (self) { groups.push({ head: el, body: [], self: true }); cur = null; return; }
+            if (el.classList.contains('panel-subheader')) { cur = { head: el, body: [], self: false }; groups.push(cur); return; }
+            if (cur) cur.body.push(el);
+        });
+    });
+    groups.forEach(function (g) {
+        const titleEl = g.head.querySelector('h3, h4');
+        const title = titleEl ? titleEl.textContent.trim() : (g.head.id || 'Sección');
+        const found = CMD_ACC_DESC.find(function (d) { return d[0].test(title); });
+        const acc = document.createElement('div'); acc.className = 'cmd-acc';
+        const head = document.createElement('button'); head.type = 'button'; head.className = 'cmd-acc-head';
+        head.innerHTML = '<span class="cmd-acc-t">' + escapeHtml(title) + '</span><small class="cmd-acc-d">' + escapeHtml(found ? found[1] : '') + '</small><span class="cmd-acc-chev">▾</span>';
+        const body = document.createElement('div'); body.className = 'cmd-acc-body'; body.hidden = true;
+        g.head.parentNode.insertBefore(acc, g.head);
+        acc.appendChild(head); acc.appendChild(body);
+        if (!g.self) g.head.classList.add('cmd-acc-orig');
+        body.appendChild(g.head);
+        g.body.forEach(function (el) { body.appendChild(el); });
+        head.addEventListener('click', function () { const open = body.hidden; body.hidden = !open; acc.classList.toggle('open', open); });
+    });
+    const bar = document.createElement('div'); bar.className = 'cmd-acc-bar';
+    bar.innerHTML = '<input type="search" id="cmdAccSearch" placeholder="Buscar sección (ej. reembolso, plataformas, CBU)…">' +
+        '<button type="button" class="btn-secondary btn-small" id="cmdAccAll">Expandir todo</button>' +
+        '<button type="button" class="btn-secondary btn-small" id="cmdAccNone">Contraer todo</button>';
+    layout.parentNode.insertBefore(bar, layout);
+    const setAll = function (open) { layout.querySelectorAll('.cmd-acc').forEach(function (a) { a.querySelector('.cmd-acc-body').hidden = !open; a.classList.toggle('open', open); }); };
+    bar.querySelector('#cmdAccAll').addEventListener('click', function () { setAll(true); });
+    bar.querySelector('#cmdAccNone').addEventListener('click', function () { setAll(false); });
+    bar.querySelector('#cmdAccSearch').addEventListener('input', function (e) {
+        const q = e.target.value.trim().toLowerCase();
+        layout.querySelectorAll('.cmd-acc').forEach(function (a) { a.style.display = (!q || a.querySelector('.cmd-acc-head').textContent.toLowerCase().includes(q)) ? '' : 'none'; });
+    });
+}
+window.initCommandsAccordion = initCommandsAccordion;

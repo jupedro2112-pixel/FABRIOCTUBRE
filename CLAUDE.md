@@ -72,7 +72,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   `firebase-messaging-sw.js`). **Tema visual (#370):** `css/pin.css` se carga ÚLTIMO y re-pinta todo en estilo
   "Pinterest" (blanco/grises/rojo) salvo la Carga manual (chat WhatsApp): cualquier color nuevo en la PWA va ahí
   (o usa las variables `--p-*`), no en chat.css con neón. `public/adminprivado2026/` — panel admin (~12k líneas
-  de admin.js, cookie httpOnly, SW propio `admin-sw.js` con scope /adminprivado2026/).
+  de admin.js, cookie httpOnly, SW propio `admin-sw.js` con scope /adminprivado2026/). **Tema (#383):** `pin-admin.css`
+  se carga último y pisa el tema oscuro (mismo estilo que la app); COMANDOS se pliega por sectores con
+  `initCommandsAccordion` (mueve nodos, no cambia ids).
 
 ## Cosas que NO hay que romper (gotchas)
 

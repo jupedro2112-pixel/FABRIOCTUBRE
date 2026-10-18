@@ -1,0 +1,122 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   #383 (owner 2026-10-18): el PANEL con el mismo estilo que la app (blanco, grises, un rojo). Se carga
+   ÚLTIMO y pisa admin.css + los estilos inline más usados (selectores [style*=…]). Para volver al panel
+   oscuro alcanza con quitar el <link> de pin-admin.css en adminprivado2026/index.html.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --p-bg: #fff; --p-surface: #f1f1f1; --p-surface-2: #e9e9e9; --p-text: #111; --p-muted: #767676; --p-border: #e2e2e2;
+  --p-red: #e60023; --p-red-soft: #ffe9ec; --p-green: #0a7a3e; --p-green-soft: #e8f5ee; --p-amber: #8a5a00; --p-amber-soft: #fff6e0;
+  --p-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* variables del tema viejo */
+  --primary: var(--p-red); --primary-dark: #ad081b; --primary-light: #ff8a9a; --secondary: var(--p-green); --danger: var(--p-red);
+  --warning: var(--p-amber); --info: var(--p-text); --dark: var(--p-surface); --darker: var(--p-bg); --light: var(--p-text);
+  --gray: var(--p-muted); --gray-light: #5f5f5f; --gray-dark: var(--p-surface-2); --border: var(--p-border);
+  --shadow: 0 1px 3px rgba(0,0,0,.06); --shadow-lg: 0 10px 30px rgba(0,0,0,.10); --radius: 12px; --radius-lg: 18px;
+  --bg-secondary: var(--p-surface); --text-secondary: var(--p-muted);
+}
+body { background: var(--p-bg) !important; color: var(--p-text) !important; font-family: var(--p-font) !important; }
+::-webkit-scrollbar-track { background: var(--p-surface); } ::-webkit-scrollbar-thumb { background: #cfcfcf; border-radius: 3px; }
+/* ── sidebar ── */
+.sidebar { background: #fff !important; border-right: 1px solid var(--p-border) !important; }
+.sidebar-header { border-bottom: 1px solid var(--p-border) !important; color: var(--p-text); }
+.nav-group-title { color: var(--p-muted) !important; }
+.nav-item { color: #5f5f5f !important; border-radius: 12px !important; padding: 10px 14px !important; font-weight: 600; }
+.nav-item:hover { background: var(--p-surface) !important; color: var(--p-text) !important; }
+.nav-item.active { background: var(--p-text) !important; color: #fff !important; }
+.nav-item .badge, .badge { background: var(--p-red) !important; color: #fff !important; border-radius: 999px !important; }
+.sidebar-footer { border-top: 1px solid var(--p-border) !important; color: var(--p-text); background: #fff; }
+.logout-btn { background: var(--p-surface) !important; color: var(--p-text) !important; border: 0 !important; border-radius: 999px !important; }
+/* ── contenido ── */
+.main-content { background: var(--p-bg) !important; }
+.panel-header { border-bottom: 1px solid var(--p-border) !important; }
+.panel-header h2, h1, h2, h3, h4 { color: var(--p-text) !important; font-family: var(--p-font) !important; }
+.panel-header h2 { font-weight: 800 !important; letter-spacing: -.2px; }
+.panel-subheader h3 { font-weight: 800 !important; }
+.refresh-btn { background: var(--p-surface) !important; color: var(--p-text) !important; border: 0 !important; border-radius: 999px !important; }
+.stat-item, .stat-card, .commands-panel, .cbu-panel, .chat-panel, .conversations-panel, .card, .table-container, .modal-content { background: #fff !important; border: 1px solid var(--p-border) !important; box-shadow: none !important; color: var(--p-text) !important; border-radius: 18px !important; }
+.stat-card { border-left-width: 1px !important; }
+.stat-value, .stat-number { color: var(--p-text) !important; }
+.stat-label { color: var(--p-muted) !important; }
+.stat-card .icon { color: var(--p-red) !important; }
+.empty-state, .empty-state p { color: var(--p-muted) !important; }
+/* tablas */
+.data-table th { background: var(--p-surface) !important; color: var(--p-muted) !important; border-bottom: 1px solid var(--p-border) !important; }
+.data-table td { border-bottom: 1px solid var(--p-border) !important; color: var(--p-text) !important; }
+.data-table tr:hover td { background: #fafafa !important; }
+table { color: var(--p-text); }
+/* botones */
+.btn-primary { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; font-weight: 700 !important; }
+.btn-primary:hover { background: #ad081b !important; transform: none !important; box-shadow: none !important; }
+.btn-secondary, .tab-btn, .filter-btn, .auto-tab-btn { background: var(--p-surface) !important; color: var(--p-text) !important; border: 0 !important; border-radius: 999px !important; font-weight: 700 !important; box-shadow: none !important; }
+.btn-secondary:hover, .tab-btn:hover, .filter-btn:hover { background: var(--p-surface-2) !important; }
+.tab-btn.active, .filter-btn.active, .auto-tab-btn.active { background: var(--p-text) !important; color: #fff !important; }
+.btn-danger { background: #fff !important; color: var(--p-red) !important; border: 1px solid var(--p-red) !important; border-radius: 999px !important; }
+button:disabled { opacity: .55; }
+/* formularios */
+.form-group label, label { color: var(--p-text) !important; font-weight: 600; }
+.form-group input, .form-group select, .form-group textarea, input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { background: var(--p-surface) !important; border: 2px solid transparent !important; color: var(--p-text) !important; border-radius: 12px !important; font-family: var(--p-font) !important; box-shadow: none !important; }
+input:not([type=checkbox]):not([type=radio]):focus, select:focus, textarea:focus { border-color: var(--p-text) !important; background: #fff !important; outline: none !important; }
+input::placeholder, textarea::placeholder { color: #9a9a9a !important; }
+select option { color: var(--p-text); background: #fff; }
+input[type=checkbox] { accent-color: var(--p-red) !important; }
+code { background: var(--p-surface); color: var(--p-text); border-radius: 6px; padding: 1px 5px; }
+a { color: var(--p-red); }
+/* modales */
+.modal { background: rgba(0,0,0,.5) !important; }
+.modal-header { border-bottom: 1px solid var(--p-border) !important; }
+/* chats */
+.conversation-item { color: var(--p-text) !important; border-radius: 14px !important; }
+.conversation-item:hover { background: var(--p-surface) !important; }
+.conversation-item.active { background: var(--p-surface) !important; border: 1px solid var(--p-text) !important; }
+.conversation-item.unread { border-left: 3px solid var(--p-red) !important; }
+.conv-avatar { background: var(--p-text) !important; color: #fff; }
+.conv-name { color: var(--p-text) !important; } .conv-preview, .conv-time { color: var(--p-muted) !important; }
+.chat-header { background: #fff !important; border-bottom: 1px solid var(--p-border) !important; color: var(--p-text) !important; }
+.chat-messages { background: #fff !important; }
+.message { font-family: var(--p-font); box-shadow: none !important; }
+.message.incoming { background: var(--p-surface) !important; color: var(--p-text) !important; }
+.message.outgoing { background: var(--p-red) !important; color: #fff !important; }
+.message.outgoing .message-time { color: rgba(255,255,255,.85) !important; }
+.message.system { background: var(--p-amber-soft) !important; border-color: #ffe0a3 !important; color: var(--p-amber) !important; }
+.message.system.internal { background: var(--p-green-soft) !important; border-color: #b9ecd8 !important; color: var(--p-green) !important; }
+.message.system.internal .internal-badge { color: var(--p-green) !important; }
+.message-time { color: var(--p-muted); }
+.chat-input-area { background: #fff !important; border-top: 1px solid var(--p-border) !important; }
+.chat-input-area textarea { background: var(--p-surface) !important; border-radius: 22px !important; }
+.action-btn, .send-btn { border-radius: 999px !important; }
+.send-btn { background: var(--p-red) !important; color: #fff !important; border: 0 !important; }
+.action-btn { background: var(--p-surface) !important; color: var(--p-text) !important; border: 0 !important; }
+/* ── estilos INLINE más usados (admin.js arma HTML con colores del tema oscuro) ── */
+[style*="background:#0d0d1a"], [style*="background:#1a1a2e"], [style*="background:#2a2a3a"], [style*="background:#15152a"], [style*="background:#1a1a24"], [style*="background: #1a1a24"], [style*="background:#3a1a1a"], [style*="background:var(--bg-secondary"],
+[style*="background:rgba(0,0,0,0.3"], [style*="background: rgba(0,0,0,0.3"], [style*="background:rgba(0,0,0,0.4"], [style*="background: rgba(0,0,0,0.4"], [style*="background:rgba(0,0,0,0.45)"], [style*="background:rgba(0,0,0,0.25)"], [style*="background:rgba(0,0,0,0.5"], [style*="background:rgba(0,0,0,0.6"],
+[style*="background:rgba(255,255,255,0.02"], [style*="background:rgba(255,255,255,0.03"], [style*="background:rgba(255,255,255,0.04"], [style*="background:rgba(255,255,255,0.05"], [style*="background:rgba(255,255,255,0.06"], [style*="background:rgba(255,255,255,0.08"], [style*="background:rgba(255,255,255,0.1)"],
+[style*="background:rgba(212,175,55,0.06)"], [style*="background:rgba(212,175,55,0.1)"], [style*="background:rgba(212,175,55,0.15)"], [style*="background:rgba(212,175,55,0.12)"], [style*="background:rgba(212,175,55,0.08)"], [style*="background:rgba(255,215,0,0.06)"], [style*="background:rgba(255,215,0,0.12)"], [style*="background:rgba(255,215,0,0.08)"],
+[style*="background:rgba(37,211,102,0.06)"], [style*="background:rgba(255,23,68,0.06)"], [style*="background:rgba(99,102,241,0.1"], [style*="background:rgba(38,224,127,0.06)"], [style*="background:rgba(38,224,127,0.08)"], [style*="background:rgba(0,212,255,0.06)"], [style*="background:rgba(83,189,235,0.06)"], [style*="background:rgba(127,215,255,0.06)"] { background: var(--p-surface) !important; }
+[style*="background:linear-gradient(135deg,#d4af37"], [style*="background: linear-gradient(135deg,#d4af37"], [style*="background:linear-gradient(135deg,rgba(255,215,0,0.12)"], [style*="background:linear-gradient(135deg,rgba(34,160,217,0.14)"], [style*="background:linear-gradient(135deg,rgba(255,215,0,0.14)"] { background: var(--p-surface) !important; color: var(--p-text) !important; }
+[style*="color:#fff"], [style*="color: #fff"], [style*="color:#eee"], [style*="color:#ddd"], [style*="color:#ccc"], [style*="color:#d4af37"], [style*="color: #d4af37"], [style*="color:#ffd700"], [style*="color: #ffd700"], [style*="color:#a5b4fc"], [style*="color:#6cf"], [style*="color:#00d4ff"], [style*="color:#53bdeb"], [style*="color:#7fd7ff"], [style*="color:#00bcd4"], [style*="color:#ffd479"], [style*="color:#ffb300"], [style*="color:#6366f1"], [style*="color:#cfe"], [style*="color:#9ab"], [style*="color:#e3d2ff"], [style*="color:#ffe7c2"] { color: var(--p-text) !important; }
+[style*="color:#888"], [style*="color: #888"], [style*="color:#aaa"], [style*="color: #aaa"], [style*="color:#bbb"], [style*="color:#999"], [style*="color:#777"], [style*="color:#666"], [style*="color:#b0b0b0"], [style*="color:var(--text-secondary"] { color: var(--p-muted) !important; }
+[style*="color:#00ff88"], [style*="color: #00ff88"], [style*="color:#4caf50"], [style*="color:#26e07f"], [style*="color:#8fd3a8"], [style*="color:#86efac"], [style*="color:#2ee06f"], [style*="color:#9ff5c0"], [style*="color:#8fb"], [style*="color:#25d366"] { color: var(--p-green) !important; }
+[style*="color:#ff6666"], [style*="color:#ff8080"], [style*="color:#ff4444"], [style*="color:#ff6b6b"], [style*="color:#f87171"], [style*="color:#ff8888"], [style*="color:#dc3545"], [style*="color:#ff5050"], [style*="color:#f7931e"], [style*="color:#ff9800"], [style*="color:#ffaa44"], [style*="color:#ff9d76"] { color: var(--p-red) !important; }
+[style*="border:1px solid rgba(212,175,55"], [style*="border: 1px solid rgba(212,175,55"], [style*="border:1.5px solid rgba(212,175,55"], [style*="border:1px solid rgba(255,255,255,0."], [style*="border:1px solid #d4af37"], [style*="border:1px solid rgba(76,175,80"], [style*="border:1px solid rgba(255,215,0"], [style*="border:1.5px solid rgba(255,215,0"], [style*="border:1px solid rgba(37,211,102"], [style*="border:1px solid rgba(255,23,68"], [style*="border:1px solid rgba(38,224,127"], [style*="border:1px solid rgba(99,102,241"], [style*="border:1px solid rgba(0,212,255"], [style*="border:1px solid rgba(83,189,235"], [style*="border:1px solid rgba(127,215,255"], [style*="border:1px dashed rgba(255,215,0"], [style*="border:1.5px dashed rgba(34,160,217"] { border-color: var(--p-border) !important; }
+/* los botones rojos/negros del tema mantienen el texto blanco aunque tengan color inline */
+.btn-primary, .btn-primary *, .nav-item.active, .nav-item.active *, .message.outgoing, .message.outgoing *, .tab-btn.active, .filter-btn.active, .auto-tab-btn.active, .badge, .conv-avatar, .send-btn { color: #fff !important; }
+/* ── #383: COMANDOS por sectores plegables ── */
+#commandsSection .commands-layout { display: block !important; }
+#commandsSection .commands-panel, #commandsSection .cbu-panel { background: transparent !important; border: 0 !important; padding: 0 !important; }
+.cmd-acc-bar { display: flex; gap: 8px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; }
+.cmd-acc-bar input { flex: 1 1 220px; min-width: 160px; padding: 10px 14px !important; border-radius: 999px !important; }
+.cmd-acc { background: #fff; border: 1px solid var(--p-border); border-radius: 18px; margin-bottom: 8px; overflow: hidden; }
+.cmd-acc.open { border-color: var(--p-text); }
+.cmd-acc-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px 16px; background: #fff; border: 0; cursor: pointer; text-align: left; font-family: var(--p-font); }
+.cmd-acc-head:hover { background: #fafafa; }
+.cmd-acc-t { font: 800 14px var(--p-font); color: var(--p-text); white-space: nowrap; }
+.cmd-acc-d { flex: 1; min-width: 0; font: 500 12px var(--p-font); color: var(--p-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd-acc-chev { color: var(--p-muted); font-size: 14px; transition: transform .2s; }
+.cmd-acc.open .cmd-acc-chev { transform: rotate(180deg); }
+.cmd-acc-body { padding: 4px 16px 16px; border-top: 1px solid var(--p-border); }
+.cmd-acc-body .panel-subheader.cmd-acc-orig { margin: 8px 0 10px !important; }
+.cmd-acc-body .panel-subheader.cmd-acc-orig > h3 { display: none; }
+.cmd-acc-body > .panel-subheader.cmd-acc-orig:empty { display: none; }
+#commandsSection .cbu-form, #commandsSection .commands-list { background: var(--p-surface) !important; border: 0 !important; border-radius: 14px !important; }
+/* ── atención: chat viejo y soporte al pie del menú ── */
+.nav-item.nav-legacy { opacity: .75; }

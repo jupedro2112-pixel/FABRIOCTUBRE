@@ -21,6 +21,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png">
     
     <link rel="stylesheet" href="/adminprivado2026/admin.css">
+    <!-- #383: tema del panel con el estilo de la app (blanco / gris / rojo). Se carga ÚLTIMO. -->
+    <link rel="stylesheet" href="/adminprivado2026/pin-admin.css">
     <!-- URL pública canónica (vipcargas.com) inyectada por el server.
          Se usa para generar los links de pauta con el dominio correcto en lugar
          de window.location.origin (que devuelve el dominio AWS directo). -->
@@ -98,11 +100,6 @@ document.addEventListener('change', function (ev) {
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
-                <a href="#" class="nav-item active" data-section="chats">
-                    <span class="icon icon-comments"></span>
-                    <span>Chats</span>
-                    <span id="unreadBadge" class="badge hidden">0</span>
-                </a>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
                     <span>Demoras</span>
@@ -177,11 +174,6 @@ document.addEventListener('change', function (ev) {
                     <span>Reseñas</span>
                     <span id="reviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:4px;">0</span>
                 </a>
-                <a href="#" class="nav-item" data-section="support">
-                    <span>💬</span>
-                    <span>Soporte</span>
-                    <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
-                </a>
                 <a href="#" class="nav-item" data-section="depositReviews">
                     <span>⏳</span>
                     <span>Cargas pendientes</span>
@@ -221,6 +213,18 @@ document.addEventListener('change', function (ev) {
                 <a href="#" class="nav-item" data-section="bonusStrategy" style="opacity:.6;">
                     <span>🚀</span>
                     <span>Estrategia de bonos</span>
+                </a>
+                <!-- #383 (owner): el chat viejo (tipo WhatsApp) queda INTERNO y, junto con Soporte, en la franja de abajo del menú. -->
+                <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">💬 Atención</div>
+                <a href="#" class="nav-item" data-section="support">
+                    <span>💬</span>
+                    <span>Soporte</span>
+                    <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
+                </a>
+                <a href="#" class="nav-item nav-legacy active" data-section="chats" title="Chat viejo: el cliente ya no lo ve (quedó interno). Para responderle usá Soporte.">
+                    <span class="icon icon-comments"></span>
+                    <span>Chat viejo (interno)</span>
+                    <span id="unreadBadge" class="badge hidden">0</span>
                 </a>
             </nav>
             <div class="sidebar-footer">

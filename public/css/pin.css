@@ -718,3 +718,10 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .lg-reviews { margin: 0 !important; }
 .lg-foot { margin: 4px 0 0; text-align: center; font: 600 10px var(--p-font); color: #9a9a9a; }
 @media (max-width: 360px) { .lg-grid { grid-template-columns: 1fr; } .lg-title { font-size: 25px; } }
+
+/* #383 (owner): las plataformas de la carga automática en una sola fila de cuadrados iguales (como el Inicio) */
+.plat-play-row { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px !important; }
+.plat-play-wrap { min-width: 0 !important; flex: none !important; }
+.plat-play-btn { height: 96px; padding: 8px 6px 24px !important; min-width: 0; }
+.plat-play-btn .plat-logo { width: 28px !important; height: 28px !important; }
+.plat-play-name { font-size: 11.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }

@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-17
 
+### 383. 🧭 Panel con el estilo de la app · COMANDOS por sectores plegables · Chat viejo + Soporte abajo del menú · auto-respuesta de Soporte · plataformas de carga automática en fila — SW v270, admin-sw v82
+**Pedido (owner):** "COMANDOS bien sectorizado, todo minimizado para maximizar y editar, todo en una pantalla con título
+y detalle; el panel con el mismo estilo de la app; el chat tipo WhatsApp queda inhabilitado: ponelo abajo con Soporte;
+cuando la gente habla, primer mensaje 'en breve le responderá nuestro agente disponible, gracias'; y las plataformas
+de la carga automática en línea recta como en Inicio".
+- **Tema del panel** `public/adminprivado2026/pin-admin.css` (último `<link>`): variables del tema viejo re-mapeadas
+  (blanco, gris #f1f1f1, texto #111, acento rojo), sidebar blanca con ítem activo negro, tarjetas/tablas/modales/
+  formularios/botones píldora y, como en la app, selectores `[style*=…]` para los colores inline más usados de
+  admin.js (fondos oscuros → gris, dorados/celestes → negro, verdes → verde, rojos → rojo). Quitar el link = panel oscuro.
+- **COMANDOS plegable** (`initCommandsAccordion`, admin.js): al abrir la sección cada bloque (`.panel-subheader` + sus
+  formularios, más Bonos automáticos y Movimientos del banco) se envuelve en un acordeón `.cmd-acc` con **título +
+  detalle** de qué se edita ahí, todo contraído en una pantalla; buscador "Buscar sección…" y botones Expandir /
+  Contraer todo. Los ids y handlers quedan intactos (sólo se mueven los nodos). Layout a una columna.
+- **Menú:** grupo nuevo "💬 Atención" al final de la barra lateral con **Soporte** y **Chat viejo (interno)** (ex
+  "Chats", sigue siendo la sección inicial para no romper el arranque; etiquetado como interno).
+- **Auto-respuesta de Soporte** (`_supportAutoReply`, server): al escribir el cliente (HTTP y socket) recibe
+  `/sys_support_autoreply` ("⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!",
+  variable {nombre}); máximo una cada 2 h por cliente y no se manda si un agente respondió hace < 10 min.
+- **App:** `.plat-play-row` en grilla de N columnas iguales (cuadrados de 96 px) como las pestañas del Inicio.
+
 ### 382. 📱 Código SMS en CADA retiro (anti-estafa) — SW v269, admin-sw v81
 **Pedido (owner):** "implementemos nuevamente el SMS por retiro de plata para que no haya estafa". Antes el SMS era
 sólo la verificación del teléfono (una vez); ahora **cada retiro se confirma con un código SMS** al teléfono verificado:
