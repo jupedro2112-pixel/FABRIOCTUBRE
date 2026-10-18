@@ -18759,7 +18759,7 @@ async function _diaUsdt(fetchNow) {
   } catch (e) { return cur ? { ...cur, fetchError: e.message } : { rate: 0, fetchError: e.message }; }
 }
 function _diaMoneyOpts(q) { const cur = q && q.cur === 'usd' ? 'usd' : 'ars'; const usdRate = Number(q && q.usdRate) > 0 ? Number(q.usdRate) : 0; return { cur, usdRate }; }
-app.get('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => { try { const d = await _diaUsdt(req.query.fetch === '1'); res.json({ success: true, rate: (d && Number(d.rate)) || 0, updatedAt: d && d.updatedAt || null, source: d && d.source || null, fetchError: d && d.fetchError || null }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
+app.get('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => { try { const d = await _diaUsdt(req.query.fetch === '1' && req.user.role === 'admin'); /* sólo admin general dispara la consulta externa y la escritura */ res.json({ success: true, rate: (d && Number(d.rate)) || 0, updatedAt: d && d.updatedAt || null, source: d && d.source || null, fetchError: d && d.fetchError || null }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
