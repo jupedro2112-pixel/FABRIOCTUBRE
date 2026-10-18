@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 407. ℹ️ Info: "La plataforma que quieras" (antes "Dos plataformas") con jugaygana en minúscula — SW v282
+**Pedido (owner):** "en la info dice dos plataformas, agregamos jugaygana: poné jugaygana en minúscula ahí y poné de título
+'La plataforma que quieras', con el mismo usuario, cada plataforma configurada de forma independiente, elegí la que quieras
+en cada carga".
+**Qué se hizo:** título de `#infoCardTwoPlats` → "🎮 La plataforma que quieras". `_paintPlatformTexts` (home.js) arma
+"Girox, Ganamos y jugaygana con el mismo usuario. Cada plataforma está configurada de forma independiente: elegí la que
+quieras en cada carga." (el nombre JUGAYGANA se pasa a minúscula SÓLO en este texto; en pestañas y demás sigue como lo
+define la plataforma). Se sigue mostrando sólo con 2+ plataformas habilitadas.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/firebase-messaging-sw.js`.
+
 ### 406. 👤 Perfil: el link de "Página de la app" va recto debajo del título, en una línea — SW v281
 **Pedido (owner, con captura):** "quiero que el link de la página lo dejes en forma recta abajo del título así entra
 completo en una línea y no se pierde".
