@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-18
 
+### 505. 🚪 Cerrar sesión habilitado para `diego576413` — SW v351
+**Pedido (owner):** "poné cerrar sesión en diego576413". Sumado a `LOGOUT_USERNAMES` (home.js): ve el botón al pie de Perfil.
+
 ### 504. 🎯 ESTRATEGIA CLIENTES · PUBLICIDAD: 100 % con la app, bono de SEGUNDA carga a las 24 h, MISIONES semanales automáticas — SW v350, admin-sw v114
 **Pedido (owner):** "activá eso: 100 % instalando la app con notificaciones, 50 % en la segunda carga a las 24 h si no volvió a
 cargar, y las misiones; del lado del administrador automático, volcado en la página con buena visión, todo automático y
