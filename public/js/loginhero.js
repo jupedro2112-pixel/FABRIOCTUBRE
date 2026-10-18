@@ -57,7 +57,9 @@
             const row = _el('lgPlatsRow');
             const list2 = Array.isArray(info.platforms) ? info.platforms : [];
             if (row && list2.length) {
-                row.innerHTML = '<span class="lg-plats-k">Jugás en</span>' + list2.map((p) => '<span class="lg-plat-pill' + (p.connected ? '' : ' soon') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (p.connected ? '' : '<small>Próximamente</small>') + '</span>').join('');
+                // Igual que las pestañas de adentro (#301): Girox NUNCA es "Próximamente" (aunque en el entorno de prueba no haya API).
+                const isSoon = (p) => p.connected === false && p.id !== 'girox';
+                row.innerHTML = '<span class="lg-plats-k">Jugás en</span>' + list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (isSoon(p) ? '<small>Próximamente</small>' : '') + '</span>').join('');
                 row.style.display = '';
             }
         } catch (_) {}
