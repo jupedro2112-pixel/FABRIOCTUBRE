@@ -5512,7 +5512,16 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
       entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
       // #372: aviso "promoción hasta diciembre" de los reembolsos (/sys_refund_promo); null ⇒ vaciado en COMANDOS → no se muestra.
-      refundPromo: await (async () => { try { const pct = await getDailyRefundPct(); return await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) { return REFUND_PROMO_DEFAULT; } })()
+      refundPromo: await (async () => { try { const pct = await getDailyRefundPct(); return await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) { return REFUND_PROMO_DEFAULT; } })(),
+      // #373: SOPORTE — quién se presenta al entrar al chat (nombre / texto / plazo), editable en COMANDOS.
+      supportIntro: await (async () => {
+        try {
+          const name = (await renderSystemCommand('/sys_support_name', SUPPORT_NAME_DEFAULT, {})) || SUPPORT_NAME_DEFAULT;
+          const text = await renderSystemCommand('/sys_support_intro', SUPPORT_INTRO_DEFAULT, { nombre: name });
+          const sla = await renderSystemCommand('/sys_support_sla', SUPPORT_SLA_DEFAULT, {});
+          return { name, text: text || '', sla: sla || '' };
+        } catch (_) { return { name: SUPPORT_NAME_DEFAULT, text: SUPPORT_INTRO_DEFAULT.replace('{nombre}', SUPPORT_NAME_DEFAULT), sla: SUPPORT_SLA_DEFAULT }; }
+      })()
     });
   } catch (e) {
     logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
@@ -11463,7 +11472,8 @@ async function initializeData() {
       const seedStories = [
         ['/images/stories/pin-1.png', '🆕 La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA · picaroja.com'],
         ['/images/stories/pin-2.jpg', '🎰 Todos los slots que buscás · Cargá y jugá en minutos · picaroja.com'],
-        ['/images/stories/pin-3.png', '⚡ Carga automática en 3 pasos: transferís, mandás la foto, se acredita solo · picaroja.com']
+        ['/images/stories/pin-3.png', '⚡ Carga automática en 3 pasos: transferís, mandás la foto, se acredita solo · picaroja.com'],
+        ['/images/stories/pin-4.png', '💬 Cualquier duda, consulta o problema, hablá con Soporte: responde a los minutos. ¡Gracias por confiar en PICA ROJA!'] // #373
       ];
       for (let i = 0; i < seedStories.length; i++) {
         const now = new Date(Date.now() + i * 1000);
@@ -11567,6 +11577,25 @@ async function initializeData() {
       description: 'Aviso debajo de los reembolsos (Info, modales de reembolso, Menú fácil, home): aclara que los % son promocionales. Variable: {pct} (% máximo del reembolso DIARIO). Vacío = no se muestra.',
       type: 'message',
       response: 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'
+    },
+    {
+      // #373 (2026-10-18): SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat.
+      name: '/sys_support_name',
+      description: 'Soporte: nombre de la persona que se presenta al entrar al chat (cabecera y tarjeta de presentación).',
+      type: 'message',
+      response: 'Martín'
+    },
+    {
+      name: '/sys_support_intro',
+      description: 'Soporte: texto de presentación al entrar al chat. Variable: {nombre} (= /sys_support_name).',
+      type: 'message',
+      response: '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.'
+    },
+    {
+      name: '/sys_support_sla',
+      description: 'Soporte: plazo de respuesta que se muestra debajo de la presentación (ej. "Responde dentro de los 10 minutos"). Vacío = no se muestra.',
+      type: 'message',
+      response: 'Responde dentro de los 10 minutos'
     },
     {
       // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
@@ -12278,7 +12307,11 @@ async function getMinDepositArs() {
 }
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
 const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%';
-const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo) // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
+const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo)
+// #373: SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat (/sys_support_*).
+const SUPPORT_NAME_DEFAULT = 'Martín';
+const SUPPORT_INTRO_DEFAULT = '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.';
+const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos'; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';

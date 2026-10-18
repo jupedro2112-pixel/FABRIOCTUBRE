@@ -180,8 +180,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; se elige en el selector que aparece en CADA arranque
   y tras 10 min en segundo plano (#367; `localStorage vip_menu_pref` = 'easy'|'full' sólo fija dónde arranca; cambiable en Perfil) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
   tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
-  Carga automática (→ full). **mini:** se entra al CHAT estilo
-  WhatsApp (`#supportPanel` inline con cabecera `#waHead`, botón CBU abajo) y el home completo
+  Carga automática (→ full). **mini (= SOPORTE desde #373; antes "Carga manual"):** se entra al CHAT
+  (`#supportPanel` inline con cabecera `#waHead` "Soporte" y la presentación de Martín `#supportIntro`, textos
+  `/sys_support_*`; estilo de la página, ya no WhatsApp; sin botón CBU ni CBU automático) y el home completo
   (`#homeFull`: carga automática `js/autoload.js`, plataformas, VIP, reembolsos…) queda plegado arriba
   bajo el cartel "⭐ SERVICIO COMPLETO · Ver todo" (texto `/sys_home_banner`, `{pct}` =
   `Config['autoLoadBonusPct']` — desde #274 es también el bono REAL de toda carga hgcash sin otro bono

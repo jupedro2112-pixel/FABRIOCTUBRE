@@ -399,6 +399,7 @@ VIP.chat = (function () {
         const content = input.value.trim();
 
         if (!content) return;
+        try { document.body.classList.add('sp-sent'); } catch (_) {} // #373: la presentación de Soporte se achica
 
         if (content.startsWith('/')) {
             VIP.ui.showToast('No puedes enviar comandos', 'error');

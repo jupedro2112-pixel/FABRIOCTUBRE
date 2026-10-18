@@ -91,15 +91,9 @@
             if (bn) { bn.setAttribute('aria-expanded', 'false'); bn.title = 'Ver la app completa'; }
             try { VIP.chat.markReceivedAsRead(); } catch (_) {}
             setTimeout(() => { try { VIP.chat.scrollToBottom(); } catch (_) {} }, 80);
-            // #365 (owner): "cuando la gente aprieta Carga manual que se apriete CBU solo": la tarjeta del CBU aparece
-            // en el chat al entrar. Como máximo una vez cada 30 min por dispositivo (no llena el chat de tarjetas).
-            try {
-                const K = 'vip_cbu_auto_at', last = Number(localStorage.getItem(K) || 0);
-                if (VIP.state && VIP.state.currentToken && Date.now() - last > 30 * 60 * 1000) {
-                    localStorage.setItem(K, String(Date.now()));
-                    setTimeout(() => { try { VIP.ui.loadAndShowCBU(null, { silent: true }); } catch (_) {} }, 600);
-                }
-            } catch (_) {}
+            // #373 (owner): el chat ya no es "Carga manual" sino SOPORTE: no se manda el CBU solo (#365 se sacó);
+            // Martín se presenta en la tarjeta de arriba (#supportIntro) y el cliente cuenta su caso.
+            try { _paintSupportIntro(_platforms && _platforms.supportIntro); } catch (_) {}
         } else {
             if (p) p.classList.add('hidden');
             _open = false;
@@ -235,6 +229,35 @@
     // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
     // COMANDOS → sólo el título. El "N%" se resalta en verde.
     // #349: cartel NOVEDAD del Inicio (texto /sys_entry_news; sin texto o sin % diario → se oculta).
+    // #373: SOPORTE — presentación de la persona (nombre / texto / plazo), textos de COMANDOS vía /api/platforms.
+    function _paintSupportIntro(si) {
+        if (!si) return;
+        try {
+            const nm = (si.name || '').trim(), tx = (si.text || '').trim(), sla = (si.sla || '').trim();
+            const n = _el('spName'); if (n && nm) n.textContent = nm;
+            const m = _el('spMsg'); if (m && tx) m.textContent = tx;
+            const s = _el('spSla'); if (s) { s.textContent = sla ? ('⏱ ' + sla) : ''; s.style.display = sla ? '' : 'none'; }
+            const st = _el('waHeadStatus'); if (st) st.textContent = nm ? (nm + ' · en línea' + (sla ? ' · ' + sla.toLowerCase() : '')) : 'en línea';
+            document.querySelectorAll('.sp-chips button').forEach((b) => {
+                const t = b.getAttribute('onclick') || '';
+                if (nm) b.setAttribute('onclick', t.replace(/Hola [^,]+,/, 'Hola ' + nm.replace(/'/g, '') + ','));
+            });
+        } catch (_) {}
+    }
+    // Chips de la presentación: dejan el texto escrito en el campo para que la persona lo complete y mande.
+    function supportQuick(text) {
+        try {
+            const i = _el('messageInput'); if (!i) return;
+            i.value = String(text || ''); i.focus();
+            try { i.setSelectionRange(i.value.length, i.value.length); } catch (_) {}
+            try { i.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
+        } catch (_) {}
+    }
+    function supportIntroToggle(ev) {
+        try { if (ev && ev.target && ev.target.closest && ev.target.closest('button')) return; } catch (_) {}
+        const el = _el('supportIntro'); if (!el) return;
+        if (document.body.classList.contains('sp-sent')) el.classList.toggle('sp-open');
+    }
     // #372: aviso "promoción hasta diciembre" de los reembolsos → todos los .refund-promo (Info, modales, Menú fácil, home).
     function _paintRefundPromo(text) {
         const t = (text == null) ? '' : String(text).trim();
@@ -551,7 +574,7 @@
 
     function _paintWaHeadName() {
         // #305 (owner): la cabecera dice "Carga manual" (antes "Cargas <plataforma>") y el avatar es un asistente fijo.
-        try { const n = _el('waHeadName'); if (n) n.textContent = 'Carga manual'; } catch (_) {}
+        try { const n = _el('waHeadName'); if (n) n.textContent = 'Soporte'; } catch (_) {} // #373: era "Carga manual"
     }
 
     // ---------------- SOPORTE (chat) ----------------
@@ -1549,6 +1572,7 @@
         try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
         try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
         try { _paintRefundPromo(_platforms && _platforms.refundPromo); } catch (_) {} // #372
+        try { _paintSupportIntro(_platforms && _platforms.supportIntro); } catch (_) {} // #373
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
@@ -1597,7 +1621,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

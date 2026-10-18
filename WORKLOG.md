@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-17
 
+### 373. 💬 "Carga manual" → SOPORTE: Martín se presenta al entrar, chat con el estilo de la página · historia de Soporte — SW v260
+**Pedido (owner):** "sacá la carga manual y dejá un Soporte; cuando entren, un mensaje tipo Stake, con el mismo estilo de
+la página: una personita se presenta — 'Hola, soy Martín, un gusto, yo me voy a encargar de tu caso, contame tu
+problema' — y abajo 'responde dentro de los 10 minutos'. Dejalo bien top". Y: "otra foto en historias: cualquier duda,
+consulta o problema hablá con Soporte, responde a los minutos, gracias por confiar en PICA ROJA".
+- **Barra:** `#navManual` dice **Soporte** (mismo id/modo `mini`). Menú fácil: "Soporte · Ayuda". Selector: "carga
+  automática, soporte". Cabecera del chat (`#waHead`): avatar ilustrado de Martín (SVG inline, vincha con micrófono),
+  título "Soporte", estado "Martín · en línea · responde dentro de los 10 minutos" (`#waHeadStatus`).
+- **Presentación (`#supportIntro`, estilo Stake):** tarjeta gris arriba del chat con avatar + punto verde, "Martín ·
+  Soporte · en línea", el texto de presentación, chips "💳 Cargar / 💸 Retirar / ❓ Otro problema" (dejan el texto
+  escrito en el campo, `VIP.home.supportQuick`) y la píldora roja "⏱ Responde dentro de los 10 minutos". Tras el primer
+  mensaje enviado (`body.sp-sent`, chat.js) queda compacta; tocarla la vuelve a abrir (`supportIntroToggle`).
+- **Textos editables en COMANDOS:** `/sys_support_name` ("Martín"), `/sys_support_intro` ({nombre}), `/sys_support_sla`
+  (vacío = sin plazo). Llegan en `GET /api/platforms` → `supportIntro {name,text,sla}`; `home.js _paintSupportIntro`.
+- **Ya no es carga manual:** se sacó el envío automático del CBU al entrar (#365) y el botón CBU de la barra de escribir
+  se oculta en modo Soporte (`pin.css`). El agente sigue pudiendo mandar la tarjeta CBU desde el panel.
+- **El chat sigue el estilo de la página** (antes WhatsApp oscuro): panel blanco con borde, burbujas del agente gris
+  #f1f1f1, las propias rojas con texto blanco, barra de escribir blanca con campo gris y botón enviar rojo, separadores
+  grises. Reglas en `pin.css` con `body.wa-dark` incluido (el modo oscuro del chat queda sin efecto visual).
+- **Historia 4** `public/images/stories/pin-4.png` (Martín ilustrado + burbuja "¡Hola! Soy Martín…", "Hablá con
+  Soporte", "RESPONDE A LOS MINUTOS", "Gracias por confiar en PICA ROJA ❤", picaroja.com), publicada en Render (72 h)
+  y agregada al seed.
+
 ### 372. 🎰 Ruleta con el estilo nuevo · reembolsos: "promoción válida hasta diciembre" — SW v259
 **Pedido (owner):** "a la ruleta dale el mismo estilo profesional, moderno y novedoso; aclará en reembolsos que ese
 margen es promocional hasta diciembre". **Ruleta:** `js/roulette.js` ya no arma HTML con colores inline: el modal,

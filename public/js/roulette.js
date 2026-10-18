@@ -203,7 +203,7 @@
             } else if (won && spin.status === 'credit_failed') {
                 html += '<div class="rl-result warn"><div class="rl-emoji">⚠️</div><div class="rl-res-k">Premio pendiente</div>' +
                     '<div class="rl-res-big">$' + _fmt(spin.prizeARS) + '</div>' +
-                    '<div class="rl-res-note">Ganaste pero la acreditación automática falló. Escribinos por Carga manual y te lo cargamos.</div></div>';
+                    '<div class="rl-res-note">Ganaste pero la acreditación automática falló. Escribinos por Soporte y te lo cargamos.</div></div>';
             } else {
                 html += '<div class="rl-result lose"><div class="rl-emoji">😔</div><div class="rl-res-k">Hoy no fue tu día</div>' +
                     '<div class="rl-res-note">Volvé mañana a partir de las 00:00 para girar otra vez.</div></div>';
