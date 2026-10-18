@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 489. 🎰 Inicio: deslizante de JUEGOS individuales, grandes, con "N jugando" (50–200) — SW v339
+**Pedido (owner, con capturas del "Top 10 juegos" de la plataforma):** "en el Inicio poné las fotos así, de forma individual,
+grande con deslizante, y que figure cuánta gente está jugando: tirá fruta, entre 50 y 200 en cada juego".
+**Qué se hizo:** 9 tarjetas recortadas de las capturas (sin la línea real de "jugando") en `public/images/games/*.jpg`
+(Fortune Garuda 1000, Joker's Jewel, Fortune Garuda 500, Fortune Tiger, Fortune Gems 2, Fortune Rabbit, Fortune Gems, Fortune
+Dragon, Golden Joker). `ENTRY_GAMES` en home.js reemplaza las fotos del deslizante: tarjetas de ~64 % del ancho (44 % en
+pantallas anchas), scroll horizontal con snap y pase automático cada 3 s (vuelve al principio), cabecera "🔥 Top juegos · gente
+jugando ahora"; cada juego muestra "● N jugando" con N al azar entre 50 y 200, estable por sesión y con ±5 cada 20 s. El botón
+rojo de cargar sigue sobre el recuadro. Las fotos viejas (g1–g6) quedan en el repo sin usarse.
+**Archivos:** `public/js/home.js`, `public/css/pin.css`, `public/images/games/`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
+### 488b. El entorno de prueba (Render) quedó con bono de 1ª carga 50 % (antes 0) para que el cartel #488 muestre 50 % / 100 %.
+
 ### 488. 🎁 Cartel de entrada "BONO DE PRIMERA CARGA": 50 % · 100 % instalando la app, con el logo — SW v338
 **Pedido (owner, con captura de otra casa):** "para la gente cuando entra que aparezca primera carga un 100 % instalando la app,
 si no un 50 %, con el logo de PICA ROJA".

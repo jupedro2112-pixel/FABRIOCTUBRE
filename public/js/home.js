@@ -604,9 +604,24 @@
     let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
     // #332: las fotos se piden con la versión de la app pegada (?b=NNN) → el navegador nunca muestra una foto vieja guardada.
     function _slideUrl(u) { const t = (_el('appBuildTag') || {}).textContent || ''; const m = /v(\d+)/.exec(t); return u + (m ? '?b=' + m[1] : ''); }
+    // #489 (owner): el deslizante del Inicio son JUEGOS individuales, grandes, con "N jugando" (número inventado entre 50 y 200,
+    // estable por sesión y con pequeños cambios cada 20 s para que se vea vivo). Las tarjetas salen de capturas de la plataforma.
+    const ENTRY_GAMES = [['fortune-garuda-1000', 'Fortune Garuda 1000'], ['jokers-jewel', "Joker's Jewel"], ['fortune-garuda-500', 'Fortune Garuda 500'], ['fortune-tiger', 'Fortune Tiger'], ['fortune-gems-2', 'Fortune Gems 2'], ['fortune-rabbit', 'Fortune Rabbit'], ['fortune-gems', 'Fortune Gems'], ['fortune-dragon', 'Fortune Dragon'], ['golden-joker', 'Golden Joker']];
+    const _gamePlayers = {}; let _gameTick = null;
+    function _gameN(id) { if (!_gamePlayers[id]) _gamePlayers[id] = 50 + Math.floor(Math.random() * 151); return _gamePlayers[id]; }
+    function _gamesTick() { ENTRY_GAMES.forEach(([id]) => { const n = Math.max(50, Math.min(200, _gameN(id) + Math.floor(Math.random() * 11) - 5)); _gamePlayers[id] = n; const el = document.querySelector('.ev-game[data-g="' + id + '"] b'); if (el) el.textContent = n; }); }
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
         if (!tr || _slBuilt) return;
+        if (ENTRY_GAMES.length) {
+            tr.classList.add('games'); const fw = tr.closest('.ev-frame-wrap'); if (fw) fw.classList.add('games');
+            tr.innerHTML = '<div class="ev-games-h"><span>🔥 Top juegos</span><small><i></i>gente jugando ahora</small></div>' + ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span></div>').join('');
+            if (dots) dots.innerHTML = '';
+            const pause = () => { _slPausedUntil = Date.now() + 5000; };
+            ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
+            clearInterval(_gameTick); _gameTick = setInterval(_gamesTick, 20000);
+            _slBuilt = true; return;
+        }
         // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").
         // #319: cada foto lleva la etiqueta "FOTO ILUSTRATIVA · acá no se juega" para que nadie intente tocarla.
         tr.innerHTML = ENTRY_SLIDES.map((u0, i) => { const u = _slideUrl(u0); return '<div class="ev-slide" style="background-image:url(' + u + ')"><img src="' + u + '" alt="Foto ilustrativa de Girox ' + (i + 1) + '" loading="' + (i ? 'lazy' : 'eager') + '" decoding="async" draggable="false"></div>'; }).join('');
@@ -617,7 +632,15 @@
         _slBuilt = true;
     }
     function _slidesDots() { const dots = _el('entrySlidesDots'); if (!dots) return; Array.from(dots.children).forEach((d, i) => d.classList.toggle('on', i === _slIdx)); }
-    function _slidesGo(i) { const tr = _el('entrySlidesTrack'); if (!tr) return; _slIdx = (i + ENTRY_SLIDES.length) % ENTRY_SLIDES.length; tr.scrollTo({ left: _slIdx * tr.clientWidth, behavior: 'smooth' }); _slidesDots(); }
+    function _slidesGo(i) {
+        const tr = _el('entrySlidesTrack'); if (!tr) return;
+        if (tr.classList.contains('games')) { // #489: avanza de a una tarjeta y vuelve al principio al llegar al final
+            const cards = tr.querySelectorAll('.ev-game'); if (!cards.length) return;
+            const step = cards[0].offsetWidth + 10; const max = tr.scrollWidth - tr.clientWidth;
+            const next = tr.scrollLeft + step > max + 4 ? 0 : tr.scrollLeft + step; tr.scrollTo({ left: next, behavior: 'smooth' }); return;
+        }
+        _slIdx = (i + ENTRY_SLIDES.length) % ENTRY_SLIDES.length; tr.scrollTo({ left: _slIdx * tr.clientWidth, behavior: 'smooth' }); _slidesDots();
+    }
     function _slidesStart() {
         _slidesBuild();
         const box = _el('entrySlides'); if (box) box.style.display = '';
@@ -625,7 +648,7 @@
         _slTimer = setInterval(() => {
             if (document.hidden || _homeMode !== 'play' || Date.now() < _slPausedUntil) return;
             _slidesGo(_slIdx + 1);
-        }, 2000);
+        }, 3000);
     }
     // #324 (owner): "Link plataforma: www.1girox.com (mirala)" → la web pública de Girox aparte, adentro de la app
     // (ventana /jugar.html con la línea "‹ Volver a cargas"), sin login: es para VERLA antes de jugar.
