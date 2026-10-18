@@ -1331,6 +1331,8 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .fd-later { border: 0; background: transparent; color: var(--p-muted); font: 700 12px var(--p-font); padding: 10px; cursor: pointer; }
 /* ── #489 (owner): Top juegos — tarjetas individuales grandes con "N jugando" ── */
 .ev-frame-wrap.games { height: auto !important; min-height: 0 !important; flex: 0 0 auto !important; background: #0d0d1a !important; display: flex; flex-direction: column; }
+.ev-frame-wrap.games .ev-slides { position: static !important; inset: auto !important; } /* el carril da la altura (antes era absoluto dentro del recuadro) */
+.ev-frame-wrap.games .ev-cta { bottom: 12px; }
 .ev-games-h { display: flex; align-items: center; justify-content: space-between; color: #fff; font: 900 15px var(--p-font); padding: 10px 12px 2px; }
 .ev-games-h small { font: 700 11px var(--p-font); color: #9aa0b2; display: inline-flex; align-items: center; gap: 6px; }
 .ev-games-h i, .ev-game .gp i { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.22); display: inline-block; }
