@@ -1284,4 +1284,7 @@ html[data-theme="dark"] .cond-sec.cond-black, html[data-theme="dark"] #vipLevels
 .ep-item b { font: 800 14px var(--p-font); } .ep-item small { font: 600 11px var(--p-font); color: var(--p-muted); }
 .ep-item em { font: 800 16px var(--p-font); color: var(--p-red); font-style: normal; }
 .ep-item.soon { opacity: .7; } .ep-item.soon em { font-size: 11px; background: var(--p-surface); border-radius: 999px; padding: 3px 9px; color: var(--p-muted); }
+/* ── #472: novedad en Referidos ── */
+.ref-news { margin: 8px 0 0; background: var(--p-red-soft); color: var(--p-text); border-radius: 12px; padding: 8px 12px; font: 600 12px/1.4 var(--p-font); text-align: left; }
+.ref-news > b:first-child { display: inline-block; background: var(--p-red); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 10px; letter-spacing: .8px; margin-right: 6px; }
 

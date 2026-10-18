@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 472. 🤝 Novedad de Referidos: aprovechá el 5% ahora, en diciembre baja al 3% — SW v330
+**Pedido (owner):** "en la novedad de referidos avisar que aprovechen el 5%, que en diciembre baja a 3% para todos los
+próximos referidos".
+**Qué se hizo:** cartel `.ref-news` en el encabezado del modal de Referidos y franja roja en la historia `pin-5.png`
+("NOVEDAD · APROVECHÁ EL 5% AHORA · en diciembre baja al 3% para los próximos referidos"). El % real sigue saliendo del
+panel (`ref-pct`); el 3% de diciembre es texto informativo: cuando llegue, cambiar el % en Comandos → Referidos y este cartel.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`, `public/images/stories/pin-5.png`.
+
 ### 470/471. 🎮 "Ver la plataforma" con selector (Girox · Ganamos Pronto · Jugaygana Pronto) · historia de Referidos — SW v329
 **Pedidos (owner):** "el Ver la plataforma hay que ajustar que cuando aprietan puedan elegir Girox, Ganamos (pronto) y
 Jugaygana (pronto)"; "en Historias vamos a publicar: ¿Conocés nuestro sistema de referidos? Invitá amigos y generá ganancias
