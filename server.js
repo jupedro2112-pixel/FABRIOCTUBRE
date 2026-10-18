@@ -18720,6 +18720,15 @@ app.get('/api/admin/diag', authMiddleware, adminMiddleware, async (req, res) => 
 const AppSession = require('./src/models/AppSession');
 const datosIa = require('./src/services/datosIaService');
 const _datosIaModels = () => ({ Transaction, User, RefundClaim: require('./src/models/RefundClaim'), DailyRouletteSpin: require('./src/models/DailyRouletteSpin'), Message, AppSession });
+// #469: condiciones promocionales VIGENTES (lo que se regala hoy) para el informe y el calculador.
+async function _diaPromoConfig() {
+  const out = { firstDepositBonusPct: 0, autoLoadBonusPct: 0, dailyRefundPct: 0, weeklyRefundPct: 0, monthlyRefundPct: 0, installGiftPct: 0 };
+  try { out.firstDepositBonusPct = await getFirstDepositBonusPct(); } catch (_) {}
+  try { out.autoLoadBonusPct = await getAutoLoadBonusPct(); } catch (_) {}
+  try { const tbp = await getRefundTiersByPeriod(); const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0); out.dailyRefundPct = mx(tbp.daily); out.weeklyRefundPct = mx(tbp.weekly); out.monthlyRefundPct = mx(tbp.monthly); } catch (_) {}
+  try { const ig = await getInstallGiftConfig(); if (ig && ig.enabled) out.installGiftPct = Number(ig.pct) || 0; } catch (_) {}
+  return out;
+}
 // Medidor: la PWA pinguea cada 60 s mientras está abierta y visible. Gap > 3 min = sesión nueva.
 app.post('/api/activity/ping', authMiddleware, async (req, res) => {
   try {
@@ -18776,7 +18785,7 @@ app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (
       for (let x = from.getTime(); x <= to.getTime(); x += 86400000) spendByDay[datosIa.dateKeyART(new Date(x))] = spend / nd;
     }
     const _t0 = Date.now();
-    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend, spendByDay });
+    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend, spendByDay, promoConfig: await _diaPromoConfig() });
     out.ms = Date.now() - _t0; logger.info('[datos-ia] analysis ' + out.from + '→' + out.to + ' ' + out.granularity + ' en ' + out.ms + ' ms ' + JSON.stringify(out.timings || {}));
     const params = { key: [out.from, out.to, out.granularity, out.campaign || '', spend].join('|'), from: out.from, to: out.to, granularity: out.granularity, campaign: out.campaign, spend };
     const summary = { registros: out.totals.registros, primerasCargas: out.totals.primerasCargas, cargas: out.totals.cargas, montoCargas: out.totals.montoCargas, netwin: out.totals.netwin, d30: out.retention.d30, pctSiguieron: out.repeat.pctSiguieron, veredicto: out.informe.veredicto.nivel };
@@ -18845,15 +18854,16 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     const q = req.query || {}; const baseDays = Math.max(7, Math.min(365, parseInt(q.base, 10) || 30));
     const to = new Date(); const from = new Date(to.getTime() - (baseDays - 1) * 86400000);
     const spendBase = await _diaSpendFor(from, to, q.campaign);
-    const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase });
+    const promoConfig = await _diaPromoConfig();
+    const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase, promoConfig });
     let calibration = 1; try { const c = await getConfig('projectionCalibration', null); if (c && Number(c.factor) > 0) calibration = Number(c.factor); } catch (_) {}
     let cacIn = Number(q.cac) > 0 ? Number(q.cac) : null, cacOrigen = cacIn ? 'indicado' : null;
     if (!cacIn && !(base.totals.cac > 0)) { // #468: costo promedio histórico (gasto total / clientes que cargaron alguna vez)
       try { const st = (await getConfig('adSpendTotal', null)) || null; const n = base.totals.baseCargadores; if (st && Number(st.amount) > 0 && n) { cacIn = Math.round(Number(st.amount) / n); cacOrigen = 'promedio histórico'; } } catch (_) {}
     }
-    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: cacIn, calibration, organicPct: q.organicPct });
+    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: cacIn, calibration, organicPct: q.organicPct, promoConfig, futBonus: q.futBonus, futRefund: q.futRefund });
     if (cacOrigen) projection.supuestos.cacOrigen = cacOrigen;
-    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || '', q.organicPct || ''].join('|'), organicPct: q.organicPct || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
+    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || '', q.organicPct || '', q.futBonus || '', q.futRefund || ''].join('|'), organicPct: q.organicPct || null, futBonus: q.futBonus || null, futRefund: q.futRefund || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
     const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, netwin: projection.base.netwin, resultado: projection.base.resultado, roi: projection.base.roi });
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }

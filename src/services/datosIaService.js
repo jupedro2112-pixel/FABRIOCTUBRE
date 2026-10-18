@@ -5,6 +5,9 @@
 'use strict';
 const TZ = 'America/Argentina/Buenos_Aires';
 const GIFT_SOURCES = ['install_bonus', 'welcome_gift', 'payout_refund'];
+// #469: lo que la casa REGALA (todo lo que no es carga ni retiro)
+const PROMO_TYPES = ['bonus', 'refund', 'roulette', 'fire_reward', 'rakeback', 'vip_levelup', 'install_gift', 'referral_commission'];
+const PROMO_LABEL = { bonus: 'bonos de carga', refund: 'reembolsos', roulette: 'ruleta', fire_reward: 'fueguito', rakeback: 'rakeback', vip_levelup: 'nivel VIP', install_gift: 'extra por instalar', referral_commission: 'referidos' };
 const DAY = 86400000;
 
 // #463: Argentina es UTC−3 fijo (sin horario de verano): se calcula por desplazamiento. Intl.toLocaleDateString por cada
@@ -62,7 +65,7 @@ async function _analyze(models, opts) {
   lap('cohortTx');
   const datesBy = new Map(); cohortTx.forEach((t) => { if (!datesBy.has(t.userId)) datesBy.set(t.userId, []); datesBy.get(t.userId).push(new Date(t.timestamp)); });
   // (3) Movimientos del rango.
-  const [depsR, wdsR, regs, logins, sessR, refundsR, spinsR, supportMsgs] = await Promise.all([
+  const [depsR, wdsR, regs, logins, sessR, refundsR, spinsR, supportMsgs, promoAgg] = await Promise.all([
     Transaction.find({ ...realDep, timestamp: { $gte: from, $lte: to } }).select('userId amount timestamp').lean(),
     Transaction.find({ ...realWd, timestamp: { $gte: from, $lte: to } }).select('userId amount timestamp').lean(),
     User.find({ ...userFilter, createdAt: { $gte: from, $lte: to } }).select('id createdAt').lean(),
@@ -70,7 +73,8 @@ async function _analyze(models, opts) {
     AppSession.find(scope({ startedAt: { $gte: from, $lte: to } })).select('userId startedAt lastPingAt installed').lean(),
     RefundClaim.find(scope({ claimedAt: { $gte: from, $lte: to } })).select('userId amount claimedAt').lean(),
     DailyRouletteSpin.find(scope({ spunAt: { $gte: from, $lte: to } })).select('userId spunAt prizeARS').lean(),
-    Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } })
+    Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } }),
+    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: { $nin: ['failed', 'cancelled'] }, timestamp: { $gte: from, $lte: to } }) }, { $group: { _id: '$type', n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
   ]);
   lap('rango');
   const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
@@ -122,8 +126,10 @@ async function _analyze(models, opts) {
     retiros: wdsR.length, montoRetiros: r0(montoRetiros), netwin: r0(montoCargas - montoRetiros),
     usuariosApp: appUsers.size, sesiones: sessR.length, minPorSesion: sessR.length ? r1(sum(sessR, sessMin) / sessR.length) : null, sesionesPorUsuarioDia: appUsers.size ? Math.round(sessR.length / appUsers.size / days * 100) / 100 : null, instalados: new Set(sessR.filter((s) => s.installed).map((s) => s.userId)).size,
     reembolsos: refundsR.length, montoReembolsos: r0(sum(refundsR, (x) => x.amount)), giros: spinsR.length, premiosRuleta: r0(sum(spinsR, (x) => x.prizeARS)), mensajesSoporte: supportMsgs,
+    promos: Object.fromEntries((promoAgg || []).map((p) => [p._id, { n: p.n, amt: r0(p.amt) }])), promosTotal: r0((promoAgg || []).reduce((s, p) => s + (Number(p.amt) || 0), 0)),
     churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length
   };
+  totals.promosPct = pct(totals.promosTotal, totals.montoCargas); totals.netwinNeto = r0(totals.netwin - totals.promosTotal); // #469
   // Período anterior (misma longitud)
   const prevTo = new Date(from.getTime() - 1), prevFrom = new Date(from.getTime() - (to - from) - 1);
   const [prevRegs, prevDepAgg] = await Promise.all([
@@ -135,11 +141,11 @@ async function _analyze(models, opts) {
 
   lap('prev');
   T.counts = { perUser: perUser.length, cohort: cohort.length, cohortTx: cohortTx.length, depsR: depsR.length, wdsR: wdsR.length, regs: regs.length, logins: logins.length, sess: sessR.length };
-  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, informe: narrative(totals, retention, growth, gran, repeat), calculadoEn: now.toISOString(), timings: T };
+  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, promoConfig: opts.promoConfig || null, informe: narrative(totals, retention, growth, gran, repeat, opts.promoConfig || null), calculadoEn: now.toISOString(), timings: T };
 }
 
 function grade(v, good, ok) { if (v == null) return null; return v >= good ? 'bien' : (v >= ok ? 'regular' : 'flojo'); }
-function narrative(t, r, g, gran, rp) {
+function narrative(t, r, g, gran, rp, pc) {
   const L = []; const per = gran === 'month' ? 'mes' : (gran === 'week' ? 'semana' : 'día');
   const sec = (ico, titulo, texto, estado, consejo) => L.push({ ico, titulo, texto, estado: estado || null, consejo: consejo || null });
   // Captación
@@ -162,6 +168,14 @@ function narrative(t, r, g, gran, rp) {
   // Dinero
   sec('💰', 'Dinero', `${t.cargas} cargas por ${money(t.montoCargas)} (${t.cargadores} cargadores, ${t.cargasPorCargador ?? 0} cargas por cargador, promedio ${money(t.cargaPromedio)}), ${t.retiros} retiros por ${money(t.montoRetiros)}. NETWIN: ${money(t.netwin)}. Reembolsos pagados: ${money(t.montoReembolsos)} (${t.reembolsos}); ruleta: ${t.giros} giros, ${money(t.premiosRuleta)} en premios.`,
     t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'bien' : (t.cargasPorCargador >= 1.8 ? 'regular' : 'flojo')), t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'Frecuencia de carga alta: los que cargan, repiten.' : (t.cargasPorCargador >= 1.8 ? 'Frecuencia de carga media.' : 'Frecuencia baja: la mayoría carga una sola vez en el período.')));
+  // #469 Promociones vigentes + costo real
+  {
+    const vig = pc ? [pc.firstDepositBonusPct > 0 ? `${pc.firstDepositBonusPct}% en la PRIMERA carga` : null, pc.autoLoadBonusPct > 0 ? `${pc.autoLoadBonusPct}% en cargas automáticas` : null, pc.dailyRefundPct > 0 ? `reembolso diario ${pc.dailyRefundPct}%` : null, pc.weeklyRefundPct > 0 ? `semanal ${pc.weeklyRefundPct}%` : null, pc.monthlyRefundPct > 0 ? `mensual ${pc.monthlyRefundPct}%` : null, pc.installGiftPct > 0 ? `${pc.installGiftPct}% extra por instalar la app` : null].filter(Boolean).join(' · ') : null;
+    const det = Object.keys(t.promos || {}).map((k) => `${PROMO_LABEL[k] || k} ${money(t.promos[k].amt)}`).join(' · ');
+    sec('🎁', 'Promociones (lo que regalás hoy)', (vig ? `Condiciones vigentes: ${vig}. ` : '') + `En el período las promociones costaron ${money(t.promosTotal)} = ${t.promosPct ?? 0}% de lo cargado` + (det ? ` (${det})` : '') + `. NETWIN neto de promociones: ${money(t.netwinNeto)}.`,
+      t.promosPct == null ? null : (t.promosPct <= 15 ? 'bien' : (t.promosPct <= 30 ? 'regular' : 'flojo')),
+      t.promosPct == null ? null : (t.promosPct <= 15 ? 'Las promociones pesan poco sobre lo cargado.' : (t.promosPct <= 30 ? 'Las promociones pesan bastante: es el precio de captar; cuando el bono de primera carga ya pasó, los clientes que quedan dejan más margen.' : 'Las promociones se comen gran parte del margen: revisar el % de primera carga y los reembolsos.')));
+  }
   // Inversión
   if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin en el período (${money(t.netwinPorNuevo)} por cliente).`,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'bien' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'regular' : 'flojo')) : null,
@@ -214,17 +228,26 @@ function project(base, opts) {
   const reembPct = t.montoCargas > 0 ? t.montoReembolsos / t.montoCargas : 0;
   const activePct = (rp.pctActivos14 != null ? rp.pctActivos14 : 30) / 100;
   const horizon = Math.min(1.5, Math.max(0.5, days / 30));
+  // #469: promociones — lo observado (promos / cargado en la base) escalado por las condiciones FUTURAS vs las vigentes
+  const pc = opts.promoConfig || {}; const promoNowPct = t.montoCargas > 0 ? (t.promosTotal || 0) / t.montoCargas : 0;
+  const curLevel = (Number(pc.firstDepositBonusPct) || 0) + (Number(pc.dailyRefundPct) || 0);
+  const futBonus = (opts.futBonus !== '' && opts.futBonus != null && Number(opts.futBonus) >= 0) ? Number(opts.futBonus) : (Number(pc.firstDepositBonusPct) || 0);
+  const futRefund = (opts.futRefund !== '' && opts.futRefund != null && Number(opts.futRefund) >= 0) ? Number(opts.futRefund) : (Number(pc.dailyRefundPct) || 0);
+  const promoRatio = curLevel > 0 ? Math.max(0, (futBonus + futRefund) / curLevel) : 1;
+  const promoFutPct = promoNowPct * promoRatio;
   const netwinPorCliente = montoPorCliente * horizon * (1 - wdRatio - reembPct);
   const mk = (f) => {
     const ff = f * calib;
     const porPauta = cac ? (spend / cac) * ff : 0, organicos = organicPerDay * days * ff, nuevos = porPauta + organicos;
     const monto = nuevos * montoPorCliente * horizon, retiros = monto * wdRatio, reemb = monto * reembPct, netwin = monto - retiros - reemb;
     const netwinPauta = porPauta * netwinPorCliente;
-    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente), montoCargas: r0(monto), retiros: r0(retiros), reembolsos: r0(reemb), netwin: r0(netwin), netwinPauta: r0(netwinPauta), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct), resultado: r0(netwinPauta - spend), roi: spend > 0 ? Math.round(((netwinPauta - spend) / spend) * 100) : null, recuperaEnDias: cac && netwinPorCliente > 0 ? Math.min(999, r0(cac / (netwinPorCliente / days))) : null };
+    const promos = monto * promoFutPct, promosPauta = (porPauta * montoPorCliente * horizon) * promoFutPct;
+    const netwinNeto = netwin - promos, netwinPautaNeto = netwinPauta - promosPauta;
+    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente), montoCargas: r0(monto), retiros: r0(retiros), reembolsos: r0(reemb), netwin: r0(netwin), promos: r0(promos), netwinNeto: r0(netwinNeto), netwinPauta: r0(netwinPauta), netwinPautaNeto: r0(netwinPautaNeto), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct), resultado: r0(netwinPautaNeto - spend), roi: spend > 0 ? Math.round(((netwinPautaNeto - spend) / spend) * 100) : null, recuperaEnDias: cac && netwinPorCliente * (1 - promoFutPct) > 0 ? Math.min(999, r0(cac / ((netwinPorCliente * (1 - promoFutPct)) / days))) : null };
   };
   // #467: "Hoy, como está": lo que pasa por día con el gasto actual, para comparar contra la inversión extra.
   const hoy = { gastoPorDia: r0((t.spend || 0) / baseDays), nuevosPorDia: Math.round(perDayFirst * 10) / 10, cargasPorDia: r0(t.cargas / baseDays), montoPorDia: r0(t.montoCargas / baseDays), netwinPorDia: r0(t.netwin / baseDays), costoPorNuevo: t.cac || null, enDias: { dias: days, gasto: r0((t.spend || 0) / baseDays * days), nuevos: r0(perDayFirst * days), monto: r0(t.montoCargas / baseDays * days), netwin: r0(t.netwin / baseDays * days) } };
-  return { spend, days, calibration: calib, hoy, supuestos: { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, cac, cacOrigen: Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado' : 'sin dato'), primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), netwinPorCliente: r0(netwinPorCliente), pctRetirado: Math.round(wdRatio * 100), pctReembolsos: Math.round(reembPct * 100), pctActivos: Math.round(activePct * 100), gastoBase: t.spend || 0 }, bajo: mk(0.7), base: mk(1), alto: mk(1.3), nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto en publicidad de un período con pauta (Análisis → Gasto) o indicá el costo a mano. Mientras tanto sólo se proyecta lo orgánico.' };
+  return { spend, days, calibration: calib, hoy, promo: { promoNowPct: Math.round(promoNowPct * 1000) / 10, curBonus: Number(pc.firstDepositBonusPct) || 0, curRefund: Number(pc.dailyRefundPct) || 0, futBonus, futRefund, promoRatio: Math.round(promoRatio * 100) / 100, promoFutPct: Math.round(promoFutPct * 1000) / 10 }, supuestos: { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, cac, cacOrigen: Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado' : 'sin dato'), primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), netwinPorCliente: r0(netwinPorCliente), pctRetirado: Math.round(wdRatio * 100), pctReembolsos: Math.round(reembPct * 100), pctActivos: Math.round(activePct * 100), gastoBase: t.spend || 0 }, bajo: mk(0.7), base: mk(1), alto: mk(1.3), nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto en publicidad de un período con pauta (Análisis → Gasto) o indicá el costo a mano. Mientras tanto sólo se proyecta lo orgánico.' };
 }
 
 // Revisión de una proyección contra lo REAL: `real` = analyze() del tramo transcurrido. Prorratea lo proyectado a los días

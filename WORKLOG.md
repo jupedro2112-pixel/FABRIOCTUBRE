@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-18
 
+### 468/469. 🧮 Gasto total desde el inicio → costo promedio por cliente · promociones vigentes y futuras en el análisis y el calculador — admin-sw v101
+**Pedido (owner):** (468) "preguntá cuánto gasté desde que empezó la página; con eso el costo promedio por cliente; si invierto
+tanto a tal costo, vendés aprox. tanto". (469) "tené en cuenta que hoy regalamos 15% de reembolso y 50% en la primera carga:
+los clientes que quedan después generan más porque ya pasó el bono; es un dato que tenés que tener en todos los análisis".
+**Qué se hizo:**
+- **#468:** `Config['adSpendTotal']` + `GET/POST /api/admin/datos-ia/spend-total` (devuelve clientes que cargaron alguna vez
+  y costo promedio = gasto total / clientes). La proyección lo usa si no hay costo a mano ni gasto diario en la base
+  (`cacOrigen: 'promedio histórico'`). Tarjeta en el Calculador y frase arriba de los escenarios: "Si invertís $X en N días a
+  $C por cliente, vas a vender aproximadamente $V en cargas (K nuevos)…". (El commit c5340a0 había dejado sólo el server.)
+- **#469:** el análisis suma lo que la casa REGALA en el período (Transaction `bonus, refund, roulette, fire_reward, rakeback,
+  vip_levelup, install_gift, referral_commission`) → `promosTotal`, `promosPct` (sobre lo cargado), `netwinNeto`, detalle por
+  tipo; lee las **condiciones vigentes** (`firstDepositBonusPct`, `autoLoadBonusPct`, reembolso diario/semanal/mensual máximos,
+  extra por instalar) y las muestra en la sección "🎁 Promociones (lo que regalás hoy)" con semáforo (≤15% bien, ≤30% regular).
+  **Calculador:** campos "Bono 1ª carga futuro %" y "Reembolso diario futuro %" (prellenados con los vigentes); costo de promos
+  proyectado = promos observadas / cargado × (futuro ÷ vigente); cada escenario muestra Promociones y NETWIN neto, y el
+  resultado/ROI de la pauta se calcula sobre el neto. Así se ve que bajar el bono de primera carga sube el margen de los que quedan.
+**Archivos:** `server.js`, `src/services/datosIaService.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 467. 🧮 Calculador: "Hoy, como está" (gasto, nuevos, ventas y netwin por día) vs "Sumando la inversión" — admin-sw v99
 **Pedido (owner):** "ver lo que gasté en el día, cuántos clientes nuevos entraron, el costo promedio por cliente, y comparar:
 hoy con esta plata vendo lo que vendo; si sumo $500.000.000 vendería tanto por cómo funciona la retención".

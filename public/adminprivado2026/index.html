@@ -1296,6 +1296,15 @@ document.addEventListener('change', function (ev) {
                     </div>
                 </div>
                 <div id="diaPaneC" style="display:none;">
+                    <!-- #468: gasto total desde el inicio → costo promedio por cliente -->
+                    <div class="dia-card"><div class="dia-card-h"><b>📣 ¿Cuánto gastaste en publicidad desde que empezó la página?</b><small>Con ese total y los clientes que cargaron alguna vez sale tu costo promedio por cliente. Es lo que usa el calculador si no cargás gasto por día ni escribís un costo a mano.</small></div>
+                        <div class="dia-bar dia-bar-in">
+                            <label>Gasto total hasta hoy $<input type="number" id="stAmount" min="0" step="1000" style="width:160px;"></label>
+                            <label>Desde (opc.)<input type="date" id="stSince"></label>
+                            <button class="btn-primary btn-small" onclick="diaSaveSpendTotal()">Guardar</button>
+                            <span id="stInfo" class="dia-pill">…</span>
+                        </div>
+                    </div>
                     <div class="dia-card"><div class="dia-card-h"><b>🧮 ¿Qué deja una inversión?</b><small>Proyección aproximada con lo observado en los últimos días. Tres escenarios: bajo (−30%), base y alto (+30%). Cada cálculo queda en el Historial para revisarlo contra lo real y ajustar los próximos.</small></div>
                         <div class="dia-bar dia-bar-in">
                             <label>Plata a invertir $<input type="number" id="prSpend" min="0" step="1000" value="500000" style="width:130px;"></label>
@@ -1303,6 +1312,9 @@ document.addEventListener('change', function (ev) {
                             <label>Base: últimos (días)<input type="number" id="prBase" min="7" max="365" value="30" style="width:80px;"></label>
                             <label>Costo por cliente nuevo $ (opc.)<input type="number" id="prCac" min="0" step="100" placeholder="observado" style="width:130px;"></label>
                             <label>% orgánico del ritmo actual (si la base no tiene gasto)<input type="number" id="prOrg" min="0" max="100" value="30" style="width:80px;"></label>
+                            <!-- #469: condiciones promocionales FUTURAS (prellenadas con las vigentes) -->
+                            <label>Bono 1ª carga futuro %<input type="number" id="prBonus" min="0" max="500" placeholder="vigente" style="width:90px;"></label>
+                            <label>Reembolso diario futuro %<input type="number" id="prRefund" min="0" max="100" placeholder="vigente" style="width:90px;"></label>
                             <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
                             <button class="btn-primary btn-small" onclick="diaProject()">Calcular</button>
                         </div>
