@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-17
 
+### 375. 💬 Soporte es SOLO soporte: sin cartel de carga automática, sin botones extra, bienvenida nueva — SW v262
+**Pedido (owner):** "en el soporte sacá la carga manual, limpiemos eso y el 'Recomendable' de carga automática; soporte
+es soporte 100%, así como está pero que no haya nada más". En modo Soporte (`body.home-mini`) se ocultan el cartel
+`#serviceBanner` ("⭐ Recomendable · Ir a carga automática · carga mínima"), el botón de test, los links de
+plataforma, la barra del regalo por instalar y, en la cabecera, el botón de modo claro/oscuro y el fueguito (quedan
+sólo avatar + "Soporte · Martín en línea"); tocar el título ya no lleva a la app completa. La **bienvenida automática
+del chat** (`/sys_welcome`, se manda al entrar cada 24 h) ya no habla del "chat de CARGAS" ni del "botón CBU":
+default nuevo de SOPORTE (contame tu duda / problema, te respondemos en minutos; para cargar, la Carga automática de
+arriba) + migración al boot que reemplaza el texto viejo si sigue guardado (editable en COMANDOS).
+
 ### 374. 🎰 Ruleta: se desbloquea con la carga mínima · premios 20/50/100% · $5.000 · $100.000 (1 cada 1.000) — SW v261
 **Pedido (owner):** "aclará que con tu carga mínima de $5.000 accedés a la ruleta diaria; podés ganar 50%, 100%, 20%,
 $5.000 o $100.000; probabilidades configurables; que la gente gane regalos pero sin afectar la economía; el de

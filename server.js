@@ -11367,6 +11367,13 @@ async function initializeData() {
       await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: "👋 ¡Hola, {username}! Este es tu chat de CARGAS y SOPORTE.\n\n💳 Para CARGAR acá mismo: tocá el botón CBU de abajo, transferí y mandanos el comprobante con la cámara. Se acredita automáticamente y elegís dónde jugar ({plataformas}).\n\n⭐ Arriba tenés \"Ver todo\": la app completa con la carga automática, reembolsos, ruleta y referidos.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá." } });
       console.log('✅ /sys_welcome: texto del chat principal (#266)');
     }
+    // #375 (owner 2026-10-18): el chat es SOPORTE 100%: si la bienvenida guardada todavía habla del botón CBU o del
+    // "chat de CARGAS", se reemplaza por la de soporte (después se edita en COMANDOS).
+    const w2 = await Command.findOne({ name: '/sys_welcome' }).lean();
+    if (w2 && /botón CBU de abajo|chat de CARGAS y SOPORTE|SOPORTE EN VIVO\.\n\nSomos tu sala/.test(String(w2.response || ''))) {
+      await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: SUPPORT_WELCOME_TEXT } });
+      console.log('✅ /sys_welcome: texto de SOPORTE (#375)');
+    }
     // #273 (owner 2026-10-17): "agregá 33 reseñas y que en total promedie 4,7 estrellas". Se siembran UNA
   // vez (flag en Config) como reseñas aprobadas: 26×5 + 4×4 + 3×3 = 155 puntos / 33 = 4,70. Usuarios
   // ficticios (userId 'seed-review-NN', nunca chocan con clientes reales); el feed los enmascara igual.
@@ -11660,7 +11667,7 @@ async function initializeData() {
       name: '/sys_welcome',
       description: 'Atención automática del soporte (se envía al entrar, cada 24h): resumen del servicio + cómo cargar + qué consultar acá. Variables: {username}, {plataformas}, {escalera} (rangos vigentes), {cbu}',
       type: 'message',
-      response: '👋 ¡Hola, {username}! Este es tu SOPORTE EN VIVO.\n\nSomos tu sala de juegos: cargás solo, elegís en qué plataforma jugar ({plataformas}) y cobrás reembolsos por lo que perdés.\n\n💳 Para CARGAR: tocá "Cargar" arriba, transferí al CBU que ves ahí, enviá el comprobante y elegí la plataforma donde querés jugar.\n\n🛠 ¿Problemas para instalar la app o con la ruleta? Consultanos acá.'
+      response: SUPPORT_WELCOME_TEXT // #375: el chat es SOPORTE (antes hablaba del CBU / "Cargar")
     },
     {
       // #221 (owner 2026-10-16): la explicación completa vive en el CHAT de soporte, no en la
@@ -12318,7 +12325,9 @@ const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentaje
 // #373: SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat (/sys_support_*).
 const SUPPORT_NAME_DEFAULT = 'Martín';
 const SUPPORT_INTRO_DEFAULT = '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.';
-const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos'; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
+const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos';
+// #375: bienvenida automática del chat de SOPORTE (/sys_welcome). Variables: {username}, {plataformas}, {escalera}, {cbu}.
+const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Este es tu chat de SOPORTE.\n\nContame tu duda, consulta o problema y lo resolvemos: te respondemos en minutos.\n\n⚡ Para cargar usá la *Carga automática* de arriba: transferís, mandás la foto del comprobante y se acredita solo."; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';

@@ -644,3 +644,7 @@ body.sp-sent .sp-intro:not(.sp-open) .sp-sla { padding: 3px 8px; font-size: 10px
 .rl-hero.rl-locked { background: var(--p-surface); }
 .rl-hero.rl-locked .rl-emoji { font-size: 54px; }
 .rl-min { color: inherit; font-weight: 800; }
+/* #375 (owner): SOPORTE es sólo soporte — sin cartel "Recomendable / Ir a carga automática", sin botones extra */
+body.home-mini .service-banner, body.home-mini .test-mini-manual, body.home-mini #supportTests, body.home-mini .plat-link-manual, body.home-mini .ig-bar { display: none !important; }
+body.home-mini #waThemeBtn, body.home-mini .wa-head-fire { display: none !important; }
+body.home-mini .wa-head .chat-topbar-info { cursor: default; }
