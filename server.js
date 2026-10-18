@@ -11346,6 +11346,13 @@ async function initializeData() {
       await Config.set('migration_roulette_v3_done', true, 'startup-migration');
       console.log('✅ Ruleta diaria configurada (#228): app instalada + activo de la semana · $5.000 / 100% / 50%');
     }
+    // #374 (owner 2026-10-18): premios 20% / 50% / 100% / $5.000 / $100.000 (1 cada 1.000) + sin premio; se desbloquea
+    // con una carga mínima en la semana. One-shot: después se edita en el panel → Ruleta diaria.
+    if (!(await getConfig('migration_roulette_v4_done', false))) {
+      await Config.set('dailyRoulette', { enabled: true, requireAppInstalled: true, minCargas30d: 0, requireActiveWeek: true, prizes: ROULETTE_PRIZES_2026_10_18 }, 'startup-migration');
+      await Config.set('migration_roulette_v4_done', true, 'startup-migration');
+      console.log('✅ Ruleta diaria (#374): 20% 45% · 50% 22% · 100% 8% · $5.000 4,9% · $100.000 0,1% · sin premio 20%');
+    }
   } catch (e) { console.warn('[startup-migration] ruleta v3:', e.message); }
 
   // #235 (owner): "en el soporte borrá todo lo que es servicio y resumí". Si la bienvenida guardada es
@@ -18991,6 +18998,19 @@ const ROULETTE_PRIZES_2026_10 = [
   { id: 'p100',   type: 'percent', value: 100,  weight: 30, emoji: '🎁', label: '100% EXTRA', rolloverX: 0 },
   { id: 'p50',    type: 'percent', value: 50,   weight: 60, emoji: '🎉', label: '50% EXTRA', rolloverX: 0 }
 ];
+// #374 (owner 2026-10-18): "con tu carga mínima de $5.000 accedés a la ruleta diaria; podés ganar 50% · 100% · 20% ·
+// $5.000 · $100.000; el de $100.000 1 cada 1.000; márgenes razonables: que la gente gane regalos sin que me afecte la
+// economía". Pesos sobre 1.000 giros: los % EXTRA (75%) sólo cuestan cuando el cliente vuelve a cargar (y van con el
+// tope de bonos), la plata al instante es poca y con rollover; costo esperado en plata ≈ $345 por giro
+// (49×$5.000 + 1×$100.000 cada 1.000 giros). Editable en el panel → Ruleta diaria (pesos = probabilidad).
+const ROULETTE_PRIZES_2026_10_18 = [
+  { id: 'p20',     type: 'percent', value: 20,     weight: 450, emoji: '🎉', label: '20% EXTRA',  rolloverX: 0 },
+  { id: 'p50',     type: 'percent', value: 50,     weight: 220, emoji: '🎁', label: '50% EXTRA',  rolloverX: 0 },
+  { id: 'p100',    type: 'percent', value: 100,    weight: 80,  emoji: '🚀', label: '100% EXTRA', rolloverX: 0 },
+  { id: 'c5000',   type: 'cash',    value: 5000,   weight: 49,  emoji: '💰', label: '$5.000',     rolloverX: 1 },
+  { id: 'c100000', type: 'cash',    value: 100000, weight: 1,   emoji: '🏆', label: '$100.000',   rolloverX: 3 },
+  { id: 'none',    type: 'none',    value: 0,      weight: 200, emoji: '😅', label: 'Casi… mañana de nuevo', rolloverX: 0 }
+];
 // Lunes 00:00 hora Argentina (UTC-3) de la semana en curso.
 function _rouletteWeekStartART(now = new Date()) {
   const art = new Date(now.getTime() - 3 * 3600 * 1000);
@@ -19002,12 +19022,16 @@ function _rouletteWeekStartART(now = new Date()) {
 async function _rouletteIsActiveThisWeek(userId, username) {
   try {
     const since = _rouletteWeekStartART();
-    const count = await Transaction.countDocuments({
+    // #374: la carga que desbloquea tiene que ser de al menos la carga mínima configurada ($5.000).
+    let minDep = 0; try { minDep = Number(await getMinDepositArs()) || 0; } catch (_) { minDep = 0; }
+    const q = {
       $or: [{ userId: userId }, { username: username }],
       type: 'deposit',
       'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] },
       timestamp: { $gte: since }
-    });
+    };
+    if (minDep > 0) q.amount = { $gte: minDep };
+    const count = await Transaction.countDocuments(q);
     return { active: count > 0, count, since };
   } catch (e) {
     logger.warn(`[roulette] chequeo activo de la semana falló: ${e.message}`);
@@ -19196,6 +19220,7 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
       needsActiveWeek: appOk && act.active && !week.active, // #228: sin carga esta semana
       requireActiveWeek: cfg.requireActiveWeek === true,
       minCargas: cfg.minCargas30d,
+      minDepositArs: await getMinDepositArs().catch(() => 5000), // #374: la carga que desbloquea la ruleta
       dateKey,
       // Premios con su probabilidad real (transparencia: la PWA los lista).
       prizes: _prizesPublic(cfg.prizes),
@@ -19515,7 +19540,8 @@ app.post('/api/roulette/spin', authMiddleware, async (req, res) => {
     if (cfg.requireActiveWeek) {
       const week = await _rouletteIsActiveThisWeek(userId, username);
       if (!week.active) {
-        return res.status(403).json({ error: 'La ruleta es para clientes que cargaron esta semana. Hacé una carga y volvé a girar.', needsActiveWeek: true });
+        const minDep = await getMinDepositArs().catch(() => 5000);
+        return res.status(403).json({ error: 'La ruleta se desbloquea con una carga mínima de $' + Number(minDep).toLocaleString('es-AR') + '. Hacé tu carga y volvé a girar.', needsActiveWeek: true, minDepositArs: minDep });
       }
     }
 

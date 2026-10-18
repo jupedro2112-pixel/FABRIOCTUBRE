@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 374. 🎰 Ruleta: se desbloquea con la carga mínima · premios 20/50/100% · $5.000 · $100.000 (1 cada 1.000) — SW v261
+**Pedido (owner):** "aclará que con tu carga mínima de $5.000 accedés a la ruleta diaria; podés ganar 50%, 100%, 20%,
+$5.000 o $100.000; probabilidades configurables; que la gente gane regalos pero sin afectar la economía; el de
+$100.000 1 cada 1.000; algo top y prolijo".
+- **Premios por defecto (`ROULETTE_PRIZES_2026_10_18`, pesos sobre 1.000 giros):** 20% EXTRA 450 (45%) · 50% EXTRA 220
+  (22%) · 100% EXTRA 80 (8%) · $5.000 49 (4,9%, rollover x1) · **$100.000 1 (0,1% = 1 cada 1.000, rollover x3)** · sin
+  premio 200 (20%). Razonamiento: el 75% de los giros da un % EXTRA que sólo cuesta cuando el cliente VUELVE a cargar
+  (y pasa por el tope de bonos, `resolveAutoBonus`), así la ruleta empuja la recarga; la plata al instante es poca y con
+  rollover; costo esperado en plata ≈ $345 por giro. Migración one-shot `migration_roulette_v4_done` pisa
+  `Config['dailyRoulette']` (app instalada + activo de la semana, cargas 30 d = 0). **Se edita en el panel → Ruleta
+  diaria** (pesos = probabilidad, se ve el % real; también el budget diario que fuerza "sin premio" si se agota).
+- **Desbloqueo:** la carga de la semana que habilita el giro tiene que ser **≥ carga mínima** (`getMinDepositArs`,
+  $5.000 configurable): `_rouletteIsActiveThisWeek` filtra `amount ≥ min`. `GET /api/roulette/status` devuelve
+  `minDepositArs`; el error del spin lo nombra.
+- **PWA:** subtítulo del modal "Se desbloquea con tu carga mínima de $X · 1 giro por día"; chip "🏆 Premio mayor
+  $100.000 · 1 cada 1.000 giros" (calculado de la tabla real); estado BLOQUEADO con explicación y botón "Cargar ahora"
+  (→ carga automática) o "Ver cómo" (app/notificaciones); `.rl-min` pinta el mínimo real en Inicio, Menú fácil e Info.
+
 ### 373. 💬 "Carga manual" → SOPORTE: Martín se presenta al entrar, chat con el estilo de la página · historia de Soporte — SW v260
 **Pedido (owner):** "sacá la carga manual y dejá un Soporte; cuando entren, un mensaje tipo Stake, con el mismo estilo de
 la página: una personita se presenta — 'Hola, soy Martín, un gusto, yo me voy a encargar de tu caso, contame tu

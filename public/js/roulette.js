@@ -37,9 +37,18 @@
             if (!d || !d.success) return;
             _state = d;
             renderHomeCard();
+            _paintUnlock(); // #374: "$5.000" real en los textos de la app
         } catch (e) { /* best-effort */ }
     }
 
+    // #374: pinta la carga mínima que desbloquea la ruleta en todos los .rl-min (Inicio, Menú fácil, Info).
+    function _paintUnlock() {
+        try {
+            const min = _state && Number(_state.minDepositArs) > 0 ? Number(_state.minDepositArs) : 0;
+            if (!min) return;
+            document.querySelectorAll('.rl-min').forEach((el) => { el.textContent = '$' + _fmt(min); });
+        } catch (_) {}
+    }
     function renderHomeCard() {
         const c = document.getElementById('rouletteHomeCard');
         if (!c) return;
@@ -184,9 +193,14 @@
         const pendingHtml = (!alreadySpun && Number(_state.pendingPct || 0) > 0)
             ? '<div class="rl-pending">🎁 Tenés <b>+' + _fmt(_state.pendingPct) + '% extra</b> pendiente: se aplica solo en tu próxima carga.</div>'
             : '';
+        const minDep = Number(_state.minDepositArs) > 0 ? Number(_state.minDepositArs) : 5000;
+        // #374: premio mayor destacado con su chance real ("1 cada N giros").
+        const topCash = (_state.prizes || []).filter((p) => p.type === 'cash' && Number(p.probPct) > 0).sort((a, b) => b.value - a.value)[0];
+        const topHtml = topCash ? '<div class="rl-top"><span class="rl-top-k">🏆 Premio mayor</span><b>$' + _fmt(topCash.value) + '</b><span class="rl-top-odd">1 cada ' + _fmt(Math.round(100 / topCash.probPct)) + ' giros</span></div>' : '';
         let html = '<div class="rl-card">';
         html += '<button type="button" class="rl-x" onclick="VIP.roulette.close()" aria-label="Cerrar">✕</button>';
-        html += '<div class="rl-head"><div class="rl-kicker">Todos los días</div><h2 class="rl-title">Ruleta diaria</h2><p class="rl-sub">1 giro por día · si ganás, se acredita solo a tu saldo</p></div>';
+        html += '<div class="rl-head"><div class="rl-kicker">Todos los días</div><h2 class="rl-title">Ruleta diaria</h2><p class="rl-sub">Se desbloquea con tu carga mínima de <b>$' + _fmt(minDep) + '</b> · 1 giro por día · si ganás, se acredita solo</p></div>';
+        html += topHtml;
 
         if (alreadySpun) {
             const won = Number(spin.prizeARS || 0) > 0;
@@ -210,6 +224,18 @@
             }
             html += prizesHtml;
             html += '<button type="button" class="rl-close" onclick="VIP.roulette.close()">Cerrar</button>';
+        } else if (!_state.eligible) {
+            // #374: bloqueada → se explica cómo se desbloquea (app instalada / carga mínima de la semana).
+            if (_state.needsAppNotifs) {
+                html += '<div class="rl-hero rl-locked"><div class="rl-emoji">📲</div><div class="rl-hero-t">Instalá la app para girar</div>' +
+                    '<div class="rl-hero-s">La ruleta se juega desde la app instalada con las notificaciones activas.</div>' +
+                    '<button type="button" class="rl-spin" onclick="VIP.roulette.needsApp()">Ver cómo</button></div>';
+            } else {
+                html += '<div class="rl-hero rl-locked"><div class="rl-emoji">🔒</div><div class="rl-hero-t">Se desbloquea con tu carga</div>' +
+                    '<div class="rl-hero-s">Hacé una carga mínima de <b>$' + _fmt(minDep) + '</b> y girás <b>todos los días</b> de la semana. Podés ganar % extra en tu próxima carga o plata al instante.</div>' +
+                    '<button type="button" class="rl-spin" onclick="VIP.roulette.close(); if (window.VIP && VIP.home) VIP.home.setHomeMode(\'full\');">Cargar ahora</button></div>';
+            }
+            html += prizesHtml;
         } else {
             html += pendingHtml;
             html += '<div id="rouletteResultBox" class="rl-hero"><div class="rl-emoji rl-emoji-swing">🎰</div>' +
@@ -348,7 +374,7 @@
         } catch (e) { /* best-effort */ }
     }
 
-    VIP.roulette = { loadStatus, open, close, spin, loadRecentWinners };
+    VIP.roulette = { loadStatus, open, close, spin, loadRecentWinners, needsApp: _showNeedsAppModal };
 
     // Boot: cargar status apenas el usuario esté autenticado.
     document.addEventListener('DOMContentLoaded', () => {

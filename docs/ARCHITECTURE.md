@@ -933,6 +933,13 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   rojo #e60023 (verde apagado sólo para plata). Los colores inline del HTML se re-mapean con `[style*=…]` de alcance
   positivo que excluye `#supportPanel` (la Carga manual sigue WhatsApp), `#rouletteModal` y el visor de historias.
   Regla: lo nuevo de la PWA se colorea con `--p-*`; para volver al tema oscuro se quita ese link.
+  **#373 — SOPORTE (ex "Carga manual"):** el modo `mini` sigue siendo el chat (`#supportPanel`), pero la barra dice
+  "Soporte", la cabecera muestra a Martín y arriba del chat va `#supportIntro` (presentación estilo Stake, chips que
+  dejan texto en el campo, plazo de respuesta); textos `/sys_support_name|intro|sla` → `GET /api/platforms.supportIntro`.
+  Ya no se manda el CBU solo al entrar ni hay botón CBU en el chat. El chat usa el estilo claro de `pin.css`.
+  **#374 — Ruleta:** premios por defecto `ROULETTE_PRIZES_2026_10_18` (20/50/100% · $5.000 · $100.000 1 cada 1.000 ·
+  sin premio), migración `migration_roulette_v4_done`; la carga de la semana que desbloquea debe ser ≥ carga mínima;
+  `status.minDepositArs` alimenta los textos (`.rl-min`) y el modal muestra el premio mayor con su chance real.
   **#366 (2026-10-17):** cuarto modo **easy** = MENÚ FÁCIL para quien se pierde con tantos botones. En CADA arranque
   (#367; y de nuevo tras ≥ 10 min en segundo plano, `_menuReaskInit`), `ui.showChatScreen` → `VIP.home.maybeShowMenuChooser` abre `#menuChooser` ("¿Cómo querés ver
   la app?" fácil / completo); la elección vive en `localStorage vip_menu_pref` ('easy' | 'full') y se cambia en

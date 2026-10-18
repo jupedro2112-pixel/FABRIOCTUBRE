@@ -636,3 +636,11 @@ body.sp-sent .sp-intro:not(.sp-open) .sp-avatar, body.sp-sent .sp-intro:not(.sp-
 body.sp-sent .sp-intro:not(.sp-open) .sp-body { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
 body.sp-sent .sp-intro:not(.sp-open) .sp-sla { padding: 3px 8px; font-size: 10px; }
 @media (max-height: 640px) { .sp-msg { font-size: 12.5px; } .sp-intro { padding: 11px 12px 10px; } }
+/* #374: ruleta — premio mayor destacado y estado bloqueado */
+.rl-top { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 9px 14px; border-radius: 999px; background: var(--p-red-soft); color: var(--p-text); font: 700 12px var(--p-font); }
+.rl-top b { font: 900 16px var(--p-font); color: var(--p-red); letter-spacing: -.2px; }
+.rl-top-k { color: var(--p-text); }
+.rl-top-odd { color: var(--p-muted); font-weight: 600; }
+.rl-hero.rl-locked { background: var(--p-surface); }
+.rl-hero.rl-locked .rl-emoji { font-size: 54px; }
+.rl-min { color: inherit; font-weight: 800; }
