@@ -1124,4 +1124,20 @@ body.reg-quick #loginForm { display: none !important; }
 .pi.pi-sm { width: 22px; height: 22px; border-radius: 7px; background: var(--p-card); margin: 0; }
 .pi.pi-sm svg { width: 13px; height: 13px; }
 html[data-theme="dark"] .pi, html[data-theme="dark"] .pi.pi-sm { background: var(--p-surface-2); }
+/* ── #441 (owner): INICIO (post-login) con íconos de línea en vez de emojis: entrada, menú fácil, selector de menú, Instalar app ── */
+.li { display: inline-flex; width: 15px; height: 15px; vertical-align: -2px; margin-right: 5px; color: var(--p-red); flex: 0 0 auto; }
+.li svg { width: 100%; height: 100%; }
+.li-w, .ev-cta .li { color: #fff; }
+.ez-ico, .ez-main-ico, .mc-ico { display: inline-flex !important; align-items: center; justify-content: center; }
+.ez-btn .ez-ico { width: 40px; height: 40px; border-radius: 12px; background: var(--p-card); color: var(--p-red); }
+.ez-btn .ez-ico svg { width: 22px; height: 22px; }
+.ez-main .ez-main-ico { width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, .18); color: #fff; }
+.ez-main .ez-main-ico svg { width: 24px; height: 24px; }
+.ez-chat .ez-ico { width: 36px; height: 36px; border-radius: 11px; background: var(--p-card); color: var(--p-red); }
+.ez-chat .ez-ico svg { width: 20px; height: 20px; }
+.ez-switch .li { color: var(--p-text); }
+.mc-ico { width: 40px; height: 40px; border-radius: 12px; background: var(--p-surface); color: var(--p-red); }
+.mc-ico svg { width: 22px; height: 22px; }
+.bs-install .li { color: var(--p-red); }
+html[data-theme="dark"] .ez-btn .ez-ico, html[data-theme="dark"] .ez-chat .ez-ico, html[data-theme="dark"] .mc-ico { background: var(--p-surface-2); }
 

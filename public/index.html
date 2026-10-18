@@ -1063,13 +1063,13 @@
                      home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
                 <div class="ev-services" id="entryServices">
                     <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
-                        <b>💸 Reembolso</b><small id="evSvcRefund">de lo que perdés</small>
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso</b><small id="evSvcRefund">de lo que perdés</small>
                     </button>
                     <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
-                        <b>🎰 Ruleta diaria</b><small>con tu carga de <b class="rl-min">$5.000</b></small>
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b><small>con tu carga de <b class="rl-min">$5.000</b></small>
                     </button>
                     <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
-                        <b>👥 Referidos</b><small>cobrá todos los meses</small>
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b><small>cobrá todos los meses</small>
                     </button>
                 </div>
                 <div class="ev-tabs" id="entryTabs"></div>
@@ -1086,12 +1086,12 @@
                         <!-- #338 (owner): sin leyenda abajo (ya está la etiqueta arriba de cada foto) -->
                         <!-- #329 (owner): el botón "Ver completas" (#323) se sacó: las fotos ya se ven bien. -->
                         <!-- #322 (owner): botón chiquito sobre el final de la foto (no tapa el resto) -->
-                        <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ Para cargar ahora mismo · apretá aquí ›</span></button>
+                        <button type="button" class="ev-cta" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i>Para cargar ahora mismo · apretá aquí ›</span></button>
                     </div>
                     <!-- #278 (owner): el modo logo (#277) quedó mal → las páginas vuelven a verse embebidas al entrar. -->
                     <iframe id="entryFrame" title="Plataforma" allow="autoplay; fullscreen" referrerpolicy="no-referrer"></iframe>
                     <div class="ev-status" id="entryStatus">
-                        <div class="ev-st-t">🎰 Abriendo la plataforma…</div>
+                        <div class="ev-st-t">Abriendo la plataforma…</div>
                         <button type="button" class="ev-st-open" style="display:none" onclick="VIP.home.entryOpen()">Abrir la plataforma ›</button>
                     </div>
                 </div>
@@ -1099,7 +1099,7 @@
                      nombre, estrellas y opinión. Las pinta reviews.js (renderEntrySlider) desde /api/reviews/public. -->
                 <div class="ev-reviews" id="entryReviews" style="display:none;"></div>
                 <!-- #366 (owner): quien se pierde con tantos botones pasa al MENÚ FÁCIL (una línea finita). -->
-                <button type="button" class="ev-easy-link" onclick="VIP.home.setMenuPref('easy')">☰ ¿Te perdés con tantos botones? Pasá al <b>menú fácil</b> ›</button>
+                <button type="button" class="ev-easy-link" onclick="VIP.home.setMenuPref('easy')"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>¿Te perdés con tantos botones? Pasá al <b>menú fácil</b> ›</button>
                 <!-- #268: Carga manual / Carga automática viven SOLO en la barra de arriba. -->
             </div>
             <!-- ===== #366 (owner): MENÚ FÁCIL — "para la gente que se pierde con tantos botones". Cuarto modo del
@@ -1113,29 +1113,29 @@
                 </div>
                 <div class="dep-pending-strip" hidden></div>
                 <button type="button" class="ez-main" onclick="VIP.home.easyLoad()" title="Carga automática">
-                    <span class="ez-main-ico">⚡</span>
+                    <span class="ez-main-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></span>
                     <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo</small></span>
                     <span class="ez-main-arrow">›</span>
                 </button>
                 <div class="ez-grid">
                     <button type="button" class="ez-btn ez-refund" onclick="VIP.home.svcRefund()" title="Reembolsos">
                         <span class="ez-badge" id="easyRefundBadge" style="display:none"></span>
-                        <span class="ez-ico">💸</span><b>Reembolso</b><small id="easyRefundSub">de lo que perdés</small><small class="refund-promo" hidden></small>
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></span><b>Reembolso</b><small id="easyRefundSub">de lo que perdés</small><small class="refund-promo" hidden></small>
                     </button>
                     <button type="button" class="ez-btn ez-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
-                        <span class="ez-ico">🎰</span><b>Ruleta diaria</b><small>Con tu carga de <b class="rl-min">$5.000</b> girás todos los días</small>
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></span><b>Ruleta diaria</b><small>Con tu carga de <b class="rl-min">$5.000</b> girás todos los días</small>
                     </button>
                     <button type="button" class="ez-btn ez-ref" onclick="VIP.ui.openReferralModal()" title="Referidos">
-                        <span class="ez-ico">👥</span><b>Referidos</b><small>Ganás el <span class="ref-pct">5</span>% de lo que juegan</small>
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></span><b>Referidos</b><small>Ganás el <span class="ref-pct">5</span>% de lo que juegan</small>
                     </button>
                     <button type="button" class="ez-btn ez-play" onclick="VIP.home.easyPlay()" title="Ver la plataforma">
-                        <span class="ez-ico">🎮</span><b>Ver la plataforma</b><small>Entrá a jugar con tu usuario</small>
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></span><b>Ver la plataforma</b><small>Entrá a jugar con tu usuario</small>
                     </button>
                 </div>
                 <button type="button" class="ez-chat" onclick="VIP.home.setHomeMode('mini')" title="Soporte por chat">
-                    <span class="ez-ico">💬</span><span class="ez-chat-txt"><b>Soporte · Ayuda</b><small>Hablá con una persona · responde en minutos</small></span>
+                    <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg></span><span class="ez-chat-txt"><b>Soporte · Ayuda</b><small>Hablá con una persona · responde en minutos</small></span>
                 </button>
-                <button type="button" class="ez-switch" onclick="VIP.home.setMenuPref('full')">🧭 <b>Pasar al menú completo</b> ›<small>Plataformas, fueguito, niveles VIP, historias y todo lo demás</small></button>
+                <button type="button" class="ez-switch" onclick="VIP.home.setMenuPref('full')"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></i><b>Pasar al menú completo</b> ›<small>Plataformas, fueguito, niveles VIP, historias y todo lo demás</small></button>
             </div>
             <div id="menuChooser" class="menu-chooser" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
                 <div class="mc-card">
@@ -1143,12 +1143,12 @@
                     <h2 id="mcTitle">¿Cómo querés ver la app?</h2>
                     <p class="mc-sub">Elegí la que te resulte más cómoda. Lo cambiás cuando quieras desde <b>Perfil</b>.</p>
                     <button type="button" class="mc-opt mc-easy" onclick="VIP.home.chooseMenu('easy')">
-                        <span class="mc-ico">👍</span>
+                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span>
                         <span class="mc-txt"><b>MENÚ FÁCIL</b><small>Pocos botones y grandes: cargar, reembolso, ruleta, referidos y jugar.</small></span>
                         <span class="mc-tag">Recomendado</span>
                     </button>
                     <button type="button" class="mc-opt mc-full" onclick="VIP.home.chooseMenu('full')">
-                        <span class="mc-ico">🧭</span>
+                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span>
                         <span class="mc-txt"><b>MENÚ COMPLETO</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, soporte, historias…</small></span>
                         <span class="mc-tag mc-tag-dim">Si ya conocés la app</span>
                     </button>
@@ -1160,7 +1160,7 @@
                 <span class="bs-balance"><span class="dash-balance-label"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
                 <!-- #262: Instalar app al lado del saldo, con IMPORTANTE en rojo -->
                 <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
-                    <span class="bs-install-t"><b>📲 Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
+                    <span class="bs-install-t"><b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></svg></i>Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
                 </button>
                 <!-- #291 (owner): con la app INSTALADA, en lugar de "Instalar app" va el NIVEL VIP con su progreso
                      (datos de VIP.state.vipStatus; lo pinta home.js _paintInstallStrip). Tocar = ir a la tarjeta VIP. -->
@@ -2312,7 +2312,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v312</div>
+                    <div class="pf-build" id="appBuildTag">app v313</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 441. 🎨 INICIO (después de iniciar sesión) con íconos de línea en vez de emojis — SW v313
+**Pedido (owner):** "esto que te digo es en Inicio de cuando iniciás sesión" (íconos modernos estilo Pinterest, no WhatsApp).
+**Qué se hizo (index.html + pin.css):** en la **pantalla de entrada** los servicios Reembolso / Ruleta diaria / Referidos, el
+CTA "Para cargar ahora mismo" (rayo blanco) y el link al menú fácil; en el **Menú fácil** el botón CARGAR AHORA (rayo en caja
+translúcida), Reembolso, Ruleta, Referidos, Ver la plataforma y Soporte (cajas blancas con SVG rojo) y "Pasar al menú
+completo" (brújula); en el **selector de menú** (tilde / brújula) y en **Instalar app** (teléfono). Clases `.li` (inline),
+`.ez-ico/.ez-main-ico/.mc-ico` (cajas 40px). El 🔥 del fueguito y los botones redondos con lógica propia se dejaron.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 440. 🎨 Íconos de línea estilo Pinterest en Info y Perfil (fuera los emojis) — SW v312
 **Pedido (owner):** "cambiá logos y dejá íconos más modernos y estilo Pinterest, no estilo WhatsApp".
 **Qué se hizo (index.html + pin.css):** en el modal **Info**, los títulos recuadrados llevan SVG de trazo rojo (`.im-ico`:
