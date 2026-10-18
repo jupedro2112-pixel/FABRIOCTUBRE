@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 396. 🌙 Modo nocturno: sólo dentro de Perfil (se sacó el botón de la barra) — SW v274
+**Pedido (owner):** "el modo nocturno adentro de perfil, no al lado".
+**Qué se hizo:** se quitó `#navTheme` de la barra superior (index.html). Queda la acción "🌙 Modo nocturno" en Perfil
+(`vipToggleTheme()`); el script del `<head>` y los tokens de pin.css no cambian (el `paint()` tolera que no exista el botón).
+**Archivos:** `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 395. 🔥 Fueguito: hitos cada 10 días hasta el 100 · 10 cargas entre rachas · rollover x5
 **Pedido (owner):** "las rachas configurala cada 10 días hasta el día 100 y respetá el orden de los regalos, exigí 10
 cargas entre racha y racha y el premio es rollover x5".
