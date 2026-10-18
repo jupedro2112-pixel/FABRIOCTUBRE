@@ -1109,4 +1109,6 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #436 (owner): la parte superior baja un poco (misma separación arriba que abajo) ── */
 .login-box.lg-app { padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
 .lg-app .lg-head { margin-top: 2px; }
+/* ── #438 (owner): Info → el texto de "La plataforma que quieras" en negrita ── */
+.info-msg #infoCardTwoPlatsDesc { font-weight: 700 !important; color: var(--p-text) !important; }
 

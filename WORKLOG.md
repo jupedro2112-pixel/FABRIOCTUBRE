@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 438. ℹ️ Info: el texto de "La plataforma que quieras" en negrita — SW v310
+**Pedido (owner, con captura):** "eso ponelo en negrita".
+**Qué se hizo:** `#infoCardTwoPlatsDesc` con `font-weight:700` y color del texto (pin.css).
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 437. 🚪 "Cerrar sesión" en Perfil también para `diego294290` — SW v309
 **Pedido (owner):** "diego294290, de ahí también quiero que pueda cerrar sesión".
 **Qué se hizo:** lista aparte `LOGOUT_USERNAMES = ['lalodj','diego294290']` en home.js → `body.can-logout`; el botón
