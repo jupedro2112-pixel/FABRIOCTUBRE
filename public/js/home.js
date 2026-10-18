@@ -58,7 +58,7 @@
         _applyMenuLayout(); // #482
         setTimeout(function () { try { loadStrategy(false); } catch (_) {} }, 600); // #504
         setTimeout(function () { try { if (!document.body.classList.contains('mc-open')) maybeFirstDepositPopup(); } catch (_) {} }, 1500); // #488: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
-        mode = (mode === 'full' || mode === 'mini' || mode === 'easy') ? mode : 'play';
+        mode = (mode === 'full' || mode === 'mini' || mode === 'easy' || mode === 'basic') ? mode : 'play'; // #512: basic
         _homeMode = mode;
         const p = _el('supportPanel');
         const cta = _el('serviceBannerCta');
@@ -66,7 +66,8 @@
         document.body.classList.toggle('home-mini', mode === 'mini');
         document.body.classList.toggle('home-play', mode === 'play');
         document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
-        document.body.classList.toggle('home-easy', mode === 'easy'); // #366: MENÚ FÁCIL
+        document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
+        document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();
@@ -77,13 +78,13 @@
             try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
             renderEntryTabs();
             _entryLoad();
-        } else if (mode === 'easy') {
+        } else if (mode === 'easy' || mode === 'basic') {
             _entryUnload();
             if (p) p.classList.add('hidden');
             _open = false;
             try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
-            _easyPaint();
-            _easyTimer = setInterval(() => { if (!document.hidden && _homeMode === 'easy') _easyPaint(); }, 15000);
+            _easyPaint(); if (mode === 'basic') _basicPaint();
+            _easyTimer = setInterval(() => { if (!document.hidden && (_homeMode === 'easy' || _homeMode === 'basic')) { _easyPaint(); if (_homeMode === 'basic') _basicPaint(); } }, 15000);
         } else {
             _entryUnload();
         }
@@ -114,20 +115,36 @@
         Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode || (id === 'navInicio' && _homeMode === 'easy')); });
     }
     // ---------------- #366: MENÚ FÁCIL / COMPLETO ----------------
-    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); return (v === 'easy' || v === 'full') ? v : null; } catch (_) { return null; } }
+    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); return (v === 'easy' || v === 'full' || v === 'basic') ? v : null; } catch (_) { return null; } } // #512: + basic
+    const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : 'play'));
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
-    function goHome() { setHomeMode(getMenuPref() === 'easy' ? 'easy' : 'play'); }
+    function goHome() { setHomeMode(_modeFor(getMenuPref())); }
     function setMenuPref(pref, opts) {
-        pref = pref === 'easy' ? 'easy' : 'full';
+        pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
         closeMenuChooser();
-        setHomeMode(pref === 'easy' ? 'easy' : 'play');
+        setHomeMode(_modeFor(pref));
         setTimeout(maybeFirstDepositPopup, 900); // #488
         if (!opts || !opts.quiet) {
-            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú fácil activado. Lo cambiás cuando quieras desde Perfil.' : '🧭 Menú completo activado. Lo cambiás cuando quieras desde Perfil.', 'success'); } catch (_) {}
+            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú fácil activado. Lo cambiás cuando quieras desde Perfil.' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras desde Perfil.'), 'success'); } catch (_) {}
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }
+    // #512: MENÚ BÁSICO — saludo + saldo, CARGAR, RETIRAR, chips de plataforma (fija la preferida) y "Entrar a jugar".
+    function _basicPaint() {
+        try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('basicHello'); if (h) h.textContent = u ? 'Hola, ' + u : 'Hola'; } catch (_) {}
+        try { const b = _el('userBalance'), bb = _el('basicBalance'); if (b && bb && b.textContent) bb.textContent = b.textContent; } catch (_) {}
+        const box = _el('basicPlats'); if (!box) return;
+        const defId = (_platforms && _platforms.defaultPlatform) || 'girox'; const pref = (_platforms && _platforms.preferredPlatform) || null;
+        const soon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox';
+        box.innerHTML = _entryList().map((p) => { const on = pref ? pref === p.id : p.id === defId; return '<button type="button" class="bv-chip plat-' + _esc(p.id) + (on ? ' on' : '') + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.basicPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(/^jugaygana$/i.test(p.name || '') ? 'Jugaygana' : (p.name || p.id)) + '</b>' + (soon(p) ? '<small>Pronto</small>' : (on ? '<small>✓</small>' : '')) + '</button>'; }).join('');
+    }
+    async function basicPick(id, isSoon) {
+        if (isSoon) { try { VIP.ui.showToast('Pronto: esta plataforma se habilita en breve', 'info'); } catch (_) {} return; }
+        try { await setPreferred(id); } catch (_) {}
+        _basicPaint();
+    }
+    function basicPlay() { const pref = (_platforms && _platforms.preferredPlatform) || (_platforms && _platforms.defaultPlatform) || 'girox'; openPlatform(pref); }
     // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
     let _stAt = 0, _stData = null;
     const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
@@ -325,7 +342,7 @@
         // #307 (owner): al entrar SIEMPRE arranca en Inicio; desde ahí van a Carga auto / manual. (Antes se
         // recordaba el último modo dentro de la sesión: ya no.)
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
-        const m = getMenuPref() === 'easy' ? 'easy' : 'play';
+        const m = _modeFor(getMenuPref()); // #512
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
@@ -1829,7 +1846,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

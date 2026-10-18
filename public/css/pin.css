@@ -1434,4 +1434,29 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 /* ── #511 (owner): "Pronto" sutil en todos lados (pestañas del Inicio, tarjetas de plataformas, ingreso, selector del menú fácil) ── */
 .ev-tab.soon .ev-soon, .ev-tab .ev-soon, .plat-soon-badge, .lg-plat small, .ep-item.soon em { background: transparent !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; font: 700 8px/1.2 var(--p-font) !important; letter-spacing: .4px !important; text-transform: uppercase !important; padding: 2px 7px !important; border-radius: 999px !important; box-shadow: none !important; opacity: .85; }
 .ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-jugaygana .ev-soon, .plat-play-btn.plat-ganamos .plat-soon-badge, .plat-play-btn.plat-jugaygana .plat-soon-badge, .ep-item.ep-ganamos.soon em, .ep-item.ep-jugaygana.soon em { color: rgba(255,255,255,.85) !important; border-color: rgba(255,255,255,.35) !important; }
+/* ── #512: MENÚ BÁSICO ── */
+.basic-view { display: none; flex-direction: column; gap: 10px; margin: 8px 12px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+body.home-basic .basic-view { display: flex; }
+body.home-basic #easyView { display: none !important; }
+.bv-top { display: flex; align-items: center; justify-content: space-between; background: var(--p-surface); border-radius: 16px; padding: 10px 14px; font: 800 14px var(--p-font); color: var(--p-text); }
+.bv-top b { font-size: 18px; color: var(--p-green); }
+.bv-btn { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; border-radius: 22px; padding: 22px 18px; text-align: left; cursor: pointer; font-family: var(--p-font); min-height: 96px; }
+.bv-btn .li { width: 48px; height: 48px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,.18); flex: 0 0 auto; } .bv-btn .li svg { width: 26px; height: 26px; }
+.bv-btn span { flex: 1; display: flex; flex-direction: column; } .bv-btn b { font: 900 22px/1.1 var(--p-font); letter-spacing: .5px; } .bv-btn small { font: 600 12px var(--p-font); opacity: .85; margin-top: 3px; }
+.bv-btn em { font-style: normal; font: 900 24px var(--p-font); opacity: .8; }
+.bv-load { background: var(--p-red); color: #fff; box-shadow: 0 8px 22px rgba(230,0,35,.28); }
+.bv-wd { background: var(--p-green); color: #fff; box-shadow: 0 8px 22px rgba(10,122,62,.25); }
+.bv-plats-h { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; } .bv-plats-h b { font: 900 14px var(--p-font); color: var(--p-text); } .bv-plats-h small { color: var(--p-muted); font-weight: 600; }
+.bv-plats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bv-chip { border: 2px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 16px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; font-family: var(--p-font); }
+.bv-chip img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #fff; }
+.bv-chip b { font: 800 12.5px var(--p-font); } .bv-chip small { font: 700 9.5px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: .4px; }
+.bv-chip.on { border-color: var(--p-red); box-shadow: 0 0 0 3px rgba(230,0,35,.12); } .bv-chip.on small { color: var(--p-red); }
+.bv-chip.soon { opacity: .75; }
+.bv-chip.plat-ganamos { background: linear-gradient(135deg, var(--p-purple), var(--p-purple-2)); color: #fff; border-color: transparent; } .bv-chip.plat-ganamos small { color: rgba(255,255,255,.85); }
+.bv-chip.plat-jugaygana { background: linear-gradient(135deg, #000, #262626); color: #fff; border-color: transparent; } .bv-chip.plat-jugaygana small { color: rgba(255,255,255,.85); }
+.bv-play { border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 999px; padding: 12px; font: 800 13px var(--p-font); cursor: pointer; }
+.bv-switch { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; } .bv-switch small { color: var(--p-muted); font-weight: 700; width: 100%; text-align: center; }
+.bv-switch button { border: 1px solid var(--p-border); background: transparent; color: var(--p-text); border-radius: 999px; padding: 8px 14px; font: 800 12px var(--p-font); cursor: pointer; }
+.mc-opt.mc-basic { border-color: var(--p-red) !important; } .mc-opt.mc-basic b { color: var(--p-red) !important; }
 

@@ -1157,11 +1157,28 @@
                      Soporte) movidos por home.js (_setMenuLayout) a #bottomNav, un header igual al de arriba al final de la pantalla. -->
                 <button type="button" class="ez-switch" onclick="VIP.home.setMenuPref('full')"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></i><b>Pasar al menú completo</b> ›<small>Plataformas, fueguito, niveles VIP, historias y todo lo demás</small></button>
             </div>
+            <!-- ===== #512 (owner): MENÚ BÁSICO — "un extra básico con 2 botones, carga y retiro, y que pueda elegir la plataforma,
+                 nada más; abajo elegir otro menú". Tercer modo del Inicio (body.home-basic, reusa el ocultado de home-easy). home.js: _basicPaint. ===== -->
+            <div id="basicView" class="basic-view" aria-label="Menú básico">
+                <div class="bv-top"><span id="basicHello">Hola</span><b id="basicBalance">$0</b></div>
+                <button type="button" class="bv-btn bv-load" onclick="VIP.home.easyLoad()"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em>›</em></button>
+                <button type="button" class="bv-btn bv-wd" onclick="VIP.withdraw.openWithdrawModal()"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10h18M7 15h4"/></svg></i><span><b>RETIRAR</b><small>Pedí tu retiro al CBU</small></span><em>›</em></button>
+                <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
+                <div class="bv-plats" id="basicPlats"></div>
+                <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
+                <div class="bv-switch"><small>Otro menú</small><button type="button" onclick="VIP.home.setMenuPref('easy')">Fácil</button><button type="button" onclick="VIP.home.setMenuPref('full')">Completo · detallado</button></div>
+            </div>
             <div id="menuChooser" class="menu-chooser" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
                 <div class="mc-card">
                     <div class="mc-kicker">BIENVENIDO/A</div>
                     <h2 id="mcTitle">¿Cómo querés ver la app?</h2>
                     <p class="mc-sub">Elegí la que te resulte más cómoda. Lo cambiás cuando quieras desde <b>Perfil</b>.</p>
+                    <!-- #512: tercera opción, la más simple -->
+                    <button type="button" class="mc-opt mc-basic" onclick="VIP.home.chooseMenu('basic')">
+                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/></svg></span>
+                        <span class="mc-txt"><b>MENÚ BÁSICO</b><small>Solo dos botones: cargar y retirar, y elegir dónde jugás.</small></span>
+                        <span class="mc-tag mc-tag-dim">Lo más simple</span>
+                    </button>
                     <button type="button" class="mc-opt mc-easy" onclick="VIP.home.chooseMenu('easy')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span>
                         <span class="mc-txt"><b>MENÚ FÁCIL</b><small>Pocos botones y grandes: cargar, reembolso, ruleta, referidos y jugar.</small></span>
@@ -2370,7 +2387,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v357</div>
+                    <div class="pf-build" id="appBuildTag">app v358</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

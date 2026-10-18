@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 512. ▭ MENÚ BÁSICO: Cargar · Retirar · elegir plataforma, y debajo pasar a Fácil o Completo — SW v358
+**Pedido (owner):** "agregá en el Inicio un extra básico con 2 botones, carga y retiro, y que pueda elegir la plataforma, nada
+más; y ahí abajo elegir otro menú, detallado/completo y fácil".
+**Qué se hizo:** tercer modo del Inicio `basic` (`vip_menu_pref = 'basic'`, `body.home-basic` reusa el ocultado de `home-easy`):
+`#basicView` con saludo + saldo, botón rojo CARGAR (carga automática), botón verde RETIRAR (modal de retiro), chips de
+plataforma (Girox / Ganamos violeta / Jugaygana negro; la elegida queda FIJA vía `/api/platforms/preferred`; las sin API dicen
+"Pronto"), "Entrar a jugar ›" y abajo "Otro menú: Fácil · Completo". El selector de arranque tiene ahora 3 opciones (Básico,
+Fácil recomendado, Completo). `_modeFor(pref)` centraliza pref → modo; `goHome`, el arranque y `setMenuPref` lo usan.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 511. ✨ "Pronto" sutil en todos lados para las plataformas sin API — SW v357
 **Pedido (owner):** "el Próximamente de las plataformas extras ponelo más sutil, poné Pronto en todos lados". Texto "Pronto" en la pestaña
 del Inicio, la tarjeta del menú completo, la fila del ingreso, el selector del menú fácil y el mensaje del server; estilo: pastilla
