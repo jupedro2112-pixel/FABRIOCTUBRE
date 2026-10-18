@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 436. 🚪 Inicio: la parte superior baja un poco (centrada con la de abajo) — SW v308
+**Pedido (owner):** "la parte superior bajala un poquito para centrarla con la parte de abajo".
+**Qué se hizo:** padding superior de la tarjeta 16px (+safe area) e inferior 12px; la cabecera con 2px extra. La sección de
+opiniones, flexible, absorbe la diferencia: sigue en una pantalla.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 435. 🚪 "Elegí dónde jugar": Ganamos y Jugaygana con "Pronto" — SW v307
 **Pedido (owner):** "en Elegí dónde jugar poné Ganamos y Jugaygana (Pronto) en vez de Próximamente".
 **Qué se hizo:** la etiqueta de las plataformas sin API en la fila del inicio pasa a "Pronto" (loginhero.js). Adentro de la
