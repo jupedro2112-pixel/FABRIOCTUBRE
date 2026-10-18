@@ -1194,4 +1194,27 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .rvm-send { width: 100%; border: 0; background: var(--p-red); color: #fff; border-radius: 999px; padding: 13px; font: 800 14.5px var(--p-font); cursor: pointer; }
 .rvm-send:disabled { opacity: .6; }
 .rvm-close { width: 100%; margin-top: 8px; border: 0; background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 10px; font: 700 12.5px var(--p-font); cursor: pointer; }
+/* ── #452 (owner): visor de HISTORIAS — barra de marca arriba, foto en el medio, texto ABAJO sobre fondo negro desgastado ── */
+.story-viewer { background: #0a0a0a !important; }
+.story-viewer .st-head { position: relative !important; top: auto !important; left: auto !important; right: auto !important; padding: calc(16px + env(safe-area-inset-top, 0px)) 12px 10px; background: #0b0b0b; gap: 10px; flex: 0 0 auto; }
+.story-viewer .st-logo img { width: 40px !important; height: 40px !important; border-radius: 12px !important; border: 0 !important; background: #000; }
+.story-viewer .st-who { gap: 1px; }
+.story-viewer .st-brand { font: 900 15px var(--p-font); letter-spacing: 1.4px; color: #fff; text-shadow: none; }
+.story-viewer .st-brand-sub { font: 600 10.5px var(--p-font); color: rgba(255, 255, 255, .72); letter-spacing: .3px; }
+.story-viewer .st-title-hidden { display: none !important; }
+.story-viewer #storyWhen { font: 600 10px var(--p-font); color: rgba(255, 255, 255, .55); }
+.story-viewer .st-close { background: rgba(255, 255, 255, .1) !important; border: 0 !important; }
+.story-viewer .st-media { position: relative !important; inset: auto !important; flex: 1 1 auto; min-height: 0; background: #000; }
+.story-viewer .st-media img, .story-viewer .st-media video { max-height: 100% !important; }
+.story-viewer .st-tap { bottom: auto; }  /* el tap cubre la foto; abajo queda el texto */
+.story-viewer .st-foot { position: relative !important; left: auto !important; right: auto !important; bottom: auto !important; flex: 0 0 auto; min-height: 92px; padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important; gap: 10px;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .028) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, .35) 0 2px, transparent 2px 9px),
+    radial-gradient(ellipse at 15% 20%, rgba(255, 255, 255, .07), transparent 45%),
+    radial-gradient(ellipse at 85% 80%, rgba(255, 255, 255, .05), transparent 40%),
+    linear-gradient(180deg, #1c1c1c, #0d0d0d) !important;
+  border-top: 1px solid rgba(255, 255, 255, .08); }
+.story-viewer .st-caption { font: 700 14px/1.4 var(--p-font) !important; color: #f2f2f2; text-shadow: none !important; max-height: 7.2em; overflow: hidden; }
+.story-viewer .st-link { background: var(--p-red) !important; color: #fff !important; }
 

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 452. 📖 Visor de historias: marca arriba en todas, foto en el medio, texto abajo sobre fondo negro desgastado — SW v321
+**Pedido (owner, con capturas):** "el texto de la parte inferior que no quede arriba de la foto; dejá el fondo negro tipo
+metro desgastado; y en todas las fotos poné el logo de la marca".
+**Qué se hizo:** el visor pasa a columna (CSS en pin.css, mismos ids): **barra de marca** fija arriba (logo 40px cuadrado
+redondeado + "PICA ROJA" + "oficial · cargas automáticas"; el título de la historia queda oculto y el "hace N h" en chico),
+**foto** en el medio (`.st-media` relativo, flex 1, contenida) y **pie** `.st-foot` como bloque propio debajo (ya no
+superpuesto) con textura oscura (gradientes de "concreto" sobre #1c1c1c→#0d0d0d, borde superior sutil), texto blanco a 14px
+y el botón "Ver más" rojo. El tap para avanzar/retroceder cubre sólo la foto.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 451. 📖 Historia de Soporte con los nombres de las 3 personas
 **Pedido (owner):** "en la última foto de Martín de las historias, como son 3 personas, publicá el nombre de las 3".
 **Qué se hizo:** la 4ª historia (foto de Soporte) ahora dice "💬 Cualquier duda, consulta o problema, hablá con Soporte:

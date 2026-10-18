@@ -2329,7 +2329,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v320</div>
+                    <div class="pf-build" id="appBuildTag">app v321</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2706,8 +2706,9 @@
     <div id="storyViewer" class="story-viewer" aria-hidden="true">
         <div class="st-bars" id="storyBars"></div>
         <div class="st-head">
+            <!-- #452 (owner): marca en TODAS las historias (logo + PICA ROJA · oficial · cargas automáticas) -->
             <span class="st-logo"><img src="icons/icon-96x96.png?v=358" alt=""></span>
-            <span class="st-who"><b id="storyTitle">PICA ROJA oficial</b><small id="storyWhen"></small></span>
+            <span class="st-who"><b class="st-brand">PICA ROJA</b><small class="st-brand-sub">oficial · cargas automáticas</small><b id="storyTitle" class="st-title-hidden">PICA ROJA oficial</b><small id="storyWhen"></small></span>
             <button type="button" class="st-close" onclick="VIP.stories.close()" aria-label="Cerrar">✕</button>
         </div>
         <div class="st-media" id="storyMedia"></div>
