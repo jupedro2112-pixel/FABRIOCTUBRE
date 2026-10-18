@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 503. 🏦 Cierres: entradas y salidas del día leídas de la API del banco (no sólo de los avisos) — admin-sw v113
+**Pedido (owner):** "lo que entró y salió del banco lo podés ver con la API del banco, y la plata a las 00 hs también: detectarlo
+con el banco".
+**Qué se hizo:** `hgcashService.listMovements({accountId, from, to})` prueba las rutas candidatas de hg.cash para listar
+movimientos (`/accounts/{id}/movements`, `/accounts/{id}/transactions`, `/account-movements`, `/movements`, `/transactions`
+con `from/to`), normaliza monto/dirección/fecha/estado y recuerda la ruta que responde. `_bankDayFromApi(dayKey)` suma entradas y
+salidas del día; el cierre las usa como `bankInAuto/bankOutAuto` con `bankSource:'api'`; si la API no expone el listado, quedan las
+de los avisos del webhook (`bankSource:'webhook'`). El botón "🏦 Saldo del banco" muestra además el resultado de la prueba de
+movimientos de ayer (ruta que respondió, cantidad, entró/salió, o el error). El saldo de las 00:00 ya se toma por API (#502).
+⚠️ Sin la doc de la API no está confirmado que hg.cash exponga ese listado: en producción el botón dice qué pasó; si la ruta
+real es otra, se agrega a `MOV_CANDIDATES`.
+**Archivos:** `src/services/hgcashService.js`, `src/models/DailyClose.js`, `server.js`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 502. 🏦 Cierres: diferencia explícita (0 · faltante negativo · sobrante positivo), SALDO DEL BANCO a las 00:00 por API, estado "Pendiente" — admin-sw v112
 **Pedidos (owner):** "en el cierre final tiene que quedar 0 de diferencia si no hubo faltantes, o el monto: negativo = faltante,
 positivo = sobrante"; "¿podés ver a las 00 hs cuánta plata tenía el banco?"; "en estado poné Pendiente solo".

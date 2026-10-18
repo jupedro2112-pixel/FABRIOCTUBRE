@@ -17,6 +17,7 @@ const schema = new mongoose.Schema({
   ventaRetenidos: { type: Number, default: 0 }, ventaNuevos: { type: Number, default: 0 },
   // #501 ARQUEO: lo que dice el BANCO vs lo que dice el sistema. Auto = movimientos del banco (webhook hgcash) y payouts pagados;
   // manual = lo que el admin lee del resumen del banco (pisa lo automático). diferencia = (entró − salió del banco) − (depósitos − retiros)
+  bankSource: { type: String, default: null }, // 'api' (listado de movimientos del banco) | 'webhook' (avisos recibidos) — #503
   bankInAuto: { type: Number, default: 0 }, bankOutAuto: { type: Number, default: 0 }, payoutsPaid: { type: Number, default: 0 }, bankMovsIn: { type: Number, default: 0 },
   bankInManual: { type: Number, default: null }, bankOutManual: { type: Number, default: null },
   bankIn: { type: Number, default: 0 }, bankOut: { type: Number, default: 0 },

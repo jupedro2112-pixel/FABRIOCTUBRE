@@ -18974,7 +18974,22 @@ async function _bankBalanceSnapshotTick() {
     const y = datosIa.dateKeyART(new Date(now.getTime() - 86400000)); for (const d of [y, dk]) { const c = await DailyClose.findOne({ dateKey: d }); if (c && c.status !== 'finalizado') { await _closeAttachBalances(c); _closeApply(c, await _closeConfig()); await c.save(); } }
   } catch (e) { logger.warn('[cierres] saldo banco: ' + e.message); }
 }
+// #503: entradas/salidas del día según la API del banco (preferido); si no responde, quedan las del webhook (dayTotals).
+async function _bankDayFromApi(dayKey) {
+  try {
+    const hg = require('./src/services/hgcashService'); if (!hg.isEnabled()) return { ok: false, error: 'API del banco no configurada' };
+    const acc = await hg.getAccounts(); if (!acc.ok || !(acc.data || []).length) return { ok: false, error: acc.error || 'sin cuentas' };
+    const a = acc.data.find((x) => !x.currency || /ARS/i.test(String(x.currency))) || acc.data[0];
+    const d0 = new Date(dayKey + 'T03:00:00.000Z'), d1 = new Date(d0.getTime() + 86400000 - 1);
+    const r = await hg.listMovements({ accountId: a.id, from: d0, to: d1 }); if (!r.ok) return r;
+    const okSt = (s) => !s || !/reject|fail|cancel|error/i.test(String(s));
+    const inDay = r.items.filter((m) => okSt(m.status) && (!m.date || (m.date >= d0 && m.date <= d1)));
+    const inbound = inDay.filter((m) => m.direction === 'in').reduce((s, m) => s + m.amount, 0), outbound = inDay.filter((m) => m.direction === 'out').reduce((s, m) => s + m.amount, 0);
+    return { ok: true, endpoint: r.endpoint, count: inDay.length, inbound: Math.round(inbound), outbound: Math.round(outbound) };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
 async function _closeAttachBalances(doc) {
+  try { const api = await _bankDayFromApi(doc.dateKey); if (api.ok) { doc.bankInAuto = api.inbound; doc.bankOutAuto = Math.max(api.outbound, doc.payoutsPaid || 0); doc.bankSource = 'api'; } else if (!doc.bankSource) doc.bankSource = 'webhook'; } catch (_) {}
   const next = datosIa.dateKeyART(new Date(new Date(doc.dateKey + 'T03:00:00.000Z').getTime() + 86400000));
   const [s0, s1] = await Promise.all([BankBalanceSnapshot.findOne({ dateKey: doc.dateKey }).lean(), BankBalanceSnapshot.findOne({ dateKey: next }).lean()]);
   doc.bankBalanceStart = s0 && s0.balance != null ? s0.balance : null; doc.bankBalanceEnd = s1 && s1.balance != null ? s1.balance : null;
@@ -19033,7 +19048,7 @@ app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) 
 });
 // #502: ver el saldo del banco AHORA (prueba de la API) y los últimos saldos de las 00:00
 app.get('/api/admin/cierres/bank-balance', authMiddleware, adminMiddleware, async (req, res) => {
-  try { if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' }); const now = await _bankBalanceNow(); const snaps = await BankBalanceSnapshot.find({}).sort({ dateKey: -1 }).limit(10).lean(); res.json({ success: true, now, snapshots: snaps }); } catch (e) { res.status(500).json({ error: 'Error' }); }
+  try { if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' }); const now = await _bankBalanceNow(); const snaps = await BankBalanceSnapshot.find({}).sort({ dateKey: -1 }).limit(10).lean(); const movs = await _bankDayFromApi(datosIa.dateKeyART(new Date(Date.now() - 86400000))); res.json({ success: true, now, movements: movs, snapshots: snaps }); } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (req, res) => {
   try {

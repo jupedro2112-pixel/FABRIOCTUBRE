@@ -171,4 +171,42 @@ async function fetchReceiptPdf(transactionId) {
   }
 }
 
-module.exports = { isEnabled, lookupAlias, getAccounts, createCashOut, getTransactionIdForRequest, getTransactionStatus, getReceiptUrl, fetchReceiptPdf, getToken, setTokenOverride, getTokenSource };
+// #503 (owner): movimientos de la cuenta POR API (lo que entró y salió del banco en un rango), para el arqueo del cierre sin depender
+// del webhook. La doc pública de hg.cash no fija la ruta: se prueban candidatas (GET) y se recuerda la que responde con una lista.
+// Devuelve movimientos normalizados: { id, amount, direction: 'in'|'out', date, status, raw }.
+let _movEndpoint = null;
+const MOV_CANDIDATES = [
+  (acc, q) => `/accounts/${encodeURIComponent(acc)}/movements?${q}`,
+  (acc, q) => `/accounts/${encodeURIComponent(acc)}/transactions?${q}`,
+  (acc, q) => `/account-movements?accountId=${encodeURIComponent(acc)}&${q}`,
+  (acc, q) => `/movements?accountId=${encodeURIComponent(acc)}&${q}`,
+  (acc, q) => `/transactions?accountId=${encodeURIComponent(acc)}&${q}`
+];
+function _normMovement(m) {
+  if (!m || typeof m !== 'object') return null;
+  const amt = Number(m.amount != null ? m.amount : (m.amountRaw != null ? m.amountRaw : (m.value != null ? m.value : m.total)));
+  const dirRaw = String(m.direction || m.type || m.kind || m.flow || '').toLowerCase();
+  const dir = /in|credit|deposit|entrada|acredit/.test(dirRaw) && !/out|debit|retiro|salida|cash-?out/.test(dirRaw) ? 'in' : (/out|debit|retiro|salida|cash-?out|transfer_out/.test(dirRaw) ? 'out' : (amt < 0 ? 'out' : 'in'));
+  const date = m.date || m.createdAt || m.created_at || m.timestamp || m.executedAt || null;
+  return { id: m.id || m.movementId || m.externalId || null, amount: Math.abs(Number.isFinite(amt) ? amt : 0), direction: dir, date: date ? new Date(date) : null, status: m.status || null, raw: m };
+}
+async function listMovements({ accountId, from, to }) {
+  if (!getToken()) return { ok: false, error: 'HGCASH_API_TOKEN no configurado' };
+  if (!accountId) return { ok: false, error: 'Falta accountId' };
+  const q = `from=${encodeURIComponent(new Date(from).toISOString())}&to=${encodeURIComponent(new Date(to).toISOString())}&limit=1000`;
+  const order = _movEndpoint ? [_movEndpoint, ...MOV_CANDIDATES.filter((c) => c !== _movEndpoint)] : MOV_CANDIDATES;
+  let lastErr = null;
+  for (const cand of order) {
+    try {
+      const path = cand(accountId, q);
+      const r = await axios.get(`${BASE}${path}`, { headers: _headers(), timeout: 20000 });
+      const d = r.data; const arr = Array.isArray(d) ? d : (d && (Array.isArray(d.data) ? d.data : (Array.isArray(d.items) ? d.items : (Array.isArray(d.movements) ? d.movements : (Array.isArray(d.transactions) ? d.transactions : null)))));
+      if (!arr) { lastErr = 'respuesta sin lista en ' + path.split('?')[0]; continue; }
+      _movEndpoint = cand;
+      return { ok: true, endpoint: path.split('?')[0], items: arr.map(_normMovement).filter(Boolean) };
+    } catch (e) { const st = e.response && e.response.status; lastErr = `HTTP ${st || e.message} en ${cand(accountId, '').split('?')[0]}`; if (st && st !== 404 && st !== 405) { /* otra ruta puede existir igual */ } }
+  }
+  return { ok: false, error: 'la API del banco no expone un listado de movimientos en las rutas conocidas (' + lastErr + ')' };
+}
+
+module.exports = { listMovements, isEnabled, lookupAlias, getAccounts, createCashOut, getTransactionIdForRequest, getTransactionStatus, getReceiptUrl, fetchReceiptPdf, getToken, setTokenOverride, getTokenSource };
