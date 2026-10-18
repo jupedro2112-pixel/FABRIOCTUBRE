@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 402. 📲 La barra fija "PENDIENTE · Instalá la app" ya no tapa "Comprobante aquí" / "Retirar premio" — SW v277
+**Pedido (owner, con captura):** "si pasa eso con lo de la app en la primera carga quiero que no me tapes la parte de
+adjuntar comprobante".
+**Qué se hizo (pin.css):** `home.js` ya ponía `body.ig-pending` cuando la barra `#installGiftBar` está visible; ahora con
+esa clase `#homeFull`, `#easyView` y `#entryView` llevan `padding-bottom: 84px + safe-area`, así la fila de botones queda
+por encima de la barra al scrollear hasta abajo.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 401. 💬 Soporte: la presentación se va cuando el cliente ya escribió · cierre automático a las 6 h sin respuesta · para él arranca de cero, el panel ve todo — SW v276
 **Pedido (owner, con captura):** "una vez que hablás con soporte que se vaya esa burbuja y que haya un cierre automático
 cuando le contestamos y el cliente no contestó más; si quiere volver a abrir el chat que aparezca como al principio;
