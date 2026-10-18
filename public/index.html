@@ -2255,7 +2255,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v283</div>
+                    <div class="pf-build" id="appBuildTag">app v284</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2278,6 +2278,8 @@
                 <!-- #294 (owner): "Soporte en vivo" se sacó del Perfil (el chat se abre desde Carga manual). El id del globito queda oculto para home.js. -->
                 <span id="headerSupportUnread" class="support-unread" style="display:none;">0</span>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}">⚙️ <span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>
+                <!-- #412 (owner): "Cerrar sesión" SOLO para el usuario de prueba (body.is-tester, lo pone home.js #296) -->
+                <button type="button" class="pf-act pf-logout" id="pfLogoutBtn" onclick="hideModal('profileModal');VIP.auth.handleLogout()">🚪 <span>Cerrar sesión<small>Sólo visible para la cuenta de prueba</small></span></button>
             </div>
         </div>
     </div>

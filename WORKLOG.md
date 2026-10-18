@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 412. 🚪 "Cerrar sesión" al pie de Perfil, sólo para `lalodj` — SW v284
+**Pedido (owner):** "activá el cerrar sesión sólo en lalodj en la parte inferior de perfil".
+**Qué se hizo:** botón `#pfLogoutBtn` (`.pf-act.pf-logout`) al final de las acciones del Perfil → `VIP.auth.handleLogout()`.
+Oculto por CSS salvo `body.is-tester` (clase que home.js pone para `TESTER_USERNAMES = ['lalodj']`, #296). El botón
+general de cerrar sesión sigue eliminado para los clientes.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 411. 🔥 Fueguito: tabla del owner guardada en la config del panel
 **Pedido (owner, con captura):** "configurame los fueguitos y guardalo en comandos así como está".
 **Qué se hizo:** `POST /api/admin/fire-milestones` en Render con la tabla de la captura (verificado releyendo):
