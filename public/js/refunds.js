@@ -470,12 +470,35 @@ VIP.refunds = (function () {
         }
     }
 
+    // #497 (owner): el selector de reembolsos es una lista prolija: título, el % como detalle, el estado real de ese período y
+    // RECLAMAR directo desde ahí (sin pasar por el modal de detalle). "Ver detalle" abre el modal de siempre.
+    const _money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    function paintRefundPicker() {
+        const box = document.getElementById('urList'); if (!box) return;
+        const st = VIP.state.refundStatus || {};
+        const defs = [['daily', 'Reembolso diario', 'de tu NETWIN de ayer', 'Todos los días'], ['weekly', 'Reembolso semanal', 'de tu NETWIN de la semana pasada', 'Lunes y martes'], ['monthly', 'Reembolso mensual', 'de tu NETWIN del mes pasado', 'Primeros días del mes']];
+        box.innerHTML = defs.map(([t, title, sub, days]) => {
+            const d = st[t] || {}; const pct = d.percentage != null ? d.percentage : { daily: 25, weekly: 3, monthly: 1 }[t];
+            const amt = Number(d.potentialAmount) || 0; const can = !!d.canClaim && amt > 0 && !d.belowMinimum;
+            let state, cls;
+            if (can) { state = 'Tenés <b>' + _money(amt) + '</b> para reclamar'; cls = 'ok'; }
+            else if (d.canClaim && amt <= 0) { state = 'Hoy no tenés pérdida para reembolsar'; cls = 'none'; }
+            else if (d.belowMinimum) { state = 'Reembolso menor al mínimo'; cls = 'none'; }
+            else { const nx = d.nextClaim ? new Date(d.nextClaim) : null; state = 'Se reclama ' + (d.availableDays || days).toLowerCase() + (nx ? ' · próximo ' + nx.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) : ''); cls = 'wait'; }
+            return '<div class="ur-card ' + cls + '"><div class="ur-head"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></i><div><b>' + title + '</b><small><em>' + pct + '%</em> ' + sub + '</small></div></div>' +
+                '<div class="ur-state">' + state + '</div>' +
+                '<div class="ur-actions">' + (can ? '<button type="button" class="btn btn-primary ur-claim" onclick="VIP.refunds.claimFromPicker(\'' + t + '\', this)">Reclamar ' + _money(amt) + '</button>' : '') + '<button type="button" class="ur-detail" onclick="VIP.refunds.showRefundModal(\'' + t + '\');VIP.ui.hideModal(\'unifiedRefundModal\');">Ver detalle ›</button></div></div>';
+        }).join('');
+    }
+    async function claimFromPicker(type, btn) {
+        if (btn) { btn.disabled = true; btn.textContent = 'Procesando…'; }
+        await claimRefund(type);
+        await loadRefundStatus(); paintRefundPicker();
+    }
     async function showUnifiedRefundModal() {
-        // Req 3: Precargar el estado de reembolsos ANTES de mostrar el modal unificado,
-        // para que al presionar una opción funcione de inmediato sin depender de cargas previas.
-        if (!VIP.state.refundStatus) {
-            await loadRefundStatus();
-        }
+        // Req 3: precargar el estado ANTES de mostrar el modal; #497: siempre fresco para que el RECLAMAR sea real.
+        await loadRefundStatus();
+        paintRefundPicker();
         VIP.ui.showModal('unifiedRefundModal');
     }
 
@@ -800,6 +823,7 @@ VIP.refunds = (function () {
     }
 
     return {
+        paintRefundPicker, claimFromPicker,
         loadRefundStatus,
         loadVipStatus,
         claimRakeback,

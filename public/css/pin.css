@@ -1360,4 +1360,18 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ep-item.ep-ganamos b, .ep-item.ep-ganamos small, .ep-item.ep-ganamos em { color: #fff !important; }
 .ep-item.ep-ganamos.soon em { background: rgba(255,255,255,.22) !important; }
 .plat-btn[data-plat="ganamos"] { background: linear-gradient(135deg, var(--p-purple), var(--p-purple-2)) !important; color: #fff !important; border-color: transparent !important; }
+/* ── #497: selector de reembolsos prolijo (tarjetas con título, % como detalle, estado y RECLAMAR directo) ── */
+.ur-list { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 8px; }
+.ur-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 18px; padding: 12px 12px 10px; text-align: left; }
+.ur-head { display: flex; align-items: center; gap: 10px; }
+.ur-head .li { width: 38px; height: 38px; border-radius: 12px; background: var(--p-red); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.ur-head .li svg { width: 20px; height: 20px; }
+.ur-head b { display: block; font: 900 15px var(--p-font); color: var(--p-text); }
+.ur-head small { display: block; font: 600 12px var(--p-font); color: var(--p-muted); margin-top: 1px; }
+.ur-head small em { font-style: normal; font-weight: 900; color: var(--p-red); }
+.ur-state { margin: 8px 0 0; font: 600 12.5px var(--p-font); color: var(--p-muted); }
+.ur-card.ok .ur-state { color: var(--p-green); } .ur-card.ok .ur-state b { color: var(--p-green); }
+.ur-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.ur-claim { flex: 1 1 auto; padding: 10px 12px !important; font-size: 13px !important; }
+.ur-detail { margin-left: auto; border: 0; background: transparent; color: var(--p-text); font: 800 12px var(--p-font); padding: 8px 4px; cursor: pointer; }
 

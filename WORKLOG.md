@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 497. 💸 Selector de reembolsos prolijo: título, % como detalle, estado y RECLAMAR directo — SW v348
+**Pedido (owner, con captura):** "armalo con título en reembolso, prolijo (tan encimado no va), que se pueda reclamar desde ahí y
+que el % figure como detalle".
+**Qué se hizo:** `#unifiedRefundModal` ya no tiene los tres botones rojos con el texto partido: `paintRefundPicker()` (refunds.js)
+arma una tarjeta por período con **título** ("Reembolso diario"), el **% como detalle** ("25% de tu NETWIN de ayer"), el
+**estado real** ("Tenés $X para reclamar" / "Hoy no tenés pérdida para reembolsar" / "Se reclama lunes y martes · próximo dd/mm")
+y, cuando corresponde, el botón **Reclamar $X** (`claimFromPicker` → `claimRefund` + repinta). "Ver detalle ›" abre el modal de
+siempre. El estado se recarga cada vez que se abre.
+**Archivos:** `public/index.html`, `public/js/refunds.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 496. 💜 Ganamos con fondo violeta en el Inicio y donde aparezca — SW v347
 **Pedido (owner):** "en el de Ganamos ponele fondo violeta en Inicio y donde esté".
 **Qué se hizo:** tokens `--p-purple` / `--p-purple-2` y degradé violeta con texto blanco para la pestaña del Inicio
