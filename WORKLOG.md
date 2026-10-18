@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 473. 🖼️ Deslizante del Inicio: dos fotos nuevas (slots 3×2 y lobbies en vivo armados en 2×2) — SW v331
+**Pedido (owner, con capturas):** "agregá esta foto en el inicio en el deslizante que ya está; la segunda editala y armá 2
+filas de 2 en vez de 1 de 3 y otra de 1, que quede cuadrada, y que entre con el mismo formato del resto".
+**Qué se hizo:** `g6.jpg` (grilla de slots, tal cual) y `g7.jpg` (los 4 lobbies en vivo recortados de la captura y
+reordenados en 2×2 cuadrado), ambos en el lienzo 800×689 de fondo oscuro que usan g1–g5; sumados a `ENTRY_SLIDES`
+(home.js). Las fotos se piden con `?b=<versión>` así que no hay caché vieja.
+**Archivos:** `public/images/girox-slides/g6.jpg`, `public/images/girox-slides/g7.jpg`, `public/js/home.js`, `public/index.html`,
+`public/firebase-messaging-sw.js`.
+
 ### 472. 🤝 Novedad de Referidos: aprovechá el 5% ahora, en diciembre baja al 3% — SW v330
 **Pedido (owner):** "en la novedad de referidos avisar que aprovechen el 5%, que en diciembre baja a 3% para todos los
 próximos referidos".
