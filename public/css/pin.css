@@ -1502,4 +1502,22 @@ body.home-basic #easyView { display: none !important; }
 .change-menu span { color: var(--p-muted); font-weight: 700; } .change-menu em { font-style: normal; color: var(--p-muted); }
 body.home-easy .change-menu, body.home-basic .change-menu, body.home-play .change-menu, body.home-full .change-menu { display: inline-flex; }
 body.home-mini .change-menu, body.mc-open .change-menu { display: none !important; }
+/* ── #522 (owner): modo nocturno más "Pinterest": menos color, más aire y separación clara entre recuadros ── */
+html[data-theme="dark"] { --p-bg: #0e0e0e; --p-card: #1a1a1a; --p-surface: #161616; --p-surface-2: #242424; --p-border: #2a2a2a; --p-red: #f0344a; --p-red-soft: #2a1418; }
+html[data-theme="dark"] .easy-view, html[data-theme="dark"] .basic-view { gap: 12px !important; }
+html[data-theme="dark"] .ez-top, html[data-theme="dark"] .ez-btn, html[data-theme="dark"] .ez-more, html[data-theme="dark"] .bv-top, html[data-theme="dark"] .bv-panel, html[data-theme="dark"] .home-card, html[data-theme="dark"] .change-menu { border: 1px solid var(--p-border) !important; background: var(--p-card) !important; }
+html[data-theme="dark"] .ez-top::before { opacity: .05; }                       /* íconos de fondo casi imperceptibles */
+html[data-theme="dark"] .ez-chev { background: transparent; color: var(--p-muted); border-color: var(--p-border); }
+html[data-theme="dark"] .ez-hello-btn[aria-expanded="true"] .ez-chev { background: transparent; color: var(--p-text); border-color: var(--p-text); }
+html[data-theme="dark"] .ez-main { background: var(--p-red) !important; box-shadow: none !important; }
+html[data-theme="dark"] .sd-banner { background: #2b1d0a; color: #ffd48a; border: 1px solid #4a3312; box-shadow: none; }
+html[data-theme="dark"] .sd-banner b, html[data-theme="dark"] .sd-banner span { color: #ffc966; } html[data-theme="dark"] .sd-banner small { color: #c9a35a; }
+html[data-theme="dark"] .ez-btn .ez-ico { background: var(--p-surface-2) !important; }
+html[data-theme="dark"] .ez-badge { background: var(--p-red) !important; }
+html[data-theme="dark"] .ez-more-actions button { background: var(--p-surface-2) !important; border: 1px solid var(--p-border) !important; }
+html[data-theme="dark"] .ev-tab, html[data-theme="dark"] .ev-svc, html[data-theme="dark"] .ev-hero, html[data-theme="dark"] #entryReviews.ev-reviews { border: 1px solid var(--p-border) !important; background: var(--p-card) !important; }
+html[data-theme="dark"] .bv-load { background: var(--p-red) !important; box-shadow: none !important; } html[data-theme="dark"] .bv-wd { background: #1f7a4a !important; box-shadow: none !important; }
+html[data-theme="dark"] .bv-chip, html[data-theme="dark"] .bv-play, html[data-theme="dark"] .bv-sw { background: var(--p-card) !important; border-color: var(--p-border) !important; }
+html[data-theme="dark"] .ms-item, html[data-theme="dark"] .ur-card, html[data-theme="dark"] .ep-item { background: var(--p-card) !important; border-color: var(--p-border) !important; }
+html[data-theme="dark"] .chat-screen { background: var(--p-bg) !important; }
 

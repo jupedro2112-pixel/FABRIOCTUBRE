@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 522. 🌙 Modo nocturno más sobrio: menos color, más aire y recuadros bien separados — SW v368
+**Pedido (owner, con captura):** "siento que le dimos mucho color o poca separación al estilo Pinterest en modo nocturno". Tokens
+oscuros ajustados (fondo #0e0e0e, tarjetas #1a1a1a con borde #2a2a2a), más separación entre recuadros, íconos de fondo del saludo
+casi invisibles, "menú" sin relleno rojo, CARGAR AHORA sin resplandor, banner de 2ª carga en ámbar oscuro en vez de naranja
+brillante, íconos sobre gris en vez de rojo suave, bordes finos en todas las tarjetas (Inicio completo incluido).
+
 ### 521. 🔤 "Menú fácil" pasa a llamarse "Menú intermedio" (el básico sigue siendo Básico) — SW v367
 **Pedido (owner):** "al menú fácil ponele menú intermedio; el básico". Sólo cambian los textos que ve el cliente (selector, toast,
 "Cambiar menú · Intermedio"); los ids internos (`easy`, `vip_menu_pref`) siguen igual.
