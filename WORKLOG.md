@@ -8,6 +8,28 @@
 
 ## Sesión 2026-10-18
 
+### 461. 🧠 Datos IA v2: cálculo con agregaciones (antes se colgaba), formato premium, historial de cálculos, revisión contra lo real y calibración — admin-sw v95
+**Pedido (owner):** "armalo en formato premium y bien detallado para entender el análisis, sencillo de ver; todo lo que se
+calcula que deje historial para después comparar la estadística con lo real y, si no coincide, ir ajustándose".
+**Qué se hizo:**
+- **Rendimiento:** la v1 cargaba todas las transacciones por consulta y se colgaba (150 s sin respuesta). Ahora
+  `datosIaService.analyze()` usa una agregación por usuario (primera/última carga, cantidad, monto), trae sólo las cargas
+  de la cohorte y los movimientos del rango, y cachea 2 min por parámetros.
+- **Informe estructurado:** `informe = { secciones: [{ico, titulo, texto, estado bien/regular/flojo, consejo}], veredicto:
+  {nivel, texto}, resumen }` (Captación, Retención, Después de la primera carga, Abandono, Uso de la app, Dinero,
+  Inversión, Soporte). Panel: veredicto grande arriba, indicadores en 4 grupos (Captación · Dinero · Retención · Uso) con
+  variación vs período anterior, informe con semáforo y recomendación por sección, escalera con barra apilada, serie, gasto.
+- **Historial (`DatosIaSnapshot`):** cada análisis, proyección y comparativa se guarda (mismos parámetros en 15 min →
+  se actualiza). Pestaña Historial: lista por tipo, "Ver" (reabre el informe / escenarios / tabla), y en proyecciones
+  **"Revisar contra lo real"**: calcula lo real desde que se hizo la proyección hasta hoy (o el fin del período), prorratea
+  lo proyectado a los días transcurridos y devuelve diferencia y factor real/proyectado por indicador + factor global
+  (clientes nuevos y NETWIN pesan doble). **Calibración:** `Config['projectionCalibration']` (promedio de las últimas 5
+  revisiones o factor a mano / reset); `project()` multiplica los escenarios por ese factor y lo muestra ("ajuste ×1.15").
+- Rutas nuevas: `GET /api/admin/datos-ia/history[?kind]`, `GET …/history/:id`, `POST …/history/:id/review`,
+  `POST …/calibration`. CSS `.dia-*` en pin-admin.css.
+**Archivos:** `src/services/datosIaService.js`, `src/models/DatosIaSnapshot.js`, `server.js`, `public/adminprivado2026/index.html`,
+`public/adminprivado2026/admin.js`, `public/adminprivado2026/pin-admin.css`, `public/admin-sw.js`.
+
 ### 459/460. 🧠 DATOS IA: análisis del negocio por reglas (día/semana/mes), medidor de uso, comparativa con la otra página y calculador de inversión — SW v327, admin-sw v94
 **Pedido (owner):** sección "Datos IA" aparte de "Datos": análisis de retención, cómo interactúa la gente, cuánto dura en
 la app, si gusta y si la inversión rinde; comparar con el otro equipo que dejó de publicitar (números cargados a mano, día

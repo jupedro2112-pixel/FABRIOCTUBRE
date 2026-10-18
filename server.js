@@ -18724,6 +18724,20 @@ app.post('/api/activity/ping', authMiddleware, async (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.json({ ok: false }); }
 });
+const DatosIaSnapshot = require('./src/models/DatosIaSnapshot');
+async function _diaSnapshot(kind, by, params, result, summary) {
+  // #461: historial — misma clase + mismos parámetros dentro de 15 min → se actualiza en vez de duplicar.
+  try {
+    const since = new Date(Date.now() - 15 * 60 * 1000);
+    const prev = await DatosIaSnapshot.findOne({ kind, createdAt: { $gte: since }, 'params.key': params.key }).select('id').lean();
+    if (prev) { await DatosIaSnapshot.updateOne({ id: prev.id }, { $set: { result, summary, by } }); return prev.id; }
+    const doc = await DatosIaSnapshot.create({ id: uuidv4(), kind, by, params, summary, result });
+    return doc.id;
+  } catch (e) { logger.warn('[datos-ia] snapshot: ' + e.message); return null; }
+}
+async function _diaSpendFor(from, to, campaign) {
+  try { const arr = (await getConfig('adSpend', [])) || []; return arr.filter((e) => e && (!campaign || (e.campaign || '') === String(campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) { return 0; }
+}
 app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
@@ -18731,14 +18745,14 @@ app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (
     const to = q.to ? new Date(q.to) : new Date(); const from = q.from ? new Date(q.from) : new Date(to.getTime() - 29 * 86400000);
     if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
     if ((to - from) > 400 * 86400000) return res.status(400).json({ error: 'Máximo 400 días' });
-    // gasto: el que viene en la query o el guardado para ese rango/campaña
-    let spend = Number(q.spend) || 0;
-    if (!spend) { try { const arr = (await getConfig('adSpend', [])) || []; spend = arr.filter((e) => e && (!q.campaign || (e.campaign || '') === String(q.campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) {} }
+    const spend = Number(q.spend) || (await _diaSpendFor(from, to, q.campaign));
     const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend });
-    res.json({ success: true, ...out });
+    const params = { key: [out.from, out.to, out.granularity, out.campaign || '', spend].join('|'), from: out.from, to: out.to, granularity: out.granularity, campaign: out.campaign, spend };
+    const summary = { registros: out.totals.registros, primerasCargas: out.totals.primerasCargas, cargas: out.totals.cargas, montoCargas: out.totals.montoCargas, netwin: out.totals.netwin, d30: out.retention.d30, pctSiguieron: out.repeat.pctSiguieron, veredicto: out.informe.veredicto.nivel };
+    const snapshotId = q.nosave ? null : await _diaSnapshot('analysis', req.user.username, params, { totals: out.totals, retention: out.retention, repeat: out.repeat, growth: out.growth, informe: out.informe }, summary);
+    res.json({ success: true, snapshotId, ...out });
   } catch (e) { logger.error('[datos-ia] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
-// Gasto en publicidad (a mano): [{id, from, to, campaign, amount, note}]
 app.get('/api/admin/datos-ia/spend', authMiddleware, adminMiddleware, async (req, res) => { try { res.json({ success: true, items: (await getConfig('adSpend', [])) || [] }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/datos-ia/spend', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -18750,7 +18764,6 @@ app.post('/api/admin/datos-ia/spend', authMiddleware, adminMiddleware, async (re
     await Config.set('adSpend', arr.slice(-500), req.user.username); res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
-// Números de la OTRA página (a mano): [{id, label, from, to, firstDeposits, usersEntered, deposits, depositsSum, avgSessionMin, retentionPct}]
 app.get('/api/admin/datos-ia/other', authMiddleware, adminMiddleware, async (req, res) => { try { res.json({ success: true, items: (await getConfig('otherPageStats', [])) || [] }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/datos-ia/other', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -18763,30 +18776,74 @@ app.post('/api/admin/datos-ia/other', authMiddleware, adminMiddleware, async (re
     await Config.set('otherPageStats', arr.slice(-300), req.user.username); res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
-// #460: calculador de inversión → proyección aproximada sobre lo observado en los últimos `base` días.
+app.post('/api/admin/datos-ia/compare', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; let other = b.other || null;
+    if (!other && b.otherId) other = ((await getConfig('otherPageStats', [])) || []).find((e) => e.id === b.otherId) || null;
+    if (!other) return res.status(400).json({ error: 'Falta la otra página (entrada guardada o números)' });
+    const from = new Date(b.day || b.from || other.from), to = new Date(b.day || b.to || other.to);
+    if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
+    const ours = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: b.campaign });
+    const comparison = datosIa.compare(ours, other);
+    const params = { key: ['cmp', other.id || other.label, b.day || '', ours.from, ours.to, b.campaign || ''].join('|'), otherId: other.id || null, otherLabel: other.label, day: b.day || null, from: ours.from, to: ours.to, campaign: b.campaign || null };
+    const snapshotId = await _diaSnapshot('compare', req.user.username, params, { comparison, oursTotals: ours.totals, oursRetention: ours.retention }, { verdict: comparison.verdict, nivel: comparison.nivel });
+    res.json({ success: true, snapshotId, ours, comparison, day: b.day || null });
+  } catch (e) { logger.error('[datos-ia/compare] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const q = req.query || {}; const baseDays = Math.max(7, Math.min(365, parseInt(q.base, 10) || 30));
     const to = new Date(); const from = new Date(to.getTime() - (baseDays - 1) * 86400000);
-    let spendBase = 0; try { const arr = (await getConfig('adSpend', [])) || []; spendBase = arr.filter((e) => e && (!q.campaign || (e.campaign || '') === String(q.campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) {}
+    const spendBase = await _diaSpendFor(from, to, q.campaign);
     const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase });
-    res.json({ success: true, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection: datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac }) });
+    let calibration = 1; try { const c = await getConfig('projectionCalibration', null); if (c && Number(c.factor) > 0) calibration = Number(c.factor); } catch (_) {}
+    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac, calibration });
+    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || ''].join('|'), spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
+    const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, netwin: projection.base.netwin, resultado: projection.base.resultado, roi: projection.base.roi });
+    res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
-// Comparativa: ours (rango de la app) vs una entrada guardada de la otra página (o números sueltos). `day` = un día concreto
-// (sorteado o elegido): nuestros datos de ESE día contra el promedio diario de la otra página.
-app.post('/api/admin/datos-ia/compare', authMiddleware, adminMiddleware, async (req, res) => {
+// #461: historial de cálculos + revisión de proyecciones contra lo real + calibración
+app.get('/api/admin/datos-ia/history', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
-    const b = req.body || {}; let other = b.other || null;
-    if (!other && b.otherId) { other = ((await getConfig('otherPageStats', [])) || []).find((e) => e.id === b.otherId) || null; }
-    if (!other) return res.status(400).json({ error: 'Falta la otra página (entrada guardada o números)' });
-    const from = new Date(b.day || b.from || other.from), to = new Date(b.day || b.to || other.to);
-    if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
-    const ours = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: b.campaign });
-    res.json({ success: true, ours, comparison: datosIa.compare(ours, other), day: b.day || null });
-  } catch (e) { logger.error('[datos-ia/compare] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+    const kind = ['analysis', 'projection', 'compare'].includes(req.query.kind) ? req.query.kind : null;
+    const items = await DatosIaSnapshot.find(kind ? { kind } : {}).sort({ createdAt: -1 }).limit(60).select('id kind createdAt by params summary review').lean();
+    const calib = await getConfig('projectionCalibration', null);
+    res.json({ success: true, items, calibration: calib || { factor: 1 } });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/datos-ia/history/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try { const d = await DatosIaSnapshot.findOne({ id: String(req.params.id) }).lean(); if (!d) return res.status(404).json({ error: 'No encontrado' }); res.json({ success: true, item: d }); } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+app.post('/api/admin/datos-ia/history/:id/review', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const snap = await DatosIaSnapshot.findOne({ id: String(req.params.id) }).lean();
+    if (!snap || snap.kind !== 'projection') return res.status(400).json({ error: 'Sólo se revisan proyecciones' });
+    const start = new Date(snap.createdAt); const end = new Date(Math.min(Date.now(), start.getTime() + (snap.params.days || 30) * 86400000));
+    const elapsed = Math.max(1, Math.round((end - start) / 86400000));
+    const real = await datosIa.analyze(_datosIaModels(), { from: start, to: end, granularity: 'day', campaign: snap.params.campaign, spend: snap.params.spend });
+    const review = datosIa.review(snap, real, elapsed);
+    await DatosIaSnapshot.updateOne({ id: snap.id }, { $set: { review } });
+    res.json({ success: true, review, real: { from: real.from, to: real.to, totals: real.totals, repeat: real.repeat } });
+  } catch (e) { logger.error('[datos-ia/review] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/datos-ia/calibration', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; let factor = Number(b.factor);
+    if (!(factor > 0)) { // automático: promedio de las últimas 5 revisiones
+      const revs = await DatosIaSnapshot.find({ kind: 'projection', 'review.factor': { $gt: 0 } }).sort({ 'review.reviewedAt': -1 }).limit(5).select('review').lean();
+      if (!revs.length) return res.status(400).json({ error: 'No hay proyecciones revisadas todavía' });
+      factor = Math.round((revs.reduce((s, r) => s + r.review.factor, 0) / revs.length) * 100) / 100;
+    }
+    factor = Math.max(0.2, Math.min(3, factor));
+    await Config.set('projectionCalibration', { factor, updatedAt: new Date().toISOString(), by: req.user.username, basedOn: b.factor ? 'manual' : 'promedio de revisiones' }, req.user.username);
+    res.json({ success: true, factor });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 
 app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {

@@ -15415,83 +15415,65 @@ function initCommandsAccordion() {
 window.initCommandsAccordion = initCommandsAccordion;
 
 // =====================================================================
-// #459: DATOS IA — análisis de la app (día/semana/mes) + comparativa con la otra página
+// #459/#461: DATOS IA — análisis (día/semana/mes), comparativa, calculador de inversión, historial + calibración
 // =====================================================================
-let _diaInited = false, _diaOthers = [];
-function _diaDate(d) { return d.toISOString().slice(0, 10); }
-function _diaMoney(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+let _diaInited = false, _diaOthers = [], _diaHist = [];
+const _diaD = (d) => d.toISOString().slice(0, 10);
+const _diaM = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+const _diaN = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
+const _diaPct = (n) => (n == null ? '—' : (n >= 0 ? '+' : '') + n + '%');
+const _diaSt = (st) => (st ? '<span class="badge-st ' + st + '">' + (st === 'bien' ? '🟢 bien' : (st === 'regular' ? '🟡 regular' : '🔴 flojo')) + '</span>' : '');
 async function diaInit() {
     if (!_diaInited) {
         _diaInited = true;
         diaPreset(30, 'day');
-        try { const r = await authFetch('/api/admin/campaigns'); if (r.ok) { const j = await r.json(); const list = j.campaigns || j.items || (Array.isArray(j) ? j : []); ['diaCampaign', 'opCampaign', 'prCampaign'].forEach(function (id) { const sel = document.getElementById(id); if (!sel) return; list.forEach(function (c) { const o = document.createElement('option'); o.value = c.code; o.textContent = (c.code || '') + (c.name ? ' · ' + c.name : ''); sel.appendChild(o); }); }); } } catch (_) {}
+        try { const r = await authFetch('/api/admin/campaigns'); if (r.ok) { const j = await r.json(); const list = j.campaigns || []; ['diaCampaign', 'opCampaign', 'prCampaign'].forEach(function (id) { const sel = document.getElementById(id); if (!sel) return; list.forEach(function (c) { const o = document.createElement('option'); o.value = c.code; o.textContent = (c.code || '') + (c.name ? ' · ' + c.name : ''); sel.appendChild(o); }); }); } } catch (_) {}
     }
     diaRun(); diaLoadSpend(); diaLoadOthers();
 }
 function diaTab(t) {
-    ['a', 'b', 'c'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.className = 'btn-' + (t === k ? 'primary' : 'secondary') + ' btn-small'; });
-    if (t === 'c') diaProject();
+    ['a', 'b', 'c', 'd'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.classList.toggle('on', t === k); });
+    if (t === 'c') diaProject(); if (t === 'd') diaLoadHistory();
 }
-async function diaProject() {
-    const g = function (id) { return document.getElementById(id).value; };
-    const out = document.getElementById('diaProjOut'); if (!out) return; out.textContent = 'Calculando…';
-    try {
-        const r = await authFetch('/api/admin/datos-ia/projection?spend=' + (g('prSpend') || 0) + '&days=' + (g('prDays') || 30) + '&base=' + (g('prBase') || 30) + (g('prCac') ? '&cac=' + g('prCac') : '') + (g('prCampaign') ? '&campaign=' + encodeURIComponent(g('prCampaign')) : ''));
-        const j = await r.json(); if (!r.ok) { out.textContent = j.error || 'Error'; return; }
-        const p = j.projection, su = p.supuestos;
-        const col = function (name, e, color) { return '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-top:3px solid ' + color + ';border-radius:12px;padding:10px 12px;"><div style="font-weight:900;color:#fff;margin-bottom:6px;">' + name + '</div>' +
-            [['Clientes nuevos', e.clientesNuevos + ' <span style="color:#888;font-size:11px;">(' + e.clientesPorPauta + ' por pauta + ' + e.clientesOrganicos + ' orgánicos)</span>'], ['Cargas', e.cargas], ['Monto cargado', _diaMoney(e.montoCargas)], ['Retiros', _diaMoney(e.retiros)], ['Reembolsos', _diaMoney(e.reembolsos)], ['NETWIN', '<b style="color:#26e07f;">' + _diaMoney(e.netwin) + '</b>'], ['Clientes activos al final', e.activosAlFinal], ['Resultado (netwin − inversión)', '<b style="color:' + (e.resultado >= 0 ? '#26e07f' : '#ff6b6b') + ';">' + _diaMoney(e.resultado) + '</b>' + (e.roi != null ? ' <span style="color:#888;">ROI ' + (e.roi >= 0 ? '+' : '') + e.roi + '%</span>' : '')]].map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#aaa;">' + x[0] + '</span><span style="color:#fff;text-align:right;">' + x[1] + '</span></div>'; }).join('') + '</div>'; };
-        out.innerHTML = (p.nota ? '<div style="background:rgba(255,170,0,0.12);border:1px solid rgba(255,170,0,0.4);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12px;">⚠️ ' + escapeHtml(p.nota) + '</div>' : '') +
-            '<div style="font-size:12px;color:#9ab;margin-bottom:8px;">Invertir <b style="color:#fff;">' + _diaMoney(p.spend) + '</b> durante <b style="color:#fff;">' + p.days + ' días</b>. Supuestos (base: ' + j.base.from + ' → ' + j.base.to + '): costo por cliente nuevo ' + (su.cac ? _diaMoney(su.cac) + ' (' + su.cacOrigen + ')' : 'sin dato') + ' · ' + su.primerasCargasPorDia + ' primeras cargas/día hoy · ' + su.cargasPorCliente + ' cargas y ' + _diaMoney(su.montoPorCliente) + ' por cliente · se retira el ' + su.pctRetirado + '% · reembolsos ' + su.pctReembolsos + '% · sigue activo el ' + su.pctActivos + '%.</div>' +
-            '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;">' + col('🔻 Escenario bajo', p.bajo, '#ff6b6b') + col('🎯 Escenario base', p.base, '#9ad0ff') + col('🔺 Escenario alto', p.alto, '#26e07f') + '</div>' +
-            '<div style="margin-top:10px;color:#888;font-size:11px;">Es una aproximación: usa el comportamiento promedio de los clientes actuales. Cuanto más días de datos reales haya (y con el gasto cargado), más se afina.</div>';
-    } catch (_) { out.textContent = 'Error de conexión'; }
-}
-window.diaProject = diaProject;
 function diaPreset(days, gran) {
     const to = new Date(); const from = new Date(to.getTime() - (days - 1) * 86400000);
-    document.getElementById('diaFrom').value = _diaDate(from); document.getElementById('diaTo').value = _diaDate(to); document.getElementById('diaGran').value = gran;
+    document.getElementById('diaFrom').value = _diaD(from); document.getElementById('diaTo').value = _diaD(to); document.getElementById('diaGran').value = gran;
     if (_diaInited) diaRun();
+}
+function _diaKpi(label, val, sub, delta) { return '<div class="dia-kpi"><div class="k">' + label + '</div><div class="v">' + val + '</div>' + (delta != null ? '<div class="d ' + (delta >= 0 ? 'up' : 'down') + '">' + _diaPct(delta) + ' vs período anterior</div>' : '') + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>'; }
+function _diaRenderReport(inf) {
+    const v = document.getElementById('diaVerdict'); if (v && inf && inf.veredicto) { v.className = 'dia-verdict show ' + inf.veredicto.nivel; v.innerHTML = '<span class="dv-ico">' + (inf.veredicto.nivel === 'bien' ? '✅' : (inf.veredicto.nivel === 'flojo' ? '🔴' : (inf.veredicto.nivel === 'regular' ? '🟡' : 'ℹ️'))) + '</span><div>VEREDICTO: ' + escapeHtml(inf.veredicto.texto) + '<small>' + inf.resumen.bien + ' indicador(es) bien · ' + inf.resumen.regular + ' regular · ' + inf.resumen.flojo + ' flojo</small></div>'; }
+    const box = document.getElementById('diaInforme'); if (!box) return;
+    box.innerHTML = (inf && inf.secciones || []).map(function (s) { return '<div class="dia-sec ' + (s.estado || '') + '"><div class="i">' + s.ico + '</div><div><div class="t">' + escapeHtml(s.titulo) + _diaSt(s.estado) + '</div><div class="x">' + escapeHtml(s.texto) + '</div>' + (s.consejo ? '<div class="c">→ ' + escapeHtml(s.consejo) + '</div>' : '') + '</div></div>'; }).join('');
 }
 async function diaRun() {
     const from = document.getElementById('diaFrom').value, to = document.getElementById('diaTo').value, gran = document.getElementById('diaGran').value, camp = document.getElementById('diaCampaign').value, spend = document.getElementById('diaSpend').value;
-    const inf = document.getElementById('diaInforme'); if (inf) inf.textContent = 'Calculando…';
+    const inf = document.getElementById('diaInforme'); if (inf) inf.innerHTML = '<div class="dia-note">Calculando…</div>';
     try {
         const r = await authFetch('/api/admin/datos-ia/analysis?from=' + from + '&to=' + to + '&granularity=' + gran + (camp ? '&campaign=' + encodeURIComponent(camp) : '') + (spend ? '&spend=' + spend : ''));
-        const j = await r.json(); if (!r.ok) { showToast(j.error || 'Error', 'error'); return; }
-        const t = j.totals, rt = j.retention, rp = j.repeat;
-        const k = function (label, val, sub) { return '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 11px;"><div style="font-size:10.5px;color:#9ab;text-transform:uppercase;letter-spacing:.5px;">' + label + '</div><div style="font-size:19px;font-weight:900;color:#fff;">' + val + '</div>' + (sub ? '<div style="font-size:10.5px;color:#aaa;">' + sub + '</div>' : '') + '</div>'; };
-        document.getElementById('diaKpis').innerHTML = [
-            k('Registros', t.registros, j.growth.registros != null ? (j.growth.registros >= 0 ? '+' : '') + j.growth.registros + '% vs anterior' : ''),
-            k('Primeras cargas', t.primerasCargas, j.growth.primerasCargas != null ? (j.growth.primerasCargas >= 0 ? '+' : '') + j.growth.primerasCargas + '% vs anterior' : ''),
-            k('Conversión registro→carga', (t.conversionRegistroCarga ?? '—') + '%'),
-            k('Cargas', t.cargas, _diaMoney(t.montoCargas) + ' · ' + t.cargadores + ' cargadores'),
-            k('Carga promedio', _diaMoney(t.cargaPromedio), (t.cargasPorCargador ?? '—') + ' cargas por cargador'),
-            k('Retiros', t.retiros, _diaMoney(t.montoRetiros)),
-            k('NETWIN', _diaMoney(t.netwin)),
-            k('Volvió a cargar 7 d', (rt.d7 ?? '—') + '%', 'de ' + rt.cohort + ' nuevos'),
-            k('Volvió a cargar 30 d', (rt.d30 ?? '—') + '%', 'período siguiente ' + (rt.next ?? '—') + '%'),
-            k('Volvió a entrar 7 d', (rt.login7 ?? '—') + '%'),
-            k('Siguen cargando', (rp.pctSiguieron ?? '—') + '%', rp.siguieronCargando + ' de ' + rp.cohort + ' nuevos'),
-            k('Abandono +30 d', (t.churn30 ?? '—') + '%', 'de los que alguna vez cargaron'),
-            k('Usuarios en la app', t.usuariosApp, t.sesiones + ' sesiones'),
-            k('Min. por sesión', t.minPorSesion ?? '—', (t.sesionesPorUsuarioDia ?? '—') + ' sesiones/usuario/día · ' + t.instalados + ' con app'),
-            k('Reembolsos', t.reembolsos, _diaMoney(t.montoReembolsos)),
-            k('Ruleta', t.giros + ' giros', _diaMoney(t.premiosRuleta)),
-            k('Soporte', t.mensajesSoporte + ' msgs'),
-            k('Costo por cliente nuevo', t.cac != null ? _diaMoney(t.cac) : '—', t.spend ? 'gasto ' + _diaMoney(t.spend) + ' · deja ' + _diaMoney(t.netwinPorNuevo) + '/cliente' : 'sin gasto cargado')
-        ].join('');
-        if (inf) inf.textContent = (j.informe || []).join('\n');
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'Error', 'error'); if (inf) inf.textContent = j.error || 'Error'; return; }
+        const t = j.totals, rt = j.retention, rp = j.repeat, g = j.growth;
+        document.getElementById('diaKpis').innerHTML =
+            '<div class="dia-group"><div class="dia-group-t">📥 Captación</div><div class="dia-kpis">' + _diaKpi('Registros', _diaN(t.registros), null, g.registros) + _diaKpi('Primeras cargas', _diaN(t.primerasCargas), null, g.primerasCargas) + _diaKpi('Conversión registro → carga', (t.conversionRegistroCarga ?? '—') + '%') + _diaKpi('Costo por cliente nuevo', t.cac != null ? _diaM(t.cac) : '—', t.spend ? 'gasto ' + _diaM(t.spend) + ' · deja ' + _diaM(t.netwinPorNuevo) + ' por cliente' : 'sin gasto cargado') + '</div></div>' +
+            '<div class="dia-group"><div class="dia-group-t">💰 Dinero</div><div class="dia-kpis">' + _diaKpi('Cargas', _diaN(t.cargas), t.cargadores + ' cargadores · ' + (t.cargasPorCargador ?? '—') + ' por cargador') + _diaKpi('Monto cargado', _diaM(t.montoCargas), 'promedio ' + _diaM(t.cargaPromedio), g.montoCargas) + _diaKpi('Retiros', _diaN(t.retiros), _diaM(t.montoRetiros)) + _diaKpi('NETWIN', _diaM(t.netwin), 'cargas − retiros') + _diaKpi('Reembolsos', _diaN(t.reembolsos), _diaM(t.montoReembolsos)) + _diaKpi('Ruleta', t.giros + ' giros', _diaM(t.premiosRuleta) + ' en premios') + '</div></div>' +
+            '<div class="dia-group"><div class="dia-group-t">🔁 Retención</div><div class="dia-kpis">' + _diaKpi('Volvió a cargar a 7 días', (rt.d7 ?? '—') + '%', 'de ' + rt.cohort + ' nuevos') + _diaKpi('Volvió a cargar a 30 días', (rt.d30 ?? '—') + '%', 'período siguiente: ' + (rt.next ?? '—') + '%') + _diaKpi('Volvió a entrar en 7 días', (rt.login7 ?? '—') + '%') + _diaKpi('Siguen cargando', (rp.pctSiguieron ?? '—') + '%', rp.siguieronCargando + ' de ' + rp.cohort + ' nuevos') + _diaKpi('Abandono +30 días', (t.churn30 ?? '—') + '%', 'de ' + t.baseCargadores + ' que alguna vez cargaron') + '</div></div>' +
+            '<div class="dia-group"><div class="dia-group-t">📱 Uso de la app</div><div class="dia-kpis">' + _diaKpi('Usuarios que entraron', _diaN(t.usuariosApp), t.sesiones + ' sesiones') + _diaKpi('Minutos por sesión', t.minPorSesion ?? '—', (t.sesionesPorUsuarioDia ?? '—') + ' sesiones por usuario y día') + _diaKpi('Con la app instalada', _diaN(t.instalados)) + _diaKpi('Mensajes a Soporte', _diaN(t.mensajesSoporte)) + '</div></div>';
+        _diaRenderReport(j.informe);
         const L = document.getElementById('diaLadder');
-        if (L) L.innerHTML = rp.cohort ? ('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;">' + [['1 sola carga', rp.una, rp.pctUna, '#ff6b6b'], ['2-3 cargas', rp.dosTres, rp.pctDosTres, '#ffb347'], ['4-9 cargas', rp.cuatroNueve, rp.pctCuatroNueve, '#9ad0ff'], ['10 o más', rp.diezMas, rp.pctDiezMas, '#26e07f'], ['Activos hoy (≤14 d)', rp.activos14, rp.pctActivos14, '#26e07f'], ['Perdidos (>30 d)', rp.perdidos30, rp.pctPerdidos30, '#ff6b6b']].map(function (x) { return '<div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 10px;border-left:4px solid ' + x[3] + ';"><div style="font-size:10.5px;color:#9ab;">' + x[0] + '</div><b style="font-size:18px;color:#fff;">' + x[1] + '</b> <span style="color:#aaa;font-size:11px;">(' + (x[2] ?? 0) + '%)</span></div>'; }).join('') + '</div><div style="margin-top:6px;color:#aaa;font-size:11.5px;">Cada cliente nuevo del rango dejó en promedio <b style="color:#fff;">' + (rp.cargasPorCliente ?? '—') + ' cargas</b> y <b style="color:#fff;">' + _diaMoney(rp.montoPorCliente) + '</b> (contando hasta hoy).</div>') : '<div style="color:#888;">Sin primeras cargas en el rango.</div>';
-        const rows = j.rows || [];
-        document.getElementById('diaTable').innerHTML = '<table class="data-table" style="width:100%;font-size:11.5px;"><thead><tr><th>' + (gran === 'month' ? 'Mes' : (gran === 'week' ? 'Semana del' : 'Día')) + '</th><th>Registros</th><th>1as cargas</th><th>Cargas</th><th>Monto</th><th>Cargadores</th><th>Retiros</th><th>NETWIN</th><th>Usuarios app</th><th>Sesiones</th><th>Min/ses.</th><th>Reemb.</th><th>Ruleta</th></tr></thead><tbody>' +
-            rows.map(function (r) { return '<tr><td>' + r.bucket + '</td><td>' + r.registros + '</td><td>' + r.primerasCargas + '</td><td>' + r.cargas + '</td><td>' + _diaMoney(r.montoCargas) + '</td><td>' + r.cargadores + '</td><td>' + r.retiros + ' · ' + _diaMoney(r.montoRetiros) + '</td><td style="color:' + (r.netwin >= 0 ? '#26e07f' : '#ff6b6b') + ';">' + _diaMoney(r.netwin) + '</td><td>' + r.usuariosApp + '</td><td>' + r.sesiones + '</td><td>' + (r.minPorSesion ?? '—') + '</td><td>' + r.reembolsos + ' · ' + _diaMoney(r.montoReembolsos) + '</td><td>' + r.giros + ' · ' + _diaMoney(r.premiosRuleta) + '</td></tr>'; }).join('') + '</tbody></table>';
+        if (L) {
+            const tot = rp.cohort || 0; const seg = function (n, col) { return tot ? '<i style="width:' + (n / tot * 100) + '%;background:' + col + ';"></i>' : ''; };
+            L.innerHTML = tot ? ('<div class="dia-bars">' + seg(rp.una, '#e60023') + seg(rp.dosTres, '#f59e0b') + seg(rp.cuatroNueve, '#38bdf8') + seg(rp.diezMas, '#16a34a') + '</div><div class="dia-legend"><span><i style="background:#e60023"></i>1 sola carga</span><span><i style="background:#f59e0b"></i>2-3</span><span><i style="background:#38bdf8"></i>4-9</span><span><i style="background:#16a34a"></i>10 o más</span></div>' +
+                '<div class="dia-ladder" style="margin-top:10px;">' + [['Nuevos en el rango', rp.cohort, null, '#111'], ['Siguieron cargando', rp.siguieronCargando, rp.pctSiguieron, '#16a34a'], ['Se quedaron en 1 carga', rp.una, rp.pctUna, '#e60023'], ['Activos hoy (≤ 14 d)', rp.activos14, rp.pctActivos14, '#16a34a'], ['En duda (15-30 d)', rp.enDuda, null, '#f59e0b'], ['Perdidos (> 30 d)', rp.perdidos30, rp.pctPerdidos30, '#e60023']].map(function (x) { return '<div style="border-left-color:' + x[3] + '"><div class="k">' + x[0] + '</div><span class="v">' + _diaN(x[1]) + '</span>' + (x[2] != null ? '<span class="p">' + x[2] + '%</span>' : '') + '</div>'; }).join('') + '</div>' +
+                '<div class="dia-note">Cada cliente nuevo del rango dejó en promedio <b>' + (rp.cargasPorCliente ?? '—') + ' cargas</b> y <b>' + _diaM(rp.montoPorCliente) + '</b> (contando hasta hoy).</div>') : '<div class="dia-note">Sin primeras cargas en el rango.</div>';
+        }
+        const rows = j.rows || []; const sub = document.getElementById('diaSerieSub'); if (sub) sub.textContent = (gran === 'month' ? 'mes a mes' : (gran === 'week' ? 'semana a semana' : 'día a día')) + ' · ' + rows.length + ' período(s)';
+        document.getElementById('diaTable').innerHTML = '<table class="data-table" style="width:100%;"><thead><tr><th>' + (gran === 'month' ? 'Mes' : (gran === 'week' ? 'Semana del' : 'Día')) + '</th><th>Registros</th><th>1as cargas</th><th>Cargas</th><th>Monto</th><th>Cargadores</th><th>Retiros</th><th>NETWIN</th><th>Usuarios app</th><th>Sesiones</th><th>Min/sesión</th><th>Reembolsos</th><th>Ruleta</th></tr></thead><tbody>' +
+            rows.map(function (r) { return '<tr><td><b>' + r.bucket + '</b></td><td>' + r.registros + '</td><td>' + r.primerasCargas + '</td><td>' + r.cargas + '</td><td>' + _diaM(r.montoCargas) + '</td><td>' + r.cargadores + '</td><td>' + r.retiros + ' · ' + _diaM(r.montoRetiros) + '</td><td style="color:' + (r.netwin >= 0 ? 'var(--p-green)' : 'var(--p-red)') + ';font-weight:800;">' + _diaM(r.netwin) + '</td><td>' + r.usuariosApp + '</td><td>' + r.sesiones + '</td><td>' + (r.minPorSesion ?? '—') + '</td><td>' + r.reembolsos + ' · ' + _diaM(r.montoReembolsos) + '</td><td>' + r.giros + ' · ' + _diaM(r.premiosRuleta) + '</td></tr>'; }).join('') + '</tbody></table>';
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
 async function diaLoadSpend() {
     try { const r = await authFetch('/api/admin/datos-ia/spend'); const j = await r.json(); const el = document.getElementById('diaSpendList'); if (!el) return;
-        el.innerHTML = (j.items || []).length ? (j.items || []).slice().reverse().map(function (e) { return '<div style="display:flex;gap:10px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span>' + e.from + ' → ' + e.to + '</span><span>' + (e.campaign || 'toda la app') + '</span><b style="color:#fff;">' + _diaMoney(e.amount) + '</b><span style="color:#888;">' + escapeHtml(e.note || '') + '</span><button class="btn-secondary btn-small" onclick="diaDelSpend(\'' + e.id + '\')">🗑</button></div>'; }).join('') : '<div style="color:#888;">Sin gasto cargado. Cargá el gasto por rango (y campaña si querés) para calcular el costo por cliente nuevo.</div>';
+        el.innerHTML = (j.items || []).length ? (j.items || []).slice().reverse().map(function (e) { return '<div class="dia-row"><span class="when">' + e.from + ' → ' + e.to + '</span><span class="kind">' + escapeHtml(e.campaign || 'toda la app') + '</span><b>' + _diaM(e.amount) + '</b><span class="grow">' + escapeHtml(e.note || '') + '</span><button class="btn-secondary btn-small" onclick="diaDelSpend(\'' + e.id + '\')">🗑</button></div>'; }).join('') : '<div class="dia-note">Sin gasto cargado.</div>';
     } catch (_) {}
 }
 async function diaSaveSpend() {
@@ -15501,7 +15483,7 @@ async function diaSaveSpend() {
 async function diaDelSpend(id) { try { await authFetch('/api/admin/datos-ia/spend', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deleteId: id }) }); diaLoadSpend(); diaRun(); } catch (_) {} }
 async function diaLoadOthers() {
     try { const r = await authFetch('/api/admin/datos-ia/other'); const j = await r.json(); _diaOthers = j.items || [];
-        const sel = document.getElementById('opSelect'); if (sel) { sel.innerHTML = _diaOthers.length ? _diaOthers.slice().reverse().map(function (e) { return '<option value="' + e.id + '">' + escapeHtml(e.label) + ' · ' + e.from + ' → ' + e.to + ' · 1as cargas ' + (e.firstDeposits ?? '—') + ' · entraron ' + (e.usersEntered ?? '—') + ' · depósitos ' + (e.deposits ?? '—') + '</option>'; }).join('') : '<option value="">(sin entradas guardadas)</option>'; }
+        const sel = document.getElementById('opSelect'); if (sel) sel.innerHTML = _diaOthers.length ? _diaOthers.slice().reverse().map(function (e) { return '<option value="' + e.id + '">' + escapeHtml(e.label) + ' · ' + e.from + ' → ' + e.to + ' · 1as cargas ' + (e.firstDeposits ?? '—') + ' · entraron ' + (e.usersEntered ?? '—') + ' · depósitos ' + (e.deposits ?? '—') + '</option>'; }).join('') : '<option value="">(sin entradas guardadas)</option>';
     } catch (_) {}
 }
 async function diaSaveOther() {
@@ -15509,27 +15491,81 @@ async function diaSaveOther() {
     const b = { label: g('opLabel'), from: g('opFrom'), to: g('opTo'), firstDeposits: g('opFirst'), usersEntered: g('opUsers'), deposits: g('opDeps'), depositsSum: g('opSum'), avgSessionMin: g('opMin'), retentionPct: g('opRet') };
     try { const r = await authFetch('/api/admin/datos-ia/other', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Guardado', 'success'); diaLoadOthers(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
-async function diaDeleteOther() {
-    const id = document.getElementById('opSelect').value; if (!id || !confirm('¿Borrar esta entrada?')) return;
-    try { await authFetch('/api/admin/datos-ia/other', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deleteId: id }) }); diaLoadOthers(); } catch (_) {}
+async function diaDeleteOther() { const id = document.getElementById('opSelect').value; if (!id || !confirm('¿Borrar esta entrada?')) return; try { await authFetch('/api/admin/datos-ia/other', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deleteId: id }) }); diaLoadOthers(); } catch (_) {} }
+function _diaCmpTable(c, day, oursFrom, oursTo) {
+    return '<div class="dia-note" style="margin:0 0 8px;">' + (day ? ('Día <b>' + day + '</b>: esta app ese día vs el promedio diario de ') : ('Rango <b>' + oursFrom + ' → ' + oursTo + '</b> (' + c.oursDays + ' d) vs ')) + '<b>' + escapeHtml(c.otherLabel) + '</b> (' + c.otherDays + ' d de datos cargados)</div>' +
+        '<table class="data-table" style="width:100%;"><thead><tr><th>Indicador</th><th>Esta app' + (day ? '' : ' (total · por día)') + '</th><th>' + escapeHtml(c.otherLabel) + ' (total · por día)</th><th>Diferencia</th></tr></thead><tbody>' +
+        c.rows.map(function (x) { const f = x.isMoney ? _diaM : _diaN; return '<tr><td>' + x.label + '</td><td><b>' + f(x.ours) + '</b>' + (x.oursPerDay != null && !day && !x.direct ? ' <span style="color:var(--p-muted)">· ' + x.oursPerDay + '/d</span>' : '') + '</td><td>' + f(x.other) + (x.otherPerDay != null && !x.direct ? ' <span style="color:var(--p-muted)">· ' + x.otherPerDay + '/d</span>' : '') + '</td><td style="font-weight:800;color:' + (x.better ? 'var(--p-green)' : (x.worse ? 'var(--p-red)' : 'var(--p-muted)')) + '">' + (x.diffPct == null ? '—' : (_diaPct(x.diffPct) + (x.better ? ' mejor' : (x.worse ? ' peor' : ' parejo')))) + '</td></tr>'; }).join('') + '</tbody></table>' +
+        '<div class="dia-verdict show ' + (c.nivel || 'sin-datos') + '" style="margin-top:10px;"><span class="dv-ico">⚖️</span><div>' + escapeHtml(c.verdict) + '</div></div>';
 }
 async function diaCompare(mode) {
     const id = document.getElementById('opSelect').value; if (!id) { showToast('Guardá primero los números de la otra página', 'error'); return; }
     const e = _diaOthers.find(function (x) { return x.id === id; }); if (!e) return;
     let day = null;
-    if (mode === 'random') { const a = new Date(e.from).getTime(), b = new Date(e.to).getTime(); day = _diaDate(new Date(a + Math.floor(Math.random() * ((b - a) / 86400000 + 1)) * 86400000)); }
+    if (mode === 'random') { const a = new Date(e.from).getTime(), b = new Date(e.to).getTime(); day = _diaD(new Date(a + Math.floor(Math.random() * ((b - a) / 86400000 + 1)) * 86400000)); }
     if (mode === 'day') { day = document.getElementById('opDay').value; if (!day) { showToast('Elegí el día', 'error'); return; } }
-    const out = document.getElementById('diaCompareOut'); out.textContent = 'Comparando…';
+    const out = document.getElementById('diaCompareOut'); out.innerHTML = '<div class="dia-note">Comparando…</div>';
     try {
         const r = await authFetch('/api/admin/datos-ia/compare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otherId: id, day: day, campaign: document.getElementById('opCampaign').value }) });
         const j = await r.json(); if (!r.ok) { out.textContent = j.error || 'Error'; return; }
-        const c = j.comparison;
-        out.innerHTML = '<div style="margin-bottom:8px;color:#9ab;">' + (day ? ('Día ' + day + ': esta app ese día vs el promedio diario de ') : ('Rango ' + j.ours.from + ' → ' + j.ours.to + ' (' + c.oursDays + ' d) vs ')) + '<b style="color:#fff;">' + escapeHtml(c.otherLabel) + '</b> (' + c.otherDays + ' d de datos cargados)</div>' +
-            '<table class="data-table" style="width:100%;font-size:12px;"><thead><tr><th>Indicador</th><th>Esta app' + (day ? '' : ' (total · por día)') + '</th><th>' + escapeHtml(c.otherLabel) + ' (total · por día)</th><th>Diferencia por día</th></tr></thead><tbody>' +
-            c.rows.map(function (x) { const fm = (x.key === 'depositsSum') ? _diaMoney : function (v) { return v; }; return '<tr><td>' + x.label + '</td><td><b style="color:#fff;">' + (x.ours ?? '—') + '</b>' + (x.oursPerDay != null && !day ? ' <span style="color:#888;">· ' + x.oursPerDay + '/d</span>' : '') + '</td><td>' + (x.other != null ? fm(x.other) : '—') + (x.otherPerDay != null ? ' <span style="color:#888;">· ' + x.otherPerDay + '/d</span>' : '') + '</td><td style="color:' + (x.better ? '#26e07f' : (x.worse ? '#ff6b6b' : '#ccc')) + ';font-weight:800;">' + (x.diffPct == null ? '—' : ((x.diffPct >= 0 ? '+' : '') + x.diffPct + '%' + (x.better ? ' mejor' : (x.worse ? ' peor' : ' parejo')))) + '</td></tr>'; }).join('') + '</tbody></table>' +
-            '<div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.05);font-weight:800;color:#fff;">' + escapeHtml(c.verdict) + '</div>' +
-            '<div style="margin-top:8px;color:#aaa;font-size:11.5px;">Retención de esta app en el rango: volvió a cargar 7 d ' + (j.ours.retention.d7 ?? '—') + '% · 30 d ' + (j.ours.retention.d30 ?? '—') + '% · siguen cargando ' + (j.ours.repeat.pctSiguieron ?? '—') + '%.</div>';
+        out.innerHTML = _diaCmpTable(j.comparison, day, j.ours.from, j.ours.to) + '<div class="dia-note">Retención de esta app en el rango: volvió a cargar a 7 d <b>' + (j.ours.retention.d7 ?? '—') + '%</b> · 30 d <b>' + (j.ours.retention.d30 ?? '—') + '%</b> · siguen cargando <b>' + (j.ours.repeat.pctSiguieron ?? '—') + '%</b>. Quedó guardado en el Historial.</div>';
     } catch (_) { out.textContent = 'Error de conexión'; }
 }
-window.diaInit = diaInit; window.diaTab = diaTab; window.diaPreset = diaPreset; window.diaRun = diaRun; window.diaSaveSpend = diaSaveSpend; window.diaDelSpend = diaDelSpend; window.diaSaveOther = diaSaveOther; window.diaDeleteOther = diaDeleteOther; window.diaCompare = diaCompare;
-
+function _diaScen(name, cls, e) {
+    return '<div class="dia-scen ' + cls + '"><h4>' + name + '</h4>' + [['Clientes nuevos', _diaN(e.clientesNuevos) + ' <small style="color:var(--p-muted)">(' + e.clientesPorPauta + ' por pauta + ' + e.clientesOrganicos + ' orgánicos)</small>'], ['Cargas', _diaN(e.cargas)], ['Monto cargado', _diaM(e.montoCargas)], ['Retiros', _diaM(e.retiros)], ['Reembolsos', _diaM(e.reembolsos)], ['NETWIN', '<span style="color:var(--p-green)">' + _diaM(e.netwin) + '</span>'], ['Clientes activos al final', _diaN(e.activosAlFinal)], ['Resultado (netwin − inversión)', '<span style="color:' + (e.resultado >= 0 ? 'var(--p-green)' : 'var(--p-red)') + '">' + _diaM(e.resultado) + '</span>' + (e.roi != null ? ' <small style="color:var(--p-muted)">ROI ' + _diaPct(e.roi) + '</small>' : '')]].map(function (x) { return '<div class="r"><span>' + x[0] + '</span><b>' + x[1] + '</b></div>'; }).join('') + '</div>';
+}
+async function diaProject() {
+    const g = function (id) { return document.getElementById(id).value; };
+    const out = document.getElementById('diaProjOut'); if (!out) return; out.innerHTML = '<div class="dia-note">Calculando…</div>';
+    try {
+        const r = await authFetch('/api/admin/datos-ia/projection?spend=' + (g('prSpend') || 0) + '&days=' + (g('prDays') || 30) + '&base=' + (g('prBase') || 30) + (g('prCac') ? '&cac=' + g('prCac') : '') + (g('prCampaign') ? '&campaign=' + encodeURIComponent(g('prCampaign')) : ''));
+        const j = await r.json(); if (!r.ok) { out.textContent = j.error || 'Error'; return; }
+        const p = j.projection, su = p.supuestos;
+        out.innerHTML = (p.nota ? '<div class="dia-warn">⚠️ ' + escapeHtml(p.nota) + '</div>' : '') +
+            '<div class="dia-note" style="margin:0 0 10px;">Invertir <b>' + _diaM(p.spend) + '</b> durante <b>' + p.days + ' días</b> · ajuste por revisiones: <b>×' + p.calibration + '</b>. Supuestos (base ' + su.baseDesde + ' → ' + su.baseHasta + '): costo por cliente nuevo <b>' + (su.cac ? _diaM(su.cac) + ' (' + su.cacOrigen + ')' : 'sin dato') + '</b> · hoy entran ' + su.primerasCargasPorDia + ' clientes nuevos por día (' + su.organicasPorDia + ' orgánicos) · ' + su.cargasPorCliente + ' cargas y ' + _diaM(su.montoPorCliente) + ' por cliente · se retira el ' + su.pctRetirado + '% · reembolsos ' + su.pctReembolsos + '% · sigue activo el ' + su.pctActivos + '%.</div>' +
+            '<div class="dia-sc">' + _diaScen('🔻 Escenario bajo', 'bajo', p.bajo) + _diaScen('🎯 Escenario base', 'base', p.base) + _diaScen('🔺 Escenario alto', 'alto', p.alto) + '</div>' +
+            '<div class="dia-note">Aproximación con el comportamiento promedio de los clientes actuales. Quedó guardada en el Historial: cuando pasen los días, revisala contra lo real y aplicá el ajuste.</div>';
+    } catch (_) { out.textContent = 'Error de conexión'; }
+}
+async function diaLoadHistory() {
+    const kind = (document.getElementById('hiKind') || {}).value || '';
+    try {
+        const r = await authFetch('/api/admin/datos-ia/history' + (kind ? '?kind=' + kind : '')); const j = await r.json(); if (!r.ok) return;
+        _diaHist = j.items || [];
+        const cal = document.getElementById('hiCalib'); if (cal) cal.textContent = 'Ajuste actual: ×' + ((j.calibration && j.calibration.factor) || 1) + (j.calibration && j.calibration.basedOn ? ' (' + j.calibration.basedOn + ')' : '');
+        const el = document.getElementById('diaHistory'); if (!el) return;
+        const K = { analysis: 'Análisis', projection: 'Proyección', compare: 'Comparativa' };
+        el.innerHTML = _diaHist.length ? _diaHist.map(function (h) {
+            const p = h.params || {}, s = h.summary || {};
+            const what = h.kind === 'analysis' ? (p.from + ' → ' + p.to + ' · ' + (p.granularity === 'month' ? 'mes' : (p.granularity === 'week' ? 'semana' : 'día')) + (p.campaign ? ' · ' + p.campaign : '') + ' — ' + _diaN(s.primerasCargas) + ' nuevos · NETWIN ' + _diaM(s.netwin) + ' · 30 d ' + (s.d30 ?? '—') + '% · siguen ' + (s.pctSiguieron ?? '—') + '%')
+                : (h.kind === 'projection' ? ('invertir ' + _diaM(p.spend) + ' en ' + p.days + ' d desde ' + p.startsAt + (p.campaign ? ' · ' + p.campaign : '') + ' — base: ' + _diaN(s.clientesNuevos) + ' nuevos · NETWIN ' + _diaM(s.netwin) + ' · ROI ' + _diaPct(s.roi) + (h.review ? ' · ✔ revisada ×' + h.review.factor : ''))
+                : ((p.otherLabel || 'otra página') + (p.day ? ' · día ' + p.day : ' · ' + p.from + ' → ' + p.to) + ' — ' + (s.verdict || '')));
+            return '<div class="dia-row" id="hi-' + h.id + '"><span class="when">' + new Date(h.createdAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span><span class="kind">' + K[h.kind] + '</span><span class="grow">' + escapeHtml(what) + '</span>' + (h.kind === 'projection' ? '<button class="btn-primary btn-small" onclick="diaReview(\'' + h.id + '\')">Revisar contra lo real</button>' : '') + '<button class="btn-secondary btn-small" onclick="diaShowSnap(\'' + h.id + '\')">Ver</button></div>';
+        }).join('') : '<div class="dia-note">Todavía no hay cálculos guardados.</div>';
+    } catch (_) {}
+}
+async function diaShowSnap(id) {
+    const box = document.getElementById('diaHistoryDetail'); box.innerHTML = '<div class="dia-note">Cargando…</div>';
+    document.querySelectorAll('.dia-row.sel').forEach(function (x) { x.classList.remove('sel'); }); const row = document.getElementById('hi-' + id); if (row) row.classList.add('sel');
+    try {
+        const r = await authFetch('/api/admin/datos-ia/history/' + id); const j = await r.json(); if (!r.ok) { box.textContent = j.error || 'Error'; return; }
+        const it = j.item, R = it.result || {};
+        if (it.kind === 'analysis') { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Análisis guardado · ' + it.params.from + ' → ' + it.params.to + '</b><small>calculado el ' + new Date(it.createdAt).toLocaleString('es-AR') + '</small></div><div id="diaHistReport" class="dia-report"></div></div>'; const tmp = document.getElementById('diaHistReport'); tmp.innerHTML = (R.informe && R.informe.secciones || []).map(function (s) { return '<div class="dia-sec ' + (s.estado || '') + '"><div class="i">' + s.ico + '</div><div><div class="t">' + escapeHtml(s.titulo) + _diaSt(s.estado) + '</div><div class="x">' + escapeHtml(s.texto) + '</div>' + (s.consejo ? '<div class="c">→ ' + escapeHtml(s.consejo) + '</div>' : '') + '</div></div>'; }).join(''); }
+        else if (it.kind === 'projection') { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Proyección guardada · ' + _diaM(it.params.spend) + ' en ' + it.params.days + ' días</b><small>calculada el ' + new Date(it.createdAt).toLocaleString('es-AR') + ' · ajuste usado ×' + (it.params.calibration || 1) + '</small></div><div class="dia-sc">' + _diaScen('🔻 Bajo', 'bajo', R.bajo) + _diaScen('🎯 Base', 'base', R.base) + _diaScen('🔺 Alto', 'alto', R.alto) + '</div>' + (it.review ? _diaReviewHtml(it.review) : '<div class="dia-note">Todavía sin revisar. Cuando pasen días, tocá "Revisar contra lo real".</div>') + '</div>'; }
+        else { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Comparativa guardada</b><small>' + new Date(it.createdAt).toLocaleString('es-AR') + '</small></div>' + _diaCmpTable(R.comparison, it.params.day, it.params.from, it.params.to) + '</div>'; }
+    } catch (_) { box.textContent = 'Error de conexión'; }
+}
+function _diaReviewHtml(rv) {
+    return '<div class="dia-card-h" style="margin-top:12px;"><b>✔ Revisión contra lo real</b><small>' + rv.elapsedDays + ' día(s) transcurridos (' + rv.fraction + '% del período): lo proyectado se prorratea a esos días</small></div>' +
+        '<table class="data-table" style="width:100%;"><thead><tr><th>Indicador</th><th>Proyectado (prorrateado)</th><th>Real</th><th>Diferencia</th><th>Factor real/proy.</th></tr></thead><tbody>' + rv.rows.map(function (x) { const f = x.isMoney ? _diaM : _diaN; return '<tr><td>' + x.label + '</td><td>' + f(x.proyectado) + '</td><td><b>' + f(x.real) + '</b></td><td style="font-weight:800;color:' + (x.diffPct == null ? 'var(--p-muted)' : (x.diffPct >= 0 ? 'var(--p-green)' : 'var(--p-red)')) + '">' + _diaPct(x.diffPct) + '</td><td>' + (x.factor != null ? '×' + x.factor : '—') + '</td></tr>'; }).join('') + '</tbody></table>' +
+        '<div class="dia-verdict show ' + (rv.factor == null ? 'sin-datos' : (rv.factor >= 0.9 && rv.factor <= 1.1 ? 'bien' : 'regular')) + '" style="margin-top:10px;"><span class="dv-ico">🎯</span><div>Factor global: <b>×' + (rv.factor ?? '—') + '</b>. ' + escapeHtml(rv.lectura) + '<small>Para que las próximas proyecciones usen este aprendizaje: "Ajustar con el promedio de revisiones".</small></div></div>';
+}
+async function diaReview(id) {
+    try { const r = await authFetch('/api/admin/datos-ia/history/' + id + '/review', { method: 'POST' }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Revisión guardada', 'success'); await diaLoadHistory(); diaShowSnap(id); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function diaCalibrate(mode) {
+    const body = mode === 'manual' ? { factor: Number(document.getElementById('hiFactor').value) } : (mode === 'reset' ? { factor: 1 } : {});
+    if (mode === 'manual' && !(body.factor > 0)) { showToast('Poné un factor (ej. 0.8 o 1.2)', 'error'); return; }
+    try { const r = await authFetch('/api/admin/datos-ia/calibration', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Ajuste aplicado: ×' + j.factor, 'success'); diaLoadHistory(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.diaInit = diaInit; window.diaTab = diaTab; window.diaPreset = diaPreset; window.diaRun = diaRun; window.diaSaveSpend = diaSaveSpend; window.diaDelSpend = diaDelSpend; window.diaSaveOther = diaSaveOther; window.diaDeleteOther = diaDeleteOther; window.diaCompare = diaCompare; window.diaProject = diaProject; window.diaLoadHistory = diaLoadHistory; window.diaShowSnap = diaShowSnap; window.diaReview = diaReview; window.diaCalibrate = diaCalibrate;
