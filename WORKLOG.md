@@ -8,6 +8,30 @@
 
 ## Sesión 2026-10-18
 
+### 400. 💸 Botones "Comprobante aquí" / "Retirar premio" en minúscula y en una fila · paso 3 de la carga automática (teléfono) — SW v275
+**Pedido (owner):** "en el título de comprobante aquí y retirar premio, ponelo en minúscula y que entre en una fila; después
+agregá un paso 3 en carga automática que diga para retirar necesitás tener un teléfono vinculado con la cuenta, el número
+telefónico sirve sólo para una cuenta oficial con nosotros".
+**Qué se hizo:** pin.css: `.lr-text b` de los dos botones sin `text-transform: uppercase` (quedan "Comprobante aquí" /
+"Retirar premio", con mayúscula inicial), `white-space: nowrap` + elipsis para que entren en una línea. index.html: paso 3
+(`.al-step-3`) en la carga automática con ese texto; el paso 2 ahora nombra el botón nuevo («Comprobante aquí», rojo).
+**Archivos:** `public/index.html`, `public/css/pin.css`.
+
+### 399. 👤 Perfil: modo nocturno ARRIBA (Activar/Desactivar) · filas usuario/clave/página en una línea · Ocultar debajo de Copiar · fix nocturno — SW v275
+**Pedido (owner, con captura):** "achicá la parte de contraseña y página que se vea en una fila así la gente entiende bien
+todo y la clave de ocultar ponelo abajo de copiar; la parte de modo oscuro no está funcionando bien, quiero que lo dejes en
+la parte superior de perfil cuando entrás como activar modo nocturno o desactivar, que preferentemente esté desactivado".
+**Qué se hizo:**
+- **Interruptor arriba:** `.pf-theme-row` justo debajo del encabezado del modal ("🌙 Modo nocturno · Desactivado/Activado"
+  + botón `#pfThemeBtn` Activar/Desactivar). Se sacó el `pf-act` de abajo. Default sigue siendo claro (`vip_theme`).
+- **Filas:** `.pf-main-big .pf-v` 14px (antes 17px, por eso la clave se partía en 3 renglones), `.pf-k` 74px, link 11px.
+  Botones de la clave apilados en `.pf-btns` (Copiar arriba, Ocultar abajo; `#pfEye` conserva id y lógica).
+- **Fix nocturno (la causa del "no funciona bien"):** en nocturno `--p-text` es blanco, y los 27 selectores de pin.css
+  con `background: var(--p-text)` (Capturar mis datos, pestañas activas, numeritos de pasos, avatares…) seguían con
+  texto blanco → invisibles. Ahora `html[data-theme="dark"] <sel>, <sel> *` llevan `--p-inv`. Además, en nocturno los
+  estilos inline blancos (`background:#fff`, `color:#111`…) se mapean a tarjeta/texto, y `.modal-content` va `--p-card`.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 398. 🔥 Fueguito: VUELTA a la versión anterior (3 hitos) — descarta #395/#397
 **Pedido (owner):** "lo del fueguito está mal, quiero que vuelva a la versión anterior".
 **Qué se hizo (server.js):** `FIRE_MILESTONES_DEFAULT` vuelve a los 3 hitos de #346 (10 d $50.000 · 20 d $250.000 ·
