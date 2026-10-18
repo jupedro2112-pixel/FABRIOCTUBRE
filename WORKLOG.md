@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 429. 🚪 Inicio más compacto: beneficios en una fila de 3, registro y plataformas más chicos → las opiniones entran — SW v301
+**Pedido (owner, con captura):** "achicá todo eso así las opiniones entran en el principal".
+**Qué se hizo (sólo CSS):** cabecera y título más chicos; beneficios en UNA fila de tres tarjetas centradas sin bajada (VIP ·
+Reembolsos · Referidos); formulario con menos padding y sin la nota; recuadro "Elegí dónde jugar" en una sola línea
+(píldoras con scroll horizontal, sin bajada); tarjetas de opiniones más chicas con 2 líneas de comentario.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 428. 🚪 Inicio: recuadro "Elegí dónde jugar" debajo de Registrarse (jugaygana en minúscula) · opiniones a la vista — SW v300
 **Pedido (owner):** "dale un mejor recuadro a donde dice a dónde jugar, y jugaygana en minúscula; poné ese rectángulo abajo
 del Registrarse y, borrando todo lo otro, hacé que se vean las opiniones de la gente".
