@@ -1386,4 +1386,23 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ep-item.ep-jugaygana.soon em { background: rgba(255,255,255,.2) !important; }
 .plat-btn[data-plat="jugaygana"] { background: linear-gradient(135deg, #000, #262626) !important; color: #fff !important; border-color: transparent !important; }
 html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-play-btn.plat-jugaygana, html[data-theme="dark"] .ep-item.ep-jugaygana { border: 1px solid rgba(255,255,255,.22) !important; }
+/* ── #504: estrategia — banner de segunda carga y misiones ── */
+.sd-banner { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 16px; padding: 11px 14px; background: linear-gradient(90deg, #ff7a18, #ffb627); color: #1a1a1a; font: 700 13px var(--p-font); text-align: left; cursor: pointer; box-shadow: 0 6px 16px rgba(255,122,24,.28); }
+.sd-banner b { font-size: 15px; font-weight: 900; } .sd-banner small { color: rgba(0,0,0,.65); font-weight: 700; } .sd-banner span { margin-left: auto; font-weight: 900; }
+.sd-banner-full { margin: 0 0 10px; }
+.ez-btn.ez-missions { grid-column: 1 / -1; align-items: flex-start !important; text-align: left; padding-bottom: 12px !important; }
+.ez-btn.ez-missions .ez-ico { color: var(--p-red); }
+.ez-mis-bars { display: flex; gap: 6px; width: 100%; margin-top: 8px; }
+.ez-mis-bars i { flex: 1; height: 6px; border-radius: 999px; background: var(--p-border); position: relative; overflow: hidden; }
+.ez-mis-bars i::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--w, 0%); background: var(--p-red); border-radius: 999px; }
+.ez-mis-bars i.ok::after { background: var(--p-green); width: 100%; }
+.ms-list { display: flex; flex-direction: column; gap: 10px; }
+.ms-item { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 16px; padding: 12px; text-align: left; }
+.ms-item.done { border-color: var(--p-green); }
+.ms-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .ms-row b { font: 900 14px var(--p-font); color: var(--p-text); }
+.ms-prize { font: 900 12px var(--p-font); color: var(--p-red); white-space: nowrap; } .ms-item.done .ms-prize { color: var(--p-green); }
+.ms-track { height: 8px; border-radius: 999px; background: var(--p-border); margin: 8px 0 6px; overflow: hidden; } .ms-track i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; } .ms-item.done .ms-track i { background: var(--p-green); }
+.ms-item small { font: 600 11.5px var(--p-font); color: var(--p-muted); }
+.ms-card { cursor: pointer; } .ms-card-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; } .ms-card-h b { font: 900 15px var(--p-font); color: var(--p-text); } .ms-card-h small { color: var(--p-muted); font-weight: 700; }
+#missionsCardList { display: flex; flex-direction: column; gap: 8px; }
 

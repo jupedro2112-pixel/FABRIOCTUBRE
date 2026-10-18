@@ -56,6 +56,7 @@
     function getHomeMode() { return _homeMode; }
     function setHomeMode(mode, opts) {
         _applyMenuLayout(); // #482
+        setTimeout(function () { try { loadStrategy(false); } catch (_) {} }, 600); // #504
         setTimeout(function () { try { if (!document.body.classList.contains('mc-open')) maybeFirstDepositPopup(); } catch (_) {} }, 1500); // #488: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
         mode = (mode === 'full' || mode === 'mini' || mode === 'easy') ? mode : 'play';
         _homeMode = mode;
@@ -127,6 +128,29 @@
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }
+    // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
+    let _stAt = 0, _stData = null;
+    const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    function _msBar(m) { const pct = Math.min(100, Math.round((m.value / m.target) * 100)); const val = m.type === 'deposit_total' ? _m$(m.value) + ' / ' + _m$(m.target) : m.value + ' / ' + m.target; return '<div class="ms-item' + (m.done ? ' done' : '') + '"><div class="ms-row"><b>' + _esc(m.title) + '</b><span class="ms-prize">' + (m.credited ? '✓ ' + _m$(m.rewardArs) + ' acreditado' : (m.done ? '✓ cumplida' : '+' + _m$(m.rewardArs))) + '</span></div><div class="ms-track"><i style="width:' + pct + '%"></i></div><small>' + val + (m.minAmount ? ' · cargas de ' + _m$(m.minAmount) + ' o más' : '') + '</small></div>'; }
+    function _stLeft(exp) { const ms = new Date(exp) - Date.now(); if (ms <= 0) return ''; const h = Math.floor(ms / 3600000), mn = Math.floor((ms % 3600000) / 60000); return h >= 1 ? '· vence en ' + h + ' h' : '· vence en ' + mn + ' min'; }
+    function _stPaint() {
+        const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
+        [['sdBanner', 'sdBannerPct', 'sdBannerLeft'], ['sdBannerFull', 'sdBannerPctFull', 'sdBannerLeftFull']].forEach(([b, p, l]) => { const el = _el(b); if (!el) return; if (sd && sd.pct > 0) { el.hidden = false; const pe = _el(p); if (pe) pe.textContent = sd.pct + '% EXTRA'; const le = _el(l); if (le) le.textContent = _stLeft(sd.expiresAt); } else el.hidden = true; });
+        const btn = _el('ezMissions'), card = _el('missionsCard');
+        if (!ms.length) { if (btn) btn.hidden = true; if (card) card.hidden = true; return; }
+        const done = ms.filter((m) => m.done).length;
+        if (btn) { btn.hidden = false; const bd = _el('ezMissionsBadge'); if (bd) { bd.textContent = done + '/' + ms.length; bd.style.display = ''; } const sub = _el('ezMissionsSub'); if (sub) sub.textContent = done === ms.length ? '¡Todas cumplidas esta semana!' : (done ? done + ' de ' + ms.length + ' cumplidas · seguí así' : 'Cumplí metas y cobrá premios'); const bars = _el('ezMissionsBars'); if (bars) bars.innerHTML = ms.map((m) => '<i class="' + (m.done ? 'ok' : '') + '" style="--w:' + Math.min(100, Math.round((m.value / m.target) * 100)) + '%"></i>').join(''); }
+        if (card) { card.hidden = false; const cs = _el('missionsCardSub'); if (cs) cs.textContent = done + ' de ' + ms.length + ' cumplidas'; const cl = _el('missionsCardList'); if (cl) cl.innerHTML = ms.map(_msBar).join(''); }
+        const list = _el('missionsList'); if (list) list.innerHTML = ms.map(_msBar).join('');
+        const msub = _el('missionsSub'); if (msub && d.weekEndsAt) msub.textContent = 'Lunes a domingo · termina el ' + new Date(d.weekEndsAt).toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit' }) + ' · el premio se acredita solo';
+    }
+    async function loadStrategy(force) {
+        const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
+        if (!force && Date.now() - _stAt < 90000) { _stPaint(); return; } _stAt = Date.now();
+        try { const r = await fetch(VIP.config.API_URL + '/api/strategy/me', { headers: { Authorization: 'Bearer ' + tok } }); if (r.ok) _stData = await r.json(); } catch (_) {}
+        _stPaint();
+    }
+    function openMissions() { loadStrategy(true); try { VIP.ui.showModal('missionsModal'); } catch (_) { const m = _el('missionsModal'); if (m) m.classList.remove('hidden'); } }
     // #488: cartel BONO DE PRIMERA CARGA al entrar (quien no cargó nunca), una vez por sesión, después de elegir el menú.
     let _fdShown = false, _fdPromoP = null;
     // #490: la promo de primera carga se consulta una vez por sesión y la usan el cartel y la etiqueta "+X% en tu primera carga" del botón CARGAR AHORA
@@ -1799,7 +1823,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

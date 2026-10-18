@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-18
 
+### 504. 🎯 ESTRATEGIA CLIENTES · PUBLICIDAD: 100 % con la app, bono de SEGUNDA carga a las 24 h, MISIONES semanales automáticas — SW v350, admin-sw v114
+**Pedido (owner):** "activá eso: 100 % instalando la app con notificaciones, 50 % en la segunda carga a las 24 h si no volvió a
+cargar, y las misiones; del lado del administrador automático, volcado en la página con buena visión, todo automático y
+confiable pero ajustable; toda esa estrategia debajo de Cierres como Estrategia clientes · publicidad".
+**Qué se hizo (todo en `Config['strategyClientes']` + los configs existentes):**
+- **Primera carga:** sigue siendo `firstDepositBonusPct` + extra por instalar (`installGift`); la sección lo muestra como
+  "con la app instalada X %" y lo edita (en Render quedó 50 + 50 = 100 %).
+- **Segunda carga (`_secondDepositTick`, cada 10 min):** clientes con UNA sola carga real hecha hace entre `afterHours` (24) y
+  +48 h → `User.secondDepositOffer = offered` con `pct` (50) y `expiresAt` (+`validHours`, 72); aviso por chat + push
+  (`/sys_second_deposit_offer`). `resolveAutoBonus` lo consume con `claimSecondDepositPercent` (atómico, con revert) después del
+  bono por instalar/código y antes de la ruleta, en cualquier carga (manual o hgcash), con el tope de bonos. Vencidos → `expired`.
+- **Misiones (`_missionsTick`, cada 15 min):** semana lunes–domingo ART (`weekKeyART`); tipos `deposits_count` (cargas ≥ mínimo),
+  `deposit_days` (días distintos), `deposit_total` (total $); defaults: 3 cargas → $3.000, 4 días → $5.000, $50.000 → $4.000. Al
+  cumplirse se acredita como regalo (`adapter.creditGift`, ref `vip-mis-<user>-<misión>-<semana>`), Transaction tipo **`mission`**
+  (sumado a `CASHBACK_GIFT_TX_TYPES`, al enum y a Datos IA), `MissionClaim` único por usuario/misión/semana, aviso por chat + push
+  (`/sys_mission_done`). Máx. 100 créditos por pasada.
+- **App:** `GET /api/strategy/me` → banner naranja "50 % EXTRA en tu próxima carga · vence en N h" (menú fácil y home completo),
+  botón ancho "🎯 Misiones de la semana" con mini-barras y contador, tarjeta en el home completo y modal con progreso por misión
+  (`VIP.home.loadStrategy/openMissions`, cache 90 s).
+- **Panel:** sección "🎯 Estrategia clientes · publicidad" debajo de Cierres (`GET/POST /api/admin/strategy`): primera carga,
+  segunda carga (con ofrecidos/usados/vencidos 30 d) y editor de misiones (título, tipo, meta, mínimo, premio, activa; cumplidas
+  por semana), botón "Guardar estrategia".
+⚠️ El commit 0a75c34 subió sólo server + panel + markup; este commit completa home.js, CSS, SW y docs.
+**Archivos:** `server.js`, `src/models/User.js`, `src/models/Transaction.js`, `src/models/MissionClaim.js`,
+`src/services/datosIaService.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/adminprivado2026/index.html`,
+`admin.js`, SWs.
+
 ### 503. 🏦 Cierres: entradas y salidas del día leídas de la API del banco (no sólo de los avisos) — admin-sw v113
 **Pedido (owner):** "lo que entró y salió del banco lo podés ver con la API del banco, y la plata a las 00 hs también: detectarlo
 con el banco".
