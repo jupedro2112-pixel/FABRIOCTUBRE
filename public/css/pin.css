@@ -1256,4 +1256,24 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .refund-promo { display: none !important; }
 .modal .refund-promo, #unifiedRefundModal .refund-promo, #infoModal .refund-promo { display: block !important; }
 .modal .refund-promo[hidden], #unifiedRefundModal .refund-promo[hidden], #infoModal .refund-promo[hidden] { display: none !important; }
+/* ── #465: condiciones (Referidos / VIP) estilo 1win + detalle de niveles ── */
+.cond-wrap { background: var(--p-surface); border-radius: 16px; margin: 0 0 12px; overflow: hidden; }
+.cond-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: transparent; padding: 11px 14px; font: 800 13px var(--p-font); color: var(--p-text); cursor: pointer; text-align: left; }
+.cond-chev { color: var(--p-muted); font-size: 11px; }
+.cond-body { padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.cond-sec { background: var(--p-card); border-radius: 12px; padding: 9px 12px; border-left: 4px solid var(--p-red); }
+.cond-sec > b { display: block; font: 800 12.5px var(--p-font); color: var(--p-text); margin-bottom: 3px; }
+.cond-sec p { margin: 0; font: 500 12.5px/1.5 var(--p-font); color: var(--p-text-2); } .cond-sec p b { color: var(--p-text); }
+.cond-sec.cond-black { border-left-color: #111; background: #1a1a1a; } .cond-sec.cond-black > b, .cond-sec.cond-black p, .cond-sec.cond-black p b { color: #fff; }
+.cond-note { font: 600 11px/1.45 var(--p-font); color: var(--p-muted); padding: 2px 2px 0; }
+#vipLevelsModal .vl-cols { display: grid; grid-template-columns: 1.3fr 1fr .9fr .9fr; gap: 6px; padding: 4px 10px; font: 800 9.5px var(--p-font); letter-spacing: .6px; text-transform: uppercase; color: var(--p-muted); }
+#vipLevelsModal .vl-row { display: grid !important; grid-template-columns: 1.3fr 1fr .9fr .9fr; gap: 6px; align-items: center; padding: 8px 10px !important; }
+#vipLevelsModal .vl-row .vl-st { display: none; }
+#vipLevelsModal .vl-row .vl-name { font: 800 12.5px var(--p-font); } #vipLevelsModal .vl-row .vl-name small { font-weight: 700; color: var(--p-red); }
+#vipLevelsModal .vl-th { font: 700 11px var(--p-font); color: var(--p-text-2); white-space: nowrap; }
+#vipLevelsModal .vl-gift { font: 700 11px var(--p-font); color: var(--p-green); white-space: nowrap; }
+#vipLevelsModal .vl-rake { font: 700 11px var(--p-font); color: var(--p-text); display: flex; flex-direction: column; }
+#vipLevelsModal .vl-black { font: 700 9.5px var(--p-font); color: var(--p-muted); white-space: normal; }
+#vipLevelsModal .vl-black-note { margin-top: 10px; background: #1a1a1a; color: #fff; border-radius: 12px; padding: 9px 12px; font: 600 12px/1.45 var(--p-font); } #vipLevelsModal .vl-black-note b { color: #fff; }
+html[data-theme="dark"] .cond-sec.cond-black, html[data-theme="dark"] #vipLevelsModal .vl-black-note { background: #2a2a2a; }
 

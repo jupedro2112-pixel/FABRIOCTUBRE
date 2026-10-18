@@ -1162,8 +1162,9 @@
             '<div class="vl-row' + (l.idx <= curIdx ? ' on' : '') + (l.idx === nextIdx ? ' next' : '') + '">' +
             '<span class="vl-st">' + (l.idx <= curIdx ? '✓' : '🔒') + '</span>' +
             '<span class="vl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + (l.idx === nextIdx ? ' <small>próximo</small>' : '') + '</span>' +
+            '<span class="vl-th">' + (Number(l.thresholdArs) > 0 ? '$' + Math.round(Number(l.thresholdArs)).toLocaleString('es-AR') : '—') + '</span>' + // #465: apostado necesario
             '<span class="vl-gift">' + (Number(l.levelUpBonusArs) > 0 ? '🎁 $' + Math.round(Number(l.levelUpBonusArs)).toLocaleString('es-AR') : '') + '</span>' +
-            '<span class="vl-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback</span></div>').join('')
+            '<span class="vl-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback' + (/black/i.test(String(l.key || l.name)) ? '<small class="vl-black">+ soporte personalizado Telegram</small>' : '') + '</span></div>').join('')
             : '<p class="vl-empty">No pudimos cargar los niveles. Probá de nuevo.</p>';
         try { VIP.ui.showModal('vipLevelsModal'); } catch (_) { const m = _el('vipLevelsModal'); if (m) m.classList.remove('hidden'); }
     }

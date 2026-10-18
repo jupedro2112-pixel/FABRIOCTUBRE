@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 465. 📄 Condiciones de Referidos y de Niveles VIP (estilo 1win) · detalle por nivel · Black con soporte Telegram — SW v328
+**Pedido (owner):** "armá en Referidos las condiciones que usa 1win como sistema de referidos, y lo mismo en Niveles VIP:
+los progresos y lo que podés ir ganando en cada nivel; avisar que los Black ya tienen soporte personalizado en Telegram".
+**Qué se hizo (index.html, home.js, pin.css):**
+- **Referidos:** desplegable "📄 Condiciones del programa de referidos" arriba del "¿Cómo funciona?": cuánto ganás ({ref-pct}%
+  de la actividad, de por vida, sin límite), quién cuenta como referido (código o link, vínculo permanente), desde cuándo
+  suma (primera carga), cuándo y cómo se cobra (el 1 de cada mes, sobre el mes anterior, se acredita al instante), qué no
+  cuenta (bonos, regalos, reembolsos; mes ganador no descuenta) y reglas de juego limpio.
+- **Niveles VIP:** desplegable "📄 Condiciones y beneficios" (progreso por apostado acumulado de por vida, nunca baja; bono
+  al subir reclamable; rakeback semanal; escalera Bronce→Black como 1win) con bloque negro "🖤 Niveles Black: soporte
+  personalizado" (asesor por Telegram, prioridad, a toda hora). La lista ahora es una tabla: Nivel · Apostado acumulado
+  (`thresholdArs`) · Bono al subir · Rakeback, y en los Black "+ soporte personalizado Telegram"; nota final para Black I–V.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 464. 🧮 Calculador: ROI sólo sobre los clientes por pauta, % orgánico editable, días para recuperar el costo — admin-sw v97
 **Qué pasaba:** sin gasto cargado en la base, todas las primeras cargas se tomaban como orgánicas y el "resultado" sumaba
 el netwin orgánico contra la inversión (ROI +2771%).
