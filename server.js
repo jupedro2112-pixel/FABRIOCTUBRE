@@ -18810,8 +18810,8 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     const spendBase = await _diaSpendFor(from, to, q.campaign);
     const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase });
     let calibration = 1; try { const c = await getConfig('projectionCalibration', null); if (c && Number(c.factor) > 0) calibration = Number(c.factor); } catch (_) {}
-    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac, calibration });
-    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || ''].join('|'), spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
+    const projection = datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac, calibration, organicPct: q.organicPct });
+    const params = { key: ['proj', q.spend || 0, q.days || 30, baseDays, q.cac || '', q.campaign || '', q.organicPct || ''].join('|'), organicPct: q.organicPct || null, spend: Number(q.spend) || 0, days: Math.max(1, parseInt(q.days, 10) || 30), baseDays, cac: Number(q.cac) || null, campaign: q.campaign || null, calibration, startsAt: datosIa.dateKeyART(new Date()) };
     const snapshotId = q.nosave ? null : await _diaSnapshot('projection', req.user.username, params, projection, { clientesNuevos: projection.base.clientesNuevos, netwin: projection.base.netwin, resultado: projection.base.resultado, roi: projection.base.roi });
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }

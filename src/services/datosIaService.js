@@ -193,26 +193,34 @@ function compare(ours, other) {
 }
 
 // Calculador de inversión. `calibration` = factor real/proyectado promedio de revisiones anteriores (1 = sin ajuste).
+// #464: economía POR CLIENTE (netwin que deja un cliente nuevo) × clientes por pauta (inversión / costo por cliente). Lo orgánico
+// se muestra aparte y NO entra en el ROI. Si en la base no hay gasto cargado, el ritmo actual se asume mixto: `organicPct`
+// (default 30%) es orgánico y el resto venía de pauta (supuesto que se ve y se puede cambiar).
 function project(base, opts) {
   const spend = Math.max(0, Number(opts.spend) || 0), days = Math.max(1, Math.min(365, parseInt(opts.days, 10) || 30));
   const t = base.totals, rp = base.repeat, baseDays = Math.max(1, t.dias);
   const calib = Number(opts.calibration) > 0 ? Number(opts.calibration) : 1;
   const cac = Number(opts.cac) > 0 ? Number(opts.cac) : (t.cac || null);
+  const organicPct = Number(opts.organicPct) >= 0 && Number(opts.organicPct) <= 100 ? Number(opts.organicPct) / 100 : 0.3;
   const perDayFirst = t.primerasCargas / baseDays;
-  const organicPerDay = t.spend > 0 ? perDayFirst * 0.4 : perDayFirst; // con pauta en la base, se asume que ~40% del ritmo es orgánico
+  let organicPerDay;
+  if (t.spend > 0 && cac) organicPerDay = Math.max(0, perDayFirst - (t.spend / baseDays) / cac); // base con gasto: lo que no explica la pauta
+  else organicPerDay = perDayFirst * organicPct;
   const cargasPorCliente = rp.cargasPorCliente || t.cargasPorCargador || 1;
   const montoPorCliente = rp.montoPorCliente || t.cargaPromedio || 0;
   const wdRatio = t.montoCargas > 0 ? Math.min(0.95, t.montoRetiros / t.montoCargas) : 0.5;
   const reembPct = t.montoCargas > 0 ? t.montoReembolsos / t.montoCargas : 0;
   const activePct = (rp.pctActivos14 != null ? rp.pctActivos14 : 30) / 100;
+  const horizon = Math.min(1.5, Math.max(0.5, days / 30));
+  const netwinPorCliente = montoPorCliente * horizon * (1 - wdRatio - reembPct);
   const mk = (f) => {
     const ff = f * calib;
     const porPauta = cac ? (spend / cac) * ff : 0, organicos = organicPerDay * days * ff, nuevos = porPauta + organicos;
-    const monto = nuevos * montoPorCliente * Math.min(1.5, Math.max(0.5, days / 30));
-    const retiros = monto * wdRatio, reemb = monto * reembPct, netwin = monto - retiros - reemb;
-    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente), montoCargas: r0(monto), retiros: r0(retiros), reembolsos: r0(reemb), netwin: r0(netwin), activosAlFinal: r0(nuevos * activePct), resultado: r0(netwin - spend), roi: spend > 0 ? Math.round(((netwin - spend) / spend) * 100) : null };
+    const monto = nuevos * montoPorCliente * horizon, retiros = monto * wdRatio, reemb = monto * reembPct, netwin = monto - retiros - reemb;
+    const netwinPauta = porPauta * netwinPorCliente;
+    return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente), montoCargas: r0(monto), retiros: r0(retiros), reembolsos: r0(reemb), netwin: r0(netwin), netwinPauta: r0(netwinPauta), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct), resultado: r0(netwinPauta - spend), roi: spend > 0 ? Math.round(((netwinPauta - spend) / spend) * 100) : null, recuperaEnDias: cac && netwinPorCliente > 0 ? Math.min(999, r0(cac / (netwinPorCliente / days))) : null };
   };
-  return { spend, days, calibration: calib, supuestos: { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, cac, cacOrigen: Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado' : 'sin dato'), primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, cargasPorCliente, montoPorCliente: r0(montoPorCliente), pctRetirado: Math.round(wdRatio * 100), pctReembolsos: Math.round(reembPct * 100), pctActivos: Math.round(activePct * 100), gastoBase: t.spend || 0 }, bajo: mk(0.7), base: mk(1), alto: mk(1.3), nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto en publicidad de un período con pauta (Análisis → Gasto) o indicá el costo a mano. Mientras tanto sólo se proyecta lo orgánico.' };
+  return { spend, days, calibration: calib, supuestos: { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, cac, cacOrigen: Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado' : 'sin dato'), primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), netwinPorCliente: r0(netwinPorCliente), pctRetirado: Math.round(wdRatio * 100), pctReembolsos: Math.round(reembPct * 100), pctActivos: Math.round(activePct * 100), gastoBase: t.spend || 0 }, bajo: mk(0.7), base: mk(1), alto: mk(1.3), nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto en publicidad de un período con pauta (Análisis → Gasto) o indicá el costo a mano. Mientras tanto sólo se proyecta lo orgánico.' };
 }
 
 // Revisión de una proyección contra lo REAL: `real` = analyze() del tramo transcurrido. Prorratea lo proyectado a los días

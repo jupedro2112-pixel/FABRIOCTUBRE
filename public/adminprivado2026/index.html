@@ -1298,6 +1298,7 @@ document.addEventListener('change', function (ev) {
                             <label>Durante (días)<input type="number" id="prDays" min="1" max="365" value="30" style="width:80px;"></label>
                             <label>Base: últimos (días)<input type="number" id="prBase" min="7" max="365" value="30" style="width:80px;"></label>
                             <label>Costo por cliente nuevo $ (opc.)<input type="number" id="prCac" min="0" step="100" placeholder="observado" style="width:130px;"></label>
+                            <label>% orgánico del ritmo actual (si la base no tiene gasto)<input type="number" id="prOrg" min="0" max="100" value="30" style="width:80px;"></label>
                             <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
                             <button class="btn-primary btn-small" onclick="diaProject()">Calcular</button>
                         </div>

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 464. 🧮 Calculador: ROI sólo sobre los clientes por pauta, % orgánico editable, días para recuperar el costo — admin-sw v97
+**Qué pasaba:** sin gasto cargado en la base, todas las primeras cargas se tomaban como orgánicas y el "resultado" sumaba
+el netwin orgánico contra la inversión (ROI +2771%).
+**Qué se hizo:** `project()` calcula el netwin POR CLIENTE (monto por cliente × horizonte × (1 − % retirado − % reembolsos)),
+clientes por pauta = inversión / costo por cliente, y **el resultado y el ROI sólo cuentan el netwin de los clientes por
+pauta**; lo orgánico se muestra aparte. Si la base no tiene gasto, el ritmo actual se asume mixto con `organicPct`
+(default 30%, editable en el panel); si tiene gasto, lo orgánico = ritmo − lo que explica la pauta. Nuevo: "Recupera el
+costo del cliente en N días".
+**Archivos:** `src/services/datosIaService.js`, `server.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 462/463. 🩺 Diagnóstico del server + Datos IA sin OOM — admin-sw v96
 **Qué pasó:** la primera versión de Datos IA cargaba todo el historial de transacciones y colgaba el proceso; la segunda
 (agregaciones) seguía tirando el servidor con 30+ días: el heap de Node en Render es de 268 MB y `toLocaleDateString` con
