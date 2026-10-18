@@ -612,7 +612,18 @@
     const ENTRY_GAMES = [['fortune-garuda-1000', 'Fortune Garuda 1000'], ['jokers-jewel', "Joker's Jewel"], ['fortune-garuda-500', 'Fortune Garuda 500'], ['fortune-tiger', 'Fortune Tiger'], ['fortune-gems-2', 'Fortune Gems 2'], ['fortune-rabbit', 'Fortune Rabbit'], ['fortune-gems', 'Fortune Gems'], ['fortune-dragon', 'Fortune Dragon'], ['golden-joker', 'Golden Joker']];
     const _gamePlayers = {}; let _gameTick = null;
     function _gameN(id) { if (!_gamePlayers[id]) _gamePlayers[id] = 50 + Math.floor(Math.random() * 151); return _gamePlayers[id]; }
-    function _gamesTick() { ENTRY_GAMES.forEach(([id]) => { const n = Math.max(50, Math.min(200, _gameN(id) + Math.floor(Math.random() * 11) - 5)); _gamePlayers[id] = n; const el = document.querySelector('.ev-game[data-g="' + id + '"] b'); if (el) el.textContent = n; }); }
+    // #495 (owner): los "jugando" van variando rato a rato: cada juego cambia solo, en momentos distintos (cada 6–20 s), de a 1 a 9
+    // personas, siempre entre 50 y 200, con un parpadeo chiquito del número.
+    function _gamesTick() {
+        if (document.hidden) return;
+        const picks = ENTRY_GAMES.filter(() => Math.random() < 0.45); // en cada pasada cambian algunos, no todos
+        picks.forEach(([id]) => {
+            const delta = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 9));
+            const n = Math.max(50, Math.min(200, _gameN(id) + delta)); if (n === _gamePlayers[id]) return; _gamePlayers[id] = n;
+            const el = document.querySelector('.ev-game[data-g="' + id + '"] b'); if (!el) return;
+            el.textContent = n; el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick');
+        });
+    }
     function _slidesBuild() {
         const tr = _el('entrySlidesTrack'), dots = _el('entrySlidesDots');
         if (!tr || _slBuilt) return;
@@ -623,7 +634,7 @@
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };
             ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
-            clearInterval(_gameTick); _gameTick = setInterval(_gamesTick, 20000);
+            clearInterval(_gameTick); _gameTick = setInterval(_gamesTick, 7000);
             _slBuilt = true; return;
         }
         // #314: la foto va a TODO el ancho dentro de un recuadro; el fondo es la misma foto desenfocada (nada queda "incompleto").

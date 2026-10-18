@@ -1345,4 +1345,7 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ev-game .gp b { color: #fff; }
 @media (min-width: 480px) { .ev-game { flex-basis: 24%; } }
 /* #493 (owner): se revirtieron #490 y #492 (negro por defecto, pastilla +X% y íconos emoji): el menú fácil queda como antes. */
+/* ── #495: parpadeo del número de "jugando" cuando cambia ── */
+@keyframes gpTick { 0% { color: #22c55e; transform: scale(1.25); } 100% { color: #fff; transform: scale(1); } }
+.ev-game .gp b { display: inline-block; } .ev-game .gp b.tick { animation: gpTick .6s ease-out; }
 

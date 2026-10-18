@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 495. 🎰 Los "N jugando" del Inicio varían rato a rato — SW v346
+**Pedido (owner):** "los números de jugando que vayan variando rato a rato".
+**Qué se hizo:** cada 7 s cambia un grupo al azar de juegos (≈45 % de ellos), de a 1 a 9 personas hacia arriba o abajo, siempre
+entre 50 y 200, con un parpadeo verde del número; no cambia con la app en segundo plano.
+**Archivos:** `public/js/home.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 494. 🎰 Juegos del Inicio un poco más chicos — SW v345
 **Pedido (owner):** "lo de las fotos dejalo, pero achicá un poco más". Tarjetas al 36 % del ancho (máx. 160 px; 24 % en pantallas
 anchas), casi tres por pantalla; texto "N jugando" en 11 px.
