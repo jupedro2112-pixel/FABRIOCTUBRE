@@ -57,6 +57,11 @@ VIP.withdraw = (function () {
         input.value = fullPhone.replace(/^\+/, '');
     }
 
+    // #379: retiro mínimo configurable (llega en /api/platforms.withdrawMinArs; 10.000 si todavía no respondió).
+    function _withdrawMin() {
+        try { const d = VIP.home && VIP.home.platformsData; const n = Number(d && d.withdrawMinArs); if (Number.isFinite(n) && n > 0) return n; } catch (_) {}
+        return 10000;
+    }
     async function openWithdrawModal() {
         _clearError('withdrawError');
         _clearError('withdrawOtpPhoneError');
@@ -111,8 +116,10 @@ VIP.withdraw = (function () {
         const balEl = _el('withdrawBalanceAmount');
         if (balEl) balEl.textContent = '$' + _balance.toLocaleString('es-AR');
 
-        // Saldo por debajo del mínimo de retiro ($4.999) → bloquear el formulario y avisar.
-        if (_balance < 4999) {
+        // Saldo por debajo del mínimo de retiro (Config, #379: $10.000 por defecto) → bloquear el formulario y avisar.
+        const _wMin = _withdrawMin();
+        try { document.querySelectorAll('.wd-min').forEach((el) => { el.textContent = '$' + _wMin.toLocaleString('es-AR'); }); const ai = _el('withdrawAmount'); if (ai) { ai.min = String(_wMin); ai.placeholder = 'Ej: ' + _wMin.toLocaleString('es-AR'); } } catch (_) {}
+        if (_balance < _wMin) {
             const noBalance = _el('withdrawNoBalance');
             const form = _el('withdrawForm');
             if (noBalance) noBalance.style.display = '';
@@ -134,8 +141,8 @@ VIP.withdraw = (function () {
             _showError('withdrawError', 'Completá titular, CVU/CBU y alias.');
             return;
         }
-        if (!amount || amount < 4999) {
-            _showError('withdrawError', 'El monto mínimo de retiro es $4.999.');
+        if (!amount || amount < _withdrawMin()) {
+            _showError('withdrawError', 'El monto mínimo de retiro es $' + _withdrawMin().toLocaleString('es-AR') + '.');
             return;
         }
         if (amount > _balance) {

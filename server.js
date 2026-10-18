@@ -5595,6 +5595,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       // #266: cartel "SERVICIO COMPLETO" del chat principal (texto editable en /sys_home_banner, {pct} de
       // Config['autoLoadBonusPct']). text === null ⇒ el comando se vació en COMANDOS → la app muestra sólo el título.
       minDeposit: await getMinDepositArs(), // #299
+      withdrawMinArs: await getWithdrawMinArs(), // #379: retiro mínimo (modal de retiro de la app)
       homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })(),
       // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
       entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
@@ -12065,8 +12066,9 @@ app.post('/api/movements/withdraw', authMiddleware, async (req, res) => {
     // Castear el monto: sin esto, un valor no numérico llegaba crudo a la
     // API de retiro. Se exige número finito y mínimo $100.
     const amountNum = Number(req.body && req.body.amount);
-    if (!amountNum || !isFinite(amountNum) || amountNum < 4999) {
-      return res.status(400).json({ error: 'El monto mínimo de retiro es $4.999' });
+    const _wMin = await getWithdrawMinArs(); // #379
+    if (!amountNum || !isFinite(amountNum) || amountNum < _wMin) {
+      return res.status(400).json({ error: 'El monto mínimo de retiro es $' + _wMin.toLocaleString('es-AR') });
     }
 
     // Si el usuario se registró por flujo rápido (sin OTP), exigir verificación
@@ -12185,8 +12187,9 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
     }
 
     const amountNum = Number(amount);
-    if (!amountNum || amountNum < 4999) {
-      return res.status(400).json({ error: 'El monto mínimo de retiro es $4.999' });
+    const _wMin = await getWithdrawMinArs(); // #379
+    if (!amountNum || amountNum < _wMin) {
+      return res.status(400).json({ error: 'El monto mínimo de retiro es $' + _wMin.toLocaleString('es-AR') });
     }
 
     const titularT = (typeof titular === 'string' ? titular : '').trim();
@@ -12450,6 +12453,15 @@ async function _isFirstRealDeposit(user) {
 // y en el paso 1 de la carga automática. Config['minDepositArs'], editable en COMANDOS → Bonos automáticos.
 // Es un AVISO al cliente: no bloquea acreditaciones (una transferencia menor igual se acredita).
 const MIN_DEPOSIT_ARS_DEFAULT = 5000;
+// #379 (owner 2026-10-18): RETIRO MÍNIMO (antes $4.999 fijo). Config['withdrawMinArs'], editable en COMANDOS → Bonos automáticos.
+const WITHDRAW_MIN_ARS_DEFAULT = 10000;
+async function getWithdrawMinArs() {
+  try {
+    const n = Number(await getConfig('withdrawMinArs', null));
+    if (Number.isFinite(n) && n >= 0 && n <= 10000000) return Math.round(n);
+  } catch (_) { /* fallback */ }
+  return WITHDRAW_MIN_ARS_DEFAULT;
+}
 async function getMinDepositArs() {
   try {
     const n = Number(await getConfig('minDepositArs', null));
@@ -12496,7 +12508,7 @@ const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica a
 
 app.get('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs(), canEdit: req.user.role === 'admin' });
+    res.json({ pct: await getInstallBonusPct(), enabled: await getInstallBonusEnabled(), cap: await getBonusCapConfig(), autoLoadPct: await getAutoLoadBonusPct(), firstDepositPct: await getFirstDepositBonusPct(), installGift: await getInstallGiftConfig(), minDepositArs: await getMinDepositArs(), withdrawMinArs: await getWithdrawMinArs(), canEdit: req.user.role === 'admin' });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Tope de los bonos automáticos (solo admin general).
@@ -12538,6 +12550,13 @@ app.post('/api/admin/install-bonus-config', authMiddleware, adminMiddleware, asy
       if (!Number.isFinite(al) || al < 0 || al > 500) return res.status(400).json({ error: 'El % de "servicio completo" tiene que ser un número entre 0 y 500.' });
       await Config.set('autoLoadBonusPct', Math.round(al), req.user.username);
       logger.info(`[home-banner] % de "servicio completo" cambiado a ${Math.round(al)}% por ${req.user.username}`);
+    }
+    // #379: retiro mínimo.
+    const wmRaw = req.body && req.body.withdrawMinArs;
+    if (wmRaw != null && wmRaw !== '') {
+      const wm = Number(wmRaw);
+      if (!Number.isFinite(wm) || wm < 0 || wm > 10000000) return res.status(400).json({ error: 'El retiro mínimo tiene que ser un monto entre 0 y 10.000.000.' });
+      await Config.set('withdrawMinArs', Math.round(wm), req.user.username);
     }
     // #299: carga mínima informativa.
     const mdRaw = req.body && req.body.minDepositArs;

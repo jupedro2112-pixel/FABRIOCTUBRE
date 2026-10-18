@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 379. 💸 Retiro mínimo $10.000 (configurable) · "pago automático" en el modal de retiro — SW v266, admin-sw v79
+**Pedido (owner):** "agregá al retiro mínimo 10.000, pago automático; ahora está en 5.000". El mínimo estaba
+hardcodeado en $4.999 (server y app). Ahora: `Config['withdrawMinArs']` (default **10.000**, `getWithdrawMinArs()`),
+editable en COMANDOS → Bonos automáticos (campo "💸 Retiro mínimo $", mismo POST `/api/admin/install-bonus-config`).
+El server lo exige en `POST /api/withdrawal/request` (y en la variante por chat) con el mensaje dinámico; la app lo
+recibe en `GET /api/platforms.withdrawMinArs` y lo usa en el modal de retiro (bloqueo por saldo, validación del monto,
+placeholder) y en el texto: "💸 Pago automático a tu CBU · Retiro mínimo $10.000".
+
 ### 378. 🃏 JUGAYGANA como tercera plataforma, "Próximamente" (igual que Ganamos) — SW v265
 **Pedido (owner):** "agregá en la app una nueva plataforma, también Próximamente: JUGAYGANA; te paso el logo".
 `src/platforms/jugaygana.js` = esqueleto con el mismo contrato que `ganamos.js` (API con `JUGAYGANA_API_URL/KEY`; sin

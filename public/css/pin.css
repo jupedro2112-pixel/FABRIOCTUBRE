@@ -662,3 +662,6 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .easy-view .dep-pending-strip { flex: 0 0 auto; margin: 0; }
 /* #377: firma de la persona de Soporte en las respuestas */
 .msg-who { font: 800 10.5px var(--p-font); color: var(--p-red); margin-bottom: 2px; letter-spacing: .2px; }
+/* #379: retiro: pago automático + mínimo */
+.wd-auto { margin: 4px 0 0 !important; font: 600 12px var(--p-font) !important; color: var(--p-muted) !important; }
+.wd-auto b { color: var(--p-text); }
