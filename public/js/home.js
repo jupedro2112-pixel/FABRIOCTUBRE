@@ -68,7 +68,7 @@
         document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
-        try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Fácil' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
+        try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Intermedio' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();
@@ -133,7 +133,7 @@
         setHomeMode(_modeFor(pref));
         setTimeout(maybeFirstDepositPopup, 900); // #488
         if (!opts || !opts.quiet) {
-            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú fácil activado. Lo cambiás cuando quieras desde Perfil.' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras desde Perfil.'), 'success'); } catch (_) {}
+            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras tocando INICIO.' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras tocando INICIO.'), 'success'); } catch (_) {}
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }

@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 521. 🔤 "Menú fácil" pasa a llamarse "Menú intermedio" (el básico sigue siendo Básico) — SW v367
+**Pedido (owner):** "al menú fácil ponele menú intermedio; el básico". Sólo cambian los textos que ve el cliente (selector, toast,
+"Cambiar menú · Intermedio"); los ids internos (`easy`, `vip_menu_pref`) siguen igual.
+
 ### 520. ☰ "Cambiar menú" arriba del Inicio — SW v366
 **Pedido (owner):** "en Inicio poné Cambiar menú". Pastilla `#changeMenuBtn` debajo de la barra, visible en los tres modos de Inicio
 (muestra el modo actual: · Básico / · Fácil / · Completo) y abre el selector. Oculta en Soporte y mientras el selector está abierto.
