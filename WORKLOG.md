@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 420. 🚪 Botón de ingreso: "Iniciar sesión", más chico — SW v291
+**Pedido (owner):** "en Entrá y enviá ya tu comprobante poné Iniciar sesión más chico".
+**Qué se hizo:** el texto del submit del login es "Iniciar sesión" en todos los puntos que lo escriben (HTML, los 4 restores
+de auth.js y `PUBLISHER_LOGIN_BTN_TEXT` de publisherwelcome.js, que era el "⚡ Entrá YA…" del modo publicista). CSS: botón
+más chico (13px, ancho al 56% centrado) y sin la animación/estilo llamativo `.publisher-cta`.
+**Archivos:** `public/index.html`, `public/js/auth.js`, `public/js/publisherwelcome.js`, `public/css/pin.css`,
+`public/firebase-messaging-sw.js`.
+
 ### 419. 🚪 Ingreso: cabecera y título más chicos · reseñas con el comentario a la vista · Soporte chico en la punta — SW v290
 **Pedido (owner):** "achicá todo lo de arriba y agregá el comentario de las reseñas de la gente y que soporte quede más
 abajo a la punta, así entra todo".

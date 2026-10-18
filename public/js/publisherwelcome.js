@@ -128,7 +128,7 @@ VIP.publisherWelcome = (function () {
     // Texto llamativo del botón de login cuando el visitante viene de publicista.
     // auth.js lo respeta en todos los puntos donde reescribe el textContent del
     // botón (estado idle / estado "Ingresando..." vuelve a este texto).
-    const PUBLISHER_LOGIN_BTN_TEXT = '⚡ Entrá YA y enviá tu comprobante de carga';
+    const PUBLISHER_LOGIN_BTN_TEXT = 'Iniciar sesión'; // #420 (owner): antes '⚡ Entrá YA y enviá tu comprobante de carga'
 
     // Aplica las customizaciones del login screen para visitantes de publicista:
     //   - reemplaza el texto del botón submit y lo estiliza llamativamente

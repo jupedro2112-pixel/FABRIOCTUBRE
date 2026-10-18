@@ -300,7 +300,7 @@ VIP.auth = (function () {
         // Texto del botón cuando NO está en estado idle (cargando, timeout, etc.).
         // En modo publicista mantenemos el texto custom para que el usuario nunca
         // vea "Ingresar a la Sala" — el flujo es coherente con la copy del welcome.
-        const idleLoginBtnText = window._publisherLoginBtnText || 'Ingresar a la Sala';
+        const idleLoginBtnText = window._publisherLoginBtnText || 'Iniciar sesión';
 
         if (loginBtn) { loginBtn.textContent = 'Ingresando...'; loginBtn.disabled = true; }
         errorDiv.classList.remove('show');
@@ -430,7 +430,7 @@ VIP.auth = (function () {
                 // ("Entrá YA..."). En modo OTP por SMS, el botón cambia para
                 // reflejar el siguiente paso. En el resto, vuelve al default.
                 const idleText = window._publisherLoginBtnText
-                    || (window._phoneLoginMode === 'otp' && loginMode === 'phone' ? '📱 Enviar código SMS' : 'Ingresar a la Sala');
+                    || (window._phoneLoginMode === 'otp' && loginMode === 'phone' ? '📱 Enviar código SMS' : 'Iniciar sesión');
                 loginBtn.textContent = idleText;
                 loginBtn.disabled = false;
             }
@@ -1407,7 +1407,7 @@ VIP.auth = (function () {
             // Reset phone login mode to password
             window._phoneLoginMode = 'password';
             if (passwordGroup) passwordGroup.style.display = '';
-            if (submitBtn) submitBtn.textContent = 'Ingresar a la Sala';
+            if (submitBtn) submitBtn.textContent = 'Iniciar sesión';
             if (submitBtn) submitBtn.style.display = '';
             // Modo usuario: mostrar el sub-toggle y resetearlo a "Contraseña".
             if (usernameLoginModeToggle) usernameLoginModeToggle.classList.remove('hidden');
@@ -1651,7 +1651,7 @@ window.switchPhoneLoginMode = function(mode) {
         if (otpBtn) { otpBtn.style.background = 'rgba(212,175,55,0.2)'; otpBtn.style.color = '#d4af37'; otpBtn.style.fontWeight = '600'; }
     } else {
         if (passwordGroup) passwordGroup.style.display = '';
-        if (submitBtn) submitBtn.textContent = 'Ingresar a la Sala';
+        if (submitBtn) submitBtn.textContent = 'Iniciar sesión';
         if (otpStep) otpStep.classList.add('hidden');
         if (passwordBtn) { passwordBtn.style.background = 'rgba(212,175,55,0.2)'; passwordBtn.style.color = '#d4af37'; passwordBtn.style.fontWeight = '600'; }
         if (otpBtn) { otpBtn.style.background = 'transparent'; otpBtn.style.color = '#888'; otpBtn.style.fontWeight = 'normal'; }

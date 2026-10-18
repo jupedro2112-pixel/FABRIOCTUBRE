@@ -967,4 +967,6 @@ body.is-tester .profile-modal .pf-logout small { color: var(--p-muted) !importan
 .gs-bubble .gs-av { flex-basis: 36px; width: 36px; height: 36px; }
 .gs-bubble-t b { font-size: 12px; } .gs-bubble-t small { display: none; }
 @media (max-height: 700px) { .lg-app .lg-title { font-size: 18px; } .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
+/* ── #420 (owner): botón de ingreso "Iniciar sesión", más chico y sin el estilo llamativo de publicista ── */
+.lg-app .lg-form .btn-primary.lg-login-btn, .lg-app .lg-form .btn-primary.publisher-cta { padding: 9px 12px !important; font-size: 13px !important; font-weight: 700 !important; width: auto !important; min-width: 56%; margin: 2px auto 4px !important; display: block; animation: none !important; box-shadow: none !important; }
 
