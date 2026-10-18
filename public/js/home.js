@@ -359,7 +359,8 @@
     // webs públicas; después se re-renderiza con la lista real (misma URL ⇒ no se recarga el iframe).
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
-        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos.png' }
+        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos.png' },
+        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: false, logoUrl: '/images/jugaygana.png' } // #378
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
@@ -543,7 +544,7 @@
         }
         _slidesStop();
         const url = p.playUrl || p.externalUrl || '';
-        if (!url) { _entryStatus((p.name || 'Esa plataforma') + ' todavía no está disponible.', false); return; }
+        if (!url) { _entryStatus((p.name || 'Esa plataforma') + (p.connected === false ? ' · Próximamente ✨' : ' todavía no está disponible.'), false); return; } // #378: sin web pública aún
         f.style.display = '';
         if (url === _entryUrl && f.getAttribute('src') === url) return;
         _entryUrl = url;
@@ -692,7 +693,7 @@
     function _platName(pid) {
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find((x) => x.id === pid);
-        return p ? p.name : (pid === 'ganamos' ? 'Ganamos' : 'Girox');
+        return p ? p.name : (pid === 'ganamos' ? 'Ganamos' : (pid === 'jugaygana' ? 'JUGAYGANA' : 'Girox'));
     }
     function showPlayNow(opts) {
         const o = opts || {};

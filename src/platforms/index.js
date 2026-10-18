@@ -31,7 +31,8 @@ const Config = require('../models/Config');
 
 const ADAPTERS = {
   girox: require('./girox'),
-  ganamos: require('./ganamos')
+  ganamos: require('./ganamos'),
+  jugaygana: require('./jugaygana') // #378: esqueleto, "Próximamente" hasta tener API
 };
 
 const DEFAULT_ID = 'girox';
@@ -42,7 +43,9 @@ const CONFIG_KEY = 'platforms';
 const DEFAULT_ITEMS = {
   girox:   { enabled: true, name: 'Girox',   emoji: '🎰', order: 1, externalUrl: '', logoUrl: '/images/soporte-1girox.png' },
   // #298 (owner): Ganamos HABILITADA y visible, pero sin API se muestra "Próximamente" y no se puede elegir (connected=false).
-  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.png' } // #350: logo real (pica violeta)
+  ganamos: { enabled: true, name: 'Ganamos', emoji: '🎲', order: 2, externalUrl: 'https://www.ganamosvip.me', logoUrl: '/images/ganamos.png' }, // #350: logo real (pica violeta)
+  // #378 (owner 2026-10-18): JUGAYGANA visible como "Próximamente" (sin API ni web pública todavía; la URL se carga en el panel).
+  jugaygana: { enabled: true, name: 'JUGAYGANA', emoji: '🃏', order: 3, externalUrl: '', logoUrl: '/images/jugaygana.png' }
 };
 
 const DEFAULT_SETTINGS = {

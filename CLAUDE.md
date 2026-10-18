@@ -58,8 +58,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
 - `src/services/giroxPublisherKeys.js` — alta de jugadores con la API key del publicista.
 - `src/utils/periodRanges.js` — rangos de fecha (ayer / semana / mes) en hora argentina.
 - `src/platforms/` — **multi-plataforma (2026-10-16):** registro (`index.js`), adaptador girox
-  (envoltura de giroxService) y **esqueleto de Ganamos** (`ganamos.js`, mismo contrato, sin API
-  hasta cargar `GANAMOS_API_URL`/`GANAMOS_API_KEY`). Checklist para conectarla: `docs/PLATFORMS.md`.
+  (envoltura de giroxService), **esqueleto de Ganamos** (`ganamos.js`, mismo contrato, sin API
+  hasta cargar `GANAMOS_API_URL`/`GANAMOS_API_KEY`) **y de JUGAYGANA** (`jugaygana.js`, #378, ídem con `JUGAYGANA_*`;
+  logo en `public/images/jugaygana.png`). Checklist para conectarla: `docs/PLATFORMS.md`.
 - `jugaygana*.js` + `referralRevenueService.js` + `jugayganaUserLinkService.js` —
   **muertos**, sin consumidores. Ver la nota de migración arriba.
 - `src/models/` — schemas Mongoose canónicos (fuente de verdad). `Story.js` (#361) = HISTORIAS de la app que

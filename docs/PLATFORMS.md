@@ -31,6 +31,7 @@
 | `src/platforms/index.js` | Registro: `getAdapter(id)`, `listEnabled()`, `decideForDeposit(user)`, `resolveDefaultFor(user)`, `getSettings()/saveSettings()` (Config['platforms'], cache 30 s), `labelOf(id)`. |
 | `src/platforms/girox.js` | Adaptador girox = envoltura fina de `giroxService` (+ `id`, `isConnected`, `capabilities`). |
 | `src/platforms/ganamos.js` | **Esqueleto** de Ganamos con el mismo contrato. `isConnected()` = `GANAMOS_API_URL` + `GANAMOS_API_KEY` presentes. Sin eso, todo devuelve `not_configured`. |
+| `src/platforms/jugaygana.js` | **Esqueleto** de JUGAYGANA (#378, copia del de Ganamos): `JUGAYGANA_API_URL` + `JUGAYGANA_API_KEY`; sin web pública por defecto (se carga en el panel). Mismo checklist que §4 cambiando el prefijo. |
 | `server.js` | `_platformAskUser`, `_platformRedirectUser`, `_resolvePlatformChoice`, `_resolvePlatformChoiceMessage`, `_platformChoiceTick`, `_hgcashCreditToPlatform` (segunda mitad de `hgcashAutoCarga`), `_bonusMultiplierFor`, `_sendUserSystemMessage`; endpoints `GET /api/platforms`, `POST /api/platform-choice`, `POST /api/admin/hgcash/movements/:id/platform`, `GET /api/admin/users/:id/platform-pending`, `GET/POST /api/admin/platforms`. |
 | `public/js/chat.js` | Render de los botones (`_renderPlatformWidget`), `choosePlatform`, `markPlatformChoiceResolved`. CSS en `public/css/chat.css` (`.plat-*`). |
 | `public/adminprivado2026/` | `populateDepositPlatforms`, `loadPlatformBanner`, `agentChoosePlatform`, `loadPlatformsCfg/savePlatformsCfg`; etiquetas hgcash `awaiting_platform` / `redirected`. |

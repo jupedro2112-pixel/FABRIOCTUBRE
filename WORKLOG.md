@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-17
 
+### 378. 🃏 JUGAYGANA como tercera plataforma, "Próximamente" (igual que Ganamos) — SW v265
+**Pedido (owner):** "agregá en la app una nueva plataforma, también Próximamente: JUGAYGANA; te paso el logo".
+`src/platforms/jugaygana.js` = esqueleto con el mismo contrato que `ganamos.js` (API con `JUGAYGANA_API_URL/KEY`; sin
+eso `isConnected()` false → "Próximamente", no se puede elegir ni se ofrece al cargar). Registrada en
+`src/platforms/index.js` (`ADAPTERS` + `DEFAULT_ITEMS`: habilitada, orden 3, emoji 🃏, logo `/images/jugaygana.png`,
+sin web pública por ahora — se carga en el panel → Configuración → Plataformas → URL externa cuando el owner la pase).
+Como `_normalizeSettings` completa los ids que falten con los defaults, la config guardada en producción la toma sola.
+PWA: pestaña nueva en el Inicio con "Próximamente" (sin URL muestra "JUGAYGANA · Próximamente" en el recuadro),
+tarjeta en Plataformas de la carga automática, `ENTRY_FALLBACK` y `_platName` con el id nuevo. Logo: el wordmark "JUGAyGANA" que pasó el owner, centrado en un cuadrado negro redondeado (`public/images/jugaygana.png`, 512 px).
+
 ### 377. 💬 SOPORTE paralelo: chat nuevo para el cliente (el viejo queda oculto), columna "Soporte" en el panel, la persona rota cada 8 h — SW v264, admin-sw v78
 **Pedido (owner):** "sacá el chat de soporte, ocultalo y armá uno paralelo; implementá un soporte y una nueva columna en
 el admin para ese chat de Martín; que la persona rote de nombre cada 8 hs: Martín, Sofía y Agustina".
