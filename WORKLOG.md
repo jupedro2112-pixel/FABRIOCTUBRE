@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 451. 📖 Historia de Soporte con los nombres de las 3 personas
+**Pedido (owner):** "en la última foto de Martín de las historias, como son 3 personas, publicá el nombre de las 3".
+**Qué se hizo:** la 4ª historia (foto de Soporte) ahora dice "💬 Cualquier duda, consulta o problema, hablá con Soporte:
+Martín, Sofía y Agustina te responden a los minutos. ¡Gracias por confiar en PICA ROJA!" — actualizada en Render con
+`PATCH /api/admin/stories/:id` (la historia es la misma, no se recreó) y en el seed de server.js para bases nuevas. Los
+nombres son los de `/sys_support_names`; si cambian, editar la historia desde el panel → Historias.
+**Archivos:** `server.js`.
+
 ### 450. ⭐ Modal "Tu opinión" con el estilo de la app — SW v320
 **Pedido (owner, con captura):** "esto cambialo adentro de dar tu opinión" (venía con el tema viejo: violeta, borde dorado,
 botón amarillo).
