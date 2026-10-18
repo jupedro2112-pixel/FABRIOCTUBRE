@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 425. 📝 La ENTRADA CON NOMBRE es la forma de registro (default 'quick'); fuera "Crear mi cuenta" — SW v297, admin-sw v90
+**Pedido (owner, con captura):** "dejalo así y sacá el registro; es para que la gente desde esta página inicial se registre
+automáticamente poniendo un nombre, quiero que sea la forma de registro".
+**Qué se hizo:** `getRegistrationMode()` default → `'quick'` y `Config['registrationMode']='quick'` seteado en Render por API.
+En el inicio desaparecen "¿Primera vez acá?" y "📝 Crear mi cuenta" (el modal de registro con SMS queda en el código pero
+sin acceso desde la pantalla). Quedan: "Tu nombre → Entrar", "Ya tengo cuenta · Iniciar sesión", "Olvidé mi contraseña",
+"Soporte". El tilde del panel pasa a decir "Registro con SMS … en vez de la entrada con el nombre" (destildado = modo actual).
+⚠️ Recordatorio A1 (#413): las cuentas nacen con la clave inicial de la landing; la ven en Perfil y pueden cambiarla.
+**Archivos:** `server.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`,
+`public/adminprivado2026/index.html`, `public/admin-sw.js`.
+
 ### 424. 🚪 Ingreso: tarjetas de beneficios (VIP · Reembolsos · Elegí dónde jugar · Referidos) con íconos de línea — SW v296
 **Pedido (owner):** "reembolsos diarios, semanal, mensual, y sobre las plataformas 'elegí dónde jugar', al principio
 Programa VIP y al final Sistema de referidos; prolijo, con íconos estilo Pinterest, sin íconos de WhatsApp, todo en una

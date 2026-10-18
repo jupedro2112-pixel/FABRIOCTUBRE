@@ -1003,4 +1003,7 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-app .lg-sub { display: none; }                /* las tarjetas reemplazan la bajada: una sola pantalla */
 .lg-app .lg-title { font-size: 18px; }
 @media (max-height: 700px) { .lg-fc small { display: none; } .lg-fc-wide small { display: block; } .lg-feat { gap: 5px; } .lg-fc { padding: 7px 9px; } }
+/* ── #425 (owner): la ENTRADA CON NOMBRE es la forma de registro → fuera "¿Primera vez acá? / Crear mi cuenta" (registro con SMS) ── */
+.lg-app .lg-alt .lg-alt-q, .lg-app .lg-alt .lg-register { display: none !important; }
+body.reg-quick .lg-quick-alt { display: inline-block; }
 

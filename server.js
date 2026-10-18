@@ -4505,7 +4505,8 @@ app.post('/api/landing/signup', landingIpLimiter, _landingSignupHandler);
 // plataformas con la misma lógica de la landing, campaña orgánica INGRESO, y se le entrega un link de acceso que la app
 // canjea sola = autologin). Tilde en Configuración → "Registro de clientes".
 async function getRegistrationMode() {
-  try { const v = await getConfig('registrationMode', 'sms'); return v === 'quick' ? 'quick' : 'sms'; } catch (_) { return 'sms'; }
+  // #425 (owner): default 'quick' — la entrada con el nombre ES la forma de registro; 'sms' queda como opción del tilde.
+  try { const v = await getConfig('registrationMode', 'quick'); return v === 'sms' ? 'sms' : 'quick'; } catch (_) { return 'quick'; }
 }
 app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res) => {
   try {

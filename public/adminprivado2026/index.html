@@ -640,7 +640,7 @@ document.addEventListener('change', function (ev) {
                                 <b>Desactivado</b> = la pantalla de ingreso muestra <b>"Tu nombre → Entrar"</b> para TODOS: se crea la cuenta sola en las plataformas (misma lógica de la landing, campaña INGRESO, clave inicial) y la persona entra directo (autologin). "Ya tengo cuenta" sigue disponible.<br>
                                 <b>Links de publicidad (#422):</b> quien entra por un link de publicista ve SIEMPRE "Tu nombre → Entrar" (cuenta atribuida a esa campaña), sin importar el tilde. El inicio normal (sin link) respeta el tilde.</p>
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                                <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="regSmsChk" style="width:auto;" checked> Registro con SMS ACTIVADO</label>
+                                <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="regSmsChk" style="width:auto;"> Registro con SMS (usuario + clave + teléfono) en vez de la entrada con el nombre</label>
                                 <button class="btn-primary btn-small" id="regModeSaveBtn" onclick="saveRegistrationMode()"><span class="icon icon-save"></span> Guardar</button>
                                 <span id="regModeState" style="font-size:11.5px;color:#9ab;"></span>
                             </div>
