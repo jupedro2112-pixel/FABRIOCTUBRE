@@ -1316,4 +1316,17 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ev-frame-wrap { min-height: 130px !important; }
 #entryReviews.ev-reviews { padding: 4px 8px 6px !important; gap: 3px !important; }
 .ev-easy-link { padding: 2px 8px !important; }
+/* ── #488: cartel BONO DE PRIMERA CARGA ── */
+.fd-modal .fd-card { max-width: 360px !important; text-align: center; padding: 22px 20px 16px !important; }
+.fd-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 6px; box-shadow: 0 6px 18px rgba(230,0,35,.18); }
+.fd-brand { font: 900 13px var(--p-font); letter-spacing: 2px; color: var(--p-red); }
+.fd-kicker { font: 800 11px var(--p-font); letter-spacing: 1.6px; color: var(--p-muted); margin-top: 10px; }
+.fd-big { display: flex; flex-direction: column; align-items: center; margin: 4px 0 10px; }
+.fd-big b { font: 900 56px/1 var(--p-font); color: var(--p-red); letter-spacing: -1px; }
+.fd-big small { font: 700 13px var(--p-font); color: var(--p-text); margin-top: 4px; }
+.fd-app { display: flex; align-items: center; gap: 10px; background: var(--p-red-soft); border-radius: 14px; padding: 10px 12px; text-align: left; font: 600 13px/1.35 var(--p-font); color: var(--p-text); }
+.fd-app i { font-style: normal; font-size: 22px; } .fd-app b { color: var(--p-red); font-size: 18px; }
+.fd-txt { font: 600 12px/1.45 var(--p-font); color: var(--p-muted); margin: 10px 0 12px; }
+.fd-btn { width: 100%; }
+.fd-later { border: 0; background: transparent; color: var(--p-muted); font: 700 12px var(--p-font); padding: 10px; cursor: pointer; }
 

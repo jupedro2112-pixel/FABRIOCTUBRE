@@ -55,7 +55,8 @@
 
     function getHomeMode() { return _homeMode; }
     function setHomeMode(mode, opts) {
-        _applyMenuLayout(); // #482: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
+        _applyMenuLayout(); // #482
+        setTimeout(function () { try { if (!document.body.classList.contains('mc-open')) maybeFirstDepositPopup(); } catch (_) {} }, 1500); // #488: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
         mode = (mode === 'full' || mode === 'mini' || mode === 'easy') ? mode : 'play';
         _homeMode = mode;
         const p = _el('supportPanel');
@@ -120,11 +121,29 @@
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
         closeMenuChooser();
         setHomeMode(pref === 'easy' ? 'easy' : 'play');
+        setTimeout(maybeFirstDepositPopup, 900); // #488
         if (!opts || !opts.quiet) {
             try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú fácil activado. Lo cambiás cuando quieras desde Perfil.' : '🧭 Menú completo activado. Lo cambiás cuando quieras desde Perfil.', 'success'); } catch (_) {}
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }
+    // #488: cartel BONO DE PRIMERA CARGA al entrar (quien no cargó nunca), una vez por sesión, después de elegir el menú.
+    let _fdShown = false;
+    async function maybeFirstDepositPopup() {
+        if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
+        const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
+        _fdShown = true;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { Authorization: 'Bearer ' + tok } }); const j = await r.json();
+            if (!j || !j.show) return;
+            const p = _el('fdPct'), pa = _el('fdPctApp'), ap = _el('fdApp'), tx = _el('fdTxt');
+            if (p) p.textContent = j.pct + '%'; if (pa) pa.textContent = j.pctApp + '%'; if (ap) ap.style.display = j.installGiftEnabled ? '' : 'none'; if (tx) tx.textContent = j.text || '';
+            try { sessionStorage.setItem('vip_fd_seen', '1'); } catch (_) {}
+            VIP.ui.showModal('fdModal');
+        } catch (_) {}
+    }
+    function fdClose() { try { VIP.ui.hideModal('fdModal'); } catch (_) { const m = _el('fdModal'); if (m) m.classList.add('hidden'); } }
+    function fdGo() { fdClose(); try { easyLoad(); } catch (_) { setHomeMode('full'); } }
     function openMenuChooser() {
         const m = _el('menuChooser'); if (!m) return;
         m.classList.add('open'); document.body.classList.add('mc-open');
@@ -1742,7 +1761,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

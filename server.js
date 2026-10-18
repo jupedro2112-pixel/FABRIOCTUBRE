@@ -13431,6 +13431,19 @@ app.post('/api/install-bonus/claim', authMiddleware, async (req, res) => {
 // ============================================
 // #283: CARGA GRATIS por instalar la app (primera carga) — estado / posponer / reclamar
 // ============================================
+// #488 (owner): cartel al entrar "BONO DE PRIMERA CARGA: X% · Y% instalando la app" para quien todavía no hizo su primera carga real.
+// X = Config['firstDepositBonusPct']; Y = X + % extra por instalar (Config['installGift'], si está activo). Texto editable: /sys_first_deposit_popup.
+app.get('/api/first-deposit-promo', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const n = await Transaction.countDocuments({ userId, type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } });
+    const pct = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig();
+    const extra = ig && ig.enabled ? (Number(ig.pct) || 0) : 0; const pctApp = pct + extra;
+    const text = await renderSystemCommand('/sys_first_deposit_popup', 'Tu primera carga viene con {pct}% de regalo. Si la hacés desde la app instalada, {pctApp}%.', { pct, pctApp, extra });
+    res.set('Cache-Control', 'no-store');
+    res.json({ show: n === 0 && pct > 0, pct, pctApp, extra, installGiftEnabled: extra > 0, text });
+  } catch (e) { res.json({ show: false }); }
+});
 app.get('/api/install-gift/status', authMiddleware, async (req, res) => {
   try {
     const user = await User.findOne({ id: req.user.userId }).lean();

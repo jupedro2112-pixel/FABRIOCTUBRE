@@ -1444,6 +1444,20 @@
                     <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn btn-secondary" style="width:100%;" onclick="hideModal('easyPlatModal')">Cerrar</button></div>
                 </div>
             </div>
+            <!-- #488 (owner): cartel de entrada BONO DE PRIMERA CARGA (X% · Y% instalando la app) con el logo de la marca; sólo para quien
+                 todavía no cargó. Una vez por sesión (sessionStorage vip_fd_seen). home.js: maybeFirstDepositPopup / fdGo / fdClose. -->
+            <div id="fdModal" class="modal hidden refund-simple profile-modal fd-modal" onclick="if(event.target === this) VIP.home.fdClose()">
+                <div class="modal-content fd-card" onclick="event.stopPropagation()">
+                    <img src="/icons/icon-192x192.png" class="fd-logo" alt="PICA ROJA" width="64" height="64">
+                    <div class="fd-brand">PICA ROJA</div>
+                    <div class="fd-kicker">BONO DE PRIMERA CARGA</div>
+                    <div class="fd-big"><b id="fdPct">50%</b><small>de regalo en tu primera carga</small></div>
+                    <div class="fd-app" id="fdApp"><i>📲</i><span><b id="fdPctApp">100%</b> si la hacés desde la app instalada</span></div>
+                    <p class="fd-txt" id="fdTxt"></p>
+                    <button type="button" class="btn btn-primary fd-btn" onclick="VIP.home.fdGo()">Cargar ahora ›</button>
+                    <button type="button" class="fd-later" onclick="VIP.home.fdClose()">Ahora no</button>
+                </div>
+            </div>
             <div id="vipLevelsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('vipLevelsModal')">
                 <div class="modal-content" onclick="event.stopPropagation()">
                     <div class="modal-header"><h2>👑 Niveles VIP</h2></div>
@@ -2352,7 +2366,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v337</div>
+                    <div class="pf-build" id="appBuildTag">app v338</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

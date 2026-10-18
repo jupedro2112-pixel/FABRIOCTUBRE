@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 488. 🎁 Cartel de entrada "BONO DE PRIMERA CARGA": 50 % · 100 % instalando la app, con el logo — SW v338
+**Pedido (owner, con captura de otra casa):** "para la gente cuando entra que aparezca primera carga un 100 % instalando la app,
+si no un 50 %, con el logo de PICA ROJA".
+**Qué se hizo:** `GET /api/first-deposit-promo` (auth) → `show` sólo si el cliente no tiene ninguna carga real; `pct` =
+`Config['firstDepositBonusPct']`, `pctApp` = pct + % extra por instalar (`Config['installGift']` si está activo); texto editable
+`/sys_first_deposit_popup` ({pct}, {pctApp}). PWA: `#fdModal` (logo redondo, "PICA ROJA", "BONO DE PRIMERA CARGA", % grande en
+rojo, pastilla "📲 Y% si la hacés desde la app instalada", botón "Cargar ahora" → carga automática, "Ahora no"), estilo de la
+página. Se muestra una vez por sesión (`sessionStorage vip_fd_seen`), después de elegir el menú (o al pintar el Inicio si el
+selector no aparece). Nada hardcodeado: los % salen del panel (COMANDOS → Bonos automáticos: primera carga; % extra por instalar).
+**Archivos:** `server.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 487. 💬 Datos IA habla como el owner: VENTA = netwin (depósitos − retiros) · inversión en dólares · REAL vs ESTIMACIÓN — admin-sw v108
 **Pedido (owner, con captura):** "¿está confirmado que desde que empezó vendió 213.861? Detallame bien: netwin es venta; depósitos,
 retiros y venta. La inversión es en USD nomás, la venta es todo en pesos, hacé que se pueda configurar. La venta no es depósitos,
