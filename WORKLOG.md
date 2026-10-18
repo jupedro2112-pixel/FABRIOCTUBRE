@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 426. ✅ Entrada con nombre: paso "¡Te registraste con éxito!" con usuario y clave, y recién después Entrar — SW v298
+**Pedido (owner):** "que si completo el nombre aparezcan los datos usuario y clave default asd123 como test; como siguiente
+paso, como que se registró con éxito".
+**Qué se hizo:** `VIP.auth.quickEntry` ya no entra solo: tras el alta muestra `#quickDone` (tilde verde, "¡Te registraste con
+éxito!", Usuario y Clave con botón Copiar, nota) y el botón **Entrar** (`VIP.auth.quickGo`) canjea el link de acceso y
+completa la sesión. Si el canje falla, cae a "Ya tengo cuenta" con los datos a la vista. **Para poder probarlo en Render (sin
+API de Girox):** `quick-entry` marca `req._allowNoApi` SÓLO en entorno de prueba (`RENDER` / `TESTER_ADMIN_PROMOTE`) y el
+handler de la landing entonces crea la cuenta LOCAL sin la plataforma (la tarjeta avisa "Modo prueba"); la landing y
+producción siguen exigiendo la API. ⚠️ La clave mostrada es la inicial de la landing (A1 de #413).
+**Archivos:** `server.js`, `public/index.html`, `public/js/auth.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 425. 📝 La ENTRADA CON NOMBRE es la forma de registro (default 'quick'); fuera "Crear mi cuenta" — SW v297, admin-sw v90
 **Pedido (owner, con captura):** "dejalo así y sacá el registro; es para que la gente desde esta página inicial se registre
 automáticamente poniendo un nombre, quiero que sea la forma de registro".

@@ -410,6 +410,16 @@
                 <div id="quickErr" class="gs-err"></div>
                 <button type="button" class="lg-quick-alt" onclick="document.body.classList.toggle('reg-quick-login')">Ya tengo cuenta · Iniciar sesión</button>
             </form>
+            <!-- #426 (owner): paso siguiente — "¡Te registraste con éxito!" con usuario y clave, y Entrar -->
+            <div id="quickDone" class="lg-quick-done" style="display:none;">
+                <span class="lg-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <b class="lg-done-t">¡Te registraste con éxito!</b>
+                <small class="lg-done-s">Guardá tus datos: con ellos entrás desde cualquier teléfono y a las plataformas.</small>
+                <div class="lg-cred"><span>Usuario</span><b id="quickUser">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickUser').textContent)}catch(e){}">Copiar</button></div>
+                <div class="lg-cred"><span>Clave</span><b id="quickPass">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickPass').textContent)}catch(e){}">Copiar</button></div>
+                <small class="lg-done-n" id="quickDoneNote"></small>
+                <button type="button" id="quickGoBtn" class="btn btn-primary lg-quick-btn" onclick="VIP.auth.quickGo()">Entrar</button>
+            </div>
             <!-- #417 (owner): el ingreso vuelve a como estaba (#414 lo había plegado); "Crear mi cuenta" abajo. -->
             <form id="loginForm" autocomplete="on">
                 <div style="display:none;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid rgba(212,175,55,0.3);">
@@ -2295,7 +2305,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v297</div>
+                    <div class="pf-build" id="appBuildTag">app v298</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

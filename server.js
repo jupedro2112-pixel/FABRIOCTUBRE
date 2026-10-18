@@ -4350,7 +4350,9 @@ async function _landingSignupHandler(req, res) {
 
     // #311 (owner): sin la Partner API conectada en este entorno no se puede crear la cuenta → se avisa con un
     // código y la landing sigue el recorrido en MODO PRUEBA (simula el paso 2, sin crear nada).
-    if (!girox.isEnabled()) {
+    // #426: la ENTRADA RÁPIDA en el entorno de PRUEBA (Render, sin Partner API) puede crear la cuenta LOCAL igual
+    // (req._allowNoApi) para probar el flujo; la landing y producción siguen exigiendo la API.
+    if (!girox.isEnabled() && !req._allowNoApi) {
       logger.warn(`[landing-signup] Partner API sin configurar: ${username} NO se creó (modo prueba en la landing)`);
       return res.status(503).json({ error: 'La plataforma todavía no está conectada en este entorno.', code: 'platform_not_configured' });
     }
@@ -4358,7 +4360,7 @@ async function _landingSignupHandler(req, res) {
     //    una cuenta local huérfana. Si la campaña tiene key de publicista, el
     //    jugador se crea bajo ESE sub-agente (si no, la comisión iría mal atribuida).
     let giroxOwner = null;
-    try {
+    if (girox.isEnabled()) try {
       const hasPubKey = await Campaign.hasGiroxApiKey(campaign.code);
       if (hasPubKey) {
         const r = await giroxPublisherKeys.createUserAsPublisher(campaign.code, { username, password });
@@ -4519,6 +4521,7 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     if (mode !== 'quick' && !code) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
     const name = String((req.body && req.body.name) || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
+    req._allowNoApi = !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1'); // #426: sólo entorno de prueba
     req.body = { name, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
       const fake = { _c: 200, status(c) { this._c = c; return this; }, json(b) { resolve({ code: this._c, body: b }); }, set() { return this; }, setHeader() { return this; }, cookie() { return this; }, end() { resolve({ code: this._c, body: {} }); } };

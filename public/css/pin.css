@@ -1006,4 +1006,15 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 /* ── #425 (owner): la ENTRADA CON NOMBRE es la forma de registro → fuera "¿Primera vez acá? / Crear mi cuenta" (registro con SMS) ── */
 .lg-app .lg-alt .lg-alt-q, .lg-app .lg-alt .lg-register { display: none !important; }
 body.reg-quick .lg-quick-alt { display: inline-block; }
+/* ── #426: "¡Te registraste con éxito!" — usuario + clave y Entrar ── */
+.lg-quick-done { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 4px 0 2px; }
+.lg-done-ico { width: 44px; height: 44px; border-radius: 50%; background: var(--p-green-soft); color: var(--p-green); display: flex; align-items: center; justify-content: center; }
+.lg-done-ico svg { width: 24px; height: 24px; }
+.lg-done-t { font: 800 17px var(--p-font); color: var(--p-text); }
+.lg-done-s { font: 500 11.5px/1.35 var(--p-font); color: var(--p-muted); }
+.lg-cred { width: 100%; display: flex; align-items: center; gap: 8px; background: var(--p-card); border-radius: 12px; padding: 8px 10px; text-align: left; }
+.lg-cred span { font: 700 10px var(--p-font); letter-spacing: .8px; text-transform: uppercase; color: var(--p-muted); min-width: 56px; }
+.lg-cred b { flex: 1; min-width: 0; font: 800 15px ui-monospace, Menlo, Consolas, monospace; color: var(--p-text); letter-spacing: .3px; overflow: hidden; text-overflow: ellipsis; }
+.lg-done-n { font: 500 10.5px var(--p-font); color: var(--p-muted); }
+.lg-quick-done .lg-quick-btn { width: 100%; margin-top: 2px !important; }
 
