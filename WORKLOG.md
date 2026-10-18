@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 430. 📱 Inicio = exactamente una pantalla de teléfono (sin scroll) · sin burbuja de Soporte — SW v302
+**Pedido (owner):** "achicalo al tamaño máximo de un teléfono en una pantalla y sacá soporte de abajo".
+**Qué se hizo (CSS):** `.login-screen` y la tarjeta miden `100dvh` con `overflow:hidden` (safe areas incluidas); cada bloque
+es de alto fijo y la sección de opiniones es flexible (`flex:1; min-height:0`): el carrusel toma el alto que sobra y las
+tarjetas se recortan a él (3 líneas de comentario). Título y tarjetas con `clamp()`. En pantallas ≤640 px se ocultan los
+beneficios y en ≤560 px las opiniones, para que registro y plataformas siempre entren. Pie oculto. La burbuja de Soporte
+para visitantes queda oculta (`.gs-bubble`); la columna "Visitantes" del panel sigue para los hilos existentes.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 429. 🚪 Inicio más compacto: beneficios en una fila de 3, registro y plataformas más chicos → las opiniones entran — SW v301
 **Pedido (owner, con captura):** "achicá todo eso así las opiniones entran en el principal".
 **Qué se hizo (sólo CSS):** cabecera y título más chicos; beneficios en UNA fila de tres tarjetas centradas sin bajada (VIP ·

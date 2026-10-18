@@ -1065,4 +1065,23 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; font-size: 11.5px !important; }
 .lg-app #loginReviews .rv-who b { font-size: 11px; }
 .lg-app .lg-foot { font-size: 9px; }
+/* ── #430 (owner): el inicio ocupa EXACTAMENTE una pantalla de teléfono (sin scroll); las opiniones toman el alto que sobra.
+   Sin burbuja de Soporte en el inicio. ── */
+.login-screen:has(.lg-app) { height: 100dvh; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; align-items: stretch !important; }
+.login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
+.lg-app > * { flex: 0 0 auto; }
+.lg-app .lg-title { font-size: clamp(14px, 4.3vw, 16.5px); }
+.lg-fc { padding: 6px 4px; } .lg-fc b { font-size: clamp(9.5px, 2.7vw, 10.5px); }
+.lg-quick input { padding: 8px 12px !important; font-size: 14px !important; } .lg-app .lg-quick-btn { padding: 9px !important; font-size: 14px !important; }
+.lg-play-box { padding: 6px 9px 7px; }
+.lg-app .lg-sec-reviews { flex: 1 1 auto !important; min-height: 0; display: flex; flex-direction: column; margin: 0; }
+.lg-app #loginReviews { flex: 1 1 auto; min-height: 0; display: flex !important; flex-direction: column; gap: 3px; }
+.lg-app #loginReviews .rv-row { flex: 1 1 auto; min-height: 0; display: flex; }
+.lg-app #loginReviews .rv-track { flex: 1 1 auto; min-height: 0; align-items: stretch; padding-bottom: 2px; }
+.lg-app #loginReviews .rv-card { height: auto; max-height: 100%; overflow: hidden; }
+.lg-app #loginReviews .rv-text { -webkit-line-clamp: 3; }
+.lg-app .lg-foot { display: none !important; }
+.gs-bubble { display: none !important; }   /* #430: sin Soporte en el inicio (la columna Visitantes del panel sigue para los hilos existentes) */
+@media (max-height: 640px) { .lg-feat { display: none; } }
+@media (max-height: 560px) { .lg-app .lg-sec-reviews { display: none !important; } }
 
