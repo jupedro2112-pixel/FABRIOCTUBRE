@@ -1101,4 +1101,9 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #433: "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" bajo el título ── */
 .lg-claim { margin: -4px 0 0 !important; font: 800 clamp(10.5px, 3vw, 12px) var(--p-font); letter-spacing: 1.1px; color: var(--p-text); text-transform: uppercase; }
 .lg-claim::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--p-green); margin: 0 6px 1px 0; }
+/* ── #434: fila prioritaria "Carga automática y atención personalizada" ── */
+.lg-fc-top { background: var(--p-red-soft); }
+.lg-fc-top .lg-fi { background: var(--p-red); color: #fff; }
+.lg-fc-top b { color: var(--p-text); }
+@media (max-height: 720px) { .lg-fc:not(.lg-fc-top) small { display: none !important; } }
 

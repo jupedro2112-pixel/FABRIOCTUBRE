@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 434. 🚪 "Carga automática y atención personalizada" como prioridad arriba de los beneficios — SW v306
+**Pedido (owner):** "Carga automática y atención personalizada poné como prioridad arriba".
+**Qué se hizo:** primera fila de `.lg-feat` (`.lg-fc-top`, fondo rojo suave, ícono rayo en rojo) con esa frase y la bajada
+"Transferís, mandás el comprobante y se acredita solo · una persona te atiende". En pantallas ≤720 px las bajadas de las
+otras filas se ocultan y la de ésta se mantiene.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 433. 🚪 "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" debajo del título — SW v305
 **Pedido (owner):** "agregá abajo del texto 'en el momento': CARGAS Y PAGOS LAS 24 HS SIN LÍMITES".
 **Qué se hizo:** `<p class="lg-claim">` bajo el `h1` (mayúsculas, 800, punto verde delante, tamaño con `clamp`).
