@@ -1107,9 +1107,23 @@
                  ver la plataforma + ayuda por chat. La preferencia (fácil o completo) vive en localStorage
                  vip_menu_pref y se elige en #menuChooser la primera vez (o desde Perfil). home.js: _easyPaint. ===== -->
             <div id="easyView" class="easy-view" aria-label="Menú fácil">
+                <!-- #448 (owner): avatar de perfil + nombre, y se expande ("ver más") con usuario, nivel, código y accesos -->
                 <div class="ez-top">
-                    <div class="ez-hello"><span id="easyHello">Hola</span><small>¿Qué querés hacer hoy?</small></div>
+                    <button type="button" class="ez-hello ez-hello-btn" id="ezHelloBtn" onclick="VIP.home.easyToggleMore()" aria-expanded="false" title="Ver más">
+                        <span class="ez-av" id="easyAvatar">👤</span>
+                        <span class="ez-hello-t"><span id="easyHello">Hola</span><small>¿Qué querés hacer hoy?</small></span>
+                        <span class="ez-chev" aria-hidden="true">▾</span>
+                    </button>
                     <div class="ez-bal"><small>Tu saldo</small><b id="easyBalance">$0</b></div>
+                </div>
+                <div class="ez-more" id="ezMore" hidden>
+                    <div class="ez-more-row"><span>Usuario</span><b id="ezMoreUser">—</b></div>
+                    <div class="ez-more-row"><span>Nivel</span><b id="ezMoreLvl">—</b></div>
+                    <div class="ez-more-row"><span>Tu código</span><b id="ezMoreCode">—</b></div>
+                    <div class="ez-more-actions">
+                        <button type="button" onclick="VIP.home.openProfile()">Ver mi perfil</button>
+                        <button type="button" onclick="VIP.home.openVipLevels()">Niveles VIP</button>
+                    </div>
                 </div>
                 <div class="dep-pending-strip" hidden></div>
                 <button type="button" class="ez-main" onclick="VIP.home.easyLoad()" title="Carga automática">
@@ -2315,7 +2329,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v318</div>
+                    <div class="pf-build" id="appBuildTag">app v319</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

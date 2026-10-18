@@ -406,9 +406,29 @@
     }
     function _avatarEmoji(key) { const o = _avatarOptions().find((x) => x.key === key); return o && !o.locked ? o.emoji : null; }
     function _defaultAvatar() { const v = VIP.state && VIP.state.vipStatus; return (v && v.level && v.level.emoji) || '👤'; }
+    // #448: cabecera del Menú fácil — "ver más" con usuario, nivel y código
+    function easyToggleMore() {
+        const box = _el('ezMore'), btn = _el('ezHelloBtn'); if (!box) return;
+        const open = box.hidden; box.hidden = !open;
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (!open) return;
+        const u = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '—';
+        const eu = _el('ezMoreUser'); if (eu) eu.textContent = u;
+        const v = VIP.state && VIP.state.vipStatus; const el = _el('ezMoreLvl'); if (el) el.textContent = v && v.level ? (v.level.emoji + ' ' + v.level.name) : 'Sin nivel todavía';
+        const ec = _el('ezMoreCode');
+        if (ec) {
+            if (_pfRefCode) ec.textContent = _pfRefCode;
+            else if (VIP.state && VIP.state.currentToken) {
+                ec.textContent = '…';
+                fetch(VIP.config.API_URL + '/api/referrals/me', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }).then((r) => (r.ok ? r.json() : null))
+                    .then((me) => { if (me && me.referralCode) { _pfRefCode = String(me.referralCode); ec.textContent = _pfRefCode; } else ec.textContent = '—'; }).catch(() => { ec.textContent = '—'; });
+            }
+        }
+    }
     function _paintAvatar() {
         const em = (_avatar && _avatarEmoji(_avatar)) || _defaultAvatar();
         const a = _el('pfAvatar'); if (a) a.textContent = em;
+        const ea = _el('easyAvatar'); if (ea) ea.textContent = em; // #448
         const n = _el('pfUserName'); if (n) n.textContent = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '—';
         const v = VIP.state && VIP.state.vipStatus;
         const lv = _el('pfUserLvl'); if (lv) { lv.textContent = v && v.level ? ('Nivel ' + v.level.emoji + ' ' + v.level.name) : 'Jugador · sin nivel todavía'; lv.style.color = (v && v.level && v.level.color) || ''; }
@@ -1680,7 +1700,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyToggleMore, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 449. 🧹 Entrada: fuera el rótulo "GIROX · LA APP QUE PAGA", recuadro más chico — SW v319
+**Pedido (owner, con captura):** "eso de Girox la app que paga sacalo y achicá el recuadro".
+**Qué se hizo (pin.css):** `.ev-hero-k` oculto; `.ev-hero` con menos padding y el texto "La única app que paga todo en el
+momento, sin tope, las 24 hs" a 12,5px.
+
+### 448. 👤 Menú fácil: avatar de perfil + nombre, desplegable "ver más" — SW v319
+**Pedido (owner, con captura):** "donde dice Hola y dj poné logo de perfil y el nombre, y que se pueda expandir desde ahí tipo
+ver más abajo; el '¿qué querés hacer hoy?' dejalo".
+**Qué se hizo:** la cabecera `.ez-top` ahora es un botón (`#ezHelloBtn`) con el avatar del Perfil (`#easyAvatar`, lo pinta
+`_paintAvatar`), "Hola, usuario", la bajada de siempre y un chevron. Al tocar se despliega `#ezMore` (usuario, nivel VIP,
+tu código de referido) con botones "Ver mi perfil" y "Niveles VIP" (`VIP.home.easyToggleMore`). El saldo queda a la derecha.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 447. 💸 Detalle de reembolsos en el inicio: sólo el % del diario — SW v318
 **Pedido (owner):** "el detalle en inicio de los reembolsos: no pongas cuánto en el semanal y mensual, dejá sólo el diario".
 **Qué se hizo:** en la fila de beneficios del ingreso (loginhero), en el servicio Reembolso de la pantalla de entrada y en el
