@@ -10324,6 +10324,7 @@ app.post('/api/admin/bonus', authMiddleware, depositorMiddleware, async (req, re
         amount: bonusAmount,
         username: resolvedUsername,
         description: 'Bonificación otorgada',
+        userId: bonusUser && bonusUser.id ? bonusUser.id : undefined, // #477: antes quedaba sin userId y la analítica no lo podía atribuir
         adminId: req.user?.userId,
         adminUsername: req.user?.username,
         adminRole: req.user?.role || 'admin',

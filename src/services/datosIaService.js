@@ -75,12 +75,14 @@ async function _analyze(models, opts) {
   // (primera carga dentro del rango) vienen además sus cargas (fecha+monto) para retención, escalera y netwin de nuevos.
   const perUser = await Transaction.aggregate([
     { $match: realDep }, { $sort: { timestamp: 1 } },
-    { $group: { _id: '$userId', first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' }, firstAmt: { $first: '$amount' }, tx: { $push: { t: '$timestamp', a: '$amount' } } } },
-    { $project: { first: 1, last: 1, n: 1, amt: 1, firstAmt: 1, tx: { $cond: [{ $and: [{ $gte: ['$first', from] }, { $lte: ['$first', to] }] }, '$tx', '$$REMOVE'] } } }
+    { $group: { _id: '$userId', un: { $first: '$username' }, first: { $min: '$timestamp' }, last: { $max: '$timestamp' }, n: { $sum: 1 }, amt: { $sum: '$amount' }, firstAmt: { $first: '$amount' }, tx: { $push: { t: '$timestamp', a: '$amount' } } } },
+    { $project: { un: 1, first: 1, last: 1, n: 1, amt: 1, firstAmt: 1, tx: { $cond: [{ $and: [{ $gte: ['$first', from] }, { $lte: ['$first', to] }] }, '$tx', '$$REMOVE'] } } }
   ]).allowDiskUse(true);
   lap('perUser');
   const cohort = perUser.filter((u) => Array.isArray(u.tx));
   const cohortSet = new Set(cohort.map((u) => u._id));
+  const cohortNames = new Set(cohort.map((u) => String(u.un || '').toLowerCase()).filter(Boolean));
+  const isCohort = (userId, username) => cohortSet.has(userId) || (username && cohortNames.has(String(username).toLowerCase()));
   const firstIn = (a, b) => perUser.filter((u) => u.first >= a && u.first <= b);
 
   // (2) Rango: TODO agrupado en Mongo por período (hora argentina) y por usuario.
@@ -98,7 +100,8 @@ async function _analyze(models, opts) {
     RefundClaim.find(scope({ claimedAt: { $gte: from, $lte: to } })).select('userId amount claimedAt').lean(),
     DailyRouletteSpin.find(scope({ spunAt: { $gte: from, $lte: to } })).select('userId spunAt prizeARS').lean(),
     Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } }),
-    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: okStatus, ...inRange }) }, { $group: { _id: { t: '$type', u: '$userId' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
+    // Regalos por tipo y usuario. ⚠️ Algunos bonos viejos no tienen userId (sólo username): se agrupa por los dos.
+    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: okStatus, ...inRange }) }, { $group: { _id: { t: '$type', u: '$userId', un: '$username' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
   ]);
   lap('rango');
   const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
@@ -147,9 +150,9 @@ async function _analyze(models, opts) {
   const nwNew = montoCargasNuevos - montoRetirosNuevos;
   // Promociones: por tipo y separadas entre NUEVOS del rango y RECURRENTES (clientes de antes). #477
   const promos = {}; let promosTotal = 0, promosNuevos = 0, promosRecurrentes = 0;
-  (promoAgg || []).forEach((p) => { const t = p._id.t; if (!promos[t]) promos[t] = { n: 0, amt: 0, nuevos: 0, recurrentes: 0 }; promos[t].n += p.n; promos[t].amt += p.amt; promosTotal += p.amt; if (cohortSet.has(p._id.u)) { promos[t].nuevos += p.amt; promosNuevos += p.amt; } else { promos[t].recurrentes += p.amt; promosRecurrentes += p.amt; } });
+  (promoAgg || []).forEach((p) => { const t = p._id.t; if (!promos[t]) promos[t] = { n: 0, amt: 0, nuevos: 0, recurrentes: 0 }; promos[t].n += p.n; promos[t].amt += p.amt; promosTotal += p.amt; if (isCohort(p._id.u, p._id.un)) { promos[t].nuevos += p.amt; promosNuevos += p.amt; } else { promos[t].recurrentes += p.amt; promosRecurrentes += p.amt; } });
   Object.keys(promos).forEach((k) => { promos[k].amt = r0(promos[k].amt); promos[k].nuevos = r0(promos[k].nuevos); promos[k].recurrentes = r0(promos[k].recurrentes); });
-  const montoCargasRecurrentes = Math.max(0, montoCargas - montoCargasNuevos);
+  const montoCargasRecurrentes = Math.max(0, Math.round(montoCargas - montoCargasNuevos)); // redondeado: evita residuos flotantes
   const netwin = montoCargas - montoRetiros;
   const pc = opts.promoConfig || null;
   // Tasa de reclamo del reembolso: cuánto de lo "reembolsable" (pérdida × % diario) se pagó de verdad (0..1).
@@ -162,7 +165,7 @@ async function _analyze(models, opts) {
     reembolsos: refundsR.length, montoReembolsos: r0(sum(refundsR, (x) => x.amount)), giros: spinsR.length, premiosRuleta: r0(sum(spinsR, (x) => x.prizeARS)), mensajesSoporte: supportMsgs,
     promos, promosTotal: r0(promosTotal), promosNuevos: r0(promosNuevos), promosRecurrentes: r0(promosRecurrentes),
     montoCargasNuevos: r0(montoCargasNuevos), montoCargasRecurrentes: r0(montoCargasRecurrentes), montoRetirosNuevos: r0(montoRetirosNuevos),
-    promosPct: pct(promosTotal, montoCargas), promosPctNuevos: pct(promosNuevos, montoCargasNuevos), promosPctRecurrentes: pct(promosRecurrentes, montoCargasRecurrentes),
+    promosPct: pct(promosTotal, montoCargas), promosPctNuevos: pct(promosNuevos, Math.round(montoCargasNuevos)), promosPctRecurrentes: montoCargasRecurrentes >= 1 ? pct(promosRecurrentes, montoCargasRecurrentes) : null,
     netwinNeto: r0(netwin - promosTotal), tasaReclamoReembolso: tasaReclamo == null ? null : Math.round(tasaReclamo * 100) / 100,
     churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, ventaPorPeso: spend > 0 ? Math.round((montoCargas / spend) * 100) / 100 : null, netoPorPeso: spend > 0 ? Math.round(((netwin - promosTotal) / spend) * 100) / 100 : null,
     netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length, primeraCargaPromedio: repeat.primeraCargaPromedio
