@@ -988,4 +988,19 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-plat-pill b { font: 800 11.5px var(--p-font); color: var(--p-text); }
 .lg-plat-pill small { font: 700 9px var(--p-font); color: var(--p-muted); background: var(--p-card); border-radius: 999px; padding: 1px 6px; letter-spacing: .2px; }
 .lg-plat-pill.soon { opacity: .85; } .lg-plat-pill.soon b { color: var(--p-muted); }
+/* ── #424: ingreso — tarjetas de beneficios estilo Pinterest con íconos de línea ── */
+.lg-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 2px 0 0; }
+.lg-fc { display: flex; align-items: flex-start; gap: 8px; background: var(--p-surface); border-radius: 14px; padding: 8px 10px; min-width: 0; }
+.lg-fc-wide { grid-column: 1 / -1; align-items: center; }
+.lg-fi { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 10px; background: var(--p-card); color: var(--p-red); display: flex; align-items: center; justify-content: center; }
+.lg-fi svg { width: 18px; height: 18px; }
+.lg-fc > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.lg-fc b { font: 800 12px var(--p-font); color: var(--p-text); line-height: 1.15; }
+.lg-fc small { font: 500 10.5px/1.3 var(--p-font); color: var(--p-muted); }
+.lg-fc .lg-plats-row { margin-top: 2px; gap: 5px; }
+.lg-fc .lg-plat-pill { background: var(--p-card); padding: 3px 8px 3px 4px; }
+.lg-fc .lg-plat-pill b { font-size: 11px; }
+.lg-app .lg-sub { display: none; }                /* las tarjetas reemplazan la bajada: una sola pantalla */
+.lg-app .lg-title { font-size: 18px; }
+@media (max-height: 700px) { .lg-fc small { display: none; } .lg-fc-wide small { display: block; } .lg-feat { gap: 5px; } .lg-fc { padding: 7px 9px; } }
 

@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 424. 🚪 Ingreso: tarjetas de beneficios (VIP · Reembolsos · Elegí dónde jugar · Referidos) con íconos de línea — SW v296
+**Pedido (owner):** "reembolsos diarios, semanal, mensual, y sobre las plataformas 'elegí dónde jugar', al principio
+Programa VIP y al final Sistema de referidos; prolijo, con íconos estilo Pinterest, sin íconos de WhatsApp, todo en una
+página principal".
+**Qué se hizo:** grilla `.lg-feat` (2 columnas) debajo del título, en lugar de la bajada: **Programa VIP** (corona) ·
+**Reembolsos** (flecha circular; "Diario 25% · semanal 3% · mensual 1% de lo que perdés" con los % reales) · **Elegí dónde
+jugar** (ancho completo, con las píldoras de las 3 plataformas, Ganamos/jugaygana "Próximamente") · **Sistema de referidos**
+(ancho completo, "cobrás el X% de su actividad", X de `/api/landing/info.referralPct`, nuevo). Íconos SVG de trazo en rojo
+sobre fondo blanco, sin emojis. En pantallas bajas se esconden las bajadas de las tarjetas chicas.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `server.js`, `public/firebase-messaging-sw.js`.
+
 ### 423. 🚪 Ingreso: fila "Jugás en" con las 3 plataformas · Ganamos y jugaygana "Próximamente" — SW v294
 **Pedido (owner, con captura):** "agregá las 3 plataformas que ofrecemos y dejá Ganamos y jugaygana con lo mismo, próximamente".
 **Qué se hizo:** `#lgPlatsRow` debajo de la bajada (index.html); loginhero.js la llena desde `/api/landing/info` (las

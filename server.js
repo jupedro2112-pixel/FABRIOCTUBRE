@@ -1161,7 +1161,8 @@ app.get('/api/landing/info', async (req, res) => {
     try { minDepositArs = await getMinDepositArs(); withdrawMinArs = await getWithdrawMinArs(); } catch (_) {}
     try { const pct = await getDailyRefundPct(); refundPromo = await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) {}
     res.setHeader('Cache-Control', 'public, max-age=60');
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode() }); // #421
+    let referralPct = null; try { referralPct = require('./src/utils/referralRate').getConfiguredPct(); } catch (_) {} // #424
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct }); // #421/#424
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

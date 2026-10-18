@@ -59,9 +59,17 @@
             if (row && list2.length) {
                 // Igual que las pestañas de adentro (#301): Girox NUNCA es "Próximamente" (aunque en el entorno de prueba no haya API).
                 const isSoon = (p) => p.connected === false && p.id !== 'girox';
-                row.innerHTML = '<span class="lg-plats-k">Jugás en</span>' + list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (isSoon(p) ? '<small>Próximamente</small>' : '') + '</span>').join('');
+                row.innerHTML = list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(p.name) + '</b>' + (isSoon(p) ? '<small>Próximamente</small>' : '') + '</span>').join('');
                 row.style.display = '';
             }
+        } catch (_) {}
+        // #424: textos de las tarjetas de beneficios con los % reales
+        try {
+            const rf = info.refunds || {}; const el = _el('lgFeatRefunds');
+            const parts = []; if (rf.dailyMax) parts.push('Diario ' + rf.dailyMax + '%'); if (rf.weeklyMax) parts.push('semanal ' + rf.weeklyMax + '%'); if (rf.monthlyMax) parts.push('mensual ' + rf.monthlyMax + '%');
+            if (el && parts.length) el.textContent = parts.join(' · ') + ' de lo que perdés';
+            const rp = Number(info.referralPct); const er = _el('lgFeatRef');
+            if (er && rp > 0) er.textContent = 'Invitá amigos y cobrás el ' + rp + '% de su actividad, de por vida';
         } catch (_) {}
         try {
             const box = _el('lgPlats');
