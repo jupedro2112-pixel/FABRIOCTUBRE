@@ -15174,19 +15174,22 @@ window.loadSupport = loadSupport; window.spSelect = spSelect; window.spSend = sp
 // =====================================================================
 // #383: COMANDOS por sectores plegables (minimizado → maximizar y editar; todo en una pantalla)
 // =====================================================================
+// #383/#389: sectores de COMANDOS. [regex del título, descripción, emoji, color de acento]. Desde #389 arrancan ABIERTOS,
+// cada uno con tarjeta propia (franja de color a la izquierda, icono, título grande y descripción completa) y un índice de
+// chips arriba para saltar al sector. Siguen plegables con un clic en la cabecera.
 const CMD_ACC_DESC = [
-    [/bonos autom/i, '% de la primera carga, "servicio completo", tope de bonos, extra por instalar, carga mínima, retiro mínimo y SMS en retiros'],
-    [/comandos personalizados/i, 'Mensajes automáticos del sistema (/sys_*) y respuestas rápidas del chat'],
-    [/configuraci[oó]n cbu/i, 'CBU, alias, titular y banco que se le manda al cliente'],
-    [/c[oó]digo de bienvenida/i, 'Códigos de bono para la comunidad de Telegram'],
-    [/comunidad/i, 'Links del canal de Telegram y etiquetas de comunidad'],
-    [/rangos de reembolso/i, 'Diario, semanal y mensual: % por rango y mínimos para cobrar'],
-    [/plataformas/i, 'Qué plataformas se ofrecen, orden, logos, URL externa y default'],
-    [/acumulativo/i, 'Reembolso acumulativo de por vida (%)'],
-    [/niveles vip/i, 'Escalera de 19 niveles: umbrales, bonos al subir y rakeback'],
-    [/fueguito/i, 'Premios de la racha diaria y mínimo de cargas entre rachas'],
-    [/movimientos del banco/i, 'Transferencias recibidas por hgcash y su estado de carga'],
-    [/banco autom/i, 'hgcash (sombra / auto), API de 1girox, credenciales y reenvío de avisos']
+    [/bonos autom/i, '% de la primera carga, "servicio completo", tope de bonos, extra por instalar, carga mínima, retiro mínimo y SMS en retiros', '🎁', '#e60023'],
+    [/comandos personalizados/i, 'Mensajes automáticos del sistema (/sys_*) y respuestas rápidas del chat', '💬', '#6366f1'],
+    [/configuraci[oó]n cbu/i, 'CBU, alias, titular y banco que se le manda al cliente', '🏦', '#0a7a3e'],
+    [/c[oó]digo de bienvenida/i, 'Códigos de bono para la comunidad de Telegram', '🎟️', '#b45309'],
+    [/comunidad/i, 'Links del canal de Telegram y etiquetas de comunidad', '📣', '#0ea5e9'],
+    [/rangos de reembolso/i, 'Diario, semanal y mensual: % por rango y mínimos para cobrar', '💸', '#16a34a'],
+    [/plataformas/i, 'Qué plataformas se ofrecen, orden, logos, URL externa y default', '🎰', '#9333ea'],
+    [/acumulativo/i, 'Reembolso acumulativo de por vida (%)', '📈', '#0891b2'],
+    [/niveles vip/i, 'Escalera de 19 niveles: umbrales, bonos al subir y rakeback', '👑', '#d4af37'],
+    [/fueguito/i, 'Premios de la racha diaria y mínimo de cargas entre rachas', '🔥', '#f97316'],
+    [/movimientos del banco/i, 'Transferencias recibidas por hgcash y su estado de carga', '🧾', '#64748b'],
+    [/banco autom/i, 'hgcash (sombra / auto), API de 1girox, credenciales y reenvío de avisos', '⚡', '#0f766e']
 ];
 let _cmdAccDone = false;
 function initCommandsAccordion() {
@@ -15204,26 +15207,39 @@ function initCommandsAccordion() {
             if (cur) cur.body.push(el);
         });
     });
-    groups.forEach(function (g) {
+    const chips = [];
+    groups.forEach(function (g, i) {
         const titleEl = g.head.querySelector('h3, h4');
-        const title = titleEl ? titleEl.textContent.trim() : (g.head.id || 'Sección');
-        const found = CMD_ACC_DESC.find(function (d) { return d[0].test(title); });
-        const acc = document.createElement('div'); acc.className = 'cmd-acc';
+        const rawTitle = titleEl ? titleEl.textContent.trim() : (g.head.id || 'Sección');
+        const found = CMD_ACC_DESC.find(function (d) { return d[0].test(rawTitle); });
+        const title = rawTitle.replace(/^[^\p{L}\p{N}]+/u, '').trim(); // sin el emoji del h3 (va aparte, en el icono)
+        const ico = found ? found[2] : '⚙️', color = found ? found[3] : '#767676', desc = found ? found[1] : '';
+        const acc = document.createElement('div'); acc.className = 'cmd-acc open'; acc.id = 'cmdAcc' + i; acc.style.setProperty('--acc', color);
         const head = document.createElement('button'); head.type = 'button'; head.className = 'cmd-acc-head';
-        head.innerHTML = '<span class="cmd-acc-t">' + escapeHtml(title) + '</span><small class="cmd-acc-d">' + escapeHtml(found ? found[1] : '') + '</small><span class="cmd-acc-chev">▾</span>';
-        const body = document.createElement('div'); body.className = 'cmd-acc-body'; body.hidden = true;
+        head.innerHTML = '<span class="cmd-acc-ico">' + ico + '</span><span class="cmd-acc-t">' + escapeHtml(title) + '</span>' +
+            '<span class="cmd-acc-d">' + escapeHtml(desc) + '</span><span class="cmd-acc-chev">▾</span>';
+        const body = document.createElement('div'); body.className = 'cmd-acc-body';
         g.head.parentNode.insertBefore(acc, g.head);
         acc.appendChild(head); acc.appendChild(body);
         if (!g.self) g.head.classList.add('cmd-acc-orig');
         body.appendChild(g.head);
         g.body.forEach(function (el) { body.appendChild(el); });
         head.addEventListener('click', function () { const open = body.hidden; body.hidden = !open; acc.classList.toggle('open', open); });
+        chips.push({ acc: acc, body: body, ico: ico, title: title, color: color });
     });
     const bar = document.createElement('div'); bar.className = 'cmd-acc-bar';
     bar.innerHTML = '<input type="search" id="cmdAccSearch" placeholder="Buscar sección (ej. reembolso, plataformas, CBU)…">' +
         '<button type="button" class="btn-secondary btn-small" id="cmdAccAll">Expandir todo</button>' +
         '<button type="button" class="btn-secondary btn-small" id="cmdAccNone">Contraer todo</button>';
+    const index = document.createElement('div'); index.className = 'cmd-acc-index';
+    chips.forEach(function (c) {
+        const chip = document.createElement('button'); chip.type = 'button'; chip.className = 'cmd-chip'; chip.style.setProperty('--acc', c.color);
+        chip.innerHTML = '<span>' + c.ico + '</span>' + escapeHtml(c.title);
+        chip.addEventListener('click', function () { c.body.hidden = false; c.acc.classList.add('open'); c.acc.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        index.appendChild(chip);
+    });
     layout.parentNode.insertBefore(bar, layout);
+    layout.parentNode.insertBefore(index, layout);
     const setAll = function (open) { layout.querySelectorAll('.cmd-acc').forEach(function (a) { a.querySelector('.cmd-acc-body').hidden = !open; a.classList.toggle('open', open); }); };
     bar.querySelector('#cmdAccAll').addEventListener('click', function () { setAll(true); });
     bar.querySelector('#cmdAccNone').addEventListener('click', function () { setAll(false); });

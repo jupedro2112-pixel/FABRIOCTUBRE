@@ -20,8 +20,26 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png">
     
+    <!-- #388: MODO NOCTURNO. Se decide ANTES de cargar el CSS (sin parpadeo). Default: oscuro; localStorage 'admin_theme'. -->
+    <script>
+    (function () {
+        var t = 'dark';
+        try { t = localStorage.getItem('admin_theme') || 'dark'; } catch (e) {}
+        document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        window.toggleAdminTheme = function () {
+            var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', cur);
+            try { localStorage.setItem('admin_theme', cur); } catch (e) {}
+            var b = document.getElementById('themeToggleBtn'); if (b) b.textContent = cur === 'dark' ? '☀️ Modo claro' : '🌙 Modo nocturno';
+        };
+        document.addEventListener('DOMContentLoaded', function () {
+            var b = document.getElementById('themeToggleBtn');
+            if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️ Modo claro' : '🌙 Modo nocturno';
+        });
+    })();
+    </script>
     <link rel="stylesheet" href="/adminprivado2026/admin.css">
-    <!-- #383: tema del panel con el estilo de la app (blanco / gris / rojo). Se carga ÚLTIMO. -->
+    <!-- #383: tema del panel con el estilo de la app (blanco / gris / rojo). Se carga ÚLTIMO. #388: + modo nocturno por tokens. -->
     <link rel="stylesheet" href="/adminprivado2026/pin-admin.css">
     <!-- URL pública canónica (vipcargas.com) inyectada por el server.
          Se usa para generar los links de pauta con el dominio correcto en lugar
@@ -238,6 +256,9 @@ document.addEventListener('change', function (ev) {
                     </button>
                     <button onclick="showChangeOwnPasswordModal()" class="logout-btn" title="Cambiar mi contraseña" style="background:transparent;color:#aaa;font-size:11px;border:1px solid rgba(255,255,255,0.15);">
                         🔑 Contraseña
+                    </button>
+                    <button id="themeToggleBtn" type="button" onclick="toggleAdminTheme()" class="logout-btn" title="Alternar modo nocturno / claro (#388)" style="background:transparent;color:#aaa;font-size:11px;border:1px solid rgba(255,255,255,0.15);">
+                        ☀️ Modo claro
                     </button>
                     <button id="logoutBtn" class="logout-btn">
                         <span class="icon icon-sign-out"></span> Salir

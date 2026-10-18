@@ -73,8 +73,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   "Pinterest" (blanco/grises/rojo) salvo la Carga manual (chat WhatsApp): cualquier color nuevo en la PWA va ahí
   (o usa las variables `--p-*`), no en chat.css con neón. `public/adminprivado2026/` — panel admin (~12k líneas
   de admin.js, cookie httpOnly, SW propio `admin-sw.js` con scope /adminprivado2026/). **Tema (#383):** `pin-admin.css`
-  se carga último y pisa el tema oscuro (mismo estilo que la app); COMANDOS se pliega por sectores con
-  `initCommandsAccordion` (mueve nodos, no cambia ids).
+  se carga último y pisa el tema oscuro (mismo estilo que la app). **Modo nocturno (#388):** `html[data-theme="dark"]`
+  redefine los tokens `--p-*` (default dark, `localStorage admin_theme`, botón en el pie del menú): cualquier color nuevo
+  del panel va como token en `:root` + override en el bloque dark, nunca fijo. COMANDOS se arma por sectores con
+  `initCommandsAccordion` (#389: tarjetas abiertas con color/icono/descr. desde `CMD_ACC_DESC`; mueve nodos, no cambia ids).
 
 ## Cosas que NO hay que romper (gotchas)
 

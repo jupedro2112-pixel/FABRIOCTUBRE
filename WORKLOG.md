@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-18
 
+### 389. 🗂️ COMANDOS: sectores ABIERTOS, tarjetas con color/icono/título/descripción e índice de chips — admin-sw v84
+**Pedido (owner):** "acomoda bien la parte de comandos, no tanto cerrándolo sino abierto pero bien recuadrado y detallado
+con títulos y bien diferenciado".
+**Qué se hizo:** `initCommandsAccordion` (admin.js) ahora crea cada sector `cmd-acc` ya **abierto**, con franja de color
+a la izquierda (`--acc` por sector, 4º elemento de `CMD_ACC_DESC`), icono grande (3º elemento), título en 16px sin el
+emoji del h3 y la descripción COMPLETA debajo (ya no en una línea con puntos suspensivos). Arriba, además del buscador y
+Expandir/Contraer todo, hay un **índice de chips** (`.cmd-acc-index`) que salta al sector y lo abre. La cabecera sigue
+plegando con un clic. CSS en `pin-admin.css` (bloque #383/#389; usa `color-mix` para el fondo del icono con fallback a
+`--p-surface`). No cambió ningún id de formulario: los nodos sólo se mueven.
+**Archivos:** `public/adminprivado2026/admin.js`, `public/adminprivado2026/pin-admin.css`, `public/admin-sw.js`.
+
+### 388. 🌙 Modo NOCTURNO del panel (activado por defecto, botón para alternar) — admin-sw v84
+**Pedido (owner):** "activa el modo nocturno en el admin".
+**Qué se hizo:** `pin-admin.css` pasó todos los colores fijos a tokens (`--p-card`, `--p-hover`, `--p-nav`,
+`--p-placeholder`, `--p-scroll`, `--p-inv` = texto sobre fondo invertido, `--p-amber-line`, `--p-green-line`) y agregó el
+bloque `html[data-theme="dark"]` que redefine los `--p-*` (fondo #121212, tarjetas #181818, texto #f2f2f2, rojo #ff3b4e,
+`color-scheme: dark`). Un `<script>` inline en el `<head>` de `index.html`, ANTES de los CSS, lee `localStorage
+'admin_theme'` (default **dark**) y pone `data-theme` en `<html>` (sin parpadeo); expone `window.toggleAdminTheme()`. Botón
+`#themeToggleBtn` ("☀️ Modo claro" / "🌙 Modo nocturno") en el pie del menú, al lado de 🔑 Contraseña. El modo claro
+sigue siendo exactamente el de #383. Los estilos inline del tema oscuro viejo que pin-admin no mapea quedan "bien" en
+nocturno por naturaleza (eran oscuros).
+**Archivos:** `public/adminprivado2026/index.html`, `public/adminprivado2026/pin-admin.css`, `public/admin-sw.js`.
+
 ### 387. 🧭 Panel: Soporte arriba de todo del menú (grupo "Atención"), Chat viejo sigue abajo — admin-sw v83
 **Pedido (owner):** "el soporte dejalo en atención pero arriba de todo, chat viejo abajo está ok".
 **Qué se hizo (`public/adminprivado2026/index.html`):** el rótulo "💬 Atención" + el ítem Soporte (con su
