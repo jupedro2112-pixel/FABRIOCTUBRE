@@ -1273,7 +1273,7 @@
                      con /api/vip/status; cada nivel alcanzado aparece desbloqueado (✓) y los que faltan con 🔒. ===== -->
                 <!-- #257: ¡Felicidades por tu nuevo nivel! → reclamar el bono eligiendo plataforma (lo pinta home.js) -->
                 <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPctFull">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeftFull"></small><span>Cargar ›</span></button>
-                <div class="home-card ms-card" id="missionsCard" hidden onclick="VIP.home.openMissions()"><div class="ms-card-h"><b>🎯 Misiones de la semana</b><small id="missionsCardSub"></small></div><div id="missionsCardList"></div></div>
+                <div class="home-card ms-card" id="missionsCard" hidden><button type="button" class="ms-card-h" onclick="VIP.home.toggleMissionsCard()" aria-expanded="false"><b>🎯 Misiones de la semana</b><small id="missionsCardSub"></small><i class="ms-chev">▾</i></button><div id="missionsCardBody" hidden><div id="missionsCardList" onclick="VIP.home.openMissions()"></div><small class="ms-note" id="missionsCardNote"></small></div></div>
                 <div class="home-card vip-claim" id="vipClaimCard" style="display:none;"></div>
                 <div class="home-card vip-card" id="vipCard" style="display:none;">
                     <button type="button" class="vip-head" onclick="VIP.home.toggleVipCard()">
@@ -2374,7 +2374,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v352</div>
+                    <div class="pf-build" id="appBuildTag">app v353</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

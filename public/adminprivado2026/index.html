@@ -1287,6 +1287,13 @@ document.addEventListener('change', function (ev) {
                 </div>
                 <div class="dia-card"><div class="dia-card-h"><b>3️⃣ Misiones semanales</b><small>Lunes a domingo (hora argentina). Cuando el cliente cumple la meta, el premio se acredita solo como regalo y se le avisa. La app muestra el progreso de cada misión.</small></div>
                     <div class="dia-bar dia-bar-in"><label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stMsOn" style="width:auto;"> Misiones activas</label><span class="dia-pill" id="stMsInfo">…</span><button class="btn-secondary btn-small" onclick="stratAddMission()">+ Agregar misión</button></div>
+                    <div class="dia-sub"><b>🛡️ Anti-estafa</b> <small>para que nadie cargue y retire sin jugar sólo para cobrar el premio</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label>Premio con rollover ×<input type="number" id="stAfRoll" min="0" max="50" style="width:70px;" title="El premio hay que jugarlo esta cantidad de veces antes de poder retirarlo (0 = libre)"></label>
+                        <label>Tope: premio ≤ % de lo cargado en la semana<input type="number" id="stAfPct" min="0" max="100" style="width:70px;" title="Ej. 20: para cobrar $3.000 tiene que haber cargado al menos $15.000 en la semana (0 = sin tope)"></label>
+                        <label>Premio mínimo $<input type="number" id="stAfMin" min="0" style="width:90px;" title="Si el tope deja el premio por debajo de esto, se espera a que cargue más"></label>
+                        <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stAfBlock" style="width:auto;"> Sin premio si retiró tanto o más de lo que cargó en la semana</label>
+                    </div>
                     <div style="overflow-x:auto;"><table class="data-table" style="width:100%;"><thead><tr><th>Activa</th><th>Título (lo ve el cliente)</th><th>Tipo de meta</th><th>Meta</th><th>Carga mínima $</th><th>Premio $</th><th>Cumplidas esta semana</th><th></th></tr></thead><tbody id="stMsRows"></tbody></table></div>
                 </div>
                 <div class="dia-bar"><button class="btn-primary" onclick="stratSave()">💾 Guardar estrategia</button><span id="stSaveInfo" class="dia-pill"></span></div>

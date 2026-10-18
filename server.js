@@ -19139,6 +19139,10 @@ async function getStrategyConfig() {
   const sd = Object.assign({}, STRATEGY_DEFAULT.secondDeposit, r.secondDeposit || {});
   sd.pct = Math.min(500, Math.max(0, Number(sd.pct) || 0)); sd.afterHours = Math.min(168, Math.max(1, Number(sd.afterHours) || 24)); sd.validHours = Math.min(720, Math.max(1, Number(sd.validHours) || 72)); sd.enabled = sd.enabled !== false;
   const ms = { enabled: !(r.missions && r.missions.enabled === false), items: Array.isArray(r.missions && r.missions.items) ? r.missions.items : STRATEGY_DEFAULT.missions.items };
+  // #508 anti-estafa: el premio va con ROLLOVER (hay que jugarlo antes de retirarlo), se topea a un % de lo cargado en la semana
+  // y no se paga si en la semana retiró tanto o más de lo que cargó (plata que entra y sale sin jugar).
+  const af = Object.assign({ rolloverX: 3, maxRewardPctOfDeposits: 20, blockIfNetWithdrawn: true, minRewardArs: 500 }, (r.missions && r.missions.antiFraud) || {});
+  ms.antiFraud = { rolloverX: Math.min(50, Math.max(0, Math.round(Number(af.rolloverX) || 0))), maxRewardPctOfDeposits: Math.min(100, Math.max(0, Number(af.maxRewardPctOfDeposits) || 0)), blockIfNetWithdrawn: af.blockIfNetWithdrawn !== false, minRewardArs: Math.max(0, Math.round(Number(af.minRewardArs) || 0)) };
   ms.items = ms.items.filter((m) => m && m.id && MISSION_TYPES[m.type]).map((m) => ({ id: String(m.id).slice(0, 30), title: String(m.title || '').slice(0, 60), type: m.type, target: Math.max(1, Number(m.target) || 1), minAmount: Math.max(0, Number(m.minAmount) || 0), rewardArs: Math.max(0, Math.round(Number(m.rewardArs) || 0)), active: m.active !== false })).slice(0, 12);
   return { secondDeposit: sd, missions: ms };
 }
@@ -19150,7 +19154,9 @@ async function _missionWeekStats(wk, userId) {
   const { start, end } = weekRangeART(wk);
   const match = { ..._REAL_DEP, timestamp: { $gte: start, $lte: end } }; if (userId) match.userId = userId;
   const rows = await Transaction.aggregate([{ $match: match }, { $group: { _id: '$userId', username: { $first: '$username' }, txs: { $push: { a: '$amount', t: '$timestamp' } }, total: { $sum: '$amount' } } }]);
-  return rows.map((r) => ({ userId: r._id, username: r.username, total: r.total, txs: r.txs, days: new Set(r.txs.map((x) => datosIa.dateKeyART(x.t))).size }));
+  const wmatch = { type: 'withdrawal', status: { $nin: ['failed', 'cancelled'] }, timestamp: { $gte: start, $lte: end } }; if (userId) wmatch.userId = userId; else wmatch.userId = { $in: rows.map((r) => r._id).filter(Boolean) };
+  const wds = rows.length ? await Transaction.aggregate([{ $match: wmatch }, { $group: { _id: '$userId', amt: { $sum: '$amount' } } }]) : []; const wdBy = new Map(wds.map((w) => [w._id, w.amt]));
+  return rows.map((r) => ({ userId: r._id, username: r.username, total: r.total, wd: wdBy.get(r._id) || 0, txs: r.txs, days: new Set(r.txs.map((x) => datosIa.dateKeyART(x.t))).size }));
 }
 function _missionProgress(m, st) {
   if (!st) return { value: 0, done: false };
@@ -19160,19 +19166,25 @@ function _missionProgress(m, st) {
   else if (m.type === 'deposit_total') v = Math.round(st.total);
   return { value: v, done: v >= m.target };
 }
-async function _missionCredit(m, st, wk) {
-  const user = await User.findOne({ id: st.userId }).lean(); if (!user) return null;
+async function _missionCredit(m, st, wk, af) {
+  const user = await User.findOne({ id: st.userId }).lean(); if (!user || user.role !== 'user' || user.isBlocked) return null;
+  af = af || { rolloverX: 3, maxRewardPctOfDeposits: 20, blockIfNetWithdrawn: true, minRewardArs: 500 };
+  if (af.blockIfNetWithdrawn && st.wd >= st.total) { logger.info(`[misiones] ${user.username} ${m.id}: sin premio, retiró ($${st.wd}) ≥ lo que cargó ($${st.total}) en la semana`); return null; }
+  let reward = m.rewardArs; if (af.maxRewardPctOfDeposits > 0) reward = Math.min(reward, Math.round(st.total * af.maxRewardPctOfDeposits / 100));
+  if (!(reward >= Math.max(1, af.minRewardArs))) { logger.info(`[misiones] ${user.username} ${m.id}: premio topeado a $${reward} (< mínimo), se espera a que cargue más`); return null; }
+  m = Object.assign({}, m, { rewardArs: reward });
   const reference = `vip-mis-${user.id}-${m.id}-${wk}`;
   // Reserva única por usuario/misión/semana. Si ya existe y quedó 'failed' (la plataforma rebotó), se REINTENTA con la misma reference (idempotente).
   let claim; try { claim = await MissionClaim.create({ id: uuidv4(), userId: user.id, username: user.username, missionId: m.id, weekKey: wk, title: m.title, rewardArs: m.rewardArs, status: 'credited' }); } catch (e) { if (e && e.code === 11000) { claim = await MissionClaim.findOne({ userId: user.id, missionId: m.id, weekKey: wk }); if (!claim || claim.status !== 'failed') return null; await MissionClaim.updateOne({ id: claim.id }, { $set: { status: 'credited', error: null } }); } else throw e; }
   let pid = user.preferredPlatform || 'girox'; let adapter = platforms.getAdapter(pid);
   if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
-  const credit = await adapter.creditGift(user.username, m.rewardArs, { description: `Misión semanal: ${m.title}`, reference });
+  const credit = await adapter.creditGift(user.username, m.rewardArs, { description: `Misión semanal: ${m.title}`, reference, rolloverX: af.rolloverX || 0 });
   if (!credit || !credit.success) { await MissionClaim.updateOne({ id: claim.id }, { $set: { status: 'failed', error: String((credit && credit.error) || 'unknown').slice(0, 200) } }); logger.error(`[misiones] credit FAIL ${user.username} ${m.id}: ${(credit && credit.error) || 'unknown'}`); return null; }
-  const tx = await Transaction.create({ id: uuidv4(), type: 'mission', userId: user.id, username: user.username, amount: m.rewardArs, platform: pid, description: `Misión semanal cumplida: ${m.title}`, transactionId: credit.data && (credit.data.transfer_id || credit.data.transferId) || null, metadata: { source: 'mission', missionId: m.id, weekKey: wk, creditedAs: credit.creditedAs || null }, timestamp: new Date() });
+  const tx = await Transaction.create({ id: uuidv4(), type: 'mission', userId: user.id, username: user.username, amount: m.rewardArs, platform: pid, description: `Misión semanal cumplida: ${m.title}`, transactionId: credit.data && (credit.data.transfer_id || credit.data.transferId) || null, metadata: { source: 'mission', missionId: m.id, weekKey: wk, creditedAs: credit.creditedAs || null, rollover: af.rolloverX || 0, cappedFrom: reward !== (arguments[0] && arguments[0].rewardArs) ? arguments[0].rewardArs : null }, timestamp: new Date() });
   await MissionClaim.updateOne({ id: claim.id }, { $set: { txId: tx.id } });
   const vars = { username: user.username, titulo: m.title, monto: m.rewardArs.toLocaleString('es-AR') };
-  const text = await renderSystemCommand('/sys_mission_done', '🎯 ¡Misión cumplida! "{titulo}": te acreditamos ${monto} de regalo. Ya lo tenés en tu saldo.', vars);
+  vars.rollover = af.rolloverX || 0;
+  const text = await renderSystemCommand('/sys_mission_done', '🎯 ¡Misión cumplida! "{titulo}": te acreditamos ${monto} de regalo. Ya lo tenés en tu saldo' + (af.rolloverX > 0 ? ' (se juega x{rollover} antes de retirarlo).' : '.'), vars);
   await _sendUserSystemMessage(user, text, { metadata: { kind: 'mission', missionId: m.id, weekKey: wk }, push: { title: '🎯 Misión cumplida', body: `"${m.title}": $${vars.monto} acreditados.` } });
   logger.info(`[misiones] ${user.username} cumplió ${m.id} (${wk}) → $${m.rewardArs}`);
   return tx;
@@ -19186,7 +19198,7 @@ async function _missionsTick() {
     const wk = weekKeyART(new Date()); const stats = await _missionWeekStats(wk);
     const claimed = new Set((await MissionClaim.find({ weekKey: wk, status: 'credited' }).select('userId missionId').lean()).map((c) => c.userId + '|' + c.missionId)); // los 'failed' se reintentan
     let n = 0;
-    for (const st of stats) { for (const m of items) { if (n >= 100) break; if (claimed.has(st.userId + '|' + m.id)) continue; if (_missionProgress(m, st).done) { await _missionCredit(m, st, wk); n++; } } }
+    for (const st of stats) { for (const m of items) { if (n >= 100) break; if (claimed.has(st.userId + '|' + m.id)) continue; if (_missionProgress(m, st).done) { if (await _missionCredit(m, st, wk, cfg.missions.antiFraud)) n++; } } }
   } catch (e) { logger.warn('[misiones] tick: ' + e.message); } finally { _missionsBusy = false; }
 }
 setTimeout(() => { _missionsTick(); setInterval(_missionsTick, 15 * 60 * 1000); }, 120 * 1000);
@@ -19224,7 +19236,7 @@ app.get('/api/strategy/me', authMiddleware, async (req, res) => {
       const claims = await MissionClaim.find({ userId: req.user.userId, weekKey: wk }).select('missionId status rewardArs').lean();
       missions = cfg.missions.items.filter((m) => m.active && m.rewardArs > 0).map((m) => { const p = _missionProgress(m, st); const c = claims.find((x) => x.missionId === m.id); return { id: m.id, title: m.title, type: m.type, target: m.target, minAmount: m.minAmount, rewardArs: m.rewardArs, value: p.value, done: p.done || !!c, credited: !!(c && c.status === 'credited') }; });
     }
-    res.set('Cache-Control', 'no-store'); res.json({ secondDeposit: sd, missions, weekKey: wk, weekEndsAt: end });
+    res.set('Cache-Control', 'no-store'); res.json({ secondDeposit: sd, missions, weekKey: wk, weekEndsAt: end, rolloverX: cfg.missions.antiFraud.rolloverX, maxRewardPct: cfg.missions.antiFraud.maxRewardPctOfDeposits });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // ── API admin: configuración + estadísticas
@@ -19248,7 +19260,7 @@ app.post('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res
     const b = req.body || {};
     if (b.firstDeposit) { const p = Number(b.firstDeposit.pct); if (Number.isFinite(p) && p >= 0 && p <= 500) await Config.set('firstDepositBonusPct', Math.round(p), req.user.username); const cur = (await getConfig('installGift', null)) || {}; const ep = Number(b.firstDeposit.installExtraPct); await Config.set('installGift', Object.assign({}, cur, { enabled: b.firstDeposit.installExtraEnabled !== false, pct: Number.isFinite(ep) && ep >= 0 && ep <= 500 ? Math.round(ep) : (cur.pct != null ? cur.pct : 50) }), req.user.username); }
     const cur = await getStrategyConfig();
-    const next = { secondDeposit: Object.assign({}, cur.secondDeposit, b.secondDeposit || {}), missions: { enabled: b.missions && b.missions.enabled != null ? b.missions.enabled !== false : cur.missions.enabled, items: b.missions && Array.isArray(b.missions.items) ? b.missions.items : cur.missions.items } };
+    const next = { secondDeposit: Object.assign({}, cur.secondDeposit, b.secondDeposit || {}), missions: { enabled: b.missions && b.missions.enabled != null ? b.missions.enabled !== false : cur.missions.enabled, items: b.missions && Array.isArray(b.missions.items) ? b.missions.items : cur.missions.items, antiFraud: Object.assign({}, cur.missions.antiFraud, (b.missions && b.missions.antiFraud) || {}) } };
     await Config.set('strategyClientes', next, req.user.username);
     res.json({ success: true, config: await getStrategyConfig() });
   } catch (e) { res.status(500).json({ error: 'Error' }); }

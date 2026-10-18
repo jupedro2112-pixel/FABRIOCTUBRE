@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 508. 🛡️ Misiones anti-estafa (rollover, tope sobre lo cargado, sin premio si retiró) · tarjeta plegada en el home completo — SW v353, admin-sw v116
+**Pedido (owner):** "las misiones hacelas para prevenir estafas, y achicalas en la carga automática: que se puedan expandir y
+minimizar así no tapan lo principal, que es la carga".
+**Anti-estafa (`Config['strategyClientes'].missions.antiFraud`, editable en la sección):** el premio se acredita **con rollover
+×3** (`creditGift` con `rolloverX`: hay que jugarlo antes de retirarlo); **tope**: premio ≤ 20 % de lo cargado en la semana (para
+$3.000 hay que haber cargado $15.000; si el tope lo deja bajo el mínimo de $500 se espera a que cargue más); **sin premio si en la
+semana retiró tanto o más de lo que cargó** (plata que entra y sale sin jugar); sólo cuentas `role:user` no bloqueadas. Todo
+registrado en `Transaction.metadata` (rollover, cappedFrom). La app lo dice: "se juega x3 antes de retirarlo".
+**UI:** en el home completo la tarjeta de misiones arranca plegada (una línea con el contador y ▾), se expande al tocar y recuerda
+el estado (`localStorage vip_ms_open`); el detalle abre el modal. El menú fácil no cambia.
+**Archivos:** `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SWs.
+
 ### 507. 🔒 Cerrar la sesión de un usuario desde el servidor — `POST /api/admin/users/:username/force-logout`
 **Pedido (owner):** "quiero cerrar sesión del usuario diego576413". La ruta sube `User.tokenVersion` (todos sus JWT previos quedan
 inválidos: `authMiddleware` compara la versión) y borra sus tokens de push; la app lo manda al ingreso en el próximo pedido.

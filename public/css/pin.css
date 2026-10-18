@@ -1405,4 +1405,11 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ms-item small { font: 600 11.5px var(--p-font); color: var(--p-muted); }
 .ms-card { cursor: pointer; } .ms-card-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; } .ms-card-h b { font: 900 15px var(--p-font); color: var(--p-text); } .ms-card-h small { color: var(--p-muted); font-weight: 700; }
 #missionsCardList { display: flex; flex-direction: column; gap: 8px; }
+/* ── #508: tarjeta de misiones plegable en el home completo (chica, no tapa la carga) ── */
+.ms-card { cursor: default; padding: 8px 12px !important; }
+.ms-card .ms-card-h { width: 100%; border: 0; background: transparent; display: flex; align-items: center; gap: 8px; padding: 4px 0; margin: 0; cursor: pointer; color: var(--p-text); font-family: var(--p-font); }
+.ms-card .ms-card-h b { font: 900 13.5px var(--p-font); } .ms-card .ms-card-h small { margin-left: auto; font: 700 11px var(--p-font); color: var(--p-muted); }
+.ms-card .ms-chev { font-style: normal; color: var(--p-muted); transition: transform .2s; } .ms-card .ms-card-h[aria-expanded="true"] .ms-chev { transform: rotate(180deg); }
+#missionsCardBody { padding: 6px 0 4px; } #missionsCardList { cursor: pointer; }
+.ms-note { display: block; margin-top: 6px; font: 600 11px var(--p-font); color: var(--p-muted); }
 
