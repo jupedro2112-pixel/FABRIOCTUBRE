@@ -1098,4 +1098,7 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-fc .lg-fi { width: 28px; height: 28px; flex-basis: 28px; } .lg-fc .lg-fi svg { width: 16px; height: 16px; }
 @media (max-height: 700px) { .lg-fc small, .lg-fc-wide small { display: none !important; } .lg-fc { padding: 5px 9px; } }
 @media (max-height: 640px) { .lg-feat { display: grid; } .lg-fc b { font-size: 11px; } }
+/* ── #433: "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" bajo el título ── */
+.lg-claim { margin: -4px 0 0 !important; font: 800 clamp(10.5px, 3vw, 12px) var(--p-font); letter-spacing: 1.1px; color: var(--p-text); text-transform: uppercase; }
+.lg-claim::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--p-green); margin: 0 6px 1px 0; }
 

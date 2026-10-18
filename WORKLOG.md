@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 433. 🚪 "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" debajo del título — SW v305
+**Pedido (owner):** "agregá abajo del texto 'en el momento': CARGAS Y PAGOS LAS 24 HS SIN LÍMITES".
+**Qué se hizo:** `<p class="lg-claim">` bajo el `h1` (mayúsculas, 800, punto verde delante, tamaño con `clamp`).
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 432. 🚪 Beneficios con el texto completo, en tres filas — SW v304
 **Pedido (owner):** "dejá lo del sistema de referidos, reembolsos diarios semanales mensuales, Programa niveles VIP PICA ROJA".
 **Qué se hizo:** las tres tarjetas pasan a filas finas (ícono + texto, ancho completo) con los títulos "Programa niveles VIP
