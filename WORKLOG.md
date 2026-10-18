@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 419. 🚪 Ingreso: cabecera y título más chicos · reseñas con el comentario a la vista · Soporte chico en la punta — SW v290
+**Pedido (owner):** "achicá todo lo de arriba y agregá el comentario de las reseñas de la gente y que soporte quede más
+abajo a la punta, así entra todo".
+**Qué se hizo (pin.css, sólo CSS):** logo 34px, marca 14px, título 19px, bajada 11,5px, formulario e inputs más compactos,
+nota del registro oculta. Slider de reseñas del login con tarjetas claras (fondo `--p-surface`) y el **comentario** en 3
+líneas (2 en pantallas bajas) con texto del tema (antes heredaba colores del tema oscuro viejo). Burbuja de Soporte
+compacta (avatar 36px + "Soporte"), a 10px del borde inferior derecho.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 418. 📝 Registro SIEMPRE visible · "Olvidé mi contraseña" · registro = usuario + contraseña + teléfono (SMS sí o sí) — SW v289
 **Pedido (owner):** "activá el registro, ahí sólo aparece Entrá YA y enviá comprobante; armá el registrarse, olvidé la
 contraseña; adentro del registrarse pedí los datos que piden todos: usuario, contraseña, teléfono para verificar SMS,

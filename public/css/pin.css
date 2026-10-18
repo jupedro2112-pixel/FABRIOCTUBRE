@@ -936,4 +936,35 @@ body.is-tester .profile-modal .pf-logout small { color: var(--p-muted) !importan
 .lg-app .lg-login-form, .lg-app .lg-reg, .lg-app .lg-login-toggle, .lg-app .lg-quote, .lg-app .lg-stories { display: none !important; } /* restos de #414-#416 */
 .login-screen:has(.lg-app) { align-items: flex-start !important; }          /* centrado por margin:auto de .login-box: no recorta arriba */
 .login-box.lg-app { margin: auto !important; }
+/* ── #419 (owner): ingreso — todo lo de arriba más chico, reseñas con el comentario visible, Soporte abajo en la punta ── */
+.login-box.lg-app { gap: 6px !important; padding: 10px 14px 10px !important; }
+.lg-app .lg-head { gap: 8px; }
+.lg-app .lg-logo { width: 34px; height: 34px; border-radius: 10px; }
+.lg-app .lg-brand b { font-size: 14px; letter-spacing: 1px; } .lg-app .lg-brand small { font-size: 9.5px; }
+.lg-app .lg-tg { padding: 6px 10px !important; font-size: 11.5px !important; }
+.lg-app .lg-ring, .lg-app .lg-ring-av { width: 36px; height: 36px; } .lg-app .lg-ring-n { min-width: 15px; height: 15px; font-size: 9px; line-height: 15px; }
+.lg-app .lg-title { margin: 2px 0 0; font-size: 19px; line-height: 1.15; }
+.lg-app .lg-sub { font-size: 11.5px; line-height: 1.35; }
+.lg-app .lg-form { padding: 10px 10px 6px; border-radius: 18px; }
+.lg-app .lg-form .input-group { margin-bottom: 7px; }
+.lg-app .lg-form .input-group label { font-size: 12px; }
+.lg-app .lg-form .input-group input { padding: 10px 12px !important; font-size: 14px !important; }
+.lg-app .lg-form .btn-primary { padding: 11px !important; font-size: 14px !important; margin-bottom: 4px !important; }
+.lg-app .lg-alt { gap: 5px; } .lg-app .lg-alt-q { font-size: 12px; flex: 1 0 100%; }
+.lg-app .lg-register { padding: 9px !important; font-size: 12.5px !important; }
+.lg-app .lg-alt .lg-link { padding: 6px 10px; font-size: 11px; }
+.lg-app .lg-alt-note { display: none; }
+.lg-app .lg-trust { font-size: 11px; padding: 0 2px; }
+/* reseñas: tarjeta clara con el COMENTARIO visible (3 líneas) */
+.lg-app #loginReviews { background: transparent !important; border: 0 !important; padding: 0 !important; }
+.lg-app #loginReviews .rv-head { padding: 0 2px; } .lg-app #loginReviews .rv-g { font: 800 10.5px var(--p-font); letter-spacing: 1px; text-transform: uppercase; color: var(--p-muted); }
+.lg-app #loginReviews .rv-card { flex: 0 0 72%; max-width: 260px; background: var(--p-surface) !important; color: var(--p-text) !important; border-radius: 14px !important; padding: 8px 10px !important; display: flex; flex-direction: column; gap: 4px; }
+.lg-app #loginReviews .rv-who b { color: var(--p-text) !important; font-size: 12px; }
+.lg-app #loginReviews .rv-text { color: var(--p-text) !important; font: 500 12px/1.4 var(--p-font) !important; -webkit-line-clamp: 3; min-height: 2.8em; }
+.lg-app .lg-foot { font-size: 9.5px; }
+/* Soporte: más abajo, en la punta derecha, compacto (sólo avatar + "Soporte") */
+.gs-bubble { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 5px 12px 5px 5px; gap: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
+.gs-bubble .gs-av { flex-basis: 36px; width: 36px; height: 36px; }
+.gs-bubble-t b { font-size: 12px; } .gs-bubble-t small { display: none; }
+@media (max-height: 700px) { .lg-app .lg-title { font-size: 18px; } .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
 
