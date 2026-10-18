@@ -1496,4 +1496,10 @@ body.home-basic #easyView { display: none !important; }
 /* ── #519: el tipo de menú se elige desde INICIO (arriba); los pases de abajo se van ── */
 .ez-switch, .ev-easy-link, .bv-switch2 { display: none !important; }
 .menu-chooser .mc-sub { font-weight: 600; }
+/* ── #520: "Cambiar menú" arriba del Inicio ── */
+.change-menu { display: none; align-items: center; gap: 6px; margin: 6px 12px 0; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); font: 800 12px var(--p-font); cursor: pointer; align-self: flex-start; }
+.change-menu .li { width: 16px; height: 16px; display: inline-flex; color: var(--p-red); } .change-menu .li svg { width: 16px; height: 16px; }
+.change-menu span { color: var(--p-muted); font-weight: 700; } .change-menu em { font-style: normal; color: var(--p-muted); }
+body.home-easy .change-menu, body.home-basic .change-menu, body.home-play .change-menu, body.home-full .change-menu { display: inline-flex; }
+body.home-mini .change-menu, body.mc-open .change-menu { display: none !important; }
 

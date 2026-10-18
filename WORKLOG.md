@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 520. ☰ "Cambiar menú" arriba del Inicio — SW v366
+**Pedido (owner):** "en Inicio poné Cambiar menú". Pastilla `#changeMenuBtn` debajo de la barra, visible en los tres modos de Inicio
+(muestra el modo actual: · Básico / · Fácil / · Completo) y abre el selector. Oculta en Soporte y mientras el selector está abierto.
+
 ### 519. 🏠 El tipo de menú se elige tocando INICIO (no desde abajo) — SW v365
 **Pedido (owner):** "en Inicio poné que cuando apretás elija el tipo de menú desde ahí, no desde abajo". `goHome()`: si ya estás en un
 modo de Inicio abre el selector (Básico · Fácil · Completo); si venías del chat, primero te lleva al Inicio. Los pases de abajo

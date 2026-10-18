@@ -68,6 +68,7 @@
         document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
+        try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Fácil' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();

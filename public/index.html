@@ -1050,6 +1050,8 @@
                  desde /api/platforms; antes de la respuesta, Girox/Ganamos fijos) + iframe público de la
                  plataforma (sin login: el link SSO es de un solo uso) + abajo Carga manual (chat WhatsApp,
                  modo mini) y Carga automática (app completa, modo full). -->
+            <!-- #520 (owner): "Cambiar menú" arriba del Inicio (en los tres modos) → abre el selector Básico · Fácil · Completo -->
+            <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú <span id="changeMenuCur"></span><em>▾</em></button>
             <div id="entryView" class="entry-view">
                 <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
                 <div class="ev-hero" role="note">
@@ -2420,7 +2422,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v365</div>
+                    <div class="pf-build" id="appBuildTag">app v366</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
