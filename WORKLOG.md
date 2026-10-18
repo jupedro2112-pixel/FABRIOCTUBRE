@@ -6,6 +6,23 @@
 >
 > **Última actualización: 2026-10-17**
 
+## Sesión 2026-10-18
+
+### 386. 🔑 Acceso admin COMPLETO al panel para `iginte1000` (seed one-shot al arranque)
+**Pedido (owner):** "ingreso panel de admin dame ingreso con iginte1000 y pepsi100 completo".
+**Qué se hizo (server.js, bloque de startup junto al de `lalodj` #296):** migración one-shot
+`migration_admin_iginte1000_v1_done`. La primera vez que arranca el server tras el deploy:
+- si existe una cuenta `iginte1000` (case-insensitive) → la pasa a `role:'admin'`, activa, desbloqueada, le pone la
+  clave inicial y sube `tokenVersion` (cierra sesiones viejas);
+- si no existe → la crea (`accountNumber: 'ADMIN-IGINTE1000'`, email placeholder) con `role:'admin'`.
+Se usa `User.updateOne` + upsert a propósito: el `pre('save')` de User re-hashearía el hash. En el código va SOLO el
+hash bcrypt (cost 12, generado en la sesión), nunca la clave en claro. Después del primer arranque no se vuelve a
+tocar: si el owner cambia la clave desde el panel se respeta. Para rotarla desde el código: nuevo hash + sufijo `_v2`.
+⚠️ Corre en TODOS los entornos (a diferencia de `lalodj`, que sólo en Render): es un admin real pedido por el owner.
+Login: `vipcargas.com/adminprivado2026/` con usuario `iginte1000`. Recomendación: cambiar la clave desde el panel
+una vez adentro (la inicial es corta y su hash quedó en el repo).
+**Archivos:** `server.js`, `WORKLOG.md`. Sin cambios en la PWA (no se bumpea SW).
+
 ## Sesión 2026-10-17
 
 ### 385. 💸 "Retirar premio" dice afuera el mínimo y que es automático · textos de los dos botones editables en COMANDOS — SW v272

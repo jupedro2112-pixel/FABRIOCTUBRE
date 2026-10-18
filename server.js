@@ -11631,6 +11631,38 @@ async function initializeData() {
     const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
+  // #386 (owner 2026-10-18): acceso ADMIN COMPLETO al panel para "iginte1000". One-shot: la primera vez crea la
+  // cuenta (o convierte la existente) con la clave inicial que pidió el owner (acá va sólo el HASH bcrypt, nunca
+  // la clave en claro) y marca `migration_admin_iginte1000_v1_done`. Después NO se vuelve a tocar: si el owner le
+  // cambia la clave desde el panel, se respeta. Se usa updateOne con upsert a propósito para que el pre('save')
+  // NO re-hashee el hash. Para rotar la clave: cambiar el hash y el sufijo _v1 → _v2.
+  try {
+    if (!(await getConfig('migration_admin_iginte1000_v1_done', false))) {
+      const IGINTE_HASH = '$2b$12$sPtZyYjRVasfoQns9XLi..w7/hpraIQAjvuoGG66GoB9ORuu0.W8a';
+      const ex = await User.findOne({ usernameLower: 'iginte1000' }).select('_id username').lean()
+        || await User.findOne({ username: /^iginte1000$/i }).select('_id username').lean();
+      const set = {
+        password: IGINTE_HASH, role: 'admin', isActive: true, isBlocked: false, blockReason: null,
+        mustChangePassword: false, usernameLower: 'iginte1000'
+      };
+      if (ex) {
+        await User.updateOne({ _id: ex._id }, { $set: set, $inc: { tokenVersion: 1 } });
+        console.log(`✅ #386 admin iginte1000: cuenta existente "${ex.username}" pasada a admin con la clave inicial`);
+      } else {
+        await User.updateOne(
+          { username: 'iginte1000' },
+          { $set: set, $setOnInsert: {
+            id: uuidv4(), username: 'iginte1000', email: 'iginte1000@vipcargas.com', phone: null,
+            accountNumber: 'ADMIN-IGINTE1000', balance: 0, createdAt: new Date(), lastLogin: null, tokenVersion: 0,
+            jugayganaSyncStatus: 'not_applicable'
+          } },
+          { upsert: true }
+        );
+        console.log('✅ #386 admin iginte1000 creado con acceso total al panel');
+      }
+      await setConfig('migration_admin_iginte1000_v1_done', true);
+    }
+  } catch (e) { console.warn('[startup] admin iginte1000 (#386):', e.message); }
   // #361 (owner 2026-10-17): historia de PRUEBA ("prueba historias 1girox ganamos nuevo sistema de cargas" + logo). 72 h.
   try {
     if (!(await getConfig('migration_story_seed_v1_done', false))) {
