@@ -5510,7 +5510,9 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       minDeposit: await getMinDepositArs(), // #299
       homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })(),
       // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
-      entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })()
+      entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
+      // #372: aviso "promoción hasta diciembre" de los reembolsos (/sys_refund_promo); null ⇒ vaciado en COMANDOS → no se muestra.
+      refundPromo: await (async () => { try { const pct = await getDailyRefundPct(); return await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) { return REFUND_PROMO_DEFAULT; } })()
     });
   } catch (e) {
     logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
@@ -11559,6 +11561,14 @@ async function initializeData() {
       response: '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%'
     },
     {
+      // #372 (2026-10-18): aviso de que los % de reembolso son promocionales (se ve en Info, en los modales de
+      // reembolso, en el Menú fácil y en la fila de reembolsos del home). Vacío = no se muestra.
+      name: '/sys_refund_promo',
+      description: 'Aviso debajo de los reembolsos (Info, modales de reembolso, Menú fácil, home): aclara que los % son promocionales. Variable: {pct} (% máximo del reembolso DIARIO). Vacío = no se muestra.',
+      type: 'message',
+      response: 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'
+    },
+    {
       // #266 (2026-10-17): cartel "SERVICIO COMPLETO" arriba del chat principal de la app (el home
       // completo queda plegado y se abre con "Ver todo"). {pct} = Config['autoLoadBonusPct'].
       name: '/sys_home_banner',
@@ -12267,7 +12277,8 @@ async function getMinDepositArs() {
   return MIN_DEPOSIT_ARS_DEFAULT;
 }
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
-const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%'; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
+const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%';
+const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo) // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';

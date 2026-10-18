@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-17
 
+### 372. 🎰 Ruleta con el estilo nuevo · reembolsos: "promoción válida hasta diciembre" — SW v259
+**Pedido (owner):** "a la ruleta dale el mismo estilo profesional, moderno y novedoso; aclará en reembolsos que ese
+margen es promocional hasta diciembre". **Ruleta:** `js/roulette.js` ya no arma HTML con colores inline: el modal,
+el estado "girando", la hoja "Para girar la ruleta" (3 pasos) y la tarjeta de comunidad usan clases `rl-*` estiladas
+en `pin.css` (tarjeta blanca redondeada, hero gris con el 🎰 y botón rojo "Girar", resultado verde/gris/rojo suave,
+premios como filas blancas con la probabilidad en píldora, ganadores de hoy en gris con punto rojo "EN VIVO"; la lista
+`.winner-row` del HTML viejo se pisa con `!important`). **Promo:** comando nuevo `/sys_refund_promo` (default
+"Promoción válida hasta diciembre. Los porcentajes pueden cambiar."; vacío = no se muestra) servido como
+`refundPromo` en `GET /api/platforms`; home.js (`_paintRefundPromo`) lo pinta en todos los `.refund-promo`: Info
+(sección Reembolsos), modal "Reembolsos" (elegir período), modal del reembolso (debajo del importe), tarjeta
+Reembolso del Menú fácil (y la fila de reembolsos del home, que en carga automática queda oculta). Editable en COMANDOS como el cartel NOVEDAD.
+
 ### 371. 📽️ Historias con el estilo nuevo (3 fotos, picaroja.com) · nombre "PICA ROJA oficial" · logo real de Telegram — SW v258
 **Nombre (owner): "ponele nombre de la página PICA ROJA oficial".** `<title>`, metas `apple-mobile-web-app-title` /
 `application-name`, manifest (`name` "PICA ROJA oficial", `short_name` "PICA ROJA"), título por defecto de las

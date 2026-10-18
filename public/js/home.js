@@ -235,6 +235,11 @@
     // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
     // COMANDOS → sólo el título. El "N%" se resalta en verde.
     // #349: cartel NOVEDAD del Inicio (texto /sys_entry_news; sin texto o sin % diario → se oculta).
+    // #372: aviso "promoción hasta diciembre" de los reembolsos → todos los .refund-promo (Info, modales, Menú fácil, home).
+    function _paintRefundPromo(text) {
+        const t = (text == null) ? '' : String(text).trim();
+        document.querySelectorAll('.refund-promo').forEach((el) => { el.textContent = t; el.hidden = !t; });
+    }
     function _paintEntryNews(en) {
         const el = document.getElementById('evHeroNew');
         if (!el) return;
@@ -1543,6 +1548,7 @@
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
         try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
+        try { _paintRefundPromo(_platforms && _platforms.refundPromo); } catch (_) {} // #372
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
