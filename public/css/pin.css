@@ -1348,4 +1348,16 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 /* ── #495: parpadeo del número de "jugando" cuando cambia ── */
 @keyframes gpTick { 0% { color: #22c55e; transform: scale(1.25); } 100% { color: #fff; transform: scale(1); } }
 .ev-game .gp b { display: inline-block; } .ev-game .gp b.tick { animation: gpTick .6s ease-out; }
+/* ── #496 (owner): GANAMOS con fondo VIOLETA en el Inicio y donde aparezca (pestaña, tarjeta del home completo, selector del menú fácil, botones del chat) ── */
+:root { --p-purple: #6d28d9; --p-purple-2: #8b5cf6; }
+.ev-tab.plat-ganamos, .ev-tab.plat-ganamos.soon, .ev-tab.plat-ganamos.active { background: linear-gradient(135deg, var(--p-purple), var(--p-purple-2)) !important; color: #fff !important; box-shadow: 0 6px 16px rgba(109,40,217,.28) !important; }
+.ev-tab.plat-ganamos *, .ev-tab.plat-ganamos.active * { color: #fff !important; }
+.ev-tab.plat-ganamos img { background: #fff !important; }
+.ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-ganamos .plat-soon-badge { background: rgba(255,255,255,.22) !important; color: #fff !important; }
+.plat-play-btn.plat-ganamos, .plat-play-btn.plat-ganamos.is-pref, .plat-play-btn.plat-ganamos.soon { background: linear-gradient(160deg, var(--p-purple), var(--p-purple-2)) !important; border-color: transparent !important; }
+.plat-play-btn.plat-ganamos .plat-play-name, .plat-play-btn.plat-ganamos .plat-play-sub { color: #fff !important; }
+.ep-item.ep-ganamos, .ep-item.ep-ganamos.soon { background: linear-gradient(135deg, var(--p-purple), var(--p-purple-2)) !important; border-color: transparent !important; color: #fff !important; opacity: 1 !important; }
+.ep-item.ep-ganamos b, .ep-item.ep-ganamos small, .ep-item.ep-ganamos em { color: #fff !important; }
+.ep-item.ep-ganamos.soon em { background: rgba(255,255,255,.22) !important; }
+.plat-btn[data-plat="ganamos"] { background: linear-gradient(135deg, var(--p-purple), var(--p-purple-2)) !important; color: #fff !important; border-color: transparent !important; }
 

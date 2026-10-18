@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 496. 💜 Ganamos con fondo violeta en el Inicio y donde aparezca — SW v347
+**Pedido (owner):** "en el de Ganamos ponele fondo violeta en Inicio y donde esté".
+**Qué se hizo:** tokens `--p-purple` / `--p-purple-2` y degradé violeta con texto blanco para la pestaña del Inicio
+(`.ev-tab.plat-ganamos`, activa o "Próximamente"), la tarjeta del home completo (`.plat-play-btn.plat-ganamos`), el selector
+"Elegí dónde jugar" del menú fácil (`.ep-item.ep-ganamos`, clase nueva por plataforma) y los botones de elegir plataforma del
+chat (`.plat-btn[data-plat="ganamos"]`). (El tema #370 lo había neutralizado a gris.)
+**Archivos:** `public/css/pin.css`, `public/js/home.js`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 495. 🎰 Los "N jugando" del Inicio varían rato a rato — SW v346
 **Pedido (owner):** "los números de jugando que vayan variando rato a rato".
 **Qué se hizo:** cada 7 s cambia un grupo al azar de juegos (≈45 % de ellos), de a 1 a 9 personas hacia arriba o abajo, siempre

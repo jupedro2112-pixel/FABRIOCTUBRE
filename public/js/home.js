@@ -181,7 +181,7 @@
         const list = _entryList();
         const soon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox';
         const nm = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || ''));
-        box.innerHTML = list.map((p) => '<button type="button" class="ep-item' + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.easyPlayPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<span><b>' + _esc(nm(p.name)) + '</b><small>' + (soon(p) ? 'Pronto' : 'Entrás con tu usuario') + '</small></span><em>' + (soon(p) ? 'Pronto' : '›') + '</em></button>').join('');
+        box.innerHTML = list.map((p) => '<button type="button" class="ep-item ep-' + _esc(p.id) + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.easyPlayPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<span><b>' + _esc(nm(p.name)) + '</b><small>' + (soon(p) ? 'Pronto' : 'Entrás con tu usuario') + '</small></span><em>' + (soon(p) ? 'Pronto' : '›') + '</em></button>').join('');
         try { VIP.ui.showModal('easyPlatModal'); } catch (_) { const m = _el('easyPlatModal'); if (m) m.classList.remove('hidden'); }
     }
     function easyPlayPick(id, isSoon) {
