@@ -4537,6 +4537,19 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
 });
 // #480 (owner): ELEGIR MENÚ de la app. Config['menuLayout'] = 1 (menú fácil actual) | 2 (barra inferior: Carga auto · Inicio · Info · Soporte).
 app.get('/api/public/menu-layout', async (req, res) => { try { const v = await getConfig('menuLayout', 1); res.set('Cache-Control', 'no-store'); res.json({ layout: Number(v) === 2 ? 2 : 1 }); } catch (_) { res.json({ layout: 1 }); } });
+// #507 (owner): CERRAR LA SESIÓN de un usuario desde el servidor. Sube `tokenVersion` → todos sus JWT anteriores dejan de valer
+// (authMiddleware los rechaza) y la app lo manda al ingreso en el próximo pedido. También borra sus tokens de push.
+app.post('/api/admin/users/:username/force-logout', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const username = String(req.params.username || '').trim().toLowerCase();
+    const user = await User.findOne({ username: new RegExp('^' + username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    await User.updateOne({ id: user.id }, { $inc: { tokenVersion: 1 }, $set: { fcmTokens: [], fcmToken: null } });
+    logger.info(`[admin] sesión cerrada a la fuerza: ${user.username} por ${req.user.username}`);
+    res.json({ success: true, username: user.username, tokenVersion: (user.tokenVersion || 0) + 1 });
+  } catch (e) { logger.error('[force-logout] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, res) => { try { const v = await getConfig('menuLayout', 1); res.json({ success: true, layout: Number(v) === 2 ? 2 : 1 }); } catch (_) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, res) => {
   try {

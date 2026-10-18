@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 507. 🔒 Cerrar la sesión de un usuario desde el servidor — `POST /api/admin/users/:username/force-logout`
+**Pedido (owner):** "quiero cerrar sesión del usuario diego576413". La ruta sube `User.tokenVersion` (todos sus JWT previos quedan
+inválidos: `authMiddleware` compara la versión) y borra sus tokens de push; la app lo manda al ingreso en el próximo pedido.
+Se usó para `diego576413` en Render.
+
 ### 506. 🧪 `diego576413` en modo test completo, igual que lalodj — SW v352
 **Pedido (owner):** "activalo como test en ese y dejá todo el test como el de lalodj para probar la carga y demás".
 Sumado a `TESTER_USERNAMES` (botones test de la PWA), `ROULETTE_TESTERS` (ruleta siempre disponible) y al promote admin del arranque
