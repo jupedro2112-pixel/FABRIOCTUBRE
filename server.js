@@ -19150,7 +19150,8 @@ function _missionProgress(m, st) {
 async function _missionCredit(m, st, wk) {
   const user = await User.findOne({ id: st.userId }).lean(); if (!user) return null;
   const reference = `vip-mis-${user.id}-${m.id}-${wk}`;
-  let claim; try { claim = await MissionClaim.create({ id: uuidv4(), userId: user.id, username: user.username, missionId: m.id, weekKey: wk, title: m.title, rewardArs: m.rewardArs, status: 'credited' }); } catch (e) { if (e && e.code === 11000) return null; throw e; }
+  // Reserva única por usuario/misión/semana. Si ya existe y quedó 'failed' (la plataforma rebotó), se REINTENTA con la misma reference (idempotente).
+  let claim; try { claim = await MissionClaim.create({ id: uuidv4(), userId: user.id, username: user.username, missionId: m.id, weekKey: wk, title: m.title, rewardArs: m.rewardArs, status: 'credited' }); } catch (e) { if (e && e.code === 11000) { claim = await MissionClaim.findOne({ userId: user.id, missionId: m.id, weekKey: wk }); if (!claim || claim.status !== 'failed') return null; await MissionClaim.updateOne({ id: claim.id }, { $set: { status: 'credited', error: null } }); } else throw e; }
   let pid = user.preferredPlatform || 'girox'; let adapter = platforms.getAdapter(pid);
   if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
   const credit = await adapter.creditGift(user.username, m.rewardArs, { description: `Misión semanal: ${m.title}`, reference });
@@ -19170,7 +19171,7 @@ async function _missionsTick() {
     const cfg = await getStrategyConfig(); if (!cfg.missions.enabled) return;
     const items = cfg.missions.items.filter((m) => m.active && m.rewardArs > 0); if (!items.length) return;
     const wk = weekKeyART(new Date()); const stats = await _missionWeekStats(wk);
-    const claimed = new Set((await MissionClaim.find({ weekKey: wk }).select('userId missionId').lean()).map((c) => c.userId + '|' + c.missionId));
+    const claimed = new Set((await MissionClaim.find({ weekKey: wk, status: 'credited' }).select('userId missionId').lean()).map((c) => c.userId + '|' + c.missionId)); // los 'failed' se reintentan
     let n = 0;
     for (const st of stats) { for (const m of items) { if (n >= 100) break; if (claimed.has(st.userId + '|' + m.id)) continue; if (_missionProgress(m, st).done) { await _missionCredit(m, st, wk); n++; } } }
   } catch (e) { logger.warn('[misiones] tick: ' + e.message); } finally { _missionsBusy = false; }
@@ -19219,12 +19220,13 @@ app.get('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res)
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const cfg = await getStrategyConfig(); const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig();
     const since30 = new Date(Date.now() - 30 * 86400000); const wk = weekKeyART(new Date());
-    const [offered, used, expired, claimsWeek, claims30] = await Promise.all([
+    const [offered, used, expired, claimsWeek, claims30, failedWeek] = await Promise.all([
       User.countDocuments({ 'secondDepositOffer.offeredAt': { $gte: since30 } }), User.countDocuments({ 'secondDepositOffer.status': 'used', 'secondDepositOffer.usedAt': { $gte: since30 } }), User.countDocuments({ 'secondDepositOffer.status': 'expired', 'secondDepositOffer.offeredAt': { $gte: since30 } }),
       MissionClaim.aggregate([{ $match: { weekKey: wk, status: 'credited' } }, { $group: { _id: '$missionId', n: { $sum: 1 }, amt: { $sum: '$rewardArs' } } }]),
-      MissionClaim.aggregate([{ $match: { createdAt: { $gte: since30 }, status: 'credited' } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$rewardArs' } } }])
+      MissionClaim.aggregate([{ $match: { createdAt: { $gte: since30 }, status: 'credited' } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$rewardArs' } } }]),
+      MissionClaim.countDocuments({ weekKey: wk, status: 'failed' })
     ]);
-    res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, weekKey: wk } });
+    res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, failedWeek, weekKey: wk } });
   } catch (e) { logger.error('[strategy] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res) => {

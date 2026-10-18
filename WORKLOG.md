@@ -30,7 +30,9 @@ confiable pero ajustable; toda esa estrategia debajo de Cierres como Estrategia 
 - **Panel:** sección "🎯 Estrategia clientes · publicidad" debajo de Cierres (`GET/POST /api/admin/strategy`): primera carga,
   segunda carga (con ofrecidos/usados/vencidos 30 d) y editor de misiones (título, tipo, meta, mínimo, premio, activa; cumplidas
   por semana), botón "Guardar estrategia".
-⚠️ El commit 0a75c34 subió sólo server + panel + markup; este commit completa home.js, CSS, SW y docs.
+⚠️ El commit 0a75c34 subió sólo server + panel + markup; 5be608b completó home.js, CSS, SW y docs. Ajuste posterior: una misión cuyo
+crédito rebotó en la plataforma (`MissionClaim.status='failed'`) se REINTENTA en la pasada siguiente con la misma reference; el panel
+muestra cuántas quedaron rebotadas. En Render (sin API de plataforma) todas rebotan: es lo esperado ahí.
 **Archivos:** `server.js`, `src/models/User.js`, `src/models/Transaction.js`, `src/models/MissionClaim.js`,
 `src/services/datosIaService.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/adminprivado2026/index.html`,
 `admin.js`, SWs.

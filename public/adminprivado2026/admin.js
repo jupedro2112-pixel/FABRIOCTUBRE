@@ -5802,7 +5802,7 @@ async function stratLoad() {
         g('stFdInfo').textContent = 'Hoy: ' + j.firstDeposit.pct + '% · con la app instalada ' + j.firstDeposit.withApp + '%';
         g('stSdOn').checked = !!j.secondDeposit.enabled; g('stSdPct').value = j.secondDeposit.pct; g('stSdAfter').value = j.secondDeposit.afterHours; g('stSdValid').value = j.secondDeposit.validHours;
         const s = j.stats.secondDeposit; g('stSdInfo').textContent = 'Últimos 30 días: ' + s.offered30 + ' ofrecidos · ' + s.used30 + ' usados · ' + s.expired30 + ' vencidos';
-        g('stMsOn').checked = !!j.missions.enabled; g('stMsInfo').textContent = 'Semana ' + j.stats.weekKey + ': ' + _stWeek.reduce((a, x) => a + x.n, 0) + ' misiones cumplidas · últimos 30 días ' + j.stats.missions30.n + ' por $' + Number(j.stats.missions30.amt || 0).toLocaleString('es-AR');
+        g('stMsOn').checked = !!j.missions.enabled; g('stMsInfo').textContent = 'Semana ' + j.stats.weekKey + ': ' + _stWeek.reduce((a, x) => a + x.n, 0) + ' misiones cumplidas · últimos 30 días ' + j.stats.missions30.n + ' por $' + Number(j.stats.missions30.amt || 0).toLocaleString('es-AR') + (j.stats.failedWeek ? ' · ⚠ ' + j.stats.failedWeek + ' con el crédito rebotado por la plataforma (se reintentan solos)' : '');
         _stRows(j.missions.items || []);
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
