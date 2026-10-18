@@ -1238,6 +1238,8 @@ function initSocket() {
         handleNewMessage(data);
         try { if (typeof spOnNewMessage === 'function') spOnNewMessage(data); } catch (_) {} // #377: columna Soporte en vivo
     });
+    // #414: consulta de un VISITANTE (sin cuenta) desde la pantalla de ingreso
+    socket.on('guest_support', (data) => { try { if (typeof gsOnEvent === 'function') gsOnEvent(data); } catch (_) {} });
     
     // MESSAGE SENT CONFIRMATION
     socket.on('message_sent', (data) => {
@@ -15093,8 +15095,9 @@ async function loadSupport() {
         _spSetBadge(j.unreadTotal || 0);
         const t = document.getElementById('spUnreadTotal'); if (t) t.textContent = _spConvs.length + ' conversación(es) · ' + (j.unreadTotal || 0) + ' sin leer';
         _spRenderList();
-        if (_spSelected && _spConvs.some(function (c) { return c.userId === _spSelected.userId; })) spLoadMessages(_spSelected.userId, true);
+        if (_spSelected && !_spSelected.guest && _spConvs.some(function (c) { return c.userId === _spSelected.userId; })) spLoadMessages(_spSelected.userId, true);
     } catch (e) { showToast('Error de conexión', 'error'); }
+    try { gsLoad(); } catch (_) {} // #414
 }
 function _spAgo(d) { const m = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000)); return m < 1 ? 'ahora' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; }
 function _spRenderList() {
@@ -15109,7 +15112,7 @@ function _spRenderList() {
 }
 async function spSelect(userId, username) {
     _spSelected = { userId: userId, username: username };
-    _spRenderList();
+    _spRenderList(); try { _gsRenderList(); } catch (_) {} // #414
     const h = document.getElementById('spHead');
     if (h) h.innerHTML = '<b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
     await spLoadMessages(userId, false);
@@ -15136,6 +15139,7 @@ function _spMsgHtml(m) {
     return '<div style="align-self:' + (mine || sys ? 'flex-end' : 'flex-start') + ';max-width:78%;background:' + bg + ';border-radius:12px;padding:7px 10px;color:#eee;font-size:13px;">' + who + (sys && m.adminOnly ? '<div style="font-size:10px;color:#26e07f;">🔒 INTERNO</div>' : '') + body + '<div style="font-size:10px;color:#888;text-align:right;margin-top:3px;">' + t + '</div></div>';
 }
 async function spSend() {
+    if (_spSelected && _spSelected.guest) return gsSend(); // #414
     const inp = document.getElementById('spInput'); const btn = document.getElementById('spSendBtn');
     const content = (inp && inp.value || '').trim();
     if (!content || !_spSelected) return;
@@ -15164,12 +15168,89 @@ function spOnNewMessage(data) {
 }
 function _spSetBadge(n) { const b = document.getElementById('supportBadge'); if (!b) return; b.textContent = n > 99 ? '99+' : String(n); b.style.display = n > 0 ? '' : 'none'; }
 async function pollSupportBadge() {
-    try { const r = await authFetch('/api/admin/support/conversations'); if (!r.ok) return; const j = await r.json(); _spSetBadge(j.unreadTotal || 0); } catch (_) {}
+    try {
+        const r = await authFetch('/api/admin/support/conversations'); if (!r.ok) return; const j = await r.json();
+        let g = 0; try { const rg = await authFetch('/api/admin/guest-support'); if (rg.ok) { const jg = await rg.json(); g = jg.unreadTotal || 0; } } catch (_) {} // #414
+        _spSetBadge((j.unreadTotal || 0) + g);
+    } catch (_) {}
 }
 setTimeout(pollSupportBadge, 6000);
 setInterval(pollSupportBadge, 45 * 1000);
 document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'spInput') { e.preventDefault(); spSend(); } });
 window.loadSupport = loadSupport; window.spSelect = spSelect; window.spSend = spSend; window.spOnNewMessage = spOnNewMessage;
+
+// =====================================================================
+// #414: SOPORTE PARA VISITANTES (sin cuenta) — columna "Visitantes" al lado de la de clientes. Comparte el panel de
+// chat (spHead / spMessages / spInput): si lo seleccionado es un visitante, spSend() responde por /guest-support.
+// =====================================================================
+let _gsThreads = [];
+async function gsLoad() {
+    try {
+        const r = await authFetch('/api/admin/guest-support'); if (!r.ok) return;
+        const j = await r.json(); _gsThreads = j.threads || [];
+        const c = document.getElementById('gsCount'); if (c) c.textContent = _gsThreads.length ? '· ' + _gsThreads.length + (j.unreadTotal ? ' · ' + j.unreadTotal + ' sin leer' : '') : '';
+        _gsRenderList();
+        if (_spSelected && _spSelected.guest && _gsThreads.some(function (t) { return t.id === _spSelected.id; })) gsLoadMessages(_spSelected.id, true);
+    } catch (_) {}
+}
+function _gsRenderList() {
+    const el = document.getElementById('gsList'); if (!el) return;
+    if (!_gsThreads.length) { el.innerHTML = '<div style="color:#888;padding:14px;text-align:center;font-size:12px;">Sin consultas de visitantes en los últimos 7 días.</div>'; return; }
+    el.innerHTML = _gsThreads.map(function (t) {
+        const sel = _spSelected && _spSelected.guest && _spSelected.id === t.id;
+        return '<div onclick="gsSelect(\'' + escapeHtml(t.id) + '\')" style="cursor:pointer;background:' + (sel ? 'rgba(99,102,241,0.16)' : 'rgba(255,255,255,0.04)') + ';border:1px solid ' + (sel ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)') + ';border-radius:10px;padding:8px 10px;' + (t.status === 'closed' ? 'opacity:.6;' : '') + '">' +
+            '<div style="display:flex;align-items:center;gap:6px;"><b style="color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(t.name) + '</b>' + (t.unread > 0 ? '<span style="background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;">' + t.unread + '</span>' : '') + '<span style="font-size:10px;color:#888;">' + _spAgo(t.lastAt) + '</span></div>' +
+            '<div style="color:#9ab;font-size:10.5px;margin-top:2px;">📞 ' + escapeHtml(t.phone) + (t.status === 'closed' ? ' · cerrada' : '') + '</div>' +
+            '<div style="color:#aaa;font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (t.lastFrom === 'guest' ? '' : '↩ ') + escapeHtml(t.lastMessage || t.motivo || '') + '</div></div>';
+    }).join('');
+}
+async function gsSelect(id) {
+    const t = _gsThreads.find(function (x) { return x.id === id; }); if (!t) return;
+    _spSelected = { guest: true, id: id, name: t.name };
+    _spRenderList(); _gsRenderList();
+    const h = document.getElementById('spHead');
+    if (h) h.innerHTML = '<b>🌐 ' + escapeHtml(t.name) + '</b><span style="color:#9ab;font-size:11.5px;">📞 ' + escapeHtml(t.phone) + ' · visitante sin cuenta · respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span>' +
+        '<button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="gsClose(\'' + escapeHtml(id) + '\')">' + (t.status === 'closed' ? 'Cerrada' : '✔ Cerrar consulta') + '</button>';
+    await gsLoadMessages(id, false);
+    t.unread = 0; _gsRenderList(); pollSupportBadge();
+}
+async function gsLoadMessages(id, keepScroll) {
+    const box = document.getElementById('spMessages'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/guest-support/' + encodeURIComponent(id)); const j = await r.json(); if (!r.ok) return;
+        const th = j.thread || {}; const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+        box.innerHTML = '<div style="align-self:center;font-size:10.5px;color:#9ab;background:rgba(255,255,255,0.06);border-radius:999px;padding:3px 10px;">Consulta de ' + escapeHtml(th.name || '') + ' · ' + new Date(th.createdAt).toLocaleString('es-AR') + '</div>' + (th.messages || []).map(_gsMsgHtml).join('');
+        if (!keepScroll || atBottom) box.scrollTop = box.scrollHeight;
+    } catch (_) {}
+}
+function _gsMsgHtml(m) {
+    const t = new Date(m.at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const mine = m.from !== 'guest';
+    const who = mine ? '<div style="font-size:10px;color:#9ab;margin-bottom:2px;">' + escapeHtml(m.agent || 'Soporte') + '</div>' : '';
+    return '<div data-gsid="' + escapeHtml(m.id || '') + '" style="align-self:' + (mine ? 'flex-end' : 'flex-start') + ';max-width:78%;background:' + (mine ? 'rgba(99,102,241,0.22)' : 'rgba(255,255,255,0.08)') + ';border-radius:12px;padding:7px 10px;color:#eee;font-size:13px;">' + who + escapeHtml(m.content).replace(/\n/g, '<br>') + '<div style="font-size:10px;color:#888;text-align:right;margin-top:2px;">' + t + '</div></div>';
+}
+async function gsSend() {
+    const inp = document.getElementById('spInput'); const btn = document.getElementById('spSendBtn');
+    const content = (inp && inp.value || '').trim();
+    if (!content || !_spSelected || !_spSelected.guest) return;
+    btn.disabled = true;
+    try {
+        const r = await authFetch('/api/admin/guest-support/' + encodeURIComponent(_spSelected.id) + '/reply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: content }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo enviar', 'error'); return; }
+        inp.value = '';
+        const box = document.getElementById('spMessages'); if (box) { box.insertAdjacentHTML('beforeend', _gsMsgHtml(j.message)); box.scrollTop = box.scrollHeight; }
+        gsLoad();
+    } catch (e) { showToast('Error de conexión', 'error'); } finally { btn.disabled = false; }
+}
+async function gsClose(id) {
+    try { await authFetch('/api/admin/guest-support/' + encodeURIComponent(id) + '/close', { method: 'POST' }); showToast('Consulta cerrada', 'success'); await gsLoad(); if (_spSelected && _spSelected.guest && _spSelected.id === id) gsSelect(id); } catch (_) {}
+}
+function gsOnEvent(data) {
+    if (document.getElementById('supportSection')?.classList.contains('active')) gsLoad(); else pollSupportBadge();
+    try { if (data && data.name) showToast('🌐 Visitante ' + data.name + ': ' + (data.preview || 'nueva consulta'), 'info'); } catch (_) {}
+}
+window.gsLoad = gsLoad; window.gsSelect = gsSelect; window.gsSend = gsSend; window.gsClose = gsClose; window.gsOnEvent = gsOnEvent;
 
 // =====================================================================
 // #383: COMANDOS por sectores plegables (minimizado → maximizar y editar; todo en una pantalla)

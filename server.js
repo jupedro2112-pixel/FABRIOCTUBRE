@@ -18363,6 +18363,105 @@ app.get('/api/deposits/pending', authMiddleware, async (req, res) => {
 // channel='support' (todo lo que escribe el cliente desde la app y lo que responde el agente desde esta columna).
 // ============================================
 const SUPPORT_ROLES = ['admin', 'depositor', 'withdrawer', 'comunidad'];
+// ============================================================
+// #414: SOPORTE PARA VISITANTES (sin cuenta) — pantalla de ingreso → columna "Visitantes" del panel
+// ============================================================
+const GuestThread = require('./src/models/GuestThread');
+const _gsClean = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
+function _gsPublicThread(t) {
+  return {
+    id: t.id, name: t.name, status: t.status, lastAt: t.lastAt,
+    messages: (t.messages || []).map((m) => ({ id: m.id, from: m.from, content: m.content, agent: m.agent || null, at: m.at }))
+  };
+}
+// Visitante: abre una conversación (nombre + teléfono + motivo). Devuelve el token para seguirla.
+app.post('/api/public/support/start', sensitiveLimiter, landingIpLimiter, async (req, res) => {
+  try {
+    const name = _gsClean(req.body && req.body.name, 60), phone = _gsClean(req.body && req.body.phone, 30), motivo = _gsClean(req.body && req.body.motivo, 500);
+    if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
+    if (phone.replace(/\D/g, '').length < 6) return res.status(400).json({ error: 'Dejanos un teléfono válido para poder contactarte.' });
+    if (motivo.length < 3) return res.status(400).json({ error: 'Contanos el motivo de tu consulta.' });
+    const open = await GuestThread.countDocuments({ ip: req.ip, status: 'open', lastAt: { $gte: new Date(Date.now() - 24 * 3600 * 1000) } });
+    if (open >= 5) return res.status(429).json({ error: 'Ya tenés varias consultas abiertas. Esperá la respuesta, por favor.' });
+    const t = await GuestThread.create({
+      id: uuidv4(), token: crypto.randomBytes(24).toString('hex'), name, phone, motivo,
+      messages: [{ id: uuidv4(), from: 'guest', content: motivo, at: new Date() }],
+      unreadAdmin: 1, lastFrom: 'guest', lastAt: new Date(), ip: String(req.ip || '').slice(0, 60), userAgent: String(req.headers['user-agent'] || '').slice(0, 200)
+    });
+    try { notifyAdmins('guest_support', { threadId: t.id, name: t.name, phone: t.phone, preview: motivo.slice(0, 80) }); } catch (_) {}
+    res.json({ success: true, threadId: t.id, token: t.token, agentName: await getSupportAgentName(), thread: _gsPublicThread(t) });
+  } catch (e) { logger.error('[guest-support] start: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Visitante: lee su conversación (polling) — token obligatorio.
+app.get('/api/public/support/:id', async (req, res) => {
+  try {
+    const token = String(req.query.token || '');
+    if (!token) return res.status(401).json({ error: 'Falta el token' });
+    const t = await GuestThread.findOne({ id: String(req.params.id) }).lean();
+    if (!t || !safeCompare(t.token, token)) return res.status(404).json({ error: 'Conversación no encontrada' });
+    res.json({ success: true, thread: _gsPublicThread(t), agentName: await getSupportAgentName() });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Visitante: manda otro mensaje.
+app.post('/api/public/support/:id/message', sensitiveLimiter, async (req, res) => {
+  try {
+    const token = String((req.body && req.body.token) || '');
+    const content = _gsClean(req.body && req.body.content, 1000);
+    if (!token) return res.status(401).json({ error: 'Falta el token' });
+    if (!content) return res.status(400).json({ error: 'Escribí un mensaje.' });
+    const msg = { id: uuidv4(), from: 'guest', content, at: new Date() };
+    const t = await GuestThread.findOneAndUpdate(
+      { id: String(req.params.id) },
+      { $push: { messages: msg }, $inc: { unreadAdmin: 1 }, $set: { lastFrom: 'guest', lastAt: new Date(), status: 'open' } },
+      { new: true }
+    ).lean();
+    if (!t || !safeCompare(t.token, token)) return res.status(404).json({ error: 'Conversación no encontrada' });
+    try { notifyAdmins('guest_support', { threadId: t.id, name: t.name, phone: t.phone, preview: content.slice(0, 80) }); } catch (_) {}
+    res.json({ success: true, message: msg });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Panel: lista (últimos 7 días) + no leídos.
+app.get('/api/admin/guest-support', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+    const rows = await GuestThread.find({ lastAt: { $gte: since } }).sort({ lastAt: -1 }).limit(200)
+      .select('id name phone motivo status unreadAdmin lastFrom lastAt messages createdAt').lean();
+    const threads = rows.map((t) => {
+      const last = (t.messages || [])[t.messages.length - 1] || null;
+      return { id: t.id, name: t.name, phone: t.phone, motivo: t.motivo, status: t.status, unread: t.unreadAdmin || 0, lastFrom: t.lastFrom, lastAt: t.lastAt, lastMessage: last ? last.content : '', createdAt: t.createdAt };
+    });
+    res.json({ success: true, threads, unreadTotal: threads.reduce((s, t) => s + (t.unread || 0), 0) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/guest-support/:id', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const t = await GuestThread.findOneAndUpdate({ id: String(req.params.id) }, { $set: { unreadAdmin: 0 } }, { new: true }).lean();
+    if (!t) return res.status(404).json({ error: 'No encontrada' });
+    res.json({ success: true, thread: { id: t.id, name: t.name, phone: t.phone, motivo: t.motivo, status: t.status, lastAt: t.lastAt, createdAt: t.createdAt, messages: t.messages || [] } });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/guest-support/:id/reply', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const content = _gsClean(req.body && req.body.content, 2000);
+    if (!content) return res.status(400).json({ error: 'Escribí la respuesta.' });
+    const agent = await getSupportAgentName();
+    const msg = { id: uuidv4(), from: 'agent', content, agent, at: new Date() };
+    const t = await GuestThread.findOneAndUpdate({ id: String(req.params.id) }, { $push: { messages: msg }, $set: { lastFrom: 'agent', lastAt: new Date(), unreadAdmin: 0, status: 'open' } }, { new: true }).lean();
+    if (!t) return res.status(404).json({ error: 'No encontrada' });
+    res.json({ success: true, message: msg });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/guest-support/:id/close', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const r = await GuestThread.updateOne({ id: String(req.params.id) }, { $set: { status: 'closed', unreadAdmin: 0 } });
+    res.json({ success: true, closed: !!(r.modifiedCount || r.nModified) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
@@ -19984,10 +20083,11 @@ app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
 // siempre se vea activo.
 // ============================================================
 function _claimsMaskName(u) {
+  // #414 (owner): "tapá el inicio del nombre con asteriscos y dejá libre el final" (antes se mostraba el inicio).
   const s = String(u || '').trim();
   if (!s) return '***';
-  const visible = Math.max(1, Math.round(s.length * 0.2));
-  return s.slice(0, visible) + '*'.repeat(Math.max(2, s.length - visible));
+  const visible = s.length >= 6 ? 3 : (s.length >= 4 ? 2 : 1);
+  return '*'.repeat(Math.max(3, s.length - visible)) + s.slice(-visible);
 }
 
 const _CLAIMS_EXAMPLE_NAMES = ['lucas', 'martin', 'jose', 'daniela', 'rodri', 'meli',

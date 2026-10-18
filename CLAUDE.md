@@ -232,6 +232,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (`/sys_support_names`, rota cada 8 h). No borres ese Config: volvería a mostrar todo el chat viejo a los clientes.
   **#380:** el cliente ve SOLO canal support + mensajes de sistema; lo que un agente escribe desde la sección Chats NO le
   llega (ni al recargar ni por socket). Responder soporte = columna 💬 Soporte del panel.
+  **#414:** hay un SOPORTE PARA VISITANTES sin cuenta (pantalla de ingreso → `GuestThread`, rutas `/api/public/support/*`
+  con token secreto; panel → columna "Visitantes" de Soporte, `/api/admin/guest-support/*`). No mezcla con `Message`.
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.

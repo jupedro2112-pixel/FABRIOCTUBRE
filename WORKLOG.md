@@ -8,6 +8,40 @@
 
 ## Sesión 2026-10-18
 
+### 414. 🚪 Ingreso como REGISTRO · soporte para VISITANTES (sin cuenta) con columna en el panel · ticker sobrio — SW v285, admin-sw v87
+**Pedido (owner, con captura del login):** "que figure como registro, que exija SMS en el registro; abajo las reseñas; agregá
+un soporte y en el admin un soporte sin acceso para gente que quiere hablar desde afuera, en otra columna al lado del de
+clientes: nombre, teléfono y motivo, formato burbuja con foto de asistente PICA ROJA; los premios en vivo con otro formato
+más profesional que rote, sin ser infantil; tapá el inicio del nombre con asteriscos y dejá libre el final".
+**Qué se hizo:**
+- **Registro primero (index.html + pin.css):** en la tarjeta de ingreso la acción principal es "📝 Registrarme · usuario +
+  clave + celular verificado por SMS" (`#registerBtn`, mismo id → app.js abre `registerModal`); el login queda plegado bajo
+  "Ya tengo cuenta · Ingresar" (`#lgLoginToggle` → `.lg-login-form.lg-open`). El SMS en el registro YA era obligatorio
+  (server `POST /api/auth/register` exige teléfono + OTP; formulario con paso 2 de SMS): no hubo que tocar nada ahí.
+  Las reseñas ya estaban al pie (`#loginReviews`, slider de reviews.js con 202 opiniones públicas): se dejan.
+- **Ticker sobrio:** `_claimsMaskName` (server) ahora tapa el INICIO y deja los últimos 3 caracteres (`*******dj777`);
+  app.js pinta `nombre · cobró/ganó · $monto · Reembolso diario / Ruleta diaria / Regalo` con estilos `.lg-tk-*`,
+  rotación cada 4,2 s con fundido.
+- **Soporte para visitantes:**
+  - Modelo `src/models/GuestThread.js` (id, token secreto, name, phone, motivo, status, messages[] embebidos, unreadAdmin,
+    lastFrom/lastAt, TTL 30 días).
+  - Rutas públicas (sin login, `sensitiveLimiter` + límite por IP; máx. 5 abiertas por IP/24 h): `POST /api/public/support/start`
+    {name, phone, motivo} → {threadId, token}; `GET /api/public/support/:id?token=`; `POST /api/public/support/:id/message`
+    {token, content}. Token comparado con `safeCompare`. Cada mensaje del visitante avisa a los admins por socket
+    (`guest_support`).
+  - Rutas del panel (`SUPPORT_ROLES`): `GET /api/admin/guest-support` (7 días, no leídos), `GET …/:id` (marca leído),
+    `POST …/:id/reply` (firma con la persona de turno, `getSupportAgentName`), `POST …/:id/close`.
+  - PWA: `public/js/guestsupport.js` + markup en `#loginScreen`: burbuja fija abajo a la derecha (`#gsBubble`, avatar de la
+    asistente = mismo SVG de #supportIntro) y panel `#gsPanel` tipo chat: paso 1 formulario (nombre, teléfono, motivo),
+    paso 2 burbujas (visitante rojo a la derecha, Soporte gris a la izquierda), input, polling cada 8 s, "Nueva consulta".
+    Hilo en `localStorage vip_guest_support`. También link "💬 Hablar con Soporte" bajo el login. Oculto con sesión.
+  - Panel (admin.js / index.html): en Soporte, columna "🌐 Visitantes (sin cuenta)" al lado de "👤 Clientes"; al elegir
+    uno se usa el mismo panel de chat (`spHead`/`spMessages`/`spInput`): `spSend()` deriva a `gsSend()`; botón "Cerrar
+    consulta"; el badge del menú suma clientes + visitantes; socket `guest_support` recarga la columna y muestra un toast.
+**Archivos:** `server.js`, `src/models/GuestThread.js`, `public/index.html`, `public/js/guestsupport.js`, `public/js/app.js`,
+`public/css/pin.css`, `public/firebase-messaging-sw.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`,
+`public/adminprivado2026/pin-admin.css`, `public/admin-sw.js`, `CLAUDE.md`.
+
 ### 413. 🔐 Seguridad pre-lanzamiento: auditoría + fixes críticos/altos/medios
 **Pedido (owner):** "revisá que esté todo ok y perfecto, seguridad y demás para lanzar la página".
 **Auditoría (agente read-only sobre server.js, auth, modelos, panel, PWA).** Dato clave: **el repo de GitHub es PÚBLICO**

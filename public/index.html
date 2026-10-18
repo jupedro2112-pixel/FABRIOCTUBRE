@@ -398,11 +398,17 @@
             <!-- Ticker en vivo de lo que reclama la gente (se llena desde app.js). -->
             <div id="loginClaimsTicker" class="lg-ticker" style="display:none;">
                 <span class="lg-live"><i></i>EN VIVO</span>
-                <span id="loginClaimsText" class="lg-ticker-t">—</span>
+                <span id="loginClaimsText" class="lg-ticker-t">—</span><!-- #414: app.js pinta nombre (final visible) · monto · tipo -->
                 <button id="loginGiftsBtn" type="button" class="lg-gifts" title="Regalos de hoy">🎁</button>
             </div>
             <div class="lg-form">
-            <form id="loginForm" autocomplete="on">
+            <!-- #414 (owner): la pantalla figura como REGISTRO: crear cuenta (SMS obligatorio) es la acción principal;
+                 "Ya tengo cuenta" despliega el ingreso de siempre. -->
+            <div class="lg-reg">
+                <button type="button" id="registerBtn" class="btn btn-primary lg-reg-main">📝 Registrarme <small>usuario + clave + celular verificado por SMS</small></button>
+                <button type="button" class="lg-login-toggle" id="lgLoginToggle" onclick="var f=document.getElementById('loginForm');var o=f.classList.toggle('lg-open');this.setAttribute('aria-expanded',o?'true':'false');this.querySelector('b').textContent=o?'Ocultar ingreso':'Ya tengo cuenta · Ingresar';if(o){try{document.getElementById('username').focus();}catch(e){}}" aria-expanded="false"><b>Ya tengo cuenta · Ingresar</b><span>▾</span></button>
+            </div>
+            <form id="loginForm" autocomplete="on" class="lg-login-form">
                 <div style="display:none;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid rgba(212,175,55,0.3);">
                     <!-- Modos de login por celular/SMS ocultos: el acceso es solo
                          usuario + contraseña. La verificación por SMS se ofrece
@@ -470,10 +476,9 @@
             </form>
             </div>
             <div class="lg-alt">
-                <span class="lg-alt-q">¿Primera vez acá?</span>
-                <button id="registerBtn" class="btn btn-secondary lg-register">📝 Crear mi cuenta</button>
                 <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Recuperar contraseña</button>
-                <span class="lg-alt-note">Solo para clientes con SMS verificado.</span>
+                <button type="button" class="lg-link" onclick="if(window.VIP&&VIP.guestSupport)VIP.guestSupport.open()">💬 Hablar con Soporte</button>
+                <span class="lg-alt-note">La recuperación es solo para clientes con SMS verificado.</span>
             </div>
             <button id="loginReviewsBtn" type="button" hidden aria-hidden="true"></button>
             <div id="errorMessage" class="error-message"></div>
@@ -503,6 +508,32 @@
                 <div id="loginReviews" class="ev-reviews lg-reviews" style="display:none;"></div>
             </section>
             <p class="lg-foot">PICA ROJA oficial · juego responsable · solo mayores de 18 años</p>
+        </div>
+        <!-- #414 (owner): SOPORTE PARA VISITANTES (sin cuenta): burbuja + panel con la asistente de PICA ROJA (js/guestsupport.js) -->
+        <button type="button" id="gsBubble" class="gs-bubble" onclick="VIP.guestSupport.open()" aria-label="Hablar con Soporte"><span class="gs-av"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#ffe9ec"/><path d="M9 64c2.5-13 11.5-19 23-19s20.5 6 23 19z" fill="#e60023"/><rect x="27" y="36" width="10" height="11" rx="4" fill="#e8b48f"/><ellipse cx="32" cy="28" rx="12" ry="13" fill="#f3c7a4"/><path d="M20 27c0-9 5-14 12-14s12 5 12 14c-2-4-6-6-12-6s-10 2-12 6z" fill="#3b2a24"/><circle cx="27.5" cy="29" r="1.4" fill="#2b1d18"/><circle cx="36.5" cy="29" r="1.4" fill="#2b1d18"/><path d="M28 34.5c2 1.6 6 1.6 8 0" stroke="#b5664e" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M18 30c-2 0-3 2-2 4s2 3 4 2" fill="#3b2a24"/><rect x="44" y="30" width="5" height="7" rx="2.5" fill="#e60023"/><path d="M46 30c0-8-5-13-14-13" stroke="#e60023" stroke-width="2.2" fill="none"/></svg></span><span class="gs-bubble-t"><b>Soporte</b><small>en línea · te respondemos en minutos</small></span></button>
+        <div id="gsPanel" class="gs-panel" role="dialog" aria-label="Soporte">
+            <div class="gs-head">
+                <span class="gs-av"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#ffe9ec"/><path d="M9 64c2.5-13 11.5-19 23-19s20.5 6 23 19z" fill="#e60023"/><rect x="27" y="36" width="10" height="11" rx="4" fill="#e8b48f"/><ellipse cx="32" cy="28" rx="12" ry="13" fill="#f3c7a4"/><path d="M20 27c0-9 5-14 12-14s12 5 12 14c-2-4-6-6-12-6s-10 2-12 6z" fill="#3b2a24"/><circle cx="27.5" cy="29" r="1.4" fill="#2b1d18"/><circle cx="36.5" cy="29" r="1.4" fill="#2b1d18"/><path d="M28 34.5c2 1.6 6 1.6 8 0" stroke="#b5664e" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M18 30c-2 0-3 2-2 4s2 3 4 2" fill="#3b2a24"/><rect x="44" y="30" width="5" height="7" rx="2.5" fill="#e60023"/><path d="M46 30c0-8-5-13-14-13" stroke="#e60023" stroke-width="2.2" fill="none"/></svg></span>
+                <div class="gs-head-t"><b id="gsAgentName">Soporte</b><small>Asistente PICA ROJA · <i class="gs-dot"></i>en línea</small></div>
+                <button type="button" class="gs-x" onclick="VIP.guestSupport.close()" aria-label="Cerrar">✕</button>
+            </div>
+            <form id="gsForm" class="gs-form" onsubmit="VIP.guestSupport.start(event)">
+                <div class="gs-intro"><div class="gs-msg gs-theirs"><div class="gs-txt">¡Hola! 👋 Soy la asistente de PICA ROJA. Dejame tu nombre, un teléfono y contame tu consulta: te respondemos acá mismo en minutos.</div></div></div>
+                <label>Nombre<input type="text" id="gsName" maxlength="60" placeholder="Tu nombre" required autocomplete="name"></label>
+                <label>Teléfono<input type="tel" id="gsPhone" maxlength="30" placeholder="11 1234-5678" required autocomplete="tel"></label>
+                <label>Motivo<textarea id="gsMotivo" maxlength="500" rows="3" placeholder="Contanos qué necesitás" required></textarea></label>
+                <div id="gsErr" class="gs-err"></div>
+                <button type="submit" id="gsStartBtn" class="gs-send-main">Enviar consulta</button>
+            </form>
+            <div id="gsChat" class="gs-chat" style="display:none;">
+                <div id="gsMessages" class="gs-messages"></div>
+                <div class="gs-status" id="gsStatus">enviado · te respondemos en minutos</div>
+                <form class="gs-input" onsubmit="VIP.guestSupport.send(event)">
+                    <input type="text" id="gsInput" maxlength="1000" placeholder="Escribí tu mensaje…" autocomplete="off">
+                    <button type="submit" aria-label="Enviar">➤</button>
+                </form>
+                <button type="button" class="gs-reset" onclick="VIP.guestSupport.reset()">Nueva consulta</button>
+            </div>
         </div>
     </div>
 
@@ -2255,7 +2286,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v284</div>
+                    <div class="pf-build" id="appBuildTag">app v285</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2654,6 +2685,7 @@
     <script src="/js/fire.js"></script>
     <script src="/js/roulette.js"></script>
     <script src="/js/reviews.js"></script>
+    <script src="/js/guestsupport.js"></script>
     <script src="/js/loginhero.js"></script>
     <script src="/js/stories.js"></script>
     <script src="/js/promobonus.js"></script>

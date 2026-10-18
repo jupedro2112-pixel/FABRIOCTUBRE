@@ -134,11 +134,13 @@ function setupEventListeners() {
         // (Sin 'daily': el reembolso diario se eliminó 2026-08-07 y el server ya
         // filtra los claims históricos de ese tipo del feed.)
         const _vipRefundLabel = { daily: 'diario', weekly: 'semanal', monthly: 'mensual' }; // #349
+        // #414 (owner): formato sobrio — nombre (el server tapa el inicio y deja el final) · monto · concepto.
         function _vipClaimText(it) {
-            const name = it.name || '***';
-            if (it.kind === 'ruleta') return '🎰 ' + name + ' ganó ' + _vipFmtMoney(it.amount) + ' en la ruleta diaria';
-            if (it.kind === 'bono') return '🎁 ' + name + ' reclamó un regalo de ' + _vipFmtMoney(it.amount);
-            return '💸 ' + name + ' reclamó ' + _vipFmtMoney(it.amount) + ' de reembolso ' + (_vipRefundLabel[it.refundType] || '');
+            const name = _vipEsc(it.name || '***');
+            const amt = _vipEsc(_vipFmtMoney(it.amount));
+            const kind = it.kind === 'ruleta' ? 'Ruleta diaria' : (it.kind === 'bono' ? 'Regalo' : ('Reembolso ' + (_vipRefundLabel[it.refundType] || '')));
+            const verb = it.kind === 'ruleta' ? 'ganó' : 'cobró';
+            return '<span class="lg-tk-n">' + name + '</span><span class="lg-tk-v">' + verb + '</span><span class="lg-tk-a">' + amt + '</span><span class="lg-tk-k">' + _vipEsc(kind.trim()) + '</span>';
         }
 
         let _vipClaims = [];
@@ -168,7 +170,7 @@ function setupEventListeners() {
             txt.style.opacity = '0';
             setTimeout(() => {
                 _vipClaimIdx = (_vipClaimIdx + 1) % _vipClaims.length;
-                txt.textContent = _vipClaimText(_vipClaims[_vipClaimIdx]);
+                txt.innerHTML = _vipClaimText(_vipClaims[_vipClaimIdx]);
                 txt.style.opacity = '1';
             }, 260);
         }
@@ -179,11 +181,11 @@ function setupEventListeners() {
             const txt = document.getElementById('loginClaimsText');
             if (ticker && txt) {
                 ticker.style.display = 'flex';
-                txt.textContent = _vipClaimText(_vipClaims[0]);
+                txt.innerHTML = _vipClaimText(_vipClaims[0]);
                 txt.style.opacity = '1';
             }
             if (_vipClaimTimer) clearInterval(_vipClaimTimer);
-            _vipClaimTimer = setInterval(_vipTickStep, 3600);
+            _vipClaimTimer = setInterval(_vipTickStep, 4200);
             if (_vipClaimFetchTimer) clearInterval(_vipClaimFetchTimer);
             _vipClaimFetchTimer = setInterval(_vipFetchClaims, 45000);
         })();

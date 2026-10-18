@@ -147,4 +147,6 @@ a { color: var(--p-red); }
 /* ── #408: cabecera de Configuración (título arriba, "Comandos" abajo) ── */
 .cfg-head h2 { margin: 0 !important; }
 .cfg-sub { font: 700 12px var(--p-font); color: var(--p-muted); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+/* ── #414: columnas de Soporte (Clientes / Visitantes) ── */
+.sp-col-t { font: 800 11px var(--p-font); letter-spacing: 1px; text-transform: uppercase; color: var(--p-muted); padding: 2px 4px; }
 
