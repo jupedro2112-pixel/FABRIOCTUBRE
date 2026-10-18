@@ -142,6 +142,11 @@ document.addEventListener('change', function (ev) {
                     <span class="icon icon-terminal"></span>
                     <span>Configuración</span>
                 </a>
+                <!-- #459: Datos IA (análisis por reglas + comparativa) -->
+                <a href="#" class="nav-item" data-section="datosIa">
+                    <span>🧠</span>
+                    <span>Datos IA</span>
+                </a>
                 <a href="#" class="nav-item" data-section="datos">
                     <span class="icon icon-chart"></span>
                     <span>Datos</span>
@@ -1221,6 +1226,90 @@ document.addEventListener('change', function (ev) {
             </section>
 
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
+            <!-- #459 (owner): DATOS IA — análisis completo de la app (día/semana/mes) + comparativa con la otra página -->
+            <section id="datosIaSection" class="section">
+                <div class="panel-header">
+                    <h2>🧠 Datos IA</h2>
+                    <button class="refresh-btn" onclick="diaRun()" title="Recalcular">🔄</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                    <button type="button" class="btn-primary btn-small" id="diaTabA" onclick="diaTab('a')">📊 Análisis de la app</button>
+                    <button type="button" class="btn-secondary btn-small" id="diaTabB" onclick="diaTab('b')">⚖️ Comparativa con la otra página</button>
+                    <button type="button" class="btn-secondary btn-small" id="diaTabC" onclick="diaTab('c')">🧮 Calculador de inversión</button>
+                </div>
+                <div id="diaPaneC" style="display:none;">
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">🧮 ¿Qué deja una inversión?</h3>
+                        <p style="color:#aaa;font-size:11.5px;margin:0 0 8px;">Proyección APROXIMADA con lo observado en los últimos días (costo por cliente nuevo, cargas y monto por cliente, % retirado, % que sigue activo). Tres escenarios: bajo (−30%), base y alto (+30%). Sirve para ver cómo escala: probá distintos montos y días.</p>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                            <label style="margin:0;font-size:11px;">Plata a invertir $<input type="number" id="prSpend" min="0" step="1000" value="500000" style="width:130px;"></label>
+                            <label style="margin:0;font-size:11px;">Durante (días)<input type="number" id="prDays" min="1" max="365" value="30" style="width:80px;"></label>
+                            <label style="margin:0;font-size:11px;">Base: últimos (días)<input type="number" id="prBase" min="7" max="365" value="30" style="width:80px;"></label>
+                            <label style="margin:0;font-size:11px;">Costo por cliente nuevo $ (opcional, pisa el observado)<input type="number" id="prCac" min="0" step="100" placeholder="observado" style="width:130px;"></label>
+                            <label style="margin:0;font-size:11px;">Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
+                            <button class="btn-primary btn-small" onclick="diaProject()">Calcular</button>
+                        </div>
+                    </div>
+                    <div id="diaProjOut"></div>
+                </div>
+                <div id="diaPaneA">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:rgba(255,255,255,0.04);border-radius:12px;padding:10px 12px;margin-bottom:12px;">
+                        <label style="margin:0;display:flex;flex-direction:column;gap:3px;font-size:11px;">Desde<input type="date" id="diaFrom"></label>
+                        <label style="margin:0;display:flex;flex-direction:column;gap:3px;font-size:11px;">Hasta<input type="date" id="diaTo"></label>
+                        <label style="margin:0;display:flex;flex-direction:column;gap:3px;font-size:11px;">Ver por<select id="diaGran"><option value="day">Día a día</option><option value="week">Semana a semana</option><option value="month">Mes a mes</option></select></label>
+                        <label style="margin:0;display:flex;flex-direction:column;gap:3px;font-size:11px;">Campaña / publicista<select id="diaCampaign"><option value="">Toda la app</option></select></label>
+                        <label style="margin:0;display:flex;flex-direction:column;gap:3px;font-size:11px;">Gasto en publicidad del rango ($)<input type="number" id="diaSpend" min="0" step="1" placeholder="(usa el guardado)" style="width:150px;"></label>
+                        <button class="btn-primary btn-small" onclick="diaRun()">Analizar</button>
+                        <div style="display:flex;gap:6px;">
+                            <button class="btn-secondary btn-small" onclick="diaPreset(7,'day')">7 días</button>
+                            <button class="btn-secondary btn-small" onclick="diaPreset(30,'day')">30 días</button>
+                            <button class="btn-secondary btn-small" onclick="diaPreset(90,'week')">90 d por semana</button>
+                            <button class="btn-secondary btn-small" onclick="diaPreset(365,'month')">1 año por mes</button>
+                        </div>
+                    </div>
+                    <div id="diaKpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:12px;"></div>
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">📝 Informe (por reglas, con los datos recolectados)</h3><div id="diaInforme" style="font-size:12.5px;line-height:1.6;color:#ddd;white-space:pre-wrap;"></div></div>
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">🪜 Después de la primera carga</h3><div id="diaLadder" style="font-size:12.5px;color:#ddd;"></div></div>
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">📅 Serie</h3><div id="diaTable" style="overflow-x:auto;"></div></div>
+                    <div class="cbu-form"><h3 style="margin:0 0 6px;">📣 Gasto en publicidad (guardado)</h3>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+                            <label style="margin:0;font-size:11px;">Desde<input type="date" id="spFrom2"></label><label style="margin:0;font-size:11px;">Hasta<input type="date" id="spTo2"></label>
+                            <label style="margin:0;font-size:11px;">Campaña (opcional)<input type="text" id="spCamp" placeholder="CODIGO" style="width:110px;"></label>
+                            <label style="margin:0;font-size:11px;">Monto $<input type="number" id="spAmount" min="0" style="width:120px;"></label>
+                            <label style="margin:0;font-size:11px;">Nota<input type="text" id="spNote" style="width:160px;"></label>
+                            <button class="btn-primary btn-small" onclick="diaSaveSpend()">Guardar gasto</button>
+                        </div>
+                        <div id="diaSpendList" style="font-size:12px;color:#ccc;"></div>
+                    </div>
+                </div>
+                <div id="diaPaneB" style="display:none;">
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">📝 Cargar números de la otra página</h3>
+                        <p style="color:#aaa;font-size:11.5px;margin:0 0 8px;">Completá lo que tengas de la página que dejó de publicitar, para un día o un rango. Se guarda y después se compara contra esta app en las mismas fechas (por día).</p>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                            <label style="margin:0;font-size:11px;">Nombre<input type="text" id="opLabel" placeholder="Equipo viejo" style="width:140px;"></label>
+                            <label style="margin:0;font-size:11px;">Desde<input type="date" id="opFrom"></label><label style="margin:0;font-size:11px;">Hasta<input type="date" id="opTo"></label>
+                            <label style="margin:0;font-size:11px;">Primeras cargas<input type="number" id="opFirst" min="0" style="width:90px;"></label>
+                            <label style="margin:0;font-size:11px;">Usuarios que entraron<input type="number" id="opUsers" min="0" style="width:90px;"></label>
+                            <label style="margin:0;font-size:11px;">Depósitos (cantidad)<input type="number" id="opDeps" min="0" style="width:90px;"></label>
+                            <label style="margin:0;font-size:11px;">Monto depositado $<input type="number" id="opSum" min="0" style="width:120px;"></label>
+                            <label style="margin:0;font-size:11px;">Min. por sesión (opc.)<input type="number" id="opMin" min="0" step="0.1" style="width:90px;"></label>
+                            <label style="margin:0;font-size:11px;">Retención % (opc.)<input type="number" id="opRet" min="0" max="100" style="width:90px;"></label>
+                            <button class="btn-primary btn-small" onclick="diaSaveOther()">Guardar</button>
+                        </div>
+                    </div>
+                    <div class="cbu-form" style="margin-bottom:12px;"><h3 style="margin:0 0 6px;">⚖️ Comparar</h3>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px;">
+                            <label style="margin:0;font-size:11px;">Entrada guardada<select id="opSelect" style="min-width:220px;"></select></label>
+                            <label style="margin:0;font-size:11px;">Campaña de esta app<select id="opCampaign"><option value="">Toda la app</option></select></label>
+                            <button class="btn-primary btn-small" onclick="diaCompare(null)">Comparar el rango completo</button>
+                            <button class="btn-secondary btn-small" onclick="diaCompare('random')">🎲 Sortear un día</button>
+                            <label style="margin:0;font-size:11px;">o elegir un día<input type="date" id="opDay"></label>
+                            <button class="btn-secondary btn-small" onclick="diaCompare('day')">Comparar ese día</button>
+                            <button class="btn-secondary btn-small" onclick="diaDeleteOther()">🗑 Borrar entrada</button>
+                        </div>
+                        <div id="diaCompareOut" style="font-size:12.5px;color:#ddd;"></div>
+                    </div>
+                </div>
+            </section>
             <section id="datosSection" class="section">
                 <div class="panel-header">
                     <h2><span class="icon icon-chart"></span> Datos</h2>

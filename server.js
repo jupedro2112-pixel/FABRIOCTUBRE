@@ -18705,6 +18705,90 @@ app.post('/api/admin/guest-support/:id/close', authMiddleware, async (req, res) 
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
+// ============================================================
+// #459: DATOS IA — medidor de sesiones de la app + análisis por reglas + comparativa con la otra página
+// ============================================================
+const AppSession = require('./src/models/AppSession');
+const datosIa = require('./src/services/datosIaService');
+const _datosIaModels = () => ({ Transaction, User, RefundClaim: require('./src/models/RefundClaim'), DailyRouletteSpin: require('./src/models/DailyRouletteSpin'), Message, AppSession });
+// Medidor: la PWA pinguea cada 60 s mientras está abierta y visible. Gap > 3 min = sesión nueva.
+app.post('/api/activity/ping', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId; const now = new Date();
+    const last = await AppSession.findOne({ userId }).sort({ lastPingAt: -1 }).select('id lastPingAt').lean();
+    if (last && now - new Date(last.lastPingAt) < 3 * 60 * 1000) {
+      await AppSession.updateOne({ id: last.id }, { $set: { lastPingAt: now, mode: String((req.body && req.body.mode) || '').slice(0, 10) || null }, $inc: { pings: 1 } });
+    } else {
+      await AppSession.create({ id: uuidv4(), userId, username: req.user.username, dateKey: datosIa.dateKeyART(now), startedAt: now, lastPingAt: now, pings: 1, installed: !!(req.body && req.body.installed), mode: String((req.body && req.body.mode) || '').slice(0, 10) || null });
+    }
+    res.json({ ok: true });
+  } catch (e) { res.json({ ok: false }); }
+});
+app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const q = req.query || {};
+    const to = q.to ? new Date(q.to) : new Date(); const from = q.from ? new Date(q.from) : new Date(to.getTime() - 29 * 86400000);
+    if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
+    if ((to - from) > 400 * 86400000) return res.status(400).json({ error: 'Máximo 400 días' });
+    // gasto: el que viene en la query o el guardado para ese rango/campaña
+    let spend = Number(q.spend) || 0;
+    if (!spend) { try { const arr = (await getConfig('adSpend', [])) || []; spend = arr.filter((e) => e && (!q.campaign || (e.campaign || '') === String(q.campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) {} }
+    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend });
+    res.json({ success: true, ...out });
+  } catch (e) { logger.error('[datos-ia] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Gasto en publicidad (a mano): [{id, from, to, campaign, amount, note}]
+app.get('/api/admin/datos-ia/spend', authMiddleware, adminMiddleware, async (req, res) => { try { res.json({ success: true, items: (await getConfig('adSpend', [])) || [] }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
+app.post('/api/admin/datos-ia/spend', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; const arr = (await getConfig('adSpend', [])) || [];
+    if (b.deleteId) { await Config.set('adSpend', arr.filter((e) => e.id !== b.deleteId), req.user.username); return res.json({ success: true }); }
+    if (!b.from || !b.to || !(Number(b.amount) > 0)) return res.status(400).json({ error: 'Faltan fechas o monto' });
+    arr.push({ id: uuidv4(), from: String(b.from).slice(0, 10), to: String(b.to).slice(0, 10), campaign: String(b.campaign || '').toUpperCase().slice(0, 40), amount: Math.round(Number(b.amount)), note: String(b.note || '').slice(0, 120), createdAt: new Date().toISOString() });
+    await Config.set('adSpend', arr.slice(-500), req.user.username); res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+// Números de la OTRA página (a mano): [{id, label, from, to, firstDeposits, usersEntered, deposits, depositsSum, avgSessionMin, retentionPct}]
+app.get('/api/admin/datos-ia/other', authMiddleware, adminMiddleware, async (req, res) => { try { res.json({ success: true, items: (await getConfig('otherPageStats', [])) || [] }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
+app.post('/api/admin/datos-ia/other', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; const arr = (await getConfig('otherPageStats', [])) || [];
+    if (b.deleteId) { await Config.set('otherPageStats', arr.filter((e) => e.id !== b.deleteId), req.user.username); return res.json({ success: true }); }
+    if (!b.from || !b.to) return res.status(400).json({ error: 'Faltan las fechas' });
+    const num = (v) => (v == null || v === '' ? null : Number(v));
+    arr.push({ id: uuidv4(), label: String(b.label || 'Otra página').slice(0, 60), from: String(b.from).slice(0, 10), to: String(b.to).slice(0, 10), firstDeposits: num(b.firstDeposits), usersEntered: num(b.usersEntered), deposits: num(b.deposits), depositsSum: num(b.depositsSum), avgSessionMin: num(b.avgSessionMin), retentionPct: num(b.retentionPct), note: String(b.note || '').slice(0, 160), createdAt: new Date().toISOString() });
+    await Config.set('otherPageStats', arr.slice(-300), req.user.username); res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+// #460: calculador de inversión → proyección aproximada sobre lo observado en los últimos `base` días.
+app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const q = req.query || {}; const baseDays = Math.max(7, Math.min(365, parseInt(q.base, 10) || 30));
+    const to = new Date(); const from = new Date(to.getTime() - (baseDays - 1) * 86400000);
+    let spendBase = 0; try { const arr = (await getConfig('adSpend', [])) || []; spendBase = arr.filter((e) => e && (!q.campaign || (e.campaign || '') === String(q.campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) {}
+    const base = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: q.campaign, spend: spendBase });
+    res.json({ success: true, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection: datosIa.project(base, { spend: q.spend, days: q.days, cac: q.cac }) });
+  } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Comparativa: ours (rango de la app) vs una entrada guardada de la otra página (o números sueltos). `day` = un día concreto
+// (sorteado o elegido): nuestros datos de ESE día contra el promedio diario de la otra página.
+app.post('/api/admin/datos-ia/compare', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; let other = b.other || null;
+    if (!other && b.otherId) { other = ((await getConfig('otherPageStats', [])) || []).find((e) => e.id === b.otherId) || null; }
+    if (!other) return res.status(400).json({ error: 'Falta la otra página (entrada guardada o números)' });
+    const from = new Date(b.day || b.from || other.from), to = new Date(b.day || b.to || other.to);
+    if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
+    const ours = await datosIa.analyze(_datosIaModels(), { from, to, granularity: 'day', campaign: b.campaign });
+    res.json({ success: true, ours, comparison: datosIa.compare(ours, other), day: b.day || null });
+  } catch (e) { logger.error('[datos-ia/compare] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });

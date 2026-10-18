@@ -8,6 +8,34 @@
 
 ## Sesión 2026-10-18
 
+### 459/460. 🧠 DATOS IA: análisis del negocio por reglas (día/semana/mes), medidor de uso, comparativa con la otra página y calculador de inversión — SW v327, admin-sw v94
+**Pedido (owner):** sección "Datos IA" aparte de "Datos": análisis de retención, cómo interactúa la gente, cuánto dura en
+la app, si gusta y si la inversión rinde; comparar con el otro equipo que dejó de publicitar (números cargados a mano, día
+aleatorio, fechas); ver cuántos siguen cargando después de la primera carga; y un calculador de plata invertida → cómo
+escala (posible venta, depósitos, clientes activos). Sin IA externa: todo con los datos recolectados.
+**Qué se hizo:**
+- **Medidor de uso** (`public/js/activity.js` + `POST /api/activity/ping` + modelo `AppSession`): la app pinguea cada 60 s
+  mientras está visible (instalada o no, modo del home); gap > 3 min = sesión nueva. Duración = último ping − inicio. TTL 180 d.
+- **Servicio `src/services/datosIaService.js`:** `analyze()` → por rango y granularidad (día / semana / mes, hora argentina),
+  filtrable por campaña de origen: registros, primeras cargas, cargas/monto/cargadores, retiros, NETWIN, usuarios en la app,
+  sesiones y minutos por sesión, instalados, reembolsos, ruleta, mensajes de soporte; **retención** de la cohorte de primeras
+  cargas (volvió a cargar a 7 d, 30 d y en el período siguiente; volvió a entrar a 7 d); **escalera después de la primera
+  carga** (1 sola / 2-3 / 4-9 / 10+ cargas, activos ≤14 d, perdidos >30 d, cargas y monto por cliente); abandono +30 d;
+  crecimiento vs período anterior; **inversión** (gasto cargado → costo por cliente nuevo y netwin que dejan los nuevos); e
+  **informe escrito por reglas** con umbrales (captación, retención, uso, dinero, inversión, veredicto). `compare()` → esta
+  app vs la otra página por día (primeras cargas, usuarios que entraron, depósitos, monto, minutos por sesión, retención) con
+  % de diferencia y veredicto. `project()` → calculador: inversión + días → clientes por pauta + orgánicos, cargas, monto,
+  retiros, reembolsos, NETWIN, activos al final, resultado y ROI, en escenarios bajo / base / alto, con los supuestos a la vista.
+- **Rutas (sólo admin general):** `GET /api/admin/datos-ia/analysis`, `GET/POST …/spend` (gasto por rango/campaña en
+  `Config['adSpend']`), `GET/POST …/other` (números de la otra página en `Config['otherPageStats']`), `POST …/compare`
+  (rango completo, día elegido o sorteado), `GET …/projection`.
+- **Panel:** sección "🧠 Datos IA" con 3 pestañas: Análisis (fechas, día/semana/mes, campaña, gasto; 18 tarjetas, informe,
+  escalera, serie, gasto guardado), Comparativa (cargar y guardar números de la otra página; comparar rango, 🎲 sortear un
+  día o elegirlo; veredicto) y Calculador de inversión.
+**Archivos:** `src/models/AppSession.js`, `src/services/datosIaService.js`, `server.js`, `public/js/activity.js`,
+`public/index.html`, `public/firebase-messaging-sw.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`,
+`public/admin-sw.js`, `CLAUDE.md`.
+
 ### 458. 💸 Reembolso "de tu NETWIN" (no "de lo que perdés") · la promo sólo adentro de los modales — SW v326
 **Pedido (owner):** "sobre el reembolso poné NETWIN, no 'sobre lo que perdés'; y la 'promoción válida' en Inicio antes de
 maximizar no la pongas, sólo adentro cuando abren, como está".
