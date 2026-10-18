@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 445. 🎨 Íconos con más presencia (duotono) — SW v316
+**Pedido (owner):** "dale un poco de vivencia a los íconos; así está bien pero le falta que remarque más, sin que sea tipo
+teléfono (emoji)".
+**Qué se hizo (pin.css):** todos los íconos de línea (inicio, Info, Perfil, menú fácil, selector) con trazo 2.4, relleno del
+mismo color al 14% (efecto duotono), cajas con fondo rojo claro y borde interior sutil, un par de px más grandes. La fila
+prioritaria de carga automática mantiene caja roja con ícono blanco. Versión oscura con caja bordó.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 444. 🏦 Banco con fallas: mensaje de salida siempre que un pago sale bien · mensajes editables en la tarjeta · historial con horarios y avisados — admin-sw v93
 **Pedido (owner):** "cuando alguien SÍ puede retirar, avisar a los que había avisado que fallaba; dejalo plasmado en la
 configuración como mensaje de salida; hacer un cierre: si falló, dejar la falla como historial con horario y a cuántas
