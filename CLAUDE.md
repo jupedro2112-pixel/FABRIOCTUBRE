@@ -31,12 +31,10 @@ Capta usuarios, los crea en la plataforma por API, gestiona cargas/retiros vía 
 reembolsos, ruleta, fueguito, referidos y campañas/publicistas. UX en PWA con
 notificaciones push (FCM).
 
-> **Migración 2026-07-31:** antes el wrapper era sobre **JUGAYGANA**
-> (`admin.agentesadmin.bet`). Los 4 clientes viejos (`jugaygana.js`,
-> `jugaygana-movements.js`, `src/services/jugayganaService.js`,
-> `jugayganaPublisherSessions.js`) + `referralRevenueService.js` y
-> `jugayganaUserLinkService.js` **siguen en el repo pero YA NADIE los importa**: se
-> conservan sólo para poder revertir. No agregarles features ni tomarlos de referencia.
+> **Migración 2026-07-31:** antes el wrapper era sobre **JUGAYGANA** (`admin.agentesadmin.bet`). Los clientes viejos
+> (`jugaygana.js`, `jugaygana-movements.js`, `jugayganaService.js`, `jugayganaPublisherSessions.js`,
+> `referralRevenueService.js`, `jugayganaUserLinkService.js`) se **ELIMINARON del repo el 2026-10-18 (#410)**: están en el
+> historial de git si hiciera falta mirarlos. No confundir con `src/platforms/jugaygana.js` (adaptador nuevo, #378).
 
 **Stack:** Node 20 · Express · MongoDB (Atlas) · Mongoose · Socket.IO (+ Redis adapter
 para multi-instancia en AWS EB) · Firebase Admin (FCM) · AWS SNS (SMS OTP).
@@ -61,8 +59,6 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (envoltura de giroxService), **esqueleto de Ganamos** (`ganamos.js`, mismo contrato, sin API
   hasta cargar `GANAMOS_API_URL`/`GANAMOS_API_KEY`) **y de JUGAYGANA** (`jugaygana.js`, #378, ídem con `JUGAYGANA_*`;
   logo en `public/images/jugaygana.png`). Checklist para conectarla: `docs/PLATFORMS.md`.
-- `jugaygana*.js` + `referralRevenueService.js` + `jugayganaUserLinkService.js` —
-  **muertos**, sin consumidores. Ver la nota de migración arriba.
 - `src/models/` — schemas Mongoose canónicos (fuente de verdad). `Story.js` (#361) = HISTORIAS de la app que
   publica el admin (panel → Historias; PWA `js/stories.js`, anillo arriba a la derecha al lado de Perfil; vencen por
   horas, `Config['storiesConfig']`). No confundir con `InfluencerStory` (placements de publicistas).

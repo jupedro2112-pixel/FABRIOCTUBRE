@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 410. 🧹 Limpieza pre-lanzamiento: fuera los 6 módulos muertos del wrapper JUGAYGANA
+**Pedido (owner):** "quiero dejarla óptima, limpiar lo que no usamos".
+**Qué se hizo:** `git rm` de `jugaygana.js`, `jugaygana-movements.js`, `src/services/jugayganaService.js`,
+`src/services/jugayganaUserLinkService.js`, `src/services/referralRevenueService.js` y
+`src/services/jugayganaPublisherSessions.js`. Verificado con grep: ningún `require` vivo (sólo se requerían entre ellos y
+desde `scripts/_archive/*`, que ya estaban archivados); en server.js / giroxService / giroxPublisherKeys aparecen sólo en
+comentarios. `node --check server.js` OK. Siguen en el historial de git. `public/js/apptest.js` (tarjeta de estado de la
+app) y `public/user-sw.js` (stub que se auto-desregistra en instalaciones viejas) SÍ se usan: quedan. CLAUDE.md actualizado.
+**Archivos:** los 6 borrados, `CLAUDE.md`.
+
 ### 409. 💸 Botones "Comprobante aquí" / "Retirar premio": mitad y mitad, sin desbordar — SW v283
 **Pedido (owner, con captura):** "está sobresaliendo; hacé que los dos ocupen aprox de ancho como el paso 2 y separalo en
 dos, comprobante aquí y retirar premio así en verde".
