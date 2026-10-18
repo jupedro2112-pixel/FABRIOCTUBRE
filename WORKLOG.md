@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 467. 🧮 Calculador: "Hoy, como está" (gasto, nuevos, ventas y netwin por día) vs "Sumando la inversión" — admin-sw v99
+**Pedido (owner):** "ver lo que gasté en el día, cuántos clientes nuevos entraron, el costo promedio por cliente, y comparar:
+hoy con esta plata vendo lo que vendo; si sumo $500.000.000 vendería tanto por cómo funciona la retención".
+**Qué se hizo:** `project()` devuelve `hoy` (gasto por día, nuevos por día, costo por nuevo, cargado y netwin por día, y lo
+mismo extrapolado a los N días) y el panel lo muestra como tarjetas antes de los tres escenarios de "Sumando $X". No se
+duplicó nada: el costo por cliente sale del gasto diario cargado en Análisis → Gasto; la retención/escalera define cuánto
+deja cada cliente.
+**Archivos:** `src/services/datosIaService.js`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 466. 🧠 Datos IA: gasto repartido por día (serie con gasto y costo por nuevo) · veredicto guardable con nota — admin-sw v98
 **Pedido (owner):** "el veredicto que se pueda guardar con cómo terminó y qué se analizó; si pongo el monto invertido, ¿es de
 esa semana?; tenés que saber cuánto gasto por día para ver cómo crece".
