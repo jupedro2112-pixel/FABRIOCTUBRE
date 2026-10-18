@@ -13910,12 +13910,13 @@ async function _countRealDepositsDays(userId, username, days) {
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
 // #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
-// #398 (owner 2026-10-18): "lo del fueguito está mal, quiero que vuelva a la versión anterior" → se vuelve a los 3 hitos
-// de siempre (lo de #395/#397 —hitos hasta el día 100— quedó descartado). Editables en el panel → Fueguito.
+// #411 (owner 2026-10-18, captura del panel): tabla vigente — premio chico con requisito de MONTO cargado en N días (#405).
+// Guardada también en Config['fireMilestones'] vía API; este default sólo aplica si la base no tiene config. Panel manda.
 const FIRE_MILESTONES_DEFAULT = [
-  { day: 10, reward: 50000,   type: 'cash', requireDeposits: 20000,  depositDays: 30, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 250000,  type: 'cash', requireDeposits: 100000, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 1000000, type: 'cash', requireDeposits: 300000, depositDays: 45, desc: 'Recompensa Fueguito 30 días' }
+  { day: 10, reward: 10000, type: 'cash', requireDeposits: 200000,  depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
+  { day: 20, reward: 20000, type: 'cash', requireDeposits: 300000,  depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 30000, type: 'cash', requireDeposits: 400000,  depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
+  { day: 50, reward: 50000, type: 'cash', requireDeposits: 1000000, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config

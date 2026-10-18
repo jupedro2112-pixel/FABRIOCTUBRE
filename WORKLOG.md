@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 411. 🔥 Fueguito: tabla del owner guardada en la config del panel
+**Pedido (owner, con captura):** "configurame los fueguitos y guardalo en comandos así como está".
+**Qué se hizo:** `POST /api/admin/fire-milestones` en Render con la tabla de la captura (verificado releyendo):
+día 10 → $10.000 (requiere $200.000 cargados en 20 días) · día 20 → $20.000 ($300.000 en 30 d) · día 30 → $30.000
+($400.000 en 40 d) · día 50 → $50.000 ($1.000.000 en 60 d). Rollover x5, mínimo de cantidad de cargas 0 (regla por monto,
+#405). `FIRE_MILESTONES_DEFAULT` del código ahora coincide (sólo rige si la base no tiene config; no hay migración: manda el
+panel). ⚠️ La migración de restauración #398 ya corrió y no se vuelve a ejecutar.
+**Archivos:** `server.js`.
+
 ### 410. 🧹 Limpieza pre-lanzamiento: fuera los 6 módulos muertos del wrapper JUGAYGANA
 **Pedido (owner):** "quiero dejarla óptima, limpiar lo que no usamos".
 **Qué se hizo:** `git rm` de `jugaygana.js`, `jugaygana-movements.js`, `src/services/jugayganaService.js`,
