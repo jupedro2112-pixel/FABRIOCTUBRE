@@ -1232,4 +1232,11 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .st-brand-foot b { font: 900 14px var(--p-font); letter-spacing: 1.3px; color: #111; }
 .st-brand-foot small { font: 600 10.5px var(--p-font); color: #666; }
 .story-viewer .st-caption { text-shadow: 0 1px 6px rgba(0, 0, 0, .8) !important; max-height: none; }
+/* ── #454 (owner): barras de progreso tipo Instagram/WhatsApp: un segmento por foto, visibles sobre cualquier imagen ── */
+.story-viewer::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 110px; background: linear-gradient(180deg, rgba(0, 0, 0, .55), transparent); z-index: 3; pointer-events: none; }
+.story-viewer .st-bars { top: calc(10px + env(safe-area-inset-top, 0px)) !important; left: 10px !important; right: 10px !important; gap: 4px !important; z-index: 6; }
+.story-viewer .st-bars i { height: 3px !important; border-radius: 999px !important; background: rgba(255, 255, 255, .35) !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
+.story-viewer .st-bars i b { background: #fff !important; border-radius: 999px !important; }
+.story-viewer .st-head { top: calc(24px + env(safe-area-inset-top, 0px)) !important; z-index: 6; }
+.story-viewer .st-close { background: rgba(0, 0, 0, .35) !important; backdrop-filter: blur(4px); }
 

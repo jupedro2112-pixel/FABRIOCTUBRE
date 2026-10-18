@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 454. 📖 Historias: barras de progreso tipo Instagram/WhatsApp — SW v323
+**Pedido (owner):** "el deslizante que figure como WhatsApp, ver cuántas fotos hay subidas… tipo Instagram".
+**Qué se hizo (pin.css):** las barras `.st-bars` (una por historia, ya existían) se ven claras sobre cualquier foto: degradado
+oscuro suave arriba del visor, segmentos de 3px redondeados con pista translúcida y relleno blanco (la actual se va
+llenando con la duración, las vistas quedan llenas), separación de 4px y respeto del notch. La ✕ baja un poco y va con
+fondo translúcido.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 453. 📖 Historias tipo WhatsApp: foto completa, sello de marca al pie, sin bloque negro — SW v322
 **Pedido (owner):** "la foto tiene que ser completa como historia de WhatsApp; el recuadro negro de fondo en el texto quedó
 mal; te pasé el texto para poner en la parte inferior de las fotos" (logo + PICA ROJA · oficial · cargas automáticas).
