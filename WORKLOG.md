@@ -10,7 +10,7 @@
 
 ### 510. 🧩 Menú fácil: Reembolso · Misiones / Referidos · Ruleta; sin "Ver la plataforma" ni "Soporte" — SW v355
 **Pedido (owner, con captura):** "Misiones arriba al lado de Reembolso, bajá Ruleta al lado de Referidos, sacá Ver la plataforma y el Soporte".
-Markup reordenado (la función `easyPlay` sigue para el selector de plataforma del menú completo); Misiones pasa a recuadro de media columna.
+Markup reordenado (la función `easyPlay` sigue para el selector de plataforma del menú completo); Misiones pasa a recuadro de media columna. (Fix inmediato: el primer commit había duplicado Reembolso en lugar de Referidos.)
 
 ### 509. 🛡️ Anti-multicuenta: rollover ×5 en TODOS los bonos, CBU repetido entre cuentas = sin bonos; menú fácil arreglado (recuadros, saludo compacto) — SW v354, admin-sw v117
 **Pedidos (owner, con captura):** "misiones en el Inicio; acá puede haber multi registros de muchas cuentas y la gente puede

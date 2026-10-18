@@ -1145,9 +1145,8 @@
                         <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span><b>Misiones de la semana</b><small id="ezMissionsSub">Cumplí metas y cobrá premios</small>
                         <div class="ez-mis-bars" id="ezMissionsBars"></div>
                     </button>
-                    <button type="button" class="ez-btn ez-refund" onclick="VIP.home.svcRefund()" title="Reembolsos">
-                        <span class="ez-badge" id="easyRefundBadge" style="display:none"></span>
-                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></span><b>Reembolso</b><small id="easyRefundSub">de tu NETWIN</small><small class="refund-promo" hidden></small>
+                    <button type="button" class="ez-btn ez-ref" onclick="VIP.ui.openReferralModal()" title="Referidos">
+                        <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></span><b>Referidos</b><small>Ganás el <span class="ref-pct">5</span>% de lo que juegan</small>
                     </button>
                     <button type="button" class="ez-btn ez-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
                         <span class="ez-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></span><b>Ruleta diaria</b><small>Con tu carga de <b class="rl-min">$5.000</b> girás todos los días</small>
@@ -2371,7 +2370,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v355</div>
+                    <div class="pf-build" id="appBuildTag">app v356</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
