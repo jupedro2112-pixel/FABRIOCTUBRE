@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 517. ▭ Básico compacto: Cargar/Retirar más chicos y "¿Querés ver más?" en dos columnas — SW v363
+**Pedido (owner):** "achicá el cargar y retirar y juntá lo de abajo así entra todo en una pantalla". Botones de 64 px, chips más chicos y las
+dos tarjetas de otro menú lado a lado, con menos separación.
+
 ### 516. ▭ Básico: Cargar y Retirar se explican y se resuelven ahí mismo; "otro menú" con más lugar — SW v362
 **Pedido (owner):** "que los botones de cargar y retirar sean directo de ahí: explicá ahí, el retiro lo mismo, que el botón de
 adjuntar o retirar salga desde el básico, y dale más lugar abajo al otro menú".

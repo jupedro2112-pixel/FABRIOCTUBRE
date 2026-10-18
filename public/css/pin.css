@@ -1477,4 +1477,17 @@ body.home-basic #easyView { display: none !important; }
 .bv-switch2-h { font: 800 12px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: 1px; text-align: center; }
 .bv-sw { width: 100%; text-align: left; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 16px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; font-family: var(--p-font); }
 .bv-sw b { font: 900 14px var(--p-font); } .bv-sw small { font: 600 11.5px/1.35 var(--p-font); color: var(--p-muted); }
+/* ── #517 (owner): básico más compacto — Cargar/Retirar más chicos y "¿Querés ver más?" más junto, para que entre todo en una pantalla ── */
+.basic-view { gap: 8px !important; margin: 6px 12px 0 !important; }
+.bv-top { padding: 7px 12px; font-size: 13px; } .bv-top b { font-size: 16px; }
+.bv-btn { padding: 13px 14px !important; min-height: 64px !important; border-radius: 18px !important; gap: 12px !important; }
+.bv-btn .li { width: 38px !important; height: 38px !important; border-radius: 12px !important; } .bv-btn .li svg { width: 20px !important; height: 20px !important; }
+.bv-btn b { font-size: 17px !important; } .bv-btn small { font-size: 11px !important; margin-top: 1px !important; } .bv-btn em { font-size: 18px !important; }
+.bv-plats-h { margin-top: 2px; } .bv-plats-h b { font-size: 13px; }
+.bv-chip { padding: 8px 6px; gap: 4px; } .bv-chip img { width: 28px; height: 28px; } .bv-chip b { font-size: 12px; }
+.bv-play { padding: 10px; font-size: 12.5px; }
+.bv-switch2 { margin-top: 8px; padding-top: 8px; gap: 6px; flex-direction: row; flex-wrap: wrap; }
+.bv-switch2-h { width: 100%; font-size: 10.5px; }
+.bv-sw { flex: 1 1 0; min-width: 0; padding: 9px 10px; border-radius: 14px; gap: 2px; }
+.bv-sw b { font-size: 12.5px; } .bv-sw small { font-size: 10.5px; line-height: 1.3; }
 
