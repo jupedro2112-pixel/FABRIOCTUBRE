@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 487. 💬 Datos IA habla como el owner: VENTA = netwin (depósitos − retiros) · inversión en dólares · REAL vs ESTIMACIÓN — admin-sw v108
+**Pedido (owner, con captura):** "¿está confirmado que desde que empezó vendió 213.861? Detallame bien: netwin es venta; depósitos,
+retiros y venta. La inversión es en USD nomás, la venta es todo en pesos, hacé que se pueda configurar. La venta no es depósitos,
+la venta es netwin, lo que cargan descontando lo que se paga".
+**Qué se hizo:** en TODA la sección (KPIs, panoramas, tabla de meses, informe y detalle del cierre) la nomenclatura es
+**Depósitos · Retiros · VENTA (netwin = depósitos − retiros) · Regalos · NETO (venta − regalos)**. La tarjeta 1 dice
+"✅ DATOS REALES (confirmados)" y las proyecciones "🔮 ESTIMACIÓN" (el 213.861 de la captura era el netwin ESTIMADO del
+panorama bajo, no un dato real). **Moneda de la inversión** (`#prInvCur`, `localStorage dia_inv_cur`, dólares por defecto si hay
+cotización): sólo los campos Plata a invertir / Gasto desde el inicio / Gasto total se escriben en esa moneda y se convierten a pesos
+con la cotización guardada; la inversión se muestra en las dos ("US$ 178.049 (= $292.000.000)"). `Config['adSpendTotal']` guarda
+además `amountUsd` y `rate`. La respuesta principal del panorama es la VENTA (netwin) por día y por mes al terminar la inversión
+(`netwinPorDiaAlFinal/netwinPorMesAlFinal`); "Recupera el costo en 999 días" pasó a "no se recupera".
+**Archivos:** `src/services/datosIaService.js`, `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`.
+
 ### 486. 🔎 Revisión de punta a punta: correcciones de la auditoría — SW v337, admin-sw v107
 **Pedido (owner):** "revisá todo de punta a punta". Se corrió sintaxis de TODO el JS del repo, chequeos estáticos (ids, handlers,
 secciones del panel), todas las rutas públicas/admin/usuario en Render (con un cliente de prueba creado por entrada rápida y

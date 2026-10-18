@@ -1317,19 +1317,21 @@ document.addEventListener('change', function (ev) {
                 </div>
                 <div id="diaPaneC">
                     <!-- #477 (owner): PANORAMA. 1) la base real · 2) condiciones vigentes/futuras · 3) si invertís X en N días → 3 panoramas -->
-                    <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Tu negocio desde que empezó hasta hoy (la base)</b><small>Siempre el análisis completo: desde la primera carga real de la página hasta hoy. Inversión, clientes nuevos, venta (cargas), retiros, regalos, lo que quedó y la retención por antigüedad. De acá salen el costo por cliente y cuánto deja cada cliente.</small></div>
+                    <div class="dia-card"><div class="dia-card-h"><b>1️⃣ ✅ DATOS REALES · tu negocio desde que empezó hasta hoy</b><small>Confirmado con los movimientos registrados, desde la primera carga real hasta hoy. Depósitos, retiros, VENTA (netwin = depósitos − retiros), regalos, NETO (venta − regalos) y retención por antigüedad. Lo único que ponés vos es la inversión.</small></div>
                         <div class="dia-bar dia-bar-in">
                             <!-- #484: la base es SIEMPRE desde que la página empezó a recibir clientes (primera carga real) hasta hoy -->
                             <select id="prBaseMode" style="display:none;"><option value="inicio" selected>Desde el inicio</option></select><input type="hidden" id="prBase" value="60">
                             <span class="dia-pill">Desde que empezó la página hasta hoy</span>
-                            <label>Gasto en publicidad desde el inicio $ (opcional)<input type="number" id="prBaseSpend" min="0" step="1000" placeholder="usa el gasto total guardado" style="width:160px;" title="Si lo dejás vacío usa el gasto total guardado abajo"></label>
+                            <!-- #487: la INVERSIÓN se paga en dólares; la venta es en pesos. Esta moneda es sólo para los campos de inversión. -->
+                            <label>La inversión la cargo en<select id="prInvCur" onchange="diaInvCurChange()"><option value="usd">Dólares (US$)</option><option value="ars">Pesos ($)</option></select></label>
+                            <label>Gasto en publicidad desde el inicio <span class="inv-sym">US$</span> (opcional)<input type="number" id="prBaseSpend" min="0" step="100" placeholder="usa el gasto total guardado" style="width:150px;" title="Si lo dejás vacío usa el gasto total guardado abajo"></label>
                             <label>Campaña<select id="prCampaign"><option value="">Toda la app</option></select></label>
                             <button class="btn-primary btn-small" onclick="diaProject()">Ver la base</button>
                         </div>
                         <div id="diaBaseOut"></div>
                         <div class="dia-sub" style="margin-top:10px;"><b>📣 Gasto total en publicidad desde que empezó la página</b> <span id="stInfo" class="dia-pill">…</span></div>
                         <div class="dia-bar dia-bar-in">
-                            <label>Gasto total hasta hoy $<input type="number" id="stAmount" min="0" step="1000" style="width:160px;"></label>
+                            <label>Gasto total hasta hoy <span class="inv-sym">US$</span><input type="number" id="stAmount" min="0" step="100" style="width:150px;"></label>
                             <label>Empezó el (opcional)<input type="date" id="stSince" title="Desde cuándo contás ese gasto. Si es más vieja que el primer cliente, se toma la del primer cliente."></label>
                             <button class="btn-secondary btn-small" onclick="diaSaveSpendTotal()">Guardar</button>
                         </div>
@@ -1344,9 +1346,9 @@ document.addEventListener('change', function (ev) {
                             <label>% orgánico (si la base no tiene gasto)<input type="number" id="prOrg" min="0" max="100" value="30" style="width:70px;"></label>
                         </div>
                     </div>
-                    <div class="dia-card"><div class="dia-card-h"><b>3️⃣ Si invertís…</b><small>Clientes nuevos = inversión ÷ costo por cliente. Lo primero que vas a ver: cuánto venden <b>por día y por mes</b> esos clientes <b>cuando termina la inversión y sin más pauta</b>, según la retención real por antigüedad, y cómo va cayendo en los 6 meses siguientes. Abajo, lo del período en sí. Tres panoramas (−30 % / base / +30 %). Todo queda en el Historial.</small></div>
+                    <div class="dia-card"><div class="dia-card-h"><b>3️⃣ 🔮 ESTIMACIÓN · si invertís…</b><small>Clientes nuevos = inversión ÷ costo por cliente. Lo primero que vas a ver: la VENTA (netwin) <b>por día y por mes</b> de esos clientes <b>cuando termina la inversión y sin más pauta</b>, según la retención real por antigüedad, y cómo cae en los 6 meses siguientes. Abajo, lo del período. Tres panoramas (−30 % / base / +30 %). Son proyecciones, no datos confirmados.</small></div>
                         <div class="dia-bar dia-bar-in">
-                            <label>Plata a invertir $<input type="number" id="prSpend" min="0" step="1000" value="400000000" style="width:160px;"></label>
+                            <label>Plata a invertir <span class="inv-sym">US$</span><input type="number" id="prSpend" min="0" step="100" value="" placeholder="ej. 400000" style="width:150px;"></label>
                             <label>Durante (días)<input type="number" id="prDays" min="1" max="365" value="60" style="width:80px;"></label>
                             <span class="dia-presets"><button onclick="diaProjPreset(30)">30 d</button><button onclick="diaProjPreset(60)">60 d</button><button onclick="diaProjPreset(120)">4 meses</button><button onclick="diaProjPreset(180)">6 meses</button></span>
                             <button class="btn-primary btn-small" onclick="diaProject()">Calcular panorama</button>

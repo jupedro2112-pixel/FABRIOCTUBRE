@@ -18879,14 +18879,16 @@ app.get('/api/admin/datos-ia/spend-total', authMiddleware, adminMiddleware, asyn
     const st = (await getConfig('adSpendTotal', null)) || null;
     const clients = await Transaction.distinct('userId', { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] } });
     const n = clients.length; const amount = st ? Number(st.amount) || 0 : 0;
-    res.json({ success: true, amount, since: st ? st.since || null : null, updatedAt: st ? st.updatedAt : null, clientesTotales: n, costoPromedio: amount > 0 && n ? Math.round(amount / n) : null });
+    res.json({ success: true, amount, amountUsd: st && st.amountUsd || null, rate: st && st.rate || null, since: st ? st.since || null : null, updatedAt: st ? st.updatedAt : null, clientesTotales: n, costoPromedio: amount > 0 && n ? Math.round(amount / n) : null });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.post('/api/admin/datos-ia/spend-total', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
-    const amount = Math.max(0, Math.round(Number(req.body && req.body.amount) || 0));
-    await Config.set('adSpendTotal', { amount, since: String((req.body && req.body.since) || '').slice(0, 10) || null, updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username);
+    const amount = Math.max(0, Math.round(Number(req.body && req.body.amount) || 0)); // siempre en PESOS
+    // #487: si el owner lo cargó en dólares, se guarda también el monto en USD y la cotización usada (trazabilidad)
+    const amountUsd = Math.max(0, Math.round(Number(req.body && req.body.amountUsd) || 0)) || null, rate = Number(req.body && req.body.rate) > 0 ? Math.round(Number(req.body.rate)) : null;
+    await Config.set('adSpendTotal', { amount, amountUsd, rate, since: String((req.body && req.body.since) || '').slice(0, 10) || null, updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
