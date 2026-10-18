@@ -1012,6 +1012,16 @@ app.get('/adminprivado2026/admin.css', adminHostCheck, (req, res) => {
   res.send(content);
 });
 
+// #383: tema del panel (pin-admin.css) — mismo trato que admin.css (el catch-all de abajo bloquea todo lo demás).
+app.get('/adminprivado2026/pin-admin.css', adminHostCheck, (req, res) => {
+  const cssPath = path.join(__dirname, 'public', 'adminprivado2026', 'pin-admin.css');
+  const content = readFileCached(cssPath);
+  if (!content) return res.status(404).send('Not found');
+  res.setHeader('Content-Type', 'text/css');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.send(content);
+});
+
 // Admin JS asset — host check only (same rationale as admin.css above).
 app.get('/adminprivado2026/admin.js', adminHostCheck, (req, res) => {
   const jsPath = path.join(__dirname, 'public', 'adminprivado2026', 'admin.js');
