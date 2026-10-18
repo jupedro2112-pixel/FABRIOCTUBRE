@@ -461,4 +461,28 @@ async function dailyRetained(models, opts) {
   return { dia: dayKey, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, porAntiguedad, historico, promedio30, serie, lectura, timings: T };
 }
 
-module.exports = { analyze, compare, project, review, dailyRetained, dateKeyART };
+// #500: números de UN día para el cierre automático (liviano: 3 agregaciones del día + primera carga sólo de los que cargaron).
+async function dayTotals(models, dayKey) {
+  const { Transaction } = models;
+  const d0 = new Date(dayKey + 'T03:00:00.000Z'), d1 = new Date(d0.getTime() + DAY - 1);
+  const okStatus = { $nin: ['failed', 'cancelled'] };
+  const realDep = { type: 'deposit', status: okStatus, 'metadata.source': { $nin: GIFT_SOURCES } };
+  const inDay = { timestamp: { $gte: d0, $lte: d1 } };
+  const [depU, wdU, prAgg] = await Promise.all([
+    Transaction.aggregate([{ $match: { ...realDep, ...inDay } }, { $group: { _id: '$userId', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]),
+    Transaction.aggregate([{ $match: { type: 'withdrawal', status: okStatus, ...inDay } }, { $group: { _id: '$userId', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]),
+    Transaction.aggregate([{ $match: { type: { $in: PROMO_TYPES }, status: okStatus, ...inDay } }, { $group: { _id: null, amt: { $sum: '$amount' } } }])
+  ]);
+  const ids = depU.map((x) => x._id).filter(Boolean);
+  const firsts = ids.length ? await Transaction.aggregate([{ $match: { ...realDep, userId: { $in: ids } } }, { $group: { _id: '$userId', first: { $min: '$timestamp' } } }]) : [];
+  const firstById = new Map(firsts.map((u) => [u._id, u.first]));
+  const isNew = (uid) => { const f = firstById.get(uid); return !f || dateKeyART(f) === dayKey; };
+  const depositos = depU.reduce((s, x) => s + x.amt, 0), cargas = depU.reduce((s, x) => s + x.n, 0);
+  const retiros = wdU.reduce((s, x) => s + x.amt, 0), retirosN = wdU.reduce((s, x) => s + x.n, 0);
+  const regalos = (prAgg[0] && prAgg[0].amt) || 0;
+  const newSet = new Set(depU.filter((x) => isNew(x._id)).map((x) => x._id));
+  const depN = depU.filter((x) => newSet.has(x._id)).reduce((s, x) => s + x.amt, 0), wdN = wdU.filter((x) => newSet.has(x._id)).reduce((s, x) => s + x.amt, 0);
+  return { dateKey: dayKey, depositos: r0(depositos), cargas, cargadores: depU.length, retiros: r0(retiros), retirosN, venta: r0(depositos - retiros), regalos: r0(regalos), neto: r0(depositos - retiros - regalos), nuevos: newSet.size, retenidos: depU.length - newSet.size, ventaNuevos: r0(depN - wdN), ventaRetenidos: r0((depositos - depN) - (retiros - wdN)) };
+}
+
+module.exports = { analyze, compare, project, review, dailyRetained, dayTotals, dateKeyART };

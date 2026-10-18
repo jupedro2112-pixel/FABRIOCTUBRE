@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 500. 🧾 CIERRES AUTOMÁTICOS: el server genera el cierre de cada día; el admin completa comisión del banco y cotización USDT → finalizado — admin-sw v110
+**Pedido (owner):** "cierres automáticos debajo de Soporte, ya que no va a haber empleados que manejen cierres; completar la
+comisión del banco directo para tener el análisis de cuánto fue el cierre y, al final, si está pendiente a cotizar o cotizado,
+completar el precio del USDT y que quede como cierre finalizado".
+**Qué se hizo:** modelo `DailyClose` (único por `dateKey` ART): depósitos, cargas, retiros, VENTA (netwin), regalos, NETO,
+nuevos/retenidos, comisión del banco (monto; % por defecto de `Config['closeConfig'].bankCommissionPct` sobre depósitos, o a
+mano), RESULTADO = neto − comisión, `usdtRate`, resultado en US$, estado `pendiente` | `finalizado`. `datosIa.dayTotals` calcula
+el día (3 agregaciones + primeras cargas de los que cargaron). Cron `_closeTick` (cada 20 min, arranca a los 90 s): asegura el
+cierre de ayer y rellena 7 días; los pendientes de los últimos 2 días se recalculan cada 6 h (por movimientos tardíos);
+idempotente entre instancias (índice único + catch 11000). Rutas: `GET /api/admin/cierres?days=` (genera los que falten de los
+últimos 14 días), `POST /api/admin/cierres/config` (% por defecto; re-aplica a pendientes sin comisión manual),
+`POST /api/admin/cierres/:dateKey` ({bankCommissionArs, usdtRate, notes, finalize, reopen, recalc}; finalizar exige USDT).
+Panel: entrada "🧾 Cierres" debajo de Elegir menú (badge con pendientes), config de comisión, "⟳ Cotización de hoy" (criptoya),
+totales de 30 días y tabla día a día con comisión y USDT editables, Guardar / Finalizar / ↻ recalcular / Reabrir.
+**Archivos:** `src/models/DailyClose.js`, `src/services/datosIaService.js`, `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `pin-admin.css`, `public/admin-sw.js`.
+
 ### 499. 📆 Datos IA: "Cierre de ayer (base retenida)" — la venta del día SIN los clientes nuevos, por antigüedad, y lo que costó esa base — admin-sw v109
 **Pedido (owner):** "el análisis que lo hagas sobre la venta del día anterior entendiendo lo que gastó antes el cliente que dejó,
 sacando los clientes nuevos de ayer; decime vos cómo armarlo para analizar bien y que no tome clientes nuevos porque no es real".

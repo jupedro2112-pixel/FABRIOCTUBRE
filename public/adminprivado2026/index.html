@@ -129,6 +129,12 @@ document.addEventListener('change', function (ev) {
                     <span>🧭</span>
                     <span>Elegir menú</span>
                 </a>
+                <!-- #500 (owner): cierres automáticos del día (sin empleados que los hagan) -->
+                <a href="#" class="nav-item" data-section="cierres">
+                    <span>🧾</span>
+                    <span>Cierres</span>
+                    <span id="cierresBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:auto;">0</span>
+                </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
@@ -1232,6 +1238,25 @@ document.addEventListener('change', function (ev) {
 
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
+            <section id="cierresSection" class="section dia">
+                <div class="panel-header cfg-head">
+                    <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Cada día se genera solo con los números reales. Vos completás la comisión del banco (o se aplica el % por defecto) y la cotización USDT → cierre finalizado.</div></div>
+                    <button class="refresh-btn" onclick="cierresLoad()" title="Actualizar">🔄</button>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>⚙️ Comisión del banco por defecto</b><small>% sobre los depósitos del día. Se aplica solo a los cierres que no tengan una comisión cargada a mano.</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label>Comisión %<input type="number" id="clPct" min="0" max="50" step="0.01" style="width:90px;"></label>
+                        <button class="btn-primary btn-small" onclick="cierresSaveConfig()">Guardar</button>
+                        <span id="clCfgInfo" class="dia-pill">…</span>
+                        <span class="dia-pill" id="clUsdtInfo">USDT: —</span>
+                        <button class="btn-secondary btn-small" onclick="cierresUsdtFetch()" title="Trae la cotización de hoy para usarla en los cierres pendientes">⟳ Cotización de hoy</button>
+                    </div>
+                </div>
+                <div id="cierresTotals" class="dia-kpis" style="margin-bottom:10px;"></div>
+                <div class="dia-card"><div class="dia-card-h"><b>📅 Últimos 30 días</b><small>Depósitos − retiros = VENTA (netwin) · − regalos = NETO · − comisión del banco = RESULTADO · ÷ USDT = resultado en dólares. Pendiente = falta la cotización. Finalizado = cerrado.</small></div>
+                    <div id="cierresList" style="overflow-x:auto;"></div>
+                </div>
+            </section>
             <section id="menuLayoutSection" class="section">
                 <div class="panel-header cfg-head">
                     <div><h2>🧭 Elegir menú de la app</h2><div class="cfg-sub">Cómo ve el Inicio el cliente en el MENÚ FÁCIL. Se aplica a todos al instante (al volver al Inicio).</div></div>

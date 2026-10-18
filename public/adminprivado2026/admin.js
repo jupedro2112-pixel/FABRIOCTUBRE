@@ -4964,6 +4964,7 @@ function switchSection(section) {
     if (section === 'datos') loadDatos();
     if (section === 'datosIa') diaInit(); // #459
     if (section === 'menuLayout') loadMenuLayout(); // #480
+    if (section === 'cierres') cierresLoad(); // #500
     if (section === 'datos2') loadDatos2();
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
@@ -5789,6 +5790,47 @@ async function setBankOutageUI(active) {
 }
 window.loadBankOutage = loadBankOutage; window.setBankOutageUI = setBankOutageUI;
 // #421: modo de registro (tilde en Configuración → Registro de clientes)
+// #500: cierres automáticos
+let _clItems = [], _clUsdt = null;
+const _clM = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+const _clU = (n) => (n == null ? '—' : 'US$ ' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 }));
+const _clC = (v) => '<span style="color:' + (v >= 0 ? 'var(--p-green)' : 'var(--p-red)') + ';font-weight:800">' + _clM(v) + '</span>';
+async function cierresLoad() {
+    const list = document.getElementById('cierresList'); if (list && !list.innerHTML) list.innerHTML = '<div class="dia-note">Generando los cierres que falten…</div>';
+    try {
+        const r = await authFetch('/api/admin/cierres?days=30'); const j = await r.json(); if (!r.ok) { if (list) list.textContent = j.error || 'Error'; return; }
+        _clItems = j.items || []; _clUsdt = j.usdtRate || null;
+        const p = document.getElementById('clPct'); if (p && document.activeElement !== p) p.value = j.config.bankCommissionPct || 0;
+        const ci = document.getElementById('clCfgInfo'); if (ci) ci.textContent = j.config.bankCommissionPct ? 'Hoy: ' + j.config.bankCommissionPct + '% sobre depósitos' : 'Sin % por defecto: la comisión se carga a mano en cada cierre';
+        const ui = document.getElementById('clUsdtInfo'); if (ui) ui.textContent = 'USDT guardado: ' + (_clUsdt ? '$' + _clUsdt.toLocaleString('es-AR') : '—');
+        const pend = _clItems.filter(function (x) { return x.status !== 'finalizado'; }).length; const bd = document.getElementById('cierresBadge'); if (bd) { bd.textContent = pend; bd.style.display = pend ? '' : 'none'; }
+        const t = j.totals || {};
+        document.getElementById('cierresTotals').innerHTML = _diaKpi('Depósitos (30 d)', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('VENTA (netwin)', _clC(t.venta)) + _diaKpi('Regalos', _clM(t.regalos)) + _diaKpi('NETO', _clC(t.neto)) + _diaKpi('Comisión banco', _clM(t.comision)) + _diaKpi('RESULTADO', _clC(t.resultado), (t.finalizados || 0) + ' de ' + _clItems.length + ' finalizados') + _diaKpi('Resultado US$', _clU(t.resultadoUsd), 'suma de los finalizados/cotizados');
+        if (!list) return;
+        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>VENTA</th><th>Regalos</th><th>NETO</th><th>Comisión banco</th><th>RESULTADO</th><th>USDT</th><th>Resultado US$</th><th>Nuevos / retenidos</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
+            const fin = c.status === 'finalizado';
+            return '<tr class="' + (fin ? 'fin' : 'pend') + '" id="cl-' + c.dateKey + '"><td><b>' + c.dateKey + '</b></td><td>' + (fin ? '<span class="cl-st fin">✅ Finalizado</span>' : '<span class="cl-st pend">⏳ Pendiente de cotizar</span>') + '</td><td>' + _clM(c.depositos) + '<br><small>' + c.cargas + ' cargas</small></td><td>' + _clM(c.retiros) + '</td><td>' + _clC(c.venta) + '</td><td>' + _clM(c.regalos) + '</td><td>' + _clC(c.neto) + '</td>' +
+                '<td><input type="number" class="cl-in" id="clCom-' + c.dateKey + '" value="' + (c.bankCommissionArs || 0) + '" min="0" step="1" ' + (fin ? 'disabled' : '') + ' title="Comisión del banco en pesos"><br><small>' + (c.bankCommissionSource === 'manual' ? 'a mano' : (c.bankCommissionPct ? c.bankCommissionPct + '% por defecto' : 'sin comisión')) + '</small></td>' +
+                '<td>' + _clC(c.resultado) + '</td>' +
+                '<td><input type="number" class="cl-in" id="clUsd-' + c.dateKey + '" value="' + (c.usdtRate || '') + '" placeholder="' + (_clUsdt || 'cotización') + '" min="1" step="1" ' + (fin ? 'disabled' : '') + '></td>' +
+                '<td>' + (c.resultadoUsd != null ? '<b>' + _clU(c.resultadoUsd) + '</b>' : '—') + '</td><td><small>' + c.nuevos + ' nuevos · ' + c.retenidos + ' retenidos<br>venta ret. ' + _clM(c.ventaRetenidos) + '</small></td>' +
+                '<td style="white-space:nowrap;">' + (fin ? '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {reopen:true})">Reabrir</button>' : '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {})">Guardar</button> <button class="btn-primary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {finalize:true})">Finalizar</button> <button class="btn-secondary btn-small" title="Vuelve a calcular los números del día" onclick="cierresSave(\'' + c.dateKey + '\', {recalc:true})">↻</button>') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    } catch (_) { if (list) list.textContent = 'Error de conexión'; }
+}
+async function cierresSave(dk, extra) {
+    const body = Object.assign({}, extra || {});
+    const com = document.getElementById('clCom-' + dk), usd = document.getElementById('clUsd-' + dk);
+    if (com && !com.disabled) body.bankCommissionArs = com.value;
+    if (usd && !usd.disabled && usd.value) body.usdtRate = usd.value;
+    if (extra && extra.finalize && !(body.usdtRate > 0)) { if (_clUsdt && confirm('No cargaste la cotización de ese día. ¿Uso la guardada ($' + _clUsdt.toLocaleString('es-AR') + ')?')) body.usdtRate = _clUsdt; else { showToast('Completá la cotización USDT para finalizar', 'error'); return; } }
+    try { const r = await authFetch('/api/admin/cierres/' + dk, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast(extra && extra.finalize ? 'Cierre ' + dk + ' FINALIZADO' : (extra && extra.reopen ? 'Cierre reabierto' : 'Cierre guardado'), 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function cierresSaveConfig() {
+    try { const r = await authFetch('/api/admin/cierres/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bankCommissionPct: document.getElementById('clPct').value }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Comisión por defecto guardada', 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function cierresUsdtFetch() { try { const r = await authFetch('/api/admin/datos-ia/usdt?fetch=1'); const j = await r.json(); if (j.rate) showToast('Cotización de hoy: $' + Number(j.rate).toLocaleString('es-AR') + ' (quedó como sugerida en los pendientes)', 'success'); else showToast('No se pudo traer la cotización', 'error'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); } }
+window.cierresLoad = cierresLoad; window.cierresSave = cierresSave; window.cierresSaveConfig = cierresSaveConfig; window.cierresUsdtFetch = cierresUsdtFetch;
 // #480: elegir menú de la app
 async function loadMenuLayout() {
     try { const r = await authFetch('/api/admin/menu-layout'); const j = await r.json(); if (!r.ok) return; const l = Number(j.layout) === 2 ? 2 : 1;

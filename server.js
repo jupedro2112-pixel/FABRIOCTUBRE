@@ -18937,6 +18937,75 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// ============================================================
+// #500 (owner): CIERRES AUTOMÁTICOS. Un cierre por día (ART) generado por el server; el admin completa la comisión del banco
+// (o aplica el % por defecto) y la cotización USDT → 'finalizado'. Config['closeConfig'] = { bankCommissionPct, autoUsdt }.
+// ============================================================
+const DailyClose = require('./src/models/DailyClose');
+async function _closeConfig() { const c = (await getConfig('closeConfig', null)) || {}; return { bankCommissionPct: Number(c.bankCommissionPct) || 0, autoUsdt: c.autoUsdt !== false }; }
+function _closeApply(doc, cfg) {
+  // comisión: manual > % por defecto sobre depósitos
+  if (doc.bankCommissionSource !== 'manual') { const pct = cfg.bankCommissionPct || 0; doc.bankCommissionPct = pct; doc.bankCommissionArs = Math.round(doc.depositos * pct / 100); doc.bankCommissionSource = pct ? 'default' : null; }
+  doc.resultado = Math.round((doc.neto || 0) - (doc.bankCommissionArs || 0));
+  doc.resultadoUsd = doc.usdtRate > 0 ? Math.round((doc.resultado / doc.usdtRate) * 100) / 100 : null;
+  return doc;
+}
+async function _closeEnsure(dayKey, recalc) {
+  let doc = await DailyClose.findOne({ dateKey: dayKey });
+  if (doc && doc.status === 'finalizado' && !recalc) return doc;
+  const cfg = await _closeConfig();
+  const t = await datosIa.dayTotals(_datosIaModels(), dayKey);
+  if (!doc) {
+    try { doc = await DailyClose.create({ id: uuidv4(), ...t }); } catch (e) { if (e && e.code === 11000) doc = await DailyClose.findOne({ dateKey: dayKey }); else throw e; }
+  } else if (doc.status !== 'finalizado' || recalc) { Object.assign(doc, t, { recalculatedAt: new Date() }); }
+  _closeApply(doc, cfg); await doc.save(); return doc;
+}
+// Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).
+async function _closeTick() {
+  try { for (let i = 1; i <= 7; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status recalculatedAt generatedAt').lean(); if (!ex) await _closeEnsure(dk, false); else if (ex.status !== 'finalizado' && i <= 2 && (Date.now() - new Date(ex.recalculatedAt || ex.generatedAt).getTime()) > 6 * 3600000) await _closeEnsure(dk, true); } } catch (e) { logger.warn('[cierres] tick: ' + e.message); }
+}
+setTimeout(() => { _closeTick(); setInterval(_closeTick, 20 * 60 * 1000); }, 90 * 1000);
+app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 30));
+    for (let i = 1; i <= Math.min(days, 14); i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); if (!(await DailyClose.exists({ dateKey: dk }))) await _closeEnsure(dk, false); }
+    const since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000));
+    const items = await DailyClose.find({ dateKey: { $gte: since } }).sort({ dateKey: -1 }).lean();
+    const cfg = await _closeConfig(); let usdt = null; try { usdt = (await getConfig('usdtRate', null)) || null; } catch (_) {}
+    const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0 });
+    res.json({ success: true, items, totals: tot, config: cfg, usdtRate: usdt && Number(usdt.rate) || null });
+  } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const pct = Number(req.body && req.body.bankCommissionPct); if (!Number.isFinite(pct) || pct < 0 || pct > 50) return res.status(400).json({ error: 'La comisión tiene que ser un % entre 0 y 50' });
+    await Config.set('closeConfig', { bankCommissionPct: Math.round(pct * 100) / 100, autoUsdt: req.body.autoUsdt !== false, updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username);
+    // re-aplica el % a los cierres pendientes con comisión por defecto
+    const cfg = await _closeConfig(); const pend = await DailyClose.find({ status: 'pendiente', bankCommissionSource: { $ne: 'manual' } }); for (const d of pend) { _closeApply(d, cfg); await d.save(); }
+    res.json({ success: true, config: cfg });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const dk = String(req.params.dateKey || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return res.status(400).json({ error: 'Día inválido' });
+    const b = req.body || {}; const cfg = await _closeConfig();
+    let doc = await DailyClose.findOne({ dateKey: dk }); if (!doc) doc = await _closeEnsure(dk, false);
+    if (b.recalc) { doc = await _closeEnsure(dk, true); }
+    if (b.bankCommissionArs != null && b.bankCommissionArs !== '') { const v = Number(b.bankCommissionArs); if (!(v >= 0)) return res.status(400).json({ error: 'Comisión inválida' }); doc.bankCommissionArs = Math.round(v); doc.bankCommissionPct = doc.depositos > 0 ? Math.round((v / doc.depositos) * 10000) / 100 : null; doc.bankCommissionSource = 'manual'; }
+    if (b.useDefaultCommission) { doc.bankCommissionSource = null; }
+    if (b.usdtRate != null && b.usdtRate !== '') { const r = Number(b.usdtRate); if (!(r > 0)) return res.status(400).json({ error: 'Cotización inválida' }); doc.usdtRate = Math.round(r); }
+    if (b.notes != null) doc.notes = String(b.notes).slice(0, 500);
+    _closeApply(doc, cfg);
+    if (b.finalize) { if (!(doc.usdtRate > 0)) return res.status(400).json({ error: 'Para finalizar hay que completar la cotización USDT' }); doc.status = 'finalizado'; doc.finalizedAt = new Date(); doc.finalizedBy = req.user.username; }
+    if (b.reopen) { doc.status = 'pendiente'; doc.finalizedAt = null; doc.finalizedBy = null; }
+    doc.updatedBy = req.user.username; await doc.save();
+    logger.info('[cierres] ' + dk + ' ' + (b.finalize ? 'FINALIZADO' : 'actualizado') + ' por ' + req.user.username + ' comisión $' + doc.bankCommissionArs + ' usdt ' + doc.usdtRate);
+    res.json({ success: true, item: doc.toObject() });
+  } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #499: CIERRE DIARIO de la base retenida (ayer por defecto; sin clientes nuevos). Costo por cliente = el promedio histórico (#468).
 app.get('/api/admin/datos-ia/daily', authMiddleware, adminMiddleware, async (req, res) => {
   try {

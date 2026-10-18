@@ -238,6 +238,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   inicio en `Config['adSpendTotal']`, cotización en `Config['usdtRate']`. **#477:** TODO por agregaciones de Mongo (nunca bajar
   movimientos sueltos: 30 d son 30.000 cargas) y el "Panorama" (`project`) tiene la lógica explicada en el comentario del código:
   regalos futuros se CALCULAN con los % futuros, no se copian los de hoy.
+  **#500 CIERRES AUTOMÁTICOS:** `DailyClose` (uno por día ART, cron `_closeTick` cada 20 min, idempotente por `dateKey`); el admin
+  sólo completa comisión del banco (% default en `Config['closeConfig']`) y USDT → `finalizado`. Panel → 🧾 Cierres.
   **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
   **#421:** `Config['registrationMode']` ('sms' | 'quick', tilde en Configuración → Registro de clientes). En 'quick' la pantalla
