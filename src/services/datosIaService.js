@@ -122,6 +122,14 @@ async function _analyze(models, opts) {
   const n = cohort.length;
   const repeat = { cohort: n, siguieronCargando: n - L.una, pctSiguieron: pct(n - L.una, n), una: L.una, pctUna: pct(L.una, n), dosTres: L.dosTres, pctDosTres: pct(L.dosTres, n), cuatroNueve: L.cuatroNueve, pctCuatroNueve: pct(L.cuatroNueve, n), diezMas: L.diezMas, pctDiezMas: pct(L.diezMas, n), activos14: L.activos14, pctActivos14: pct(L.activos14, n), enDuda: L.enDuda, perdidos30: L.perdidos30, pctPerdidos30: pct(L.perdidos30, n), cargasPorCliente: n ? r1(L.cargas / n) : null, montoPorCliente: n ? r0(L.monto / n) : null, primeraCargaPromedio: n ? r0(L.primera / n) : null };
 
+  // #483 CURVA DE RETENCIÓN por antigüedad (días desde la primera carga): cuánto vende por día un cliente a esa edad y qué % sigue
+  // cargando. Sólo cuentan los clientes que ya tienen esa edad (ventana completa hasta hoy), así no se subestima a los recientes.
+  const AGE_BUCKETS = [[1, 7], [8, 14], [15, 30], [31, 60], [61, 90], [91, 120], [121, 180], [181, 365]];
+  const curva = AGE_BUCKETS.map(([a0, a1]) => {
+    let clientes = 0, venta = 0, activos = 0, cargasN = 0;
+    cohort.forEach((u) => { const f = u.first.getTime(); if (f + a1 * DAY > now.getTime()) return; clientes++; let any = false; u.tx.forEach((x) => { const age = Math.floor((x.t.getTime() - f) / DAY); if (age >= a0 && age <= a1) { venta += x.a; cargasN++; any = true; } }); if (any) activos++; });
+    return { desde: a0, hasta: a1, clientes, ventaPorClienteDia: clientes ? Math.round(venta / clientes / (a1 - a0 + 1)) : null, activosPct: clientes ? Math.round((activos / clientes) * 1000) / 10 : null, cargasPorCliente: clientes ? Math.round((cargasN / clientes) * 100) / 100 : null };
+  });
   // Abandono de toda la base del alcance
   const churn30 = pct(perUser.filter((u) => new Date(u.last) < new Date(to.getTime() - 30 * DAY)).length, perUser.length);
 
@@ -187,7 +195,7 @@ async function _analyze(models, opts) {
   const growth = { primerasCargas: pct(n - prevFirst, prevFirst), registros: pct(totals.registros - prevRegs, prevRegs), montoCargas: pct(montoCargas - prevAmt, prevAmt), prev: { primerasCargas: prevFirst, registros: prevRegs, montoCargas: r0(prevAmt) } };
   lap('prev');
   T.counts = { perUser: perUser.length, cohort: cohort.length, depB: depB.length, depU: depU.length, logins: logins.length, sessU: sessU.length, promoAgg: (promoAgg || []).length };
-  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, growth, rows, promoConfig: pc, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, informe: narrative(totals, retention, growth, gran, repeat, pc, F), calculadoEn: now.toISOString(), timings: T };
+  return { from: dateKeyART(from), to: dateKeyART(to), granularity: gran, campaign: campaign || null, totals, retention, repeat, curva, growth, rows, promoConfig: pc, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, informe: narrative(totals, retention, growth, gran, repeat, pc, F), calculadoEn: now.toISOString(), timings: T };
 }
 
 function grade(v, good, ok) { if (v == null) return null; return v >= good ? 'bien' : (v >= ok ? 'regular' : 'flojo'); }
@@ -315,6 +323,22 @@ function project(base, opts) {
   const baseDepsN = cargaProm > 0 ? baseVenta / cargaProm : 0;
   const basePromos = baseDepsN * capCost(cargaProm, fut.rec) + (fut.refund / 100) * baseNetwin * tasaReclamo + baseVenta * otrosPct;
   const baseActual = { venta: r0(baseVenta), retiros: r0(baseVenta * wdRatio), netwin: r0(baseNetwin), promos: r0(basePromos), neto: r0(baseNetwin - basePromos), ventaPorDiaHoy: r0(recPorDia), clientes14: t.clientesBaseVieja14 || 0, promosPctHoy: t.promosPctRecurrentes };
+  // #483 DESPUÉS DE LA INVERSIÓN, sin pauta: con la curva de retención, cuánto venden por día/mes los clientes que trajo la pauta
+  // cuando termina el período y en los meses siguientes. Más allá de lo observado, decae al ritmo de los dos últimos tramos.
+  const curva = (base.curva || []).filter((b) => b.clientes >= 20 && b.ventaPorClienteDia != null);
+  const lastB = curva[curva.length - 1], prevB = curva[curva.length - 2];
+  const decayMes = lastB && prevB && prevB.ventaPorClienteDia > 0 ? clamp(lastB.ventaPorClienteDia / prevB.ventaPorClienteDia, 0.3, 1) : 0.7;
+  const vAt = (age) => { if (age < 1 || !lastB) return 0; for (const b of curva) if (age >= b.desde && age <= b.hasta) return b.ventaPorClienteDia; if (age < curva[0].desde) return curva[0].ventaPorClienteDia; return lastB.ventaPorClienteDia * Math.pow(decayMes, (age - lastB.hasta) / 30); };
+  const actAt = (age) => { if (age < 1 || !lastB) return 0; for (const b of curva) if (age >= b.desde && age <= b.hasta) return (b.activosPct || 0) / 100; return ((lastB.activosPct || 0) / 100) * Math.pow(decayMes, (age - lastB.hasta) / 30); };
+  const promosSobreVenta = (venta) => { const nw = venta * (1 - wdRatio); return (cargaProm > 0 ? (venta / cargaProm) * capCost(cargaProm, fut.rec) : 0) + (fut.refund / 100) * nw * tasaReclamo + venta * otrosPct; };
+  const despuesDe = (cPorDia) => {
+    const ventaDia = (k) => { let s = 0; for (let d = 0; d < days; d++) s += cPorDia * vAt(k + (days - 1 - d)); return s; };
+    const activosEn = (k) => { let s = 0; for (let d = 0; d < days; d++) s += cPorDia * actAt(k + (days - 1 - d)); return s; };
+    const meses = []; let tot = 0;
+    for (let m = 1; m <= 6; m++) { let s = 0; for (let k = (m - 1) * 30 + 1; k <= m * 30; k++) s += ventaDia(k); const nw = s * (1 - wdRatio), pr = promosSobreVenta(s); tot += s; meses.push({ mes: m, venta: r0(s), porDia: r0(s / 30), netwin: r0(nw), regalos: r0(pr), neto: r0(nw - pr), activos: r0(activosEn(m * 30)) }); }
+    const nwT = tot * (1 - wdRatio), prT = promosSobreVenta(tot);
+    return { clientesPorDia: Math.round(cPorDia * 10) / 10, clientesTraidos: r0(cPorDia * days), ventaPorDiaAlFinal: r0(ventaDia(1)), ventaPorMesAlFinal: r0(ventaDia(1) * 30), activosAlFinal: r0(activosEn(1)), meses, seisMeses: { venta: r0(tot), netwin: r0(nwT), regalos: r0(prT), neto: r0(nwT - prT) } };
+  };
   const mk = (f) => {
     const ff = f * calib;
     const porPauta = cac ? (spend / cac) * ff : 0, organicos = organicPerDay * days * ff, nuevos = porPauta + organicos;
@@ -326,14 +350,16 @@ function project(base, opts) {
     return { clientesPorPauta: r0(porPauta), clientesOrganicos: r0(organicos), clientesNuevos: r0(nuevos), cargas: r0(nuevos * cargasPorCliente * horizon), montoCargas: r0(monto), retiros: r0(retiros), netwin: r0(netwin),
       promos: r0(promos), promosDetalle: { bonus1: r0(bonus1), bonusRec: r0(bonusRec), refund: r0(refund), otros: r0(otros) }, netwinNeto: r0(netwinNeto), netwinPauta: r0(netwinPauta), netwinPautaNeto: r0(netwinPautaNeto), netwinOrganico: r0(netwin - netwinPauta), activosAlFinal: r0(nuevos * activePct),
       resultado: r0(netwinPautaNeto - spend), roi: spend > 0 ? Math.round(((netwinPautaNeto - spend) / spend) * 100) : null, recuperaEnDias: cac && netoCli > 0 ? Math.min(999, r0(cac / (netoCli / days))) : null,
-      total, resultadoTotal: r0(netwinNeto + baseNetwin - basePromos - spend) };
+      total, resultadoTotal: r0(netwinNeto + baseNetwin - basePromos - spend), despues: despuesDe(cac ? (spend / days / cac) * ff : 0) };
   };
   // "Hoy, como está": lo que pasa por día en la base, llevado a N días (sin la inversión nueva)
   const hoy = { gastoPorDia: r0((t.spend || 0) / baseDays), nuevosPorDia: Math.round(perDayFirst * 10) / 10, cargasPorDia: r0(t.cargas / baseDays), montoPorDia: r0(t.montoCargas / baseDays), netwinPorDia: r0(t.netwin / baseDays), promosPorDia: r0(t.promosTotal / baseDays), netoPorDia: r0(t.netwinNeto / baseDays), costoPorNuevo: t.cac || null,
     enDias: { dias: days, gasto: r0((t.spend || 0) / baseDays * days), nuevos: r0(perDayFirst * days), monto: r0(t.montoCargas / baseDays * days), netwin: r0(t.netwin / baseDays * days), promos: r0(t.promosTotal / baseDays * days), neto: r0(t.netwinNeto / baseDays * days) } };
   const bajo = mk(0.7), b = mk(1), alto = mk(1.3);
   const cacOrigen = Number(opts.cac) > 0 ? 'indicado' : (t.cac ? 'observado en la base' : 'sin dato');
+  const aviso = cac && primeraCarga && cac < primeraCarga * 0.02 ? `El costo por cliente (${money(cac)}) es sospechosamente bajo frente a la primera carga promedio (${money(primeraCarga)}): revisá el gasto de la base o la moneda del campo.` : null;
   const supuestos = { diasBase: baseDays, baseDesde: base.from, baseHasta: base.to, gastoBase: t.spend || 0, cac, cacOrigen, primerasCargasPorDia: Math.round(perDayFirst * 100) / 100, organicasPorDia: Math.round(organicPerDay * 100) / 100, organicPct: t.spend > 0 && cac ? null : Math.round(organicPct * 100), cargasPorCliente, montoPorCliente: r0(montoPorCliente), primeraCarga: r0(primeraCarga), cargaPromedio: r0(cargaProm), horizonte: Math.round(horizon * 100) / 100, ventaPorCliente: r0(ventaCli), netwinPorCliente: r0(netwinBrutoCli), promosPorCliente: r0(promosCli), promosPorClienteHoy: r0(promosCliHoy), netoPorCliente: r0(netoCli), pctRetirado: Math.round(wdRatio * 100), pctActivos: Math.round(activePct * 100), tasaReclamo: Math.round(tasaReclamo * 100), otrosPct: Math.round(otrosPct * 1000) / 10, capArs, restPct };
+  const curvaInfo = { tramosObservados: curva.length, hastaDias: lastB ? lastB.hasta : 0, decaimientoMensual: Math.round(decayMes * 100) / 100, tramos: base.curva || [] };
   const promo = { cur, fut, promoNowPct: t.promosPct, promoNowPctNuevos: t.promosPctNuevos, promoNowPctRecurrentes: t.promosPctRecurrentes, promoFutPctCliente: ventaCli > 0 ? Math.round((promosCli / ventaCli) * 1000) / 10 : null, promoHoyPctCliente: ventaCli > 0 ? Math.round((promosCliHoy / ventaCli) * 1000) / 10 : null };
   // Explicación del cierre, paso a paso (lo que se guarda con el panorama)
   const E = [];
@@ -342,9 +368,11 @@ function project(base, opts) {
   E.push(`REGALOS por cliente nuevo con las condiciones FUTURAS (bono 1ª carga ${fut.bonus1}% con tope ${money(capArs)} y ${restPct}% sobre el resto · ${fut.rec}% en cargas siguientes · reembolso ${fut.refund}% sobre lo perdido, que se cobra el ${supuestos.tasaReclamo}% · otros regalos ${supuestos.otrosPct}% de la venta): ${money(promosCli)} (hoy, con ${cur.bonus1}% / ${cur.rec}% / ${cur.refund}%, serían ${money(promosCliHoy)}). Queda NETO por cliente: ${money(netoCli)}.`);
   E.push(`INVERSIÓN ${money(spend)} en ${days} días a ${cac ? money(cac) : '—'} por cliente → ${b.clientesPorPauta} clientes por pauta + ${b.clientesOrganicos} orgánicos (ritmo de la base) = ${b.clientesNuevos} nuevos (panorama base). Venta de los nuevos ${money(b.montoCargas)}, netwin bruto ${money(b.netwin)}, regalos ${money(b.promos)}, neto ${money(b.netwinNeto)}.`);
   E.push(`LA BASE ACTUAL: ${baseActual.clientes14} clientes que ya cargaban antes de los últimos 14 días vendieron ${money(recPorDia)} por día en esos 14 días → si siguen así, en ${days} días ${money(baseVenta)} de venta, regalos ${money(basePromos)} (con los % futuros), neto ${money(baseActual.neto)}.`);
+  if (b.despues && lastB) E.push(`DESPUÉS DE LA INVERSIÓN (sin más pauta): la pauta trae ${b.despues.clientesPorDia} clientes por día (${b.despues.clientesTraidos} en ${days} días). Con la curva de retención real (medida hasta ${lastB.hasta} días de antigüedad; más allá decae ×${curvaInfo.decaimientoMensual} por mes), al terminar el período esos clientes venden ${money(b.despues.ventaPorDiaAlFinal)} por día ≈ ${money(b.despues.ventaPorMesAlFinal)} por mes, y siguen activos ${b.despues.activosAlFinal}. Mes 1 después: ${money(b.despues.meses[0].venta)} · mes 2: ${money(b.despues.meses[1].venta)} · mes 3: ${money(b.despues.meses[2].venta)} · mes 6: ${money(b.despues.meses[5].venta)}. Los 6 meses siguientes suman ${money(b.despues.seisMeses.venta)} de venta, netwin bruto ${money(b.despues.seisMeses.netwin)}, regalos ${money(b.despues.seisMeses.regalos)}, neto ${money(b.despues.seisMeses.neto)}.`);
+  else E.push('DESPUÉS DE LA INVERSIÓN: todavía no hay suficientes clientes con antigüedad para medir la curva de retención (hacen falta al menos 20 clientes por tramo).');
   E.push(`TOTAL DEL NEGOCIO en ${days} días (panorama base): venta ${money(b.total.venta)}, netwin bruto ${money(b.total.netwin)}, regalos ${money(b.total.promos)}, neto ${money(b.total.neto)}. Resultado de la PAUTA (neto de los clientes por pauta − inversión): ${money(b.resultado)} (ROI ${b.roi ?? '—'}%). Resultado total (neto total − inversión): ${money(b.resultadoTotal)}. Panoramas bajo/alto: ±30 % en clientes nuevos.`);
   if (calib !== 1) E.push(`Ajuste por revisiones anteriores aplicado: ×${calib}.`);
-  return { spend, days, calibration: calib, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, baseActual, promo, supuestos, bajo, base: b, alto, explicacion: E, nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto total desde el inicio (o el de la base) o escribí el costo a mano. Mientras tanto sólo se proyecta lo orgánico y la base actual.' };
+  return { spend, days, calibration: calib, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, baseActual, promo, curva: curvaInfo, supuestos, bajo, base: b, alto, explicacion: E, aviso, nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto total desde el inicio (o el de la base) o escribí el costo a mano. Mientras tanto sólo se proyecta lo orgánico y la base actual.' };
 }
 
 // Revisión de una proyección contra lo REAL: `real` = analyze() del tramo transcurrido. Prorratea lo proyectado a los días

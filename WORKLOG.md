@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 483. 📈 Panorama: "después de la inversión, sin pauta" con la curva de retención real · campos en la moneda elegida — admin-sw v105
+**Pedido (owner, con captura):** "si invierto 426.829 es imposible meter 70.000.000 clientes; hacé el análisis sobre la retención:
+dame la respuesta en el día final del tiempo que seleccioné, no cuánto voy a vender sino cuánto vendería por día o por mes a partir
+de ahí, sin pauta".
+**Qué pasaba:** con "Ver todo en USDT" los campos seguían en pesos → un costo por cliente de "10" (pensado en US$) eran $10 y
+daba 70 M de clientes. Ahora los campos de plata se escriben en la moneda elegida (la etiqueta cambia a "US$" y `_diaIn` convierte
+a pesos antes de mandar); los montos chicos en USD se muestran con 2 decimales; y el server avisa si el costo por cliente es
+sospechosamente bajo (< 2 % de la primera carga promedio).
+**Qué se hizo:** `analyze` mide la **curva de retención por antigüedad** (`curva[]`: tramos 1–7, 8–14, 15–30, 31–60, 61–90,
+91–120, 121–180, 181–365 días → venta por cliente por día, cargas por cliente y % que sigue cargando, contando sólo clientes que
+ya tienen esa edad). `project` → `despues` por panorama: clientes por día = (inversión ÷ días) ÷ costo por cliente; al terminar el
+período cada camada tiene su edad y vende lo que dice la curva (más allá de lo observado decae al ritmo de los dos últimos tramos,
+tope ×1, piso ×0.3 por mes) → **venta por día y por mes al finalizar, clientes activos, y mes 1…6 después** (venta, netwin bruto,
+regalos con % futuros, neto) + total de 6 meses. Es lo primero que muestra el panorama y lo primero del "Detalle del cierre"; la
+tabla de retención por antigüedad se ve en la tarjeta de la base. Lo del período (venta durante la inversión) queda debajo.
+**Archivos:** `src/services/datosIaService.js`, `public/adminprivado2026/admin.js`, `index.html`, `public/admin-sw.js`.
+
 ### 482. 🖼️ Se saca la foto de lobbies 2×2 del deslizante · la opción de menú aplica igual en menú fácil y completo, sin ocultar nada — SW v335
 **Pedido (owner):** "sacá del Inicio la foto que quedó mal (lobbies 2×2)"; "el cambio del menú tiene que quedar igual en menú
 rápido y menú completo sin que afecte todo lo que hoy mostramos".
