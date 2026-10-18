@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 447. 💸 Detalle de reembolsos en el inicio: sólo el % del diario — SW v318
+**Pedido (owner):** "el detalle en inicio de los reembolsos: no pongas cuánto en el semanal y mensual, dejá sólo el diario".
+**Qué se hizo:** en la fila de beneficios del ingreso (loginhero), en el servicio Reembolso de la pantalla de entrada y en el
+Menú fácil (home.js) el texto queda "Diario 25% · semanal · mensual de lo que perdés" (sin los % de semanal y mensual).
+El selector de reembolsos y los modales siguen mostrando cada %.
+**Archivos:** `public/js/loginhero.js`, `public/js/home.js`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 446. 💸 Selector de reembolsos: los tres botones rojos con letra blanca — SW v317
 **Pedido (owner, con captura):** "ahí es siempre rojo con letra blanca" (el Diario salía con letra verde).
 **Qué se hizo:** `#unifiedRefundModal`: fuera los degradados y colores inline (verde/azul) de los tres botones; clase `.ur-btn`
