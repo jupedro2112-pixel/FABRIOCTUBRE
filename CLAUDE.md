@@ -232,6 +232,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   (`/sys_support_names`, rota cada 8 h). No borres ese Config: volvería a mostrar todo el chat viejo a los clientes.
   **#380:** el cliente ve SOLO canal support + mensajes de sistema; lo que un agente escribe desde la sección Chats NO le
   llega (ni al recargar ni por socket). Responder soporte = columna 💬 Soporte del panel.
+  **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
+  respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
+  presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
 - **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de

@@ -143,6 +143,10 @@ const userSchema = new mongoose.Schema({
     default: false,
     index: true
   },
+  // #401: SOPORTE — el cliente sólo ve los mensajes de soporte desde esta fecha (su "sesión" actual). La pone el cron
+  // de cierre automático (6 h sin respuesta del cliente tras una respuesta nuestra): para él el chat arranca de cero;
+  // el panel sigue viendo TODO el historial. null = nunca se cerró.
+  supportSessionSince: { type: Date, default: null },
   tokenVersion: { 
     type: Number, 
     default: 0 

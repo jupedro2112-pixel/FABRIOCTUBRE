@@ -325,6 +325,9 @@ VIP.chat = (function () {
 
         container.innerHTML = '';
         container.appendChild(fragment);
+        // #401: la presentación de Soporte (#supportIntro) desaparece cuando el cliente YA escribió en esta sesión del
+        // chat; si el chat se cerró (6 h sin respuesta) no hay mensajes suyos visibles → vuelve a aparecer como al principio.
+        try { document.body.classList.toggle('sp-sent', messages.some((m) => m && m.senderRole === 'user')); } catch (_) {}
 
         if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];

@@ -788,3 +788,5 @@ html[data-theme="dark"] .profile-modal .pf-theme-btn { background: var(--p-red);
 .home-actions-row .lr-text b, .load-row-btn .lr-text b, .withdraw-row-btn .lr-text b { text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px !important; }
 .home-actions-row .lr-text small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #autoLoadCard .al-step-3 .al-step-t { color: var(--p-text) !important; }
+/* ── #401 (owner): una vez que el cliente habló con Soporte, la burbuja de presentación se va del todo ── */
+body.sp-sent .sp-intro, body.sp-sent #supportIntro { display: none !important; }

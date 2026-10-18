@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-18
 
+### 401. 💬 Soporte: la presentación se va cuando el cliente ya escribió · cierre automático a las 6 h sin respuesta · para él arranca de cero, el panel ve todo — SW v276
+**Pedido (owner, con captura):** "una vez que hablás con soporte que se vaya esa burbuja y que haya un cierre automático
+cuando le contestamos y el cliente no contestó más; si quiere volver a abrir el chat que aparezca como al principio;
+si respondemos y no responde por 6 hs cerramos el chat; igual del lado admin que siga apareciendo el chat anterior".
+**Qué se hizo:**
+- **Modelo:** `User.supportSessionSince` (Date|null): el cliente sólo ve mensajes de soporte desde `max(Config
+  supportChannelSince, supportSessionSince)` (`GET /api/messages/:userId`, rama no-admin). El panel NO filtra por esto.
+- **Cron `_supportAutoCloseTick`** (cada 10 min, arranca a los 4 min): agrega por conversación los mensajes visibles del
+  canal soporte (channel 'support' o senderRole 'user', no adminOnly, desde supportChannelSince); si el ÚLTIMO no es del
+  cliente y tiene más de `Config['supportAutoCloseHours']` (default 6; 0 = apagado) horas → `supportSessionSince = ahora`
+  con `findOneAndUpdate` condicional (`supportSessionSince < lastAt`: idempotente multi-instancia, no re-cierra sin
+  actividad nueva), nota INTERNA en el chat (`_emitAdminOnlyChatNote`: "🔒 Chat de Soporte cerrado automáticamente…") y
+  socket `support_session_reset` a `user_<id>` → la PWA recarga y queda vacía.
+- **PWA:** `renderMessages` pone/quita `body.sp-sent` según haya mensajes del cliente en lo visible; pin.css oculta
+  `#supportIntro` del todo con `sp-sent` (antes sólo se achicaba). Sin mensajes suyos (chat nuevo o cerrado) → la
+  presentación con los chips vuelve a aparecer como al principio.
+**Archivos:** `src/models/User.js`, `server.js`, `public/js/chat.js`, `public/js/socket.js`, `public/css/pin.css`,
+`public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 400. 💸 Botones "Comprobante aquí" / "Retirar premio" en minúscula y en una fila · paso 3 de la carga automática (teléfono) — SW v275
 **Pedido (owner):** "en el título de comprobante aquí y retirar premio, ponelo en minúscula y que entre en una fila; después
 agregá un paso 3 en carga automática que diga para retirar necesitás tener un teléfono vinculado con la cuenta, el número
