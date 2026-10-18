@@ -947,6 +947,10 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   "⏳ Cargas pendientes" (`/api/admin/deposit-reviews*`): Confirmar = `_agentDepositHandler` (la función de
   `POST /api/admin/deposit`, extraída para reusarla) · Rechazar = `/sys_deposit_rejected`. Duplicados → el cliente recibe
   `/sys_receipt_duplicate`. Cliente: `GET /api/deposits/pending` + socket `deposit_review_update` → franja "⏳ Carga pendiente".
+  **#377 — SOPORTE paralelo:** `Message.channel='support'` para lo que escribe el cliente y las respuestas de la columna
+  "💬 Soporte" del panel (`/api/admin/support/conversations|agent`); el cliente ve sólo mensajes posteriores a
+  `Config['supportChannelSince']`. La persona de turno (`getSupportAgentName`, `/sys_support_names`, 8 h por turno en
+  hora AR) firma esas respuestas (`senderUsername` público, `metadata.agent` real) y aparece en la presentación de la app.
   **#366 (2026-10-17):** cuarto modo **easy** = MENÚ FÁCIL para quien se pierde con tantos botones. En CADA arranque
   (#367; y de nuevo tras ≥ 10 min en segundo plano, `_menuReaskInit`), `ui.showChatScreen` → `VIP.home.maybeShowMenuChooser` abre `#menuChooser` ("¿Cómo querés ver
   la app?" fácil / completo); la elección vive en `localStorage vip_menu_pref` ('easy' | 'full') y se cambia en

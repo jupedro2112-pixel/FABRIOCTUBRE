@@ -221,6 +221,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   `_batchImpact` mide primera carga + cargas siguientes (mismo día / 7 d) + recuperados por antigüedad sin
   cargar; lo usan el detalle del lote y `cronograma-report`. El envío manual de lotes sigue intacto.
 
+- **Soporte paralelo (#377, 2026-10-18):** el cliente ve el chat sólo desde `Config['supportChannelSince']` (el historial
+  viejo queda para el panel). Respuestas desde la columna Soporte → `channel:'support'` y firmadas por la persona de turno
+  (`/sys_support_names`, rota cada 8 h). No borres ese Config: volvería a mostrar todo el chat viejo a los clientes.
 - **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de

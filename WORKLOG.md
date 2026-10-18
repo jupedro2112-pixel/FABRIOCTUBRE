@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-17
 
+### 377. 💬 SOPORTE paralelo: chat nuevo para el cliente (el viejo queda oculto), columna "Soporte" en el panel, la persona rota cada 8 h — SW v264, admin-sw v78
+**Pedido (owner):** "sacá el chat de soporte, ocultalo y armá uno paralelo; implementá un soporte y una nueva columna en
+el admin para ese chat de Martín; que la persona rote de nombre cada 8 hs: Martín, Sofía y Agustina".
+- **Cliente:** ve SOLO el chat desde `Config['supportChannelSince']` (lo fija una migración al primer arranque de esta
+  versión): el historial viejo de cargas/CBU desaparece de la app (`GET /api/messages/:userId` aplica el corte para
+  rol `user`; el panel sigue viendo todo). Lo que escribe desde la app se guarda con `Message.channel='support'`.
+- **Persona de turno:** `/sys_support_names` ("Martín, Sofía, Agustina", editable en COMANDOS) + `getSupportAgentName()`:
+  turnos de 8 h en hora argentina — 08–16 el 1º, 16–24 el 2º, 00–08 el 3º. Se usa en la presentación de la app
+  (`/api/platforms.supportIntro.name`, {nombre} del intro) y como **remitente** de las respuestas que salen de la
+  columna Soporte (`senderUsername` = nombre público; `metadata.agent` = agente real, para auditoría). La app muestra
+  "Sofía · Soporte" arriba de cada respuesta (`.msg-who`). `/sys_support_name` (fijo) ya no se usa.
+- **Panel → "💬 Soporte"** (nuevo, con badge de no leídos): cabecera "Ahora atiende X (turno)", lista de conversaciones
+  con mensajes de soporte de las últimas 72 h (`GET /api/admin/support/conversations`: no leídos, último mensaje,
+  online) y un chat propio (mensajes completos del cliente, 🔒 internos incluidos) con composer que envía
+  `POST /api/messages/send` con `channel:'support'`; se actualiza por socket (`spOnNewMessage`), marca leído al abrir,
+  Enter envía, "Ver chat completo" salta a Chats. Roles: admin, depositor, withdrawer, comunidad.
+- La sección **Chats** sigue igual (ve y responde todo; sus respuestas van sin firma de soporte).
+
 ### 376. ⏳ CARGAS PENDIENTES: duplicados avisados al cliente, cola de revisión con Confirmar / Rechazar, "carga pendiente" en la app — SW v263, admin-sw v77
 **Pedido (owner):** "si detecta un comprobante duplicado o ya usado que le avise al cliente; del lado admin algo copado
 como la carga automática de los casinos oficiales: si falla la app que al cliente le aparezca como carga pendiente y el

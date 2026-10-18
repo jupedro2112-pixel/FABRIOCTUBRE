@@ -660,3 +660,5 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .dep-pending-strip b { font: 800 13px var(--p-font); color: #5a3d00; }
 .dep-pending-strip small { font: 600 11px var(--p-font); color: #8a5a00; }
 .easy-view .dep-pending-strip { flex: 0 0 auto; margin: 0; }
+/* #377: firma de la persona de Soporte en las respuestas */
+.msg-who { font: 800 10.5px var(--p-font); color: var(--p-red); margin-bottom: 2px; letter-spacing: .2px; }

@@ -75,7 +75,10 @@ const messageSchema = new mongoose.Schema({
   metadata: {
     type: mongoose.Schema.Types.Mixed,
     default: null
-  }
+  },
+  // #377: 'support' = chat de SOPORTE paralelo (lo que escribe el cliente desde la app y lo que responde el agente
+  // desde la columna Soporte del panel). null = chat clásico / mensajes de sistema.
+  channel: { type: String, default: null, index: true }
 }, {
   timestamps: true
 });

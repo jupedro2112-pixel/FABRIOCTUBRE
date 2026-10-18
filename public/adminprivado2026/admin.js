@@ -1236,6 +1236,7 @@ function initSocket() {
     // NEW MESSAGE - INSTANT
     socket.on('new_message', (data) => {
         handleNewMessage(data);
+        try { if (typeof spOnNewMessage === 'function') spOnNewMessage(data); } catch (_) {} // #377: columna Soporte en vivo
     });
     
     // MESSAGE SENT CONFIRMATION
@@ -4965,6 +4966,7 @@ function switchSection(section) {
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
+    if (section === 'support') loadSupport(); // #377
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -15063,3 +15065,100 @@ window.loadDepositReviews = loadDepositReviews;
 window.drvConfirm = drvConfirm;
 window.drvReject = drvReject;
 window.drvOpenChat = drvOpenChat;
+
+// =====================================================================
+// #377: SOPORTE paralelo — columna propia (lista + chat) con el nombre rotativo
+// =====================================================================
+let _spConvs = [];
+let _spSelected = null;
+let _spAgent = null;
+async function loadSupport() {
+    try {
+        const ra = await authFetch('/api/admin/support/agent');
+        if (ra.ok) { _spAgent = await ra.json(); const n = document.getElementById('spAgentName'), s = document.getElementById('spAgentShift'); if (n) n.textContent = _spAgent.name || '—'; if (s) s.textContent = _spAgent.shift ? '(' + _spAgent.shift + ')' : ''; }
+    } catch (_) {}
+    try {
+        const r = await authFetch('/api/admin/support/conversations');
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'Error', 'error'); return; }
+        _spConvs = j.conversations || [];
+        _spSetBadge(j.unreadTotal || 0);
+        const t = document.getElementById('spUnreadTotal'); if (t) t.textContent = _spConvs.length + ' conversación(es) · ' + (j.unreadTotal || 0) + ' sin leer';
+        _spRenderList();
+        if (_spSelected && _spConvs.some(function (c) { return c.userId === _spSelected.userId; })) spLoadMessages(_spSelected.userId, true);
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+function _spAgo(d) { const m = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000)); return m < 1 ? 'ahora' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; }
+function _spRenderList() {
+    const el = document.getElementById('spList'); if (!el) return;
+    if (!_spConvs.length) { el.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">Sin conversaciones de soporte en las últimas 72 h.</div>'; return; }
+    el.innerHTML = _spConvs.map(function (c) {
+        const sel = _spSelected && _spSelected.userId === c.userId;
+        return '<div onclick="spSelect(\'' + escapeHtml(c.userId) + '\',\'' + escapeHtml(c.username) + '\')" style="cursor:pointer;background:' + (sel ? 'rgba(37,211,102,0.14)' : 'rgba(255,255,255,0.04)') + ';border:1px solid ' + (sel ? 'rgba(37,211,102,0.5)' : 'rgba(255,255,255,0.1)') + ';border-radius:10px;padding:9px 11px;">' +
+            '<div style="display:flex;align-items:center;gap:6px;"><b style="color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">' + (c.online ? '🟢 ' : '') + '@' + escapeHtml(c.username) + '</b>' + (c.unread > 0 ? '<span style="background:#ff5050;color:#fff;border-radius:9px;padding:1px 7px;font-size:10px;font-weight:900;">' + c.unread + '</span>' : '') + '<span style="color:#777;font-size:10.5px;">' + _spAgo(c.lastAt) + '</span></div>' +
+            '<div style="color:#aaa;font-size:11.5px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (c.lastRole === 'user' ? '' : '↩ ') + escapeHtml(c.lastMessage || '') + '</div></div>';
+    }).join('');
+}
+async function spSelect(userId, username) {
+    _spSelected = { userId: userId, username: username };
+    _spRenderList();
+    const h = document.getElementById('spHead');
+    if (h) h.innerHTML = '<b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
+    await spLoadMessages(userId, false);
+    try { await authFetch('/api/messages/read/' + encodeURIComponent(userId), { method: 'POST' }); } catch (_) {}
+    const c = _spConvs.find(function (x) { return x.userId === userId; }); if (c) { c.unread = 0; _spRenderList(); _spSetBadge(_spConvs.reduce(function (s, x) { return s + (x.unread || 0); }, 0)); }
+}
+async function spLoadMessages(userId, keepScroll) {
+    const box = document.getElementById('spMessages'); if (!box) return;
+    try {
+        const r = await authFetch('/api/messages/' + encodeURIComponent(userId) + '?limit=80');
+        const j = await r.json(); if (!r.ok) return;
+        const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+        box.innerHTML = (j.messages || []).map(_spMsgHtml).join('');
+        if (!keepScroll || atBottom) box.scrollTop = box.scrollHeight;
+    } catch (_) {}
+}
+function _spMsgHtml(m) {
+    const t = new Date(m.timestamp).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const mine = m.senderRole !== 'user';
+    const sys = m.type === 'system' || m.senderRole === 'system';
+    const body = m.type === 'image' ? '<a href="' + escapeHtml(m.content) + '" target="_blank" rel="noopener"><img src="' + escapeHtml(m.content) + '" style="max-width:220px;max-height:220px;border-radius:8px;display:block;"></a>' : escapeHtml(m.content || '').replace(/\n/g, '<br>');
+    const who = mine && !sys ? '<div style="font-size:10px;color:#9ab;margin-bottom:2px;">' + escapeHtml(m.senderUsername || '') + (m.metadata && m.metadata.agent && m.metadata.agent !== m.senderUsername ? ' <span style="color:#666;">(' + escapeHtml(m.metadata.agent) + ')</span>' : '') + (m.channel === 'support' ? ' · soporte' : '') + '</div>' : '';
+    const bg = sys ? (m.adminOnly ? 'rgba(38,224,127,0.12)' : 'rgba(255,170,0,0.12)') : (mine ? 'rgba(37,211,102,0.18)' : 'rgba(255,255,255,0.08)');
+    return '<div style="align-self:' + (mine || sys ? 'flex-end' : 'flex-start') + ';max-width:78%;background:' + bg + ';border-radius:12px;padding:7px 10px;color:#eee;font-size:13px;">' + who + (sys && m.adminOnly ? '<div style="font-size:10px;color:#26e07f;">🔒 INTERNO</div>' : '') + body + '<div style="font-size:10px;color:#888;text-align:right;margin-top:3px;">' + t + '</div></div>';
+}
+async function spSend() {
+    const inp = document.getElementById('spInput'); const btn = document.getElementById('spSendBtn');
+    const content = (inp && inp.value || '').trim();
+    if (!content || !_spSelected) return;
+    btn.disabled = true;
+    try {
+        const r = await authFetch('/api/messages/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: content, receiverId: _spSelected.userId, type: 'text', channel: 'support' }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo enviar', 'error'); return; }
+        inp.value = '';
+        const box = document.getElementById('spMessages'); if (box) { box.insertAdjacentHTML('beforeend', _spMsgHtml(j)); box.scrollTop = box.scrollHeight; }
+    } catch (e) { showToast('Error de conexión', 'error'); } finally { btn.disabled = false; }
+}
+function spOnNewMessage(data) {
+    const m = data && data.message ? data.message : data;
+    if (!m) return;
+    const uid = m.senderRole === 'user' ? m.senderId : m.receiverId;
+    if (m.channel === 'support' || (m.senderRole === 'user')) {
+        if (document.getElementById('supportSection')?.classList.contains('active')) {
+            if (_spSelected && _spSelected.userId === uid) {
+                const box = document.getElementById('spMessages');
+                if (box && !box.querySelector('[data-spid="' + m.id + '"]')) { box.insertAdjacentHTML('beforeend', _spMsgHtml(m).replace('<div style="align-self', '<div data-spid="' + escapeHtml(m.id || '') + '" style="align-self')); box.scrollTop = box.scrollHeight; }
+                if (m.senderRole === 'user') { try { authFetch('/api/messages/read/' + encodeURIComponent(uid), { method: 'POST' }); } catch (_) {} }
+            } else { loadSupport(); }
+        } else if (m.senderRole === 'user') { pollSupportBadge(); }
+    }
+}
+function _spSetBadge(n) { const b = document.getElementById('supportBadge'); if (!b) return; b.textContent = n > 99 ? '99+' : String(n); b.style.display = n > 0 ? '' : 'none'; }
+async function pollSupportBadge() {
+    try { const r = await authFetch('/api/admin/support/conversations'); if (!r.ok) return; const j = await r.json(); _spSetBadge(j.unreadTotal || 0); } catch (_) {}
+}
+setTimeout(pollSupportBadge, 6000);
+setInterval(pollSupportBadge, 45 * 1000);
+document.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && e.target && e.target.id === 'spInput') { e.preventDefault(); spSend(); } });
+window.loadSupport = loadSupport; window.spSelect = spSelect; window.spSend = spSend; window.spOnNewMessage = spOnNewMessage;

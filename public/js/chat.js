@@ -220,7 +220,10 @@ VIP.chat = (function () {
         //   metadata.kind = 'platform_link' → botón que abre el link externo de la
         //     plataforma (Ganamos sin API).
         const platformHtml = _renderPlatformWidget(message);
-        msgDiv.innerHTML = `${contentHtml}${platformHtml}<span class="message-time">${time}${ticksHtml}</span>`;
+        // #377: respuestas de Soporte firmadas con la persona de turno (Martín / Sofía / Agustina).
+        const _who = (!isFromUser && message.type !== 'system' && message.senderRole !== 'system' && (message.channel === 'support' || (message.metadata && message.metadata.agentName)))
+            ? `<div class="msg-who">${escapeHtml((message.metadata && message.metadata.agentName) || message.senderUsername || 'Soporte')} · Soporte</div>` : '';
+        msgDiv.innerHTML = `${_who}${contentHtml}${platformHtml}<span class="message-time">${time}${ticksHtml}</span>`;
 
         if (imageUrl) {
             const img = msgDiv.querySelector('img');
@@ -463,7 +466,7 @@ VIP.chat = (function () {
         setTimeout(scrollToBottom, 300);
 
         if (VIP.state.socket && VIP.state.socket.connected) {
-            VIP.state.socket.emit('send_message', { content, type: 'text' });
+            VIP.state.socket.emit('send_message', { content, type: 'text', channel: 'support' }); // #377
             return;
         }
 

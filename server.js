@@ -5603,7 +5603,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       // #373: SOPORTE — quién se presenta al entrar al chat (nombre / texto / plazo), editable en COMANDOS.
       supportIntro: await (async () => {
         try {
-          const name = (await renderSystemCommand('/sys_support_name', SUPPORT_NAME_DEFAULT, {})) || SUPPORT_NAME_DEFAULT;
+          const name = await getSupportAgentName(); // #377: rota cada 8 h
           const text = await renderSystemCommand('/sys_support_intro', SUPPORT_INTRO_DEFAULT, { nombre: name });
           const sla = await renderSystemCommand('/sys_support_sla', SUPPORT_SLA_DEFAULT, {});
           return { name, text: text || '', sla: sla || '' };
@@ -7319,6 +7319,11 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
     if (before) {
       matchStage.timestamp = { $lt: before };
     }
+    // #377: el cliente sólo ve el chat NUEVO de Soporte (desde Config['supportChannelSince']); el panel ve todo.
+    if (!isAdminRole) {
+      const since = await getSupportChannelSince();
+      if (since) matchStage.timestamp = Object.assign({}, matchStage.timestamp || {}, { $gte: since });
+    }
 
     const messages = await Message.aggregate([
       { $match: matchStage },
@@ -7329,7 +7334,7 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
         $project: {
           _id: 0, id: 1, senderId: 1, senderUsername: 1, senderRole: 1,
           receiverId: 1, receiverRole: 1, content: 1, type: 1, read: 1,
-          adminOnly: 1, timestamp: 1,
+          adminOnly: 1, timestamp: 1, channel: 1,
           // metadata: botones de la PWA (multi-plataforma: kind platform_choice / platform_link)
           metadata: 1
         }
@@ -7517,15 +7522,21 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
     
     logger.debug(`[API_MESSAGES_SEND] isAdminRole: ${isAdminRole}`);
     
+    // #377: canal SOPORTE. Lo que escribe el cliente va siempre al soporte; el agente lo marca desde la columna
+    // Soporte del panel (channel:'support') y entonces firma con el nombre rotativo (Martín / Sofía / Agustina).
+    const _spChannel = (!isAdminRole || (req.body && req.body.channel === 'support')) ? 'support' : null;
+    const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
     const messageData = {
       id: uuidv4(),
       senderId: req.user.userId,
-      senderUsername: req.user.username,
+      senderUsername: _spName || req.user.username,
       senderRole: req.user.role,
       receiverId: isAdminRole ? (receiverId || 'admin') : 'admin',
       receiverRole: isAdminRole ? 'user' : 'admin',
       content,
       type,
+      channel: _spChannel,
+      metadata: _spName ? { channel: 'support', agent: req.user.username, agentName: _spName } : null,
       timestamp: new Date(),
       read: false
     };
@@ -10522,15 +10533,20 @@ io.on('connection', (socket) => {
       }
       
       // Si llegamos aquí, NO es un comando - guardar el mensaje normalmente
+      // #377: canal SOPORTE (ver POST /api/messages/send).
+      const _spChannel = (!isAdminRole || data.channel === 'support') ? 'support' : null;
+      const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
       const messageData = {
         id: uuidv4(),
         senderId: socket.userId,
-        senderUsername: socket.username,
+        senderUsername: _spName || socket.username,
         senderRole: socket.role,
         receiverId: targetReceiverId,
         receiverRole: targetReceiverRole,
         content,
         type,
+        channel: _spChannel,
+        metadata: _spName ? { channel: 'support', agent: socket.username, agentName: _spName } : null,
         timestamp: new Date(),
         read: false
       };
@@ -11439,6 +11455,11 @@ async function initializeData() {
     }
     // #374 (owner 2026-10-18): premios 20% / 50% / 100% / $5.000 / $100.000 (1 cada 1.000) + sin premio; se desbloquea
     // con una carga mínima en la semana. One-shot: después se edita en el panel → Ruleta diaria.
+    // #377: el cliente deja de ver el chat viejo de cargas: sólo ve lo posterior a esta fecha (soporte nuevo).
+    if (!(await getConfig('supportChannelSince', null))) {
+      await Config.set('supportChannelSince', new Date().toISOString(), 'startup-migration');
+      console.log('✅ Soporte paralelo (#377): el cliente ve el chat desde ahora; el panel ve todo');
+    }
     if (!(await getConfig('migration_roulette_v4_done', false))) {
       await Config.set('dailyRoulette', { enabled: true, requireAppInstalled: true, minCargas30d: 0, requireActiveWeek: true, prizes: ROULETTE_PRIZES_2026_10_18 }, 'startup-migration');
       await Config.set('migration_roulette_v4_done', true, 'startup-migration');
@@ -11685,10 +11706,11 @@ async function initializeData() {
     },
     {
       // #373 (2026-10-18): SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat.
-      name: '/sys_support_name',
-      description: 'Soporte: nombre de la persona que se presenta al entrar al chat (cabecera y tarjeta de presentación).',
+      // #377: nombres separados por coma; rotan cada 8 h (08–16 / 16–24 / 00–08, hora AR).
+      name: '/sys_support_names',
+      description: 'Soporte: nombres de quienes atienden, separados por coma. Rotan cada 8 horas (08–16 el 1º, 16–24 el 2º, 00–08 el 3º, hora argentina). Se ve en la presentación y en las respuestas de la columna Soporte.',
       type: 'message',
-      response: 'Martín'
+      response: SUPPORT_NAMES_DEFAULT
     },
     {
       name: '/sys_support_intro',
@@ -12442,6 +12464,30 @@ const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentaje
 const SUPPORT_NAME_DEFAULT = 'Martín';
 const SUPPORT_INTRO_DEFAULT = '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.';
 const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos';
+// #377 (owner 2026-10-18): SOPORTE paralelo — la persona que atiende ROTA cada 8 horas (Martín, Sofía, Agustina;
+// editable en /sys_support_names). Turnos en hora argentina: 08–16 el 1º, 16–24 el 2º, 00–08 el 3º. El nombre se usa
+// en la presentación de la app y como remitente de las respuestas que salen de la columna Soporte del panel.
+const SUPPORT_NAMES_DEFAULT = 'Martín, Sofía, Agustina';
+function _supportSlot(at = new Date()) { const art = new Date(at.getTime() - 3 * 3600 * 1000); return Math.floor(((art.getUTCHours() + 24 - 8) % 24) / 8); }
+function _supportShiftLabel(at = new Date()) { return ['08 a 16 hs', '16 a 24 hs', '00 a 08 hs'][_supportSlot(at)]; }
+async function getSupportAgentName(at = new Date()) {
+  let raw = SUPPORT_NAMES_DEFAULT;
+  try { const v = await renderSystemCommand('/sys_support_names', SUPPORT_NAMES_DEFAULT, {}); if (v) raw = v; } catch (_) {}
+  const names = String(raw).split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+  if (!names.length) return SUPPORT_NAME_DEFAULT;
+  return names[_supportSlot(at) % names.length];
+}
+// El cliente sólo ve el chat desde esta fecha (el chat viejo de cargas queda oculto para él; el panel lo ve entero).
+let _supportSinceCache = { at: 0, value: null };
+async function getSupportChannelSince() {
+  if (Date.now() - _supportSinceCache.at < 60 * 1000) return _supportSinceCache.value;
+  let v = null;
+  try { const raw = await getConfig('supportChannelSince', null); if (raw) { const d = new Date(raw); if (!isNaN(d.getTime())) v = d; } } catch (_) {}
+  _supportSinceCache = { at: Date.now(), value: v };
+  return v;
+}
+
+
 // #375: bienvenida automática del chat de SOPORTE (/sys_welcome). Variables: {username}, {plataformas}, {escalera}, {cbu}.
 const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Este es tu chat de SOPORTE.\n\nContame tu duda, consulta o problema y lo resolvemos: te respondemos en minutos.\n\n⚡ Para cargar usá la *Carga automática* de arriba: transferís, mandás la foto del comprobante y se acredita solo.";
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
@@ -18036,6 +18082,47 @@ app.get('/api/deposits/pending', authMiddleware, async (req, res) => {
     const items = await Comprobante.find({ userId: req.user.userId, reviewStatus: 'pending', autoCharged: { $ne: true }, createdAt: { $gte: since } }).sort({ createdAt: -1 }).limit(5).lean();
     res.json({ items: items.map((c) => ({ id: c.id, amount: c.amount || 0, createdAt: c.createdAt, escalated: !!c.reviewEscalatedAt })) });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+
+// ============================================
+// #377: SOPORTE paralelo — columna del panel. Las conversaciones de soporte salen de los mensajes con
+// channel='support' (todo lo que escribe el cliente desde la app y lo que responde el agente desde esta columna).
+// ============================================
+const SUPPORT_ROLES = ['admin', 'depositor', 'withdrawer', 'comunidad'];
+app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const raw = (await renderSystemCommand('/sys_support_names', SUPPORT_NAMES_DEFAULT, {})) || SUPPORT_NAMES_DEFAULT;
+    res.json({ name: await getSupportAgentName(), shift: _supportShiftLabel(), names: String(raw).split(/[,;\n]/).map((s) => s.trim()).filter(Boolean) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const since = new Date(Date.now() - 72 * 3600 * 1000);
+    const rows = await Message.aggregate([
+      { $match: { channel: 'support', timestamp: { $gte: since } } },
+      { $addFields: { convUserId: { $cond: [{ $eq: ['$senderRole', 'user'] }, '$senderId', '$receiverId'] } } },
+      { $sort: { timestamp: -1 } },
+      { $group: {
+        _id: '$convUserId',
+        lastMessage: { $first: '$content' }, lastType: { $first: '$type' }, lastAt: { $first: '$timestamp' }, lastRole: { $first: '$senderRole' },
+        unread: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0] } }
+      } },
+      { $sort: { lastAt: -1 } },
+      { $limit: 200 },
+      { $lookup: { from: 'users', localField: '_id', foreignField: 'id', as: 'user' } },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'chatstatuses', localField: '_id', foreignField: 'userId', as: 'cs' } },
+      { $project: {
+        _id: 0, userId: '$_id', username: { $ifNull: ['$user.username', '?'] }, unread: 1, lastAt: 1, lastRole: 1,
+        lastMessage: { $cond: [{ $eq: ['$lastType', 'image'] }, '📸 Imagen', { $substrCP: [{ $ifNull: ['$lastMessage', ''] }, 0, 90] }] },
+        online: { $gt: [{ $ifNull: ['$user.lastLogin', new Date(0)] }, { $subtract: [new Date(), 300000] }] },
+        status: { $ifNull: [{ $arrayElemAt: ['$cs.status', 0] }, 'open'] }
+      } }
+    ]);
+    res.json({ conversations: rows, unreadTotal: rows.reduce((s, r) => s + (r.unread || 0), 0) });
+  } catch (e) { logger.error(`/api/admin/support/conversations: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 
 app.get('/api/admin/hgcash/movements', authMiddleware, adminMiddleware, async (req, res) => {
