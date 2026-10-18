@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 506. 🧪 `diego576413` en modo test completo, igual que lalodj — SW v352
+**Pedido (owner):** "activalo como test en ese y dejá todo el test como el de lalodj para probar la carga y demás".
+Sumado a `TESTER_USERNAMES` (botones test de la PWA), `ROULETTE_TESTERS` (ruleta siempre disponible) y al promote admin del arranque
+(sólo entorno de prueba: `RENDER=true` o `TESTER_ADMIN_PROMOTE=1`, igual que #355). Ya tenía cerrar sesión (#505).
+
 ### 505. 🚪 Cerrar sesión habilitado para `diego576413` — SW v351
 **Pedido (owner):** "poné cerrar sesión en diego576413". Sumado a `LOGOUT_USERNAMES` (home.js): ve el botón al pie de Perfil.
 

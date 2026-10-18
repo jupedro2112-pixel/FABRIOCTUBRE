@@ -11703,7 +11703,7 @@ async function initializeData() {
   // (AWS) no se toca: una cuenta de prueba con clave simple NO puede quedar como admin del panel.
   try {
     if (!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1')) throw Object.assign(new Error('skip'), { skip: true });
-    const r = await User.updateOne({ username: { $in: ['lalodj', 'lalodj499910'] } }, { $set: { role: 'admin', isActive: true, isBlocked: false } }); // #476: también lalodj499910
+    const r = await User.updateOne({ username: { $in: ['lalodj', 'lalodj499910', 'diego576413'] } }, { $set: { role: 'admin', isActive: true, isBlocked: false } }); // #476/#506: usuarios de prueba (sólo entorno de prueba)
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
@@ -20617,7 +20617,7 @@ function _prizesClient(prizes) {
   return _prizesPublic(prizes).map((p) => ({ id: p.id, type: p.type, value: p.value, label: p.label, emoji: p.emoji, rolloverX: p.rolloverX }));
 }
 // #390 (owner): a los usuarios de PRUEBA se les reinicia la ruleta en cada apertura/giro para testear sin esperar al otro día.
-const ROULETTE_TESTERS = ['lalodj', 'lalodj499910']; // #476
+const ROULETTE_TESTERS = ['lalodj', 'lalodj499910', 'diego576413']; // #476 · #506
 // #413 (seguridad): sólo en el entorno de prueba (Render) o con TESTER_ADMIN_PROMOTE=1, igual que #355. En producción NO.
 const _isRouletteTester = (username) => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
 function _pickWeightedPrize(prizes) {
