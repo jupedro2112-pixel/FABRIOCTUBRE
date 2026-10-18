@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 435. 🚪 "Elegí dónde jugar": Ganamos y Jugaygana con "Pronto" — SW v307
+**Pedido (owner):** "en Elegí dónde jugar poné Ganamos y Jugaygana (Pronto) en vez de Próximamente".
+**Qué se hizo:** la etiqueta de las plataformas sin API en la fila del inicio pasa a "Pronto" (loginhero.js). Adentro de la
+app las pestañas siguen diciendo "Próximamente".
+**Archivos:** `public/js/loginhero.js`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 434. 🚪 "Carga automática y atención personalizada" como prioridad arriba de los beneficios — SW v306
 **Pedido (owner):** "Carga automática y atención personalizada poné como prioridad arriba".
 **Qué se hizo:** primera fila de `.lg-feat` (`.lg-fc-top`, fondo rojo suave, ícono rayo en rojo) con esa frase y la bajada
