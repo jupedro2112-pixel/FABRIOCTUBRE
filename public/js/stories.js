@@ -102,6 +102,8 @@
         // texto + link
         const cap = _el('storyCaption');
         if (cap) { cap.textContent = (s.mediaType !== 'none' && s.text) ? s.text : ''; cap.style.display = cap.textContent ? '' : 'none'; }
+        // #453 (owner): en las historias con FOTO/VIDEO el texto no se superpone (la foto va completa, con el sello de marca abajo).
+        try { if (cap) cap.style.display = (s.mediaType === 'image' || s.mediaType === 'video') ? 'none' : ''; } catch (_) {}
         const link = _el('storyLink');
         if (link) {
             if (s.linkUrl) { link.href = s.linkUrl; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }

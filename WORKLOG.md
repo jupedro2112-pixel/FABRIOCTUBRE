@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 453. 📖 Historias tipo WhatsApp: foto completa, sello de marca al pie, sin bloque negro — SW v322
+**Pedido (owner):** "la foto tiene que ser completa como historia de WhatsApp; el recuadro negro de fondo en el texto quedó
+mal; te pasé el texto para poner en la parte inferior de las fotos" (logo + PICA ROJA · oficial · cargas automáticas).
+**Qué se hizo:** vuelve la foto a pantalla completa (`object-fit: cover`, sin desenfoque de fondo) y arriba sólo las barras de
+progreso y la ✕. Al pie, sobre un degradado suave, el **sello de marca** `.st-brand-foot` (píldora blanca con el logo
+redondo, "PICA ROJA" y "oficial · cargas automáticas") en TODAS las historias. El texto de la historia (`#storyCaption`) se
+oculta en las de foto/video (las imágenes ya traen su mensaje) y sólo se muestra en las historias de texto. Reemplaza #452.
+**Archivos:** `public/index.html`, `public/js/stories.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 452. 📖 Visor de historias: marca arriba en todas, foto en el medio, texto abajo sobre fondo negro desgastado — SW v321
 **Pedido (owner, con capturas):** "el texto de la parte inferior que no quede arriba de la foto; dejá el fondo negro tipo
 metro desgastado; y en todas las fotos poné el logo de la marca".

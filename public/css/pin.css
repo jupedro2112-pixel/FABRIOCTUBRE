@@ -1217,4 +1217,19 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
   border-top: 1px solid rgba(255, 255, 255, .08); }
 .story-viewer .st-caption { font: 700 14px/1.4 var(--p-font) !important; color: #f2f2f2; text-shadow: none !important; max-height: 7.2em; overflow: hidden; }
 .story-viewer .st-link { background: var(--p-red) !important; color: #fff !important; }
+/* ── #453 (owner): historias tipo WhatsApp — FOTO COMPLETA a pantalla, sin bloque negro; sello de marca al pie ── */
+.story-viewer .st-head { position: absolute !important; top: calc(14px + env(safe-area-inset-top, 0px)) !important; left: 10px !important; right: 10px !important; padding: 0; background: transparent; justify-content: flex-end; }
+.story-viewer .st-head .st-logo, .story-viewer .st-head .st-who { display: none !important; }
+.story-viewer .st-media { position: absolute !important; inset: 0 !important; flex: none; }
+.story-viewer .st-media img { width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; object-fit: cover !important; }
+.story-viewer .st-media video { width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important; object-fit: cover !important; }
+.story-viewer .st-media .st-blur { display: none; }
+.story-viewer .st-tap { bottom: 0; }
+.story-viewer .st-foot { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; min-height: 0; padding: 40px 16px calc(18px + env(safe-area-inset-bottom, 0px)) !important; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .55) 45%, rgba(0, 0, 0, .78)) !important; border-top: 0 !important; align-items: center; }
+.st-brand-foot { display: flex; align-items: center; gap: 10px; background: rgba(255, 255, 255, .92); color: #111; border-radius: 999px; padding: 6px 16px 6px 6px; box-shadow: 0 6px 22px rgba(0, 0, 0, .35); }
+.st-brand-foot img { width: 36px; height: 36px; border-radius: 50%; display: block; }
+.st-brand-foot span { display: flex; flex-direction: column; line-height: 1.1; }
+.st-brand-foot b { font: 900 14px var(--p-font); letter-spacing: 1.3px; color: #111; }
+.st-brand-foot small { font: 600 10.5px var(--p-font); color: #666; }
+.story-viewer .st-caption { text-shadow: 0 1px 6px rgba(0, 0, 0, .8) !important; max-height: none; }
 
