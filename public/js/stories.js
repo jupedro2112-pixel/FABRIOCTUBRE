@@ -167,23 +167,22 @@
         document.addEventListener('keydown', (e) => { if (!v.classList.contains('open')) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') next(); if (e.key === 'ArrowLeft') prev(); });
     }
 
-    // #416: tira de historias en la PANTALLA DE INGRESO (sin sesión): /api/stories/public → círculos; tocar abre el visor.
-    async function loadPublic(boxId) {
-        const box = _el(boxId || 'lgStories'); if (!box) return;
+    // #416/#417: historias en la PANTALLA DE INGRESO (sin sesión): /api/stories/public → ANILLO tipo Instagram arriba a la
+    // derecha (#lgStoriesRing, sólo si hay historias); tocarlo abre el visor desde la primera.
+    async function loadPublic(ringId) {
+        const ring = _el(ringId || 'lgStoriesRing'); if (!ring) return;
         try {
             const r = await fetch(VIP.config.API_URL + '/api/stories/public');
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const j = await r.json();
             _items = Array.isArray(j.items) ? j.items : [];
         } catch (_) { _items = []; }
-        if (!_items.length) { box.style.display = 'none'; return; }
-        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-        box.innerHTML = '<div class="lg-stories-t">Historias</div><div class="lg-stories-row">' + _items.map((s, i) => {
-            const thumb = s.mediaType === 'image' && s.mediaUrl ? '<img src="' + esc(s.mediaUrl) + '" alt="">' : (s.mediaType === 'video' ? '<i>🎬</i>' : '<i>' + esc((s.title || 'PR').trim().slice(0, 2).toUpperCase()) + '</i>');
-            const lbl = (s.title || s.text || 'Historia').trim().slice(0, 14);
-            return '<button type="button" class="lg-story" onclick="VIP.stories.open(' + i + ')" title="' + esc(s.title || '') + '"><span class="lg-story-ring" style="--bg:' + esc(s.bgColor || '#06070d') + '">' + thumb + '</span><small>' + esc(lbl) + '</small></button>';
-        }).join('') + '</div>';
-        box.style.display = '';
+        if (!_items.length) { ring.style.display = 'none'; return; }
+        const seen = _seen(); const unseen = _items.filter((s) => !seen.includes(s.id)).length;
+        ring.classList.toggle('has-new', unseen > 0);
+        const n = _el('lgStoriesCount'); if (n) { n.textContent = String(_items.length); n.style.display = ''; }
+        ring.title = _items.length + ' historia' + (_items.length === 1 ? '' : 's');
+        ring.style.display = '';
     }
     VIP.stories = { init, load, loadPublic, open, close, next, prev, pause, resume };
 })();

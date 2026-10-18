@@ -10,24 +10,17 @@
     let _done = false;
     async function init() {
         if (_done) return; _done = true;
-        // #416: historias publicadas (tira de círculos) + opinión de la gente: promedio real y una reseña corta que rota.
-        try { if (VIP.stories && VIP.stories.loadPublic) VIP.stories.loadPublic('lgStories'); } catch (_) {}
+        // #417: historias → anillo arriba a la derecha; reseñas → slider que se desliza solo (como adentro) + promedio real.
+        try { if (VIP.stories && VIP.stories.loadPublic) VIP.stories.loadPublic('lgStoriesRing'); } catch (_) {}
+        try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider('loginReviews', { noAdd: true }); } catch (_) {}
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=12&random=1');
+            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=1');
             if (r.ok) {
                 const d = await r.json(); const t = _el('lgTrust');
                 if (t && d && d.total > 0) {
                     const avg = Number(d.avgStars || 0); const full = Math.round(avg);
                     t.innerHTML = '<span class="lg-stars">' + '★'.repeat(full) + '<i>' + '★'.repeat(5 - full) + '</i></span><b>' + avg.toFixed(1).replace('.', ',') + '</b><span>· ' + Number(d.total).toLocaleString('es-AR') + ' opiniones de jugadores</span>';
                     t.style.display = '';
-                }
-                const q = _el('lgQuote');
-                const quotes = ((d && d.items) || []).filter((it) => { const c = String(it.comment || '').trim(); return c && !/^[1-5] estrellas$/i.test(c); }).slice(0, 8);
-                if (q && quotes.length) {
-                    let i = 0;
-                    const paint = () => { const it = quotes[i % quotes.length]; q.innerHTML = '<span class="lg-quote-t">“' + _esc(String(it.comment).trim().slice(0, 110)) + '”</span><span class="lg-quote-n">' + _esc(it.maskedUsername || '***') + ' · ' + '★'.repeat(Math.max(1, Math.min(5, Math.round(Number(it.stars) || 5)))) + '</span>'; q.style.display = ''; };
-                    paint();
-                    if (quotes.length > 1) setInterval(() => { q.style.opacity = '0'; setTimeout(() => { i++; paint(); q.style.opacity = '1'; }, 250); }, 5200);
                 }
             }
         } catch (_) {}

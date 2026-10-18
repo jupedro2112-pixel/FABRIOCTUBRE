@@ -385,21 +385,15 @@
             <header class="lg-head">
                 <img src="/icons/icon-192x192.png" class="lg-logo" alt="PICA ROJA">
                 <div class="lg-brand"><b>PICA ROJA</b><small>oficial · cargas automáticas</small></div>
+                <!-- #417 (owner): HISTORIAS arriba a la derecha, anillo tipo Instagram (aparece sólo si hay historias; stories.js → loadPublic) -->
+                <button type="button" id="lgStoriesRing" class="lg-ring" style="display:none;" onclick="VIP.stories.open()" title="Historias" aria-label="Ver historias"><span class="lg-ring-av"><img src="/icons/icon-192x192.png" alt=""></span><b id="lgStoriesCount" class="lg-ring-n"></b></button>
                 <button id="helpTelegramBtn" type="button" class="lg-tg" title="Soporte por Telegram"><svg viewBox="0 0 24 24" width="16" height="16" fill="#229ed9" style="flex-shrink:0;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span>Telegram</span></button>
             </header>
             <h1 class="lg-title">Cargá, jugá y cobrá <span>en el momento</span></h1>
             <p class="lg-sub">Cargas automáticas en minutos · reembolsos por lo que perdés · soporte 24 hs.</p>
-            <!-- #416 (owner): fuera los chips y el ticker de premios en vivo ("poco profesional / no nos interesa").
-                 En su lugar: las HISTORIAS publicadas (stories.js → loadPublic) y, más abajo, la opinión de la gente. -->
-            <div class="lg-stories" id="lgStories" style="display:none;"></div>
             <div class="lg-form">
-            <!-- #414 (owner): la pantalla figura como REGISTRO: crear cuenta (SMS obligatorio) es la acción principal;
-                 "Ya tengo cuenta" despliega el ingreso de siempre. -->
-            <div class="lg-reg">
-                <button type="button" id="registerBtn" class="btn btn-primary lg-reg-main">📝 Registrarme <small>usuario + clave + celular verificado por SMS</small></button>
-                <button type="button" class="lg-login-toggle" id="lgLoginToggle" onclick="var f=document.getElementById('loginForm');var o=f.classList.toggle('lg-open');this.setAttribute('aria-expanded',o?'true':'false');this.querySelector('b').textContent=o?'Ocultar ingreso':'Ya tengo cuenta · Ingresar';if(o){try{document.getElementById('username').focus();}catch(e){}}" aria-expanded="false"><b>Ya tengo cuenta · Ingresar</b><span>▾</span></button>
-            </div>
-            <form id="loginForm" autocomplete="on" class="lg-login-form">
+            <!-- #417 (owner): el ingreso vuelve a como estaba (#414 lo había plegado); "Crear mi cuenta" abajo. -->
+            <form id="loginForm" autocomplete="on">
                 <div style="display:none;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid rgba(212,175,55,0.3);">
                     <!-- Modos de login por celular/SMS ocultos: el acceso es solo
                          usuario + contraseña. La verificación por SMS se ofrece
@@ -468,15 +462,16 @@
             </div>
             <!-- #415: línea de confianza (reseñas reales) en vez de las secciones largas (quedan en el HTML, ocultas por CSS) -->
             <div class="lg-trust" id="lgTrust" style="display:none;"></div>
-            <div class="lg-quote" id="lgQuote" style="display:none;"></div>
             <div class="lg-alt">
+                <span class="lg-alt-q">¿Primera vez acá?</span>
+                <button id="registerBtn" class="btn btn-secondary lg-register">📝 Crear mi cuenta</button>
                 <button id="findUserBtn" class="lg-link" onclick="showModal('resetPassModal')">🔑 Recuperar contraseña</button>
-                <button type="button" class="lg-link" onclick="if(window.VIP&&VIP.guestSupport)VIP.guestSupport.open()">💬 Hablar con Soporte</button>
-                <span class="lg-alt-note">La recuperación es solo para clientes con SMS verificado.</span>
+                <button type="button" class="lg-link" onclick="if(window.VIP&&VIP.guestSupport)VIP.guestSupport.open()">💬 Soporte</button>
+                <span class="lg-alt-note">Registro con celular verificado por SMS · recuperación solo para clientes verificados.</span>
             </div>
             <button id="loginReviewsBtn" type="button" hidden aria-hidden="true"></button>
             <div id="errorMessage" class="error-message"></div>
-            <section class="lg-sec">
+            <section class="lg-sec lg-sec-info">
                 <h3 class="lg-h3">Lo que te damos</h3>
                 <div class="lg-grid">
                     <div class="lg-card">
@@ -498,7 +493,8 @@
                     </div>
                 </div>
             </section>
-            <section class="lg-sec">
+            <section class="lg-sec lg-sec-reviews">
+                <!-- #417: las reseñas se deslizan solas, como el slider de adentro (reviews.js renderEntrySlider) -->
                 <div id="loginReviews" class="ev-reviews lg-reviews" style="display:none;"></div>
             </section>
             <p class="lg-foot">PICA ROJA oficial · juego responsable · solo mayores de 18 años</p>
@@ -2280,7 +2276,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v287</div>
+                    <div class="pf-build" id="appBuildTag">app v288</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

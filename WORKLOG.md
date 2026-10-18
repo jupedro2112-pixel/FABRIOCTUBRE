@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 417. 🚪 Ingreso: registro como estaba · reseñas deslizándose · historias como anillo Instagram arriba a la derecha — SW v288
+**Pedido (owner):** "sacaste la forma de registrarse; las historias ponelas arriba a la derecha con formato tipo Instagram
+cuando sube historias; el registro dejalo como estaba; que vaya deslizando las reseñas de la gente como cuando estás
+adentro, que se vaya leyendo".
+**Qué se hizo:** index.html vuelve al login visible de siempre (usuario + clave + botón) y abajo "¿Primera vez acá? ·
+📝 Crear mi cuenta" (`#registerBtn` → modal de registro con SMS obligatorio) + Recuperar + Soporte. Fuera el plegado de #414
+y la cita de #416. **Historias:** `#lgStoriesRing` en la cabecera (anillo degradado estilo Instagram alrededor del logo,
+contador rojo, pulso si hay no vistas; `stories.js loadPublic`), sólo aparece si hay historias activas; abre el visor.
+**Reseñas:** vuelve el slider automático `renderEntrySlider('loginReviews')` (el mismo que adentro) debajo del login, más la
+línea "★ 4,8 · N opiniones". "Lo que te damos" sigue oculta. Centrado por `margin:auto` (sin recortar arriba).
+**Archivos:** `public/index.html`, `public/js/stories.js`, `public/js/loginhero.js`, `public/css/pin.css`,
+`public/firebase-messaging-sw.js`.
+
 ### 416. 🚪 Ingreso: fuera chips y ticker de premios · historias publicadas + opinión de la gente — SW v287
 **Pedido (owner):** "carga automática / reembolso / carga mínima así siento que está poco profesional; los regalos en vivo
 no nos interesan; sí un poco la opinión de la gente y las historias que publicamos".
