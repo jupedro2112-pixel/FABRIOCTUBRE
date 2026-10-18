@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 456. 📖 Historias rehechas de 0: sin pie interno (franja inferior libre), Soporte con los 3, republicadas con horario nuevo · arriba sólo el nombre — SW v325
+**Pedido (owner, con captura):** "cambiá las fotos y dejalas hasta donde aparece esta parte inferior, que no se superponga
+nada, actualizá las fotos de 0; borrar y publicar con horario actualizado; el logo arriba sacalo, dejá sólo el nombre; la
+foto de Soporte actualizala con los 3".
+**Qué se hizo:**
+- **Imágenes** (1080×1920, `public/images/stories/pin-1..4.png`; pin-2 pasa de .jpg a .png): se recortó el pie interno
+  (línea + picaroja.com + leyenda) y el contenido termina ≥290 px antes del borde inferior, que queda blanco para el sello de
+  marca del visor. pin-4 se dibujó de nuevo con PIL: tres avatares con auriculares (Martín, Sofía, Agustina), "EQUIPO DE
+  SOPORTE", burbuja "¡Hola! Somos Martín, Sofía y Agustina…", "Hablá con Soporte", "RESPONDE A LOS MINUTOS", "Gracias por
+  confiar en PICA ROJA ❤".
+- **Publicación:** se borraron las 4 historias anteriores (`DELETE /api/admin/stories/:id`) y se crearon 4 nuevas
+  (`POST /api/admin/stories`, `mediaUrl …?v=2` para saltar la caché, 72 h) → horario actualizado.
+- **Visor:** arriba sólo "PICA ROJA" + "hace N h" (el logo se quitó); el sello con logo queda abajo (#455). Seed del boot
+  actualizado a pin-2.png.
+**Archivos:** `public/images/stories/*`, `server.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 455. 📖 Historias: logo + PICA ROJA arriba a la izquierda (Instagram) · sello de abajo en blanco, sin píldora — SW v324
 **Pedido (owner, con captura):** "poné el logo de la página en la punta y PICA ROJA como para que se vea tipo historias; en
 las fotos, el texto abajo de PICA ROJA con el logo dejalo en blanco".

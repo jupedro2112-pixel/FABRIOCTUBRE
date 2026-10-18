@@ -1250,4 +1250,6 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .st-brand-foot img { width: 40px; height: 40px; border: 2px solid #fff; background: #000; }
 .st-brand-foot b { color: #fff !important; font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, .8); }
 .st-brand-foot small { color: #fff !important; font-weight: 700; text-shadow: 0 1px 8px rgba(0, 0, 0, .8); }
+/* ── #456 (owner): arriba sólo el nombre (sin logo) ── */
+.story-viewer .st-head .st-logo { display: none !important; }
 

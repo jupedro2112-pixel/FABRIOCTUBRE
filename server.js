@@ -11732,9 +11732,9 @@ async function initializeData() {
       // #371: tres historias con el estilo nuevo (blanco / rojo), con picaroja.com al pie.
       const seedStories = [
         ['/images/stories/pin-1.png', '🆕 La novedad llegó · El futuro está acá · CARGAS AUTOMÁTICA · picaroja.com'],
-        ['/images/stories/pin-2.jpg', '🎰 Todos los slots que buscás · Cargá y jugá en minutos · picaroja.com'],
+        ['/images/stories/pin-2.png', '🎰 Todos los slots que buscás · Cargá y jugá en minutos · picaroja.com'], // #456: png sin pie interno
         ['/images/stories/pin-3.png', '⚡ Carga automática en 3 pasos: transferís, mandás la foto, se acredita solo · picaroja.com'],
-        ['/images/stories/pin-4.png', '💬 Cualquier duda, consulta o problema, hablá con Soporte: Martín, Sofía y Agustina te responden a los minutos. ¡Gracias por confiar en PICA ROJA!'] // #373/#451
+        ['/images/stories/pin-4.png', '💬 Cualquier duda, consulta o problema, hablá con Soporte: Martín, Sofía y Agustina te responden a los minutos. ¡Gracias por confiar en PICA ROJA!'] // #373/#451/#456: imagen con los 3 de Soporte
       ];
       for (let i = 0; i < seedStories.length; i++) {
         const now = new Date(Date.now() + i * 1000);
