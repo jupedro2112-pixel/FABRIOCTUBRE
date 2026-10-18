@@ -482,7 +482,7 @@
         if (why) why.textContent = one ? ('¿Por qué elegir ' + one.name + '?') : ('¿Por qué elegir ' + names.join(' o ') + '?');
         const two = _el('infoCardTwoPlats'); if (two) two.style.display = one ? 'none' : '';
         // #407 (owner): título "La plataforma que quieras"; jugaygana en minúscula ACÁ (sólo en Info); lista "A, B y C".
-        const _infoName = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'jugaygana' : String(n || ''));
+        const _infoName = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || '')); // #431: J mayúscula
         const _list = names.map(_infoName); const _joined = _list.length > 1 ? (_list.slice(0, -1).join(', ') + ' y ' + _list[_list.length - 1]) : (_list[0] || '');
         const twoDesc = _el('infoCardTwoPlatsDesc'); if (twoDesc && !one) twoDesc.textContent = _joined + ' con el mismo usuario. Cada plataforma está configurada de forma independiente: elegí la que quieras en cada carga.';
         const sub = _el('platformsSub');

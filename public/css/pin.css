@@ -1084,4 +1084,9 @@ body.reg-quick #loginForm { display: none !important; }
 .gs-bubble { display: none !important; }   /* #430: sin Soporte en el inicio (la columna Visitantes del panel sigue para los hilos existentes) */
 @media (max-height: 640px) { .lg-feat { display: none; } }
 @media (max-height: 560px) { .lg-app .lg-sec-reviews { display: none !important; } }
+/* ── #431 (owner): más aire entre bloques (la sección de opiniones absorbe la diferencia; sigue en una pantalla) ── */
+.login-box.lg-app { gap: 10px !important; }
+.lg-feat { gap: 7px; } .lg-quick { gap: 7px; } .lg-play-box { gap: 7px; }
+.lg-app #loginReviews { gap: 5px; }
+@media (max-height: 700px) { .login-box.lg-app { gap: 7px !important; } }
 

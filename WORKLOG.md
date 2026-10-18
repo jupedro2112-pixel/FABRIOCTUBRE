@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 431. 🚪 Inicio: más espacio entre bloques · "Jugaygana" con J mayúscula — SW v303
+**Pedido (owner):** "dejá más espacio entre una cosa y la otra; Jugaygana ponelo con la J mayúscula".
+**Qué se hizo:** gap de la tarjeta 10px (7px en pantallas ≤700 px): la sección de opiniones es flexible, así que sigue
+entrando todo en una pantalla. El nombre se muestra "Jugaygana" en la fila del inicio (loginhero) y en el texto de Info
+(home.js e index.html); en el resto de la app sigue el nombre que define la plataforma.
+**Archivos:** `public/js/loginhero.js`, `public/js/home.js`, `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 430. 📱 Inicio = exactamente una pantalla de teléfono (sin scroll) · sin burbuja de Soporte — SW v302
 **Pedido (owner):** "achicalo al tamaño máximo de un teléfono en una pantalla y sacá soporte de abajo".
 **Qué se hizo (CSS):** `.login-screen` y la tarjeta miden `100dvh` con `overflow:hidden` (safe areas incluidas); cada bloque
