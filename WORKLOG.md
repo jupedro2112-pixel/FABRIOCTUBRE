@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 491. 🎰 Tarjetas de juegos completas y más chicas — SW v342
+**Pedido (owner):** "las fotos de los juegos se ven cortadas; que queden completas y achicar".
+**Qué se hizo:** cada foto va COMPLETA (`object-fit: contain`) en una caja de proporción fija 300×330 (las fotos recortadas de las
+capturas tienen alturas distintas y la fila las cortaba); tarjetas al 46 % del ancho (máx. 200 px; 31 % en pantallas anchas) y el
+recuadro/carril sin tope de alto.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 490. 🌑 Estilo de la referencia: NEGRO por defecto (blanco desde Perfil), menú fácil en lista de tarjetas anchas, etiqueta "+X% en tu primera carga" — SW v341
 **Pedido (owner, con captura de otra casa):** "vamos con este estilo de página; primero el negro y después que se pueda cambiar al
 blanco".

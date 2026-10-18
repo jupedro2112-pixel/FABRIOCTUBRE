@@ -1337,11 +1337,13 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ev-games-h small { font: 700 11px var(--p-font); color: #9aa0b2; display: inline-flex; align-items: center; gap: 6px; }
 .ev-games-h i, .ev-game .gp i { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.22); display: inline-block; }
 .ev-slides-track.games { position: static; flex: 0 0 auto; flex-direction: row; gap: 10px; padding: 8px 10px 56px; scroll-snap-type: x mandatory; overflow-x: auto; }
-.ev-game { flex: 0 0 64%; max-width: 280px; scroll-snap-align: start; border-radius: 16px; overflow: hidden; background: #161622; display: flex; flex-direction: column; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
-.ev-game img { width: 100%; height: auto; display: block; }
+.ev-game { flex: 0 0 46%; max-width: 200px; scroll-snap-align: start; border-radius: 16px; overflow: hidden; background: #161622; display: flex; flex-direction: column; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+/* #491: la foto COMPLETA (contain) en una caja de proporción fija: ninguna tarjeta se corta aunque las fotos tengan alturas distintas */
+.ev-game img { width: 100%; aspect-ratio: 300 / 330; height: auto; object-fit: contain; display: block; background: #161622; }
+.ev-frame-wrap.games .ev-slides, .ev-frame-wrap.games .ev-slides-track { overflow-y: visible !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
 .ev-game .gp { display: flex; align-items: center; gap: 7px; padding: 7px 10px 8px; color: #fff; font: 700 12px var(--p-font); background: #161622; }
 .ev-game .gp b { color: #fff; }
-@media (min-width: 480px) { .ev-game { flex-basis: 44%; } }
+@media (min-width: 480px) { .ev-game { flex-basis: 31%; } }
 /* ── #490 (owner): estilo de lista oscura (tarjetas anchas, ícono a la izquierda, título + detalle) para el menú fácil; negro por defecto ── */
 .ez-grid { grid-template-columns: 1fr !important; grid-auto-rows: auto !important; gap: 10px !important; flex: 0 0 auto !important; }
 .ez-btn { display: grid !important; grid-template-columns: 56px 1fr; grid-template-areas: "ico title" "ico sub" "ico promo"; column-gap: 14px; row-gap: 2px; align-items: center; justify-items: start; text-align: left; padding: 16px 14px !important; min-height: 92px; border-radius: 20px !important; border: 1px solid var(--p-border) !important; }
