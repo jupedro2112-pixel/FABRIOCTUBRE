@@ -1434,6 +1434,14 @@
                 </div>
             </div>
             <!-- ===== #294: escalera de niveles VIP (se abre desde el nivel junto al saldo; en el test también, con datos de ejemplo) ===== -->
+            <!-- #470 (owner): "Ver la plataforma" → elegir Girox / Ganamos (Pronto) / Jugaygana (Pronto) -->
+            <div id="easyPlatModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('easyPlatModal')">
+                <div class="modal-content" style="max-width:380px;" onclick="event.stopPropagation()">
+                    <div class="modal-header"><h2>Elegí dónde jugar</h2><p>Mismo usuario y clave en todas</p></div>
+                    <div id="easyPlatList" class="ep-list"></div>
+                    <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn btn-secondary" style="width:100%;" onclick="hideModal('easyPlatModal')">Cerrar</button></div>
+                </div>
+            </div>
             <div id="vipLevelsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('vipLevelsModal')">
                 <div class="modal-content" onclick="event.stopPropagation()">
                     <div class="modal-header"><h2>👑 Niveles VIP</h2></div>
@@ -2342,7 +2350,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v328</div>
+                    <div class="pf-build" id="appBuildTag">app v329</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

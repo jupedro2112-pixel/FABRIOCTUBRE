@@ -151,7 +151,21 @@
         });
     }
     function easyLoad() { setHomeMode('full'); }
-    function easyPlay() { openPlatform(_entryPlat || 'girox'); }
+    // #470 (owner): "Ver la plataforma" abre un selector: Girox · Ganamos (Pronto) · Jugaygana (Pronto).
+    function easyPlay() {
+        const box = _el('easyPlatList'); if (!box) { openPlatform(_entryPlat || 'girox'); return; }
+        const defId = (_platforms && _platforms.defaultPlatform) || 'girox';
+        const list = _entryList();
+        const soon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox';
+        const nm = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || ''));
+        box.innerHTML = list.map((p) => '<button type="button" class="ep-item' + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.easyPlayPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<span><b>' + _esc(nm(p.name)) + '</b><small>' + (soon(p) ? 'Pronto' : 'Entrás con tu usuario') + '</small></span><em>' + (soon(p) ? 'Pronto' : '›') + '</em></button>').join('');
+        try { VIP.ui.showModal('easyPlatModal'); } catch (_) { const m = _el('easyPlatModal'); if (m) m.classList.remove('hidden'); }
+    }
+    function easyPlayPick(id, isSoon) {
+        if (isSoon) { try { VIP.ui.showToast('Pronto: esta plataforma se habilita en breve', 'info'); } catch (_) {} return; }
+        try { VIP.ui.hideModal('easyPlatModal'); } catch (_) { const m = _el('easyPlatModal'); if (m) m.classList.add('hidden'); }
+        openPlatform(id || 'girox');
+    }
     // Pinta el menú fácil con datos reales: usuario, saldo (espejo de #userBalance), % de reembolso por período
     // (escalera real del server, nada hardcodeado), plata reclamable y % de referidos.
     function _easyPaint() {
@@ -1701,7 +1715,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyToggleMore, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -1276,4 +1276,12 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 #vipLevelsModal .vl-black { font: 700 9.5px var(--p-font); color: var(--p-muted); white-space: normal; }
 #vipLevelsModal .vl-black-note { margin-top: 10px; background: #1a1a1a; color: #fff; border-radius: 12px; padding: 9px 12px; font: 600 12px/1.45 var(--p-font); } #vipLevelsModal .vl-black-note b { color: #fff; }
 html[data-theme="dark"] .cond-sec.cond-black, html[data-theme="dark"] #vipLevelsModal .vl-black-note { background: #2a2a2a; }
+/* ── #470: selector "Elegí dónde jugar" del Menú fácil ── */
+.ep-list { display: flex; flex-direction: column; gap: 8px; }
+.ep-item { display: flex; align-items: center; gap: 12px; width: 100%; border: 1px solid var(--p-border); background: var(--p-card); border-radius: 16px; padding: 10px 12px; cursor: pointer; text-align: left; font-family: var(--p-font); color: var(--p-text); }
+.ep-item img, .ep-item i { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--p-surface); display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 20px; flex: 0 0 auto; }
+.ep-item span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ep-item b { font: 800 14px var(--p-font); } .ep-item small { font: 600 11px var(--p-font); color: var(--p-muted); }
+.ep-item em { font: 800 16px var(--p-font); color: var(--p-red); font-style: normal; }
+.ep-item.soon { opacity: .7; } .ep-item.soon em { font-size: 11px; background: var(--p-surface); border-radius: 999px; padding: 3px 9px; color: var(--p-muted); }
 

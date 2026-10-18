@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 470/471. 🎮 "Ver la plataforma" con selector (Girox · Ganamos Pronto · Jugaygana Pronto) · historia de Referidos — SW v329
+**Pedidos (owner):** "el Ver la plataforma hay que ajustar que cuando aprietan puedan elegir Girox, Ganamos (pronto) y
+Jugaygana (pronto)"; "en Historias vamos a publicar: ¿Conocés nuestro sistema de referidos? Invitá amigos y generá ganancias
+de forma automática!".
+**Qué se hizo:** `easyPlay()` abre `#easyPlatModal` con las plataformas habilitadas (logo, nombre, "Entrás con tu usuario"
+o "Pronto"); Girox abre la plataforma, las "Pronto" avisan con un toast. Historia 5 (`pin-5.png`, dibujada con PIL: vos + dos
+amigos conectados, "SISTEMA DE REFERIDOS", titular, "COBRÁS TODOS LOS MESES") publicada vía API con 72 h.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`, `public/images/stories/pin-5.png`.
+
 ### 468/469. 🧮 Gasto total desde el inicio → costo promedio por cliente · promociones vigentes y futuras en el análisis y el calculador — admin-sw v101
 **Pedido (owner):** (468) "preguntá cuánto gasté desde que empezó la página; con eso el costo promedio por cliente; si invierto
 tanto a tal costo, vendés aprox. tanto". (469) "tené en cuenta que hoy regalamos 15% de reembolso y 50% en la primera carga:
