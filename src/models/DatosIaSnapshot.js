@@ -10,7 +10,8 @@ const schema = new mongoose.Schema({
   params: { type: mongoose.Schema.Types.Mixed, default: {} },
   summary: { type: mongoose.Schema.Types.Mixed, default: {} },   // números clave (chicos) para la lista
   result: { type: mongoose.Schema.Types.Mixed, default: {} },    // resultado completo
-  review: { type: mongoose.Schema.Types.Mixed, default: null }   // proyección: { reviewedAt, elapsedDays, real, rows, factor }
+  review: { type: mongoose.Schema.Types.Mixed, default: null },  // proyección: { reviewedAt, elapsedDays, real, rows, factor }
+  note: { type: String, default: null }, notedAt: { type: Date, default: null }, notedBy: { type: String, default: null } // #466: nota del owner
 });
 schema.index({ kind: 1, createdAt: -1 });
 schema.index({ createdAt: 1 }, { expireAfterSeconds: 730 * 24 * 3600 });

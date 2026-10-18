@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 466. 🧠 Datos IA: gasto repartido por día (serie con gasto y costo por nuevo) · veredicto guardable con nota — admin-sw v98
+**Pedido (owner):** "el veredicto que se pueda guardar con cómo terminó y qué se analizó; si pongo el monto invertido, ¿es de
+esa semana?; tenés que saber cuánto gasto por día para ver cómo crece".
+**Qué se hizo:** el gasto cargado por rango se reparte parejo por día (`_diaSpendByDay`) y el análisis suma sólo los días que
+caen en el período; la serie muestra "Gasto pauta" y "Costo/nuevo" por día/semana/mes; el informe dice el gasto por día. El
+gasto escrito a mano en la barra es el TOTAL del rango (también se reparte por día). Caja "💾 Guardar este análisis con
+nota" bajo el veredicto → `POST /api/admin/datos-ia/history/:id/note`; la nota se ve en el Historial.
+**Archivos:** `server.js`, `src/services/datosIaService.js`, `src/models/DatosIaSnapshot.js`, `public/adminprivado2026/index.html`,
+`public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 465. 📄 Condiciones de Referidos y de Niveles VIP (estilo 1win) · detalle por nivel · Black con soporte Telegram — SW v328
 **Pedido (owner):** "armá en Referidos las condiciones que usa 1win como sistema de referidos, y lo mismo en Niveles VIP:
 los progresos y lo que podés ir ganando en cada nivel; avisar que los Black ya tienen soporte personalizado en Telegram".

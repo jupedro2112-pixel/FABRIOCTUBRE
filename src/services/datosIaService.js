@@ -38,6 +38,7 @@ async function _analyze(models, opts) {
   const gran = ['day', 'week', 'month'].includes(opts.granularity) ? opts.granularity : 'day';
   const campaign = String(opts.campaign || '').toUpperCase().trim();
   const spend = Number(opts.spend) || 0;
+  const spendByDay = opts.spendByDay || {};
   const days = Math.max(1, Math.round((to - from) / DAY));
   const now = new Date();
   const T = {}; let _tk = Date.now(); const lap = (k) => { T[k] = Date.now() - _tk; _tk = Date.now(); };
@@ -105,7 +106,8 @@ async function _analyze(models, opts) {
   logins.forEach((u) => { get(u.lastLogin).usuariosApp.add(u.id); });
   refundsR.forEach((c) => { const r = get(c.claimedAt); r.reembolsos++; r.montoReembolsos += Number(c.amount) || 0; });
   spinsR.forEach((s) => { const r = get(s.spunAt); r.giros++; r.premiosRuleta += Number(s.prizeARS) || 0; });
-  const rows = Object.keys(series).sort().map((b) => { const r = series[b]; return { bucket: b, registros: r.registros, primerasCargas: r.primerasCargas, cargas: r.cargas, montoCargas: r0(r.montoCargas), cargadores: r.cargadores.size, retiros: r.retiros, montoRetiros: r0(r.montoRetiros), netwin: r0(r.montoCargas - r.montoRetiros), sesiones: r.sesiones, usuariosApp: r.usuariosApp.size, minPorSesion: r.sesiones ? r1(r.minutos / r.sesiones) : null, reembolsos: r.reembolsos, montoReembolsos: r0(r.montoReembolsos), giros: r.giros, premiosRuleta: r0(r.premiosRuleta) }; });
+  const spendOf = {}; Object.keys(spendByDay).forEach((k) => { const bb = bucketOf(new Date(k + 'T12:00:00Z'), gran); spendOf[bb] = (spendOf[bb] || 0) + spendByDay[k]; });
+  const rows = Object.keys(series).sort().map((b) => { const r = series[b]; return { bucket: b, gasto: r0(spendOf[b] || 0), costoPorNuevo: spendOf[b] > 0 && r.primerasCargas ? r0(spendOf[b] / r.primerasCargas) : null, registros: r.registros, primerasCargas: r.primerasCargas, cargas: r.cargas, montoCargas: r0(r.montoCargas), cargadores: r.cargadores.size, retiros: r.retiros, montoRetiros: r0(r.montoRetiros), netwin: r0(r.montoCargas - r.montoRetiros), sesiones: r.sesiones, usuariosApp: r.usuariosApp.size, minPorSesion: r.sesiones ? r1(r.minutos / r.sesiones) : null, reembolsos: r.reembolsos, montoReembolsos: r0(r.montoReembolsos), giros: r.giros, premiosRuleta: r0(r.premiosRuleta) }; });
 
   lap('series');
   // Totales
@@ -120,7 +122,7 @@ async function _analyze(models, opts) {
     retiros: wdsR.length, montoRetiros: r0(montoRetiros), netwin: r0(montoCargas - montoRetiros),
     usuariosApp: appUsers.size, sesiones: sessR.length, minPorSesion: sessR.length ? r1(sum(sessR, sessMin) / sessR.length) : null, sesionesPorUsuarioDia: appUsers.size ? Math.round(sessR.length / appUsers.size / days * 100) / 100 : null, instalados: new Set(sessR.filter((s) => s.installed).map((s) => s.userId)).size,
     reembolsos: refundsR.length, montoReembolsos: r0(sum(refundsR, (x) => x.amount)), giros: spinsR.length, premiosRuleta: r0(sum(spinsR, (x) => x.prizeARS)), mensajesSoporte: supportMsgs,
-    churn30, spend, cac: spend > 0 && n ? r0(spend / n) : null, netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length
+    churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length
   };
   // Período anterior (misma longitud)
   const prevTo = new Date(from.getTime() - 1), prevFrom = new Date(from.getTime() - (to - from) - 1);
@@ -161,7 +163,7 @@ function narrative(t, r, g, gran, rp) {
   sec('💰', 'Dinero', `${t.cargas} cargas por ${money(t.montoCargas)} (${t.cargadores} cargadores, ${t.cargasPorCargador ?? 0} cargas por cargador, promedio ${money(t.cargaPromedio)}), ${t.retiros} retiros por ${money(t.montoRetiros)}. NETWIN: ${money(t.netwin)}. Reembolsos pagados: ${money(t.montoReembolsos)} (${t.reembolsos}); ruleta: ${t.giros} giros, ${money(t.premiosRuleta)} en premios.`,
     t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'bien' : (t.cargasPorCargador >= 1.8 ? 'regular' : 'flojo')), t.cargasPorCargador == null ? null : (t.cargasPorCargador >= 3 ? 'Frecuencia de carga alta: los que cargan, repiten.' : (t.cargasPorCargador >= 1.8 ? 'Frecuencia de carga media.' : 'Frecuencia baja: la mayoría carga una sola vez en el período.')));
   // Inversión
-  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin en el período (${money(t.netwinPorNuevo)} por cliente).`,
+  if (t.spend > 0) sec('📣', 'Inversión', `${money(t.spend)} gastados en el período (${money(t.gastoPorDia)} por día) → costo por cliente nuevo (primera carga): ${t.cac != null ? money(t.cac) : '—'}. Los ${t.primerasCargas} nuevos dejaron ${money(t.netwinNuevos)} de netwin en el período (${money(t.netwinPorNuevo)} por cliente).`,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'bien' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'regular' : 'flojo')) : null,
     t.cac != null && t.netwinPorNuevo != null ? (t.netwinPorNuevo >= t.cac * 1.3 ? 'La inversión RINDE: cada cliente nuevo deja más de lo que costó traerlo, ya dentro del período.' : (t.netwinPorNuevo >= t.cac * 0.8 ? 'Al límite: el cliente nuevo paga casi lo que costó; depende de que vuelva a cargar.' : 'No se recupera en el período: cada cliente nuevo cuesta más de lo que deja. Si la retención es buena puede cerrar después; si no, bajar el gasto o cambiar la pauta.')) : null);
   else sec('📣', 'Inversión', 'Cargá el gasto en publicidad del período para calcular el costo por cliente nuevo y si se recupera.', null, null);

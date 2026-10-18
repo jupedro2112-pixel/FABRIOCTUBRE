@@ -1244,16 +1244,20 @@ document.addEventListener('change', function (ev) {
                         <label>Hasta<input type="date" id="diaTo"></label>
                         <label>Ver por<select id="diaGran"><option value="day">Día a día</option><option value="week">Semana a semana</option><option value="month">Mes a mes</option></select></label>
                         <label>Campaña / publicista<select id="diaCampaign"><option value="">Toda la app</option></select></label>
-                        <label>Gasto en pauta del rango ($)<input type="number" id="diaSpend" min="0" step="1" placeholder="usa el guardado" style="width:140px;"></label>
+                        <label>Gasto en pauta del rango ($, opcional)<input type="number" id="diaSpend" min="0" step="1" placeholder="usa el guardado" style="width:140px;" title="Total gastado en TODO el rango analizado. Si lo dejás vacío, se usa el gasto guardado abajo (repartido por día)."></label>
                         <button class="btn-primary btn-small" onclick="diaRun()">Analizar</button>
                         <span class="dia-presets"><button onclick="diaPreset(7,'day')">7 d</button><button onclick="diaPreset(30,'day')">30 d</button><button onclick="diaPreset(90,'week')">90 d · semanas</button><button onclick="diaPreset(365,'month')">1 año · meses</button></span>
                     </div>
                     <div id="diaVerdict" class="dia-verdict"></div>
+                    <!-- #466: guardar el veredicto con una nota de qué se analizó -->
+                    <div id="diaSaveBox" class="dia-card" style="display:none;"><div class="dia-card-h"><b>💾 Guardar este análisis con nota</b><small>Qué se analizó, cómo terminó, qué decidiste. Queda en el Historial junto con todos los números.</small></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;"><textarea id="diaNote" rows="2" placeholder="Ej.: semana 2 de la campaña X, con $300.000 de pauta. Retención floja: probar bono en la 2ª carga." style="flex:1;min-width:240px;resize:vertical;"></textarea><button class="btn-primary btn-small" onclick="diaSaveNote()">Guardar nota</button></div>
+                    </div>
                     <div id="diaKpis"></div>
                     <div class="dia-card"><div class="dia-card-h"><b>📝 Informe</b><small>Cada sección tiene un semáforo (🟢 bien · 🟡 regular · 🔴 flojo) y una recomendación</small></div><div id="diaInforme" class="dia-report"></div></div>
                     <div class="dia-card"><div class="dia-card-h"><b>🪜 Después de la primera carga</b><small>Los nuevos del rango, contando todo lo que cargaron hasta hoy</small></div><div id="diaLadder"></div></div>
                     <div class="dia-card"><div class="dia-card-h"><b>📅 Serie</b><small id="diaSerieSub">por período</small></div><div id="diaTable" style="overflow-x:auto;"></div></div>
-                    <div class="dia-card"><div class="dia-card-h"><b>📣 Gasto en publicidad</b><small>Guardalo por rango (y campaña si querés) para calcular el costo por cliente nuevo</small></div>
+                    <div class="dia-card"><div class="dia-card-h"><b>📣 Gasto en publicidad</b><small>Cargá el TOTAL gastado entre dos fechas (por ejemplo, lo de una semana): se reparte parejo por día. Así el análisis sabe cuánto se gastó cada día y calcula el costo por cliente nuevo por día, semana o mes.</small></div>
                         <div class="dia-bar dia-bar-in">
                             <label>Desde<input type="date" id="spFrom2"></label><label>Hasta<input type="date" id="spTo2"></label>
                             <label>Campaña (opc.)<input type="text" id="spCamp" placeholder="CODIGO" style="width:110px;"></label>

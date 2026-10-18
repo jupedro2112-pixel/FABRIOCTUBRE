@@ -18744,9 +18744,24 @@ async function _diaSnapshot(kind, by, params, result, summary) {
     return doc.id;
   } catch (e) { logger.warn('[datos-ia] snapshot: ' + e.message); return null; }
 }
-async function _diaSpendFor(from, to, campaign) {
-  try { const arr = (await getConfig('adSpend', [])) || []; return arr.filter((e) => e && (!campaign || (e.campaign || '') === String(campaign).toUpperCase()) && e.from <= datosIa.dateKeyART(to) && e.to >= datosIa.dateKeyART(from)).reduce((s, e) => s + (Number(e.amount) || 0), 0); } catch (_) { return 0; }
+// #466: el gasto cargado por rango se reparte POR DÍA (monto / días del rango) y se suma sólo lo que cae dentro del período
+// analizado → se puede ver cuánto se gasta cada día/semana y el costo por cliente nuevo por período.
+async function _diaSpendByDay(from, to, campaign) {
+  const byDay = {}; let total = 0;
+  try {
+    const arr = (await getConfig('adSpend', [])) || [];
+    const f = datosIa.dateKeyART(from), t = datosIa.dateKeyART(to);
+    for (const e of arr) {
+      if (!e || (campaign && (e.campaign || '') !== String(campaign).toUpperCase())) continue;
+      if (e.to < f || e.from > t) continue;
+      const d0 = new Date(e.from + 'T12:00:00Z'), d1 = new Date(e.to + 'T12:00:00Z');
+      const nDays = Math.max(1, Math.round((d1 - d0) / 86400000) + 1); const perDay = (Number(e.amount) || 0) / nDays;
+      for (let x = d0.getTime(); x <= d1.getTime(); x += 86400000) { const k = new Date(x).toISOString().slice(0, 10); if (k >= f && k <= t) { byDay[k] = (byDay[k] || 0) + perDay; total += perDay; } }
+    }
+  } catch (_) {}
+  return { byDay, total: Math.round(total) };
 }
+async function _diaSpendFor(from, to, campaign) { return (await _diaSpendByDay(from, to, campaign)).total; }
 app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
@@ -18754,9 +18769,14 @@ app.get('/api/admin/datos-ia/analysis', authMiddleware, adminMiddleware, async (
     const to = q.to ? new Date(q.to) : new Date(); const from = q.from ? new Date(q.from) : new Date(to.getTime() - 29 * 86400000);
     if (isNaN(from) || isNaN(to) || from > to) return res.status(400).json({ error: 'Fechas inválidas' });
     if ((to - from) > 400 * 86400000) return res.status(400).json({ error: 'Máximo 400 días' });
-    const spend = Number(q.spend) || (await _diaSpendFor(from, to, q.campaign));
+    const sb = await _diaSpendByDay(from, to, q.campaign);
+    let spendByDay = sb.byDay, spend = sb.total;
+    if (Number(q.spend) > 0) { // gasto indicado a mano para el rango → se reparte parejo por día
+      spend = Number(q.spend); spendByDay = {}; const nd = Math.max(1, Math.round((to - from) / 86400000) + 1);
+      for (let x = from.getTime(); x <= to.getTime(); x += 86400000) spendByDay[datosIa.dateKeyART(new Date(x))] = spend / nd;
+    }
     const _t0 = Date.now();
-    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend });
+    const out = await datosIa.analyze(_datosIaModels(), { from, to, granularity: q.granularity, campaign: q.campaign, spend, spendByDay });
     out.ms = Date.now() - _t0; logger.info('[datos-ia] analysis ' + out.from + '→' + out.to + ' ' + out.granularity + ' en ' + out.ms + ' ms ' + JSON.stringify(out.timings || {}));
     const params = { key: [out.from, out.to, out.granularity, out.campaign || '', spend].join('|'), from: out.from, to: out.to, granularity: out.granularity, campaign: out.campaign, spend };
     const summary = { registros: out.totals.registros, primerasCargas: out.totals.primerasCargas, cargas: out.totals.cargas, montoCargas: out.totals.montoCargas, netwin: out.totals.netwin, d30: out.retention.d30, pctSiguieron: out.repeat.pctSiguieron, veredicto: out.informe.veredicto.nivel };
@@ -18821,7 +18841,7 @@ app.get('/api/admin/datos-ia/history', authMiddleware, adminMiddleware, async (r
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const kind = ['analysis', 'projection', 'compare'].includes(req.query.kind) ? req.query.kind : null;
-    const items = await DatosIaSnapshot.find(kind ? { kind } : {}).sort({ createdAt: -1 }).limit(60).select('id kind createdAt by params summary review').lean();
+    const items = await DatosIaSnapshot.find(kind ? { kind } : {}).sort({ createdAt: -1 }).limit(60).select('id kind createdAt by params summary review note notedAt').lean();
     const calib = await getConfig('projectionCalibration', null);
     res.json({ success: true, items, calibration: calib || { factor: 1 } });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -18841,6 +18861,16 @@ app.post('/api/admin/datos-ia/history/:id/review', authMiddleware, adminMiddlewa
     await DatosIaSnapshot.updateOne({ id: snap.id }, { $set: { review } });
     res.json({ success: true, review, real: { from: real.from, to: real.to, totals: real.totals, repeat: real.repeat } });
   } catch (e) { logger.error('[datos-ia/review] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #466: nota del owner sobre un cálculo guardado ("qué se analizó / cómo terminó")
+app.post('/api/admin/datos-ia/history/:id/note', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const note = String((req.body && req.body.note) || '').trim().slice(0, 1500);
+    const r = await DatosIaSnapshot.updateOne({ id: String(req.params.id) }, { $set: { note, notedAt: new Date(), notedBy: req.user.username } });
+    if (!(r.matchedCount || r.n)) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.post('/api/admin/datos-ia/calibration', authMiddleware, adminMiddleware, async (req, res) => {
   try {

@@ -15417,7 +15417,7 @@ window.initCommandsAccordion = initCommandsAccordion;
 // =====================================================================
 // #459/#461: DATOS IA — análisis (día/semana/mes), comparativa, calculador de inversión, historial + calibración
 // =====================================================================
-let _diaInited = false, _diaOthers = [], _diaHist = [];
+let _diaInited = false, _diaOthers = [], _diaHist = [], _diaLastSnapshot = null;
 const _diaD = (d) => d.toISOString().slice(0, 10);
 const _diaM = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
 const _diaN = (n) => (n == null ? '—' : Number(n).toLocaleString('es-AR'));
@@ -15459,6 +15459,7 @@ async function diaRun() {
             '<div class="dia-group"><div class="dia-group-t">🔁 Retención</div><div class="dia-kpis">' + _diaKpi('Volvió a cargar a 7 días', (rt.d7 ?? '—') + '%', 'de ' + rt.cohort + ' nuevos') + _diaKpi('Volvió a cargar a 30 días', (rt.d30 ?? '—') + '%', 'período siguiente: ' + (rt.next ?? '—') + '%') + _diaKpi('Volvió a entrar en 7 días', (rt.login7 ?? '—') + '%') + _diaKpi('Siguen cargando', (rp.pctSiguieron ?? '—') + '%', rp.siguieronCargando + ' de ' + rp.cohort + ' nuevos') + _diaKpi('Abandono +30 días', (t.churn30 ?? '—') + '%', 'de ' + t.baseCargadores + ' que alguna vez cargaron') + '</div></div>' +
             '<div class="dia-group"><div class="dia-group-t">📱 Uso de la app</div><div class="dia-kpis">' + _diaKpi('Usuarios que entraron', _diaN(t.usuariosApp), t.sesiones + ' sesiones') + _diaKpi('Minutos por sesión', t.minPorSesion ?? '—', (t.sesionesPorUsuarioDia ?? '—') + ' sesiones por usuario y día') + _diaKpi('Con la app instalada', _diaN(t.instalados)) + _diaKpi('Mensajes a Soporte', _diaN(t.mensajesSoporte)) + '</div></div>';
         _diaRenderReport(j.informe);
+        _diaLastSnapshot = j.snapshotId || null; const sb = document.getElementById('diaSaveBox'); if (sb) sb.style.display = _diaLastSnapshot ? '' : 'none'; // #466
         const L = document.getElementById('diaLadder');
         if (L) {
             const tot = rp.cohort || 0; const seg = function (n, col) { return tot ? '<i style="width:' + (n / tot * 100) + '%;background:' + col + ';"></i>' : ''; };
@@ -15467,8 +15468,8 @@ async function diaRun() {
                 '<div class="dia-note">Cada cliente nuevo del rango dejó en promedio <b>' + (rp.cargasPorCliente ?? '—') + ' cargas</b> y <b>' + _diaM(rp.montoPorCliente) + '</b> (contando hasta hoy).</div>') : '<div class="dia-note">Sin primeras cargas en el rango.</div>';
         }
         const rows = j.rows || []; const sub = document.getElementById('diaSerieSub'); if (sub) sub.textContent = (gran === 'month' ? 'mes a mes' : (gran === 'week' ? 'semana a semana' : 'día a día')) + ' · ' + rows.length + ' período(s)';
-        document.getElementById('diaTable').innerHTML = '<table class="data-table" style="width:100%;"><thead><tr><th>' + (gran === 'month' ? 'Mes' : (gran === 'week' ? 'Semana del' : 'Día')) + '</th><th>Registros</th><th>1as cargas</th><th>Cargas</th><th>Monto</th><th>Cargadores</th><th>Retiros</th><th>NETWIN</th><th>Usuarios app</th><th>Sesiones</th><th>Min/sesión</th><th>Reembolsos</th><th>Ruleta</th></tr></thead><tbody>' +
-            rows.map(function (r) { return '<tr><td><b>' + r.bucket + '</b></td><td>' + r.registros + '</td><td>' + r.primerasCargas + '</td><td>' + r.cargas + '</td><td>' + _diaM(r.montoCargas) + '</td><td>' + r.cargadores + '</td><td>' + r.retiros + ' · ' + _diaM(r.montoRetiros) + '</td><td style="color:' + (r.netwin >= 0 ? 'var(--p-green)' : 'var(--p-red)') + ';font-weight:800;">' + _diaM(r.netwin) + '</td><td>' + r.usuariosApp + '</td><td>' + r.sesiones + '</td><td>' + (r.minPorSesion ?? '—') + '</td><td>' + r.reembolsos + ' · ' + _diaM(r.montoReembolsos) + '</td><td>' + r.giros + ' · ' + _diaM(r.premiosRuleta) + '</td></tr>'; }).join('') + '</tbody></table>';
+        document.getElementById('diaTable').innerHTML = '<table class="data-table" style="width:100%;"><thead><tr><th>' + (gran === 'month' ? 'Mes' : (gran === 'week' ? 'Semana del' : 'Día')) + '</th><th>Gasto pauta</th><th>Costo/nuevo</th><th>Registros</th><th>1as cargas</th><th>Cargas</th><th>Monto</th><th>Cargadores</th><th>Retiros</th><th>NETWIN</th><th>Usuarios app</th><th>Sesiones</th><th>Min/sesión</th><th>Reembolsos</th><th>Ruleta</th></tr></thead><tbody>' +
+            rows.map(function (r) { return '<tr><td><b>' + r.bucket + '</b></td><td>' + (r.gasto ? _diaM(r.gasto) : '—') + '</td><td>' + (r.costoPorNuevo != null ? _diaM(r.costoPorNuevo) : '—') + '</td><td>' + r.registros + '</td><td>' + r.primerasCargas + '</td><td>' + r.cargas + '</td><td>' + _diaM(r.montoCargas) + '</td><td>' + r.cargadores + '</td><td>' + r.retiros + ' · ' + _diaM(r.montoRetiros) + '</td><td style="color:' + (r.netwin >= 0 ? 'var(--p-green)' : 'var(--p-red)') + ';font-weight:800;">' + _diaM(r.netwin) + '</td><td>' + r.usuariosApp + '</td><td>' + r.sesiones + '</td><td>' + (r.minPorSesion ?? '—') + '</td><td>' + r.reembolsos + ' · ' + _diaM(r.montoReembolsos) + '</td><td>' + r.giros + ' · ' + _diaM(r.premiosRuleta) + '</td></tr>'; }).join('') + '</tbody></table>';
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
 async function diaLoadSpend() {
@@ -15540,7 +15541,7 @@ async function diaLoadHistory() {
             const what = h.kind === 'analysis' ? (p.from + ' → ' + p.to + ' · ' + (p.granularity === 'month' ? 'mes' : (p.granularity === 'week' ? 'semana' : 'día')) + (p.campaign ? ' · ' + p.campaign : '') + ' — ' + _diaN(s.primerasCargas) + ' nuevos · NETWIN ' + _diaM(s.netwin) + ' · 30 d ' + (s.d30 ?? '—') + '% · siguen ' + (s.pctSiguieron ?? '—') + '%')
                 : (h.kind === 'projection' ? ('invertir ' + _diaM(p.spend) + ' en ' + p.days + ' d desde ' + p.startsAt + (p.campaign ? ' · ' + p.campaign : '') + ' — base: ' + _diaN(s.clientesNuevos) + ' nuevos · NETWIN ' + _diaM(s.netwin) + ' · ROI ' + _diaPct(s.roi) + (h.review ? ' · ✔ revisada ×' + h.review.factor : ''))
                 : ((p.otherLabel || 'otra página') + (p.day ? ' · día ' + p.day : ' · ' + p.from + ' → ' + p.to) + ' — ' + (s.verdict || '')));
-            return '<div class="dia-row" id="hi-' + h.id + '"><span class="when">' + new Date(h.createdAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span><span class="kind">' + K[h.kind] + '</span><span class="grow">' + escapeHtml(what) + '</span>' + (h.kind === 'projection' ? '<button class="btn-primary btn-small" onclick="diaReview(\'' + h.id + '\')">Revisar contra lo real</button>' : '') + '<button class="btn-secondary btn-small" onclick="diaShowSnap(\'' + h.id + '\')">Ver</button></div>';
+            return '<div class="dia-row" id="hi-' + h.id + '"><span class="when">' + new Date(h.createdAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span><span class="kind">' + K[h.kind] + '</span><span class="grow">' + escapeHtml(what) + (h.note ? '<br><b style="color:var(--p-text)">📝 ' + escapeHtml(h.note) + '</b>' : '') + '</span>' + (h.kind === 'projection' ? '<button class="btn-primary btn-small" onclick="diaReview(\'' + h.id + '\')">Revisar contra lo real</button>' : '') + '<button class="btn-secondary btn-small" onclick="diaShowSnap(\'' + h.id + '\')">Ver</button></div>';
         }).join('') : '<div class="dia-note">Todavía no hay cálculos guardados.</div>';
     } catch (_) {}
 }
@@ -15568,4 +15569,9 @@ async function diaCalibrate(mode) {
     if (mode === 'manual' && !(body.factor > 0)) { showToast('Poné un factor (ej. 0.8 o 1.2)', 'error'); return; }
     try { const r = await authFetch('/api/admin/datos-ia/calibration', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Ajuste aplicado: ×' + j.factor, 'success'); diaLoadHistory(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
+async function diaSaveNote() {
+    const note = (document.getElementById('diaNote').value || '').trim(); if (!_diaLastSnapshot) { showToast('Primero analizá', 'error'); return; } if (!note) { showToast('Escribí la nota', 'error'); return; }
+    try { const r = await authFetch('/api/admin/datos-ia/history/' + _diaLastSnapshot + '/note', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: note }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Guardado en el Historial', 'success'); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.diaSaveNote = diaSaveNote;
 window.diaInit = diaInit; window.diaTab = diaTab; window.diaPreset = diaPreset; window.diaRun = diaRun; window.diaSaveSpend = diaSaveSpend; window.diaDelSpend = diaDelSpend; window.diaSaveOther = diaSaveOther; window.diaDeleteOther = diaDeleteOther; window.diaCompare = diaCompare; window.diaProject = diaProject; window.diaLoadHistory = diaLoadHistory; window.diaShowSnap = diaShowSnap; window.diaReview = diaReview; window.diaCalibrate = diaCalibrate;
