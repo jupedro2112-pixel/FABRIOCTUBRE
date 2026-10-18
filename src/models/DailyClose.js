@@ -15,10 +15,17 @@ const schema = new mongoose.Schema({
   neto: { type: Number, default: 0 },           // venta − regalos
   nuevos: { type: Number, default: 0 }, retenidos: { type: Number, default: 0 },
   ventaRetenidos: { type: Number, default: 0 }, ventaNuevos: { type: Number, default: 0 },
+  // #501 ARQUEO: lo que dice el BANCO vs lo que dice el sistema. Auto = movimientos del banco (webhook hgcash) y payouts pagados;
+  // manual = lo que el admin lee del resumen del banco (pisa lo automático). diferencia = (entró − salió del banco) − (depósitos − retiros)
+  bankInAuto: { type: Number, default: 0 }, bankOutAuto: { type: Number, default: 0 }, payoutsPaid: { type: Number, default: 0 }, bankMovsIn: { type: Number, default: 0 },
+  bankInManual: { type: Number, default: null }, bankOutManual: { type: Number, default: null },
+  bankIn: { type: Number, default: 0 }, bankOut: { type: Number, default: 0 },
+  difIn: { type: Number, default: 0 }, difOut: { type: Number, default: 0 }, diferencia: { type: Number, default: 0 },
+  arqueo: { type: String, enum: ['sin_datos', 'cuadra', 'faltante', 'sobrante'], default: 'sin_datos' },
   // Lo que completa el admin
   bankCommissionPct: { type: Number, default: null },   // % sobre los depósitos (si se usa el % por defecto)
   bankCommissionArs: { type: Number, default: 0 },      // monto final de comisión (pesos)
-  bankCommissionSource: { type: String, default: null }, // 'default' | 'manual'
+  bankCommissionSource: { type: String, default: null }, // 'default' | 'manual' (monto) | 'manual_pct' (% del día, #501)
   resultado: { type: Number, default: 0 },              // neto − comisión del banco
   usdtRate: { type: Number, default: null },
   resultadoUsd: { type: Number, default: null },

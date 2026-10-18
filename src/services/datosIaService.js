@@ -463,7 +463,7 @@ async function dailyRetained(models, opts) {
 
 // #500: números de UN día para el cierre automático (liviano: 3 agregaciones del día + primera carga sólo de los que cargaron).
 async function dayTotals(models, dayKey) {
-  const { Transaction } = models;
+  const { Transaction, BankMovement, PendingPayout } = models;
   const d0 = new Date(dayKey + 'T03:00:00.000Z'), d1 = new Date(d0.getTime() + DAY - 1);
   const okStatus = { $nin: ['failed', 'cancelled'] };
   const realDep = { type: 'deposit', status: okStatus, 'metadata.source': { $nin: GIFT_SOURCES } };
@@ -473,6 +473,15 @@ async function dayTotals(models, dayKey) {
     Transaction.aggregate([{ $match: { type: 'withdrawal', status: okStatus, ...inDay } }, { $group: { _id: '$userId', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]),
     Transaction.aggregate([{ $match: { type: { $in: PROMO_TYPES }, status: okStatus, ...inDay } }, { $group: { _id: null, amt: { $sum: '$amount' } } }])
   ]);
+  // #501 lado BANCO: movimientos entrantes/salientes del banco (webhook) y retiros pagados por banco ese día
+  let bankMovsIn = 0, bankMovsOut = 0, payoutsPaid = 0;
+  try {
+    if (BankMovement) {
+      const bm = await BankMovement.aggregate([{ $match: { createdAt: { $gte: new Date(d0.getTime() - DAY), $lte: new Date(d1.getTime() + DAY) } } }, { $addFields: { dd: { $ifNull: ['$date', '$createdAt'] } } }, { $match: { dd: { $gte: d0, $lte: d1 }, status: { $nin: ['rejected', 'failed', 'cancelled', 'REJECTED', 'FAILED', 'CANCELLED'] } } }, { $group: { _id: '$direction', amt: { $sum: '$amount' }, n: { $sum: 1 } } }]);
+      bm.forEach((x) => { if (String(x._id).toLowerCase() === 'inbound') bankMovsIn = x.amt; else if (String(x._id).toLowerCase() === 'outbound') bankMovsOut = x.amt; });
+    }
+    if (PendingPayout) { const pp = await PendingPayout.aggregate([{ $match: { status: 'paid', paidAt: { $gte: d0, $lte: d1 } } }, { $group: { _id: null, amt: { $sum: '$amount' } } }]); payoutsPaid = (pp[0] && pp[0].amt) || 0; }
+  } catch (_) {}
   const ids = depU.map((x) => x._id).filter(Boolean);
   const firsts = ids.length ? await Transaction.aggregate([{ $match: { ...realDep, userId: { $in: ids } } }, { $group: { _id: '$userId', first: { $min: '$timestamp' } } }]) : [];
   const firstById = new Map(firsts.map((u) => [u._id, u.first]));
@@ -482,7 +491,7 @@ async function dayTotals(models, dayKey) {
   const regalos = (prAgg[0] && prAgg[0].amt) || 0;
   const newSet = new Set(depU.filter((x) => isNew(x._id)).map((x) => x._id));
   const depN = depU.filter((x) => newSet.has(x._id)).reduce((s, x) => s + x.amt, 0), wdN = wdU.filter((x) => newSet.has(x._id)).reduce((s, x) => s + x.amt, 0);
-  return { dateKey: dayKey, depositos: r0(depositos), cargas, cargadores: depU.length, retiros: r0(retiros), retirosN, venta: r0(depositos - retiros), regalos: r0(regalos), neto: r0(depositos - retiros - regalos), nuevos: newSet.size, retenidos: depU.length - newSet.size, ventaNuevos: r0(depN - wdN), ventaRetenidos: r0((depositos - depN) - (retiros - wdN)) };
+  return { dateKey: dayKey, depositos: r0(depositos), cargas, cargadores: depU.length, retiros: r0(retiros), retirosN, venta: r0(depositos - retiros), regalos: r0(regalos), neto: r0(depositos - retiros - regalos), nuevos: newSet.size, retenidos: depU.length - newSet.size, ventaNuevos: r0(depN - wdN), ventaRetenidos: r0((depositos - depN) - (retiros - wdN)), bankMovsIn: r0(bankMovsIn), payoutsPaid: r0(payoutsPaid), bankInAuto: r0(bankMovsIn), bankOutAuto: r0(Math.max(bankMovsOut, payoutsPaid)) };
 }
 
 module.exports = { analyze, compare, project, review, dailyRetained, dayTotals, dateKeyART };

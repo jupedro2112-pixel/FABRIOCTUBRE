@@ -232,4 +232,6 @@ a { color: var(--p-red); }
 .cl-st { display: inline-block; border-radius: 999px; padding: 3px 9px; font: 800 10.5px var(--p-font); white-space: nowrap; }
 .cl-st.fin { background: rgba(22,163,74,.15); color: var(--p-green); } .cl-st.pend { background: rgba(255,179,71,.18); color: #b86e00; }
 tr.fin td { opacity: .92; }
+.cl-st.bad { background: rgba(230,0,35,.14); color: var(--p-red); } .cl-st.warn { background: rgba(255,179,71,.18); color: #b86e00; } .cl-st.none { background: var(--p-surface); color: var(--p-muted); }
+.cl-table .cl-in.cl-pct { width: 62px; }
 

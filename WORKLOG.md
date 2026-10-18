@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 501. 🧾 Cierres: ARQUEO (¿da faltante o diferencia?) y comisión del banco editable por día — admin-sw v111
+**Pedidos (owner):** "en el cierre es revisar si da faltante o diferencia"; "la comisión por defecto dejámela modificar en el
+cierre porque puede variar en el día".
+**Qué se hizo:** `dayTotals` suma el lado BANCO del día: movimientos entrantes/salientes del webhook (`BankMovement`, por fecha
+del movimiento) y retiros pagados por banco (`PendingPayout` paid) → `bankInAuto` / `bankOutAuto`. En el cierre: banco = lo
+escrito "según banco" (`bankInManual/bankOutManual`) o lo automático; `difIn = banco entró − depósitos`, `difOut = banco salió −
+retiros`, `diferencia = (entró − salió) − (depósitos − retiros)`; `arqueo` = cuadra (|dif| ≤ máx($1.000, 0,1 % de los depósitos))
+/ faltante / sobrante / sin datos. Totales de 30 d con la diferencia acumulada y cuántos días con faltante/sobrante.
+**Comisión por día:** cada fila tiene % del día y monto; el % por defecto es sólo el punto de partida (`bankCommissionSource`:
+default · manual_pct · manual); vacío vuelve al default.
+**Archivos:** `src/models/DailyClose.js`, `src/services/datosIaService.js`, `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `pin-admin.css`, `public/admin-sw.js`.
+
 ### 500. 🧾 CIERRES AUTOMÁTICOS: el server genera el cierre de cada día; el admin completa comisión del banco y cotización USDT → finalizado — admin-sw v110
 **Pedido (owner):** "cierres automáticos debajo de Soporte, ya que no va a haber empleados que manejen cierres; completar la
 comisión del banco directo para tener el análisis de cuánto fue el cierre y, al final, si está pendiente a cotizar o cotizado,

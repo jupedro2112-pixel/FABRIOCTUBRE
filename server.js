@@ -18744,7 +18744,7 @@ app.get('/api/admin/diag', authMiddleware, adminMiddleware, async (req, res) => 
 // ============================================================
 const AppSession = require('./src/models/AppSession');
 const datosIa = require('./src/services/datosIaService');
-const _datosIaModels = () => ({ Transaction, User, RefundClaim: require('./src/models/RefundClaim'), DailyRouletteSpin: require('./src/models/DailyRouletteSpin'), Message, AppSession });
+const _datosIaModels = () => ({ Transaction, User, RefundClaim: require('./src/models/RefundClaim'), DailyRouletteSpin: require('./src/models/DailyRouletteSpin'), Message, AppSession, BankMovement: require('./src/models/BankMovement'), PendingPayout: require('./src/models/PendingPayout') });
 // #469: condiciones promocionales VIGENTES (lo que se regala hoy) para el informe y el calculador.
 async function _diaPromoConfig() {
   const out = { firstDepositBonusPct: 0, autoLoadBonusPct: 0, dailyRefundPct: 0, weeklyRefundPct: 0, monthlyRefundPct: 0, installGiftPct: 0 };
@@ -18944,9 +18944,18 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
 const DailyClose = require('./src/models/DailyClose');
 async function _closeConfig() { const c = (await getConfig('closeConfig', null)) || {}; return { bankCommissionPct: Number(c.bankCommissionPct) || 0, autoUsdt: c.autoUsdt !== false }; }
 function _closeApply(doc, cfg) {
-  // comisión: manual > % por defecto sobre depósitos
-  if (doc.bankCommissionSource !== 'manual') { const pct = cfg.bankCommissionPct || 0; doc.bankCommissionPct = pct; doc.bankCommissionArs = Math.round(doc.depositos * pct / 100); doc.bankCommissionSource = pct ? 'default' : null; }
+  // comisión: monto a mano > % del día (a mano) > % por defecto sobre depósitos (#501: el % se puede cambiar en cada cierre)
+  if (doc.bankCommissionSource === 'manual_pct') { doc.bankCommissionArs = Math.round(doc.depositos * (doc.bankCommissionPct || 0) / 100); }
+  else if (doc.bankCommissionSource !== 'manual') { const pct = cfg.bankCommissionPct || 0; doc.bankCommissionPct = pct; doc.bankCommissionArs = Math.round(doc.depositos * pct / 100); doc.bankCommissionSource = pct ? 'default' : null; }
   doc.resultado = Math.round((doc.neto || 0) - (doc.bankCommissionArs || 0));
+  // #501 ARQUEO: banco (manual > automático) vs sistema
+  doc.bankIn = doc.bankInManual != null ? doc.bankInManual : (doc.bankInAuto || 0);
+  doc.bankOut = doc.bankOutManual != null ? doc.bankOutManual : (doc.bankOutAuto || 0);
+  const hasBank = doc.bankInManual != null || doc.bankOutManual != null || doc.bankInAuto > 0 || doc.bankOutAuto > 0;
+  doc.difIn = Math.round(doc.bankIn - doc.depositos); doc.difOut = Math.round(doc.bankOut - doc.retiros);
+  doc.diferencia = Math.round((doc.bankIn - doc.bankOut) - (doc.depositos - doc.retiros));
+  const tol = Math.max(1000, Math.round(doc.depositos * 0.001));
+  doc.arqueo = !hasBank ? 'sin_datos' : (Math.abs(doc.diferencia) <= tol ? 'cuadra' : (doc.diferencia < 0 ? 'faltante' : 'sobrante'));
   doc.resultadoUsd = doc.usdtRate > 0 ? Math.round((doc.resultado / doc.usdtRate) * 100) / 100 : null;
   return doc;
 }
@@ -18973,7 +18982,7 @@ app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) 
     const since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000));
     const items = await DailyClose.find({ dateKey: { $gte: since } }).sort({ dateKey: -1 }).lean();
     const cfg = await _closeConfig(); let usdt = null; try { usdt = (await getConfig('usdtRate', null)) || null; } catch (_) {}
-    const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0 });
+    const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0), diferencia: a.diferencia + (c.arqueo && c.arqueo !== 'sin_datos' ? (c.diferencia || 0) : 0), faltantes: a.faltantes + (c.arqueo === 'faltante' ? 1 : 0), sobrantes: a.sobrantes + (c.arqueo === 'sobrante' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0, diferencia: 0, faltantes: 0, sobrantes: 0 });
     res.json({ success: true, items, totals: tot, config: cfg, usdtRate: usdt && Number(usdt.rate) || null });
   } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
@@ -18994,7 +19003,11 @@ app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (
     const b = req.body || {}; const cfg = await _closeConfig();
     let doc = await DailyClose.findOne({ dateKey: dk }); if (!doc) doc = await _closeEnsure(dk, false);
     if (b.recalc) { doc = await _closeEnsure(dk, true); }
-    if (b.bankCommissionArs != null && b.bankCommissionArs !== '') { const v = Number(b.bankCommissionArs); if (!(v >= 0)) return res.status(400).json({ error: 'Comisión inválida' }); doc.bankCommissionArs = Math.round(v); doc.bankCommissionPct = doc.depositos > 0 ? Math.round((v / doc.depositos) * 10000) / 100 : null; doc.bankCommissionSource = 'manual'; }
+    // #501: comisión del día por % (prioridad si vino) o por monto
+    if (b.bankCommissionPct != null && b.bankCommissionPct !== '' && !(b.bankCommissionArs != null && b.bankCommissionArs !== '' && b.commissionBy === 'amount')) { const p = Number(b.bankCommissionPct); if (!(p >= 0 && p <= 50)) return res.status(400).json({ error: 'El % de comisión tiene que estar entre 0 y 50' }); doc.bankCommissionPct = Math.round(p * 100) / 100; doc.bankCommissionSource = 'manual_pct'; }
+    else if (b.bankCommissionArs != null && b.bankCommissionArs !== '') { const v = Number(b.bankCommissionArs); if (!(v >= 0)) return res.status(400).json({ error: 'Comisión inválida' }); doc.bankCommissionArs = Math.round(v); doc.bankCommissionPct = doc.depositos > 0 ? Math.round((v / doc.depositos) * 10000) / 100 : null; doc.bankCommissionSource = 'manual'; }
+    if (b.bankInManual !== undefined) { doc.bankInManual = b.bankInManual === '' || b.bankInManual == null ? null : Math.round(Number(b.bankInManual) || 0); }
+    if (b.bankOutManual !== undefined) { doc.bankOutManual = b.bankOutManual === '' || b.bankOutManual == null ? null : Math.round(Number(b.bankOutManual) || 0); }
     if (b.useDefaultCommission) { doc.bankCommissionSource = null; }
     if (b.usdtRate != null && b.usdtRate !== '') { const r = Number(b.usdtRate); if (!(r > 0)) return res.status(400).json({ error: 'Cotización inválida' }); doc.usdtRate = Math.round(r); }
     if (b.notes != null) doc.notes = String(b.notes).slice(0, 500);
