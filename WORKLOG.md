@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 494. 🎰 Juegos del Inicio un poco más chicos — SW v345
+**Pedido (owner):** "lo de las fotos dejalo, pero achicá un poco más". Tarjetas al 36 % del ancho (máx. 160 px; 24 % en pantallas
+anchas), casi tres por pantalla; texto "N jugando" en 11 px.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 493. ↩️ Revertidos #490 y #492: todo como hace dos actualizaciones — SW v344
 **Pedido (owner):** "dejá todo como estaba hace 2 actualizaciones porque no me gustó".
 **Qué se hizo:** vuelve el tema CLARO por defecto (el nocturno sigue disponible en Perfil), se quitó la pastilla naranja
