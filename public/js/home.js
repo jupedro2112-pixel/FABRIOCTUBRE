@@ -128,13 +128,17 @@
     }
     function chooseMenu(pref) { setMenuPref(pref); }
     // #488: cartel BONO DE PRIMERA CARGA al entrar (quien no cargó nunca), una vez por sesión, después de elegir el menú.
-    let _fdShown = false;
+    let _fdShown = false, _fdPromoP = null;
+    // #490: la promo de primera carga se consulta una vez por sesión y la usan el cartel y la etiqueta "+X% en tu primera carga" del botón CARGAR AHORA
+    function _fdPromoLoad() { if (_fdPromoP) return _fdPromoP; const tok = VIP.state && VIP.state.currentToken; if (!tok) return Promise.resolve(null); _fdPromoP = fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { Authorization: 'Bearer ' + tok } }).then((r) => r.json()).catch(() => null); return _fdPromoP; }
+    async function _fdTagPaint() { const tag = _el('ezMainTag'); if (!tag) return; const j = await _fdPromoLoad(); if (j && j.show) { tag.textContent = '🎁 +' + j.pct + '% en tu primera carga' + (j.installGiftEnabled ? ' · +' + j.pctApp + '% con la app' : ''); tag.hidden = false; } else tag.hidden = true; }
     async function maybeFirstDepositPopup() {
+        _fdTagPaint();
         if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
         const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
         _fdShown = true;
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { Authorization: 'Bearer ' + tok } }); const j = await r.json();
+            const j = await _fdPromoLoad();
             if (!j || !j.show) return;
             const p = _el('fdPct'), pa = _el('fdPctApp'), ap = _el('fdApp'), tx = _el('fdTxt');
             if (p) p.textContent = j.pct + '%'; if (pa) pa.textContent = j.pctApp + '%'; if (ap) ap.style.display = j.installGiftEnabled ? '' : 'none'; if (tx) tx.textContent = j.text || '';
@@ -215,7 +219,7 @@
     }
     function _easyPaint() {
         const v = _el('easyView'); if (!v) return;
-        _applyMenuLayout();
+        _applyMenuLayout(); _fdTagPaint();
         try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('easyHello'); if (h) h.textContent = u ? ('Hola, ' + u) : 'Hola'; } catch (_) {}
         try { const b = _el('userBalance'), eb = _el('easyBalance'); if (b && eb && b.textContent) eb.textContent = b.textContent; } catch (_) {}
         try {

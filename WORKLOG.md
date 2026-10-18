@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 490. 🌑 Estilo de la referencia: NEGRO por defecto (blanco desde Perfil), menú fácil en lista de tarjetas anchas, etiqueta "+X% en tu primera carga" — SW v341
+**Pedido (owner, con captura de otra casa):** "vamos con este estilo de página; primero el negro y después que se pueda cambiar al
+blanco".
+**Qué se hizo:** el tema arranca en **negro** para quien no eligió (`vip_theme` default 'dark'; quien ya tenía claro lo conserva;
+se cambia en Perfil → Modo nocturno). El menú fácil pasa de grilla 2×2 a **lista de tarjetas anchas** como la referencia: ícono en
+recuadro a la izquierda (56 px), título grande y detalle debajo (Reembolso · Ruleta diaria · Referidos · Ver la plataforma).
+Sobre CARGAR AHORA aparece la pastilla naranja "🎁 +50% en tu primera carga · +100% con la app" (misma consulta
+`/api/first-deposit-promo` que el cartel #488, una vez por sesión; sólo para quien no cargó nunca; los % salen del panel).
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 489. 🎰 Inicio: deslizante de JUEGOS individuales, grandes, con "N jugando" (50–200) — SW v339
 **Pedido (owner, con capturas del "Top 10 juegos" de la plataforma):** "en el Inicio poné las fotos así, de forma individual,
 grande con deslizante, y que figure cuánta gente está jugando: tirá fruta, entre 50 y 200 en cada juego".
