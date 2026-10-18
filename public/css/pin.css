@@ -1239,4 +1239,15 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .story-viewer .st-bars i b { background: #fff !important; border-radius: 999px !important; }
 .story-viewer .st-head { top: calc(24px + env(safe-area-inset-top, 0px)) !important; z-index: 6; }
 .story-viewer .st-close { background: rgba(0, 0, 0, .35) !important; backdrop-filter: blur(4px); }
+/* ── #455 (owner): arriba a la izquierda logo + PICA ROJA (tipo Instagram); abajo el sello sin píldora, texto en blanco ── */
+.story-viewer .st-head { justify-content: space-between !important; }
+.story-viewer .st-head .st-logo, .story-viewer .st-head .st-who { display: flex !important; }
+.story-viewer .st-head .st-logo img { width: 34px !important; height: 34px !important; border-radius: 50% !important; border: 2px solid #fff !important; background: #000; }
+.story-viewer .st-head .st-brand { font: 900 13.5px var(--p-font); letter-spacing: 1.2px; color: #fff; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+.story-viewer .st-head .st-brand-sub { display: none; }
+.story-viewer .st-head #storyWhen { font: 600 11px var(--p-font); color: rgba(255, 255, 255, .85); text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+.st-brand-foot { background: transparent !important; box-shadow: none !important; padding: 0 !important; gap: 10px; }
+.st-brand-foot img { width: 40px; height: 40px; border: 2px solid #fff; background: #000; }
+.st-brand-foot b { color: #fff !important; font-size: 15px; text-shadow: 0 1px 8px rgba(0, 0, 0, .8); }
+.st-brand-foot small { color: #fff !important; font-weight: 700; text-shadow: 0 1px 8px rgba(0, 0, 0, .8); }
 

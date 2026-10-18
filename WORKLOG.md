@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 455. 📖 Historias: logo + PICA ROJA arriba a la izquierda (Instagram) · sello de abajo en blanco, sin píldora — SW v324
+**Pedido (owner, con captura):** "poné el logo de la página en la punta y PICA ROJA como para que se vea tipo historias; en
+las fotos, el texto abajo de PICA ROJA con el logo dejalo en blanco".
+**Qué se hizo (pin.css):** arriba a la izquierda vuelve el logo redondo con borde blanco + "PICA ROJA" + "hace N h" (como
+Instagram), con la ✕ a la derecha. El sello del pie pierde la píldora blanca: logo redondo con borde blanco y "PICA ROJA /
+oficial · cargas automáticas" en blanco con sombra, directamente sobre la foto.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 454. 📖 Historias: barras de progreso tipo Instagram/WhatsApp — SW v323
 **Pedido (owner):** "el deslizante que figure como WhatsApp, ver cuántas fotos hay subidas… tipo Instagram".
 **Qué se hizo (pin.css):** las barras `.st-bars` (una por historia, ya existían) se ven claras sobre cualquier foto: degradado
