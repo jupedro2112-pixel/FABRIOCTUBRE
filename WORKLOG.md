@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 446. 💸 Selector de reembolsos: los tres botones rojos con letra blanca — SW v317
+**Pedido (owner, con captura):** "ahí es siempre rojo con letra blanca" (el Diario salía con letra verde).
+**Qué se hizo:** `#unifiedRefundModal`: fuera los degradados y colores inline (verde/azul) de los tres botones; clase `.ur-btn`
+→ rojo del tema, letra blanca, píldora, con ícono de calendario de línea (día / semana / mes) en vez de emojis; título sin 🎁.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 445. 🎨 Íconos con más presencia (duotono) — SW v316
 **Pedido (owner):** "dale un poco de vivencia a los íconos; así está bien pero le falta que remarque más, sin que sea tipo
 teléfono (emoji)".

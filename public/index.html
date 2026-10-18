@@ -2041,19 +2041,20 @@
         <div class="modal-content" style="max-width:380px;position:relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('unifiedRefundModal')" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:22px;cursor:pointer;z-index:10;line-height:1;">✕</button>
             <div class="modal-header">
-                <h2>🎁 Reembolsos</h2>
+                <h2>Reembolsos</h2>
                 <p style="font-size:12px;color:#aaa;">Elegí el tipo de reembolso a consultar</p>
                 <p class="refund-promo" hidden></p>
             </div>
             <div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
-                <button onclick="VIP.refunds.showRefundModal('daily');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary" style="font-size:15px;padding:14px;background:linear-gradient(135deg,#00c46a,#00ff88);color:#052e16;">
-                    📅 Reembolso Diario (<span id="unifiedDailyPct">25</span>% de tu NETWIN de ayer)
+                <!-- #446 (owner): los tres botones SIEMPRE rojos con letra blanca (antes verde/azul con inline); íconos de línea -->
+                <button onclick="VIP.refunds.showRefundModal('daily');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary ur-btn" style="font-size:15px;padding:14px;">
+                    <i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h.01"/></svg></i>Reembolso Diario (<span id="unifiedDailyPct">25</span>% de tu NETWIN de ayer)
                 </button>
-                <button onclick="VIP.refunds.showRefundModal('weekly');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary" style="font-size:15px;padding:14px;background:linear-gradient(135deg,#1a6b3a,#2d9b56);">
-                    📆 Reembolso Semanal (<span id="unifiedWeeklyPct">10</span>% de tu NETWIN semanal)
+                <button onclick="VIP.refunds.showRefundModal('weekly');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary ur-btn" style="font-size:15px;padding:14px;">
+                    <i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 15h10"/></svg></i>Reembolso Semanal (<span id="unifiedWeeklyPct">10</span>% de tu NETWIN semanal)
                 </button>
-                <button onclick="VIP.refunds.showRefundModal('monthly');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary" style="font-size:15px;padding:14px;background:linear-gradient(135deg,#1a3a6b,#2d5b9b);">
-                    🗓️ Reembolso Mensual (<span id="unifiedMonthlyPct">5</span>% de tu NETWIN mensual)
+                <button onclick="VIP.refunds.showRefundModal('monthly');VIP.ui.hideModal('unifiedRefundModal');" class="btn btn-primary ur-btn" style="font-size:15px;padding:14px;">
+                    <i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 14h3M12 14h3M7 18h3M12 18h3"/></svg></i>Reembolso Mensual (<span id="unifiedMonthlyPct">5</span>% de tu NETWIN mensual)
                 </button>
                 <button onclick="VIP.ui.hideModal('unifiedRefundModal')" class="btn btn-secondary">Cerrar</button>
             </div>
@@ -2314,7 +2315,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v316</div>
+                    <div class="pf-build" id="appBuildTag">app v317</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

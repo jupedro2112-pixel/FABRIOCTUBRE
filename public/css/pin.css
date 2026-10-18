@@ -1156,4 +1156,9 @@ html[data-theme="dark"] .ez-btn .ez-ico, html[data-theme="dark"] .ez-chat .ez-ic
 .ez-btn .ez-ico svg { width: 24px; height: 24px; } .mc-ico svg { width: 24px; height: 24px; }
 .ez-switch .li svg path, .ez-switch .li svg circle { fill-opacity: .1; }
 html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="dark"] .ez-btn .ez-ico, html[data-theme="dark"] .ez-chat .ez-ico, html[data-theme="dark"] .mc-ico { background: #3a1218 !important; box-shadow: none; }
+/* ── #446 (owner): selector de reembolsos — los tres botones rojos con letra blanca ── */
+#unifiedRefundModal .ur-btn { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; font-weight: 800 !important; display: flex !important; align-items: center; justify-content: center; gap: 6px; }
+#unifiedRefundModal .ur-btn * { color: #fff !important; }
+#unifiedRefundModal .ur-btn .li svg path, #unifiedRefundModal .ur-btn .li svg rect { fill: #fff; fill-opacity: .18; }
+#unifiedRefundModal .ur-btn:hover { background: var(--p-red-dark) !important; }
 
