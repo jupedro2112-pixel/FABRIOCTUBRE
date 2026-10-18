@@ -1268,6 +1268,13 @@ document.addEventListener('change', function (ev) {
                     <div><h2>🎯 Estrategia clientes · publicidad</h2><div class="cfg-sub">Todo corre solo. Acá ajustás los números. Los textos que ve el cliente se editan en COMANDOS (<code>/sys_second_deposit_offer</code>, <code>/sys_mission_done</code>, <code>/sys_first_deposit_popup</code>).</div></div>
                     <button class="refresh-btn" onclick="stratLoad()" title="Actualizar">🔄</button>
                 </div>
+                <div class="dia-card"><div class="dia-card-h"><b>🛡️ Anti-estafa general</b><small>Pensado para multicuentas y gente que carga y retira sin jugar. Todo bono se acredita con rollover (hay que jugarlo antes de retirarlo). Además, si una cuenta carga desde un CBU que ya usó OTRA cuenta, queda marcada: la carga se acredita igual pero sin bonos de bienvenida, 2ª carga ni misiones (aviso interno en su chat).</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label>Rollover de TODOS los bonos ×<input type="number" id="stRollX" min="0" max="50" style="width:70px;"></label>
+                        <button class="btn-primary btn-small" onclick="stratRollover()">Aplicar a todo</button>
+                        <span class="dia-pill" id="stRollInfo">…</span>
+                    </div>
+                </div>
                 <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Primera carga</b><small>Bono de bienvenida en la primera carga real + extra si instala la app (con notificaciones). El cliente lo ve al entrar y sobre CARGAR AHORA.</small></div>
                     <div class="dia-bar dia-bar-in">
                         <label>Bono 1ª carga %<input type="number" id="stFdPct" min="0" max="500" style="width:80px;"></label>

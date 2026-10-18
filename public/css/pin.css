@@ -1412,4 +1412,19 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ms-card .ms-chev { font-style: normal; color: var(--p-muted); transition: transform .2s; } .ms-card .ms-card-h[aria-expanded="true"] .ms-chev { transform: rotate(180deg); }
 #missionsCardBody { padding: 6px 0 4px; } #missionsCardList { cursor: pointer; }
 .ms-note { display: block; margin-top: 6px; font: 600 11px var(--p-font); color: var(--p-muted); }
+/* ── #509 (owner): el menú fácil se encimaba al sumar Misiones (la grilla tenía alto fijo). Ahora cada cosa es un recuadro con su
+   alto natural y la pantalla se desliza si hace falta; el saludo es compacto para que entre todo. ── */
+.easy-view { overflow-y: auto !important; gap: 8px !important; }
+.ez-top { padding: 6px 10px !important; gap: 8px !important; }
+.ez-top .ez-av, .ez-top #easyAvatar { width: 30px !important; height: 30px !important; font-size: 15px !important; }
+.ez-hello-t span { font-size: 13.5px !important; } .ez-hello-t small { font-size: 10.5px !important; }
+.ez-bal small { font-size: 9.5px !important; } .ez-bal b { font-size: 15px !important; }
+.ez-main { flex: 0 0 auto !important; min-height: 0 !important; padding: 11px 14px !important; }
+.ez-main-txt b { font-size: 16px !important; } .ez-main-txt small { font-size: 11px !important; }
+.ez-grid { flex: 0 0 auto !important; grid-auto-rows: auto !important; gap: 8px !important; }
+.ez-btn { min-height: 86px !important; padding: 10px 8px !important; }
+.ez-btn.ez-missions { min-height: 0 !important; padding: 10px 12px 12px !important; flex-direction: column; align-items: flex-start !important; }
+.ez-btn.ez-missions > b { margin-top: 4px; }
+.ez-chat, .ez-switch { flex: 0 0 auto !important; }
+.sd-banner { flex: 0 0 auto; }
 

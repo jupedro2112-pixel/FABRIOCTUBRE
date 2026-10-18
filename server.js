@@ -2729,7 +2729,8 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     // garantía que ya daba `chargeKey` en nuestra base, ahora también del otro lado.
     const _ref = `vip-hg-${chargeKey || movement.movementId}`;
     // BONO AUTOMÁTICO (#210): el bono en % pendiente entra junto con la carga.
-    const _auto = await resolveAutoBonus(user, Number(amount), 'auto-hgcash');
+    const _reuse = await _cbuReuseCheck(user, movement); // #509
+    const _auto = await resolveAutoBonus(user, Number(amount), 'auto-hgcash', { noWelcome: !!_reuse });
     const result = await adapter.depositToUser(user.username, Number(amount), 'Carga automática (hgcash)', _ref,
       _auto.bonus > 0 ? { bonusAmount: _auto.bonus, bonusMultiplier: await _bonusMultiplierFor(adapter) } : null);
     if (!result.success) {
@@ -2813,7 +2814,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     // Oferta de recuperación 100% (no se envía si está etiquetado comunidad/no comunidad).
     await maybeSendRecoveryMessage(user);
     // #283: en la PRIMERA carga de un cliente sin la app → oferta de carga GRATIS por instalarla.
-    await maybeOfferInstallGift(user, { amount, platform: pid, source: 'hgcash' });
+    if (!_reuse && !_isFlagged(user)) await maybeOfferInstallGift(user, { amount, platform: pid, source: 'hgcash' }); // #509
 
     await _emitAdminOnlyChatNote(user.id, user.username, `🏦 ✅ CARGA AUTOMÁTICA hgcash — ${dataDesc}. Acreditado en ${platLabel}${by && by !== "single" && by !== "direct" ? " (elección: " + by + ")" : ""}.`);
     if (_hgBonusApplied) await _emitAdminOnlyChatNote(user.id, user.username, _autoBonusNoteText(_auto, Number(amount), 0, 'carga automática hgcash')).catch(() => {});
@@ -9570,6 +9571,9 @@ async function getGiroxBonusMultiplier() {
       if (!allowed.length) allowed = null;
     }
   } catch (_) { /* config no disponible: se sigue con la env */ }
+  // #509 (owner): rollover de TODOS los bonos ×5 por defecto. Config['bonusRolloverX'] manda sobre la env; si la plataforma sólo permite
+  // ciertos multiplicadores, se usa el permitido más cercano hacia arriba (o el mayor).
+  try { const cv = Number(await getConfig('bonusRolloverX', 5)); if (Number.isFinite(cv) && cv >= 0) { if (!allowed || allowed.includes(cv)) return cv; const up = allowed.filter((n) => n >= cv); return up.length ? up[0] : allowed[allowed.length - 1]; } } catch (_) {}
   const envVal = Number(process.env.GIROX_BONUS_MULTIPLIER);
   const envOk = Number.isFinite(envVal) && envVal >= 0;
   if (envOk && (!allowed || allowed.includes(envVal))) return envVal;
@@ -13205,18 +13209,41 @@ async function claimPromoBonusPercent(user, usedBy, amount) {
  * Resuelve y RESERVA el bono automático que le corresponde a esta carga.
  * @returns {{pct, bonus, source, label, claimed, rule, revert()}}
  */
-async function resolveAutoBonus(user, amount, usedBy) {
+// #509 anti-estafa (owner: "puede haber multi registros de muchas cuentas"): rollover de regalos y chequeo de CBU repetido.
+async function _giftRolloverX() { try { const v = Number(await getConfig('bonusRolloverX', 5)); return Number.isFinite(v) && v >= 0 ? Math.min(50, Math.round(v)) : 5; } catch (_) { return 5; } }
+// Si el CBU/CVU de origen de esta transferencia ya fue usado por OTRA cuenta, es la misma persona con otro usuario: se marca
+// `fraudFlags: cbu_reuse` y NO lleva bonos de bienvenida (1ª carga, instalar, código, 2ª carga) ni misiones. La carga se acredita igual.
+async function _cbuReuseCheck(user, movement) {
+  try {
+    const cbu = movement && String(movement.fromCBU || '').replace(/\D/g, ''); if (!cbu || cbu.length < 10) return null;
+    const BankMovement = require('./src/models/BankMovement');
+    const others = await BankMovement.find({ fromCBU: { $regex: cbu + '$' }, matchedUserId: { $nin: [null, user.id] } }).select('matchedUsername matchedUserId').limit(5).lean();
+    const names = [...new Set(others.map((o) => o.matchedUsername).filter(Boolean))];
+    if (!names.length) return null;
+    const flagged = Array.isArray(user.fraudFlags) && user.fraudFlags.includes('cbu_reuse');
+    if (!flagged) {
+      await User.updateOne({ id: user.id }, { $addToSet: { fraudFlags: 'cbu_reuse' }, $push: { fraudNotes: { at: new Date(), note: `CBU ${cbu.slice(-6)} ya usado por: ${names.join(', ')}` } } });
+      await _emitAdminOnlyChatNote(user.id, user.username, `🛡️ ANTI-ESTAFA: este cliente cargó desde un CBU que ya usó otra cuenta (${names.join(', ')}). Queda marcado: sin bonos de bienvenida, 2ª carga ni misiones. La carga se acreditó normal.`);
+      logger.warn(`[anti-estafa] cbu_reuse ${user.username} ← ${names.join(',')}`);
+    }
+    return names;
+  } catch (e) { logger.warn('[anti-estafa] cbu check: ' + e.message); return null; }
+}
+const _isFlagged = (user) => Array.isArray(user && user.fraudFlags) && user.fraudFlags.length > 0;
+async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
   const none = { pct: 0, bonus: 0, source: null, label: null, claimed: false, rule: '', revert: async () => {} };
   if (!user || !(Number(amount) > 0)) return none;
-  let c = await claimInstallBonusPercent(user, usedBy);
-  if (!c.claimed) c = await claimWelcomeCodePercent(user, usedBy);
-  if (!c.claimed) c = await claimSecondDepositPercent(user, usedBy); // #504
+  // #509: cuenta marcada por multicuenta → sin bonos de bienvenida ni 2ª carga (sí ruleta/lotes, que ya ganó)
+  const blockWelcome = opts.noWelcome || _isFlagged(user);
+  let c = blockWelcome ? { pct: 0, claimed: false } : await claimInstallBonusPercent(user, usedBy);
+  if (!c.claimed && !blockWelcome) c = await claimWelcomeCodePercent(user, usedBy);
+  if (!c.claimed && !blockWelcome) c = await claimSecondDepositPercent(user, usedBy); // #504
   if (!c.claimed) c = await claimDailyRoulettePercent(user, usedBy);
   if (!c.claimed) c = await claimPromoBonusPercent(user, usedBy, amount);
   // #290 (owner 2026-10-17): la PUBLICIDAD promete un % automático en la PRIMERA carga. Si es la primera
   // carga real del cliente y no tenía otro bono pendiente, lleva Config['firstDepositBonusPct'] (manual o
   // hgcash), con el tope. Va ANTES del 10% de carga automática (#274): en la primera carga manda éste.
-  if (!c.claimed) {
+  if (!c.claimed && !blockWelcome) {
     const fp = await getFirstDepositBonusPct();
     if (fp > 0 && await _isFirstRealDeposit(user)) c = { pct: fp, claimed: true, source: 'first_deposit', label: `bono de bienvenida de la primera carga (${fp}%)`, revert: async () => {} };
   }
@@ -13546,7 +13573,7 @@ app.post('/api/install-gift/claim', authMiddleware, async (req, res) => {
     let adapter = platforms.getAdapter(pid);
     if (!adapter || typeof adapter.isConnected !== 'function' || !adapter.isConnected() || typeof adapter.creditGift !== 'function') { pid = 'girox'; adapter = girox; }
     const reference = `vip-igift-${user.id}`;
-    const credit = await adapter.creditGift(user.username, amount, { description: `${ig.pct != null ? ig.pct : ''}% extra por instalar la app (sobre la primera carga)`, reference });
+    const credit = await adapter.creditGift(user.username, amount, { description: `${ig.pct != null ? ig.pct : ''}% extra por instalar la app (sobre la primera carga)`, reference, rolloverX: await _giftRolloverX() }); // #509
     if (!credit || !credit.success) {
       await User.updateOne({ id: user.id }, { $set: { 'installGift.status': prevStatus, 'installGift.claimedAt': null, 'installGift.lastError': String((credit && credit.error) || 'unknown').slice(0, 200) } }).catch(() => {});
       logger.error(`[install-gift] credit FAIL user=${user.username} $${amount}: ${(credit && credit.error) || 'unknown'}`);
@@ -19141,7 +19168,7 @@ async function getStrategyConfig() {
   const ms = { enabled: !(r.missions && r.missions.enabled === false), items: Array.isArray(r.missions && r.missions.items) ? r.missions.items : STRATEGY_DEFAULT.missions.items };
   // #508 anti-estafa: el premio va con ROLLOVER (hay que jugarlo antes de retirarlo), se topea a un % de lo cargado en la semana
   // y no se paga si en la semana retiró tanto o más de lo que cargó (plata que entra y sale sin jugar).
-  const af = Object.assign({ rolloverX: 3, maxRewardPctOfDeposits: 20, blockIfNetWithdrawn: true, minRewardArs: 500 }, (r.missions && r.missions.antiFraud) || {});
+  const af = Object.assign({ rolloverX: 5, maxRewardPctOfDeposits: 20, blockIfNetWithdrawn: true, minRewardArs: 500 }, (r.missions && r.missions.antiFraud) || {});
   ms.antiFraud = { rolloverX: Math.min(50, Math.max(0, Math.round(Number(af.rolloverX) || 0))), maxRewardPctOfDeposits: Math.min(100, Math.max(0, Number(af.maxRewardPctOfDeposits) || 0)), blockIfNetWithdrawn: af.blockIfNetWithdrawn !== false, minRewardArs: Math.max(0, Math.round(Number(af.minRewardArs) || 0)) };
   ms.items = ms.items.filter((m) => m && m.id && MISSION_TYPES[m.type]).map((m) => ({ id: String(m.id).slice(0, 30), title: String(m.title || '').slice(0, 60), type: m.type, target: Math.max(1, Number(m.target) || 1), minAmount: Math.max(0, Number(m.minAmount) || 0), rewardArs: Math.max(0, Math.round(Number(m.rewardArs) || 0)), active: m.active !== false })).slice(0, 12);
   return { secondDeposit: sd, missions: ms };
@@ -19167,7 +19194,7 @@ function _missionProgress(m, st) {
   return { value: v, done: v >= m.target };
 }
 async function _missionCredit(m, st, wk, af) {
-  const user = await User.findOne({ id: st.userId }).lean(); if (!user || user.role !== 'user' || user.isBlocked) return null;
+  const user = await User.findOne({ id: st.userId }).lean(); if (!user || user.role !== 'user' || user.isBlocked || _isFlagged(user)) return null;
   af = af || { rolloverX: 3, maxRewardPctOfDeposits: 20, blockIfNetWithdrawn: true, minRewardArs: 500 };
   if (af.blockIfNetWithdrawn && st.wd >= st.total) { logger.info(`[misiones] ${user.username} ${m.id}: sin premio, retiró ($${st.wd}) ≥ lo que cargó ($${st.total}) en la semana`); return null; }
   let reward = m.rewardArs; if (af.maxRewardPctOfDeposits > 0) reward = Math.min(reward, Math.round(st.total * af.maxRewardPctOfDeposits / 100));
@@ -19213,7 +19240,7 @@ async function _secondDepositTick() {
     let n = 0;
     for (const c of cands) {
       if (!c._id) continue;
-      const user = await User.findOneAndUpdate({ id: c._id, role: 'user', $or: [{ 'secondDepositOffer.status': { $exists: false } }, { 'secondDepositOffer.status': 'none' }] }, { $set: { secondDepositOffer: { status: 'offered', pct: sd.pct, offeredAt: now, expiresAt: new Date(now.getTime() + sd.validHours * 3600000), usedAt: null } } }, { new: true });
+      const user = await User.findOneAndUpdate({ id: c._id, role: 'user', fraudFlags: { $size: 0 }, $or: [{ 'secondDepositOffer.status': { $exists: false } }, { 'secondDepositOffer.status': 'none' }] }, { $set: { secondDepositOffer: { status: 'offered', pct: sd.pct, offeredAt: now, expiresAt: new Date(now.getTime() + sd.validHours * 3600000), usedAt: null } } }, { new: true });
       if (!user) continue;
       const vars = { username: user.username, pct: sd.pct, hours: sd.validHours };
       const text = await renderSystemCommand('/sys_second_deposit_offer', '🎁 {username}, tu PRÓXIMA carga tiene un {pct}% EXTRA de regalo. Vale por {hours} horas: cargá ahora y se acredita solo.', vars);
@@ -19254,6 +19281,21 @@ app.get('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res)
     res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, failedWeek, weekKey: wk } });
   } catch (e) { logger.error('[strategy] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #509: ROLLOVER GLOBAL ×N para todos los bonos: bonos de carga (1ª, 2ª, automática, ruleta %, lotes), fueguito, código de bienvenida,
+// extra por instalar, misiones y los premios en $ de la ruleta.
+app.post('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const x = Math.round(Number(req.body && req.body.x)); if (!(x >= 0 && x <= 50)) return res.status(400).json({ error: 'Rollover entre 0 y 50' });
+    const by = req.user.username;
+    await Config.set('bonusRolloverX', x, by); await Config.set('fireRolloverMultiplier', x, by); await Config.set('communityWelcomeRolloverX', x, by);
+    const cur = await getStrategyConfig(); cur.missions.antiFraud.rolloverX = x; await Config.set('strategyClientes', cur, by);
+    try { const rc = await getDailyRouletteConfig(); if (rc && rc.prizes) { rc.prizes = rc.prizes.map((p) => (p.type === 'cash' ? Object.assign({}, p, { rolloverX: x }) : p)); await Config.set('dailyRoulette', rc, by); } } catch (_) {}
+    logger.info(`[anti-estafa] rollover global ×${x} por ${by}`);
+    res.json({ success: true, x });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
+app.get('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async (req, res) => { try { const x = await _giftRolloverX(); const fire = await getFireRolloverMultiplier(); const wc = await getWelcomeCodeRolloverX(); const st = await getStrategyConfig(); const flagged = await User.countDocuments({ 'fraudFlags.0': { $exists: true } }); res.json({ success: true, bonos: x, fueguito: fire, codigo: wc, misiones: st.missions.antiFraud.rolloverX, flagged }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });

@@ -628,6 +628,9 @@ const userSchema = new mongoose.Schema({
     expiresAt: { type: Date, default: null },
     usedAt: { type: Date, default: null }
   },
+  // #509 anti-estafa: banderas (ej. 'cbu_reuse' = cargó desde un CBU que ya usó OTRA cuenta → sin bonos de bienvenida/2ª carga/misiones)
+  fraudFlags: { type: [String], default: [] },
+  fraudNotes: { type: [{ at: Date, note: String }], default: [] },
   dailyRoulettePendingPct: { type: Number, default: 0 },
   dailyRoulettePendingLabel: { type: String, default: null },
   dailyRouletteWonAt: { type: Date, default: null },

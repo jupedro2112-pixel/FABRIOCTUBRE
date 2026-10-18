@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-18
 
+### 509. 🛡️ Anti-multicuenta: rollover ×5 en TODOS los bonos, CBU repetido entre cuentas = sin bonos; menú fácil arreglado (recuadros, saludo compacto) — SW v354, admin-sw v117
+**Pedidos (owner, con captura):** "misiones en el Inicio; acá puede haber multi registros de muchas cuentas y la gente puede
+estafar si cargan y retiran; los rollover de los bonos de todo tipo ×5 y fijate si hay que ajustar algo"; "eso arreglalo, dejá
+todo en recuadros en la página principal y achicá el saludo así entra todo".
+**Anti-estafa:**
+- **Rollover global** `Config['bonusRolloverX']` (default 5): manda en `getGiroxBonusMultiplier` (bonos de carga: 1ª, 2ª,
+  automática, ruleta %, lotes; si la plataforma sólo permite ciertos multiplicadores toma el permitido ≥ más cercano), en el extra
+  por instalar (`creditGift` con `rolloverX`) y por defecto en misiones. `POST /api/admin/strategy/rollover {x}` lo aplica a todo
+  de una (también fueguito `fireRolloverMultiplier`, código de bienvenida `communityWelcomeRolloverX` y los premios en $ de la
+  ruleta). Botón "Aplicar a todo" en Estrategia.
+- **CBU repetido** (`_cbuReuseCheck`, en la carga automática hgcash): si el CBU de origen ya está matcheado a OTRA cuenta
+  (`BankMovement.matchedUserId`), el usuario queda `fraudFlags: ['cbu_reuse']` (+ nota) con aviso interno en su chat; la carga se
+  acredita igual pero **sin** bono de 1ª carga, instalar, código ni 2ª carga (`resolveAutoBonus` con `noWelcome`), sin oferta de
+  2ª carga ni misiones. El panel muestra cuántas cuentas quedaron marcadas.
+- Los límites por IP de la landing/entrada rápida ya existían (8 cuentas por hora por conexión).
+**Menú fácil:** la grilla tenía alto fijo y con la 5ª tarjeta (Misiones) se encimaba con "Pasar al menú completo"; ahora cada
+recuadro tiene su alto natural, la vista se desliza y el saludo (avatar, Hola, saldo) es compacto.
+**Archivos:** `server.js`, `src/models/User.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/css/pin.css`, `public/index.html`, SWs.
+
 ### 508. 🛡️ Misiones anti-estafa (rollover, tope sobre lo cargado, sin premio si retiró) · tarjeta plegada en el home completo — SW v353, admin-sw v116
 **Pedido (owner):** "las misiones hacelas para prevenir estafas, y achicalas en la carga automática: que se puedan expandir y
 minimizar así no tapan lo principal, que es la carga".

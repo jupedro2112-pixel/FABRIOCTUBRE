@@ -4965,7 +4965,7 @@ function switchSection(section) {
     if (section === 'datosIa') diaInit(); // #459
     if (section === 'menuLayout') loadMenuLayout(); // #480
     if (section === 'cierres') cierresLoad(); // #500
-    if (section === 'strategy') stratLoad(); // #504
+    if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
     if (section === 'datos2') loadDatos2();
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
@@ -5817,6 +5817,9 @@ async function stratSave() {
     const body = { firstDeposit: { pct: g('stFdPct').value, installExtraEnabled: g('stIgOn').checked, installExtraPct: g('stIgPct').value }, secondDeposit: { enabled: g('stSdOn').checked, pct: Number(g('stSdPct').value), afterHours: Number(g('stSdAfter').value), validHours: Number(g('stSdValid').value) }, missions: { enabled: g('stMsOn').checked, items: items, antiFraud: { rolloverX: Number(g('stAfRoll').value), maxRewardPctOfDeposits: Number(g('stAfPct').value), minRewardArs: Number(g('stAfMin').value), blockIfNetWithdrawn: g('stAfBlock').checked } } };
     try { const r = await authFetch('/api/admin/strategy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Estrategia guardada y en marcha', 'success'); const si = g('stSaveInfo'); if (si) si.textContent = 'Guardado ' + new Date().toLocaleTimeString('es-AR'); stratLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
+async function stratRolloverLoad() { try { const r = await authFetch('/api/admin/strategy/rollover'); const j = await r.json(); if (!r.ok) return; const i = document.getElementById('stRollX'); if (i && document.activeElement !== i) i.value = j.bonos; const p = document.getElementById('stRollInfo'); if (p) p.textContent = 'Hoy: bonos de carga ×' + j.bonos + ' · fueguito ×' + j.fueguito + ' · código ×' + j.codigo + ' · misiones ×' + j.misiones + ' · cuentas marcadas por CBU repetido: ' + j.flagged; } catch (_) {} }
+async function stratRollover() { const x = Number(document.getElementById('stRollX').value); try { const r = await authFetch('/api/admin/strategy/rollover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ x }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Rollover ×' + j.x + ' aplicado a todos los bonos', 'success'); stratRolloverLoad(); stratLoad(); } catch (_) { showToast('Error de conexión', 'error'); } }
+window.stratRollover = stratRollover;
 window.stratLoad = stratLoad; window.stratSave = stratSave; window.stratAddMission = stratAddMission;
 // #500: cierres automáticos
 let _clItems = [], _clUsdt = null;
