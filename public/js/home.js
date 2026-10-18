@@ -665,7 +665,7 @@
         box.innerHTML = list.map((p) => {
             const soon = isSoon(p);
             return '<button type="button" class="ev-tab plat-' + _esc(p.id) + (p.id === _entryPlat ? ' active' : '') + (soon ? ' soon' : '') + '" onclick="VIP.home.entrySwitch(\'' + _esc(p.id) + '\')"' + (soon ? ' title="Próximamente"' : '') + '>' +
-            (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + _esc(p.name) +
+            (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<span class="ev-name">' + _esc(/^jugaygana$/i.test(p.name || '') ? 'Jugaygana' : p.name) + '</span>' + // #523: logo y nombre en línea
             (p.id === 'girox' ? '<span class="ev-reco">Recomendado</span>' : '') +
             (soon ? '<span class="ev-soon">Pronto</span>' : '') + // #511: sutil
             '</button>';

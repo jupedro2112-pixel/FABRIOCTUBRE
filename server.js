@@ -11858,7 +11858,7 @@ async function initializeData() {
       name: '/sys_entry_news',
       description: 'Cartel NOVEDAD del Inicio de la app (debajo de "La única app que paga…"). Variable: {pct} (% máximo del reembolso DIARIO según los rangos). Vacío = no se muestra.',
       type: 'message',
-      response: '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%'
+      response: '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}% / Pagos sin límites en el acto'
     },
     {
       // #372 (2026-10-18): aviso de que los % de reembolso son promocionales (se ve en Info, en los modales de
@@ -12907,7 +12907,7 @@ async function getMinDepositArs() {
   return MIN_DEPOSIT_ARS_DEFAULT;
 }
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
-const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%'; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
+const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}% / Pagos sin límites en el acto'; // #523 // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
 const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo)
 // #373: SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat (/sys_support_*).
 const SUPPORT_NAME_DEFAULT = 'Martín';

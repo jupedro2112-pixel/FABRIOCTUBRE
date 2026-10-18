@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 523. 🧱 Inicio completo: sin el titular, NOVEDAD en una fila con "Pagos sin límites en el acto", plataformas en línea, Recomendado con recuadro, Girox legible en nocturno — SW v369
+**Pedido (owner, con captura):** "sacá 'la única app que paga en el momento'; en la novedad agregá '/ pagos sin límites en el acto'
+y que entre en la misma fila; la letra de Girox en blanco; las 3 plataformas con texto y fotos en línea; el Recomendado tipo
+página, con recuadro".
+**Qué se hizo:** se quitó el titular y el ícono del cartel; `/sys_entry_news` (default y comando) ahora termina en "/ Pagos sin
+límites en el acto" y se muestra en una sola fila (fuente adaptable, sin cortar en dos). Las pestañas de plataforma son filas
+(logo redondo 32 px + nombre) de la misma altura, con "Recomendado" (borde rojo) y "Pronto" (borde gris) como recuadros chicos
+arriba a la derecha. Fix nocturno: la pestaña activa (Girox) quedaba con texto oscuro sobre fondo oscuro por #522 → ahora texto
+blanco y borde claro.
+**Archivos:** `server.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 522. 🌙 Modo nocturno más sobrio: menos color, más aire y recuadros bien separados — SW v368
 **Pedido (owner, con captura):** "siento que le dimos mucho color o poca separación al estilo Pinterest en modo nocturno". Tokens
 oscuros ajustados (fondo #0e0e0e, tarjetas #1a1a1a con borde #2a2a2a), más separación entre recuadros, íconos de fondo del saludo

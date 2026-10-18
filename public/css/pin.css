@@ -1520,4 +1520,21 @@ html[data-theme="dark"] .bv-load { background: var(--p-red) !important; box-shad
 html[data-theme="dark"] .bv-chip, html[data-theme="dark"] .bv-play, html[data-theme="dark"] .bv-sw { background: var(--p-card) !important; border-color: var(--p-border) !important; }
 html[data-theme="dark"] .ms-item, html[data-theme="dark"] .ur-card, html[data-theme="dark"] .ep-item { background: var(--p-card) !important; border-color: var(--p-border) !important; }
 html[data-theme="dark"] .chat-screen { background: var(--p-bg) !important; }
+/* ── #523 (owner): Inicio completo — NOVEDAD en una sola fila sin el titular; las 3 plataformas con logo y nombre en línea;
+   "Recomendado" y "Pronto" como recuadros chicos del estilo de la página; Girox legible en nocturno ── */
+.ev-hero { padding: 6px 8px !important; }
+.ev-hero-k { display: none !important; }
+.ev-hero-new { display: block !important; width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; font: 800 clamp(9px, 2.8vw, 11px) var(--p-font) !important; letter-spacing: .3px; padding: 7px 10px !important; }
+.ev-tab, .ev-tab.soon { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 8px !important; min-height: 60px !important; padding: 12px 10px 10px !important; border-radius: 18px !important; border: 1px solid var(--p-border) !important; position: relative; }
+.ev-tab img { width: 32px !important; height: 32px !important; border-radius: 50% !important; object-fit: cover !important; }
+.ev-tab .ev-name { font: 900 14px var(--p-font); white-space: nowrap; }
+.ev-tab .ev-reco, .ev-tab .ev-soon { position: absolute !important; top: -8px !important; right: 10px !important; margin: 0 !important; font: 800 8px/1.2 var(--p-font) !important; letter-spacing: .5px !important; text-transform: uppercase !important; padding: 3px 8px !important; border-radius: 8px !important; box-shadow: none !important; }
+.ev-tab .ev-reco { background: var(--p-card) !important; color: var(--p-red) !important; border: 1px solid var(--p-red) !important; opacity: 1 !important; }
+.ev-tab .ev-soon { background: var(--p-card) !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; }
+.ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-jugaygana .ev-soon { background: rgba(0,0,0,.35) !important; color: #fff !important; border-color: rgba(255,255,255,.35) !important; }
+.ev-tab.active { border-color: var(--p-text) !important; }
+html[data-theme="dark"] .ev-tab.active, html[data-theme="dark"] .ev-tab.active .ev-name { color: var(--p-text) !important; }
+html[data-theme="dark"] .ev-tab.active { background: var(--p-card) !important; border-color: #f2f2f2 !important; }
+html[data-theme="dark"] .ev-tab .ev-reco { background: var(--p-card) !important; }
+.ev-tab.plat-ganamos .ev-name, .ev-tab.plat-jugaygana .ev-name { color: #fff !important; }
 
