@@ -1254,6 +1254,7 @@ document.addEventListener('change', function (ev) {
                 <!-- #484 (owner): el PANORAMA es la pestaña principal (abre por defecto); siempre analiza desde que empezó la página -->
                 <div class="dia-tabs">
                     <button type="button" id="diaTabC" class="on" onclick="diaTab('c')">🧮 Panorama (principal)</button>
+                    <button type="button" id="diaTabE" onclick="diaTab('e')">📆 Cierre de ayer (base retenida)</button>
                     <button type="button" id="diaTabA" onclick="diaTab('a')">📊 Análisis por fechas</button>
                     <button type="button" id="diaTabB" onclick="diaTab('b')">⚖️ Comparativa</button>
                     <button type="button" id="diaTabD" onclick="diaTab('d')">📜 Historial</button>
@@ -1359,10 +1360,21 @@ document.addEventListener('change', function (ev) {
                         </div>
                     </div>
                 </div>
+                <!-- #499 (owner): CIERRE DIARIO de la base retenida — la venta de ayer SIN los clientes nuevos de ayer -->
+                <div id="diaPaneE" style="display:none;">
+                    <div class="dia-card"><div class="dia-card-h"><b>📆 Cierre del día · base retenida</b><small>La venta de AYER (o del día que elijas) de los clientes que YA cargaban de antes. Los que hicieron su primera carga ese día quedan afuera: llevan bono de primera carga y no dicen nada de la retención. Además: qué costó traer a esos retenidos y cuánto dejaron en toda su vida.</small></div>
+                        <div class="dia-bar dia-bar-in">
+                            <label>Día<input type="date" id="dyDay"></label>
+                            <button class="btn-primary btn-small" onclick="diaDaily()">Ver cierre</button>
+                            <span class="dia-presets"><button onclick="diaDailyPreset(1)">Ayer</button><button onclick="diaDailyPreset(2)">Anteayer</button><button onclick="diaDailyPreset(7)">Hace 7 días</button></span>
+                        </div>
+                        <div id="diaDailyOut"></div>
+                    </div>
+                </div>
                 <div id="diaPaneD" style="display:none;">
                     <div class="dia-card"><div class="dia-card-h"><b>📜 Historial de cálculos</b><small>Todo lo calculado queda guardado. Las proyecciones se pueden <b>revisar contra lo real</b> y con eso se ajustan las siguientes (factor de calibración).</small></div>
                         <div class="dia-bar dia-bar-in">
-                            <label>Tipo<select id="hiKind" onchange="diaLoadHistory()"><option value="">Todos</option><option value="analysis">Análisis</option><option value="projection">Proyecciones</option><option value="compare">Comparativas</option></select></label>
+                            <label>Tipo<select id="hiKind" onchange="diaLoadHistory()"><option value="">Todos</option><option value="analysis">Análisis</option><option value="projection">Proyecciones</option><option value="compare">Comparativas</option><option value="daily">Cierres diarios</option></select></label>
                             <span id="hiCalib" class="dia-pill"></span>
                             <button class="btn-secondary btn-small" onclick="diaCalibrate(null)">Ajustar con el promedio de revisiones</button>
                             <label>o factor a mano<input type="number" id="hiFactor" min="0.2" max="3" step="0.05" placeholder="1.00" style="width:80px;"></label>

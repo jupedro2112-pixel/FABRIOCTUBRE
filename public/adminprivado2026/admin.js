@@ -15480,8 +15480,8 @@ async function diaInit() {
     _diaAuto = true; diaLoadSpendTotal(); diaProject(); diaLoadSpend(); diaLoadOthers(); // #484: abre en el Panorama; el análisis por fechas se calcula al entrar a su pestaña
 }
 function diaTab(t) {
-    ['a', 'b', 'c', 'd'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.classList.toggle('on', t === k); });
-    if (t === 'c') { diaLoadSpendTotal(); _diaAuto = true; diaProject(); } if (t === 'd') diaLoadHistory(); if (t === 'a' && !_diaRanA) { _diaRanA = true; diaRun(); }
+    ['a', 'b', 'c', 'd', 'e'].forEach(function (k) { const p = document.getElementById('diaPane' + k.toUpperCase()); if (p) p.style.display = t === k ? '' : 'none'; const b = document.getElementById('diaTab' + k.toUpperCase()); if (b) b.classList.toggle('on', t === k); });
+    if (t === 'c') { diaLoadSpendTotal(); _diaAuto = true; diaProject(); } if (t === 'd') diaLoadHistory(); if (t === 'e' && !document.getElementById('diaDailyOut').innerHTML) { diaDailyPreset(1); } if (t === 'a' && !_diaRanA) { _diaRanA = true; diaRun(); }
 }
 function diaPreset(days, gran) {
     const to = new Date(); const from = new Date(to.getTime() - (days - 1) * 86400000);
@@ -15628,6 +15628,27 @@ async function diaSaveProjNote() {
     try { const r = await authFetch('/api/admin/datos-ia/history/' + _diaProjSnapshot + '/note', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: note }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Panorama guardado con nota', 'success'); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.diaSaveProjNote = diaSaveProjNote;
+// #499: cierre diario de la base retenida
+function diaDailyPreset(n) { const d = new Date(Date.now() - n * 86400000); const i = document.getElementById('dyDay'); if (i) i.value = _diaD(d); diaDaily(); }
+async function diaDaily() {
+    const out = document.getElementById('diaDailyOut'); if (!out) return; out.innerHTML = '<div class="dia-note">Calculando el cierre…</div>';
+    const day = (document.getElementById('dyDay') || {}).value || '';
+    try {
+        const r = await authFetch('/api/admin/datos-ia/daily?' + (day ? 'day=' + day : '') + _diaQS()); const j = await r.json(); if (!r.ok) { out.textContent = j.error || 'Error'; return; }
+        const hy = j.hoy, hs = j.historico, pm = j.promedio30;
+        const col = (v) => '<span style="color:' + (v >= 0 ? 'var(--p-green)' : 'var(--p-red)') + '">' + _diaM(v) + '</span>';
+        out.innerHTML =
+            '<div class="dia-verdict show ' + (hy.netoRetenidos >= 0 ? 'bien' : 'regular') + '"><span class="dv-ico">📆</span><div>' + (j.lectura || []).slice(0, 2).map(escapeHtml).join(' ') + '</div></div>' +
+            '<div class="dia-group"><div class="dia-group-t">✅ ' + j.dia + ' · SOLO base retenida (' + _diaN(hy.retenidos) + ' clientes que ya cargaban de antes)</div><div class="dia-kpis">' + _diaKpi('Depósitos', _diaM(hy.depositosRetenidos)) + _diaKpi('Retiros', _diaM(hy.retirosRetenidos)) + _diaKpi('VENTA (netwin)', col(hy.ventaRetenidos), 'promedio 29 días anteriores: ' + _diaM(pm.ventaRetenidos)) + _diaKpi('Regalos', _diaM(hy.regalosRetenidos)) + _diaKpi('NETO', col(hy.netoRetenidos), 'promedio: ' + _diaM(pm.netoRetenidos)) + _diaKpi('Nuevos ese día (afuera)', _diaN(hy.nuevos), 'venta ' + _diaM(hy.ventaNuevos) + ' · regalos ' + _diaM(hy.regalosNuevos)) + '</div></div>' +
+            '<div class="dia-sub"><b>🪜 Por antigüedad</b> <small>quién produjo la venta retenida de ese día, según los días desde su primera carga</small></div>' +
+            '<table class="data-table" style="width:100%;"><thead><tr><th>Antigüedad</th><th>Clientes</th><th>Depósitos</th><th>Retiros</th><th>VENTA</th><th>Regalos</th><th>NETO</th><th>Venta por cliente</th></tr></thead><tbody>' + (j.porAntiguedad || []).map(function (a) { return '<tr><td>' + a.tramo + '</td><td>' + _diaN(a.clientes) + '</td><td>' + _diaM(a.depositos) + '</td><td>' + _diaM(a.retiros) + '</td><td><b>' + _diaM(a.venta) + '</b></td><td>' + _diaM(a.regalos) + '</td><td>' + col(a.neto) + '</td><td>' + (a.ventaPorCliente != null ? _diaM(a.ventaPorCliente) : '—') + '</td></tr>'; }).join('') + '</tbody></table>' +
+            '<div class="dia-group" style="margin-top:12px;"><div class="dia-group-t">💼 Lo que costó antes: la historia completa de esos ' + _diaN(hs.clientes) + ' retenidos (hasta ese día)</div><div class="dia-kpis">' + _diaKpi('Costo de traerlos', hs.costoAdquisicion != null ? _diaMInv(hs.costoAdquisicion) : '— (cargá el gasto total)', hs.costoPorCliente ? _diaM(hs.costoPorCliente) + ' por cliente' : '') + _diaKpi('Depósitos históricos', _diaM(hs.depositos), _diaN(hs.cargas) + ' cargas') + _diaKpi('Retiros históricos', _diaM(hs.retiros)) + _diaKpi('VENTA histórica', col(hs.venta)) + _diaKpi('Regalos históricos', _diaM(hs.regalos)) + _diaKpi('NETO histórico', col(hs.neto), hs.netoPorCliente != null ? _diaM(hs.netoPorCliente) + ' por cliente' : '') + _diaKpi('Resultado vs costo', hs.resultado != null ? col(hs.resultado) : '—', hs.vecesElCosto != null ? 'pagaron su costo ×' + hs.vecesElCosto : '') + '</div></div>' +
+            '<div class="dia-sub" style="margin-top:12px;"><b>📅 Últimos 30 días</b> <small>venta de la base retenida vs la de los nuevos, día a día</small></div>' +
+            '<div style="overflow-x:auto;"><table class="data-table" style="width:100%;"><thead><tr><th>Día</th><th>Retenidos</th><th>VENTA retenidos</th><th>Regalos</th><th>NETO retenidos</th><th>Nuevos</th><th>VENTA nuevos</th></tr></thead><tbody>' + (j.serie || []).slice().reverse().map(function (s) { return '<tr' + (s.dia === j.dia ? ' style="font-weight:800"' : '') + '><td>' + s.dia + '</td><td>' + _diaN(s.retenidos) + '</td><td>' + col(s.ventaRetenidos) + '</td><td>' + _diaM(s.regalosRetenidos) + '</td><td>' + col(s.netoRetenidos) + '</td><td>' + _diaN(s.nuevos) + '</td><td>' + _diaM(s.ventaNuevos) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
+            '<div class="dia-sub" style="margin-top:12px;"><b>📋 Lectura</b></div><ol class="dia-steps">' + (j.lectura || []).map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>';
+    } catch (_) { out.textContent = 'Error de conexión'; }
+}
+window.diaDaily = diaDaily; window.diaDailyPreset = diaDailyPreset;
 async function diaLoadHistory() {
     const kind = (document.getElementById('hiKind') || {}).value || '';
     try {
@@ -15635,12 +15656,13 @@ async function diaLoadHistory() {
         _diaHist = j.items || [];
         const cal = document.getElementById('hiCalib'); if (cal) cal.textContent = 'Ajuste actual: ×' + ((j.calibration && j.calibration.factor) || 1) + (j.calibration && j.calibration.basedOn ? ' (' + j.calibration.basedOn + ')' : '');
         const el = document.getElementById('diaHistory'); if (!el) return;
-        const K = { analysis: 'Análisis', projection: 'Proyección', compare: 'Comparativa' };
+        const K = { analysis: 'Análisis', projection: 'Proyección', compare: 'Comparativa', daily: 'Cierre diario' };
         el.innerHTML = _diaHist.length ? _diaHist.map(function (h) {
             const p = h.params || {}, s = h.summary || {};
             const what = h.kind === 'analysis' ? (p.from + ' → ' + p.to + ' · ' + (p.granularity === 'month' ? 'mes' : (p.granularity === 'week' ? 'semana' : 'día')) + (p.campaign ? ' · ' + p.campaign : '') + ' — ' + _diaN(s.primerasCargas) + ' nuevos · NETWIN ' + _diaM(s.netwin) + ' · 30 d ' + (s.d30 ?? '—') + '% · siguen ' + (s.pctSiguieron ?? '—') + '%')
                 : (h.kind === 'projection' ? ('invertir ' + _diaM(p.spend) + ' en ' + p.days + ' d desde ' + p.startsAt + (p.baseFrom ? ' · base ' + p.baseFrom + ' → ' + p.baseTo : '') + (p.campaign ? ' · ' + p.campaign : '') + ' — ' + _diaN(s.clientesNuevos) + ' nuevos' + (s.venta != null ? ' · venta total ' + _diaM(s.venta) + ' · neto ' + _diaM(s.neto) : ' · NETWIN ' + _diaM(s.netwin)) + ' · ROI ' + _diaPct(s.roi) + (h.review ? ' · ✔ revisada ×' + h.review.factor : ''))
-                : ((p.otherLabel || 'otra página') + (p.day ? ' · día ' + p.day : ' · ' + p.from + ' → ' + p.to) + ' — ' + (s.verdict || '')));
+                : (h.kind === 'daily' ? ('base retenida del ' + p.day + ' — ' + _diaN(s.retenidos) + ' retenidos · VENTA ' + _diaM(s.ventaRetenidos) + ' · NETO ' + _diaM(s.netoRetenidos) + ' · nuevos afuera: ' + _diaN(s.nuevos))
+                : ((p.otherLabel || 'otra página') + (p.day ? ' · día ' + p.day : ' · ' + p.from + ' → ' + p.to) + ' — ' + (s.verdict || ''))));
             return '<div class="dia-row" id="hi-' + h.id + '"><span class="when">' + new Date(h.createdAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span><span class="kind">' + K[h.kind] + '</span><span class="grow">' + escapeHtml(what) + (h.note ? '<br><b style="color:var(--p-text)">📝 ' + escapeHtml(h.note) + '</b>' : '') + '</span>' + (h.kind === 'projection' ? '<button class="btn-primary btn-small" onclick="diaReview(\'' + h.id + '\')">Revisar contra lo real</button>' : '') + '<button class="btn-secondary btn-small" onclick="diaShowSnap(\'' + h.id + '\')">Ver</button></div>';
         }).join('') : '<div class="dia-note">Todavía no hay cálculos guardados.</div>';
     } catch (_) {}
@@ -15653,6 +15675,7 @@ async function diaShowSnap(id) {
         const it = j.item, R = it.result || {};
         if (it.kind === 'analysis') { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Análisis guardado · ' + it.params.from + ' → ' + it.params.to + '</b><small>calculado el ' + new Date(it.createdAt).toLocaleString('es-AR') + '</small></div><div id="diaHistReport" class="dia-report"></div></div>'; const tmp = document.getElementById('diaHistReport'); tmp.innerHTML = (R.informe && R.informe.secciones || []).map(function (s) { return '<div class="dia-sec ' + (s.estado || '') + '"><div class="i">' + s.ico + '</div><div><div class="t">' + escapeHtml(s.titulo) + _diaSt(s.estado) + '</div><div class="x">' + escapeHtml(s.texto) + '</div>' + (s.consejo ? '<div class="c">→ ' + escapeHtml(s.consejo) + '</div>' : '') + '</div></div>'; }).join(''); }
         else if (it.kind === 'projection') { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Panorama guardado · ' + _diaM(it.params.spend) + ' en ' + it.params.days + ' días</b><small>calculado el ' + new Date(it.createdAt).toLocaleString('es-AR') + (it.params.baseFrom ? ' · base ' + it.params.baseFrom + ' → ' + it.params.baseTo + ' con ' + _diaM(it.params.baseSpend) + ' de pauta' : '') + ' · ajuste usado ×' + (it.params.calibration || 1) + (it.params.cur === 'usd' ? ' · calculado en USDT a $' + it.params.usdRate : '') + '</small></div>' + (it.note ? '<div class="dia-note" style="margin:0 0 8px;"><b>📝 Nota:</b> ' + escapeHtml(it.note) + '</div>' : '') + '<div class="dia-sc">' + _diaScen('🔻 Bajo', 'bajo', R.bajo) + _diaScen('🎯 Base', 'base', R.base) + _diaScen('🔺 Alto', 'alto', R.alto) + '</div>' + (R.explicacion ? '<div class="dia-sub" style="margin-top:10px;"><b>📋 Detalle del cierre</b></div><ol class="dia-steps">' + R.explicacion.map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>' : '') + (it.review ? _diaReviewHtml(it.review) : '<div class="dia-note">Todavía sin revisar. Cuando pasen días, tocá "Revisar contra lo real".</div>') + '</div>'; }
+        else if (it.kind === 'daily') { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Cierre diario guardado · ' + it.params.day + '</b><small>' + new Date(it.createdAt).toLocaleString('es-AR') + '</small></div>' + (it.note ? '<div class="dia-note"><b>📝 Nota:</b> ' + escapeHtml(it.note) + '</div>' : '') + '<ol class="dia-steps">' + (R.lectura || []).map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol></div>'; }
         else { box.innerHTML = '<div class="dia-card" style="margin-top:10px;"><div class="dia-card-h"><b>Comparativa guardada</b><small>' + new Date(it.createdAt).toLocaleString('es-AR') + '</small></div>' + _diaCmpTable(R.comparison, it.params.day, it.params.from, it.params.to) + '</div>'; }
     } catch (_) { box.textContent = 'Error de conexión'; }
 }

@@ -388,4 +388,77 @@ function review(snapshot, real, elapsedDays) {
   return { reviewedAt: new Date().toISOString(), elapsedDays, fraction: Math.round(frac * 100), rows, factor: factor != null ? Math.max(0.2, Math.min(3, factor)) : null, lectura: factor == null ? 'Sin datos reales todavía.' : (factor >= 0.9 && factor <= 1.1 ? 'La proyección estuvo bien calibrada.' : (factor > 1.1 ? `La realidad superó lo proyectado (×${factor}): las próximas proyecciones se ajustan hacia arriba.` : `La realidad quedó por debajo de lo proyectado (×${factor}): las próximas proyecciones se ajustan hacia abajo.`)) };
 }
 
-module.exports = { analyze, compare, project, review, dateKeyART };
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// #499 CIERRE DIARIO DE LA BASE RETENIDA (owner): "analizar la venta de AYER sacando a los clientes nuevos, entendiendo lo que
+// costó antes el cliente que dejó esa venta". Lógica:
+//  • Día = ayer (hora argentina) o el que se elija. Cliente NUEVO = su primera carga real fue ESE día; RETENIDO = cargó ese día
+//    pero su primera carga fue antes. La venta de los nuevos va aparte: lleva bono de 1ª carga y no dice nada de la retención.
+//  • Para los retenidos: depósitos, retiros, VENTA (netwin = depósitos − retiros), regalos del día y NETO, abiertos por
+//    antigüedad (días desde su primera carga).
+//  • "Lo que costó antes": para esos mismos retenidos, su historia completa hasta ese día: costo de traerlos (clientes × costo
+//    por cliente), depósitos/retiros de toda la vida, regalos de toda la vida → NETO histórico vs costo → si ya se pagaron.
+//  • Serie de los últimos 30 días con venta de retenidos vs nuevos, para ver la tendencia de la base.
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+async function dailyRetained(models, opts) {
+  const { Transaction } = models;
+  const F = fmt(opts); const money = F.money;
+  const dayKey = opts.day ? dateKeyART(opts.day) : dateKeyART(new Date(Date.now() - DAY));
+  const d0 = new Date(dayKey + 'T03:00:00.000Z'), d1 = new Date(d0.getTime() + DAY - 1);
+  const s0 = new Date(d0.getTime() - 29 * DAY);
+  const okStatus = { $nin: ['failed', 'cancelled'] };
+  const realDep = { type: 'deposit', status: okStatus, 'metadata.source': { $nin: GIFT_SOURCES } };
+  const realWd = { type: 'withdrawal', status: okStatus };
+  const dayExpr = { $dateToString: { format: '%Y-%m-%d', date: '$timestamp', timezone: TZ } };
+  const T = {}; let _tk = Date.now(); const lap = (k) => { T[k] = Date.now() - _tk; _tk = Date.now(); };
+  // (1) primera carga de cada usuario (liviano: sin fechas sueltas)
+  const firsts = await Transaction.aggregate([{ $match: realDep }, { $group: { _id: '$userId', un: { $first: '$username' }, first: { $min: '$timestamp' } } }]);
+  const firstById = new Map(firsts.map((u) => [u._id, u.first])); const firstByName = new Map(firsts.map((u) => [String(u.un || '').toLowerCase(), u.first]));
+  const firstOf = (userId, username) => firstById.get(userId) || (username ? firstByName.get(String(username).toLowerCase()) : null) || null;
+  lap('firsts');
+  // (2) últimos 30 días agrupados por día y usuario: depósitos, retiros y regalos
+  const byDayUser = (match) => Transaction.aggregate([{ $match: { ...match, timestamp: { $gte: s0, $lte: d1 } } }, { $group: { _id: { d: dayExpr, u: '$userId', un: '$username' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }]);
+  const [depDU, wdDU, prDU] = await Promise.all([byDayUser(realDep), byDayUser(realWd), byDayUser({ type: { $in: PROMO_TYPES }, status: okStatus })]);
+  lap('30d');
+  const isNewOn = (uid, un, dk) => { const f = firstOf(uid, un); return f ? dateKeyART(f) === dk : true; };
+  const ageOn = (uid, un, dk) => { const f = firstOf(uid, un); return f ? Math.floor((new Date(dk + 'T03:00:00.000Z') - f) / DAY) : 0; };
+  // Serie 30 días
+  const S = {}; const row = () => ({ nuevos: new Set(), retenidos: new Set(), depN: 0, depR: 0, wdN: 0, wdR: 0, prN: 0, prR: 0 });
+  for (let t = s0.getTime(); t <= d0.getTime(); t += DAY) S[dateKeyART(new Date(t + 12 * 3600000))] = row();
+  const put = (arr, kind) => arr.forEach((x) => { const dk = x._id.d; if (!S[dk]) return; const r = S[dk]; const nw = isNewOn(x._id.u, x._id.un, dk); if (kind === 'dep') { (nw ? r.nuevos : r.retenidos).add(x._id.u || x._id.un); r[nw ? 'depN' : 'depR'] += x.amt; } else if (kind === 'wd') r[nw ? 'wdN' : 'wdR'] += x.amt; else r[nw ? 'prN' : 'prR'] += x.amt; });
+  put(depDU, 'dep'); put(wdDU, 'wd'); put(prDU, 'pr');
+  const serie = Object.keys(S).sort().map((dk) => { const r = S[dk]; const vR = r.depR - r.wdR, vN = r.depN - r.wdN; return { dia: dk, nuevos: r.nuevos.size, retenidos: r.retenidos.size, depositosRetenidos: r0(r.depR), retirosRetenidos: r0(r.wdR), ventaRetenidos: r0(vR), regalosRetenidos: r0(r.prR), netoRetenidos: r0(vR - r.prR), depositosNuevos: r0(r.depN), ventaNuevos: r0(vN), regalosNuevos: r0(r.prN), netoNuevos: r0(vN - r.prN) }; });
+  const hoy = serie.find((x) => x.dia === dayKey) || serie[serie.length - 1];
+  // Por antigüedad (sólo retenidos del día)
+  const AGE = [[1, 7, '1–7 días'], [8, 14, '8–14 días'], [15, 30, '15–30 días'], [31, 60, '31–60 días'], [61, 90, '61–90 días'], [91, 100000, 'más de 90 días']];
+  const A = AGE.map(([a0, a1, label]) => ({ tramo: label, a0, a1, clientes: new Set(), dep: 0, wd: 0, pr: 0 }));
+  const bucket = (age) => A.find((b) => age >= b.a0 && age <= b.a1) || A[A.length - 1];
+  const retIds = new Set();
+  depDU.filter((x) => x._id.d === dayKey && !isNewOn(x._id.u, x._id.un, dayKey)).forEach((x) => { const b = bucket(ageOn(x._id.u, x._id.un, dayKey)); b.clientes.add(x._id.u || x._id.un); b.dep += x.amt; retIds.add(x._id.u); });
+  wdDU.filter((x) => x._id.d === dayKey && !isNewOn(x._id.u, x._id.un, dayKey)).forEach((x) => { bucket(ageOn(x._id.u, x._id.un, dayKey)).wd += x.amt; });
+  prDU.filter((x) => x._id.d === dayKey && !isNewOn(x._id.u, x._id.un, dayKey)).forEach((x) => { bucket(ageOn(x._id.u, x._id.un, dayKey)).pr += x.amt; });
+  const porAntiguedad = A.map((b) => ({ tramo: b.tramo, clientes: b.clientes.size, depositos: r0(b.dep), retiros: r0(b.wd), venta: r0(b.dep - b.wd), regalos: r0(b.pr), neto: r0(b.dep - b.wd - b.pr), ventaPorCliente: b.clientes.size ? r0((b.dep - b.wd) / b.clientes.size) : null }));
+  lap('dia');
+  // (3) Historia completa de los retenidos que cargaron ese día: lo que costó traerlos y lo que dejaron hasta ese día
+  const ids = Array.from(retIds).filter(Boolean);
+  const life = async (match) => { const r = await Transaction.aggregate([{ $match: { ...match, userId: { $in: ids }, timestamp: { $lte: d1 } } }, { $group: { _id: null, amt: { $sum: '$amount' }, n: { $sum: 1 } } }]); return r[0] || { amt: 0, n: 0 }; };
+  const [lDep, lWd, lPr] = ids.length ? await Promise.all([life(realDep), life(realWd), life({ type: { $in: PROMO_TYPES }, status: okStatus })]) : [{ amt: 0, n: 0 }, { amt: 0, n: 0 }, { amt: 0, n: 0 }];
+  lap('historia');
+  const cac = Number(opts.cac) > 0 ? Number(opts.cac) : null;
+  const ventaHist = lDep.amt - lWd.amt, netoHist = ventaHist - lPr.amt, costo = cac ? cac * ids.length : null;
+  const historico = { clientes: ids.length, costoPorCliente: cac, costoAdquisicion: costo != null ? r0(costo) : null, depositos: r0(lDep.amt), cargas: lDep.n, retiros: r0(lWd.amt), venta: r0(ventaHist), regalos: r0(lPr.amt), neto: r0(netoHist), resultado: costo != null ? r0(netoHist - costo) : null, netoPorCliente: ids.length ? r0(netoHist / ids.length) : null, vecesElCosto: costo > 0 ? Math.round((netoHist / costo) * 100) / 100 : null };
+  // Promedios de la serie (sin el día elegido) para contextualizar
+  const prev = serie.filter((x) => x.dia !== dayKey); const avg = (k) => (prev.length ? r0(prev.reduce((s, x) => s + x[k], 0) / prev.length) : 0);
+  const promedio30 = { retenidos: avg('retenidos'), ventaRetenidos: avg('ventaRetenidos'), netoRetenidos: avg('netoRetenidos'), ventaNuevos: avg('ventaNuevos') };
+  const dif = promedio30.ventaRetenidos ? Math.round(((hoy.ventaRetenidos - promedio30.ventaRetenidos) / Math.abs(promedio30.ventaRetenidos)) * 100) : null;
+  const top = porAntiguedad.slice().sort((a, b) => b.venta - a.venta)[0];
+  const lectura = [
+    `El ${dayKey} cargaron ${hoy.retenidos + hoy.nuevos} clientes: ${hoy.nuevos} nuevos (primera carga ese día, quedan AFUERA del análisis) y ${hoy.retenidos} retenidos (ya cargaban de antes).`,
+    `BASE RETENIDA ese día: depósitos ${money(hoy.depositosRetenidos)} − retiros ${money(hoy.retirosRetenidos)} = VENTA (netwin) ${money(hoy.ventaRetenidos)}; regalos ${money(hoy.regalosRetenidos)} → NETO ${money(hoy.netoRetenidos)}.` + (dif != null ? ` Contra el promedio de los 29 días anteriores (${money(promedio30.ventaRetenidos)} de venta retenida por día): ${dif >= 0 ? '+' : ''}${dif}%.` : ''),
+    top && top.clientes ? `La antigüedad que más vendió fue ${top.tramo} (${top.clientes} clientes, ${money(top.venta)} de venta, ${money(top.ventaPorCliente)} por cliente).` : 'Sin ventas de retenidos ese día.',
+    `LO QUE COSTÓ ANTES: esos ${historico.clientes} retenidos ` + (costo != null ? `costaron ${money(costo)} traerlos (${money(cac)} por cliente) y ` : '') + `recibieron ${money(historico.regalos)} en regalos en toda su vida; dejaron ${money(historico.venta)} de VENTA histórica → NETO histórico ${money(historico.neto)}` + (historico.resultado != null ? ` = ${historico.resultado >= 0 ? 'ya pagaron su costo ' + historico.vecesElCosto + ' veces' : 'todavía no cubren su costo (faltan ' + money(-historico.resultado) + ')'}.` : '.'),
+    `Los nuevos de ese día (${hoy.nuevos}) dejaron ${money(hoy.ventaNuevos)} de venta y ${money(hoy.regalosNuevos)} de regalos: se miran aparte porque llevan bono de primera carga.`
+  ];
+  return { dia: dayKey, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, porAntiguedad, historico, promedio30, serie, lectura, timings: T };
+}
+
+module.exports = { analyze, compare, project, review, dailyRetained, dateKeyART };

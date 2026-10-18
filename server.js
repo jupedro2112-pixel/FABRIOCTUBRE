@@ -18937,11 +18937,26 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
     res.json({ success: true, snapshotId, calibration, base: { from: base.from, to: base.to, totals: base.totals, repeat: base.repeat }, projection });
   } catch (e) { logger.error('[datos-ia/projection] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #499: CIERRE DIARIO de la base retenida (ayer por defecto; sin clientes nuevos). Costo por cliente = el promedio histórico (#468).
+app.get('/api/admin/datos-ia/daily', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const q = req.query || {}; let cac = Number(q.cac) > 0 ? Number(q.cac) : null;
+    if (!cac) { try { const st = (await getConfig('adSpendTotal', null)) || null; if (st && Number(st.amount) > 0) { const n = (await Transaction.distinct('userId', { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] } })).length; if (n) cac = Math.round(Number(st.amount) / n); } } catch (_) {}
+    }
+    const _t0 = Date.now();
+    const out = await datosIa.dailyRetained(_datosIaModels(), { day: q.day || null, cac, ..._diaMoneyOpts(q) });
+    out.ms = Date.now() - _t0; logger.info('[datos-ia] daily ' + out.dia + ' en ' + out.ms + ' ms ' + JSON.stringify(out.timings || {}));
+    const params = { key: ['daily', out.dia, cac || '', _diaMoneyOpts(q).cur].join('|'), day: out.dia, cac, cur: _diaMoneyOpts(q).cur };
+    const snapshotId = q.nosave ? null : await _diaSnapshot('daily', req.user.username, params, { hoy: out.hoy, porAntiguedad: out.porAntiguedad, historico: out.historico, promedio30: out.promedio30, lectura: out.lectura }, { retenidos: out.hoy.retenidos, nuevos: out.hoy.nuevos, ventaRetenidos: out.hoy.ventaRetenidos, netoRetenidos: out.hoy.netoRetenidos });
+    res.json({ success: true, snapshotId, ...out });
+  } catch (e) { logger.error('[datos-ia/daily] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #461: historial de cálculos + revisión de proyecciones contra lo real + calibración
 app.get('/api/admin/datos-ia/history', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
-    const kind = ['analysis', 'projection', 'compare'].includes(req.query.kind) ? req.query.kind : null;
+    const kind = ['analysis', 'projection', 'compare', 'daily'].includes(req.query.kind) ? req.query.kind : null;
     const items = await DatosIaSnapshot.find(kind ? { kind } : {}).sort({ createdAt: -1 }).limit(60).select('id kind createdAt by params summary review note notedAt').lean();
     const calib = await getConfig('projectionCalibration', null);
     res.json({ success: true, items, calibration: calib || { factor: 1 } });

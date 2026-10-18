@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 499. 📆 Datos IA: "Cierre de ayer (base retenida)" — la venta del día SIN los clientes nuevos, por antigüedad, y lo que costó esa base — admin-sw v109
+**Pedido (owner):** "el análisis que lo hagas sobre la venta del día anterior entendiendo lo que gastó antes el cliente que dejó,
+sacando los clientes nuevos de ayer; decime vos cómo armarlo para analizar bien y que no tome clientes nuevos porque no es real".
+**Cómo se armó (`dailyRetained` en el service, ruta `GET /api/admin/datos-ia/daily?day=`):** NUEVO = primera carga real ESE
+día → afuera (se muestra aparte: lleva bono de 1ª carga); RETENIDO = cargó ese día pero ya cargaba de antes. Para los retenidos:
+depósitos, retiros, VENTA (netwin), regalos del día, NETO, abiertos por antigüedad (1–7 · 8–14 · 15–30 · 31–60 · 61–90 · +90
+días) con venta por cliente; promedio de los 29 días anteriores para comparar; serie de 30 días retenidos vs nuevos; y la
+HISTORIA completa de esos mismos retenidos hasta ese día (costo de traerlos = clientes × costo por cliente promedio, depósitos,
+retiros, venta, regalos, neto histórico, "pagaron su costo ×N"). Lectura en 5 frases. Pestaña nueva "📆 Cierre de ayer (base
+retenida)" (segunda), presets Ayer / Anteayer / Hace 7 días, se guarda en el Historial como "Cierre diario" (kind `daily`, enum
+del modelo ampliado). Todo por agregaciones (3 de 30 días por día+usuario, 1 de primeras cargas, 3 de historia con `$in`).
+**Archivos:** `src/services/datosIaService.js`, `server.js`, `src/models/DatosIaSnapshot.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`.
+
 ### 498. ⬛ JUGAYGANA con fondo negro · primera tarjeta de juegos sin el título "Top 10 Juegos" — SW v349
 **Pedidos (owner):** "el de Jugaygana ponele fondo negro también"; "la primera foto del Inicio dice Top 10 juegos, sacala".
 **Qué se hizo:** mismo esquema que Ganamos (#496) para `plat-jugaygana` / `ep-jugaygana` / `data-plat="jugaygana"` con degradé

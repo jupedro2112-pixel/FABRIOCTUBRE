@@ -4,7 +4,7 @@
 const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
   id: { type: String, required: true, unique: true, index: true },
-  kind: { type: String, enum: ['analysis', 'projection', 'compare'], required: true, index: true },
+  kind: { type: String, enum: ['analysis', 'projection', 'compare', 'daily'], required: true, index: true }, // daily = cierre diario de la base retenida (#499)
   createdAt: { type: Date, default: Date.now, index: true },
   by: { type: String, default: null },
   params: { type: mongoose.Schema.Types.Mixed, default: {} },
