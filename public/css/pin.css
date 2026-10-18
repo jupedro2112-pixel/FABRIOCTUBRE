@@ -1427,4 +1427,8 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ez-btn.ez-missions > b { margin-top: 4px; }
 .ez-chat, .ez-switch { flex: 0 0 auto !important; }
 .sd-banner { flex: 0 0 auto; }
+/* ── #510: Misiones como recuadro normal (media columna), al lado de Reembolso ── */
+.ez-btn.ez-missions { grid-column: auto !important; align-items: center !important; text-align: center !important; padding: 10px 8px 12px !important; }
+.ez-btn.ez-missions > b { margin-top: 0; }
+.ez-mis-bars { margin-top: 6px; }
 
