@@ -2178,18 +2178,18 @@
                  notificaciones, que ahora viven sólo en Perfil). Los % salen de la config real (home.js llena
                  infoDailyMax / infoWeeklyMax / infoMonthlyMax; infoCardWhyTitle e infoCardTwoPlats según plataformas). -->
             <div class="info-msg" id="infoMsg">
-                <p class="im-sec"><b>💎 <span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Servicio <b>personalizado</b>: cargás solo en minutos, elegís en qué plataforma jugar con el mismo usuario y clave, retirás a tu CBU y tenés soporte en vivo 24 hs. Y lo más importante: <b>somos la plataforma mejor paga de internet</b>.</p>
-                <p class="im-sec"><b>💰 Reembolsos <span class="info-badge">Novedad</span></b>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Servicio <b>personalizado</b>: cargás solo en minutos, elegís en qué plataforma jugar con el mismo usuario y clave, retirás a tu CBU y tenés soporte en vivo 24 hs. Y lo más importante: <b>somos la plataforma mejor paga de internet</b>.</p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolsos <span class="info-badge">Novedad</span></b>
                     <span class="im-line"><b>¿Perdiste ayer?</b> Todos los días recuperás hasta el <b><span id="infoDailyMax">…</span>%</b> de lo que perdiste el día anterior.</span>
                     <span class="im-line"><b>¿Te fue mal en la semana?</b> Volvé el <b>lunes o martes</b> y recuperá hasta el <b><span id="infoWeeklyMax">…</span>%</b> de lo que perdiste.</span>
                     <span class="im-line"><b>¿Mes flojo?</b> Desde el <b>día 7</b> recuperás hasta el <b><span id="infoMonthlyMax">…</span>%</b> de la pérdida del mes.</span>
                     <span class="im-line">Se calcula sobre lo que perdés <b>con tu plata</b> (los bonos no cuentan) y <b>se cobra solo</b> desde "Cobrá tu reembolso acá", sin pedirle a nadie.</span>
                     <span class="refund-promo" hidden></span></p>
                 <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
-                <p class="im-sec" id="infoCardTwoPlats" style="display:none;"><b>🎮 La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b> con el mismo usuario. Cada plataforma está configurada de forma independiente: elegí la que quieras en cada carga.</span></p>
-                <p class="im-sec"><b>🎰 Ruleta diaria</b>Se desbloquea con tu <b>carga mínima de <span class="rl-min">$5.000</span></b> (con la app instalada) y girás <b>una vez por día</b> toda la semana: % extra en tu próxima carga o plata al instante. El premio mayor y la chance real de cada premio se ven en la ruleta. <button type="button" class="im-link" onclick="hideModal('infoModal'); if(window.VIP&&VIP.roulette&&VIP.roulette.open)VIP.roulette.open();">Girar la ruleta ›</button></p>
-                <p class="im-sec"><b>🤝 Referidos</b>Invitá amigos con tu link y cobrá todos los meses el <b><span class="ref-pct">5</span>%</b> de su actividad, de por vida.</p>
-                <p class="im-sec"><b>👑 Niveles VIP</b>Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</p>
+                <p class="im-sec" id="infoCardTwoPlats" style="display:none;"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b> con el mismo usuario. Cada plataforma está configurada de forma independiente: elegí la que quieras en cada carga.</span></p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b>Se desbloquea con tu <b>carga mínima de <span class="rl-min">$5.000</span></b> (con la app instalada) y girás <b>una vez por día</b> toda la semana: % extra en tu próxima carga o plata al instante. El premio mayor y la chance real de cada premio se ven en la ruleta. <button type="button" class="im-link" onclick="hideModal('infoModal'); if(window.VIP&&VIP.roulette&&VIP.roulette.open)VIP.roulette.open();">Girar la ruleta ›</button></p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b>Invitá amigos con tu link y cobrá todos los meses el <b><span class="ref-pct">5</span>%</b> de su actividad, de por vida.</p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</b>Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal.</p>
             </div>
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="closeInfoModal" class="btn btn-primary" style="width: 100%;">Entendido</button>
@@ -2287,13 +2287,13 @@
             <!-- #404 (owner): orden del Perfil — Canjear código arriba de todo · Menú fácil/completo · Modo nocturno + Notificaciones
                  · usuario + datos + Capturar · Fueguito · el resto. Todo más compacto (.pf-compact). -->
             <div class="pf-actions pf-actions-top">
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()">🎁 <span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8"/><path d="M12 8v12"/><path d="M12 8c-2.5 0-4.5-1.3-4.5-3S9 2.5 10 3.5 12 8 12 8zm0 0c2.5 0 4.5-1.3 4.5-3S15 2.5 14 3.5 12 8 12 8z"/></svg></i><span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
                 <!-- #366: elegir menú fácil / completo cuando quieran -->
-                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()">☰ <span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
+                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i><span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
             </div>
             <!-- #399 (owner): modo nocturno ARRIBA de todo de Perfil, con botón Activar / Desactivar (default: desactivado) -->
             <div class="pf-theme-row">
-                <span class="pf-theme-k"><b>🌙 Modo nocturno</b><small id="pfThemeHint">Desactivado</small></span>
+                <span class="pf-theme-k"><b><i class="pi pi-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></i>Modo nocturno</b><small id="pfThemeHint">Desactivado</small></span>
                 <button type="button" class="pf-theme-btn" id="pfThemeBtn" onclick="vipToggleTheme()">Activar</button>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2312,7 +2312,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v311</div>
+                    <div class="pf-build" id="appBuildTag">app v312</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2329,14 +2329,14 @@
                     <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
                     <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · reclamá tu premio cada día</small></span>
                 </div>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()">📲 <span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>
-                <a class="pf-act" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer">📣 <span>Canal de Telegram<small>Novedades y promos</small></span></a>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4.5"/><path d="M11.5 10.5L20 2M16 6l2.5 2.5M13.5 8.5L16 11"/></svg></i><span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></svg></i><span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>
+                <a class="pf-act" id="canalTelegramHeaderBtn" href="/go/comunidad" target="_blank" rel="noopener noreferrer"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9.5a3.5 3.5 0 0 1 0 5M17.5 7a7 7 0 0 1 0 10"/></svg></i><span>Canal de Telegram<small>Novedades y promos</small></span></a>
                 <!-- #294 (owner): "Soporte en vivo" se sacó del Perfil (el chat se abre desde Carga manual). El id del globito queda oculto para home.js. -->
                 <span id="headerSupportUnread" class="support-unread" style="display:none;">0</span>
-                <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}">⚙️ <span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>
+                <button type="button" class="pf-act" onclick="hideModal('profileModal');var b=document.getElementById('settingsBtn'); if(b){b.click();}else{VIP.ui.showModal('settingsModal');}"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Más ajustes<small>Modo oscuro del chat · plan de notificaciones</small></span></button>
                 <!-- #412 (owner): "Cerrar sesión" SOLO para el usuario de prueba (body.is-tester, lo pone home.js #296) -->
-                <button type="button" class="pf-act pf-logout" id="pfLogoutBtn" onclick="hideModal('profileModal');VIP.auth.handleLogout()">🚪 <span>Cerrar sesión<small>Salís de la app en este teléfono</small></span></button>
+                <button type="button" class="pf-act pf-logout" id="pfLogoutBtn" onclick="hideModal('profileModal');VIP.auth.handleLogout()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5v16h-5"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></i><span>Cerrar sesión<small>Salís de la app en este teléfono</small></span></button>
             </div>
         </div>
     </div>

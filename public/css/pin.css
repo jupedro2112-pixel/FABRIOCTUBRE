@@ -1113,4 +1113,15 @@ body.reg-quick #loginForm { display: none !important; }
 .info-msg #infoCardTwoPlats > b:first-child { display: inline-flex !important; margin-bottom: 8px !important; }
 .info-msg #infoCardTwoPlatsDesc { display: block; font-weight: 500 !important; color: var(--p-text-2) !important; }
 .info-msg #infoCardTwoPlatsDesc b { font-weight: 800 !important; color: var(--p-text) !important; }
+/* ── #440 (owner): íconos de LÍNEA (estilo Pinterest) en Info y en las acciones de Perfil, en vez de emojis ── */
+.im-ico { display: inline-flex; width: 18px; height: 18px; color: var(--p-red); margin-right: 6px; flex: 0 0 auto; }
+.im-ico svg { width: 18px; height: 18px; }
+.pi { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 10px; background: var(--p-card); color: var(--p-red); flex: 0 0 auto; margin-right: 2px; }
+.pi svg { width: 17px; height: 17px; }
+.pf-compact .pf-act .pi { width: 28px; height: 28px; }
+.pf-logout .pi { color: var(--p-red); }
+.pf-theme-k b { display: inline-flex; align-items: center; gap: 6px; }
+.pi.pi-sm { width: 22px; height: 22px; border-radius: 7px; background: var(--p-card); margin: 0; }
+.pi.pi-sm svg { width: 13px; height: 13px; }
+html[data-theme="dark"] .pi, html[data-theme="dark"] .pi.pi-sm { background: var(--p-surface-2); }
 

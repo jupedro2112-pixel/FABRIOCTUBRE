@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 440. 🎨 Íconos de línea estilo Pinterest en Info y Perfil (fuera los emojis) — SW v312
+**Pedido (owner):** "cambiá logos y dejá íconos más modernos y estilo Pinterest, no estilo WhatsApp".
+**Qué se hizo (index.html + pin.css):** en el modal **Info**, los títulos recuadrados llevan SVG de trazo rojo (`.im-ico`:
+gema, flecha circular, control, diana, personas, corona) en vez de 💎💰🎮🎰🤝👑. En **Perfil**, las acciones llevan un
+cuadradito blanco con SVG rojo (`.pi`: regalo, menú, llave, teléfono, megáfono, engranaje, puerta) y el interruptor de modo
+nocturno una luna de línea. Los botones redondos de Notificaciones 🔔 y Fueguito 🔥 (con ids y lógica propia) se dejaron.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 439. ℹ️ Info: "Girox" separado del título y sólo las plataformas en negrita — SW v311
 **Pedido (owner):** "separá un poco Girox, y después dejá sólo remarcado las plataformas: Girox, Ganamos y Jugaygana".
 **Qué se hizo:** el texto de `#infoCardTwoPlatsDesc` pasa a su propia línea debajo del título recuadrado (ya no pegado a
