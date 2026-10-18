@@ -27,8 +27,14 @@
         let info = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/landing/info'); if (r.ok) info = await r.json(); } catch (_) {}
         if (!info) return;
-        // #421: modo de registro (panel): 'quick' = entrada rápida sólo con el nombre; 'sms' = registro de siempre.
-        try { document.body.classList.toggle('reg-quick', info.registrationMode === 'quick'); } catch (_) {}
+        // #421/#422: entrada rápida (sólo nombre) si el panel está en 'quick' O si la persona llegó por un LINK DE PUBLICIDAD
+        // (atribución de campaña); el inicio normal sigue con Iniciar sesión / Crear mi cuenta.
+        try {
+            let viaAd = false;
+            try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) viaAd = true; } catch (_) {}
+            try { if (!viaAd && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); viaAd = !!(a && a.code); } } catch (_) {}
+            document.body.classList.toggle('reg-quick', info.registrationMode === 'quick' || viaAd);
+        } catch (_) {}
         try {
             const rf = info.refunds || {};
             const parts = [];

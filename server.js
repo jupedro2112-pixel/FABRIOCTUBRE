@@ -4508,10 +4508,16 @@ async function getRegistrationMode() {
 }
 app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res) => {
   try {
-    if ((await getRegistrationMode()) !== 'quick') return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
+    // #422 (owner): la entrada rápida rige SIEMPRE para quien llega por un LINK DE PUBLICIDAD (campaignCode del link,
+    // validado por el handler de la landing: tiene que ser una campaña activa) y, además, para todos si el tilde del
+    // panel está en 'quick'. El inicio normal (sin link) sigue con Iniciar sesión / Crear mi cuenta.
+    const codeRaw = String((req.body && req.body.campaignCode) || '').toUpperCase().trim();
+    const code = /^[A-Z0-9_-]{2,40}$/.test(codeRaw) ? codeRaw : '';
+    const mode = await getRegistrationMode();
+    if (mode !== 'quick' && !code) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
     const name = String((req.body && req.body.name) || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
-    req.body = { name, campaignCode: 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
+    req.body = { name, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
       const fake = { _c: 200, status(c) { this._c = c; return this; }, json(b) { resolve({ code: this._c, body: b }); }, set() { return this; }, setHeader() { return this; }, cookie() { return this; }, end() { resolve({ code: this._c, body: {} }); } };
       Promise.resolve(_landingSignupHandler(req, fake)).catch((e) => resolve({ code: 500, body: { error: e.message } }));

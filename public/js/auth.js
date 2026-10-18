@@ -529,7 +529,11 @@ VIP.auth = (function () {
         if (name.length < 2) { if (err) err.textContent = 'Escribí tu nombre.'; return; }
         if (btn) { btn.disabled = true; btn.textContent = 'Creando tu acceso…'; }
         try {
-            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, landingUrl: location.href }) });
+            // #422: si vino por link de publicidad, la cuenta queda atribuida a esa campaña (si no, INGRESO).
+            let campaignCode = null;
+            try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) campaignCode = String(inj).toUpperCase().trim(); } catch (_) {}
+            try { if (!campaignCode && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); if (a && a.code) campaignCode = String(a.code).toUpperCase().trim(); } } catch (_) {}
+            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, campaignCode: campaignCode || undefined, landingUrl: location.href }) });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.accessToken) { if (err) err.textContent = d.error || 'No pudimos crear tu acceso. Probá de nuevo.'; return; }
             const r2 = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: d.accessToken }) });

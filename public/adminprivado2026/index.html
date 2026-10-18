@@ -637,7 +637,8 @@ document.addEventListener('change', function (ev) {
                         <div class="cbu-form" id="registrationModeForm" style="margin-bottom:14px;">
                             <h3 style="margin:0 0 6px;">👤 Registro de clientes</h3>
                             <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Con el tilde <b>activado</b> la app pide <b>usuario, contraseña y teléfono verificado por SMS</b> (registro normal).
-                                <b>Desactivado</b> = la pantalla de ingreso muestra <b>"Tu nombre → Entrar"</b>: se crea la cuenta sola en las plataformas (misma lógica de la landing, campaña INGRESO, clave inicial) y la persona entra directo (autologin). "Ya tengo cuenta" sigue disponible.</p>
+                                <b>Desactivado</b> = la pantalla de ingreso muestra <b>"Tu nombre → Entrar"</b> para TODOS: se crea la cuenta sola en las plataformas (misma lógica de la landing, campaña INGRESO, clave inicial) y la persona entra directo (autologin). "Ya tengo cuenta" sigue disponible.<br>
+                                <b>Links de publicidad (#422):</b> quien entra por un link de publicista ve SIEMPRE "Tu nombre → Entrar" (cuenta atribuida a esa campaña), sin importar el tilde. El inicio normal (sin link) respeta el tilde.</p>
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="regSmsChk" style="width:auto;" checked> Registro con SMS ACTIVADO</label>
                                 <button class="btn-primary btn-small" id="regModeSaveBtn" onclick="saveRegistrationMode()"><span class="icon icon-save"></span> Guardar</button>

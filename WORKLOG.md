@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 422. 📣 Entrada rápida (sólo nombre) AUTOMÁTICA para quien llega por link de publicidad — SW v293, admin-sw v89
+**Pedido (owner):** "activá el modo registro automático si desde el admin con el link de publicidad la gente entra y que tenga
+sólo para completar el nombre así se registra; para el inicio normal original dejamos Iniciar sesión y Crear mi cuenta".
+**Qué se hizo:** `POST /api/auth/quick-entry` acepta `campaignCode`: si viene (link de publicista, validado como campaña
+activa por el handler de la landing) la entrada rápida funciona aunque el tilde esté en 'sms', y la cuenta queda atribuida a
+esa campaña; sin código, sigue dependiendo del tilde (410 si está en 'sms'). PWA: loginhero.js pone `body.reg-quick` también
+cuando hay atribución de campaña (`window.__VIP_CAMPAIGN_CODE__` inyectado por `/CODIGO`, o `VIP.campaign.getActive()` por
+`?p=`); `VIP.auth.quickEntry` manda ese `campaignCode`. El inicio normal (sin link) queda como estaba: Iniciar sesión +
+Crear mi cuenta (con SMS). Texto del tilde del panel actualizado.
+**Archivos:** `server.js`, `public/js/auth.js`, `public/js/loginhero.js`, `public/index.html`, `public/firebase-messaging-sw.js`,
+`public/adminprivado2026/index.html`, `public/admin-sw.js`.
+
 ### 421. 👤 Tilde "Registro de clientes" en Configuración: con SMS o ENTRADA RÁPIDA sólo con el nombre (autologin) — SW v292, admin-sw v88
 **Pedido (owner):** "dejá en comandos la opción de registro y también modo desactivar registro, poné un tilde; cuando
 desactivás el registro, la gente completa sólo el nombre y entra directo, tipo registro automático con la API para
