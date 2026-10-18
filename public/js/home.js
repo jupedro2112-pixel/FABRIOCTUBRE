@@ -133,7 +133,6 @@
     function _fdPromoLoad() { if (_fdPromoP) return _fdPromoP; const tok = VIP.state && VIP.state.currentToken; if (!tok) return Promise.resolve(null); _fdPromoP = fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { Authorization: 'Bearer ' + tok } }).then((r) => r.json()).catch(() => null); return _fdPromoP; }
     async function _fdTagPaint() { const tag = _el('ezMainTag'); if (!tag) return; const j = await _fdPromoLoad(); if (j && j.show) { tag.textContent = '🎁 +' + j.pct + '% en tu primera carga' + (j.installGiftEnabled ? ' · +' + j.pctApp + '% con la app' : ''); tag.hidden = false; } else tag.hidden = true; }
     async function maybeFirstDepositPopup() {
-        _fdTagPaint();
         if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
         const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
         _fdShown = true;
@@ -219,7 +218,7 @@
     }
     function _easyPaint() {
         const v = _el('easyView'); if (!v) return;
-        _applyMenuLayout(); _fdTagPaint();
+        _applyMenuLayout();
         try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('easyHello'); if (h) h.textContent = u ? ('Hola, ' + u) : 'Hola'; } catch (_) {}
         try { const b = _el('userBalance'), eb = _el('easyBalance'); if (b && eb && b.textContent) eb.textContent = b.textContent; } catch (_) {}
         try {

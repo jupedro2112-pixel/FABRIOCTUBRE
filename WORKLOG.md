@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 493. ↩️ Revertidos #490 y #492: todo como hace dos actualizaciones — SW v344
+**Pedido (owner):** "dejá todo como estaba hace 2 actualizaciones porque no me gustó".
+**Qué se hizo:** vuelve el tema CLARO por defecto (el nocturno sigue disponible en Perfil), se quitó la pastilla naranja
+"+X% en tu primera carga" del botón CARGAR AHORA y los íconos emoji del menú fácil (quedan los de líneas de siempre, grilla 2×2).
+Se conservan el cartel de primera carga (#488), los juegos del Inicio (#489) y su arreglo de tamaño (#491). El endpoint
+`/api/first-deposit-promo` y `_fdPromoLoad` siguen (los usa el cartel); `_fdTagPaint` queda sin llamadas.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `public/js/home.js`, `public/firebase-messaging-sw.js`.
+
 ### 492. 🎨 Menú fácil: vuelve el formato viejo (grilla 2×2); lo nuevo son los ÍCONOS realistas — SW v343
 **Pedido (owner):** "no, el formato como el viejo; yo digo los íconos: el estilo de los íconos más realistas".
 **Qué se hizo:** se quitó la lista de tarjetas anchas de #490 (la grilla 2×2 queda como estaba). Los íconos de Reembolso 💰,
