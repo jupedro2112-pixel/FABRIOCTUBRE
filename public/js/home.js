@@ -441,6 +441,17 @@
         const c = _el('alMinLine'); if (c) { const bb = c.querySelector('b'); if (bb) bb.textContent = txt; c.style.display = txt ? '' : 'none'; }
         const d = _el('serviceBannerMin'); if (d) { const bb = d.querySelector('b'); if (bb) bb.textContent = txt; d.style.display = txt ? '' : 'none'; }
     }
+    // #385: textos de los botones "Adjuntar comprobante aquí" y "Retirar premio" desde COMANDOS (/sys_load_btn*, /sys_withdraw_btn*).
+    function _paintActionBtns(ab) {
+        if (!ab) return;
+        const set = (id, v) => { if (v == null || !String(v).trim()) return; const el = _el(id); if (el) el.textContent = String(v).trim(); };
+        try {
+            const lb = document.querySelector('#loadHereBtn .lr-text b'); if (lb && ab.load) lb.textContent = String(ab.load).trim();
+            set('loadHereMin', ab.loadSub);
+            set('withdrawBtnText', ab.withdraw);
+            set('withdrawBtnSub', ab.withdrawSub);
+        } catch (_) {}
+    }
     // #296: con UNA sola plataforma habilitada (Ganamos apagada hasta tener la API) los textos no la nombran.
     function _paintPlatformTexts() {
         const list = (_platforms && _platforms.platforms) || [];
@@ -1588,6 +1599,7 @@
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
+        try { _paintActionBtns(_platforms && _platforms.actionBtns); } catch (_) {} // #385
         try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
         try { _paintRefundPromo(_platforms && _platforms.refundPromo); } catch (_) {} // #372
         try { _paintSupportIntro(_platforms && _platforms.supportIntro); } catch (_) {} // #373

@@ -5613,6 +5613,19 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       minDeposit: await getMinDepositArs(), // #299
       withdrawMinArs: await getWithdrawMinArs(), // #379: retiro mínimo (modal de retiro de la app)
       withdrawOtp: await getWithdrawOtpRequired(), // #382: la app pide el código SMS antes de crear el retiro
+      // #385: textos de los botones de abajo de la carga automática (COMANDOS). Vacío = la app deja su texto por defecto.
+      actionBtns: await (async () => {
+        try {
+          const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+          const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
+          return {
+            load: await renderSystemCommand('/sys_load_btn', LOAD_BTN_DEFAULT, vars),
+            loadSub: await renderSystemCommand('/sys_load_btn_sub', LOAD_BTN_SUB_DEFAULT, vars),
+            withdraw: await renderSystemCommand('/sys_withdraw_btn', WITHDRAW_BTN_DEFAULT, vars),
+            withdrawSub: await renderSystemCommand('/sys_withdraw_btn_sub', WITHDRAW_BTN_SUB_DEFAULT, vars)
+          };
+        } catch (_) { return null; }
+      })(),
       homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })(),
       // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
       entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
@@ -11746,6 +11759,31 @@ async function initializeData() {
       response: '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.'
     },
     {
+      // #385: textos de los dos botones de abajo de la carga automática.
+      name: '/sys_load_btn',
+      description: 'Botón grande "Adjuntar comprobante aquí" (carga automática): título. Variables: {min}, {retiro_min}.',
+      type: 'message',
+      response: LOAD_BTN_DEFAULT
+    },
+    {
+      name: '/sys_load_btn_sub',
+      description: 'Botón "Adjuntar comprobante aquí": bajada (ej. "carga mínima {min} · se acredita solo"). Variables: {min}, {retiro_min}.',
+      type: 'message',
+      response: LOAD_BTN_SUB_DEFAULT
+    },
+    {
+      name: '/sys_withdraw_btn',
+      description: 'Botón "Retirar premio" (carga automática): título. Variables: {min}, {retiro_min}.',
+      type: 'message',
+      response: WITHDRAW_BTN_DEFAULT
+    },
+    {
+      name: '/sys_withdraw_btn_sub',
+      description: 'Botón "Retirar premio": bajada (ej. "retiro mínimo {retiro_min} · pago automático a tu CBU"). Variables: {retiro_min}, {min}.',
+      type: 'message',
+      response: WITHDRAW_BTN_SUB_DEFAULT
+    },
+    {
       // #384: respuestas automáticas de los chips Cargar / Retirar de Soporte (con botón al sector).
       name: '/sys_support_quick_cargar',
       description: 'Soporte: respuesta automática cuando el cliente toca "Cargar" (las cargas son automáticas + botón a Carga automática). Variables: {min} (carga mínima), {retiro_min}. Vacío = no se manda.',
@@ -12523,6 +12561,11 @@ async function _isFirstRealDeposit(user) {
 const MIN_DEPOSIT_ARS_DEFAULT = 5000;
 // #379 (owner 2026-10-18): RETIRO MÍNIMO (antes $4.999 fijo). Config['withdrawMinArs'], editable en COMANDOS → Bonos automáticos.
 const WITHDRAW_MIN_ARS_DEFAULT = 10000;
+// #385: textos de los botones "Adjuntar comprobante aquí" / "Retirar premio" (editables en COMANDOS).
+const LOAD_BTN_DEFAULT = 'Adjuntar comprobante aquí';
+const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';
+const WITHDRAW_BTN_DEFAULT = 'Retirar premio';
+const WITHDRAW_BTN_SUB_DEFAULT = 'retiro mínimo {retiro_min} · pago automático a tu CBU';
 // #382 (owner 2026-10-18): código SMS en CADA retiro (anti-estafa). Config['withdrawOtpRequired'], default true.
 async function getWithdrawOtpRequired() {
   try { const v = await getConfig('withdrawOtpRequired', null); if (v === false || v === 'false' || v === 0) return false; } catch (_) {}

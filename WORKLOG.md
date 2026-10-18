@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-17
 
+### 385. 💸 "Retirar premio" dice afuera el mínimo y que es automático · textos de los dos botones editables en COMANDOS — SW v272
+**Pedido (owner):** "en Retirar premio no dice afuera: que diga retiro mínimo 10.000 y que es automático; después en
+Comandos dejá todo ajustable". El botón `#withdrawChatBtn` ahora tiene título + bajada ("Retirar premio" / "retiro
+mínimo $10.000 · pago automático a tu CBU"), igual que el de "Adjuntar comprobante aquí". Los cuatro textos salen de
+COMANDOS: `/sys_load_btn`, `/sys_load_btn_sub` ({min} = carga mínima), `/sys_withdraw_btn`, `/sys_withdraw_btn_sub`
+({retiro_min} = retiro mínimo) → `GET /api/platforms.actionBtns` → `home.js _paintActionBtns` (vacío = queda el
+texto por defecto del HTML). Los montos se resuelven con la configuración real (nada hardcodeado).
+
 ### 384. 💬 Soporte: los accesos rápidos mandan el mensaje solos; "Cargar" y "Retirar" responden automático con botón al sector — SW v271
 **Pedido (owner):** "en Soporte, si pone Cargar o Retirar que responda automáticamente que las cargas y retiros son
 automáticos y le damos un botón para ir al sector; cuando aprietan un botón (ej. Otro problema) que no haya que
