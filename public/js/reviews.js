@@ -261,16 +261,17 @@
         _selectedStars = 5;
         const ov = document.createElement('div');
         ov.id = 'reviewModalOverlay';
-        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:26000;display:flex;align-items:center;justify-content:center;padding:14px;';
+        // #450 (owner): modal con el estilo de la app (tarjeta blanca, estrellas rojas, botón rojo) — clases .rvm-* en pin.css
+        ov.className = 'rvm-overlay';
         ov.onclick = function (e) { if (e.target === ov) closeModal(); };
-        ov.innerHTML = '<div style="background:linear-gradient(135deg,#1a0033,#0a0015);border:2px solid #d4af37;border-radius:16px;padding:20px 18px;max-width:420px;width:100%;color:#fff;box-sizing:border-box;">'
-            + '<h2 style="color:#ffd700;text-align:center;margin:0 0 4px;font-size:18px;font-weight:900;">⭐ Tu opinión</h2>'
-            + '<p style="color:#bbb;text-align:center;font-size:12px;margin:0 0 14px;">Contanos cómo la estás pasando. Se envía una sola vez.</p>'
-            + '<div id="reviewModalStars" style="text-align:center;font-size:38px;letter-spacing:6px;margin-bottom:10px;"></div>'
-            + '<textarea id="reviewModalComment" maxlength="100" placeholder="Escribí tu comentario (opcional)" style="width:100%;box-sizing:border-box;background:rgba(0,0,0,0.45);border:1px solid rgba(212,175,55,0.4);color:#fff;border-radius:9px;padding:10px;font-size:13px;min-height:70px;resize:vertical;"></textarea>'
-            + '<div id="reviewModalMsg" style="font-size:12px;text-align:center;min-height:16px;margin:8px 0;"></div>'
-            + '<button id="reviewModalSubmit" onclick="VIP.reviews.submit()" style="width:100%;background:linear-gradient(135deg,#ffd700,#f7931e);color:#000;border:none;padding:13px;border-radius:11px;font-weight:900;font-size:14px;cursor:pointer;">📨 Enviar opinión</button>'
-            + '<button onclick="VIP.reviews.closeModal()" style="width:100%;margin-top:8px;background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.2);padding:10px;border-radius:9px;font-weight:700;font-size:12px;cursor:pointer;">Cerrar</button>'
+        ov.innerHTML = '<div class="rvm-card">'
+            + '<h2 class="rvm-t">Tu opinión</h2>'
+            + '<p class="rvm-s">Contanos cómo la estás pasando. Se envía una sola vez.</p>'
+            + '<div id="reviewModalStars" class="rvm-stars"></div>'
+            + '<textarea id="reviewModalComment" class="rvm-ta" maxlength="100" placeholder="Escribí tu comentario (opcional)"></textarea>'
+            + '<div id="reviewModalMsg" class="rvm-msg"></div>'
+            + '<button id="reviewModalSubmit" class="rvm-send" onclick="VIP.reviews.submit()">Enviar opinión</button>'
+            + '<button class="rvm-close" onclick="VIP.reviews.closeModal()">Cerrar</button>'
             + '</div>';
         document.body.appendChild(ov);
         _paintModalStars();
@@ -286,7 +287,7 @@
         if (!el) return;
         let h = '';
         for (let i = 1; i <= 5; i++) {
-            h += '<span onclick="VIP.reviews.setStars(' + i + ')" style="cursor:pointer;color:' + (i <= _selectedStars ? '#ffd700' : '#555') + ';">★</span>';
+            h += '<span class="rvm-star' + (i <= _selectedStars ? ' on' : '') + '" onclick="VIP.reviews.setStars(' + i + ')">★</span>'; // #450
         }
         el.innerHTML = h;
     }
@@ -319,7 +320,7 @@
                     return;
                 }
                 if (msg) { msg.style.color = '#ff8080'; msg.textContent = (d && d.error) || 'Error'; }
-                if (btn) { btn.disabled = false; btn.textContent = '📨 Enviar opinión'; }
+                if (btn) { btn.disabled = false; btn.textContent = 'Enviar opinión'; }
                 return;
             }
             _myReview = { stars: _selectedStars, comment: comment };
@@ -328,7 +329,7 @@
             setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); _pubCache = null; renderEntrySlider(); }, 1600);
         } catch (e) {
             if (msg) { msg.style.color = '#ff8080'; msg.textContent = 'Error de conexión'; }
-            if (btn) { btn.disabled = false; btn.textContent = '📨 Enviar opinión'; }
+            if (btn) { btn.disabled = false; btn.textContent = 'Enviar opinión'; }
         }
     }
 

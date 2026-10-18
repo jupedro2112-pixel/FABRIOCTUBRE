@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 450. ⭐ Modal "Tu opinión" con el estilo de la app — SW v320
+**Pedido (owner, con captura):** "esto cambialo adentro de dar tu opinión" (venía con el tema viejo: violeta, borde dorado,
+botón amarillo).
+**Qué se hizo:** `reviews.js openModal` arma el modal con clases `.rvm-*` (pin.css): tarjeta blanca redondeada, estrellas
+grandes rojas (grises las no elegidas), textarea gris, botón rojo "Enviar opinión" y "Cerrar" en píldora gris; sin emojis.
+Misma lógica de envío (ids `reviewModalStars/Comment/Msg/Submit` intactos).
+**Archivos:** `public/js/reviews.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 449. 🧹 Entrada: fuera el rótulo "GIROX · LA APP QUE PAGA", recuadro más chico — SW v319
 **Pedido (owner, con captura):** "eso de Girox la app que paga sacalo y achicá el recuadro".
 **Qué se hizo (pin.css):** `.ev-hero-k` oculto; `.ev-hero` con menos padding y el texto "La única app que paga todo en el
