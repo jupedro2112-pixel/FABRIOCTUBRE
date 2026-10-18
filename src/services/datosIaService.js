@@ -90,7 +90,7 @@ async function _analyze(models, opts) {
   const byBucket = (match) => Transaction.aggregate([{ $match: { ...match, ...inRange } }, { $group: { _id: { b: bExpr, u: '$userId' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }, { $group: { _id: '$_id.b', n: { $sum: '$n' }, amt: { $sum: '$amt' }, users: { $sum: 1 } } }]);
   const byUser = (match) => Transaction.aggregate([{ $match: { ...match, ...inRange } }, { $group: { _id: '$userId', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]);
   const sessMatch = scope({ startedAt: { $gte: from, $lte: to } });
-  const [depB, depU, wdB, wdU, regB, logins, sessB, sessU, refundsR, spinsR, supportMsgs, promoAgg] = await Promise.all([
+  const [depB, depU, wdB, wdU, regB, logins, sessB, sessU, refundsR, spinsR, supportMsgs, promoAgg, last14U] = await Promise.all([
     byBucket(realDep), byUser(realDep), byBucket(realWd), byUser(realWd),
     User.aggregate([{ $match: { ...userFilter, createdAt: { $gte: from, $lte: to } } }, { $group: { _id: bucketExpr('$createdAt', gran), n: { $sum: 1 } } }]),
     // lastLogin hasta 7 días después del rango: sirve para "volvió a ENTRAR en la primera semana" de los nuevos del final del rango
@@ -101,7 +101,9 @@ async function _analyze(models, opts) {
     DailyRouletteSpin.find(scope({ spunAt: { $gte: from, $lte: to } })).select('userId spunAt prizeARS').lean(),
     Message.countDocuments({ senderRole: 'user', timestamp: { $gte: from, $lte: to } }),
     // Regalos por tipo y usuario. ⚠️ Algunos bonos viejos no tienen userId (sólo username): se agrupa por los dos.
-    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: okStatus, ...inRange }) }, { $group: { _id: { t: '$type', u: '$userId', un: '$username' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
+    Transaction.aggregate([{ $match: scope({ type: { $in: PROMO_TYPES }, status: okStatus, ...inRange }) }, { $group: { _id: { t: '$type', u: '$userId', un: '$username' }, n: { $sum: 1 }, amt: { $sum: '$amount' } } }]),
+    // #477: venta de los ÚLTIMOS 14 días por usuario → lo que vende por día la base "vieja" (primera carga antes de esos 14 días)
+    Transaction.aggregate([{ $match: { ...realDep, timestamp: { $gte: new Date(to.getTime() - 14 * DAY), $lte: to } } }, { $group: { _id: '$userId', amt: { $sum: '$amount' } } }])
   ]);
   lap('rango');
   const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f ? f(x) : x) || 0), 0);
@@ -153,6 +155,9 @@ async function _analyze(models, opts) {
   (promoAgg || []).forEach((p) => { const t = p._id.t; if (!promos[t]) promos[t] = { n: 0, amt: 0, nuevos: 0, recurrentes: 0 }; promos[t].n += p.n; promos[t].amt += p.amt; promosTotal += p.amt; if (isCohort(p._id.u, p._id.un)) { promos[t].nuevos += p.amt; promosNuevos += p.amt; } else { promos[t].recurrentes += p.amt; promosRecurrentes += p.amt; } });
   Object.keys(promos).forEach((k) => { promos[k].amt = r0(promos[k].amt); promos[k].nuevos = r0(promos[k].nuevos); promos[k].recurrentes = r0(promos[k].recurrentes); });
   const montoCargasRecurrentes = Math.max(0, Math.round(montoCargas - montoCargasNuevos)); // redondeado: evita residuos flotantes
+  // Base actual: clientes con primera carga ANTES de los últimos 14 días → cuánto vendieron por día en esos 14 días
+  const firstById = new Map(perUser.map((u) => [u._id, u.first])); const cut14 = new Date(to.getTime() - 14 * DAY);
+  let venta14Viejos = 0, clientes14Viejos = 0; (last14U || []).forEach((x) => { const f = firstById.get(x._id); if (f && f < cut14) { venta14Viejos += x.amt; clientes14Viejos++; } });
   const netwin = montoCargas - montoRetiros;
   const pc = opts.promoConfig || null;
   // Tasa de reclamo del reembolso: cuánto de lo "reembolsable" (pérdida × % diario) se pagó de verdad (0..1).
@@ -168,7 +173,8 @@ async function _analyze(models, opts) {
     promosPct: pct(promosTotal, montoCargas), promosPctNuevos: pct(promosNuevos, Math.round(montoCargasNuevos)), promosPctRecurrentes: montoCargasRecurrentes >= 1 ? pct(promosRecurrentes, montoCargasRecurrentes) : null,
     netwinNeto: r0(netwin - promosTotal), tasaReclamoReembolso: tasaReclamo == null ? null : Math.round(tasaReclamo * 100) / 100,
     churn30, spend, gastoPorDia: spend > 0 ? r0(spend / days) : 0, cac: spend > 0 && n ? r0(spend / n) : null, ventaPorPeso: spend > 0 ? Math.round((montoCargas / spend) * 100) / 100 : null, netoPorPeso: spend > 0 ? Math.round(((netwin - promosTotal) / spend) * 100) / 100 : null,
-    netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length, primeraCargaPromedio: repeat.primeraCargaPromedio
+    netwinNuevos: r0(nwNew), netwinPorNuevo: n ? r0(nwNew / n) : null, baseCargadores: perUser.length, primeraCargaPromedio: repeat.primeraCargaPromedio,
+    ventaBaseViejaPorDia: r0(venta14Viejos / 14), clientesBaseVieja14: clientes14Viejos
   };
   totals.conversionRegistroCarga = pct(n, totals.registros);
   // Período anterior (misma longitud)
@@ -303,11 +309,12 @@ function project(base, opts) {
   // Lo mismo con las condiciones VIGENTES (para mostrar la diferencia)
   const promosCliHoy = capCost(primeraCarga, cur.bonus1) + recDeps * capCost(cargaProm, cur.rec) + (cur.refund / 100) * netwinBrutoCli * tasaReclamo + otrosCli;
   // La base actual (clientes de antes) sigue vendiendo al ritmo observado; sus regalos: con el % recurrente futuro
-  const recPorDia = t.montoCargasRecurrentes / baseDays;
+  // Base actual = clientes que ya cargaban antes de los últimos 14 días: lo que vendieron por día en esos 14 días (no depende de cómo se eligió la base)
+  const recPorDia = t.ventaBaseViejaPorDia != null ? t.ventaBaseViejaPorDia : t.montoCargasRecurrentes / baseDays;
   const baseVenta = recPorDia * days, baseNetwin = baseVenta * (1 - wdRatio);
   const baseDepsN = cargaProm > 0 ? baseVenta / cargaProm : 0;
   const basePromos = baseDepsN * capCost(cargaProm, fut.rec) + (fut.refund / 100) * baseNetwin * tasaReclamo + baseVenta * otrosPct;
-  const baseActual = { venta: r0(baseVenta), retiros: r0(baseVenta * wdRatio), netwin: r0(baseNetwin), promos: r0(basePromos), neto: r0(baseNetwin - basePromos), ventaPorDiaHoy: r0(recPorDia), promosPctHoy: t.promosPctRecurrentes };
+  const baseActual = { venta: r0(baseVenta), retiros: r0(baseVenta * wdRatio), netwin: r0(baseNetwin), promos: r0(basePromos), neto: r0(baseNetwin - basePromos), ventaPorDiaHoy: r0(recPorDia), clientes14: t.clientesBaseVieja14 || 0, promosPctHoy: t.promosPctRecurrentes };
   const mk = (f) => {
     const ff = f * calib;
     const porPauta = cac ? (spend / cac) * ff : 0, organicos = organicPerDay * days * ff, nuevos = porPauta + organicos;
@@ -334,7 +341,7 @@ function project(base, opts) {
   E.push(`CADA CLIENTE NUEVO de la base dejó ${money(montoPorCliente)} en ${cargasPorCliente} cargas (primera carga ${money(primeraCarga)}). Para ${days} días se toma ×${supuestos.horizonte} → ${money(ventaCli)} de venta, ${money(netwinBrutoCli)} de netwin bruto.`);
   E.push(`REGALOS por cliente nuevo con las condiciones FUTURAS (bono 1ª carga ${fut.bonus1}% con tope ${money(capArs)} y ${restPct}% sobre el resto · ${fut.rec}% en cargas siguientes · reembolso ${fut.refund}% sobre lo perdido, que se cobra el ${supuestos.tasaReclamo}% · otros regalos ${supuestos.otrosPct}% de la venta): ${money(promosCli)} (hoy, con ${cur.bonus1}% / ${cur.rec}% / ${cur.refund}%, serían ${money(promosCliHoy)}). Queda NETO por cliente: ${money(netoCli)}.`);
   E.push(`INVERSIÓN ${money(spend)} en ${days} días a ${cac ? money(cac) : '—'} por cliente → ${b.clientesPorPauta} clientes por pauta + ${b.clientesOrganicos} orgánicos (ritmo de la base) = ${b.clientesNuevos} nuevos (panorama base). Venta de los nuevos ${money(b.montoCargas)}, netwin bruto ${money(b.netwin)}, regalos ${money(b.promos)}, neto ${money(b.netwinNeto)}.`);
-  E.push(`LA BASE ACTUAL (clientes de antes) sigue vendiendo ${money(recPorDia)} por día → en ${days} días ${money(baseVenta)} de venta, neto ${money(baseActual.neto)}.`);
+  E.push(`LA BASE ACTUAL: ${baseActual.clientes14} clientes que ya cargaban antes de los últimos 14 días vendieron ${money(recPorDia)} por día en esos 14 días → si siguen así, en ${days} días ${money(baseVenta)} de venta, regalos ${money(basePromos)} (con los % futuros), neto ${money(baseActual.neto)}.`);
   E.push(`TOTAL DEL NEGOCIO en ${days} días (panorama base): venta ${money(b.total.venta)}, netwin bruto ${money(b.total.netwin)}, regalos ${money(b.total.promos)}, neto ${money(b.total.neto)}. Resultado de la PAUTA (neto de los clientes por pauta − inversión): ${money(b.resultado)} (ROI ${b.roi ?? '—'}%). Resultado total (neto total − inversión): ${money(b.resultadoTotal)}. Panoramas bajo/alto: ±30 % en clientes nuevos.`);
   if (calib !== 1) E.push(`Ajuste por revisiones anteriores aplicado: ×${calib}.`);
   return { spend, days, calibration: calib, moneda: { cur: F.usd ? 'usd' : 'ars', usdRate: F.rate || null }, hoy, baseActual, promo, supuestos, bajo, base: b, alto, explicacion: E, nota: cac ? null : 'No hay costo por cliente nuevo: cargá el gasto total desde el inicio (o el de la base) o escribí el costo a mano. Mientras tanto sólo se proyecta lo orgánico y la base actual.' };

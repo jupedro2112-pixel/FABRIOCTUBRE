@@ -4963,6 +4963,7 @@ function switchSection(section) {
     if (section === 'commands') { loadCommands(); try { initCommandsAccordion(); } catch (_) {} } // #383: sectores plegables
     if (section === 'datos') loadDatos();
     if (section === 'datosIa') diaInit(); // #459
+    if (section === 'menuLayout') loadMenuLayout(); // #480
     if (section === 'datos2') loadDatos2();
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
@@ -5788,6 +5789,17 @@ async function setBankOutageUI(active) {
 }
 window.loadBankOutage = loadBankOutage; window.setBankOutageUI = setBankOutageUI;
 // #421: modo de registro (tilde en Configuración → Registro de clientes)
+// #480: elegir menú de la app
+async function loadMenuLayout() {
+    try { const r = await authFetch('/api/admin/menu-layout'); const j = await r.json(); if (!r.ok) return; const l = Number(j.layout) === 2 ? 2 : 1;
+        [1, 2].forEach(function (n) { const b = document.getElementById('mlOpt' + n); if (b) b.classList.toggle('on', n === l); });
+        const st = document.getElementById('mlState'); if (st) st.innerHTML = 'Hoy la app usa la <b>opción ' + l + '</b>' + (l === 2 ? ' (barra inferior)' : ' (menú actual)') + '.';
+    } catch (_) {}
+}
+async function saveMenuLayout(layout) {
+    try { const r = await authFetch('/api/admin/menu-layout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ layout: layout }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Menú: opción ' + j.layout + ' aplicada', 'success'); loadMenuLayout(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadMenuLayout = loadMenuLayout; window.saveMenuLayout = saveMenuLayout;
 async function loadRegistrationMode() {
     try {
         const r = await authFetch('/api/admin/registration-mode'); if (!r.ok) return; const j = await r.json();
@@ -15581,7 +15593,7 @@ async function diaProject() {
             '<div class="dia-group"><div class="dia-group-t">📍 Hoy, como está (la base llevada a ' + p.days + ' días, sin la inversión nueva)</div><div class="dia-kpis">' + _diaKpi('Gasto', _diaM(p.hoy.enDias.gasto), _diaM(p.hoy.gastoPorDia) + ' por día') + _diaKpi('Clientes nuevos', _diaN(p.hoy.enDias.nuevos), p.hoy.nuevosPorDia + ' por día') + _diaKpi('Venta', _diaM(p.hoy.enDias.monto), _diaM(p.hoy.montoPorDia) + ' por día') + _diaKpi('NETWIN bruto', _diaM(p.hoy.enDias.netwin)) + _diaKpi('Regalos', _diaM(p.hoy.enDias.promos)) + _diaKpi('NETO', _diaM(p.hoy.enDias.neto)) + '</div></div>' +
             '<div class="dia-group-t">🚀 Con ' + _diaM(p.spend) + ' de inversión en ' + p.days + ' días — tres panoramas</div>' +
             '<div class="dia-sc">' + _diaScen('🔻 Panorama bajo (−30 %)', 'bajo', p.bajo) + _diaScen('🎯 Panorama base', 'base', b) + _diaScen('🔺 Panorama alto (+30 %)', 'alto', p.alto) + '</div>' +
-            '<div class="dia-note" style="margin-top:8px;">La base actual (clientes de antes) sigue vendiendo ' + _diaM(p.baseActual.ventaPorDiaHoy) + ' por día → en ' + p.days + ' días: venta ' + _diaM(p.baseActual.venta) + ', regalos ' + _diaM(p.baseActual.promos) + ', neto <b>' + _diaM(p.baseActual.neto) + '</b> (ya sumado en el TOTAL de cada panorama).</div>' +
+            '<div class="dia-note" style="margin-top:8px;">La base actual (' + _diaN(p.baseActual.clientes14) + ' clientes que ya cargaban antes de los últimos 14 días) vende ' + _diaM(p.baseActual.ventaPorDiaHoy) + ' por día → en ' + p.days + ' días: venta ' + _diaM(p.baseActual.venta) + ', regalos ' + _diaM(p.baseActual.promos) + ', neto <b>' + _diaM(p.baseActual.neto) + '</b> (ya sumado en el TOTAL de cada panorama).</div>' +
             '<div class="dia-sub" style="margin-top:12px;"><b>📋 Detalle del cierre (cómo se llegó a estos números)</b></div><ol class="dia-steps">' + (p.explicacion || []).map(function (s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>' +
             '<div class="dia-note">Aproximación con el comportamiento real de tus clientes. Quedó guardada en el Historial: cuando pasen los días, revisala contra lo real y aplicá el ajuste.</div>';
     } catch (e) { out.textContent = 'Error de conexión'; }

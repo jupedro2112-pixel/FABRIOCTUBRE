@@ -124,6 +124,11 @@ document.addEventListener('change', function (ev) {
                     <span>Soporte</span>
                     <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
                 </a>
+                <!-- #480 (owner): elegir el menú de la app (opción 1 actual / opción 2 barra inferior) -->
+                <a href="#" class="nav-item" data-section="menuLayout">
+                    <span>🧭</span>
+                    <span>Elegir menú</span>
+                </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
@@ -1227,6 +1232,18 @@ document.addEventListener('change', function (ev) {
 
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
+            <section id="menuLayoutSection" class="section">
+                <div class="panel-header cfg-head">
+                    <div><h2>🧭 Elegir menú de la app</h2><div class="cfg-sub">Cómo ve el Inicio el cliente en el MENÚ FÁCIL. Se aplica a todos al instante (al volver al Inicio).</div></div>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>Opciones</b><small>Perfil, historias y Telegram quedan arriba como están en las dos.</small></div>
+                    <div class="ml-opts">
+                        <button type="button" class="ml-opt" id="mlOpt1" onclick="saveMenuLayout(1)"><b>Opción 1 · Menú actual</b><small>Saldo, CARGAR AHORA grande, reembolso / ruleta / referidos / ver la plataforma y el botón de soporte por chat.</small></button>
+                        <button type="button" class="ml-opt" id="mlOpt2" onclick="saveMenuLayout(2)"><b>Opción 2 · Barra inferior</b><small>Abajo, fija: <b>Carga auto</b> (izquierda) · <b>Inicio</b> · <b>Info</b> · <b>Soporte</b> (derecha). Arriba quedan el saludo con saldo y los accesos a reembolso / ruleta / referidos / plataforma.</small></button>
+                    </div>
+                    <div id="mlState" class="dia-note" style="margin-top:8px;">…</div>
+                </div>
+            </section>
             <section id="datosIaSection" class="section dia">
                 <div class="panel-header cfg-head">
                     <div><h2>🧠 Datos IA</h2><div class="cfg-sub">Análisis del negocio con datos reales · informe por reglas · historial y ajuste</div></div>

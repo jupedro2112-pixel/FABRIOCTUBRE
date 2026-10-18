@@ -168,8 +168,15 @@
     }
     // Pinta el menú fácil con datos reales: usuario, saldo (espejo de #userBalance), % de reembolso por período
     // (escalera real del server, nada hardcodeado), plata reclamable y % de referidos.
+    // #480: opción de menú elegida en el panel (1 = actual, 2 = barra inferior). Se lee una vez por sesión (y al volver al Inicio).
+    let _menuLayoutAt = 0;
+    async function _applyMenuLayout() {
+        if (Date.now() - _menuLayoutAt < 120000) return; _menuLayoutAt = Date.now();
+        try { const r = await fetch(VIP.config.API_URL + '/api/public/menu-layout'); const j = await r.json(); document.body.classList.toggle('menu2', Number(j && j.layout) === 2); } catch (_) {}
+    }
     function _easyPaint() {
         const v = _el('easyView'); if (!v) return;
+        _applyMenuLayout();
         try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('easyHello'); if (h) h.textContent = u ? ('Hola, ' + u) : 'Hola'; } catch (_) {}
         try { const b = _el('userBalance'), eb = _el('easyBalance'); if (b && eb && b.textContent) eb.textContent = b.textContent; } catch (_) {}
         try {

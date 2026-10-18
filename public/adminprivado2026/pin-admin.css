@@ -218,4 +218,10 @@ a { color: var(--p-red); }
 .dia .dia-sub small { font-weight: 600; color: var(--p-muted); }
 .dia ol.dia-steps { margin: 6px 0 10px; padding-left: 22px; display: grid; gap: 6px; }
 .dia ol.dia-steps li { font: 600 12.5px/1.5 var(--p-font); color: var(--p-text); background: var(--p-surface); border-radius: 10px; padding: 8px 10px; }
+/* ── #480: elegir menú ── */
+.ml-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.ml-opt { text-align: left; border: 2px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 16px; padding: 14px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; font-family: var(--p-font); }
+.ml-opt b { font-size: 14px; } .ml-opt small { color: var(--p-muted); line-height: 1.45; }
+.ml-opt.on { border-color: var(--p-red); box-shadow: 0 0 0 3px rgba(230,0,35,.12); }
+.ml-opt.on b::after { content: "  ✓ en uso"; color: var(--p-red); }
 

@@ -161,6 +161,9 @@
 
     // La captura lleva SOLO lo que el cliente tiene que guardar (owner #228): link de la
     // app, su usuario y su contraseña. Nada de CBU ni pasos (eso cambia y vive en la app).
+    // #478 (owner): título = logo de la marca; la clave se ve SIEMPRE (la guardada o la predeterminada de acceso).
+    const DEFAULT_ACCESS_PW = 'asd123';
+    const _brandLogo = new Image(); try { _brandLogo.src = '/icons/icon-192x192.png'; } catch (_) {}
     function _drawCard() {
         const W = 1080, H = 1080;
         const c = document.createElement('canvas');
@@ -172,10 +175,13 @@
         ctx.strokeStyle = '#ff2d55'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, W - 40, H - 40);
         const pad = 90;
         let y = 170;
-        ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff'; ctx.font = '900 60px Montserrat, system-ui, sans-serif';
-        ctx.fillText('MIS DATOS DE ACCESO', W / 2, y); y += 56;
-        ctx.fillStyle = '#9aa0b2'; ctx.font = '600 30px Montserrat, system-ui, sans-serif';
-        ctx.fillText('Guardá esta captura para entrar cuando quieras', W / 2, y); y += 120;
+        // Logo redondo + nombre de la marca como título
+        try { if (_brandLogo.complete && _brandLogo.naturalWidth) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 150, 70, 0, Math.PI * 2); ctx.closePath(); ctx.clip(); ctx.drawImage(_brandLogo, W / 2 - 70, 80, 140, 140); ctx.restore(); } } catch (_) {}
+        y = 290;
+        ctx.textAlign = 'center'; ctx.fillStyle = '#ffffff'; ctx.font = '900 64px Montserrat, system-ui, sans-serif';
+        ctx.fillText('PICA ROJA', W / 2, y); y += 44;
+        ctx.fillStyle = '#9aa0b2'; ctx.font = '600 28px Montserrat, system-ui, sans-serif';
+        ctx.fillText('oficial · cargas automáticas · mis datos de acceso', W / 2, y); y += 100;
         ctx.textAlign = 'left';
         function row(label, value, color) {
             ctx.fillStyle = '#9aa0b2'; ctx.font = '700 28px Montserrat, system-ui, sans-serif'; ctx.fillText(label.toUpperCase(), pad, y); y += 56;
@@ -184,8 +190,8 @@
         }
         row('Link de la app', appLink().replace(/^https?:\/\//, ''), '#ff6b6b');
         row('Usuario', username(), '#ffffff');
-        const pw = getPassword();
-        row('Contraseña', pw || '(no guardada — entrá y volvé a generar la captura)', pw ? '#ffd166' : '#ff8a80');
+        const pw = getPassword() || DEFAULT_ACCESS_PW;
+        row('Contraseña', pw, '#ffd166');
         ctx.fillStyle = '#6f7790'; ctx.font = '500 24px Montserrat, system-ui, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText('Generada el ' + new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }), W / 2, H - 70);
         return c;

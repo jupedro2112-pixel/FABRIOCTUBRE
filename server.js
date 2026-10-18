@@ -4535,6 +4535,17 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     res.status(201).json({ success: true, username: out.body.username, password: out.body.password, accessToken, platforms: out.body.platforms || [] });
   } catch (e) { logger.error('[quick-entry] ' + e.message); res.status(500).json({ error: 'Error del servidor. Probá de nuevo.' }); }
 });
+// #480 (owner): ELEGIR MENÚ de la app. Config['menuLayout'] = 1 (menú fácil actual) | 2 (barra inferior: Carga auto · Inicio · Info · Soporte).
+app.get('/api/public/menu-layout', async (req, res) => { try { const v = await getConfig('menuLayout', 1); res.set('Cache-Control', 'no-store'); res.json({ layout: Number(v) === 2 ? 2 : 1 }); } catch (_) { res.json({ layout: 1 }); } });
+app.get('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, res) => { try { const v = await getConfig('menuLayout', 1); res.json({ success: true, layout: Number(v) === 2 ? 2 : 1 }); } catch (_) { res.status(500).json({ error: 'Error' }); } });
+app.post('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const layout = Number(req.body && req.body.layout) === 2 ? 2 : 1;
+    await Config.set('menuLayout', layout, req.user.username); logger.info('[menu-layout] opción ' + layout + ' por ' + req.user.username);
+    res.json({ success: true, layout });
+  } catch (e) { res.status(500).json({ error: 'Error' }); }
+});
 app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
   res.json({ success: true, mode: await getRegistrationMode(), canEdit: req.user.role === 'admin' });
 });

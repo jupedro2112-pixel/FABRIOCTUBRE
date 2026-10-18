@@ -8,6 +8,27 @@
 
 ## Sesión 2026-10-18
 
+### 478/479/480. 📸 Captura con logo y clave visible · fondo del saludo con íconos · MENÚ OPCIÓN 2 (barra inferior) elegible desde el panel — SW v333, admin-sw v103
+**Pedidos (owner, con capturas):** (478) "la captura de datos: mismo formato, de título el logo de la marca, la clave siempre la del
+acceso, asd123 la predeterminada y que se vea siempre". (479) "en el fondo del saludo poné íconos sobre juego/apuestas, que es una
+página de cargas, sin tapar el nombre y siempre con la simpleza". (480) "abajo: Inicio, carga auto a la izquierda y soporte a la
+derecha, en el medio Info; perfil, historias y Telegram arriba como están. Cambio de prueba: en el administrador una opción debajo
+de Soporte 'Elegir menú' con el de ahora como opción 1 y éste como opción 2".
+**Qué se hizo:**
+- **#478 `autoload.js`:** la captura lleva el logo redondo (`/icons/icon-192x192.png`) + "PICA ROJA" como título; la contraseña
+  es la guardada/de sesión o, si no hay, la predeterminada de acceso (`DEFAULT_ACCESS_PW = 'asd123'`, la misma que usa la landing).
+- **#479 `pin.css`:** `.ez-top::before` con 5 íconos SVG inline (dado, ficha, cartas, rayo, moneda) en rojo al 9 % (14 % en
+  nocturno), ubicados en los bordes para no tapar nombre ni saldo.
+- **#480:** `Config['menuLayout']` (1 | 2), `GET /api/public/menu-layout` (no-store) + `GET/POST /api/admin/menu-layout`.
+  Panel: entrada "🧭 Elegir menú" debajo de Soporte → `#menuLayoutSection` con las dos tarjetas (`saveMenuLayout`). PWA:
+  `_applyMenuLayout()` (home.js, al pintar el menú fácil, cache 2 min) pone `body.menu2`; con eso aparece `#ezBar` (fija abajo:
+  Carga auto rojo · Inicio · Info · Soporte) y se ocultan CARGAR AHORA grande y el botón de chat (viven en la barra). Con la
+  opción 1 no cambia nada.
+- **#477 (ajuste):** "la base actual" del panorama ya no depende de cómo se eligió la base: es la venta por día de los últimos 14
+  días de los clientes que ya cargaban antes de esos 14 días (`ventaBaseViejaPorDia`, `clientesBaseVieja14`).
+**Archivos:** `public/js/autoload.js`, `public/js/home.js`, `public/index.html`, `public/css/pin.css`, `server.js`,
+`public/adminprivado2026/index.html`, `admin.js`, `pin-admin.css`, `src/services/datosIaService.js`, SWs.
+
 ### 477. 🧠 Datos IA: 3× más rápido (agregaciones en Mongo) · PANORAMA de inversión con base desde el inicio, regalos nuevos/recurrentes, condiciones futuras, 3 panoramas, cierre explicado y USDT — admin-sw v102
 **Pedido (owner):** "revisá bien, limpiá y hacelo más rápido que no retrase la página; que se entienda la lógica porque un mal
 cálculo me tira todo mal. Necesito: con la inversión que tengo hasta la fecha (ej. 60 días gastando 200 M) cómo va el negocio en
