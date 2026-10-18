@@ -12404,7 +12404,12 @@ app.get('/api/withdrawal/bank-status', authMiddleware, async (req, res) => {
 app.get('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const o = await getBankOutage(); const w = (await getConfig('bankOutageWaiters', [])) || [];
-    res.json({ success: true, ...o, waiters: w.length, failedWaiters: w.filter((x) => x && x.kind === 'failed').length, failStreak: _bankFailStreak, settings: await getBankSettings(), canEdit: ['admin', 'withdrawer'].includes(req.user.role) });
+    const history = await BankOutageEvent.find({}).sort({ startedAt: -1 }).limit(30).lean(); // #444
+    const texts = {};
+    for (const [k, name, def] of [['down', '/sys_bank_down', BANK_DOWN_DEFAULT], ['failClient', '/sys_bank_fail_client', BANK_FAIL_CLIENT_DEFAULT], ['up', '/sys_bank_up', BANK_UP_DEFAULT], ['upPending', '/sys_bank_up_pending', BANK_UP_PENDING_DEFAULT]]) {
+      try { const c = await Command.findOne({ name }).select('response').lean(); texts[k] = (c && c.response) || def; } catch (_) { texts[k] = def; }
+    }
+    res.json({ success: true, ...o, waiters: w.length, failedWaiters: w.filter((x) => x && x.kind === 'failed').length, failStreak: _bankFailStreak, settings: await getBankSettings(), texts, history, canEdit: ['admin', 'withdrawer'].includes(req.user.role) });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, res) => {
@@ -12420,6 +12425,14 @@ app.post('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, 
         notifyFailedClient: typeof s.notifyFailedClient === 'boolean' ? s.notifyFailedClient : cur.notifyFailedClient
       };
       await Config.set('bankOutageSettings', next, req.user.username);
+    }
+    // #444: los 4 mensajes editables desde la misma tarjeta (son los comandos /sys_bank_*).
+    if (req.body && req.body.texts && typeof req.body.texts === 'object') {
+      const map = { down: '/sys_bank_down', failClient: '/sys_bank_fail_client', up: '/sys_bank_up', upPending: '/sys_bank_up_pending' };
+      for (const k of Object.keys(map)) {
+        const v = req.body.texts[k];
+        if (typeof v === 'string' && v.trim()) await Command.updateOne({ name: map[k] }, { $set: { response: v.trim().slice(0, 1500) } });
+      }
     }
     let r = { changed: false };
     if (req.body && typeof req.body.active === 'boolean') {
@@ -12752,17 +12765,31 @@ async function getBankSettings() {
   return { ...BANK_SETTINGS_DEFAULT };
 }
 async function getBankOutage() {
-  try { const v = await getConfig('bankOutage', null); if (v && typeof v === 'object') return { active: !!v.active, mode: v.mode || 'manual', since: v.since || null, reason: v.reason || null, updatedBy: v.updatedBy || null }; } catch (_) {}
+  try { const v = await getConfig('bankOutage', null); if (v && typeof v === 'object') return { active: !!v.active, mode: v.mode || 'manual', since: v.since || null, reason: v.reason || null, updatedBy: v.updatedBy || null, eventId: v.eventId || null }; } catch (_) {}
   return { active: false, mode: 'manual', since: null, reason: null, updatedBy: null };
 }
+const BankOutageEvent = require('./src/models/BankOutageEvent'); // #444: historial
 async function setBankOutage(active, opts = {}) {
   const mode = opts.mode || 'manual', by = opts.by || 'sistema', reason = opts.reason || null;
   const cur = await getBankOutage();
   if (!!cur.active === !!active) return { changed: false, state: cur };
-  const next = { active: !!active, mode, since: active ? new Date().toISOString() : null, reason: active ? String(reason || '').slice(0, 160) || null : null, updatedBy: by, updatedAt: new Date().toISOString() };
+  const next = { active: !!active, mode, since: active ? new Date().toISOString() : cur.since, reason: active ? String(reason || '').slice(0, 160) || null : cur.reason, updatedBy: by, updatedAt: new Date().toISOString(), eventId: active ? uuidv4() : (cur.eventId || null) };
+  if (!active) { next.since = null; next.reason = null; }
   await Config.set('bankOutage', next, by);
   logger.warn(`[bank-outage] ${active ? 'ACTIVADA' : 'DESACTIVADA'} (${mode}) por ${by}${reason ? ' — ' + reason : ''}`);
-  if (!active) _notifyBankOutageWaiters().catch((e) => logger.warn('[bank-outage] aviso: ' + e.message));
+  if (active) {
+    try { await BankOutageEvent.create({ id: next.eventId, startedAt: new Date(), mode, reason: next.reason, openedBy: by, failedPayouts: mode === 'auto' ? _bankFailStreak : 0 }); } catch (e) { logger.warn('[bank-outage] historial: ' + e.message); }
+  } else {
+    // #444: cierre → avisar a los anotados y dejar el evento en el historial con hora y cantidades.
+    let n = { total: 0, waiters: 0, failed: 0 };
+    try { n = await _notifyBankOutageWaiters(); } catch (e) { logger.warn('[bank-outage] aviso: ' + e.message); }
+    try {
+      const evId = cur.eventId || null;
+      const set = { endedAt: new Date(), closedBy: by, notifiedTotal: n.total, notifiedWaiters: n.waiters, notifiedFailed: n.failed };
+      let r = evId ? await BankOutageEvent.updateOne({ id: evId }, { $set: set }) : null;
+      if (!r || !(r.modifiedCount || r.nModified)) await BankOutageEvent.create({ id: uuidv4(), startedAt: cur.since ? new Date(cur.since) : new Date(), mode: cur.mode || mode, reason: cur.reason || null, openedBy: cur.updatedBy || null, ...set });
+    } catch (e) { logger.warn('[bank-outage] historial cierre: ' + e.message); }
+  }
   return { changed: true, state: next };
 }
 // #443: la lista guarda { userId, kind: 'waiter' (quiso retirar durante la falla) | 'failed' (su pago falló) }.
@@ -12776,7 +12803,7 @@ async function _addBankOutageWaiter(userId, kind = 'waiter') {
 }
 async function _notifyBankOutageWaiters() {
   const arr = ((await getConfig('bankOutageWaiters', [])) || []).map((x) => (typeof x === 'string' ? { userId: x, kind: 'waiter' } : x)).filter((x) => x && x.userId);
-  if (!arr.length) return 0;
+  if (!arr.length) return { total: 0, waiters: 0, failed: 0 };
   await Config.set('bankOutageWaiters', [], 'sistema');
   const textUp = await renderSystemCommand('/sys_bank_up', BANK_UP_DEFAULT, {});
   const textPend = await renderSystemCommand('/sys_bank_up_pending', BANK_UP_PENDING_DEFAULT, {});
@@ -12786,8 +12813,9 @@ async function _notifyBankOutageWaiters() {
     const failed = kinds[u.id] === 'failed';
     try { await _sendUserSystemMessage(u, failed ? textPend : textUp, { push: { title: 'Banco normalizado ✅', body: failed ? 'Tu retiro pendiente se procesa ahora.' : 'Ya podés volver a pedir tu retiro.' } }); } catch (_) {}
   }
-  logger.info(`[bank-outage] avisados ${users.length} clientes (${arr.filter((x) => x.kind === 'failed').length} con pago fallido)`);
-  return users.length;
+  const failedN = users.filter((u) => kinds[u.id] === 'failed').length;
+  logger.info(`[bank-outage] avisados ${users.length} clientes (${failedN} con pago fallido)`);
+  return { total: users.length, waiters: users.length - failedN, failed: failedN };
 }
 let _bankFailStreak = 0;
 // #443: pago fallido → (1) aviso al cliente afectado y queda anotado como 'failed'; (2) al llegar al umbral (default 1) se
@@ -12811,7 +12839,16 @@ async function _bankPayoutFailed(reason, payout) {
 }
 async function _bankPayoutOk() {
   _bankFailStreak = 0;
-  try { const cur = await getBankOutage(); if (cur.active && cur.mode === 'auto') await setBankOutage(false, { mode: 'auto', by: 'auto' }); } catch (_) {}
+  try {
+    const cur = await getBankOutage();
+    if (cur.active && cur.mode === 'auto') { await setBankOutage(false, { mode: 'auto', by: 'auto' }); return; }
+    // #444: aunque la alerta no esté activa (o sea manual), si hay clientes avisados de la falla se les manda el mensaje de
+    // salida con el primer pago que sale bien, y queda en el historial como "aviso".
+    if (!cur.active) {
+      const n = await _notifyBankOutageWaiters();
+      if (n.total > 0) { try { await BankOutageEvent.create({ id: uuidv4(), startedAt: new Date(), endedAt: new Date(), mode: 'aviso', reason: 'pago OK: aviso de salida', openedBy: 'auto', closedBy: 'auto', notifiedTotal: n.total, notifiedWaiters: n.waiters, notifiedFailed: n.failed }); } catch (_) {} }
+    }
+  } catch (_) {}
 }
 const LOAD_BTN_DEFAULT = 'Comprobante aquí'; // #391 (antes 'Adjuntar comprobante aquí')
 const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';

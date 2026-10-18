@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-18
 
+### 444. 🏦 Banco con fallas: mensaje de salida siempre que un pago sale bien · mensajes editables en la tarjeta · historial con horarios y avisados — admin-sw v93
+**Pedido (owner):** "cuando alguien SÍ puede retirar, avisar a los que había avisado que fallaba; dejalo plasmado en la
+configuración como mensaje de salida; hacer un cierre: si falló, dejar la falla como historial con horario y a cuántas
+personas fue el aviso".
+**Qué se hizo:**
+- `_bankPayoutOk()` ahora avisa a los anotados **siempre** que un pago sale bien, aunque la alerta no se haya activado (o
+  sea manual): a los que esperaban `/sys_bank_up`, a los que les falló `/sys_bank_up_pending`. Si no había alerta, queda en
+  el historial como "aviso de salida".
+- **Historial:** modelo `BankOutageEvent` (inicio, cierre, modo manual/automática/aviso, motivo, quién abrió/cerró, pagos
+  fallidos, avisados total / esperaban / con pago fallido). `setBankOutage(true)` abre el evento (`eventId` en
+  `Config['bankOutage']`), `setBankOutage(false)` lo cierra con las cantidades del aviso. Tabla en la tarjeta del panel
+  (últimos 30, con duración).
+- **Mensajes editables en la misma tarjeta:** 4 textareas (cartel al retirar, al cliente cuyo pago falló, salida a los que
+  esperaban, salida al que le falló) + "Guardar mensajes" → `POST /api/admin/bank-outage {texts}` escribe los `/sys_bank_*`
+  (siguen editables también en Comandos personalizados).
+**Archivos:** `server.js`, `src/models/BankOutageEvent.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`,
+`public/admin-sw.js`.
+
 ### 443. 🏦 Banco con fallas 100% automático y configurable: aviso al que le falló, umbral, pausa, avisos al volver — SW v315, admin-sw v92
 **Pedido (owner):** "que sea automático: un cliente quiere retirar y falla → mensaje de aviso que vuelva en un rato que está
 fallando el banco; si después uno cobra sin problemas, que le avise al que falló que el banco volvió, por notificación o

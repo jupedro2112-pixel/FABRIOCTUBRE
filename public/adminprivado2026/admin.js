@@ -5742,8 +5742,29 @@ async function loadBankOutage() {
         const a = document.getElementById('boAutoChk'), t = document.getElementById('boThreshold'), p = document.getElementById('boPauseChk'), n = document.getElementById('boNotifyChk');
         if (a) a.checked = s.autoEnabled !== false; if (t) t.value = s.failThreshold || 1; if (p) p.checked = s.pauseWithdrawals !== false; if (n) n.checked = s.notifyFailedClient !== false;
         [a, t, p, n].forEach(function (el) { if (el) el.disabled = !j.canEdit; });
+        // #444: textos + historial
+        const tx = j.texts || {};
+        [['boTxtDown', 'down'], ['boTxtFail', 'failClient'], ['boTxtUp', 'up'], ['boTxtUpPending', 'upPending']].forEach(function (pair) { const el = document.getElementById(pair[0]); if (el && document.activeElement !== el) { el.value = tx[pair[1]] || ''; el.disabled = !j.canEdit; } });
+        const h = document.getElementById('bankOutageHistory');
+        if (h) {
+            const rows = j.history || [];
+            const f = function (d) { return d ? new Date(d).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'; };
+            const dur = function (e) { if (!e.endedAt) return 'en curso'; const m = Math.round((new Date(e.endedAt) - new Date(e.startedAt)) / 60000); return m < 60 ? m + ' min' : Math.round(m / 60 * 10) / 10 + ' h'; };
+            h.innerHTML = rows.length ? '<table class="data-table" style="width:100%;font-size:11.5px;"><thead><tr><th>Inicio</th><th>Cierre</th><th>Duración</th><th>Tipo</th><th>Motivo</th><th>Avisados</th><th>Por</th></tr></thead><tbody>' +
+                rows.map(function (e) { return '<tr><td>' + f(e.startedAt) + '</td><td>' + f(e.endedAt) + '</td><td>' + dur(e) + '</td><td>' + escapeHtml(e.mode === 'auto' ? 'automática' : (e.mode === 'aviso' ? 'aviso de salida' : 'manual')) + '</td><td>' + escapeHtml(e.reason || '') + '</td><td>' + (e.endedAt ? ('<b>' + (e.notifiedTotal || 0) + '</b> (' + (e.notifiedWaiters || 0) + ' esperaban · ' + (e.notifiedFailed || 0) + ' con pago fallido)') : '—') + '</td><td>' + escapeHtml((e.openedBy || '') + (e.closedBy ? ' → ' + e.closedBy : '')) + '</td></tr>'; }).join('') + '</tbody></table>'
+                : '<div style="color:#888;">Sin fallas registradas todavía.</div>';
+        }
     } catch (_) {}
 }
+async function saveBankOutageTexts() {
+    const g = function (id) { const el = document.getElementById(id); return el ? el.value : ''; };
+    try {
+        const r = await authFetch('/api/admin/bank-outage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texts: { down: g('boTxtDown'), failClient: g('boTxtFail'), up: g('boTxtUp'), upPending: g('boTxtUpPending') } }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Mensajes del banco guardados', 'success'); loadBankOutage();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.saveBankOutageTexts = saveBankOutageTexts;
 async function saveBankOutageSettings() {
     const a = document.getElementById('boAutoChk'), t = document.getElementById('boThreshold'), p = document.getElementById('boPauseChk'), n = document.getElementById('boNotifyChk');
     const settings = { autoEnabled: !!(a && a.checked), failThreshold: Number(t && t.value) || 1, pauseWithdrawals: !!(p && p.checked), notifyFailedClient: !!(n && n.checked) };
