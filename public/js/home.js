@@ -332,9 +332,13 @@
     function _paintFireLevels(st) {
         const fill = _el('fireHomeFill'), dots = _el('fireHomeDots'), rule = _el('fireHomeRule');
         // #340: la regla de cargas mínimas se pinta aunque no haya barra (tarjeta simple del home).
-        if (rule && st && st.minDeposits != null) {
+        // #405: regla por MONTO (requisito del próximo premio); el mínimo por cantidad sólo si el panel lo tiene > 0.
+        const _fmtA = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        const _reqA = Number(st && st.nextReqAmount) || 0, _reqD = Number(st && st.nextReqDays) || 0, _reqH = Number(st && st.nextReqHave) || 0, _reqDay = Number(st && st.nextReqDay) || 0;
+        if (rule && st) {
             const min = Number(st.minDeposits) || 0;
             if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas</b> entre racha y racha · si no, vuelve a 0'; rule.style.display = ''; } // #354: una sola línea
+            else if (_reqA > 0) { rule.innerHTML = '⚠️ Premio del día ' + _reqDay + ': cargá <b>' + _fmtA(_reqA) + '</b> en ' + _reqD + ' días · llevás <b>' + _fmtA(_reqH) + '</b> · si no, vuelve a 0'; rule.style.display = ''; }
             else rule.style.display = 'none';
         }
         if (!fill || !dots) return;
@@ -354,6 +358,9 @@
                 const have = st && st.depositsCount != null ? Number(st.depositsCount) : null;
                 const days = Number(st && st.depositsWindowDays) || 0;
                 rule.textContent = 'Para desbloquear cada premio: mínimo ' + min + ' cargas dentro del plazo' + (days ? ' (' + days + ' días)' : '') + (have != null ? ' · llevás ' + have + '/' + min : '') + '. Si no, la racha se reinicia.';
+                rule.style.display = '';
+            } else if (_reqA > 0) {
+                rule.innerHTML = 'Premio del día ' + _reqDay + ': cargá <b>' + _fmtA(_reqA) + '</b> en los últimos ' + _reqD + ' días · llevás <b>' + _fmtA(_reqH) + '</b>. Si no, la racha se reinicia.';
                 rule.style.display = '';
             } else rule.style.display = 'none';
         }

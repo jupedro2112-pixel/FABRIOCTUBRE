@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-18
 
+### 405. 🔥 Fueguito: el requisito es por MONTO cargado en N días (no por cantidad de cargas) — SW v280, admin-sw v85
+**Pedido (owner, con captura del panel):** "cambiar el detalle y la cantidad de cargas, que sea por monto depositado; que
+sea así, no por cantidad de carga sino por monto".
+**Contexto:** cada premio ya tenía en el panel "Requisito carga $" (`requireDeposits`) y "En N días" (`depositDays`), pero
+ese gate se había ELIMINADO del reclamo el 2026-08-05 (a favor del rollover): sólo se validaba la CANTIDAD de cargas
+(`fireMinDeposits`, #291). Ahora vale lo que dice la tabla del panel.
+**Qué se hizo:**
+- `server.js`: `_sumRealDepositsDays()` (suma de depósitos reales, misma base que el conteo). `POST /api/fire/claim-reward`
+  valida `suma(últimos depositDays) ≥ requireDeposits` del hito reclamado; si no llega → premio perdido, racha a 0, nota
+  interna, error `MIN_AMOUNT` (misma mecánica que #291). `GET /api/fire/status` expone `requireDeposits`/`depositDays` por
+  hito y `nextReqDay/Amount/Days/Have` del próximo premio. Migración one-shot `migration_fire_amount_rule_v1_done`:
+  `fireMinDeposits` = 0 (la regla por cantidad queda apagada; el campo sigue en el panel por si la quiere de vuelta).
+- **PWA:** regla del home (`#fireHomeRule`) y del modal (`#fireRuleTop`, condición y lista de premios) hablan de monto:
+  "Premio del día 10: cargá $200.000 en 20 días · llevás $X · si no, vuelve a 0"; cada hito muestra "requiere $X cargados en
+  N días". Si el panel vuelve a poner cantidad > 0, los textos viejos de cantidad reaparecen (prioridad a la cantidad).
+- **Panel:** la etiqueta del mínimo de cantidad aclara "0 = apagado; el requisito vigente es por MONTO".
+**Archivos:** `server.js`, `public/js/home.js`, `public/js/fire.js`, `public/index.html`, `public/firebase-messaging-sw.js`,
+`public/adminprivado2026/index.html`, `public/admin-sw.js`.
+
 ### 404. 👤 Perfil reordenado y más compacto — SW v279
 **Pedido (owner):** "sacá de perfil: notificaciones ponelo abajo de modo nocturno, fueguito ponelo abajo de capturar datos,
 después dejá menú fácil/completo también en la parte superior y arriba de todo el canjear código; y achicá un poco todo

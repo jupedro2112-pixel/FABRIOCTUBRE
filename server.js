@@ -11679,6 +11679,15 @@ async function initializeData() {
       console.log('✅ Fueguito (#398): restaurados los 3 hitos de siempre (10/20/30 días), 10 cargas entre rachas, rollover x5');
     }
   } catch (e) { console.warn('[startup-migration] fueguito restore (#398):', e.message); }
+  // #405 (owner 2026-10-18): el requisito del fueguito pasa a ser por MONTO (columnas del panel) → el mínimo de CANTIDAD de
+  // cargas se apaga (0) una vez. Si el owner lo quiere de vuelta, lo sube desde el panel.
+  try {
+    if (!(await getConfig('migration_fire_amount_rule_v1_done', false))) {
+      await Config.set('fireMinDeposits', 0, 'startup-migration');
+      await Config.set('migration_fire_amount_rule_v1_done', true, 'startup-migration');
+      console.log('✅ Fueguito (#405): requisito por monto (mínimo de cantidad de cargas = 0)');
+    }
+  } catch (e) { console.warn('[startup-migration] fueguito por monto (#405):', e.message); }
   // #391 (owner 2026-10-18): textos nuevos de los botones de carga automática. Pisa SOLO si todavía tienen el default
   // viejo (si el owner ya los editó en COMANDOS, se respetan). One-shot.
   try {
@@ -13875,6 +13884,18 @@ async function getFireMinDeposits() {
   return FIRE_MIN_DEPOSITS_DEFAULT;
 }
 // Cargas REALES (deposits sin regalos) del cliente en los últimos `days` días.
+// #405 (owner): el requisito del premio del fueguito es por MONTO cargado en N días (columnas "Requisito carga $" / "En N
+// días" del panel), no por cantidad de cargas. Misma base que el conteo: depósitos reales (sin regalos).
+async function _sumRealDepositsDays(userId, username, days) {
+  try {
+    const since = new Date(Date.now() - Math.max(1, Number(days) || 1) * 86400000);
+    const r = await Transaction.aggregate([
+      { $match: { $or: [{ userId }, { username }], type: 'deposit', 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] }, timestamp: { $gte: since } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    return Math.round(Number(r && r[0] && r[0].total) || 0);
+  } catch (_) { return 0; }
+}
 async function _countRealDepositsDays(userId, username, days) {
   try {
     const since = new Date(Date.now() - Math.max(1, Number(days) || 1) * 86400000);
@@ -14054,9 +14075,16 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
         type: m.type,
         reward: m.type === 'cash' ? m.reward : null,
         hasDepositRequirement: m.requireDeposits > 0,
+        requireDeposits: m.requireDeposits || 0, // #405: monto a cargar…
+        depositDays: m.depositDays || 0,         // …en estos días
         status
       };
     });
+    // #405: requisito por MONTO del próximo premio (para la regla del home y del modal).
+    const _nextMs = FIRE_MILESTONES.find(m => m.day > currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || null;
+    const _nextReqAmount = _nextMs ? (Number(_nextMs.requireDeposits) || 0) : 0;
+    const _nextReqDays = _nextMs ? (Number(_nextMs.depositDays) || 30) : 30;
+    const _nextReqHave = _nextReqAmount > 0 ? await _sumRealDepositsDays(userId, req.user.username, _nextReqDays) : 0;
     
     res.json({
       streak: currentStreak,
@@ -14075,7 +14103,12 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
       // #291: mínimo de cargas en el plazo del próximo premio (y cuántas lleva) para la barra del home.
       minDeposits: await getFireMinDeposits(),
       depositsWindowDays: _fireNextDay,
-      depositsCount: await _countRealDepositsDays(userId, req.user.username, _fireNextDay)
+      depositsCount: await _countRealDepositsDays(userId, req.user.username, _fireNextDay),
+      // #405: requisito por MONTO del próximo premio
+      nextReqDay: _nextMs ? _nextMs.day : null,
+      nextReqAmount: _nextReqAmount,
+      nextReqDays: _nextReqDays,
+      nextReqHave: _nextReqHave
     });
   } catch (error) {
     console.error('Error obteniendo estado del fueguito:', error);
@@ -14221,11 +14254,34 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
         });
       }
     }
-    // 🪦 Acá estaba el "Req 6": el premio exigía actividad de CARGAS del período
-    // (milestone.requireDeposits vía getDepositsInPeriod). ELIMINADO (owner
-    // 2026-08-05): el candado ahora es el ROLLOVER — el premio se acredita con
-    // objetivo de apuestas (x5 default) y la plataforma no deja retirarlo hasta
-    // cumplirlo, así que ya no hace falta gate previo para reclamar.
+    // #405 (owner 2026-10-18): requisito por MONTO — "que sea por monto depositado, no por cantidad de cargas". El hito
+    // (panel: Requisito carga $ / En N días) exige haber cargado ≥ requireDeposits en los últimos depositDays días. Si no
+    // llega, igual que la regla #291: premio perdido y racha a 0. (Este gate había sido eliminado el 2026-08-05 a favor del
+    // rollover; el owner lo vuelve a pedir, y el rollover x5 sigue aplicándose al acreditar.)
+    try {
+      const _msAll = await getFireMilestones();
+      const _ms = _msAll.find(m => m.day === Number(fireStreak.pendingCashRewardDay));
+      const _need = _ms ? (Number(_ms.requireDeposits) || 0) : 0;
+      if (_need > 0) {
+        const _dd = Math.max(1, Number(_ms.depositDays) || 30);
+        const _sum = await _sumRealDepositsDays(userId, username, _dd);
+        if (_sum < _need) {
+          const _fmt = (n) => '$' + Math.round(n).toLocaleString('es-AR');
+          fireStreak.streak = 0;
+          fireStreak.lastReset = new Date();
+          fireStreak.pendingCashReward = 0;
+          fireStreak.pendingCashRewardDay = 0;
+          fireStreak.pendingCashRewardDesc = '';
+          fireStreak.pendingCashRewardDate = '';
+          await fireStreak.save();
+          _emitAdminOnlyChatNote(userId, username, `🔥 Fueguito: quiso cobrar el premio del día ${_ms.day} pero cargó ${_fmt(_sum)} en los últimos ${_dd} días (requisito ${_fmt(_need)}). Premio perdido y racha reiniciada (regla #405, por monto). No hay que hacer nada.`).catch(() => {});
+          return res.status(400).json({
+            error: `Para desbloquear este premio necesitás haber cargado ${_fmt(_need)} en los últimos ${_dd} días (llevás ${_fmt(_sum)}). La racha se reinició: ¡arrancá de nuevo y cargá seguido! 🔥`,
+            code: 'MIN_AMOUNT', have: _sum, min: _need, days: _dd, streakReset: true
+          });
+        }
+      }
+    } catch (e) { logger.warn('[fire] gate por monto: ' + e.message); }
 
     // RESERVA ATÓMICA anti doble/N-cobro (TOCTOU): consumimos el premio pendiente
     // ANTES de acreditar. `findOneAndUpdate` con guard `pendingCashReward > 0` es

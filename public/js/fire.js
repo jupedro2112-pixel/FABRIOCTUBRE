@@ -70,16 +70,22 @@ VIP.fire = (function () {
         }
 
         // #348: la misma regla arriba del modal
-        try { const top = document.getElementById('fireRuleTop'); const r0 = VIP.state.fireStatus.minDeposits; const m0 = (r0 == null || r0 === '') ? 10 : (Number(r0) || 0); if (top) { top.innerHTML = m0 > 0 ? ('⚠️ Mínimo <b>' + m0 + ' cargas entre racha y racha</b> para poder reclamar cada premio · si no, el fueguito vuelve a 0') : ''; top.style.display = m0 > 0 ? '' : 'none'; } } catch (_) {}
+        // #405: regla por MONTO (el mínimo por cantidad sólo si el panel lo tiene > 0).
+        const _fA = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        const _st = VIP.state.fireStatus || {};
+        const _rqA = Number(_st.nextReqAmount) || 0, _rqD = Number(_st.nextReqDays) || 0, _rqH = Number(_st.nextReqHave) || 0, _rqDay = Number(_st.nextReqDay) || 0;
+        try { const top = document.getElementById('fireRuleTop'); const r0 = _st.minDeposits; const m0 = (r0 == null || r0 === '') ? 0 : (Number(r0) || 0); if (top) { top.innerHTML = m0 > 0 ? ('⚠️ Mínimo <b>' + m0 + ' cargas entre racha y racha</b> para poder reclamar cada premio · si no, el fueguito vuelve a 0') : (_rqA > 0 ? ('⚠️ Para cobrar el premio del día ' + _rqDay + ' tenés que haber cargado <b>' + _fA(_rqA) + ' en ' + _rqD + ' días</b> (llevás ' + _fA(_rqH) + ') · si no, el fueguito vuelve a 0') : ''); top.style.display = (m0 > 0 || _rqA > 0) ? '' : 'none'; } } catch (_) {}
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
             // #347: si el server todavía no manda el mínimo (sin redeploy) se muestra el default 10; sólo 0 explícito lo apaga.
             const _mdRaw = VIP.state.fireStatus.minDeposits;
-            const _md = (_mdRaw == null || _mdRaw === '') ? 10 : (Number(_mdRaw) || 0);
+            const _md = (_mdRaw == null || _mdRaw === '') ? 0 : (Number(_mdRaw) || 0); // #405: default 0 (la regla es por monto)
             const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
             activityConditionEl.innerHTML = _md > 0
                 ? '📋 <strong>Condición:</strong> entre racha y racha necesitás como mínimo <strong>' + _md + ' cargas</strong> para poder reclamar el premio (ej.: para el premio del día ' + _d1 + ', al menos ' + _md + ' cargas en esos ' + _d1 + ' días). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
-                : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.';
+                : (_rqA > 0
+                    ? '📋 <strong>Condición:</strong> cada premio pide un <strong>monto cargado</strong> dentro de su plazo (ej.: premio del día ' + _rqDay + ' → <strong>' + _fA(_rqA) + ' en ' + _rqD + ' días</strong>; llevás ' + _fA(_rqH) + '). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
+                    : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.');
         }
 
         const pendingBonusEl = document.getElementById('firePendingBonus');
@@ -147,8 +153,12 @@ VIP.fire = (function () {
                 const depositNote = (_fsMult > 0 && m.type === 'cash' && m.reward)
                     ? ` <span style="font-size:10px;color:#ffb84d;">(retiro con rollover x${_fsMult})</span>`
                     : '';
+                // #405: requisito por monto de cada premio
+                const reqNote = (Number(m.requireDeposits) > 0)
+                    ? `<br><span style="font-size:10.5px;color:#aaa;">requiere ${_fA(m.requireDeposits)} cargados en ${Number(m.depositDays) || 30} días</span>`
+                    : '';
                 return `<div class="milestone-item ${statusClass}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
-                    <span>${statusIcon} <strong>Día ${m.day}</strong>: ${rewardText}${depositNote}</span>
+                    <span>${statusIcon} <strong>Día ${m.day}</strong>: ${rewardText}${depositNote}${reqNote}</span>
                     <span style="font-size:11px;color:#aaa;">${statusLabel}</span>
                 </div>`;
             }).join('');
