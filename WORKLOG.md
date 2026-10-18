@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-18
 
+### 409. 💸 Botones "Comprobante aquí" / "Retirar premio": mitad y mitad, sin desbordar — SW v283
+**Pedido (owner, con captura):** "está sobresaliendo; hacé que los dos ocupen aprox de ancho como el paso 2 y separalo en
+dos, comprobante aquí y retirar premio así en verde".
+**Qué se hizo (pin.css):** `.home-actions-row` con margen lateral de 12px (ancho de las tarjetas de pasos) y cada botón
+`flex: 1 1 0; width/max-width: 50%; min-width: 0; overflow: hidden` (el `nowrap` de #400 sin `min-width:0` hacía que el
+botón verde empujara hacia afuera). Título 12px, bajada 9,5px, ícono del clip 16px. Retirar premio sigue verde (#391).
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
+### 408. 🧹 Panel: fuera el grupo "No se usa" (Automatización y Estrategia de bonos) · "Comandos" → "Configuración / Comandos" — admin-sw v86
+**Pedido (owner):** "en el admin lo que dice no se usa limpiar, limpialo todo; al título comandos ponelo arriba de todo como
+configuración y abajo comandos".
+**Qué se hizo (`adminprivado2026/index.html`):** se eliminaron del menú el rótulo "No se usa (limpiar)" y los ítems
+Automatización (`data-section="automations"`, con su `#automationsBadge`) y Estrategia de bonos, y se quitaron del HTML las
+dos `<section>` (`#automationsSection`, `#bonusStrategySection`). En admin.js quedan `loadAutomations()` /
+`loadBonusStrategy()` (sólo se disparaban al entrar a esas secciones) y el pintado del badge está null-guarded: no rompe.
+Los flags del backend (`INACTIVIDAD_DISABLED`, `BONUS_STRATEGY_DISABLED`) siguen apagando esos motores. Cabecera de la
+sección: "⚙️ Configuración" y debajo "COMANDOS" (`.cfg-head/.cfg-sub`); el ítem del menú pasa a decir "Configuración"
+(`data-section="commands"` no cambia).
+**Archivos:** `public/adminprivado2026/index.html`, `public/adminprivado2026/pin-admin.css`, `public/admin-sw.js`.
+
 ### 407. ℹ️ Info: "La plataforma que quieras" (antes "Dos plataformas") con jugaygana en minúscula — SW v282
 **Pedido (owner):** "en la info dice dos plataformas, agregamos jugaygana: poné jugaygana en minúscula ahí y poné de título
 'La plataforma que quieras', con el mismo usuario, cada plataforma configurada de forma independiente, elegí la que quieras

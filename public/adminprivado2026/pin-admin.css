@@ -144,3 +144,7 @@ a { color: var(--p-red); }
 @media (max-width: 640px) { .cmd-acc-head { grid-template-columns: 40px 1fr 20px; padding: 12px 14px; } .cmd-acc-ico { width: 40px; height: 40px; font-size: 19px; } .cmd-acc-t { font-size: 15px; } }
 /* ── atención: chat viejo y soporte al pie del menú ── */
 .nav-item.nav-legacy { opacity: .75; }
+/* ── #408: cabecera de Configuración (título arriba, "Comandos" abajo) ── */
+.cfg-head h2 { margin: 0 !important; }
+.cfg-sub { font: 700 12px var(--p-font); color: var(--p-muted); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+

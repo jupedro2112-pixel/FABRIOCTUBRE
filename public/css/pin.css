@@ -826,4 +826,11 @@ body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 .profile-modal .pf-row.pf-row-link .pf-k { order: 1; min-width: 0 !important; flex: 1 1 auto; }
 .profile-modal .pf-row.pf-row-link .pf-copy { order: 2; margin-left: auto; }
 .profile-modal .pf-row.pf-row-link .pf-link { order: 3; flex: 1 1 100% !important; width: 100%; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; word-break: normal !important; font-size: 12px !important; font-weight: 700 !important; letter-spacing: 0 !important; }
+/* ── #409 (owner): los dos botones a MITAD y MITAD, dentro del ancho de las tarjetas de pasos, sin desbordar ── */
+.home-actions-row, body.home-full .home-actions-row { display: flex !important; gap: 8px !important; margin: 6px 12px !important; width: auto !important; max-width: 100%; box-sizing: border-box; }
+.home-actions-row > .load-row-btn, .home-actions-row > .withdraw-row-btn, body.home-full .home-actions-row .withdraw-row-btn, body.home-full .load-row-btn { flex: 1 1 0 !important; width: 50% !important; max-width: 50% !important; min-width: 0 !important; margin: 0 !important; overflow: hidden !important; box-sizing: border-box; padding: 9px 12px !important; }
+.home-actions-row .lr-text { min-width: 0 !important; overflow: hidden; flex: 1 1 auto; }
+.home-actions-row .lr-text b { font-size: 12px !important; }
+.home-actions-row .lr-text small { font-size: 9.5px !important; }
+.home-actions-row .load-row-btn svg { flex: 0 0 auto; width: 16px; height: 16px; }
 
