@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 485. 📐 Inicio completo: entra la línea "pasar al menú fácil" (todo apenas más chico; deslizable si no entra) — SW v336
+**Pedido (owner, con captura):** "abajo no se ve el texto para pasar al menú fácil; achicá un poco todo para que entre, apenas".
+**Qué se hizo:** en `pin.css` (#485) el `.entry-view` pasa a `overflow-y: auto` con padding inferior (el `overflow: hidden` de #337
+escondía la última línea cuando no entraba) y se achican apenas gap, cartel superior, pastillas de servicios, alto mínimo del
+recuadro de fotos y la tarjeta de opiniones.
+**Archivos:** `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 484. 🧮 Panorama = pestaña principal de Datos IA · base SIEMPRE desde que la página empezó a recibir clientes — admin-sw v106
 **Pedido (owner):** "este final hacelo como análisis principal en Datos IA, es el que más voy a ver; siempre un análisis completo
 desde que empezó hasta la fecha; la fecha es cuando empezó la plataforma a recibir clientes; si selecciono una fecha vieja tomá
