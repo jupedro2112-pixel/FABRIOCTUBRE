@@ -1302,12 +1302,13 @@ document.addEventListener('change', function (ev) {
                         <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stAfBlock" style="width:auto;"> Sin premio si retiró tanto o más de lo que cargó en la semana</label>
                     </div>
                     <!-- #514: NIVELES de misiones — cada nivel tiene sus misiones; el cliente entra por lo que carga por semana y sube al completar todas -->
-                    <div class="dia-sub"><b>🪜 Niveles</b> <small>el cliente entra al nivel según su carga semanal promedio (últimas 4 semanas); si completa TODAS las misiones de su nivel, la semana siguiente pasa al nivel de arriba (más difícil, premios más grandes); si pasa N semanas sin cumplir ninguna, baja un nivel ganado.</small></div>
+                    <div class="dia-sub"><b>🪜 Niveles</b> <small>el cliente entra al nivel según su <b>nivel VIP</b> (Bronce · Plata · Oro · Platino · Diamante · Black, la escalera de Niveles VIP): al subir de VIP le tocan misiones más difíciles y premios más grandes. Además, si completa TODAS las misiones de su nivel en la semana, la siguiente juega un nivel más arriba; si pasa N semanas sin cumplir ninguna, baja ese nivel ganado.</small></div>
                     <div class="dia-bar dia-bar-in">
                         <label>Nivel que estás editando<select id="stTierSel" onchange="stratTierSwitch()"></select></label>
                         <label>Nombre<input type="text" id="stTierName" maxlength="30" style="width:120px;"></label>
                         <label>Emoji<input type="text" id="stTierEmoji" maxlength="4" style="width:50px;"></label>
-                        <label>Entra con carga semanal ≥ $<input type="number" id="stTierMin" min="0" step="1000" style="width:120px;"></label>
+                        <label>Entra desde el nivel VIP<select id="stTierVip"></select></label>
+                        <label>Carga semanal mínima $ (opc.)<input type="number" id="stTierMin" min="0" step="1000" style="width:110px;" title="Además del nivel VIP, si querés exigir una carga semanal promedio (0 = no)"></label>
                         <button class="btn-secondary btn-small" onclick="stratTierAdd()">+ Nivel</button>
                         <button class="btn-secondary btn-small" onclick="stratTierRemove()">🗑 Quitar nivel</button>
                         <label>Baja un nivel tras (semanas sin cumplir)<input type="number" id="stDemote" min="1" max="8" style="width:60px;"></label>

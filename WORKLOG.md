@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 515. 🏅 Misiones atadas al SISTEMA DE NIVELES VIP (Bronce · Plata · Oro · Platino · Diamante · Black) — SW v361, admin-sw v119
+**Pedido (owner):** "usá el sistema de niveles".
+**Qué se hizo:** los niveles de misiones ya no se definen por carga semanal sino por la **familia del nivel VIP** del cliente
+(`User.vipLevel`, escalera de #292): cada nivel de misiones tiene `vipFrom` (Bronce 0 · Plata 3 · Oro 6 · Platino 9 · Diamante 12 ·
+Black 15) con misiones y premios crecientes (Bronce $3.000 … Black $120.000–200.000). Al subir de VIP (por lo jugado de por vida)
+le tocan misiones más difíciles; completar TODAS las de su nivel en una semana lo sube una familia de misiones aunque el VIP no
+llegue (promo), y N semanas sin cumplir ninguna lo baja. La carga semanal mínima queda como exigencia opcional extra por nivel.
+Panel: "Entra desde el nivel VIP" con la lista real de niveles. App: "Nivel 🥈 Plata · Tu nivel VIP: Plata II · Completá las 3 y
+pasás a 🥇 Oro (también al llegar a VIP Oro I)". Fix: la config guardada sin `tiers` ya no arma un nivel "Base" único: usa los
+defaults por familia.
+**Archivos:** `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/js/home.js`, `public/index.html`, SWs.
+
 ### 514. 🪜 MISIONES POR NIVEL DE CLIENTE: cada nivel con sus misiones y premios; el que completa todas sube — SW v360, admin-sw v118
 **Pedido (owner):** "diferentes tipos de misiones semanales según el tipo de cliente, regalos acordes, y cada vez que suben,
 niveles más difíciles; detallalo bien".

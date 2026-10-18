@@ -5792,7 +5792,7 @@ async function setBankOutageUI(active) {
 window.loadBankOutage = loadBankOutage; window.setBankOutageUI = setBankOutageUI;
 // #421: modo de registro (tilde en Configuración → Registro de clientes)
 // #504: estrategia clientes · publicidad
-let _stTypes = {}, _stWeek = [], _stTiers = [], _stTierIdx = 0;
+let _stTypes = {}, _stWeek = [], _stTiers = [], _stTierIdx = 0, _stVip = [];
 async function stratLoad() {
     try {
         const r = await authFetch('/api/admin/strategy'); const j = await r.json(); if (!r.ok) { showToast(j.error || 'Error', 'error'); return; }
@@ -5803,23 +5803,24 @@ async function stratLoad() {
         g('stSdOn').checked = !!j.secondDeposit.enabled; g('stSdPct').value = j.secondDeposit.pct; g('stSdAfter').value = j.secondDeposit.afterHours; g('stSdValid').value = j.secondDeposit.validHours;
         const s = j.stats.secondDeposit; g('stSdInfo').textContent = 'Últimos 30 días: ' + s.offered30 + ' ofrecidos · ' + s.used30 + ' usados · ' + s.expired30 + ' vencidos';
         g('stMsOn').checked = !!j.missions.enabled; const af = j.missions.antiFraud || {}; g('stAfRoll').value = af.rolloverX != null ? af.rolloverX : 3; g('stAfPct').value = af.maxRewardPctOfDeposits != null ? af.maxRewardPctOfDeposits : 20; g('stAfMin').value = af.minRewardArs != null ? af.minRewardArs : 500; g('stAfBlock').checked = af.blockIfNetWithdrawn !== false; g('stMsInfo').textContent = 'Semana ' + j.stats.weekKey + ': ' + _stWeek.reduce((a, x) => a + x.n, 0) + ' misiones cumplidas · últimos 30 días ' + j.stats.missions30.n + ' por $' + Number(j.stats.missions30.amt || 0).toLocaleString('es-AR') + (j.stats.failedWeek ? ' · ⚠ ' + j.stats.failedWeek + ' con el crédito rebotado por la plataforma (se reintentan solos)' : '');
+        _stVip = j.vipLevels || []; const vs = document.getElementById('stTierVip'); if (vs) vs.innerHTML = [{ idx: 0, name: 'Bronce I', emoji: '🥉' }].concat(_stVip).map((l) => '<option value="' + l.idx + '">' + l.idx + ' · ' + (l.emoji || '') + ' ' + escapeHtml(l.name) + '</option>').join('');
         _stTiers = JSON.parse(JSON.stringify(j.missions.tiers || [])); _stTierIdx = Math.min(_stTierIdx, Math.max(0, _stTiers.length - 1)); g('stDemote').value = j.missions.demoteAfterWeeks || 2;
         const pr = (j.stats.promos || []).reduce((a, x) => a + x.n, 0); g('stTierInfo').textContent = pr + ' clientes con niveles ganados';
         _stTierPaint();
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 // #514: niveles
-function _stTierSync() { const t = _stTiers[_stTierIdx]; if (!t) return; t.name = document.getElementById('stTierName').value.trim() || t.name; t.emoji = document.getElementById('stTierEmoji').value.trim() || t.emoji; t.minWeekly = Number(document.getElementById('stTierMin').value) || 0; t.items = _stReadRows(); }
+function _stTierSync() { const t = _stTiers[_stTierIdx]; if (!t) return; t.name = document.getElementById('stTierName').value.trim() || t.name; t.emoji = document.getElementById('stTierEmoji').value.trim() || t.emoji; t.vipFrom = Number(document.getElementById('stTierVip').value) || 0; t.minWeekly = Number(document.getElementById('stTierMin').value) || 0; t.items = _stReadRows(); }
 function _stReadRows() { return Array.from(document.querySelectorAll('#stMsRows tr')).map(function (tr) { return { id: tr.dataset.id, active: tr.querySelector('.st-act').checked, title: tr.querySelector('.st-title').value.trim(), type: tr.querySelector('.st-type').value, target: Number(tr.querySelector('.st-target').value), minAmount: Number(tr.querySelector('.st-min').value), rewardArs: Number(tr.querySelector('.st-reward').value) }; }).filter((m) => m.title); }
 function _stTierPaint() {
     const sel = document.getElementById('stTierSel'); if (!sel) return;
-    sel.innerHTML = _stTiers.map((t, i) => '<option value="' + i + '"' + (i === _stTierIdx ? ' selected' : '') + '>' + escapeHtml((t.emoji || '') + ' ' + t.name + ' · desde $' + Number(t.minWeekly || 0).toLocaleString('es-AR') + '/sem') + '</option>').join('');
+    const vn = (i) => { const l = _stVip.find((x) => x.idx === i); return l ? l.name : (i === 0 ? 'Bronce I' : 'VIP ' + i); }; sel.innerHTML = _stTiers.map((t, i) => '<option value="' + i + '"' + (i === _stTierIdx ? ' selected' : '') + '>' + escapeHtml((t.emoji || '') + ' ' + t.name + ' · desde VIP ' + vn(t.vipFrom || 0)) + '</option>').join('');
     const t = _stTiers[_stTierIdx]; if (!t) { _stRows([]); return; }
-    document.getElementById('stTierName').value = t.name || ''; document.getElementById('stTierEmoji').value = t.emoji || ''; document.getElementById('stTierMin').value = t.minWeekly || 0;
+    document.getElementById('stTierName').value = t.name || ''; document.getElementById('stTierEmoji').value = t.emoji || ''; document.getElementById('stTierVip').value = String(t.vipFrom || 0); document.getElementById('stTierMin').value = t.minWeekly || 0;
     _stRows(t.items || []);
 }
 function stratTierSwitch() { _stTierSync(); _stTierIdx = Number(document.getElementById('stTierSel').value) || 0; _stTierPaint(); }
-function stratTierAdd() { _stTierSync(); const last = _stTiers[_stTiers.length - 1]; _stTiers.push({ id: 't' + Date.now().toString(36), name: 'Nivel ' + (_stTiers.length + 1), emoji: '🎯', minWeekly: last ? Math.round(last.minWeekly * 2) || 50000 : 0, items: [] }); _stTierIdx = _stTiers.length - 1; _stTierPaint(); }
+function stratTierAdd() { _stTierSync(); const last = _stTiers[_stTiers.length - 1]; _stTiers.push({ id: 't' + Date.now().toString(36), name: 'Nivel ' + (_stTiers.length + 1), emoji: '🎯', vipFrom: last ? Math.min(19, (last.vipFrom || 0) + 3) : 0, minWeekly: 0, items: [] }); _stTierIdx = _stTiers.length - 1; _stTierPaint(); }
 function stratTierRemove() { if (_stTiers.length <= 1) { showToast('Tiene que quedar al menos un nivel', 'error'); return; } if (!confirm('¿Quitar este nivel y sus misiones?')) return; _stTiers.splice(_stTierIdx, 1); _stTierIdx = 0; _stTierPaint(); }
 window.stratTierSwitch = stratTierSwitch; window.stratTierAdd = stratTierAdd; window.stratTierRemove = stratTierRemove;
 function _stRows(items) {

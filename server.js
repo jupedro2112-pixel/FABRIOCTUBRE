@@ -19154,23 +19154,35 @@ const MissionClaim = require('./src/models/MissionClaim');
 // #514 (owner): MISIONES POR NIVEL DE CLIENTE. El nivel sale de lo que carga por semana (promedio de las últimas 4) + los niveles
 // ganados por completar TODAS las misiones de una semana (`User.missionTier.promo`). Cada nivel tiene sus misiones, más difíciles
 // y con premios más grandes. Dos semanas seguidas sin cumplir ninguna → baja un nivel ganado.
+// #515 (owner: "usá el sistema de niveles"): los niveles de misiones son las FAMILIAS del nivel VIP del cliente (`User.vipLevel`,
+// escalera de 19 niveles de #292): Bronce (idx 0–2) · Plata (3–5) · Oro (6–8) · Platino (9–11) · Diamante (12–14) · Black (15–19).
+// `vipFrom` = primer idx VIP de la familia. Al subir de nivel VIP (por lo jugado de por vida) le tocan misiones más difíciles; además,
+// completar TODAS las de su nivel en una semana lo sube una familia de misiones (promo) aunque el VIP todavía no llegue.
 const MISSION_TIERS_DEFAULT = [
-  { id: 'bronce', name: 'Bronce', emoji: '🥉', minWeekly: 0, items: [
+  { id: 'bronce', name: 'Bronce', emoji: '🥉', vipFrom: 0, minWeekly: 0, items: [
     { id: 'b_3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
     { id: 'b_3dias', title: 'Cargá 3 días distintos', type: 'deposit_days', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
     { id: 'b_30k', title: 'Cargá $30.000 en la semana', type: 'deposit_total', target: 30000, minAmount: 0, rewardArs: 3000, active: true } ] },
-  { id: 'plata', name: 'Plata', emoji: '🥈', minWeekly: 60000, items: [
+  { id: 'plata', name: 'Plata', emoji: '🥈', vipFrom: 3, minWeekly: 0, items: [
     { id: 'p_5cargas', title: '5 cargas en la semana', type: 'deposits_count', target: 5, minAmount: 10000, rewardArs: 8000, active: true },
     { id: 'p_4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 10000, rewardArs: 8000, active: true },
     { id: 'p_100k', title: 'Cargá $100.000 en la semana', type: 'deposit_total', target: 100000, minAmount: 0, rewardArs: 10000, active: true } ] },
-  { id: 'oro', name: 'Oro', emoji: '🥇', minWeekly: 200000, items: [
+  { id: 'oro', name: 'Oro', emoji: '🥇', vipFrom: 6, minWeekly: 0, items: [
     { id: 'o_8cargas', title: '8 cargas en la semana', type: 'deposits_count', target: 8, minAmount: 15000, rewardArs: 20000, active: true },
     { id: 'o_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 15000, rewardArs: 20000, active: true },
     { id: 'o_300k', title: 'Cargá $300.000 en la semana', type: 'deposit_total', target: 300000, minAmount: 0, rewardArs: 30000, active: true } ] },
-  { id: 'diamante', name: 'Diamante', emoji: '💎', minWeekly: 600000, items: [
-    { id: 'd_12cargas', title: '12 cargas en la semana', type: 'deposits_count', target: 12, minAmount: 20000, rewardArs: 50000, active: true },
-    { id: 'd_6dias', title: 'Cargá 6 días distintos', type: 'deposit_days', target: 6, minAmount: 20000, rewardArs: 50000, active: true },
-    { id: 'd_800k', title: 'Cargá $800.000 en la semana', type: 'deposit_total', target: 800000, minAmount: 0, rewardArs: 80000, active: true } ] }
+  { id: 'platino', name: 'Platino', emoji: '💠', vipFrom: 9, minWeekly: 0, items: [
+    { id: 'pl_10cargas', title: '10 cargas en la semana', type: 'deposits_count', target: 10, minAmount: 20000, rewardArs: 35000, active: true },
+    { id: 'pl_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 20000, rewardArs: 35000, active: true },
+    { id: 'pl_500k', title: 'Cargá $500.000 en la semana', type: 'deposit_total', target: 500000, minAmount: 0, rewardArs: 50000, active: true } ] },
+  { id: 'diamante', name: 'Diamante', emoji: '💎', vipFrom: 12, minWeekly: 0, items: [
+    { id: 'd_12cargas', title: '12 cargas en la semana', type: 'deposits_count', target: 12, minAmount: 25000, rewardArs: 60000, active: true },
+    { id: 'd_6dias', title: 'Cargá 6 días distintos', type: 'deposit_days', target: 6, minAmount: 25000, rewardArs: 60000, active: true },
+    { id: 'd_1m', title: 'Cargá $1.000.000 en la semana', type: 'deposit_total', target: 1000000, minAmount: 0, rewardArs: 100000, active: true } ] },
+  { id: 'black', name: 'Black', emoji: '🖤', vipFrom: 15, minWeekly: 0, items: [
+    { id: 'bk_15cargas', title: '15 cargas en la semana', type: 'deposits_count', target: 15, minAmount: 30000, rewardArs: 120000, active: true },
+    { id: 'bk_7dias', title: 'Cargá los 7 días', type: 'deposit_days', target: 7, minAmount: 30000, rewardArs: 120000, active: true },
+    { id: 'bk_2m', title: 'Cargá $2.000.000 en la semana', type: 'deposit_total', target: 2000000, minAmount: 0, rewardArs: 200000, active: true } ] }
 ];
 const STRATEGY_DEFAULT = {
   secondDeposit: { enabled: true, pct: 50, afterHours: 24, validHours: 72 },
@@ -19194,8 +19206,8 @@ async function getStrategyConfig() {
   const normItems = (arr) => (Array.isArray(arr) ? arr : []).filter((m) => m && m.id && MISSION_TYPES[m.type]).map((m) => ({ id: String(m.id).slice(0, 30), title: String(m.title || '').slice(0, 60), type: m.type, target: Math.max(1, Number(m.target) || 1), minAmount: Math.max(0, Number(m.minAmount) || 0), rewardArs: Math.max(0, Math.round(Number(m.rewardArs) || 0)), active: m.active !== false })).slice(0, 12);
   ms.items = normItems(ms.items);
   // #514 niveles: si la config guardada no tiene `tiers`, se usan los defaults (y los `items` viejos quedan como nivel único si existían a mano)
-  const rawTiers = r.missions && Array.isArray(r.missions.tiers) && r.missions.tiers.length ? r.missions.tiers : (r.missions && Array.isArray(r.missions.items) && r.missions.items.length ? [{ id: 'base', name: 'Base', emoji: '🎯', minWeekly: 0, items: r.missions.items }] : MISSION_TIERS_DEFAULT);
-  ms.tiers = rawTiers.filter((t) => t && t.id).map((t, i) => ({ id: String(t.id).slice(0, 20), name: String(t.name || ('Nivel ' + (i + 1))).slice(0, 30), emoji: String(t.emoji || '🎯').slice(0, 4), minWeekly: Math.max(0, Math.round(Number(t.minWeekly) || 0)), items: normItems(t.items) })).sort((a, b) => a.minWeekly - b.minWeekly).slice(0, 8);
+  const rawTiers = r.missions && Array.isArray(r.missions.tiers) && r.missions.tiers.length ? r.missions.tiers : MISSION_TIERS_DEFAULT; // #515: niveles guardados o los defaults por familia VIP
+  ms.tiers = rawTiers.filter((t) => t && t.id).map((t, i) => ({ id: String(t.id).slice(0, 20), name: String(t.name || ('Nivel ' + (i + 1))).slice(0, 30), emoji: String(t.emoji || '🎯').slice(0, 4), vipFrom: Math.max(0, Math.min(19, Math.round(Number(t.vipFrom) || 0))), minWeekly: Math.max(0, Math.round(Number(t.minWeekly) || 0)), items: normItems(t.items) })).sort((a, b) => a.vipFrom - b.vipFrom || a.minWeekly - b.minWeekly).slice(0, 8);
   ms.demoteAfterWeeks = Math.max(1, Math.min(8, Number(r.missions && r.missions.demoteAfterWeeks) || 2));
   return { secondDeposit: sd, missions: ms };
 }
@@ -19221,7 +19233,9 @@ async function _missionAvgWeekly(userId) {
 // Nivel = base por lo que carga (minWeekly) + niveles ganados (promo). Dos semanas seguidas sin cumplir ninguna → pierde un nivel ganado.
 async function _missionTierFor(user, avgWeekly, cfg, wk, claimsByWeek) {
   const tiers = cfg.missions.tiers; if (!tiers.length) return null;
-  let base = 0; tiers.forEach((t, i) => { if ((avgWeekly || 0) >= t.minWeekly) base = i; });
+  // #515: base = la familia de su nivel VIP (User.vipLevel); si un nivel además pide carga semanal mínima, también tiene que cumplirla
+  const vipIdx = Number(user && user.vipLevel) || 0;
+  let base = 0; tiers.forEach((t, i) => { if (vipIdx >= (t.vipFrom || 0) && (avgWeekly || 0) >= (t.minWeekly || 0)) base = i; });
   const mt = (user && user.missionTier) || {}; let promo = Number(mt.promo) || 0;
   if (user && mt.updatedWeek !== wk) {
     // semana nueva: revisar si bajó (sin ninguna misión cumplida en las últimas N semanas cerradas)
@@ -19234,7 +19248,8 @@ async function _missionTierFor(user, avgWeekly, cfg, wk, claimsByWeek) {
   }
   const idx = Math.min(tiers.length - 1, base + promo);
   const next = tiers[idx + 1] || null;
-  return { idx, base, promo, tier: tiers[idx], next, avgWeekly: Math.round(avgWeekly || 0), faltaParaSubir: next ? Math.max(0, next.minWeekly - Math.round(avgWeekly || 0)) : null };
+  const vipNext = next ? vipLevels.getLevel(next.vipFrom || 0) : null;
+  return { idx, base, promo, tier: tiers[idx], next, avgWeekly: Math.round(avgWeekly || 0), vipIdx, vipName: (vipLevels.getLevel(vipIdx) || {}).name || null, vipNextName: vipNext ? vipNext.name : null, faltaParaSubir: next && next.minWeekly > 0 ? Math.max(0, next.minWeekly - Math.round(avgWeekly || 0)) : null };
 }
 function _missionProgress(m, st) {
   if (!st) return { value: 0, done: false };
@@ -19278,7 +19293,7 @@ async function _missionsTick() {
     const claimed = new Set(claimedDocs.map((c) => c.userId + '|' + c.missionId)); // los 'failed' se reintentan
     const prevClaims = await MissionClaim.find({ status: 'credited', createdAt: { $gte: new Date(Date.now() - (cfg.missions.demoteAfterWeeks + 1) * 7 * 86400000) } }).select('userId weekKey').lean();
     const claimsByWeek = new Set(prevClaims.map((c) => c.userId + '|' + c.weekKey));
-    const users = await User.find({ id: { $in: stats.map((s) => s.userId).filter(Boolean) } }).select('id username role isBlocked fraudFlags missionTier').lean();
+    const users = await User.find({ id: { $in: stats.map((s) => s.userId).filter(Boolean) } }).select('id username role isBlocked fraudFlags missionTier vipLevel').lean();
     const byId = new Map(users.map((u) => [u.id, u]));
     let n = 0;
     for (const st of stats) {
@@ -19329,11 +19344,11 @@ app.get('/api/strategy/me', authMiddleware, async (req, res) => {
     let missions = [], nivel = null;
     if (cfg.missions.enabled && cfg.missions.tiers.length) {
       const st = (await _missionWeekStats(wk, req.user.userId))[0] || null;
-      const full = await User.findOne({ id: req.user.userId }).select('id username missionTier').lean();
+      const full = await User.findOne({ id: req.user.userId }).select('id username missionTier vipLevel').lean();
       const avg = await _missionAvgWeekly(req.user.userId); const T = await _missionTierFor(full, avg.get(req.user.userId) || 0, cfg, wk, null);
       const claims = await MissionClaim.find({ userId: req.user.userId, weekKey: wk }).select('missionId status rewardArs').lean();
       missions = T.tier.items.filter((m) => m.active && m.rewardArs > 0).map((m) => { const p = _missionProgress(m, st); const c = claims.find((x) => x.missionId === m.id); return { id: m.id, title: m.title, type: m.type, target: m.target, minAmount: m.minAmount, rewardArs: m.rewardArs, value: p.value, done: p.done || !!c, credited: !!(c && c.status === 'credited') }; });
-      nivel = { id: T.tier.id, name: T.tier.name, emoji: T.tier.emoji, idx: T.idx, total: cfg.missions.tiers.length, promo: T.promo, avgWeekly: T.avgWeekly, next: T.next ? { name: T.next.name, emoji: T.next.emoji, minWeekly: T.next.minWeekly } : null, faltaParaSubir: T.faltaParaSubir, todasCumplidas: missions.length > 0 && missions.every((m) => m.done) };
+      nivel = { id: T.tier.id, name: T.tier.name, emoji: T.tier.emoji, idx: T.idx, total: cfg.missions.tiers.length, promo: T.promo, avgWeekly: T.avgWeekly, vipName: T.vipName, vipNextName: T.vipNextName, next: T.next ? { name: T.next.name, emoji: T.next.emoji, minWeekly: T.next.minWeekly, vipFrom: T.next.vipFrom } : null, faltaParaSubir: T.faltaParaSubir, todasCumplidas: missions.length > 0 && missions.every((m) => m.done) };
     }
     res.set('Cache-Control', 'no-store'); res.json({ secondDeposit: sd, missions, nivel, weekKey: wk, weekEndsAt: end, rolloverX: cfg.missions.antiFraud.rolloverX, maxRewardPct: cfg.missions.antiFraud.maxRewardPctOfDeposits });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -19351,7 +19366,7 @@ app.get('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res)
       MissionClaim.countDocuments({ weekKey: wk, status: 'failed' }),
       User.aggregate([{ $match: { role: 'user', 'missionTier.promo': { $gt: 0 } } }, { $group: { _id: '$missionTier.promo', n: { $sum: 1 } } }])
     ]);
-    res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, failedWeek, promos, weekKey: wk } });
+    res.json({ success: true, firstDeposit: { pct: fd, installExtraEnabled: ig.enabled, installExtraPct: ig.pct, withApp: fd + (ig.enabled ? ig.pct : 0) }, secondDeposit: cfg.secondDeposit, missions: cfg.missions, missionTypes: MISSION_TYPES, vipLevels: vipLevels.listLevels().map((l) => ({ idx: l.idx, name: l.name, emoji: l.emoji })), stats: { secondDeposit: { offered30: offered, used30: used, expired30: expired }, missionsWeek: claimsWeek, missions30: claims30[0] || { n: 0, amt: 0 }, failedWeek, promos, weekKey: wk } });
   } catch (e) { logger.error('[strategy] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
 // #509: ROLLOVER GLOBAL ×N para todos los bonos: bonos de carga (1ª, 2ª, automática, ruleta %, lotes), fueguito, código de bienvenida,
