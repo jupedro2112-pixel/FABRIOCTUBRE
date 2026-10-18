@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 427. 🚪 Inicio = sólo "Completá tu nombre para registrarte" → "Registrarse ya" — SW v299
+**Pedido (owner):** "sacá el olvidé contraseña y soporte, todo eso no va; el ya tengo cuenta tampoco va; es 'completá tu
+nombre para registrarte' y en Entrar 'Registrarse ya'".
+**Qué se hizo:** etiqueta y botón renombrados (también el restore del botón en auth.js). Ocultos por CSS: el bloque `.lg-alt`
+(Olvidé mi contraseña, link Soporte), "Ya tengo cuenta · Iniciar sesión" y el formulario de login. La burbuja flotante de
+Soporte para visitantes (#414) se mantiene (fue pedido aparte); si tampoco va, es una línea de CSS.
+⚠️ Consecuencia: un cliente existente que cierre sesión o cambie de teléfono no tiene desde dónde iniciar sesión en esta
+pantalla (los que tienen sesión guardada entran directo). Si hace falta, se puede reponer un link discreto.
+**Archivos:** `public/index.html`, `public/js/auth.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 426. ✅ Entrada con nombre: paso "¡Te registraste con éxito!" con usuario y clave, y recién después Entrar — SW v298
 **Pedido (owner):** "que si completo el nombre aparezcan los datos usuario y clave default asd123 como test; como siguiente
 paso, como que se registró con éxito".

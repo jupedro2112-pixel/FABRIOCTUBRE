@@ -403,12 +403,12 @@
             <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
                  sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
             <form id="quickEntry" class="lg-quick" onsubmit="VIP.auth.quickEntry(event)">
-                <label class="lg-quick-l">Tu nombre</label>
+                <label class="lg-quick-l">Completá tu nombre para registrarte</label>
                 <input type="text" id="quickName" maxlength="60" placeholder="Ej.: Martín" autocomplete="given-name" required>
-                <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">Entrar</button>
+                <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">Registrarse ya</button>
                 <small class="lg-quick-n">Creamos tu usuario al instante y entrás directo. Tu clave la ves en Perfil.</small>
                 <div id="quickErr" class="gs-err"></div>
-                <button type="button" class="lg-quick-alt" onclick="document.body.classList.toggle('reg-quick-login')">Ya tengo cuenta · Iniciar sesión</button>
+                <!-- #427 (owner): sin "Ya tengo cuenta": la pantalla es SOLO registro con el nombre -->
             </form>
             <!-- #426 (owner): paso siguiente — "¡Te registraste con éxito!" con usuario y clave, y Entrar -->
             <div id="quickDone" class="lg-quick-done" style="display:none;">
@@ -2305,7 +2305,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v298</div>
+                    <div class="pf-build" id="appBuildTag">app v299</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

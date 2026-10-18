@@ -1017,4 +1017,8 @@ body.reg-quick .lg-quick-alt { display: inline-block; }
 .lg-cred b { flex: 1; min-width: 0; font: 800 15px ui-monospace, Menlo, Consolas, monospace; color: var(--p-text); letter-spacing: .3px; overflow: hidden; text-overflow: ellipsis; }
 .lg-done-n { font: 500 10.5px var(--p-font); color: var(--p-muted); }
 .lg-quick-done .lg-quick-btn { width: 100%; margin-top: 2px !important; }
+/* ── #427 (owner): la pantalla inicial es SOLO "Completá tu nombre para registrarte": sin Olvidé mi contraseña, sin link Soporte,
+   sin "Ya tengo cuenta" (los clientes con sesión guardada entran directo). ── */
+.lg-app .lg-alt, .lg-app .lg-quick-alt { display: none !important; }
+body.reg-quick #loginForm { display: none !important; }
 
