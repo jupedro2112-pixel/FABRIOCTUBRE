@@ -27,6 +27,8 @@
         let info = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/landing/info'); if (r.ok) info = await r.json(); } catch (_) {}
         if (!info) return;
+        // #421: modo de registro (panel): 'quick' = entrada rápida sólo con el nombre; 'sms' = registro de siempre.
+        try { document.body.classList.toggle('reg-quick', info.registrationMode === 'quick'); } catch (_) {}
         try {
             const rf = info.refunds || {};
             const parts = [];

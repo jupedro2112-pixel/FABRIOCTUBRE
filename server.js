@@ -1161,7 +1161,7 @@ app.get('/api/landing/info', async (req, res) => {
     try { minDepositArs = await getMinDepositArs(); withdrawMinArs = await getWithdrawMinArs(); } catch (_) {}
     try { const pct = await getDailyRefundPct(); refundPromo = await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) {}
     res.setHeader('Cache-Control', 'public, max-age=60');
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo });
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode() }); // #421
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -4312,7 +4312,8 @@ async function _deriveUniqueUsername(name) {
   return null; // improbable: 12 intentos con sufijo aleatorio
 }
 
-app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
+// #421: handler nombrado para poder reutilizarlo desde la ENTRADA RÁPIDA (/api/auth/quick-entry) con la campaña INGRESO.
+async function _landingSignupHandler(req, res) {
   try {
     if (String(process.env.LANDING_SIGNUP_DISABLED || '').toLowerCase() === 'true') {
       return res.status(410).json({ error: 'El registro rápido no está disponible en este momento.' });
@@ -4495,6 +4496,43 @@ app.post('/api/landing/signup', landingIpLimiter, async (req, res) => {
     try { console.error(`[landing-signup][500] ${error.stack || error.message}`); } catch (_) {}
     res.status(500).json({ error: 'Error del servidor. Probá de nuevo.' });
   }
+}
+app.post('/api/landing/signup', landingIpLimiter, _landingSignupHandler);
+
+// #421 (owner 2026-10-18): MODO DE REGISTRO. Config['registrationMode'] = 'sms' (default: usuario + clave + teléfono con
+// SMS) | 'quick' (registro DESACTIVADO: la persona completa sólo su NOMBRE y entra directo — se crea la cuenta en las
+// plataformas con la misma lógica de la landing, campaña orgánica INGRESO, y se le entrega un link de acceso que la app
+// canjea sola = autologin). Tilde en Configuración → "Registro de clientes".
+async function getRegistrationMode() {
+  try { const v = await getConfig('registrationMode', 'sms'); return v === 'quick' ? 'quick' : 'sms'; } catch (_) { return 'sms'; }
+}
+app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res) => {
+  try {
+    if ((await getRegistrationMode()) !== 'quick') return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
+    const name = String((req.body && req.body.name) || '').trim();
+    if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
+    req.body = { name, campaignCode: 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
+    const out = await new Promise((resolve) => {
+      const fake = { _c: 200, status(c) { this._c = c; return this; }, json(b) { resolve({ code: this._c, body: b }); }, set() { return this; }, setHeader() { return this; }, cookie() { return this; }, end() { resolve({ code: this._c, body: {} }); } };
+      Promise.resolve(_landingSignupHandler(req, fake)).catch((e) => resolve({ code: 500, body: { error: e.message } }));
+    });
+    if (out.code !== 201 || !out.body || !out.body.accessUrl) return res.status(out.code || 500).json(out.body || { error: 'Error del servidor' });
+    let accessToken = null;
+    try { accessToken = new URL(out.body.accessUrl).searchParams.get('acceso'); } catch (_) {}
+    res.status(201).json({ success: true, username: out.body.username, password: out.body.password, accessToken, platforms: out.body.platforms || [] });
+  } catch (e) { logger.error('[quick-entry] ' + e.message); res.status(500).json({ error: 'Error del servidor. Probá de nuevo.' }); }
+});
+app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
+  res.json({ success: true, mode: await getRegistrationMode(), canEdit: req.user.role === 'admin' });
+});
+app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general.' });
+    const mode = req.body && req.body.mode === 'quick' ? 'quick' : 'sms';
+    await Config.set('registrationMode', mode, req.user.username);
+    logger.info(`[registration-mode] ${mode} por ${req.user.username}`);
+    res.json({ success: true, mode });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
 // Login

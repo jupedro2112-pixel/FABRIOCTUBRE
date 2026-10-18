@@ -969,4 +969,15 @@ body.is-tester .profile-modal .pf-logout small { color: var(--p-muted) !importan
 @media (max-height: 700px) { .lg-app .lg-title { font-size: 18px; } .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
 /* ── #420 (owner): botón de ingreso "Iniciar sesión", más chico y sin el estilo llamativo de publicista ── */
 .lg-app .lg-form .btn-primary.lg-login-btn, .lg-app .lg-form .btn-primary.publisher-cta { padding: 9px 12px !important; font-size: 13px !important; font-weight: 700 !important; width: auto !important; min-width: 56%; margin: 2px auto 4px !important; display: block; animation: none !important; box-shadow: none !important; }
+/* ── #421: ENTRADA RÁPIDA (registro desactivado desde el panel) ── */
+.lg-quick { display: none; flex-direction: column; gap: 7px; }
+body.reg-quick .lg-quick { display: flex; }
+body.reg-quick:not(.reg-quick-login) #loginForm, body.reg-quick:not(.reg-quick-login) .lg-alt .lg-alt-q, body.reg-quick:not(.reg-quick-login) .lg-alt .lg-register { display: none !important; }
+body.reg-quick.reg-quick-login .lg-quick { display: none; }
+.lg-quick-l { font: 700 12px var(--p-font); color: var(--p-text); }
+.lg-quick input { background: var(--p-card) !important; border: 2px solid transparent !important; border-radius: 14px !important; padding: 12px 14px !important; font: 600 16px var(--p-font) !important; color: var(--p-text) !important; }
+.lg-quick input:focus { border-color: var(--p-text) !important; outline: none; }
+.lg-quick-btn { padding: 13px !important; font-size: 16px !important; margin: 0 !important; }
+.lg-quick-n { font: 500 11px var(--p-font); color: var(--p-muted); text-align: center; }
+.lg-quick-alt { border: 0; background: transparent; color: var(--p-text); font: 700 12px var(--p-font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 0 4px; }
 

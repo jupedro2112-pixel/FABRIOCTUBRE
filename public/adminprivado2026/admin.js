@@ -5728,7 +5728,28 @@ async function loadCommands() {
 }
 
 // ====== % del bono por instalar la app (COMANDOS, solo admin general edita) ======
+// #421: modo de registro (tilde en Configuración → Registro de clientes)
+async function loadRegistrationMode() {
+    try {
+        const r = await authFetch('/api/admin/registration-mode'); if (!r.ok) return; const j = await r.json();
+        const chk = document.getElementById('regSmsChk'); const st = document.getElementById('regModeState'); const btn = document.getElementById('regModeSaveBtn');
+        if (chk) { chk.checked = j.mode !== 'quick'; chk.disabled = !j.canEdit; }
+        if (btn) btn.style.display = j.canEdit ? '' : 'none';
+        if (st) st.textContent = j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (sólo nombre, sin SMS)' : 'Ahora: registro con SMS';
+    } catch (_) {}
+}
+async function saveRegistrationMode() {
+    const chk = document.getElementById('regSmsChk'); const mode = chk && !chk.checked ? 'quick' : 'sms';
+    try {
+        const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast(mode === 'quick' ? 'Registro DESACTIVADO: la app pide sólo el nombre y entra directo' : 'Registro con SMS activado', 'success');
+        loadRegistrationMode();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadRegistrationMode = loadRegistrationMode; window.saveRegistrationMode = saveRegistrationMode;
 async function loadInstallBonusPct() {
+    try { loadRegistrationMode(); } catch (_) {} // #421
     const form = document.getElementById('installBonusPctForm');
     if (!form) return;
     try {
@@ -15259,6 +15280,7 @@ window.gsLoad = gsLoad; window.gsSelect = gsSelect; window.gsSend = gsSend; wind
 // cada uno con tarjeta propia (franja de color a la izquierda, icono, título grande y descripción completa) y un índice de
 // chips arriba para saltar al sector. Siguen plegables con un clic en la cabecera.
 const CMD_ACC_DESC = [
+    [/registro de clientes/i, 'Tilde: registro con SMS (usuario, clave, teléfono) o entrada rápida sólo con el nombre', '👤', '#0ea5e9'],
     [/bonos autom/i, '% de la primera carga, "servicio completo", tope de bonos, extra por instalar, carga mínima, retiro mínimo y SMS en retiros', '🎁', '#e60023'],
     [/comandos personalizados/i, 'Mensajes automáticos del sistema (/sys_*) y respuestas rápidas del chat', '💬', '#6366f1'],
     [/configuraci[oó]n cbu/i, 'CBU, alias, titular y banco que se le manda al cliente', '🏦', '#0a7a3e'],
@@ -15282,7 +15304,7 @@ function initCommandsAccordion() {
     panels.forEach(function (panel) {
         let cur = null;
         Array.from(panel.children).forEach(function (el) {
-            const self = el.id === 'installBonusPctForm' || el.id === 'hgcashMovementsPanel';
+            const self = el.id === 'installBonusPctForm' || el.id === 'hgcashMovementsPanel' || el.id === 'registrationModeForm'; // #421
             if (self) { groups.push({ head: el, body: [], self: true }); cur = null; return; }
             if (el.classList.contains('panel-subheader')) { cur = { head: el, body: [], self: false }; groups.push(cur); return; }
             if (cur) cur.body.push(el);

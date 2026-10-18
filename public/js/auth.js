@@ -519,6 +519,30 @@ VIP.auth = (function () {
     // automáticamente. El link muere al canjearse (single use, lo garantiza el
     // backend) y el usuario queda con mustChangePassword → verifyToken() le abre
     // el recuadro de crear su contraseña nueva (flujo existente).
+    // #421 (owner): ENTRADA RÁPIDA (registro desactivado desde el panel): sólo el nombre → el server crea la cuenta
+    // (misma lógica de la landing, campaña INGRESO) y devuelve un token de acceso que se canjea acá = autologin.
+    async function quickEntry(ev) {
+        if (ev && ev.preventDefault) ev.preventDefault();
+        const inp = document.getElementById('quickName'); const btn = document.getElementById('quickEntryBtn'); const err = document.getElementById('quickErr');
+        const name = (inp && inp.value || '').trim();
+        if (err) err.textContent = '';
+        if (name.length < 2) { if (err) err.textContent = 'Escribí tu nombre.'; return; }
+        if (btn) { btn.disabled = true; btn.textContent = 'Creando tu acceso…'; }
+        try {
+            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, landingUrl: location.href }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.accessToken) { if (err) err.textContent = d.error || 'No pudimos crear tu acceso. Probá de nuevo.'; return; }
+            const r2 = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: d.accessToken }) });
+            const d2 = await r2.json().catch(() => ({}));
+            if (!r2.ok || !d2.token) { if (err) err.textContent = d2.error || 'Tu cuenta se creó (' + (d.username || '') + ') pero no pudimos entrar. Iniciá sesión con tu usuario.'; return; }
+            VIP.state.currentToken = d2.token;
+            localStorage.setItem('userToken', d2.token);
+            try { if (d.password && VIP.autoload && VIP.autoload.setPassword) VIP.autoload.setPassword(d.password); } catch (_) {}
+            try { VIP.ui.showToast('✅ Listo, ' + name + '. Tu usuario es ' + (d.username || '') + '.', 'success'); } catch (_) {}
+            await verifyToken();
+        } catch (_) { if (err) err.textContent = 'Error de conexión. Probá de nuevo.'; }
+        finally { if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; } }
+    }
     async function tryAccessLink() {
         let token = null;
         try { token = new URLSearchParams(window.location.search).get('acceso'); } catch (e) {}
@@ -1569,6 +1593,7 @@ VIP.auth = (function () {
         handleRegister,
         handleRegisterDirect,
         resetRegisterOtp,
+        quickEntry, // #421
         maybeOfferSmsVerification,
         refreshVerifyPhoneBanner,
         applyRegisterModalMode,

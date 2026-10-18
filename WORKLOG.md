@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-18
 
+### 421. 👤 Tilde "Registro de clientes" en Configuración: con SMS o ENTRADA RÁPIDA sólo con el nombre (autologin) — SW v292, admin-sw v88
+**Pedido (owner):** "dejá en comandos la opción de registro y también modo desactivar registro, poné un tilde; cuando
+desactivás el registro, la gente completa sólo el nombre y entra directo, tipo registro automático con la API para
+autologin completando el nombre".
+**Qué se hizo:**
+- `Config['registrationMode']` = `'sms'` (default) | `'quick'`; `getRegistrationMode()`; `GET/POST /api/admin/registration-mode`
+  (POST sólo admin general). `GET /api/landing/info` expone `registrationMode` (público).
+- **Panel:** tarjeta "👤 Registro de clientes" en Configuración (sector propio del acordeón, `#registrationModeForm`) con el
+  tilde "Registro con SMS ACTIVADO" + Guardar + estado actual. Destildado = entrada rápida.
+- **Server:** el alta de la landing pasa a ser `_landingSignupHandler` (la ruta `/api/landing/signup` lo registra igual) y
+  `POST /api/auth/quick-entry` {name} lo reutiliza con `campaignCode:'INGRESO'` (campaña orgánica del boot, #306) capturando
+  la respuesta: crea el usuario en las plataformas con la clave inicial de la landing, emite el link de acceso y devuelve
+  `{username, password, accessToken}`. Si el modo es 'sms' responde 410. Límites: `authLimiter` + `landingIpLimiter`.
+- **PWA:** loginhero.js pone `body.reg-quick` según el modo; aparece `#quickEntry` ("Tu nombre → Entrar", nota y "Ya tengo
+  cuenta · Iniciar sesión" que muestra el login de siempre) y se ocultan el form y "Crear mi cuenta". `VIP.auth.quickEntry`
+  llama a quick-entry, canjea `accessToken` en `/api/auth/access-link` (mismo flujo que `?acceso=`), guarda la clave inicial
+  para Perfil y completa la sesión con `verifyToken()`.
+⚠️ Con el registro desactivado las cuentas nacen con la clave inicial de la landing (ver A1 de #413): la ve en Perfil y
+puede cambiarla. Probado en Render: toggle ida y vuelta por API y `quick-entry` responde 410 con el modo 'sms'
+(no se creó ninguna cuenta real de prueba).
+**Archivos:** `server.js`, `public/index.html`, `public/js/auth.js`, `public/js/loginhero.js`, `public/css/pin.css`,
+`public/firebase-messaging-sw.js`, `public/adminprivado2026/index.html`, `public/adminprivado2026/admin.js`, `public/admin-sw.js`.
+
 ### 420. 🚪 Botón de ingreso: "Iniciar sesión", más chico — SW v291
 **Pedido (owner):** "en Entrá y enviá ya tu comprobante poné Iniciar sesión más chico".
 **Qué se hizo:** el texto del submit del login es "Iniciar sesión" en todos los puntos que lo escriben (HTML, los 4 restores
