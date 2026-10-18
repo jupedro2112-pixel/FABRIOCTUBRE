@@ -55,6 +55,7 @@
 
     function getHomeMode() { return _homeMode; }
     function setHomeMode(mode, opts) {
+        _applyMenuLayout(); // #482: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
         mode = (mode === 'full' || mode === 'mini' || mode === 'easy') ? mode : 'play';
         _homeMode = mode;
         const p = _el('supportPanel');
@@ -580,7 +581,7 @@
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
     // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
     // #331: nombres nuevos (g1..g5) para que ningún caché viejo muestre fotos anteriores. Orden del owner: Jokers, Fire Joker, Starburst, Sugar Rush, Money Time.
-    const ENTRY_SLIDES = ['/images/girox-slides/g1.jpg', '/images/girox-slides/g2.jpg', '/images/girox-slides/g3.jpg', '/images/girox-slides/g4.jpg', '/images/girox-slides/g5.jpg', '/images/girox-slides/g6.jpg', '/images/girox-slides/g7.jpg']; // #473: slots 3×2 y lobbies en vivo 2×2
+    const ENTRY_SLIDES = ['/images/girox-slides/g1.jpg', '/images/girox-slides/g2.jpg', '/images/girox-slides/g3.jpg', '/images/girox-slides/g4.jpg', '/images/girox-slides/g5.jpg', '/images/girox-slides/g6.jpg']; // #473: slots 3×2 (#482: la de lobbies 2×2 se sacó, quedaba mal)
     let _slTimer = null, _slIdx = 0, _slBuilt = false, _slPausedUntil = 0;
     // #332: las fotos se piden con la versión de la app pegada (?b=NNN) → el navegador nunca muestra una foto vieja guardada.
     function _slideUrl(u) { const t = (_el('appBuildTag') || {}).textContent || ''; const m = /v(\d+)/.exec(t); return u + (m ? '?b=' + m[1] : ''); }

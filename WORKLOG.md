@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 482. 🖼️ Se saca la foto de lobbies 2×2 del deslizante · la opción de menú aplica igual en menú fácil y completo, sin ocultar nada — SW v335
+**Pedido (owner):** "sacá del Inicio la foto que quedó mal (lobbies 2×2)"; "el cambio del menú tiene que quedar igual en menú
+rápido y menú completo sin que afecte todo lo que hoy mostramos".
+**Qué se hizo:** `g7.jpg` fuera de `ENTRY_SLIDES` (queda `g6`, la de slots). `_applyMenuLayout()` se llama en `setHomeMode`
+(todos los modos), no sólo al pintar el menú fácil; se quitó la regla que escondía el botón de soporte del menú fácil con la
+opción 2: ahora la opción 2 SOLO mueve Carga auto · Inicio · Soporte de la barra de arriba a la de abajo.
+**Archivos:** `public/js/home.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
+
 ### 481. 🧭 Opción 2 afinada: la barra de abajo es la misma de arriba (Carga auto · Inicio · Soporte), Info queda arriba, "menú" en el saludo — SW v334, admin-sw v104
 **Pedido (owner):** "la parte inferior tiene que quedar como la superior y lo que bajás sacalo de arriba; el recuadro de Inicio
 igual y en la misma ubicación, a ambos lados Carga auto y Soporte; Info dejalo arriba con Perfil, Historias y Telegram a la punta;
