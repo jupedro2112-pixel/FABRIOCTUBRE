@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 458. 💸 Reembolso "de tu NETWIN" (no "de lo que perdés") · la promo sólo adentro de los modales — SW v326
+**Pedido (owner):** "sobre el reembolso poné NETWIN, no 'sobre lo que perdés'; y la 'promoción válida' en Inicio antes de
+maximizar no la pongas, sólo adentro cuando abren, como está".
+**Qué se hizo:** textos de la fila de beneficios del ingreso, del servicio Reembolso de la entrada y del Menú fácil pasan a
+"Diario 25% · semanal · mensual de tu NETWIN" (loginhero.js, home.js, defaults del HTML). `.refund-promo` ("Promoción válida
+hasta diciembre…") queda oculto en el Inicio/Menú fácil/tarjetas y sólo se muestra dentro de los modales (selector de
+reembolsos, modal de reembolso, Info), que siguen igual.
+**Archivos:** `public/js/loginhero.js`, `public/js/home.js`, `public/index.html`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 457. 📖 Historia 2 (slots): sin la fila cortada, "Jugá · probá tu suerte" + botón; republicadas las 4 en orden
 **Pedido (owner, con captura):** "esa foto, abajo de Cargá y jugá, sacá ese fondo que está cortado y poné 'jugá, probá tu
 suerte'; si hay que eliminar, eliminá y volvé a subir, respetá el orden".

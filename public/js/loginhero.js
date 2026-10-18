@@ -69,7 +69,7 @@
             const rf = info.refunds || {}; const el = _el('lgFeatRefunds');
             // #447 (owner): sólo el % del diario; semanal y mensual sin número.
             const parts = []; if (rf.dailyMax) parts.push('Diario ' + rf.dailyMax + '%'); if (rf.weeklyMax) parts.push('semanal'); if (rf.monthlyMax) parts.push('mensual');
-            if (el && parts.length) el.textContent = parts.join(' · ') + ' de lo que perdés con tu plata';
+            if (el && parts.length) el.textContent = parts.join(' · ') + ' de tu NETWIN'; // #458
             const rp = Number(info.referralPct); const er = _el('lgFeatRef');
             if (er && rp > 0) er.textContent = 'Invitá amigos y cobrás el ' + rp + '% de su actividad, de por vida';
         } catch (_) {}

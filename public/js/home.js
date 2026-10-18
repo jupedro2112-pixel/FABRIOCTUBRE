@@ -168,7 +168,7 @@
                 if (mx(tbp.daily)) parts.push('Diario ' + mx(tbp.daily) + '%');
                 if (mx(tbp.weekly)) parts.push('semanal');
                 if (mx(tbp.monthly)) parts.push('mensual');
-                const el = _el('easyRefundSub'); if (el && parts.length) el.textContent = parts.join(' · ') + ' de lo que perdés';
+                const el = _el('easyRefundSub'); if (el && parts.length) el.textContent = parts.join(' · ') + ' de tu NETWIN'; // #458
                 let claim = 0;
                 ['daily', 'weekly', 'monthly'].forEach((k) => { const d = s[k]; if (d && d.canClaim && Number(d.potentialAmount) > 0) claim += Number(d.potentialAmount); });
                 const bd = _el('easyRefundBadge');
@@ -1582,7 +1582,7 @@
                 if (m && mx(tbp.monthly)) m.textContent = mx(tbp.monthly);
                 // #269/#359: tarjeta "Reembolso" del Inicio — % máximo real entre DIARIO (#349), semanal y mensual.
                 const top = Math.max(mx(tbp.daily), mx(tbp.weekly), mx(tbp.monthly));
-                const sv = _el('evSvcRefund'); if (sv) sv.textContent = (mx(tbp.daily) ? ('diario ' + mx(tbp.daily) + '%') : ('hasta ' + top + '%')) + ' de lo que perdés · semanal y mensual'; // #447
+                const sv = _el('evSvcRefund'); if (sv) sv.textContent = (mx(tbp.daily) ? ('diario ' + mx(tbp.daily) + '%') : ('hasta ' + top + '%')) + ' de tu NETWIN · semanal y mensual'; // #447/#458
                 const d = _el('infoDailyMax'); if (d && mx(tbp.daily)) d.textContent = mx(tbp.daily);
             }
         } catch (_) {}
