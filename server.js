@@ -11663,6 +11663,27 @@ async function initializeData() {
       await setConfig('migration_admin_iginte1000_v1_done', true);
     }
   } catch (e) { console.warn('[startup] admin iginte1000 (#386):', e.message); }
+  // #395 (owner 2026-10-18): fueguito — hitos cada 10 días hasta el 100 (escalera FIRE_MILESTONES_DEFAULT), 10 cargas entre
+  // racha y racha y rollover x5. One-shot: pisa lo guardado en el panel UNA vez; después el panel manda.
+  try {
+    if (!(await getConfig('migration_fire_10to100_v1_done', false))) {
+      await Config.set('fireMilestones', FIRE_MILESTONES_DEFAULT, 'startup-migration');
+      await Config.set('fireMinDeposits', 10, 'startup-migration');
+      await Config.set('fireRolloverMultiplier', 5, 'startup-migration');
+      await Config.set('migration_fire_10to100_v1_done', true, 'startup-migration');
+      console.log('✅ Fueguito (#395): 10 hitos (día 10 → 100), 10 cargas entre rachas, rollover x5');
+    }
+  } catch (e) { console.warn('[startup-migration] fueguito 10→100 (#395):', e.message); }
+  // #391 (owner 2026-10-18): textos nuevos de los botones de carga automática. Pisa SOLO si todavía tienen el default
+  // viejo (si el owner ya los editó en COMANDOS, se respetan). One-shot.
+  try {
+    if (!(await getConfig('migration_action_btns_v2_done', false))) {
+      await Command.updateOne({ name: '/sys_load_btn', response: 'Adjuntar comprobante aquí' }, { $set: { response: LOAD_BTN_DEFAULT } });
+      await Command.updateOne({ name: '/sys_withdraw_btn_sub', response: 'retiro mínimo {retiro_min} · pago automático a tu CBU' }, { $set: { response: WITHDRAW_BTN_SUB_DEFAULT } });
+      await setConfig('migration_action_btns_v2_done', true);
+      console.log('✅ #391 textos de botones Comprobante aquí / Retirar premio actualizados');
+    }
+  } catch (e) { console.warn('[startup] botones #391:', e.message); }
   // #361 (owner 2026-10-17): historia de PRUEBA ("prueba historias 1girox ganamos nuevo sistema de cargas" + logo). 72 h.
   try {
     if (!(await getConfig('migration_story_seed_v1_done', false))) {
@@ -11793,13 +11814,13 @@ async function initializeData() {
     {
       // #385: textos de los dos botones de abajo de la carga automática.
       name: '/sys_load_btn',
-      description: 'Botón grande "Adjuntar comprobante aquí" (carga automática): título. Variables: {min}, {retiro_min}.',
+      description: 'Botón grande "Comprobante aquí" (carga automática): título. Variables: {min}, {retiro_min}.',
       type: 'message',
       response: LOAD_BTN_DEFAULT
     },
     {
       name: '/sys_load_btn_sub',
-      description: 'Botón "Adjuntar comprobante aquí": bajada (ej. "carga mínima {min} · se acredita solo"). Variables: {min}, {retiro_min}.',
+      description: 'Botón "Comprobante aquí": bajada (ej. "carga mínima {min} · se acredita solo"). Variables: {min}, {retiro_min}.',
       type: 'message',
       response: LOAD_BTN_SUB_DEFAULT
     },
@@ -11811,7 +11832,7 @@ async function initializeData() {
     },
     {
       name: '/sys_withdraw_btn_sub',
-      description: 'Botón "Retirar premio": bajada (ej. "retiro mínimo {retiro_min} · pago automático a tu CBU"). Variables: {retiro_min}, {min}.',
+      description: 'Botón "Retirar premio" (verde): bajada (ej. "Mínimo {retiro_min} · pago automático"). Variables: {retiro_min}, {min}.',
       type: 'message',
       response: WITHDRAW_BTN_SUB_DEFAULT
     },
@@ -12594,10 +12615,10 @@ const MIN_DEPOSIT_ARS_DEFAULT = 5000;
 // #379 (owner 2026-10-18): RETIRO MÍNIMO (antes $4.999 fijo). Config['withdrawMinArs'], editable en COMANDOS → Bonos automáticos.
 const WITHDRAW_MIN_ARS_DEFAULT = 10000;
 // #385: textos de los botones "Adjuntar comprobante aquí" / "Retirar premio" (editables en COMANDOS).
-const LOAD_BTN_DEFAULT = 'Adjuntar comprobante aquí';
+const LOAD_BTN_DEFAULT = 'Comprobante aquí'; // #391 (antes 'Adjuntar comprobante aquí')
 const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';
 const WITHDRAW_BTN_DEFAULT = 'Retirar premio';
-const WITHDRAW_BTN_SUB_DEFAULT = 'retiro mínimo {retiro_min} · pago automático a tu CBU';
+const WITHDRAW_BTN_SUB_DEFAULT = 'Mínimo {retiro_min} · pago automático'; // #391: corto y legible
 // #382 (owner 2026-10-18): código SMS en CADA retiro (anti-estafa). Config['withdrawOtpRequired'], default true.
 async function getWithdrawOtpRequired() {
   try { const v = await getConfig('withdrawOtpRequired', null); if (v === false || v === 'false' || v === 0) return false; } catch (_) {}
@@ -13863,10 +13884,21 @@ async function _countRealDepositsDays(userId, username, days) {
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
 // #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
+// #395 (owner 2026-10-18): "las rachas cada 10 días hasta el día 100, respetá el orden de los regalos, 10 cargas entre
+// racha y racha, rollover x5". Los 3 primeros hitos quedan como estaban; del 40 al 100 la escalera sigue SUBIENDO
+// (orden de los regalos). Todo editable en el panel → Fueguito. La migración `migration_fire_10to100_v1_done` pisa la
+// config guardada UNA vez con esta escalera + fireMinDeposits=10 + fireRolloverMultiplier=5.
 const FIRE_MILESTONES_DEFAULT = [
-  { day: 10, reward: 50000,   type: 'cash', requireDeposits: 20000,  depositDays: 30, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 250000,  type: 'cash', requireDeposits: 100000, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 1000000, type: 'cash', requireDeposits: 300000, depositDays: 45, desc: 'Recompensa Fueguito 30 días' }
+  { day: 10,  reward: 50000,    type: 'cash', requireDeposits: 20000,   depositDays: 30,  desc: 'Recompensa Fueguito 10 días' },
+  { day: 20,  reward: 250000,   type: 'cash', requireDeposits: 100000,  depositDays: 30,  desc: 'Recompensa Fueguito 20 días' },
+  { day: 30,  reward: 1000000,  type: 'cash', requireDeposits: 300000,  depositDays: 45,  desc: 'Recompensa Fueguito 30 días' },
+  { day: 40,  reward: 1500000,  type: 'cash', requireDeposits: 400000,  depositDays: 60,  desc: 'Recompensa Fueguito 40 días' },
+  { day: 50,  reward: 2000000,  type: 'cash', requireDeposits: 500000,  depositDays: 75,  desc: 'Recompensa Fueguito 50 días' },
+  { day: 60,  reward: 2500000,  type: 'cash', requireDeposits: 600000,  depositDays: 90,  desc: 'Recompensa Fueguito 60 días' },
+  { day: 70,  reward: 3000000,  type: 'cash', requireDeposits: 700000,  depositDays: 105, desc: 'Recompensa Fueguito 70 días' },
+  { day: 80,  reward: 4000000,  type: 'cash', requireDeposits: 800000,  depositDays: 120, desc: 'Recompensa Fueguito 80 días' },
+  { day: 90,  reward: 5000000,  type: 'cash', requireDeposits: 900000,  depositDays: 135, desc: 'Recompensa Fueguito 90 días' },
+  { day: 100, reward: 10000000, type: 'cash', requireDeposits: 1000000, depositDays: 150, desc: 'Recompensa Fueguito 100 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
@@ -19600,6 +19632,13 @@ function _prizesPublic(prizes) {
     probPct: Math.round((Number(p.weight) || 0) / total * 1000) / 10
   }));
 }
+// #390 (owner): la PWA NO ve pesos ni probabilidades ("eso es interno"). Sólo el panel usa _prizesPublic.
+function _prizesClient(prizes) {
+  return _prizesPublic(prizes).map((p) => ({ id: p.id, type: p.type, value: p.value, label: p.label, emoji: p.emoji, rolloverX: p.rolloverX }));
+}
+// #390 (owner): a los usuarios de PRUEBA se les reinicia la ruleta en cada apertura/giro para testear sin esperar al otro día.
+const ROULETTE_TESTERS = ['lalodj'];
+const _isRouletteTester = (username) => ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
 function _pickWeightedPrize(prizes) {
   const total = prizes.reduce((s, p) => s + (Number(p.weight) || 0), 0);
   if (!(total > 0)) return prizes[prizes.length - 1];
@@ -19730,7 +19769,7 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
     const act = await _rouletteIsActiveClient(userId, username, cfg.minCargas30d);
     const week = cfg.requireActiveWeek ? await _rouletteIsActiveThisWeek(userId, username) : { active: true };
     const eligible = cfg.enabled && appOk && act.active && week.active;
-    const spin = await DailyRouletteSpin.findOne({ userId, dateKey }).lean();
+    const spin = _isRouletteTester(username) ? null : await DailyRouletteSpin.findOne({ userId, dateKey }).lean(); // #390 tester: siempre "sin girar"
     res.json({
       success: true,
       enabled: cfg.enabled,
@@ -19742,8 +19781,8 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
       minCargas: cfg.minCargas30d,
       minDepositArs: await getMinDepositArs().catch(() => 5000), // #374: la carga que desbloquea la ruleta
       dateKey,
-      // Premios con su probabilidad real (transparencia: la PWA los lista).
-      prizes: _prizesPublic(cfg.prizes),
+      // #390: premios SIN probabilidad (interno). Antes se listaban con el %.
+      prizes: _prizesClient(cfg.prizes),
       // % EXTRA ganado y todavía sin usar (se aplica solo en la próxima carga).
       pendingPct: (u && u.dailyRoulettePendingPct) || 0,
       pendingLabel: (u && u.dailyRoulettePendingLabel) || null,
@@ -20065,6 +20104,8 @@ app.post('/api/roulette/spin', authMiddleware, async (req, res) => {
       }
     }
 
+    // #390: usuario de prueba → se borra el giro de hoy y puede volver a girar.
+    if (_isRouletteTester(username)) { try { await DailyRouletteSpin.deleteMany({ userId, dateKey }); } catch (_) {} }
     // Pre-check: ya giró hoy? (el unique index igual cubre el race)
     const already = await DailyRouletteSpin.findOne({ userId, dateKey }).lean();
     if (already) {

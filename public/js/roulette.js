@@ -180,23 +180,23 @@
         }
         const spin = spinResult || _state.spin;
         const alreadySpun = !!(spin && (spin.prizeARS != null));
-        // Tabla de premios con la probabilidad REAL de cada uno (transparencia — los define el panel).
+        // #390 (owner): lista de premios SIN probabilidades ("eso es interno"); el server ya no las manda.
         const _prizeRows = (_state.prizes || []).map(function (p) {
             const val = p.type === 'percent' ? ('+' + _fmt(p.value) + '% en tu próxima carga')
                 : (p.type === 'cash' ? ('$' + _fmt(p.value) + (p.rolloverX > 0 ? ' (rollover x' + p.rolloverX + ')' : '')) : 'Sin premio');
             return '<div class="rl-prize"><span class="rl-prize-n">' + _esc(p.emoji || '🎁') + ' ' + _esc(p.label) + '</span>' +
-                '<span class="rl-prize-v">' + _esc(val) + '</span><span class="rl-prize-p">' + _fmt(p.probPct) + '%</span></div>';
+                '<span class="rl-prize-v">' + _esc(val) + '</span></div>';
         }).join('');
         const prizesHtml = _prizeRows
-            ? '<div class="rl-prizes"><div class="rl-sec-t">Premios y probabilidades</div><div class="rl-prize-list">' + _prizeRows + '</div></div>'
+            ? '<div class="rl-prizes"><div class="rl-sec-t">Premios</div><div class="rl-prize-list">' + _prizeRows + '</div></div>'
             : '';
         const pendingHtml = (!alreadySpun && Number(_state.pendingPct || 0) > 0)
             ? '<div class="rl-pending">🎁 Tenés <b>+' + _fmt(_state.pendingPct) + '% extra</b> pendiente: se aplica solo en tu próxima carga.</div>'
             : '';
         const minDep = Number(_state.minDepositArs) > 0 ? Number(_state.minDepositArs) : 5000;
-        // #374: premio mayor destacado con su chance real ("1 cada N giros").
-        const topCash = (_state.prizes || []).filter((p) => p.type === 'cash' && Number(p.probPct) > 0).sort((a, b) => b.value - a.value)[0];
-        const topHtml = topCash ? '<div class="rl-top"><span class="rl-top-k">🏆 Premio mayor</span><b>$' + _fmt(topCash.value) + '</b><span class="rl-top-odd">1 cada ' + _fmt(Math.round(100 / topCash.probPct)) + ' giros</span></div>' : '';
+        // #374: premio mayor destacado. #390: sin la chance ("1 cada N giros") — es interno.
+        const topCash = (_state.prizes || []).filter((p) => p.type === 'cash' && Number(p.value) > 0).sort((a, b) => b.value - a.value)[0];
+        const topHtml = topCash ? '<div class="rl-top"><span class="rl-top-k">🏆 Premio mayor</span><b>$' + _fmt(topCash.value) + '</b></div>' : '';
         let html = '<div class="rl-card">';
         html += '<button type="button" class="rl-x" onclick="VIP.roulette.close()" aria-label="Cerrar">✕</button>';
         html += '<div class="rl-head"><div class="rl-kicker">Todos los días</div><h2 class="rl-title">Ruleta diaria</h2><p class="rl-sub">Se desbloquea con tu carga mínima de <b>$' + _fmt(minDep) + '</b> · 1 giro por día · si ganás, se acredita solo</p></div>';

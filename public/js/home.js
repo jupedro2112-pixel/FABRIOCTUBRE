@@ -185,8 +185,20 @@
         }
     }
     // ---------------- #268: PERFIL ----------------
-    let _pfShown = false;
+    let _pfShown = true; // #393 (owner): la clave se muestra siempre (el botón "Ocultar" sigue)
+    let _pfRefCode = null;
+    function _pfPaintCode() { // #393: código de referido debajo del nombre
+        const box = _el('pfUserCode'), v = _el('pfUserCodeV');
+        if (!box || !v) return;
+        if (_pfRefCode) { v.textContent = _pfRefCode; box.style.display = ''; return; }
+        if (!VIP.state || !VIP.state.currentToken) return;
+        fetch(VIP.config.API_URL + '/api/referrals/me', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((me) => { if (me && me.referralCode) { _pfRefCode = String(me.referralCode); v.textContent = _pfRefCode; box.style.display = ''; } })
+            .catch(() => {});
+    }
     function _pfPaint() {
+        _pfPaintCode();
         const u = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '—';
         const pw = (VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '';
         const eu = _el('pfUser'), ep = _el('pfPass'), eye = _el('pfEye'), hint = _el('pfHint');
@@ -200,7 +212,7 @@
         }
     }
     function openProfile() {
-        _pfShown = false;
+        _pfShown = true; // #393
         try { if (VIP.autoload && VIP.autoload.hidePreview) VIP.autoload.hidePreview(); } catch (_) {}
         _pfPaint();
         try { _paintAvatar(); } catch (_) {} // #304
@@ -209,6 +221,7 @@
     function profileTogglePw() { _pfShown = !_pfShown; _pfPaint(); }
     function profileCopy(which) {
         const v = which === 'pass' ? ((VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || '')
+            : which === 'code' ? (_pfRefCode || '')
             : which === 'link' ? ((VIP.autoload && VIP.autoload.appLink && VIP.autoload.appLink()) || (location.origin + '/'))
             : ((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '');
         if (!v) { try { VIP.ui.showToast('No hay nada para copiar', 'info'); } catch (_) {} return; }

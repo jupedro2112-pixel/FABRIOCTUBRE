@@ -208,6 +208,30 @@
     <noscript><img height="1" width="1" style="display:none"
         src="https://www.facebook.com/tr?id=__META_PIXEL_ID_PLACEHOLDER__&ev=PageView&noscript=1"/></noscript>
 
+    <!-- #392: MODO NOCTURNO de la app. Se decide ANTES del CSS (sin parpadeo). Default claro; localStorage 'vip_theme'. -->
+    <script>
+    (function () {
+        var t = 'light';
+        try { t = localStorage.getItem('vip_theme') || 'light'; } catch (e) {}
+        document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+        function paint() {
+            var d = document.documentElement.getAttribute('data-theme') === 'dark';
+            var h = document.getElementById('pfThemeHint'); if (h) h.textContent = d ? 'Activado · tocá para volver al modo claro' : 'Fondo oscuro para la noche · tocá para activarlo';
+            var l = document.getElementById('pfThemeLbl'); if (l) l.textContent = d ? 'Modo claro' : 'Modo nocturno';
+            var i = document.getElementById('navThemeIco'); if (i) i.textContent = d ? '☀️' : '🌙';
+            var b = document.getElementById('navTheme'); if (b) b.title = d ? 'Pasar a modo claro' : 'Pasar a modo nocturno';
+            var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', d ? '#121212' : '#ffffff');
+        }
+        window.vipToggleTheme = function () {
+            var d = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', d);
+            try { localStorage.setItem('vip_theme', d); } catch (e) {}
+            paint();
+        };
+        window.vipPaintTheme = paint;
+        document.addEventListener('DOMContentLoaded', paint);
+    })();
+    </script>
     <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/login.css">
     <link rel="stylesheet" href="/css/header.css">
@@ -517,6 +541,10 @@
             <span class="tn-sep" aria-hidden="true"></span>
             <button type="button" class="tn-btn" id="infoBtn" title="Información del servicio">
                 <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span>
+            </button>
+            <!-- #392: modo nocturno / claro desde la barra (también en Perfil) -->
+            <button type="button" class="tn-btn tn-theme" id="navTheme" onclick="vipToggleTheme()" title="Pasar a modo nocturno" aria-label="Modo nocturno">
+                <span class="tn-ico" id="navThemeIco" aria-hidden="true">🌙</span>
             </button>
             <button type="button" class="tn-btn" id="navPerfil" onclick="VIP.home.openProfile()" title="Tu perfil: usuario, clave, notificaciones">
                 <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span>
@@ -1250,9 +1278,9 @@
             <div class="home-actions-row">
                 <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
-                    <span class="lr-text"><b>Adjuntar comprobante aquí</b><small id="loadHereMin">carga mínima $5.000 · se acredita solo</small></span>
+                    <span class="lr-text"><b>Comprobante aquí</b><small id="loadHereMin">carga mínima $5.000 · se acredita solo</small></span>
                 </button>
-                <button class="withdraw-row-btn" id="withdrawChatBtn" title="Completá tus datos, confirmás por SMS y se paga automáticamente a tu CBU"><span class="lr-text"><b id="withdrawBtnText">Retirar premio</b><small id="withdrawBtnSub">retiro mínimo $10.000 · pago automático</small></span></button>
+                <button class="withdraw-row-btn" id="withdrawChatBtn" title="Completá tus datos, confirmás por SMS y se paga automáticamente a tu CBU"><span class="lr-text"><b id="withdrawBtnText">Retirar premio</b><small id="withdrawBtnSub">Mínimo $10.000 · pago automático</small></span></button>
             </div>
             <!-- #275: botón chiquito de prueba del cartel "Jugar ahora" (modo carga automática) -->
             <div class="test-mini-row"><button type="button" class="test-mini" onclick="VIP.home.playNowTest()">test · ver cartel "Jugar ahora" (con el extra por instalar)</button></div>
@@ -2202,10 +2230,12 @@
                 <button type="button" class="pf-avatar" id="pfAvatarBtn" onclick="VIP.home.openAvatarPicker()" title="Cambiar avatar"><span id="pfAvatar">👤</span><span class="pf-avatar-edit" aria-hidden="true">✎</span></button>
                 <div class="pf-userinfo">
                     <div class="pf-username" id="pfUserName">—</div>
+                    <!-- #393 (owner): código de referido debajo del nombre -->
+                    <div class="pf-usercode" id="pfUserCode" style="display:none;">Tu código <b id="pfUserCodeV">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('code')">Copiar</button></div>
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v272</div>
+                    <div class="pf-build" id="appBuildTag">app v273</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2221,6 +2251,8 @@
                 <!-- #366: elegir menú fácil / completo cuando quieran -->
                 <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()">☰ <span>Menú fácil / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()">🔑 <span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
+                <!-- #392: modo nocturno (también en la barra de arriba) -->
+                <button type="button" class="pf-act" onclick="vipToggleTheme()">🌙 <span><span id="pfThemeLbl">Modo nocturno</span><small id="pfThemeHint">Fondo oscuro para la noche · tocá para activarlo</small></span></button>
                 <div class="pf-act pf-wrap">
                     <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
                     <span onclick="var b=document.getElementById('notificationBtn'); if(b) b.click();">Notificaciones<small>Activá los avisos de cargas, reembolsos y premios</small></span>

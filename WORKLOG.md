@@ -8,6 +8,63 @@
 
 ## Sesión 2026-10-18
 
+### 395. 🔥 Fueguito: hitos cada 10 días hasta el 100 · 10 cargas entre rachas · rollover x5
+**Pedido (owner):** "las rachas configurala cada 10 días hasta el día 100 y respetá el orden de los regalos, exigí 10
+cargas entre racha y racha y el premio es rollover x5".
+**Qué se hizo (server.js):** `FIRE_MILESTONES_DEFAULT` pasa de 3 a 10 hitos. Los 3 primeros quedan iguales
+(10 d $50.000 · 20 d $250.000 · 30 d $1.000.000) y del 40 al 100 la escalera sigue subiendo (orden de los regalos):
+40 d $1,5M · 50 d $2M · 60 d $2,5M · 70 d $3M · 80 d $4M · 90 d $5M · 100 d $10M (actividad requerida y plazo crecen
+en paralelo). ⚠️ Los montos del 40 al 100 los elegí yo como escalera razonable: se ajustan desde el panel → Fueguito.
+Migración one-shot `migration_fire_10to100_v1_done`: pisa `Config['fireMilestones']` con la escalera, `fireMinDeposits`=10
+y `fireRolloverMultiplier`=5 (eran los defaults, pero se fijan explícitamente). Después manda el panel. La lógica de
+reclamo busca el hito por día exacto (`find(m => m.day === streak)`), así que no hubo que tocarla; la PWA (`fire.js`)
+lista los hitos que le llegan.
+**Archivos:** `server.js`.
+
+### 394. ℹ️ Info: cada sección en su tarjeta (franja de color distinta) y el título RECUADRADO — SW v273
+**Pedido (owner):** "en info está bien así pero faltaría diferenciar uno del otro y que queden los títulos como con un
+recuadro para diferenciar del texto informativo".
+**Qué se hizo (`css/pin.css`):** `.info-msg` queda transparente y cada `.im-sec` es una tarjeta (`--p-card`, borde,
+franja izquierda de color por `nth-of-type`: rojo / verde / celeste / violeta / naranja / dorado). El `<b>` inicial de
+cada sección (el título) se ve como chip recuadrado (fondo `--p-surface`, borde, radio 10). Sin cambios de HTML.
+
+### 393. 👤 Perfil: código de referido debajo del nombre · la clave se muestra siempre — SW v273
+**Pedido (owner):** "el código en perfil ponelo abajo del nombre, la contraseña no la ocultes".
+**Qué se hizo:** `#pfUserCode` (index.html, dentro de `.pf-userinfo` justo bajo `#pfUserName`) con el código de referido
+y botón Copiar (`profileCopy('code')`). `home.js` lo trae de `/api/referrals/me` una vez por sesión (`_pfRefCode`).
+`_pfShown` arranca en `true` y `openProfile` ya no lo resetea a oculto: la clave se ve de entrada; el botón pasa a decir
+"Ocultar" y sigue funcionando. Estilos `.pf-usercode` en pin.css.
+
+### 392. 🌙 Modo NOCTURNO de la app (Perfil + botón en la barra de arriba) — SW v273
+**Pedido (owner):** "arma el modo nocturno que se pueda ajustar desde perfil y esté en la parte superior también".
+**Qué se hizo:** `css/pin.css` se tokenizó (script: dentro de cada regla, `background:#fff`→`--p-card`, `#333`→
+`--p-text-2`, `#5f5f5f`→`--p-nav`, `#cfcfcf`→`--p-border-hi`, `#9a9a9a`→`--p-placeholder`, `#fafafa`→`--p-hover`,
+`#dcdcdc`→`--p-border`; `color:#fff` sobre fondo `--p-text` → `--p-inv`; los selectores `[style*=…]` y `:root` no se
+tocaron) y al final se agregó `html[data-theme="dark"]` que redefine los `--p-*` (fondo #121212, tarjetas #181818, texto
+#f2f2f2, rojo #ff3b4e, `color-scheme: dark`). `index.html`: `<script>` inline ANTES de los CSS que lee `localStorage
+'vip_theme'` (default **claro**: a los clientes no se les cambia nada solos) y expone `window.vipToggleTheme()` /
+`vipPaintTheme()`. Botón `#navTheme` (🌙/☀️) en la barra, antes de Perfil; en Perfil, acción "🌙 Modo nocturno" con
+estado. La Carga manual (WhatsApp), la ruleta y las historias no dependen de pin.css y siguen igual (como pide el #370).
+**Regla:** cualquier color nuevo de la PWA va como token `--p-*` en `:root` + override en el bloque dark.
+
+### 391. 💸 "Retirar premio" en VERDE sobrio con bajada corta · "Comprobante aquí" — SW v273
+**Pedido (owner):** "en retiro ponele un color verde con el mismo estilo de sobriedad y el detalle de retirar premio, el
+mínimo y pago automático ponele buena letra y resumido, en adjuntar comprobante aquí poné solo comprobante aquí".
+**Qué se hizo:** pin.css: `.withdraw-row-btn` fondo `--p-green-soft`, texto `--p-green`, borde `--p-green-line` (token
+nuevo, con versión dark); título 13px/800 y bajada 10,5px/600 sin mayúsculas. Textos: `LOAD_BTN_DEFAULT` →
+"Comprobante aquí", `WITHDRAW_BTN_SUB_DEFAULT` → "Mínimo {retiro_min} · pago automático" (+ fallbacks del HTML y
+descripciones de los comandos). Migración one-shot `migration_action_btns_v2_done`: pisa `/sys_load_btn` y
+`/sys_withdraw_btn_sub` SOLO si todavía tenían el default viejo (si el owner los editó, se respetan).
+
+### 390. 🎰 Ruleta: sin probabilidades para el cliente · lalodj gira siempre (test)
+**Pedido (owner):** "en la ruleta no des las probabilidades de ganancia de los premios, eso es interno, reiniciá en
+lalodj la ruleta siempre para testear".
+**Qué se hizo (server.js):** `_prizesClient()` (sin `weight` ni `probPct`) es lo que devuelve `GET /api/roulette/status`;
+el panel y los reportes siguen con `_prizesPublic`. `roulette.js`: la lista pasa a titularse "Premios", sin la columna
+de %, y el "🏆 Premio mayor" ya no dice "1 cada N giros". `ROULETTE_TESTERS = ['lalodj']` (`_isRouletteTester`): en
+status se le devuelve `spin:null` (siempre "sin girar") y en `POST /api/roulette/spin` se borra su giro del día antes
+de girar. Rige en todos los entornos (es la cuenta de prueba del owner; los premios se acreditan de verdad en ella).
+
 ### 389. 🗂️ COMANDOS: sectores ABIERTOS, tarjetas con color/icono/título/descripción e índice de chips — admin-sw v84
 **Pedido (owner):** "acomoda bien la parte de comandos, no tanto cerrándolo sino abierto pero bien recuadrado y detallado
 con títulos y bien diferenciado".
