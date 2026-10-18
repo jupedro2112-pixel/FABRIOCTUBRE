@@ -12320,14 +12320,14 @@ async function getMinDepositArs() {
   return MIN_DEPOSIT_ARS_DEFAULT;
 }
 const HOME_BANNER_DEFAULT = 'Cargando de forma automática tenés un {pct}% en todas tus cargas.'; // #271: corto (arriba del chat)
-const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%';
+const ENTRY_NEWS_DEFAULT = '🆕 NOVEDAD · Hasta diciembre: reembolso DIARIO del {pct}%'; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
 const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo)
 // #373: SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat (/sys_support_*).
 const SUPPORT_NAME_DEFAULT = 'Martín';
 const SUPPORT_INTRO_DEFAULT = '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.';
 const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos';
 // #375: bienvenida automática del chat de SOPORTE (/sys_welcome). Variables: {username}, {plataformas}, {escalera}, {cbu}.
-const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Este es tu chat de SOPORTE.\n\nContame tu duda, consulta o problema y lo resolvemos: te respondemos en minutos.\n\n⚡ Para cargar usá la *Carga automática* de arriba: transferís, mandás la foto del comprobante y se acredita solo."; // #349: cartel del Inicio, {pct} = % máximo de la escalera diaria
+const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Este es tu chat de SOPORTE.\n\nContame tu duda, consulta o problema y lo resolvemos: te respondemos en minutos.\n\n⚡ Para cargar usá la *Carga automática* de arriba: transferís, mandás la foto del comprobante y se acredita solo.";
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';
