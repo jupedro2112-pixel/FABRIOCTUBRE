@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 415. 🚪 Ingreso en UNA sola pantalla, estilo registro de app (sin deslizar) — SW v286
+**Pedido (owner):** "hacelo más formato de registro de cualquier aplicación de ese estilo tipo Pinterest, la explicación del
+servicio resumida y en una pantalla todo sin deslizar, es una app".
+**Qué se hizo:** clase `lg-app` en la tarjeta de ingreso (index.html) + bloque CSS en pin.css: la pantalla centra la tarjeta
+en `100dvh`, tipografías y espacios más chicos, título "Cargá, jugá y cobrá en el momento", bajada de una línea, chips,
+ticker, botón grande "Registrarme" + "Ya tengo cuenta" (el login desplegado scrollea dentro de 46vh), **línea de confianza**
+`#lgTrust` (★ 4,8 · 202 opiniones, de `/api/reviews/public`, loginhero.js) y pie. Las secciones "Lo que te damos" y el slider
+de reseñas quedan en el HTML pero ocultas (`.lg-app .lg-sec`). Con pantallas bajas (≤700/620 px) se achican título y
+botón, y se esconden un chip, el ticker y la nota. La burbuja de Soporte para visitantes (#414) sigue abajo a la derecha.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 414. 🚪 Ingreso como REGISTRO · soporte para VISITANTES (sin cuenta) con columna en el panel · ticker sobrio — SW v285, admin-sw v87
 **Pedido (owner, con captura del login):** "que figure como registro, que exija SMS en el registro; abajo las reseñas; agregá
 un soporte y en el admin un soporte sin acceso para gente que quiere hablar desde afuera, en otra columna al lado del de

@@ -10,7 +10,18 @@
     let _done = false;
     async function init() {
         if (_done) return; _done = true;
-        try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider('loginReviews', { noAdd: true }); } catch (_) {}
+        // #415: una sola pantalla → en vez del slider de reseñas, una línea de confianza con el promedio real.
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/reviews/public?limit=1');
+            if (r.ok) {
+                const d = await r.json(); const t = _el('lgTrust');
+                if (t && d && d.total > 0) {
+                    const avg = Number(d.avgStars || 0); const full = Math.round(avg);
+                    t.innerHTML = '<span class="lg-stars">' + '★'.repeat(full) + '<i>' + '★'.repeat(5 - full) + '</i></span><b>' + avg.toFixed(1).replace('.', ',') + '</b><span>· ' + Number(d.total).toLocaleString('es-AR') + ' opiniones de jugadores</span>';
+                    t.style.display = '';
+                }
+            }
+        } catch (_) {}
         let info = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/landing/info'); if (r.ok) info = await r.json(); } catch (_) {}
         if (!info) return;
