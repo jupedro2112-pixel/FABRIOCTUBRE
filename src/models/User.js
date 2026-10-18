@@ -630,6 +630,8 @@ const userSchema = new mongoose.Schema({
   },
   // #509 anti-estafa: banderas (ej. 'cbu_reuse' = cargó desde un CBU que ya usó OTRA cuenta → sin bonos de bienvenida/2ª carga/misiones)
   fraudFlags: { type: [String], default: [] },
+  // #514 misiones por NIVEL: `promo` = niveles ganados por completar todas las misiones de una semana (baja si pasa 2 semanas sin cumplir ninguna)
+  missionTier: { promo: { type: Number, default: 0 }, updatedWeek: { type: String, default: null }, promotedWeek: { type: String, default: null }, lastTierId: { type: String, default: null } },
   fraudNotes: { type: [{ at: Date, note: String }], default: [] },
   dailyRoulettePendingPct: { type: Number, default: 0 },
   dailyRoulettePendingLabel: { type: String, default: null },

@@ -1301,6 +1301,18 @@ document.addEventListener('change', function (ev) {
                         <label>Premio mínimo $<input type="number" id="stAfMin" min="0" style="width:90px;" title="Si el tope deja el premio por debajo de esto, se espera a que cargue más"></label>
                         <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stAfBlock" style="width:auto;"> Sin premio si retiró tanto o más de lo que cargó en la semana</label>
                     </div>
+                    <!-- #514: NIVELES de misiones — cada nivel tiene sus misiones; el cliente entra por lo que carga por semana y sube al completar todas -->
+                    <div class="dia-sub"><b>🪜 Niveles</b> <small>el cliente entra al nivel según su carga semanal promedio (últimas 4 semanas); si completa TODAS las misiones de su nivel, la semana siguiente pasa al nivel de arriba (más difícil, premios más grandes); si pasa N semanas sin cumplir ninguna, baja un nivel ganado.</small></div>
+                    <div class="dia-bar dia-bar-in">
+                        <label>Nivel que estás editando<select id="stTierSel" onchange="stratTierSwitch()"></select></label>
+                        <label>Nombre<input type="text" id="stTierName" maxlength="30" style="width:120px;"></label>
+                        <label>Emoji<input type="text" id="stTierEmoji" maxlength="4" style="width:50px;"></label>
+                        <label>Entra con carga semanal ≥ $<input type="number" id="stTierMin" min="0" step="1000" style="width:120px;"></label>
+                        <button class="btn-secondary btn-small" onclick="stratTierAdd()">+ Nivel</button>
+                        <button class="btn-secondary btn-small" onclick="stratTierRemove()">🗑 Quitar nivel</button>
+                        <label>Baja un nivel tras (semanas sin cumplir)<input type="number" id="stDemote" min="1" max="8" style="width:60px;"></label>
+                        <span class="dia-pill" id="stTierInfo"></span>
+                    </div>
                     <div style="overflow-x:auto;"><table class="data-table" style="width:100%;"><thead><tr><th>Activa</th><th>Título (lo ve el cliente)</th><th>Tipo de meta</th><th>Meta</th><th>Carga mínima $</th><th>Premio $</th><th>Cumplidas esta semana</th><th></th></tr></thead><tbody id="stMsRows"></tbody></table></div>
                 </div>
                 <div class="dia-bar"><button class="btn-primary" onclick="stratSave()">💾 Guardar estrategia</button><span id="stSaveInfo" class="dia-pill"></span></div>

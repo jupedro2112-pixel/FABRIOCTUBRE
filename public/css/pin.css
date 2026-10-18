@@ -1459,4 +1459,7 @@ body.home-basic #easyView { display: none !important; }
 .bv-switch { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; } .bv-switch small { color: var(--p-muted); font-weight: 700; width: 100%; text-align: center; }
 .bv-switch button { border: 1px solid var(--p-border); background: transparent; color: var(--p-text); border-radius: 999px; padding: 8px 14px; font: 800 12px var(--p-font); cursor: pointer; }
 .mc-opt.mc-basic { border-color: var(--p-red) !important; } .mc-opt.mc-basic b { color: var(--p-red) !important; }
+/* ── #514: nivel de misiones ── */
+.ms-level { display: flex; flex-direction: column; gap: 3px; background: var(--p-red-soft); border-radius: 14px; padding: 10px 12px; margin-bottom: 4px; text-align: left; }
+.ms-level b { font: 900 14px var(--p-font); color: var(--p-red); } .ms-level small { font: 600 11.5px/1.35 var(--p-font); color: var(--p-text); }
 

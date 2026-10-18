@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 514. 🪜 MISIONES POR NIVEL DE CLIENTE: cada nivel con sus misiones y premios; el que completa todas sube — SW v360, admin-sw v118
+**Pedido (owner):** "diferentes tipos de misiones semanales según el tipo de cliente, regalos acordes, y cada vez que suben,
+niveles más difíciles; detallalo bien".
+**Cómo funciona:** `missions.tiers[]` (4 por defecto: 🥉 Bronce desde $0/sem · 🥈 Plata desde $60.000 · 🥇 Oro desde $200.000 ·
+💎 Diamante desde $600.000; cada uno con 3 misiones: cargas, días distintos y total, con metas y premios crecientes: $3.000 → $8–10k
+→ $20–30k → $50–80k). **Nivel del cliente** = base por su carga semanal promedio de las últimas 4 semanas + `missionTier.promo`
+(niveles ganados). **Sube**: si completa TODAS las misiones de su nivel en la semana, `promo += 1` (una vez por semana) y se le
+avisa (`/sys_mission_levelup`); la semana siguiente le tocan las del nivel de arriba. **Baja**: N semanas seguidas (default 2) sin
+cumplir ninguna → `promo −= 1`. Anti-estafa de #508/#509 intacto (rollover ×5, tope 20 % de lo cargado, sin premio si retiró).
+**App:** el modal y la tarjeta muestran "Nivel 🥈 Plata · 1 de 3 cumplidas" y "Completá las 3 y la semana que viene pasás a 🥇 Oro
+(o cargá $X más por semana)". **Panel:** editor por nivel (selector de nivel, nombre, emoji, carga semanal mínima, + Nivel / Quitar,
+semanas para bajar) con la misma tabla de misiones por nivel; stats de clientes con niveles ganados.
+**Archivos:** `server.js`, `src/models/User.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/js/home.js`, `public/css/pin.css`, SWs.
+
 ### 513. 🎲 Logo original de Ganamos — SW v359
 **Pedido (owner, con imagen):** "logo de Ganamos para que lo cambies y pongas el original". Guardado como `public/images/ganamos-net.png`
 (512×512, el cuadrado violeta con G♠NAMOS .NET); `_normalizeLogo` mapea las rutas viejas (`ganamos.svg` / `ganamos.png`) a la nueva,
