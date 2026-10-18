@@ -21589,6 +21589,9 @@ function _storyPublic(s, req) {
   const base = ''; // mismo origen
   let mediaUrl = s.mediaUrl || '';
   if (!mediaUrl && s.mediaMime) mediaUrl = base + '/api/stories/' + encodeURIComponent(s.id) + '/media?v=' + new Date(s.publishedAt || s.createdAt).getTime();
+  // #456: las imágenes de /images/ se cachean 24 h en el teléfono → cache-buster con la fecha de publicación (si se
+  // republica una historia con la misma ruta, todos ven la foto nueva).
+  if (/^\/images\//.test(mediaUrl) && mediaUrl.indexOf('?') === -1) mediaUrl += '?v=' + new Date(s.publishedAt || s.createdAt).getTime();
   return {
     id: s.id, title: s.title || '', text: s.text || '', mediaType: s.mediaType || 'none', mediaUrl, bgColor: s.bgColor || '#06070d',
     linkUrl: s.linkUrl || '', linkLabel: s.linkLabel || '', durationSec: s.durationSec || 6, hours: s.hours,

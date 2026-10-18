@@ -22,6 +22,8 @@ foto de Soporte actualizala con los 3".
   (`POST /api/admin/stories`, `mediaUrl …?v=2` para saltar la caché, 72 h) → horario actualizado.
 - **Visor:** arriba sólo "PICA ROJA" + "hace N h" (el logo se quitó); el sello con logo queda abajo (#455). Seed del boot
   actualizado a pin-2.png.
+- **Caché:** `/images/*` se sirve con `max-age=86400`; `_storyPublic` ahora agrega `?v=<publishedAt>` a los `mediaUrl` de
+  `/images/…` (el POST del panel no acepta query en la URL), así los teléfonos ven la foto nueva sin esperar 24 h.
 **Archivos:** `public/images/stories/*`, `server.js`, `public/css/pin.css`, `public/index.html`, `public/firebase-messaging-sw.js`.
 
 ### 455. 📖 Historias: logo + PICA ROJA arriba a la izquierda (Instagram) · sello de abajo en blanco, sin píldora — SW v324
