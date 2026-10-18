@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-17
 
+### 370. 🎨 Tema "Pinterest": blanco, grises, un rojo — toda la app salvo la Carga manual (WhatsApp) — SW v257
+**Pedido (owner, captura de Pinterest):** "rediseñá la página más estilo Pinterest, más aesthetic y profesional, no
+tanto color y que no te pierdas; de punta a punta: desde que entrás hasta Info, cambio de clave, carga automática.
+Respetá la carga manual, que siga pareciendo WhatsApp". Implementado como **capa de tema** `public/css/pin.css`
+(≈400 líneas) que se carga ÚLTIMA en `index.html`: fondo blanco, superficies gris #f1f1f1, texto #111, secundario
+#767676, bordes #e2e2e2, **un solo acento rojo #e60023** (Inicio, CTAs, chips), verde apagado sólo para plata, sans
+del sistema (Helvetica/Roboto), botones píldora, tarjetas de 16–24 px, sin degradés/neón/brillos/animaciones de
+sombra. Re-mapea las variables `--dx-*`/`--pr-*` y pisa con `!important` login, barra de arriba (Inicio = píldora
+roja, el resto gris; Telegram e Historias neutros), Inicio (hero, servicios, pestañas, fotos, CTA, reseñas), Menú
+fácil + selector, home completo (tarjetas, carga automática, reembolsos, fueguito, plataformas, VIP, carga gratis,
+jugar ahora, casino embebido), modales (genérico, Perfil, Info, reembolso, fueguito, niveles, avatar, referidos,
+plan de notificaciones), toasts y scrollbars. Los **colores inline** del HTML viejo (dorados, grises, verdes,
+blancos) se re-mapean con selectores `[style*=…]` de alcance positivo (login, Inicio, Menú fácil, home, barra,
+modales) para NO tocar `#supportPanel` (chat WhatsApp intacto, incluida la tarjeta CBU), `#rouletteModal` (HTML por
+JS) ni el visor de historias (pantalla completa oscura a propósito). **Volver atrás** = quitar el `<link>` de
+pin.css. No se pudo capturar pantalla en esta sesión (sin navegador): revisar con capturas del owner y ajustar.
+
 ### 369. ℹ️ Info del servicio en UN SOLO MENSAJE · app y notificaciones sólo en Perfil — SW v256
 **Pedido (owner, captura de un tester):** "sacaría de Info la opción de instalar app y notificaciones" → "app y
 notificaciones dejalo en Perfil nomás" (ya estaban ahí: 🔔 Notificaciones y 📲 Instalar la app); "y todo esto lo

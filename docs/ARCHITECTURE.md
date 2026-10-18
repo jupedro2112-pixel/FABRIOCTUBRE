@@ -928,6 +928,11 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   hasta que responda `/api/platforms`, "Abrir la plataforma ›" a los 15 s si no embebe) y abajo
   "Carga manual" (→ mini) / "Carga automática" (→ full). Al salir el iframe se vacía. `openSupport()`
   en play = mini. El cartel tiene el chip "🎰 Plataformas" para volver.
+  **#370 (2026-10-17) — TEMA "PINTEREST":** `public/css/pin.css` (último `<link>`) re-mapea `--dx-*`/`--pr-*` y pisa con
+  `!important` login, barra, Inicio, Menú fácil, home completo y modales en blanco / gris #f1f1f1 / texto #111 / acento
+  rojo #e60023 (verde apagado sólo para plata). Los colores inline del HTML se re-mapean con `[style*=…]` de alcance
+  positivo que excluye `#supportPanel` (la Carga manual sigue WhatsApp), `#rouletteModal` y el visor de historias.
+  Regla: lo nuevo de la PWA se colorea con `--p-*`; para volver al tema oscuro se quita ese link.
   **#366 (2026-10-17):** cuarto modo **easy** = MENÚ FÁCIL para quien se pierde con tantos botones. En CADA arranque
   (#367; y de nuevo tras ≥ 10 min en segundo plano, `_menuReaskInit`), `ui.showChatScreen` → `VIP.home.maybeShowMenuChooser` abre `#menuChooser` ("¿Cómo querés ver
   la app?" fácil / completo); la elección vive en `localStorage vip_menu_pref` ('easy' | 'full') y se cambia en
