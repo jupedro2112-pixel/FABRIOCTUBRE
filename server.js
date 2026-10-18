@@ -11666,12 +11666,12 @@ async function initializeData() {
   // #395 (owner 2026-10-18): fueguito — hitos cada 10 días hasta el 100 (escalera FIRE_MILESTONES_DEFAULT), 10 cargas entre
   // racha y racha y rollover x5. One-shot: pisa lo guardado en el panel UNA vez; después el panel manda.
   try {
-    if (!(await getConfig('migration_fire_10to100_v1_done', false))) {
+    if (!(await getConfig('migration_fire_10to100_v2_done', false))) { // v2 (#397): montos de siempre repetidos, no la escalera inventada de v1
       await Config.set('fireMilestones', FIRE_MILESTONES_DEFAULT, 'startup-migration');
       await Config.set('fireMinDeposits', 10, 'startup-migration');
       await Config.set('fireRolloverMultiplier', 5, 'startup-migration');
-      await Config.set('migration_fire_10to100_v1_done', true, 'startup-migration');
-      console.log('✅ Fueguito (#395): 10 hitos (día 10 → 100), 10 cargas entre rachas, rollover x5');
+      await Config.set('migration_fire_10to100_v2_done', true, 'startup-migration');
+      console.log('✅ Fueguito (#395/#397): 10 hitos (día 10 → 100) con los montos de siempre en ciclo, 10 cargas entre rachas, rollover x5');
     }
   } catch (e) { console.warn('[startup-migration] fueguito 10→100 (#395):', e.message); }
   // #391 (owner 2026-10-18): textos nuevos de los botones de carga automática. Pisa SOLO si todavía tienen el default
@@ -13884,22 +13884,22 @@ async function _countRealDepositsDays(userId, username, days) {
 // Hitos/milestones del Fueguito (DEFAULTS). Editables desde el panel → Config['fireMilestones'].
 // requireDeposits > 0 marca que la RECOMPENSA (no el reclamo diario) requiere actividad del mes.
 // #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
-// #395 (owner 2026-10-18): "las rachas cada 10 días hasta el día 100, respetá el orden de los regalos, 10 cargas entre
-// racha y racha, rollover x5". Los 3 primeros hitos quedan como estaban; del 40 al 100 la escalera sigue SUBIENDO
-// (orden de los regalos). Todo editable en el panel → Fueguito. La migración `migration_fire_10to100_v1_done` pisa la
-// config guardada UNA vez con esta escalera + fireMinDeposits=10 + fireRolloverMultiplier=5.
-const FIRE_MILESTONES_DEFAULT = [
-  { day: 10,  reward: 50000,    type: 'cash', requireDeposits: 20000,   depositDays: 30,  desc: 'Recompensa Fueguito 10 días' },
-  { day: 20,  reward: 250000,   type: 'cash', requireDeposits: 100000,  depositDays: 30,  desc: 'Recompensa Fueguito 20 días' },
-  { day: 30,  reward: 1000000,  type: 'cash', requireDeposits: 300000,  depositDays: 45,  desc: 'Recompensa Fueguito 30 días' },
-  { day: 40,  reward: 1500000,  type: 'cash', requireDeposits: 400000,  depositDays: 60,  desc: 'Recompensa Fueguito 40 días' },
-  { day: 50,  reward: 2000000,  type: 'cash', requireDeposits: 500000,  depositDays: 75,  desc: 'Recompensa Fueguito 50 días' },
-  { day: 60,  reward: 2500000,  type: 'cash', requireDeposits: 600000,  depositDays: 90,  desc: 'Recompensa Fueguito 60 días' },
-  { day: 70,  reward: 3000000,  type: 'cash', requireDeposits: 700000,  depositDays: 105, desc: 'Recompensa Fueguito 70 días' },
-  { day: 80,  reward: 4000000,  type: 'cash', requireDeposits: 800000,  depositDays: 120, desc: 'Recompensa Fueguito 80 días' },
-  { day: 90,  reward: 5000000,  type: 'cash', requireDeposits: 900000,  depositDays: 135, desc: 'Recompensa Fueguito 90 días' },
-  { day: 100, reward: 10000000, type: 'cash', requireDeposits: 1000000, depositDays: 150, desc: 'Recompensa Fueguito 100 días' }
-];
+// #395/#397 (owner 2026-10-18): "las rachas cada 10 días hasta el día 100 y respetá el orden de los regalos … dejá los
+// montos como estaban, sólo el rollover x5". Hitos cada 10 días hasta el 100; los premios se REPITEN en el orden de
+// siempre: $50.000 → $250.000 → $1.000.000 → $50.000 → … (sin inventar montos nuevos). Editables en el panel → Fueguito.
+const FIRE_MILESTONES_DEFAULT = (() => {
+  const cycle = [
+    { reward: 50000,   requireDeposits: 20000,  depositDays: 30 },
+    { reward: 250000,  requireDeposits: 100000, depositDays: 30 },
+    { reward: 1000000, requireDeposits: 300000, depositDays: 45 }
+  ];
+  const out = [];
+  for (let day = 10, i = 0; day <= 100; day += 10, i++) {
+    const c = cycle[i % cycle.length];
+    out.push({ day, reward: c.reward, type: 'cash', requireDeposits: c.requireDeposits, depositDays: c.depositDays, desc: 'Recompensa Fueguito ' + day + ' días' });
+  }
+  return out;
+})();
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
 // válida, usa los defaults. Normaliza/clampea y ordena por día. Todos los premios son

@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 397. 🔥 Fueguito: los montos de siempre, repetidos en orden hasta el día 100 (corrige #395)
+**Pedido (owner):** "los regalos del fueguito los subiste, dejalo como estaba los montos de los premios, solo cambiá el
+rollover, así como está x5 está ok".
+**Qué se hizo (server.js):** `FIRE_MILESTONES_DEFAULT` se genera con un ciclo: día 10 $50.000 · 20 $250.000 · 30
+$1.000.000 · 40 $50.000 · 50 $250.000 · 60 $1.000.000 · 70 $50.000 · 80 $250.000 · 90 $1.000.000 · 100 $50.000
+(actividad requerida y plazo acompañan a cada monto como antes). La migración pasa a `migration_fire_10to100_v2_done`
+(pisa la escalera inventada en #395 UNA vez); `fireMinDeposits`=10 y `fireRolloverMultiplier`=5 se mantienen.
+**Archivos:** `server.js`.
+
 ### 396. 🌙 Modo nocturno: sólo dentro de Perfil (se sacó el botón de la barra) — SW v274
 **Pedido (owner):** "el modo nocturno adentro de perfil, no al lado".
 **Qué se hizo:** se quitó `#navTheme` de la barra superior (index.html). Queda la acción "🌙 Modo nocturno" en Perfil
@@ -20,7 +29,7 @@ cargas entre racha y racha y el premio es rollover x5".
 **Qué se hizo (server.js):** `FIRE_MILESTONES_DEFAULT` pasa de 3 a 10 hitos. Los 3 primeros quedan iguales
 (10 d $50.000 · 20 d $250.000 · 30 d $1.000.000) y del 40 al 100 la escalera sigue subiendo (orden de los regalos):
 40 d $1,5M · 50 d $2M · 60 d $2,5M · 70 d $3M · 80 d $4M · 90 d $5M · 100 d $10M (actividad requerida y plazo crecen
-en paralelo). ⚠️ Los montos del 40 al 100 los elegí yo como escalera razonable: se ajustan desde el panel → Fueguito.
+en paralelo). ⚠️ Los montos del 40 al 100 los había inventado yo: el owner los rechazó → corregido en #397 (montos de siempre en ciclo).
 Migración one-shot `migration_fire_10to100_v1_done`: pisa `Config['fireMilestones']` con la escalera, `fireMinDeposits`=10
 y `fireRolloverMultiplier`=5 (eran los defaults, pero se fijan explícitamente). Después manda el panel. La lógica de
 reclamo busca el hito por día exacto (`find(m => m.day === streak)`), así que no hubo que tocarla; la PWA (`fire.js`)
