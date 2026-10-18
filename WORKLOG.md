@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-17
 
+### 380. 🟦 Pestañas de plataformas iguales (3 cuadrados) · Soporte 100% independiente del chat viejo — SW v267, admin-sw v80
+**Pedido (owner):** "las 3 plataformas en forma recta, cuadrados iguales con la altura que ya tiene Ganamos; y el
+soporte: hablé y me contestaron del chat anterior; quiero otro chat 100% independiente, el otro dejalo como está".
+- **Pestañas del Inicio** (`.ev-tabs` / `.ev-tab`, pin.css): grilla de N columnas iguales, cada pestaña es un cuadro de
+  86 px de alto con el logo (30 px) arriba, el nombre abajo y la etiqueta "Próximamente" / "Recomendado" adentro, todas
+  del mismo tamaño.
+- **Soporte independiente:** el cliente ve en Soporte SOLO los mensajes con `channel='support'` (lo suyo + las respuestas
+  de la columna 💬 Soporte del panel) y los mensajes de sistema (acuses de carga, "¿dónde querés jugar?", bienvenida)
+  posteriores al corte. Las respuestas que un agente escribe desde la sección **Chats** (chat viejo) ya **no** le
+  llegan al cliente: ni al recargar (`GET /api/messages/:userId`, filtro para rol `user`) ni en vivo (socket.js descarta
+  los `new_message` de agente sin canal). La sección Chats queda como estaba (historial completo) con un aviso arriba
+  del campo de escribir: "lo que escribas acá no lo ve el cliente en Soporte — respondé desde 💬 Soporte". La columna
+  Soporte del panel pide `?channel=support` y muestra exactamente lo que ve el cliente (más las notas 🔒 internas).
+
 ### 379. 💸 Retiro mínimo $10.000 (configurable) · "pago automático" en el modal de retiro — SW v266, admin-sw v79
 **Pedido (owner):** "agregá al retiro mínimo 10.000, pago automático; ahora está en 5.000". El mínimo estaba
 hardcodeado en $4.999 (server y app). Ahora: `Config['withdrawMinArs']` (default **10.000**, `getWithdrawMinArs()`),

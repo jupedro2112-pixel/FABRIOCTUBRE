@@ -15115,7 +15115,7 @@ async function spSelect(userId, username) {
 async function spLoadMessages(userId, keepScroll) {
     const box = document.getElementById('spMessages'); if (!box) return;
     try {
-        const r = await authFetch('/api/messages/' + encodeURIComponent(userId) + '?limit=80');
+        const r = await authFetch('/api/messages/' + encodeURIComponent(userId) + '?limit=80&channel=support'); // #380: lo mismo que ve el cliente
         const j = await r.json(); if (!r.ok) return;
         const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
         box.innerHTML = (j.messages || []).map(_spMsgHtml).join('');

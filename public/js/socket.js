@@ -102,6 +102,12 @@ VIP.socket = (function () {
 
             const message = data.message || data;
 
+            // #380: Soporte es 100% independiente del chat viejo: una respuesta de agente escrita desde la sección
+            // Chats (sin canal) no se muestra en la app. Sí: lo del cliente, el sistema y la columna Soporte.
+            if (message && message.senderRole && message.senderRole !== 'user' && message.senderRole !== 'system' && message.type !== 'system' && message.channel !== 'support') {
+                return;
+            }
+
             if (message.id && VIP.state.processedMessageIds.has(message.id)) {
                 return;
             }

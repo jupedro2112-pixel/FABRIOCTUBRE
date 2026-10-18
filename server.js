@@ -7321,6 +7321,11 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
       matchStage.timestamp = { $lt: before };
     }
     // #377: el cliente sólo ve el chat NUEVO de Soporte (desde Config['supportChannelSince']); el panel ve todo.
+    // #380: y SOLO el canal de soporte (lo suyo, las respuestas de la columna Soporte y los mensajes de sistema): lo que
+    // un agente escribe desde la sección Chats (chat viejo) no le llega. El panel pide lo mismo con ?channel=support.
+    if (!isAdminRole || req.query.channel === 'support') {
+      matchStage.$and = [{ $or: [{ channel: 'support' }, { type: 'system' }, { senderRole: 'user' }] }];
+    }
     if (!isAdminRole) {
       const since = await getSupportChannelSince();
       if (since) matchStage.timestamp = Object.assign({}, matchStage.timestamp || {}, { $gte: since });

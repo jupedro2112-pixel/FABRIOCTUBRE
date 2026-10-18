@@ -446,7 +446,9 @@ document.addEventListener('change', function (ev) {
                                 <button id="attachImageBtn" class="attach-btn" title="Adjuntar imagen o video">
                                     <span class="icon icon-image"></span>
                                 </button>
-                                <textarea id="messageInput" placeholder="Escribe un mensaje..." rows="1"></textarea>
+                                <!-- #380: el cliente ya no ve este chat; soporte se responde desde la columna 💬 Soporte -->
+                                <div style="flex:1 0 100%;font-size:10.5px;color:#ffb347;margin:0 0 4px;">⚠️ Lo que escribas acá <b>no lo ve el cliente</b> (el chat viejo quedó interno). Para responderle usá la columna <b>💬 Soporte</b>.</div>
+                                <textarea id="messageInput" placeholder="Nota interna / chat viejo (el cliente no lo ve)…" rows="1"></textarea>
                                 <button id="sendMessage" class="send-btn">
                                     <span class="icon icon-paper-plane"></span>
                                 </button>
