@@ -3130,11 +3130,9 @@ app.post('/api/hgcash/webhook', async (req, res) => {
     } else {
       // Fail-closed en producción: sin secreto no se puede validar la firma → NO se
       // procesa el webhook (evita inyección de movimientos/cargas falsas). En dev se permite.
-      if (process.env.NODE_ENV === 'production') {
-        logger.error('[hgcash] webhook RECHAZADO en producción: falta el secreto (panel → Banco automático, o HGCASH_WEBHOOK_SECRET en SSM)');
-        return res.status(503).json({ error: 'webhook no configurado' });
-      }
-      logger.warn('[hgcash] webhook recibido SIN HGCASH_WEBHOOK_SECRET — no se valida firma (solo dev)');
+      // #413 (seguridad): fail-closed SIEMPRE (antes sólo con NODE_ENV=production): sin secreto no se acredita nada.
+      logger.error('[hgcash] webhook RECHAZADO: falta el secreto (panel → Banco automático, o HGCASH_WEBHOOK_SECRET en SSM)');
+      return res.status(503).json({ error: 'webhook no configurado' });
     }
 
     // Fan-out al proyecto hermano (autoreembolsos): recién DESPUÉS de validar la
@@ -5968,7 +5966,7 @@ app.post('/api/auth/request-password-reset', sensitiveLimiter, smsIpLimiter, asy
     if (phone && typeof phone === 'string') {
       const normalizedPhone = phone.trim();
       if (validateInternationalPhone(normalizedPhone)) {
-        const user = await User.findOne({ phone: normalizedPhone, phoneVerified: true }).lean();
+        const user = await User.findOne({ phone: normalizedPhone, phoneVerified: true, role: 'user' }).lean(); // #413: nunca staff
         if (user) {
           try {
             await generateAndSendOTP(normalizedPhone, 'reset');
@@ -6972,6 +6970,7 @@ app.get('/api/admin/girox/health', authMiddleware, adminMiddleware, async (req, 
 // es (a) y hay que reclamarle a 1girox.
 app.get('/api/admin/girox/test-sso', authMiddleware, adminMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' }); // #413: entra al casino COMO el jugador
     const username = String(req.query.username || '').trim();
     if (!username) {
       return res.status(400).json({ error: 'Falta ?username=' });
@@ -7014,6 +7013,14 @@ app.get('/api/admin/girox/test-sso', authMiddleware, adminMiddleware, async (req
 app.put('/api/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    // #413 (seguridad): un cajero/comunidad NO puede editar cuentas de staff (teléfono, isActive…): era la puerta para
+    // resetear por SMS la clave del admin general. Sólo el admin general edita a otros admins.
+    try {
+      const _target = await User.findOne({ id }).select('role').lean();
+      if (_target && isAdminRole(_target.role) && req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Solo el admin general puede editar cuentas de staff.' });
+      }
+    } catch (_) {}
 
     // Whitelist of fields any admin role can update
     const ALLOWED_FIELDS = ['email', 'phone', 'whatsapp', 'isActive', 'balance'];
@@ -11636,38 +11643,8 @@ async function initializeData() {
     const r = await User.updateOne({ username: 'lalodj' }, { $set: { role: 'admin', isActive: true, isBlocked: false } });
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
-  // #386 (owner 2026-10-18): acceso ADMIN COMPLETO al panel para "iginte1000". One-shot: la primera vez crea la
-  // cuenta (o convierte la existente) con la clave inicial que pidió el owner (acá va sólo el HASH bcrypt, nunca
-  // la clave en claro) y marca `migration_admin_iginte1000_v1_done`. Después NO se vuelve a tocar: si el owner le
-  // cambia la clave desde el panel, se respeta. Se usa updateOne con upsert a propósito para que el pre('save')
-  // NO re-hashee el hash. Para rotar la clave: cambiar el hash y el sufijo _v1 → _v2.
-  try {
-    if (!(await getConfig('migration_admin_iginte1000_v1_done', false))) {
-      const IGINTE_HASH = '$2b$12$sPtZyYjRVasfoQns9XLi..w7/hpraIQAjvuoGG66GoB9ORuu0.W8a';
-      const ex = await User.findOne({ usernameLower: 'iginte1000' }).select('_id username').lean()
-        || await User.findOne({ username: /^iginte1000$/i }).select('_id username').lean();
-      const set = {
-        password: IGINTE_HASH, role: 'admin', isActive: true, isBlocked: false, blockReason: null,
-        mustChangePassword: false, usernameLower: 'iginte1000'
-      };
-      if (ex) {
-        await User.updateOne({ _id: ex._id }, { $set: set, $inc: { tokenVersion: 1 } });
-        console.log(`✅ #386 admin iginte1000: cuenta existente "${ex.username}" pasada a admin con la clave inicial`);
-      } else {
-        await User.updateOne(
-          { username: 'iginte1000' },
-          { $set: set, $setOnInsert: {
-            id: uuidv4(), username: 'iginte1000', email: 'iginte1000@vipcargas.com', phone: null,
-            accountNumber: 'ADMIN-IGINTE1000', balance: 0, createdAt: new Date(), lastLogin: null, tokenVersion: 0,
-            jugayganaSyncStatus: 'not_applicable'
-          } },
-          { upsert: true }
-        );
-        console.log('✅ #386 admin iginte1000 creado con acceso total al panel');
-      }
-      await setConfig('migration_admin_iginte1000_v1_done', true);
-    }
-  } catch (e) { console.warn('[startup] admin iginte1000 (#386):', e.message); }
+  // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
+  // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #398 (owner 2026-10-18): fueguito de vuelta a la versión anterior (3 hitos). One-shot que deshace lo que #395/#397
   // habían escrito en Config['fireMilestones']; min. de cargas 10 y rollover x5 quedan igual. Después manda el panel.
   try {
@@ -12451,7 +12428,8 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
         createdAt: new Date()
       });
     } catch (ppErr) {
-      logger.warn(`[withdrawal/request] no se pudo crear PendingPayout para ${user.username}: ${ppErr.message}`);
+      logger.error(`[withdrawal/request] no se pudo crear PendingPayout para ${user.username}: ${ppErr.message}`);
+      return res.status(500).json({ error: 'No pudimos registrar tu solicitud de retiro. Probá de nuevo en un momento.' }); // #413
     }
 
     // Guardar datos bancarios para la próxima vez (si el usuario lo pidió).
@@ -17448,6 +17426,7 @@ app.post('/api/admin/users/:id/verify-phone', authMiddleware, adminMiddleware, a
 
     const user = await User.findOne({ id });
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado.' });
+    if (isAdminRole(user.role) && req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el admin general puede tocar cuentas de staff.' }); // #413
 
     user.phoneVerified = verified;
     if (verified) {
@@ -17958,7 +17937,10 @@ app.get('/api/users/:userId', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Acceso denegado' });
     }
     
-    const user = await User.findOne({ id: userId }).select('-password').lean();
+    // #413 (seguridad): el cliente ve SOLO sus campos públicos (antes '-password' exponía notas internas, tags, IP, tokens FCM…).
+    const user = adminRoles.includes(req.user.role)
+      ? await User.findOne({ id: userId }).select('-password').lean()
+      : await User.findOne({ id: userId }).select(USER_PUBLIC_FIELDS).lean();
     
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -19691,7 +19673,8 @@ function _prizesClient(prizes) {
 }
 // #390 (owner): a los usuarios de PRUEBA se les reinicia la ruleta en cada apertura/giro para testear sin esperar al otro día.
 const ROULETTE_TESTERS = ['lalodj'];
-const _isRouletteTester = (username) => ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
+// #413 (seguridad): sólo en el entorno de prueba (Render) o con TESTER_ADMIN_PROMOTE=1, igual que #355. En producción NO.
+const _isRouletteTester = (username) => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
 function _pickWeightedPrize(prizes) {
   const total = prizes.reduce((s, p) => s + (Number(p.weight) || 0), 0);
   if (!(total > 0)) return prizes[prizes.length - 1];

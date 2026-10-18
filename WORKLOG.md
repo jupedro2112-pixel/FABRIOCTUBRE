@@ -8,6 +8,39 @@
 
 ## Sesión 2026-10-18
 
+### 413. 🔐 Seguridad pre-lanzamiento: auditoría + fixes críticos/altos/medios
+**Pedido (owner):** "revisá que esté todo ok y perfecto, seguridad y demás para lanzar la página".
+**Auditoría (agente read-only sobre server.js, auth, modelos, panel, PWA).** Dato clave: **el repo de GitHub es PÚBLICO**
+⇒ nada de claves/hashes en código ni en docs. Hallazgos corregidos en esta entrada:
+- **C1 (crítico)** La clave inicial del admin `iginte1000` había quedado en claro en el WORKLOG (#386) y su hash en
+  server.js. ✔ Clave ROTADA vía `POST /api/admin/change-own-password` a una aleatoria de 16 caracteres (se le entregó al
+  owner en la sesión; NO está en el repo; la vieja devuelve 401). ✔ Seed #386 eliminado del código (ya había corrido).
+  ✔ Mención purgada del WORKLOG (queda en el historial de git, pero esa clave ya no sirve).
+- **A2 (alto)** Escalada cajero → admin general vía reset por SMS: `PUT /api/users/:id` y `/api/admin/users/:id/verify-phone`
+  ahora rechazan (403) tocar cuentas de staff si el que opera no es admin general; `request-password-reset` sólo encuentra
+  cuentas `role:'user'`.
+- **A3 (alto)** `GET /api/admin/girox/test-sso` (entra al casino COMO el jugador) sólo para admin general.
+- **M1** `lalodj` sin límite de ruleta (#390) sólo en entorno de prueba (`RENDER` o `TESTER_ADMIN_PROMOTE=1`), como #355.
+- **M2** `src/middlewares/auth.js` (`authenticate`, usado por `/api/referrals/*`) ahora rechaza `isActive:false` /
+  `isBlocked:true` (un bloqueado podía cobrar referidos con un JWT vigente).
+- **M3** `GET /api/users/:userId` para el propio cliente devuelve `USER_PUBLIC_FIELDS` (antes `-password` exponía notas
+  internas, tags, IP de registro, tokens FCM, hash del access-link…).
+- **M4** Webhook hgcash: fail-closed SIEMPRE sin secreto (antes sólo con `NODE_ENV=production`).
+- **M6** `POST /api/withdrawal/request`: si falla `PendingPayout.create` responde 500 (antes decía "recibimos tu solicitud"
+  y el retiro no existía en la cola).
+**Pendientes para el owner (no se tocaron):**
+- **A1** Cuentas de la landing nacen con la clave fija `asd123` (en el repo) y no se les fuerza el cambio. Decisión de diseño
+  (#226: se le muestra en pantalla). Recomendado: `LANDING_DEFAULT_PASSWORD` por entorno o volver al PIN aleatorio.
+- **M5** Lock anti-doble-retiro cae a memoria por proceso si no hay `REDIS_URL` en AWS multi-instancia: confirmar la var.
+- **M4 bis** Confirmar `NODE_ENV=production` en AWS y Render (cookies `Secure`, HSTS).
+- **B1–B7** (bajo): rate limits en memoria por proceso, body 10 MB global, CSP con `unsafe-inline`, carga manual sin tope por
+  operación, `PUBLIC_BASE_URL` con default a `cargas1girox.com`, comprobante de pago público por UUID, `apptest.js` público.
+- **lalodj**: sigue con rol admin en Render (#296) y clave manual: antes de lanzar, bajarle el rol o borrarlo.
+**OK verificado por la auditoría:** autorización de `/api/admin/*`, IDOR en mensajes/usuarios/sockets, retiros contra
+`wagering.available` + OTP + reclamo atómico, idempotencia por `reference`, sin secretos en git, CORS/cabeceras/cookies,
+regex escapados, sin eval, XSS escapado en panel y PWA, sin rutas debug públicas.
+**Archivos:** `server.js`, `src/middlewares/auth.js`, `WORKLOG.md`, `CLAUDE.md`.
+
 ### 412. 🚪 "Cerrar sesión" al pie de Perfil, sólo para `lalodj` — SW v284
 **Pedido (owner):** "activá el cerrar sesión sólo en lalodj en la parte inferior de perfil".
 **Qué se hizo:** botón `#pfLogoutBtn` (`.pf-act.pf-logout`) al final de las acciones del Perfil → `VIP.auth.handleLogout()`.
@@ -270,7 +303,7 @@ estaba, al final del menú, ahora bajo un rótulo propio "Interno" (atenuado). N
 **Archivos:** `public/adminprivado2026/index.html`, `public/admin-sw.js`, `WORKLOG.md`.
 
 ### 386. 🔑 Acceso admin COMPLETO al panel para `iginte1000` (seed one-shot al arranque)
-**Pedido (owner):** "ingreso panel de admin dame ingreso con iginte1000 y pepsi100 completo".
+**Pedido (owner):** "ingreso panel de admin dame ingreso con iginte1000 y [clave inicial, rotada en #413] completo".
 **Qué se hizo (server.js, bloque de startup junto al de `lalodj` #296):** migración one-shot
 `migration_admin_iginte1000_v1_done`. La primera vez que arranca el server tras el deploy:
 - si existe una cuenta `iginte1000` (case-insensitive) → la pasa a `role:'admin'`, activa, desbloqueada, le pone la

@@ -77,6 +77,10 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
 
 ## Cosas que NO hay que romper (gotchas)
 
+- **EL REPO ES PÚBLICO en GitHub (#413).** Nunca escribir claves, hashes, tokens ni API keys en código ni en docs (ni en el
+  WORKLOG al citar pedidos del owner: reemplazar por "[clave]"). Credenciales siempre por env/SSM o por el panel (cifradas).
+  La clave del admin `iginte1000` se rotó el 2026-10-18 y vive sólo en manos del owner.
+
 - **JWT_SECRET y otros secrets** se cargan desde AWS SSM en el bootstrap async, NO al
   `require()`. Por eso hay lazy getters en `src/middlewares/auth.js` y rutas.
 - **IDEMPOTENCIA POR `reference` (lo más importante de la plataforma nueva).** Cargas,

@@ -155,7 +155,11 @@ const authenticate = async (req, res, next) => {
     // Check tokenVersion for session revocation
     if (decoded.tokenVersion !== undefined) {
       try {
-        const user = await User.findOne({ id: decoded.userId }).select('tokenVersion isActive').lean();
+        const user = await User.findOne({ id: decoded.userId }).select('tokenVersion isActive isBlocked').lean();
+        // #413 (seguridad): igual que el authMiddleware de server.js — un bloqueado/inactivo no opera (ej. cobrar referidos).
+        if (user && (user.isActive === false || user.isBlocked === true)) {
+          return next(new AppError('Cuenta bloqueada o inactiva.', 403, ErrorCodes.AUTH_UNAUTHORIZED));
+        }
         if (user && user.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
           return next(new AppError(
             'Sesión invalidada. Iniciá sesión nuevamente.',
