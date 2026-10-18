@@ -93,6 +93,13 @@ VIP.chat = (function () {
             return `<div class="dep-pill dep-wait">⏳ ${md.escalated ? 'Un agente la está revisando' : 'En verificación · se acredita sola'}</div>`;
         }
         if (md.kind === 'receipt_duplicate') return '<div class="dep-pill dep-dup">⚠️ Comprobante ya usado · no se acredita</div>';
+        // #384: respuesta automática de Soporte con botón al sector (carga automática / retirar premio).
+        if (md.kind === 'go_section') {
+            const t = String(md.target || 'full');
+            const act = t === 'withdraw' ? "VIP.withdraw.openWithdrawModal()" : "VIP.home.setHomeMode('full')";
+            const label = escapeHtml(String(md.label || (t === 'withdraw' ? '💸 Ir a Retirar premio' : '⚡ Ir a Carga automática')));
+            return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="${act}">${label}</button></div>`;
+        }
         if (md.kind === 'deposit_rejected') return '<div class="dep-pill dep-rej">❌ Carga no acreditada</div>';
         if (md.kind === 'platform_link' && md.url) {
             const url = encodeURI(String(md.url));
@@ -403,7 +410,8 @@ VIP.chat = (function () {
         }).catch(() => {});
     }
 
-    async function sendMessage() {
+    async function sendMessage(_ev, _quick) {
+        const quick = (typeof _quick === 'string' && _quick) ? _quick : null; // #384: acceso rápido de Soporte (cargar | retirar | otro)
         const input = document.getElementById('messageInput');
         const content = input.value.trim();
 
@@ -466,7 +474,7 @@ VIP.chat = (function () {
         setTimeout(scrollToBottom, 300);
 
         if (VIP.state.socket && VIP.state.socket.connected) {
-            VIP.state.socket.emit('send_message', { content, type: 'text', channel: 'support' }); // #377
+            VIP.state.socket.emit('send_message', { content, type: 'text', channel: 'support', quick: quick || undefined }); // #377/#384
             return;
         }
 
@@ -477,7 +485,7 @@ VIP.chat = (function () {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${VIP.state.currentToken}`
                 },
-                body: JSON.stringify({ content, type: 'text' })
+                body: JSON.stringify({ content, type: 'text', channel: 'support', quick: quick || undefined }) // #384
             });
 
             if (response.ok) {

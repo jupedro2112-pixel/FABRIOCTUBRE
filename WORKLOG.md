@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-17
 
+### 384. 💬 Soporte: los accesos rápidos mandan el mensaje solos; "Cargar" y "Retirar" responden automático con botón al sector — SW v271
+**Pedido (owner):** "en Soporte, si pone Cargar o Retirar que responda automáticamente que las cargas y retiros son
+automáticos y le damos un botón para ir al sector; cuando aprietan un botón (ej. Otro problema) que no haya que
+enviar, que se mande directo". Los tres chips de la presentación (`VIP.home.supportQuick('cargar'|'retirar'|'otro')`)
+ahora **envían** el mensaje al toque (`VIP.chat.sendMessage(null, kind)` → socket/REST con `quick`). El server
+(HTTP y socket) guarda `metadata.quick` y, para `cargar` / `retirar`, responde en el acto con
+`/sys_support_quick_cargar` ({min} = carga mínima) o `/sys_support_quick_retirar` ({retiro_min}) + metadata
+`{kind:'go_section', target:'full'|'withdraw'}` que la app dibuja como botón "⚡ Ir a Carga automática" /
+"💸 Ir a Retirar premio" (`_renderPlatformWidget`). Para `otro` sigue la auto-respuesta genérica (#383).
+**Verificación en vivo (#383/#384, usuario de prueba creado y borrado):** el cliente ve sólo el canal de soporte; la
+auto-respuesta llega; el panel lista la conversación con no leídos; la respuesta desde la columna Soporte sale firmada
+por la persona de turno (agente real en metadata) y la del Chat viejo NO le llega; retiro bloqueado sin teléfono
+verificado / sin API en Render. ⚠️ En Render la IA de comprobantes (ANTHROPIC_API_KEY) y hgcash están apagados: la
+cola de Cargas pendientes sólo se ejercita en producción. La bienvenida automática no se mostró para la cuenta creada
+desde el panel (createdByAgent); pendiente de revisar si es intencional.
+
 ### 383. 🧭 Panel con el estilo de la app · COMANDOS por sectores plegables · Chat viejo + Soporte abajo del menú · auto-respuesta de Soporte · plataformas de carga automática en fila — SW v270, admin-sw v82
 **Pedido (owner):** "COMANDOS bien sectorizado, todo minimizado para maximizar y editar, todo en una pantalla con título
 y detalle; el panel con el mismo estilo de la app; el chat tipo WhatsApp queda inhabilitado: ponelo abajo con Soporte;

@@ -257,19 +257,17 @@
             const m = _el('spMsg'); if (m && tx) m.textContent = tx;
             const s = _el('spSla'); if (s) { s.textContent = sla ? ('⏱ ' + sla) : ''; s.style.display = sla ? '' : 'none'; }
             const st = _el('waHeadStatus'); if (st) st.textContent = nm ? (nm + ' · en línea' + (sla ? ' · ' + sla.toLowerCase() : '')) : 'en línea';
-            document.querySelectorAll('.sp-chips button').forEach((b) => {
-                const t = b.getAttribute('onclick') || '';
-                if (nm) b.setAttribute('onclick', t.replace(/Hola [^,]+,/, 'Hola ' + nm.replace(/'/g, '') + ','));
-            });
         } catch (_) {}
     }
-    // Chips de la presentación: dejan el texto escrito en el campo para que la persona lo complete y mande.
-    function supportQuick(text) {
+    // #384 (owner): los chips MANDAN el mensaje solos. 'cargar' / 'retirar' reciben respuesta automática con botón al sector.
+    const SUPPORT_QUICK_TEXT = { cargar: '💳 Quiero hacer una carga', retirar: '💸 Quiero retirar mi premio', otro: '❓ Tengo otro problema' };
+    function supportQuick(kind) {
         try {
+            const k = SUPPORT_QUICK_TEXT[kind] ? kind : 'otro';
             const i = _el('messageInput'); if (!i) return;
-            i.value = String(text || ''); i.focus();
-            try { i.setSelectionRange(i.value.length, i.value.length); } catch (_) {}
-            try { i.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) {}
+            i.value = SUPPORT_QUICK_TEXT[k];
+            if (VIP.chat && VIP.chat.sendMessage) VIP.chat.sendMessage(null, k);
+            if (k === 'otro') { setTimeout(() => { try { i.focus(); } catch (_) {} }, 300); }
         } catch (_) {}
     }
     function supportIntroToggle(ev) {

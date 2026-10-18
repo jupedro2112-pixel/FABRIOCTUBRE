@@ -7549,6 +7549,7 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
     // Soporte del panel (channel:'support') y entonces firma con el nombre rotativo (Martín / Sofía / Agustina).
     const _spChannel = (!isAdminRole || (req.body && req.body.channel === 'support')) ? 'support' : null;
     const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
+    const _spQuick = (!isAdminRole && req.body && SUPPORT_QUICK_KINDS.includes(String(req.body.quick || ''))) ? String(req.body.quick) : null; // #384
     const messageData = {
       id: uuidv4(),
       senderId: req.user.userId,
@@ -7559,7 +7560,7 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
       content,
       type,
       channel: _spChannel,
-      metadata: _spName ? { channel: 'support', agent: req.user.username, agentName: _spName } : null,
+      metadata: _spName ? { channel: 'support', agent: req.user.username, agentName: _spName } : (_spQuick ? { quick: _spQuick } : null),
       timestamp: new Date(),
       read: false
     };
@@ -7734,7 +7735,7 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
       io.to(`user_${req.user.userId}`).emit('message_sent', message);
       // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
       maybeNotifyComunidadActivity(req.user.userId, req.user.username).catch(() => {});
-      setTimeout(() => { _supportAutoReply(req.user.userId, req.user.username); }, 1500); // #383
+      setTimeout(() => { _supportQuickReply(req.user.userId, req.user.username, _spQuick); }, 1200); // #383/#384
     } else {
       // Admin enviando mensaje - notificar al usuario
       // SLA: respuesta de texto del agente — resolver el reloj de demora (fire-and-forget).
@@ -10560,6 +10561,7 @@ io.on('connection', (socket) => {
       // #377: canal SOPORTE (ver POST /api/messages/send).
       const _spChannel = (!isAdminRole || data.channel === 'support') ? 'support' : null;
       const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
+      const _spQuick = (!isAdminRole && SUPPORT_QUICK_KINDS.includes(String(data.quick || ''))) ? String(data.quick) : null; // #384
       const messageData = {
         id: uuidv4(),
         senderId: socket.userId,
@@ -10570,7 +10572,7 @@ io.on('connection', (socket) => {
         content,
         type,
         channel: _spChannel,
-        metadata: _spName ? { channel: 'support', agent: socket.username, agentName: _spName } : null,
+        metadata: _spName ? { channel: 'support', agent: socket.username, agentName: _spName } : (_spQuick ? { quick: _spQuick } : null),
         timestamp: new Date(),
         read: false
       };
@@ -10657,7 +10659,7 @@ io.on('connection', (socket) => {
 
         // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
         maybeNotifyComunidadActivity(socket.userId, socket.username).catch(() => {});
-        setTimeout(() => { _supportAutoReply(socket.userId, socket.username); }, 1500); // #383
+        setTimeout(() => { _supportQuickReply(socket.userId, socket.username, _spQuick); }, 1200); // #383/#384
       } else {
         // Admin/depositor/withdrawer enviando mensaje - notificar al usuario específico
         logger.debug(`[SEND_MESSAGE] Looking up socket for user ${receiverId}`);
@@ -11744,6 +11746,19 @@ async function initializeData() {
       response: '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.'
     },
     {
+      // #384: respuestas automáticas de los chips Cargar / Retirar de Soporte (con botón al sector).
+      name: '/sys_support_quick_cargar',
+      description: 'Soporte: respuesta automática cuando el cliente toca "Cargar" (las cargas son automáticas + botón a Carga automática). Variables: {min} (carga mínima), {retiro_min}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_QUICK_CARGAR_DEFAULT
+    },
+    {
+      name: '/sys_support_quick_retirar',
+      description: 'Soporte: respuesta automática cuando el cliente toca "Retirar" (los retiros son automáticos + botón a Retirar premio). Variables: {retiro_min}, {min}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_QUICK_RETIRAR_DEFAULT
+    },
+    {
       // #383: primera respuesta automática cuando el cliente escribe en Soporte. Variable: {nombre} (persona de turno).
       name: '/sys_support_autoreply',
       description: 'Soporte: respuesta automática apenas escribe el cliente (una cada 2 h; no se manda si un agente respondió hace menos de 10 min). Variable: {nombre}. Vacío = no se manda.',
@@ -12554,6 +12569,26 @@ async function getSupportAgentName(at = new Date()) {
 // #383 (owner): primera respuesta automática del SOPORTE cuando escribe el cliente — "en breve le responderá nuestro
 // agente disponible, gracias". Máximo una cada 2 h por cliente y no se manda si un agente respondió hace < 10 min.
 const SUPPORT_AUTOREPLY_DEFAULT = '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!';
+// #384 (owner): los chips "Cargar" / "Retirar" de Soporte responden solos: las cargas y los retiros son automáticos,
+// con un botón que lleva al sector. Texto editable ({min} = carga mínima, {retiro_min} = retiro mínimo).
+const SUPPORT_QUICK_CARGAR_DEFAULT = '⚡ Las cargas son 100% automáticas: transferís al CBU, mandás la foto del comprobante y se acredita sola en minutos (carga mínima {min}). Tocá el botón y te llevo a la carga automática. Si ya la hiciste y algo falló, contame acá y lo reviso.';
+const SUPPORT_QUICK_RETIRAR_DEFAULT = '💸 Los retiros también son automáticos: en "Retirar premio" completás tus datos, confirmás con el código SMS y se paga solo a tu CBU (retiro mínimo {retiro_min}). Tocá el botón para ir. Si ya lo pediste y tenés dudas, contame acá.';
+const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro'];
+async function _supportQuickReply(userId, username, quick) {
+  try {
+    if (quick !== 'cargar' && quick !== 'retirar') return _supportAutoReply(userId, username);
+    const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
+    const txt = quick === 'cargar'
+      ? await renderSystemCommand('/sys_support_quick_cargar', SUPPORT_QUICK_CARGAR_DEFAULT, vars)
+      : await renderSystemCommand('/sys_support_quick_retirar', SUPPORT_QUICK_RETIRAR_DEFAULT, vars);
+    if (!txt) return;
+    const meta = quick === 'cargar'
+      ? { kind: 'go_section', target: 'full', label: '⚡ Ir a Carga automática', channel: 'support' }
+      : { kind: 'go_section', target: 'withdraw', label: '💸 Ir a Retirar premio', channel: 'support' };
+    await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: meta });
+  } catch (e) { logger.warn(`[support] quick-reply: ${e.message}`); }
+}
 async function _supportAutoReply(userId, username) {
   try {
     const txt = await renderSystemCommand('/sys_support_autoreply', SUPPORT_AUTOREPLY_DEFAULT, { nombre: await getSupportAgentName() });
