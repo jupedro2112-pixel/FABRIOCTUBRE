@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 432. 🚪 Beneficios con el texto completo, en tres filas — SW v304
+**Pedido (owner):** "dejá lo del sistema de referidos, reembolsos diarios semanales mensuales, Programa niveles VIP PICA ROJA".
+**Qué se hizo:** las tres tarjetas pasan a filas finas (ícono + texto, ancho completo) con los títulos "Programa niveles VIP
+PICA ROJA", "Reembolsos diarios, semanales y mensuales" (bajada con los % reales: "Diario 25% · semanal 3% · mensual 1% de lo
+que perdés con tu plata") y "Sistema de referidos" (bajada con el % real). En pantallas ≤700 px se ocultan las bajadas; ya
+no se esconde la grilla entera en ≤640 px.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 431. 🚪 Inicio: más espacio entre bloques · "Jugaygana" con J mayúscula — SW v303
 **Pedido (owner):** "dejá más espacio entre una cosa y la otra; Jugaygana ponelo con la J mayúscula".
 **Qué se hizo:** gap de la tarjeta 10px (7px en pantallas ≤700 px): la sección de opiniones es flexible, así que sigue

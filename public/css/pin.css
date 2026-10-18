@@ -1089,4 +1089,13 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-feat { gap: 7px; } .lg-quick { gap: 7px; } .lg-play-box { gap: 7px; }
 .lg-app #loginReviews { gap: 5px; }
 @media (max-height: 700px) { .login-box.lg-app { gap: 7px !important; } }
+/* ── #432 (owner): beneficios con el texto completo, en TRES filas finas (ícono + texto) ── */
+.lg-feat { grid-template-columns: 1fr; gap: 5px; }
+.lg-fc, .lg-fc-wide { flex-direction: row; align-items: center; text-align: left; gap: 9px; padding: 6px 9px; border-radius: 12px; }
+.lg-fc > div { align-items: flex-start; gap: 1px; }
+.lg-fc b { font-size: 12px; line-height: 1.2; }
+.lg-fc small, .lg-fc-wide small { display: block !important; font-size: 10px; line-height: 1.25; }
+.lg-fc .lg-fi { width: 28px; height: 28px; flex-basis: 28px; } .lg-fc .lg-fi svg { width: 16px; height: 16px; }
+@media (max-height: 700px) { .lg-fc small, .lg-fc-wide small { display: none !important; } .lg-fc { padding: 5px 9px; } }
+@media (max-height: 640px) { .lg-feat { display: grid; } .lg-fc b { font-size: 11px; } }
 

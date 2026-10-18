@@ -68,7 +68,7 @@
         try {
             const rf = info.refunds || {}; const el = _el('lgFeatRefunds');
             const parts = []; if (rf.dailyMax) parts.push('Diario ' + rf.dailyMax + '%'); if (rf.weeklyMax) parts.push('semanal ' + rf.weeklyMax + '%'); if (rf.monthlyMax) parts.push('mensual ' + rf.monthlyMax + '%');
-            if (el && parts.length) el.textContent = parts.join(' · ') + ' de lo que perdés';
+            if (el && parts.length) el.textContent = parts.join(' · ') + ' de lo que perdés con tu plata';
             const rp = Number(info.referralPct); const er = _el('lgFeatRef');
             if (er && rp > 0) er.textContent = 'Invitá amigos y cobrás el ' + rp + '% de su actividad, de por vida';
         } catch (_) {}
