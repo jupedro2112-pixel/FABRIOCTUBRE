@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 575. 📐 Menú 2: la pantalla termina arriba de la barra (sin bloques blancos que tapen) — SW v403
+**Pedido (owner, con captura):** "ese blanco ahí tampoco va, no tiene que tapar; pasa en todos los menús". Los rellenos por contenedor
+(#565/#567/#571/#574) dejaban una banda blanca entre el contenido y la barra. Ahora con `body.menu2` la pantalla entera (`#chatScreen`)
+mide `100dvh − 76 px` y la barra fija ocupa el resto: el contenido se desliza hasta el borde de la barra y nada queda tapado, en todos los menús.
+La fila Comprobante/Retirar de Carga auto queda a 82 px (encima de la barra). **Archivos:** `public/css/pin.css`, SW.
+
 ### 574. 🧹 Sin barra de desplazamiento visible en los menús — SW v402
 **Pedido (owner, con captura del menú básico):** "ese deslizante ahí no es necesario". Se oculta la barra de scroll de `.basic-view`,
 `.easy-view`, `.entry-view`, `#homePanel` y `#homeFull` (el contenido se sigue deslizando) y el relleno del básico con el menú 2 baja a 88 px.
