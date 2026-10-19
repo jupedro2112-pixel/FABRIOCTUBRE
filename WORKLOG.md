@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 544. 🌐 Landing de Vercel: logos locales de las plataformas + todo más chico (entra en una pantalla)
+**Pedido (owner):** "en la landing no se ven los logos de las plataformas; achicá el 100 % del bono, lo de cuál es tu nombre y crear
+cuenta, así todo lo de abajo entra en una hoja".
+**Qué se hizo:** los logos salían del backend (`API_BASE/images/…`, detrás de Cloudflare) y no cargaban desde Vercel: ahora van en
+`landing/img/` (girox, ganamos, jugaygana, picaroja) y se usan siempre; el backend sólo actualiza nombres/"Pronto". Banner del bono
+(100% a 40 px, menos padding), frase, "¿Cuál es tu nombre?", input y CTA más chicos; márgenes de confianza, plataformas (36 px) y legal
+reducidos. Carpeta lista en `/home/amnesia/Downloads/landing-picaroja/` (subir CON la subcarpeta `img/`).
+**Archivos:** `landing/index.html`, `landing/img/*`.
+
 ### 543. 🐛 "Registrarse" no mostraba nada + landing de Vercel en blanco — SW v387
 **Pedido (owner):** "limpiá un poco el inicio; puse registrar pero no carga nada; la /landing no abre más".
 **Causas y fixes:** (1) `body.reg-quick .lg-form {display:none}` (#542) escondía TAMBIÉN el formulario dentro de la pantalla interna de
