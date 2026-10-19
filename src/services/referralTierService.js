@@ -55,7 +55,8 @@ function normalizeConfig(c) {
   const tiers = hasNew ? normalizeTiers(c.tiers) : DEFAULTS.tiers.slice();
   const basePct = Number(c.basePct);
   return {
-    enabled: c.enabled !== false,
+    // #529: sin Config guardada rige DEFAULTS.enabled (false en este repo → % plano); guardada, lo que diga el panel.
+    enabled: typeof c.enabled === 'boolean' ? c.enabled : DEFAULTS.enabled,
     minChargedARS: Number(c.minChargedARS) >= 0 ? Math.round(Number(c.minChargedARS)) : DEFAULTS.minChargedARS,
     basePct: Number.isFinite(basePct) && basePct >= 0 && basePct <= 50 ? Math.round(basePct * 100) / 100 : DEFAULTS.basePct,
     tiers: tiers.length ? tiers : DEFAULTS.tiers.slice()
