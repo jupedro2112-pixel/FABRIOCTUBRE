@@ -1530,12 +1530,11 @@ VIP.ui._showCasinoFrame = function() {
 
 /** Abre/cierra el chat de cargas SOBRE el casino (el juego no se corta). */
 VIP.ui.toggleCasinoChat = function() {
+  // Si lo que hubo fue un ARRASTRE de la burbuja, el click posterior no abre.
+  if (VIP.ui._bubbleWasDragged) return;
   // #601 (owner): dentro del casino NO hay chat: la burbuja abre SIEMPRE el panel chico de carga automática
   // (alias · CBU · titular + adjuntar comprobante, #598). El cajón de chat viejo queda sin uso.
   try { if (VIP.home && VIP.home.toggleCasinoLoad) { VIP.home.toggleCasinoLoad(); return; } } catch (_) {}
-
-  // Si lo que hubo fue un ARRASTRE de la burbuja, el click posterior no abre.
-  if (VIP.ui._bubbleWasDragged) return;
   const drawer = document.getElementById('casinoChatDrawer');
   if (!drawer) return;
   // El panel se abre del mismo lado en que quedó la burbuja arrastrable.
