@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 543. 🐛 "Registrarse" no mostraba nada + landing de Vercel en blanco — SW v387
+**Pedido (owner):** "limpiá un poco el inicio; puse registrar pero no carga nada; la /landing no abre más".
+**Causas y fixes:** (1) `body.reg-quick .lg-form {display:none}` (#542) escondía TAMBIÉN el formulario dentro de la pantalla interna de
+registro (`.lg-form-reg`): la pantalla se abría vacía. Ahora la regla excluye `.lg-form-reg`. (2) La landing publicada en Vercel servía
+70 bytes (`blank.html`) a todos: el `vercel.json` del zip manda a la página en blanco a quien no tenga `x-vercel-ip-country: AR`, y el
+owner entra por Tor (Tails). Se sacaron `landing/vercel.json` y `landing/blank.html` del repo y de la carpeta de Downloads; hay que volver
+a subir la carpeta a Vercel SIN esos dos archivos (y borrarlos del proyecto si quedaron). (3) Limpieza: pie "PICA ROJA oficial · +18".
+**Archivos:** `public/css/pin.css`, `public/index.html`, `landing/README.md`, `landing/vercel.json` y `landing/blank.html` (eliminados), SW.
+
 ### 542. 📐 Pantalla de ingreso compacta (entra en una pantalla) + registro en PANTALLA INTERNA "Completá tu nombre aquí" — SW v386
 **Pedido (owner, con captura):** "centrá todo, subí la parte de usuarios y que el registro abra una nueva pantalla interna que diga
 completá tu nombre aquí; cuando complete, que pida verificar SMS obligatorio; achicá todo para que entre en una página principal".

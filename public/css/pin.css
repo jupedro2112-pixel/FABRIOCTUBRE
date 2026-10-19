@@ -1723,7 +1723,7 @@ body.entry-login .lg-form { padding-top: 16px; }
 .lg-login-links { display: flex; margin-top: 2px; gap: 6px; }
 .lg-login-links .lg-register-btn { padding: 11px !important; font-size: 14px !important; }
 .lg-login-links .lg-link { padding: 7px 10px; font-size: 11.5px; }
-body.reg-quick .lg-form, body.reg-quick .lg-login-h, body.reg-quick .lg-login-links { display: none !important; }
+body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-quick .lg-login-links { display: none !important; } /* #543: el form de la pantalla de registro NO se esconde */
 .lg-trustrow { gap: 8px; font-size: 10.5px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; margin-top: 0; }
 .lg-play-box { padding: 7px 10px 9px; border-radius: 16px; } .lg-play-h { margin-bottom: 6px; } .lg-play-h b { font-size: 12px; } .lg-play-h small { font-size: 9.5px; }
 .lg-plats-tiles { gap: 6px; } .lg-plats-tiles .lg-plat-pill { padding: 7px 4px 6px; border-radius: 12px; gap: 4px; }
@@ -1740,4 +1740,6 @@ body.reg-quick .lg-form, body.reg-quick .lg-login-h, body.reg-quick .lg-login-li
 .lg-form-reg { max-width: 420px; width: 100%; margin: 0 auto; }
 .lg-form-reg .lg-quick-l { font-size: 15px !important; }
 .lg-reg-login { align-self: center; background: transparent !important; text-decoration: underline; }
-
+/* #543 limpieza del ingreso */
+#loginScreen .lg-promo, #loginScreen .lg-promo-note { display: none !important; }
+.lg-regscreen .lg-form-reg { display: block !important; }
