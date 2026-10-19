@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 542. 📐 Pantalla de ingreso compacta (entra en una pantalla) + registro en PANTALLA INTERNA "Completá tu nombre aquí" — SW v386
+**Pedido (owner, con captura):** "centrá todo, subí la parte de usuarios y que el registro abra una nueva pantalla interna que diga
+completá tu nombre aquí; cuando complete, que pida verificar SMS obligatorio; achicá todo para que entre en una página principal".
+**Qué se hizo:** (1) Se sacó la frase "Creá tu cuenta en un click…" (quedaba suelta arriba del login). El recuadro de usuario + clave va
+arriba, con título "Iniciar sesión", botón grande **Registrarse** y "Olvidé mi contraseña" (siempre, ya no depende del tilde #538).
+(2) Todo más chico: cabecera, inputs, botones, línea de confianza en UNA línea, tiles de plataformas (32 px), chips de servicios; las
+opiniones se esconden en pantallas de menos de 760 px de alto y los últimos chips en menos de 640 px. (3) El registro rápido (`#quickEntry`
++ barra + datos) se MOVIÓ a `#regScreen`, pantalla interna a pantalla completa con "‹ Volver", título "Crear mi cuenta" y el campo
+"Completá tu nombre aquí". Con SMS obligatorio: nombre → CONTINUAR (`quickNext`) → celular + código → CREAR MI CUENTA → barra → entra.
+Por link de publicidad/referido o modo rápido se abre sola (sin SMS si es publicidad). "Ya tengo cuenta · Iniciar sesión" vuelve al login.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/js/auth.js`, `public/css/pin.css`, SW.
+
 ### 541. 📱 "Registrarse" desde el inicio: sólo el nombre + celular verificado por SMS → entra · sin "Agregar a Inicio" en el ingreso — SW v385, admin-sw v123
 **Pedido (owner):** "que el registro en el inicio de PICA ROJA tenga un botón de registro, que sea completando el nombre nomás y que
 directo se registre, pero antes exigir desde ese sector el verificador de SMS; el bono de bienvenida en esa parte sacalo; y ese botón de

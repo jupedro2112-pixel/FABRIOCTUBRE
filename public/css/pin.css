@@ -1711,4 +1711,33 @@ body.entry-login .lg-form { padding-top: 16px; }
 #quickOtpStep { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; } #quickOtpStep input { text-align: center; letter-spacing: 6px; font-size: 20px !important; }
 #quickSmsBox { display: flex; flex-direction: column; gap: 7px; margin: 2px 0; }
 .lg-login-links .lg-register-btn { flex: 1 0 100%; padding: 13px !important; font-size: 15px !important; }
+/* ── #542 pantalla de ingreso COMPACTA (entra en una pantalla) + registro en pantalla interna ── */
+.login-box.lg-app { gap: 7px !important; padding: 8px 14px 10px !important; }
+.lg-head { gap: 8px; } .lg-logo { width: 38px; height: 38px; border-radius: 11px; } .lg-brand b { font-size: 15px; } .lg-brand small { font-size: 9.5px; }
+.lg-ring, .lg-ring-av { width: 38px; height: 38px; }
+.lg-form { padding: 10px 12px 8px; border-radius: 18px; }
+.lg-form .input-group { margin-bottom: 7px; } .lg-form .input-group label { font-size: 11.5px; margin-bottom: 3px; }
+.lg-form .input-group input { padding: 10px 12px !important; font-size: 14px !important; }
+.lg-form .btn-primary { padding: 11px !important; font-size: 14px !important; margin-bottom: 4px; }
+.lg-login-h { display: block; margin: 0 0 6px; font-size: 16px; text-align: center; }
+.lg-login-links { display: flex; margin-top: 2px; gap: 6px; }
+.lg-login-links .lg-register-btn { padding: 11px !important; font-size: 14px !important; }
+.lg-login-links .lg-link { padding: 7px 10px; font-size: 11.5px; }
+body.reg-quick .lg-form, body.reg-quick .lg-login-h, body.reg-quick .lg-login-links { display: none !important; }
+.lg-trustrow { gap: 8px; font-size: 10.5px; flex-wrap: nowrap; white-space: nowrap; overflow: hidden; margin-top: 0; }
+.lg-play-box { padding: 7px 10px 9px; border-radius: 16px; } .lg-play-h { margin-bottom: 6px; } .lg-play-h b { font-size: 12px; } .lg-play-h small { font-size: 9.5px; }
+.lg-plats-tiles { gap: 6px; } .lg-plats-tiles .lg-plat-pill { padding: 7px 4px 6px; border-radius: 12px; gap: 4px; }
+.lg-plats-tiles .lg-plat-pill img, .lg-plats-tiles .lg-plat-pill i { width: 32px; height: 32px; border-radius: 10px; } .lg-plats-tiles .lg-plat-pill b { font-size: 10.5px; }
+.lg-sys { gap: 4px; } .lg-sy { padding: 4px 8px 4px 5px; font-size: 10px; gap: 4px; } .lg-sy i { width: 17px; height: 17px; } .lg-sy i svg { width: 10px; height: 10px; }
+.lg-foot { font-size: 9px; margin: 0; }
+@media (max-height: 760px) { .lg-app .lg-sec-reviews { display: none !important; } }
+@media (max-height: 640px) { .lg-sys .lg-sy:nth-child(n+7) { display: none; } }
+.lg-regscreen { position: fixed; inset: 0; z-index: 2600; background: #fff; overflow-y: auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; --p-bg: #fff; --p-surface: #f3f3f3; --p-card: #fff; --p-text: #111; --p-muted: #6f6f6f; --p-border: #e2e2e2; }
+.lg-regscreen[hidden] { display: none !important; }
+.lg-reg-head { display: flex; align-items: center; gap: 10px; max-width: 420px; width: 100%; margin: 0 auto; }
+.lg-reg-back { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--p-surface); color: var(--p-text); font: 900 24px/1 var(--p-font); cursor: pointer; flex: 0 0 auto; }
+.lg-logo-sm { width: 36px; height: 36px; border-radius: 10px; }
+.lg-form-reg { max-width: 420px; width: 100%; margin: 0 auto; }
+.lg-form-reg .lg-quick-l { font-size: 15px !important; }
+.lg-reg-login { align-self: center; background: transparent !important; text-decoration: underline; }
 

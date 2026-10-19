@@ -535,6 +535,15 @@ VIP.auth = (function () {
         const d = raw.replace(/\D/g, '').replace(/^0+/, '');
         return d.length >= 7 ? '+54' + d : null;
     }
+    // #542: nombre → CONTINUAR → aparece el celular (SMS obligatorio)
+    function quickNext() {
+        const inp = document.getElementById('quickName'), err = document.getElementById('quickErr');
+        if (err) err.textContent = '';
+        if (((inp && inp.value) || '').trim().length < 2) { if (err) err.textContent = 'Escribí tu nombre.'; try { inp.focus(); } catch (_) {} return; }
+        const sb = document.getElementById('quickSmsBox'), nb = document.getElementById('quickNextBtn'), eb = document.getElementById('quickEntryBtn');
+        if (sb) sb.hidden = false; if (nb) nb.hidden = true; if (eb) eb.hidden = false;
+        try { inp.readOnly = true; document.getElementById('quickPhone').focus(); } catch (_) {}
+    }
     async function quickSendOtp() {
         const err = document.getElementById('quickErr'), b = document.getElementById('quickOtpBtn'), msg = document.getElementById('quickSmsMsg'), step = document.getElementById('quickOtpStep');
         if (err) err.textContent = '';
@@ -1678,7 +1687,7 @@ VIP.auth = (function () {
         handleRegister,
         handleRegisterDirect,
         resetRegisterOtp,
-        quickEntry, quickGo, quickSendOtp, // #421/#426/#541
+        quickEntry, quickGo, quickSendOtp, quickNext, // #421/#426/#541/#542
         maybeOfferSmsVerification,
         refreshVerifyPhoneBanner,
         applyRegisterModalMode,

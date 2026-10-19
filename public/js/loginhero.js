@@ -40,7 +40,7 @@
             document.body.classList.toggle('entry-login', !!info.entryLogin && !viaAd && !viaRef);
             // #541: SMS obligatorio para registrarse desde el inicio (no por link de publicidad)
             VIP.loginHero.quickSms = !!info.quickEntrySms && !viaAd;
-            const sb = _el('quickSmsBox'); if (sb) sb.hidden = !VIP.loginHero.quickSms;
+            if (document.body.classList.contains('reg-quick') && !(VIP.state && VIP.state.currentToken)) showRegister(); // #542
         } catch (_) {}
         VIP.loginHero.ready = true; // #533: app.js espera esto para decidir dónde cae el link de referido
         // #533: si hay un código de referido guardado (link de hoy o de los últimos 30 días), se avisa en el registro rápido.
@@ -117,13 +117,25 @@
     }, 12000);
     // #538: "Crear mi cuenta" desde el modo Iniciar sesión → vuelve al registro (nombre, o formulario SMS según el tilde)
     // #541 (owner): "Registrarse" = sólo el nombre (+ celular verificado por SMS) y entra; vale en cualquier modo de registro.
+    // #542: el registro vive en una pantalla interna (#regScreen). Con SMS obligatorio: nombre → CONTINUAR → celular + código.
     function showRegister() {
         document.body.classList.remove('entry-login');
         document.body.classList.add('reg-quick');
-        try { const sb = _el('quickSmsBox'); if (sb) sb.hidden = !VIP.loginHero.quickSms; } catch (_) {}
-        try { const q = _el('quickName'); if (q) { q.focus(); q.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (_) {}
+        const rs = _el('regScreen'); if (rs) rs.hidden = false;
+        try {
+            const sms = !!VIP.loginHero.quickSms;
+            const sb = _el('quickSmsBox'); if (sb) sb.hidden = true; // recién después de CONTINUAR
+            const nb = _el('quickNextBtn'); if (nb) nb.hidden = !sms;
+            const eb = _el('quickEntryBtn'); if (eb) eb.hidden = sms;
+        } catch (_) {}
+        try { window.scrollTo(0, 0); const q = _el('quickName'); if (q) q.focus(); } catch (_) {}
     }
-    VIP.loginHero = { init, showRegister, ready: false, quickSms: false };
+    function closeRegister(toLogin) {
+        const rs = _el('regScreen'); if (rs) rs.hidden = true;
+        if (toLogin) document.body.classList.remove('reg-quick');
+        try { const u = _el('username'); if (toLogin && u) u.focus(); } catch (_) {}
+    }
+    VIP.loginHero = { init, showRegister, closeRegister, ready: false, quickSms: false };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
     else setTimeout(init, 50);
 })();

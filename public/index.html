@@ -398,45 +398,7 @@
                 <span class="lg-promo-sub" id="lgBonusSub">EN TU PRIMERA CARGA</span>
                 <small class="lg-promo-note" id="lgBonusNote">instalando la app · si no, 50%</small><!-- #537 -->
             </div>
-            <p class="lg-pitch">Creá tu cuenta en un click y entrá a jugar. Sin formularios, sin esperas.</p>
             <div class="lg-form">
-            <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
-                 sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
-            <form id="quickEntry" class="lg-quick" onsubmit="VIP.auth.quickEntry(event)">
-                <div id="quickRefHint" class="lg-quick-ref" style="display:none;">🤝 Te invitó un amigo · código <b></b> · queda vinculado a tu cuenta</div><!-- #533 -->
-                <label class="lg-quick-l" for="quickName">¿Cuál es tu nombre?</label>
-                <input type="text" id="quickName" maxlength="60" placeholder="Ej: Juan" autocomplete="given-name" required>
-                <!-- #541 (owner): desde el inicio de la app el registro pide verificar el celular por SMS antes de crear la cuenta -->
-                <div id="quickSmsBox" hidden>
-                    <label class="lg-quick-l" for="quickPhone">Tu celular (te mandamos un código por SMS)</label>
-                    <div class="lg-phone"><span>+54</span><input type="tel" id="quickPhone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="9 11 1234-5678"></div>
-                    <button type="button" id="quickOtpBtn" class="lg-quick-otp" onclick="VIP.auth.quickSendOtp()">Enviar código por SMS</button>
-                    <div id="quickOtpStep" hidden>
-                        <input type="text" id="quickOtp" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code">
-                        <small id="quickSmsMsg" class="lg-quick-n"></small>
-                    </div>
-                </div>
-                <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">CREAR MI CUENTA</button>
-                <small class="lg-quick-n">Con tu nombre generamos tu usuario al instante.</small>
-                <div id="quickErr" class="gs-err"></div>
-                <!-- #427 (owner): sin "Ya tengo cuenta": la pantalla es SOLO registro con el nombre -->
-            </form>
-            <!-- #534: barra de progreso mientras se crea la cuenta y entra solo -->
-            <div id="quickLoading" class="lg-quick-loading" style="display:none;" aria-live="polite">
-                <b id="quickLoadingTxt">Creando tu cuenta…</b>
-                <div class="lg-bar"><i></i></div>
-                <small>Tu usuario y tu clave quedan en Perfil. Es la misma clave para la app y para Girox.</small>
-            </div>
-            <div id="quickDone" class="lg-quick-done" style="display:none;">
-                <span class="lg-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
-                <b class="lg-done-t">¡Te registraste con éxito!</b>
-                <small class="lg-done-s">Guardá tus datos: con ellos entrás desde cualquier teléfono y a las plataformas.</small>
-                <div class="lg-cred"><span>Usuario</span><b id="quickUser">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickUser').textContent)}catch(e){}">Copiar</button></div>
-                <div class="lg-cred"><span>Clave</span><b id="quickPass">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickPass').textContent)}catch(e){}">Copiar</button></div>
-                <small class="lg-done-n" id="quickDoneNote"></small>
-                <button type="button" id="quickGoBtn" class="btn btn-primary lg-quick-btn" onclick="VIP.auth.quickGo()">Entrar</button>
-            </div>
-            <!-- #417 (owner): el ingreso vuelve a como estaba (#414 lo había plegado); "Crear mi cuenta" abajo. -->
             <!-- #538 (owner): modo "Iniciar sesión" (tilde del panel, Config['entryLogin']): sin bono, usuario + clave + olvidé mi contraseña -->
             <h2 class="lg-login-h">Iniciar sesión</h2>
             <form id="loginForm" autocomplete="on">
@@ -565,6 +527,57 @@
                 <div id="loginReviews" class="ev-reviews lg-reviews" style="display:none;"></div>
             </section>
             <p class="lg-foot">Bono sujeto a términos: aplica sobre la primera carga, solo nuevos jugadores · +18 · Jugá con responsabilidad</p>
+        </div>
+        <!-- #542 (owner): REGISTRO en una pantalla interna aparte: "Completá tu nombre aquí" → (SMS obligatorio) → entra.
+             Se abre con "Registrarse" o sola cuando la entrada es por link de publicidad / referido / modo rápido (body.reg-quick). -->
+        <div id="regScreen" class="lg-regscreen" hidden>
+            <div class="lg-reg-head">
+                <button type="button" class="lg-reg-back" onclick="VIP.loginHero.closeRegister()" aria-label="Volver">‹</button>
+                <div class="lg-brand"><b>Crear mi cuenta</b><small>PICA ROJA · oficial</small></div>
+                <img src="/icons/icon-192x192.png" class="lg-logo lg-logo-sm" alt="">
+            </div>
+            <div class="lg-form lg-form-reg">
+            <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
+                 sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
+            <form id="quickEntry" class="lg-quick" onsubmit="VIP.auth.quickEntry(event)">
+                <div id="quickRefHint" class="lg-quick-ref" style="display:none;">🤝 Te invitó un amigo · código <b></b> · queda vinculado a tu cuenta</div><!-- #533 -->
+                <label class="lg-quick-l" for="quickName">Completá tu nombre aquí</label>
+                <input type="text" id="quickName" maxlength="60" placeholder="Ej: Juan" autocomplete="given-name" required>
+                <!-- #542: con SMS obligatorio, primero el nombre → Continuar → celular + código -->
+                <button type="button" id="quickNextBtn" class="btn btn-primary lg-quick-btn" onclick="VIP.auth.quickNext()" hidden>CONTINUAR</button>
+                <!-- #541 (owner): desde el inicio de la app el registro pide verificar el celular por SMS antes de crear la cuenta -->
+                <div id="quickSmsBox" hidden>
+                    <label class="lg-quick-l" for="quickPhone">Tu celular (te mandamos un código por SMS)</label>
+                    <div class="lg-phone"><span>+54</span><input type="tel" id="quickPhone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="9 11 1234-5678"></div>
+                    <button type="button" id="quickOtpBtn" class="lg-quick-otp" onclick="VIP.auth.quickSendOtp()">Enviar código por SMS</button>
+                    <div id="quickOtpStep" hidden>
+                        <input type="text" id="quickOtp" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code">
+                        <small id="quickSmsMsg" class="lg-quick-n"></small>
+                    </div>
+                </div>
+                <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">CREAR MI CUENTA</button>
+                <small class="lg-quick-n">Con tu nombre generamos tu usuario al instante.</small>
+                <div id="quickErr" class="gs-err"></div>
+                <!-- #427 (owner): sin "Ya tengo cuenta": la pantalla es SOLO registro con el nombre -->
+            </form>
+            <!-- #534: barra de progreso mientras se crea la cuenta y entra solo -->
+            <div id="quickLoading" class="lg-quick-loading" style="display:none;" aria-live="polite">
+                <b id="quickLoadingTxt">Creando tu cuenta…</b>
+                <div class="lg-bar"><i></i></div>
+                <small>Tu usuario y tu clave quedan en Perfil. Es la misma clave para la app y para Girox.</small>
+            </div>
+            <div id="quickDone" class="lg-quick-done" style="display:none;">
+                <span class="lg-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <b class="lg-done-t">¡Te registraste con éxito!</b>
+                <small class="lg-done-s">Guardá tus datos: con ellos entrás desde cualquier teléfono y a las plataformas.</small>
+                <div class="lg-cred"><span>Usuario</span><b id="quickUser">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickUser').textContent)}catch(e){}">Copiar</button></div>
+                <div class="lg-cred"><span>Clave</span><b id="quickPass">—</b><button type="button" class="pf-copy" onclick="try{VIP.ui.copyText(document.getElementById('quickPass').textContent)}catch(e){}">Copiar</button></div>
+                <small class="lg-done-n" id="quickDoneNote"></small>
+                <button type="button" id="quickGoBtn" class="btn btn-primary lg-quick-btn" onclick="VIP.auth.quickGo()">Entrar</button>
+            </div>
+            <!-- #417 (owner): el ingreso vuelve a como estaba (#414 lo había plegado); "Crear mi cuenta" abajo. -->
+            </div>
+            <button type="button" class="lg-link lg-reg-login" onclick="VIP.loginHero.closeRegister(true)">Ya tengo cuenta · Iniciar sesión</button>
         </div>
         <!-- #530: popup de enganche de la landing (una vez por sesión, a los 12 s, sólo si todavía no escribió el nombre) -->
         <div id="lgPop" class="lg-pop" role="dialog" aria-modal="true" aria-label="Tu bono te espera" onclick="if(event.target===this)this.classList.remove('on')">
@@ -2480,7 +2493,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v385</div>
+                    <div class="pf-build" id="appBuildTag">app v386</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
