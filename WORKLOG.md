@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 556. 📖 Historias: foto completa, pie debajo (sin encimarse), cierre más claro; republicadas + referidos con "Quiero referir gente" — SW v392
+**Pedido (owner):** "en las fotos de historias republiquemos lo mismo pero con mejor cierre, que no se encime con el final; hay fotos
+fuera del recuadro, acomodalo; volvé a publicar lo del sistema de referidos y poné abajo 'quiero referir gente'".
+**Causa:** las imágenes son 1080×1920 (9:16) y el visor (#453) las mostraba con `object-fit: cover` a pantalla completa ⇒ en
+teléfonos 9:19,5 se recortaban arriba/abajo, y el pie (sello + botón) se superponía sobre la foto.
+**Qué se hizo:** `object-fit: contain` con fondo difuminado de la misma foto, el área de la foto termina 112 px antes del borde y el pie
+va DEBAJO (fondo negro, botón rojo en píldora centrado), botón de cierre más grande y visible. Se borraron las 4 historias publicadas
+y se volvieron a publicar las 5 (las 4 fotos + la de referidos `pin-5.png`, 72 h) por `POST /api/admin/stories`; la de referidos lleva
+`linkUrl: app:referidos` y `linkLabel: "Quiero referir gente ›"` (cierra la historia y abre Referidos, #474).
+**Archivos:** `public/css/pin.css`, SW. (Las historias viven en la base: en producción hay que publicarlas desde el panel.)
+
 ### 555. 🔁 Textos de "Todo nuestro servicio" siempre iguales a la configuración del panel — SW v391
 **Pedido (owner):** "todo lo que se ajuste sobre el reembolso, misiones, detalles de lo que sea desde el admin, ajustalo en el texto de
 la página principal y que coincida siempre".
