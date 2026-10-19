@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 601. 🎰 Dentro del casino: sin chat, sólo el panel de carga automática — SW v422
+**Pedido (owner, con captura de picaroja.com):** "eso limpiá todo, dejá el botón de cargas del básico que funcione desde ahí, sin chat ni
+nada, sólo carga automática". `VIP.ui.toggleCasinoChat` (lo que abría el cajón "Carga rápida 1GIROX · Quiero depositar / Solicitar
+retiro / Pedir CBU / Hablar" con el chat) ahora abre SIEMPRE el panel chico de #598 (alias · CBU · titular + adjuntar comprobante).
+⚠️ La captura es de picaroja.com (producción, AWS): ahí corre la versión vieja hasta que se despliegue lo de hoy. **Archivos:** `public/js/ui.js`, SW.
+
 ### 600. ▦ Menú intermedio sin hueco abajo — SW v421
 **Pedido (owner, con captura):** "ese espacio ahí no va" (hueco blanco entre las tarjetas y la barra del menú 2). La vista crece y la grilla
 de servicios (`.ez-grid`) estira sus tarjetas hasta llenar la pantalla. **Archivos:** `public/css/pin.css`, SW.
