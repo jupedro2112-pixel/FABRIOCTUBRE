@@ -767,7 +767,7 @@ html[data-theme="dark"] .profile-modal .pf-theme-btn { background: var(--p-red);
 .home-actions-row .lr-text small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #autoLoadCard .al-step-3 .al-step-t { color: var(--p-text) !important; }
 /* ── #401 (owner): una vez que el cliente habló con Soporte, la burbuja de presentación se va del todo ── */
-body.sp-sent .sp-intro, body.sp-sent #supportIntro { display: none !important; }
+body.sp-sent .sp-intro, body.sp-sent #supportIntro { display: none !important; } /* #612: en home-mini se vuelve a mostrar arriba (ver abajo) */
 /* ── #402 (owner): con la barra fija "PENDIENTE · Instalá la app" (body.ig-pending) el contenido deja lugar abajo para que no
    tape "Comprobante aquí" / "Retirar premio" ── */
 body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
@@ -1848,4 +1848,10 @@ body.home-mini #sdBanner { display: none !important; }
    arriba). Nada plegado reserva lugar. */
 body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: 12px !important; }
 body.home-easy #homeFull, body.home-basic #homeFull, body.home-play #homeFull, body.home-mini #homeFull { padding: 0 !important; margin: 0 !important; border: 0 !important; }
+/* #612 (owner): con la charla abierta, la PRESENTACIÓN queda ARRIBA del chat, prolija y compacta ("Bienvenido al soporte, mi nombre es
+   {nombre}…"); abajo sólo los mensajes y la caja. Sin la pregunta ni los botones de tema. */
+body.home-mini.sp-sent #supportIntro { display: flex !important; margin: 8px 10px 0 !important; padding: 11px 12px 10px !important; border: 1px solid var(--p-border); }
+body.home-mini.sp-sent #supportIntro .sp-ask, body.home-mini.sp-sent #supportIntro .sp-topics, body.home-mini.sp-sent #supportIntro #spClosed, body.home-mini.sp-sent #supportIntro .sp-sla { display: none !important; }
+body.home-mini.sp-sent #supportIntro .sp-msg { font-size: 13px; line-height: 1.4; }
+body.home-mini.sp-sent #chatMessages { flex: 1 1 auto !important; min-height: 0; }
 

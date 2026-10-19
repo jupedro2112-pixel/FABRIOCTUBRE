@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 612. 💬 Soporte: presentación "Bienvenido al soporte, mi nombre es {nombre}…" prolija arriba del chat — SW v428
+**Pedido (owner, con captura):** "no está bien arriba el soporte: 'Bienvenidos al soporte, mi nombre es Martín (o el del turno), por favor
+envíenos su problema y en breve contestamos', armalo prolijo". `/sys_support_intro` (y `SUPPORT_INTRO_DEFAULT`) pasa a "👋 ¡Bienvenido
+al soporte! Mi nombre es {nombre}. Por favor envianos tu problema y en breve te contestamos." con migración del guardado. Con la
+charla abierta la tarjeta de presentación se muestra ARRIBA (compacta, sin la pregunta ni los botones de tema) y debajo el chat; el
+nombre rota con el turno (`/sys_support_names`). La franja blanca de arriba era el padding de `ig-pending` (#610, ya corregido).
+**Archivos:** `server.js`, `public/index.html`, `public/css/pin.css`, SW.
+
 ### 610/611. 🧹 Franja blanca que tapaba el final del básico · aviso de 1ª carga abre el panel de carga del básico — SW v427
 **Pedidos (owner, con captura):** "ese espacio en blanco está tapando" · "si en el básico aprieto cargar que abra el botón de cargas de
 ahí, como el de Carga auto del menú básico, no de otro". (#610) Causa: con el regalo de instalar pendiente (`body.ig-pending`) el home

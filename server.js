@@ -11890,6 +11890,11 @@ async function initializeData() {
       const cl = await Command.findOne({ name: '/sys_support_closed' }).lean();
       if (cl && /^✅ Charla cerrada por Soporte/.test(String(cl.response || ''))) { await Command.updateOne({ name: '/sys_support_closed' }, { $set: { response: '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.' } }); console.log('✅ /sys_support_closed (#607)'); }
     } catch (e) { console.warn('[startup-migration] #607:', e.message); }
+    // #612 (owner): presentación del soporte "Bienvenido al soporte, mi nombre es {nombre}…" (migración si quedó la anterior)
+    try {
+      const si = await Command.findOne({ name: '/sys_support_intro' }).lean();
+      if (si && /Yo me voy a encargar de tu caso/.test(String(si.response || ''))) { await Command.updateOne({ name: '/sys_support_intro' }, { $set: { response: SUPPORT_INTRO_DEFAULT } }); console.log('✅ /sys_support_intro (#612)'); }
+    } catch (e) { console.warn('[startup-migration] #612:', e.message); }
     // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
     // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
     try {
@@ -12244,7 +12249,7 @@ async function initializeData() {
       name: '/sys_support_intro',
       description: 'Soporte: texto de presentación al entrar al chat. Variable: {nombre} (= /sys_support_name).',
       type: 'message',
-      response: '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.'
+      response: SUPPORT_INTRO_DEFAULT
     },
     {
       // #385: textos de los dos botones de abajo de la carga automática.
@@ -13293,7 +13298,7 @@ const ENTRY_NEWS_DEFAULT = 'NOVEDAD: aprovechá reembolso {pct}% hasta diciembre
 const REFUND_PROMO_DEFAULT = 'Promoción válida hasta diciembre. Los porcentajes pueden cambiar.'; // #372: aviso bajo los reembolsos (/sys_refund_promo)
 // #373: SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat (/sys_support_*).
 const SUPPORT_NAME_DEFAULT = 'Martín';
-const SUPPORT_INTRO_DEFAULT = '¡Hola! Soy {nombre}, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.';
+const SUPPORT_INTRO_DEFAULT = '👋 ¡Bienvenido al soporte! Mi nombre es {nombre}. Por favor envianos tu problema y en breve te contestamos.'; // #612 (owner)
 const SUPPORT_SLA_DEFAULT = 'Responde dentro de los 10 minutos';
 // #377 (owner 2026-10-18): SOPORTE paralelo — la persona que atiende ROTA cada 8 horas (Martín, Sofía, Agustina;
 // editable en /sys_support_names). Turnos en hora argentina: 08–16 el 1º, 16–24 el 2º, 00–08 el 3º. El nombre se usa
