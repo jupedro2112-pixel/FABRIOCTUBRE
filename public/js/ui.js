@@ -193,6 +193,9 @@ VIP.ui = (function () {
     let _casinoInviteTimer = null;
 
     function showCasinoInvite(balance) {
+        // #597 (owner, limpieza): este cartel violeta "¡Saldo acreditado! · Jugar ahora · ¿Ya estás en Telegram?" se SACÓ: duplicaba la
+        // burbuja de carga acreditada (#563). Se deja la función (la llama el sondeo de saldo) pero no muestra nada.
+        return;
         const now = Date.now();
         if (now - _lastCasinoInviteAt < 60000) return;
         if (!VIP.state.currentUser) return;

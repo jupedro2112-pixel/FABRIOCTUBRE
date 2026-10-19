@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 597. 🧹 Fuera el cartel violeta "¡Saldo acreditado! · Jugar ahora · ¿Ya estás en Telegram?" tras la carga — SW v418
+**Pedido (owner, con captura):** "este cartel después de la carga limpialo, dejamos el que ya tenemos". `showCasinoInvite` (ui.js, lo
+disparaba el sondeo de saldo cuando subía) ya no muestra nada: queda la burbuja de carga acreditada (#563). **Archivos:** `public/js/ui.js`, SW.
+
 ### 596. 🧹 Limpieza de carteles sin sentido al entrar — SW v417
 **Pedido (owner):** "hacé una buena limpieza de carteles sin sentido, limpiá todo y dejala óptima para cargarla".
 **Inventario de lo que saltaba al entrar y qué quedó:**
