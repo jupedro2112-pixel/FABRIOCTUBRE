@@ -11883,7 +11883,7 @@ async function initializeData() {
     // #603 (owner): el acuse del soporte pasa a "Contame qué necesitás, ya estamos con vos en breve" (migración si tenía el texto anterior)
     try {
       const ar = await Command.findOne({ name: '/sys_support_autoreply' }).lean();
-      if (ar && String(ar.response || '') === 'Responde dentro de los 10 minutos') { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
+      if (ar && String(ar.response || '') === '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!') { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
     } catch (e) { console.warn('[startup-migration] #603:', e.message); }
     // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
     // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
@@ -12316,7 +12316,7 @@ async function initializeData() {
       name: '/sys_support_sla',
       description: 'Soporte: plazo de respuesta que se muestra debajo de la presentación (ej. "Responde dentro de los 10 minutos"). Vacío = no se muestra.',
       type: 'message',
-      response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' // #603
+      response: 'Responde dentro de los 10 minutos'
     },
     {
       // #376 (2026-10-18): CARGAS PENDIENTES — avisos al cliente del ciclo del comprobante.
@@ -13305,7 +13305,7 @@ async function getSupportAgentName(at = new Date()) {
 }
 // #383 (owner): primera respuesta automática del SOPORTE cuando escribe el cliente — "en breve le responderá nuestro
 // agente disponible, gracias". Máximo una cada 2 h por cliente y no se manda si un agente respondió hace < 10 min.
-const SUPPORT_AUTOREPLY_DEFAULT = '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!';
+const SUPPORT_AUTOREPLY_DEFAULT = '🙌 Contame qué necesitás, ya estamos con vos en breve.'; // #603 (owner); antes: '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!'
 // #384 (owner): los chips "Cargar" / "Retirar" de Soporte responden solos: las cargas y los retiros son automáticos,
 // con un botón que lleva al sector. Texto editable ({min} = carga mínima, {retiro_min} = retiro mínimo).
 const SUPPORT_QUICK_CARGAR_DEFAULT = '⚡ Las cargas son 100% automáticas: transferís al CBU, mandás la foto del comprobante y se acredita sola en minutos (carga mínima {min}). Tocá el botón y te llevo a la carga automática. Si ya la hiciste y algo falló, contame acá y lo reviso.';
