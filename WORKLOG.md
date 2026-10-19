@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-18
 
+### 525. 🆕 Novedad: "NOVEDAD: aprovechá reembolso 25% hasta diciembre", una sola línea, letra más chica — SW v371
+**Pedido (owner).** Default y comando `/sys_entry_news` actualizados (también en Render vía API); pastilla con letra 8,5–10 px adaptable y sin corte.
+
 ### 524. ▭ Básico con accesos (Misiones · Reembolsos · Referidos · Niveles VIP · Ruleta) · Inicio completo con Misiones en la fila y "Reembolso · Diario 25%" — SW v370
 **Pedidos (owner):** "en el básico, abajo de Entrar a jugar: misiones, reembolsos, referidos y niveles VIP, ruleta diaria"; "en el
 Inicio completo un recuadro más en la fila de Reembolso con las misiones; en Reembolso poné 'Reembolso' y abajo 'Diario 25%',
