@@ -38,6 +38,9 @@
             // Un link de publicidad o de referido SIEMPRE muestra el registro (si no, el cliente nuevo no sabría qué hacer).
             const viaRef = !!(window._vipRefLocked && new URLSearchParams(location.search).get('ref'));
             document.body.classList.toggle('entry-login', !!info.entryLogin && !viaAd && !viaRef);
+            // #541: SMS obligatorio para registrarse desde el inicio (no por link de publicidad)
+            VIP.loginHero.quickSms = !!info.quickEntrySms && !viaAd;
+            const sb = _el('quickSmsBox'); if (sb) sb.hidden = !VIP.loginHero.quickSms;
         } catch (_) {}
         VIP.loginHero.ready = true; // #533: app.js espera esto para decidir dónde cae el link de referido
         // #533: si hay un código de referido guardado (link de hoy o de los últimos 30 días), se avisa en el registro rápido.
@@ -113,12 +116,14 @@
         } catch (_) {}
     }, 12000);
     // #538: "Crear mi cuenta" desde el modo Iniciar sesión → vuelve al registro (nombre, o formulario SMS según el tilde)
+    // #541 (owner): "Registrarse" = sólo el nombre (+ celular verificado por SMS) y entra; vale en cualquier modo de registro.
     function showRegister() {
         document.body.classList.remove('entry-login');
-        if (!document.body.classList.contains('reg-quick')) { try { const b = _el('registerBtn'); if (b) b.click(); } catch (_) {} }
+        document.body.classList.add('reg-quick');
+        try { const sb = _el('quickSmsBox'); if (sb) sb.hidden = !VIP.loginHero.quickSms; } catch (_) {}
         try { const q = _el('quickName'); if (q) { q.focus(); q.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (_) {}
     }
-    VIP.loginHero = { init, showRegister, ready: false };
+    VIP.loginHero = { init, showRegister, ready: false, quickSms: false };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
     else setTimeout(init, 50);
 })();

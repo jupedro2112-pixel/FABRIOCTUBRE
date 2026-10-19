@@ -5909,6 +5909,7 @@ async function loadRegistrationMode() {
         const chk = document.getElementById('regSmsChk'); const st = document.getElementById('regModeState'); const btn = document.getElementById('regModeSaveBtn');
         if (chk) { chk.checked = j.mode !== 'quick'; chk.disabled = !j.canEdit; }
         const lchk = document.getElementById('regLoginChk'); if (lchk) { lchk.checked = j.entryLogin === true; lchk.disabled = !j.canEdit; } // #538
+        const schk = document.getElementById('regQuickSmsChk'); if (schk) { schk.checked = j.quickEntrySms !== false; schk.disabled = !j.canEdit; } // #541
         if (btn) btn.style.display = j.canEdit ? '' : 'none';
         if (st) st.textContent = (j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (sólo nombre, sin SMS)' : 'Ahora: registro con SMS') + (j.entryLogin ? ' · pantalla de ingreso: INICIAR SESIÓN' : '');
     } catch (_) {}
@@ -5916,8 +5917,9 @@ async function loadRegistrationMode() {
 async function saveRegistrationMode() {
     const chk = document.getElementById('regSmsChk'); const mode = chk && !chk.checked ? 'quick' : 'sms';
     const lchk = document.getElementById('regLoginChk'); const entryLogin = !!(lchk && lchk.checked); // #538
+    const schk = document.getElementById('regQuickSmsChk'); const quickEntrySms = !!(schk && schk.checked); // #541
     try {
-        const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode, entryLogin }) });
+        const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode, entryLogin, quickEntrySms }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         showToast(mode === 'quick' ? 'Registro DESACTIVADO: la app pide sólo el nombre y entra directo' : 'Registro con SMS activado', 'success');
         loadRegistrationMode();

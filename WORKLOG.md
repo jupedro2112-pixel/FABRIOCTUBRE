@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 541. 📱 "Registrarse" desde el inicio: sólo el nombre + celular verificado por SMS → entra · sin "Agregar a Inicio" en el ingreso — SW v385, admin-sw v123
+**Pedido (owner):** "que el registro en el inicio de PICA ROJA tenga un botón de registro, que sea completando el nombre nomás y que
+directo se registre, pero antes exigir desde ese sector el verificador de SMS; el bono de bienvenida en esa parte sacalo; y ese botón de
+Agregar a Inicio sacalo".
+**Qué se hizo:** (1) En la pantalla "Iniciar sesión" (tilde #538) hay un botón grande **Registrarse** que abre el registro con el nombre.
+(2) El registro con el nombre pide el celular (+54 fijo, o internacional con +) → "Enviar código por SMS" (`/api/auth/send-register-otp`,
+purpose `register`, reenvío a los 60 s) → código → CREAR MI CUENTA → barra → entra. `POST /api/auth/quick-entry` recibe `phone` +
+`otpCode`, verifica (`verifyOTP`), rechaza celulares ya registrados y guarda `phone/phoneKey/phoneVerified` en la cuenta nueva. Con el
+celular verificado la entrada con el nombre vale en cualquier modo de registro (también "Registro con SMS"). Sin código y sin link de
+publicidad responde `400 SMS_REQUIRED`. `Config['quickEntrySms']` (default ON; tilde en Configuración → Registro, misma ruta
+`/api/admin/registration-mode`); `/api/landing/info.quickEntrySms`. Los links de publicidad (campaña) NO piden SMS. (3) El bono ya estaba
+fuera del registro de la app (#540). (4) "📱 Agregar a Inicio" (`showInstallButton`) no se muestra en la pantalla de ingreso; auth.js
+lo vuelve a pedir 1,5 s después de entrar si el navegador ofreció instalar.
+**Archivos:** `server.js`, `public/index.html`, `public/js/loginhero.js`, `public/js/auth.js`, `public/css/pin.css`, panel index + admin.js, SWs.
+
 ### 540. 🌐 `landing/` (la de Vercel) con todo el registro de PICA ROJA · sin bono en el registro de la app · INICIO (#539 rehecho) — SW v384
 **Pedidos (owner):** "en el inicio del registro no va el margen de bono (la gente ahí se registra), sí en la landing" · "en esa [captura
 de la landing de Vercel] pongamos todo lo del registro con el servicio de PICA ROJA" · "modificá la carpeta /landing".

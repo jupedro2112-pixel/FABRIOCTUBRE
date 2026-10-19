@@ -1702,3 +1702,13 @@ body.entry-login .lg-login-h { display: block; }
 body.entry-login .lg-form { padding-top: 16px; }
 /* #540 (owner): en el registro de la app NO va el bono de bienvenida (la gente ya se registra ahí); queda sólo en la landing. */
 #loginScreen .lg-promo { display: none !important; }
+/* #541 registro desde el inicio: celular + SMS, botón Registrarse */
+.lg-phone { display: flex; align-items: center; gap: 6px; background: var(--p-card); border-radius: 14px; padding: 0 0 0 12px; border: 2px solid transparent; }
+.lg-phone:focus-within { border-color: var(--p-text); } .lg-phone span { font: 800 15px var(--p-font); color: var(--p-muted); }
+.lg-phone input { flex: 1; min-width: 0; background: transparent !important; border: 0 !important; padding: 12px 10px !important; font: 700 16px var(--p-font) !important; color: var(--p-text); text-align: left; outline: none; }
+.lg-quick-otp { border: 0; border-radius: 999px; padding: 10px 14px; font: 800 13px var(--p-font); background: var(--p-text); color: var(--p-inv); cursor: pointer; }
+.lg-quick-otp:disabled { opacity: .55; cursor: default; }
+#quickOtpStep { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; } #quickOtpStep input { text-align: center; letter-spacing: 6px; font-size: 20px !important; }
+#quickSmsBox { display: flex; flex-direction: column; gap: 7px; margin: 2px 0; }
+.lg-login-links .lg-register-btn { flex: 1 0 100%; padding: 13px !important; font-size: 15px !important; }
+

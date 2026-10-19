@@ -406,6 +406,16 @@
                 <div id="quickRefHint" class="lg-quick-ref" style="display:none;">🤝 Te invitó un amigo · código <b></b> · queda vinculado a tu cuenta</div><!-- #533 -->
                 <label class="lg-quick-l" for="quickName">¿Cuál es tu nombre?</label>
                 <input type="text" id="quickName" maxlength="60" placeholder="Ej: Juan" autocomplete="given-name" required>
+                <!-- #541 (owner): desde el inicio de la app el registro pide verificar el celular por SMS antes de crear la cuenta -->
+                <div id="quickSmsBox" hidden>
+                    <label class="lg-quick-l" for="quickPhone">Tu celular (te mandamos un código por SMS)</label>
+                    <div class="lg-phone"><span>+54</span><input type="tel" id="quickPhone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="9 11 1234-5678"></div>
+                    <button type="button" id="quickOtpBtn" class="lg-quick-otp" onclick="VIP.auth.quickSendOtp()">Enviar código por SMS</button>
+                    <div id="quickOtpStep" hidden>
+                        <input type="text" id="quickOtp" inputmode="numeric" maxlength="6" placeholder="Código de 6 dígitos" autocomplete="one-time-code">
+                        <small id="quickSmsMsg" class="lg-quick-n"></small>
+                    </div>
+                </div>
                 <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">CREAR MI CUENTA</button>
                 <small class="lg-quick-n">Con tu nombre generamos tu usuario al instante.</small>
                 <div id="quickErr" class="gs-err"></div>
@@ -496,8 +506,8 @@
                 <button type="submit" class="btn btn-primary lg-login-btn">Iniciar sesión</button>
             </form>
             <div class="lg-login-links">
+                <button type="button" class="btn btn-primary lg-register-btn" onclick="VIP.loginHero.showRegister()">📝 Registrarse</button><!-- #541: nombre + SMS → entra -->
                 <button type="button" class="lg-link" onclick="showModal('resetPassModal')">🔑 Olvidé mi contraseña</button>
-                <button type="button" class="lg-link" onclick="VIP.loginHero.showRegister()">📝 Crear mi cuenta</button>
             </div>
             </div>
             <div class="lg-trustrow"><span><i></i>Acreditación al instante</span><span><i></i>Retiros rápidos</span><span><i></i>Soporte 24/7</span></div>
@@ -2470,7 +2480,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v384</div>
+                    <div class="pf-build" id="appBuildTag">app v385</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -4151,6 +4161,8 @@
         // MOSTRAR BOTÓN DE INSTALACIÓN
         // ============================================
         function showInstallButton() {
+            // #541 (owner): en la pantalla de ingreso NO se muestra "Agregar a Inicio" (auth.js lo vuelve a pedir al entrar).
+            try { const _ls = document.getElementById('loginScreen'); if (_ls && !_ls.classList.contains('hidden')) return; } catch (_) {}
             // Si el usuario lo cerró con la ✕, respetarlo por 3 días (el botón le
             // tapaba contenido y molestaba a quien no quiere instalar todavía).
             try {
@@ -4187,6 +4199,7 @@
             }
         }
         
+        window.showInstallButton = showInstallButton; // #541: auth.js lo llama al entrar
         // ============================================
         // OCULTAR BOTÓN DE INSTALACIÓN
         // ============================================

@@ -1174,7 +1174,7 @@ app.get('/api/landing/info', async (req, res) => {
     // #530: % de bienvenida REAL para el banner de la pantalla de ingreso (nada hardcodeado): primera carga + extra por instalar la app.
     let welcome = null;
     try { const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig(); welcome = { pct: fd, withApp: fd + (ig && ig.enabled ? ig.pct : 0) }; } catch (_) {}
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true }); // #421/#424/#530/#538
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true }); // #421/#424/#530/#538/#541
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -4549,9 +4549,25 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     const codeRaw = String((req.body && req.body.campaignCode) || '').toUpperCase().trim();
     const code = /^[A-Z0-9_-]{2,40}$/.test(codeRaw) ? codeRaw : '';
     const mode = await getRegistrationMode();
-    if (mode !== 'quick' && !code) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
     const name = String((req.body && req.body.name) || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
+    // #541 (owner): el registro desde el INICIO de la app (sin link de publicidad) exige verificar el celular por SMS antes de
+    // crear la cuenta (Config['quickEntrySms'], default ON; tilde en Configuración → Registro). Los links de publicidad no.
+    // Con el celular verificado la entrada con el nombre vale en CUALQUIER modo de registro (también con "Registro con SMS").
+    let verifiedPhone = null;
+    const phoneRaw = String((req.body && req.body.phone) || '').trim(); const otpCode = String((req.body && req.body.otpCode) || '').trim();
+    if (phoneRaw || otpCode) {
+      if (!validateInternationalPhone(phoneRaw)) return res.status(400).json({ error: 'Número de celular inválido.' });
+      if (!/^\d{4,8}$/.test(otpCode)) return res.status(400).json({ error: 'Ingresá el código que te llegó por SMS.' });
+      const v = await verifyOTP(phoneRaw, otpCode, 'register');
+      if (!v || !v.valid) return res.status(400).json({ error: (v && v.error) || 'Código incorrecto o vencido.' });
+      const taken = await User.findOne({ phoneKey: normalizePhoneKey(phoneRaw), phoneVerified: true }).select('_id').lean();
+      if (taken) return res.status(400).json({ error: 'Ese celular ya está registrado. Iniciá sesión con tu usuario.' });
+      verifiedPhone = phoneRaw;
+    }
+    const smsRequired = !code && (await getConfig('quickEntrySms', true)) === true;
+    if (smsRequired && !verifiedPhone) return res.status(400).json({ code: 'SMS_REQUIRED', error: 'Verificá tu celular por SMS para crear la cuenta.' });
+    if (mode !== 'quick' && !code && !verifiedPhone) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
     req._allowNoApi = !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1'); // #426: sólo entorno de prueba
     req.body = { name, referralCode: (req.body && req.body.referralCode) || null, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
@@ -4561,6 +4577,9 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     if (out.code !== 201 || !out.body || !out.body.accessUrl) return res.status(out.code || 500).json(out.body || { error: 'Error del servidor' });
     let accessToken = null;
     try { accessToken = new URL(out.body.accessUrl).searchParams.get('acceso'); } catch (_) {}
+    if (verifiedPhone) { // #541: el celular verificado queda en la cuenta (igual que el registro con SMS)
+      try { await User.updateOne({ username: out.body.username }, { $set: { phone: verifiedPhone, phoneKey: normalizePhoneKey(verifiedPhone), phoneVerified: true, phoneVerificationPending: false } }); } catch (e) { logger.warn(`[quick-entry] no se pudo guardar el celular verificado de ${out.body.username}: ${e.message}`); }
+    }
     res.status(201).json({ success: true, username: out.body.username, password: out.body.password, accessToken, platforms: out.body.platforms || [] });
   } catch (e) { logger.error('[quick-entry] ' + e.message); res.status(500).json({ error: 'Error del servidor. Probá de nuevo.' }); }
 });
@@ -4589,7 +4608,7 @@ app.post('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, 
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
-  res.json({ success: true, mode: await getRegistrationMode(), entryLogin: (await getConfig('entryLogin', false)) === true, canEdit: req.user.role === 'admin' }); // #538
+  res.json({ success: true, mode: await getRegistrationMode(), entryLogin: (await getConfig('entryLogin', false)) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true, canEdit: req.user.role === 'admin' }); // #538/#541
 });
 app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -4599,6 +4618,7 @@ app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async 
     // #538: pantalla de ingreso = Iniciar sesión (usuario + clave + olvidé mi contraseña, sin bono de bienvenida)
     const entryLogin = !!(req.body && req.body.entryLogin === true);
     await Config.set('entryLogin', entryLogin, req.user.username);
+    if (req.body && typeof req.body.quickEntrySms === 'boolean') await Config.set('quickEntrySms', req.body.quickEntrySms, req.user.username); // #541
     logger.info(`[registration-mode] ${mode} · pantalla de ingreso: ${entryLogin ? 'INICIAR SESIÓN' : 'registro'} por ${req.user.username}`);
     res.json({ success: true, mode, entryLogin });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }

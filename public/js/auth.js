@@ -483,6 +483,7 @@ VIP.auth = (function () {
                 VIP.fire.loadFireStatus();
                 if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529 card INVITÁ A TUS AMIGOS (home completo)
                 if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529 popup (1× cada 24 h)
+                setTimeout(() => { try { if (window.deferredPrompt && window.showInstallButton) window.showInstallButton(); } catch (_) {} }, 1500); // #541
 
                 // Entrada por la landing (`ir=casino`): abrir el casino directo,
                 // con el chat de cargas en el pop-up "Cargar acá" (owner 2026-08-15).
@@ -525,19 +526,54 @@ VIP.auth = (function () {
     // #421 (owner): ENTRADA RÁPIDA (registro desactivado desde el panel): sólo el nombre → el server crea la cuenta
     // (misma lógica de la landing, campaña INGRESO) y devuelve un token de acceso que se canjea acá = autologin.
     let _quickAccess = null;
+    // #541: celular → código por SMS (misma ruta que el registro normal, purpose 'register')
+    let _quickPhone = null;
+    function _quickBuildPhone() {
+        const raw = ((document.getElementById('quickPhone') || {}).value || '').trim();
+        if (!raw) return null;
+        if (raw.startsWith('+')) return '+' + raw.slice(1).replace(/\D/g, '');
+        const d = raw.replace(/\D/g, '').replace(/^0+/, '');
+        return d.length >= 7 ? '+54' + d : null;
+    }
+    async function quickSendOtp() {
+        const err = document.getElementById('quickErr'), b = document.getElementById('quickOtpBtn'), msg = document.getElementById('quickSmsMsg'), step = document.getElementById('quickOtpStep');
+        if (err) err.textContent = '';
+        const phone = _quickBuildPhone();
+        if (!phone) { if (err) err.textContent = 'Poné tu celular con código de área (ej.: 9 11 1234-5678).'; return; }
+        if (b) { b.disabled = true; b.textContent = 'Enviando…'; }
+        try {
+            const r = await fetch(`${VIP.config.API_URL}/api/auth/send-register-otp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { if (err) err.textContent = d.error || 'No pudimos mandar el SMS. Revisá el número.'; if (b) { b.disabled = false; b.textContent = 'Enviar código por SMS'; } return; }
+            _quickPhone = phone;
+            if (step) step.hidden = false;
+            if (msg) msg.textContent = 'Te mandamos un código al ' + (d.phone || phone) + '. Ponelo acá y tocá CREAR MI CUENTA.';
+            try { document.getElementById('quickOtp').focus(); } catch (_) {}
+            let left = 60; if (b) b.textContent = 'Reenviar en 60 s';
+            const t = setInterval(() => { left--; if (left <= 0) { clearInterval(t); if (b) { b.disabled = false; b.textContent = 'Reenviar código'; } } else if (b) b.textContent = 'Reenviar en ' + left + ' s'; }, 1000);
+        } catch (_) { if (err) err.textContent = 'Error de conexión. Probá de nuevo.'; if (b) { b.disabled = false; b.textContent = 'Enviar código por SMS'; } }
+    }
     async function quickEntry(ev) {
         if (ev && ev.preventDefault) ev.preventDefault();
         const inp = document.getElementById('quickName'); const btn = document.getElementById('quickEntryBtn'); const err = document.getElementById('quickErr');
         const name = (inp && inp.value || '').trim();
         if (err) err.textContent = '';
         if (name.length < 2) { if (err) err.textContent = 'Escribí tu nombre.'; return; }
+        // #541: con verificación por SMS activa, primero el código
+        const smsBox = document.getElementById('quickSmsBox'); const smsOn = !!(smsBox && !smsBox.hidden);
+        let otpCode = '';
+        if (smsOn) {
+            otpCode = ((document.getElementById('quickOtp') || {}).value || '').trim();
+            if (!_quickPhone) { if (err) err.textContent = 'Poné tu celular y tocá "Enviar código por SMS".'; return; }
+            if (!/^\d{4,8}$/.test(otpCode)) { if (err) err.textContent = 'Ingresá el código de 6 dígitos que te llegó por SMS.'; return; }
+        }
         if (btn) { btn.disabled = true; btn.textContent = 'Creando tu cuenta…'; }
         try {
             // #422: si vino por link de publicidad, la cuenta queda atribuida a esa campaña (si no, INGRESO).
             let campaignCode = null;
             try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) campaignCode = String(inj).toUpperCase().trim(); } catch (_) {}
             try { if (!campaignCode && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); if (a && a.code) campaignCode = String(a.code).toUpperCase().trim(); } } catch (_) {}
-            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, referralCode: window._vipRefLocked || undefined, campaignCode: campaignCode || undefined, landingUrl: location.href }) });
+            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, phone: smsOn ? _quickPhone : undefined, otpCode: smsOn ? otpCode : undefined, referralCode: window._vipRefLocked || undefined, campaignCode: campaignCode || undefined, landingUrl: location.href }) });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.accessToken) { if (err) err.textContent = d.error || 'No pudimos crear tu cuenta. Probá de nuevo.'; return; }
             // #426: paso siguiente — mostrar usuario + clave ("¡Te registraste con éxito!") y recién con "Entrar" se inicia la sesión.
@@ -717,6 +753,7 @@ VIP.auth = (function () {
         VIP.fire.loadFireStatus();
         if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529
         if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529
+        setTimeout(() => { try { if (window.deferredPrompt && window.showInstallButton) window.showInstallButton(); } catch (_) {} }, 1500); // #541
         VIP.ui.loadCanalInformativoUrl();
         refreshVerifyPhoneBanner();
         if (VIP.appTest && VIP.appTest.maybeShowAppCheck) VIP.appTest.maybeShowAppCheck();
@@ -1641,7 +1678,7 @@ VIP.auth = (function () {
         handleRegister,
         handleRegisterDirect,
         resetRegisterOtp,
-        quickEntry, quickGo, // #421/#426
+        quickEntry, quickGo, quickSendOtp, // #421/#426/#541
         maybeOfferSmsVerification,
         refreshVerifyPhoneBanner,
         applyRegisterModalMode,
