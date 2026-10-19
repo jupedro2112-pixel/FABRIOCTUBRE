@@ -1736,4 +1736,9 @@ body.home-full .test-mini-row { margin-bottom: 2px; }
    por contenedor: ningún bloque blanco tapa el contenido, en ningún menú. ── */
 body.menu2 .chat-screen, body.menu2 #chatScreen { height: calc(100dvh - 76px - env(safe-area-inset-bottom, 0px)) !important; max-height: calc(100dvh - 76px - env(safe-area-inset-bottom, 0px)) !important; min-height: 0 !important; overflow: hidden; }
 body.menu2 #bottomNav.bottom-nav { height: calc(76px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; background: var(--p-card); }
+/* #576 (owner): en el recuadro "Elegí dónde jugar" las etiquetas RECOMENDADO / PRONTO van ADENTRO de cada tile, centradas (se habían corrido) */
+.ev-play-first, .ev-play-first .ev-tabs { overflow: visible; }
+.ev-play-first .ev-tab, .ev-play-first .ev-tab.soon, .ev-play-first .ev-tab.active { position: relative !important; padding: 18px 6px 20px !important; min-height: 96px !important; }
+.ev-play-first .ev-tab .ev-reco { position: absolute !important; top: 5px !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translateX(-50%); white-space: nowrap; }
+.ev-play-first .ev-tab .ev-soon { position: absolute !important; bottom: 5px !important; top: auto !important; left: 50% !important; right: auto !important; transform: translateX(-50%); white-space: nowrap; }
 

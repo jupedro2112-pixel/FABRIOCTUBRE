@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 576/577. 🎰 Etiquetas de las plataformas adentro del tile · "Jugar" abre la plataforma aunque no haya API — SW v404
+**Pedidos (owner):** "se corrió lo de Ganamos/Jugaygana, el Pronto está descentrado" · "en el test que funcione todo como el real, que
+funcione la API de Girox porque no abre la página cuando ponés Jugar".
+**(#576)** En el recuadro "Elegí dónde jugar" (#563) las etiquetas RECOMENDADO / PRONTO estaban posicionadas fuera del tile (`top:-8px`,
+`bottom:-8px`) y el recuadro las corría: ahora van ADENTRO de cada tile, centradas arriba/abajo, con más alto. **(#577)** `platformSessionHandler`:
+sin API conectada, Girox no tenía `externalUrl` ⇒ 503 "todavía no está disponible". Ahora usa `getPlayUrl()` (GIROX_PLAY_URL, default
+1girox.com) como sitio público: "Jugar" abre la página (sin login único). ⚠️ Para que en Render funcione IGUAL que producción (login
+único, saldo, cargas, retiros) hay que cargar la API de 1girox en el panel de Render: COMANDOS → Banco automático → "🎰 API de 1girox"
+(la clave la tiene el owner; no va en el código).
+**Archivos:** `server.js`, `public/css/pin.css`, SW.
+
 ### 575. 📐 Menú 2: la pantalla termina arriba de la barra (sin bloques blancos que tapen) — SW v403
 **Pedido (owner, con captura):** "ese blanco ahí tampoco va, no tiene que tapar; pasa en todos los menús". Los rellenos por contenedor
 (#565/#567/#571/#574) dejaban una banda blanca entre el contenido y la barra. Ahora con `body.menu2` la pantalla entera (`#chatScreen`)

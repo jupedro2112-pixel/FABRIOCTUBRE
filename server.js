@@ -5799,8 +5799,11 @@ async function platformSessionHandler(req, res) {
       if (!_p) return res.status(400).json({ error: 'Esa plataforma no está disponible.' });
       const _ad = platforms.getAdapter(_reqPlatform);
       if (!_p.connected) {
-        if (!_p.externalUrl) return res.status(503).json({ error: `${_p.name} todavía no está disponible. Escribinos por chat.` });
-        return res.json({ success: true, external: true, platform: _reqPlatform, redirectUrl: _p.externalUrl, platformUrl: _p.externalUrl });
+        // #577 (owner): sin API conectada (entorno de prueba) "Jugar" abre igual el sitio público de la plataforma (sin login
+        // único). Girox no tiene externalUrl: usa el sitio de juego del adaptador (GIROX_PLAY_URL, default 1girox.com).
+        const _pub = _p.externalUrl || (_ad && typeof _ad.getPlayUrl === 'function' && _ad.getPlayUrl()) || null;
+        if (!_pub) return res.status(503).json({ error: `${_p.name} todavía no está disponible. Escribinos por chat.` });
+        return res.json({ success: true, external: true, noSso: true, platform: _reqPlatform, redirectUrl: _pub, platformUrl: _pub });
       }
       const _u = await User.findOne({ id: req.user.userId }).select('id username isBlocked isActive');
       if (!_u) return res.status(404).json({ error: 'Usuario no encontrado' });
