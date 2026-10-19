@@ -46,6 +46,15 @@
             const txt = _el('lgRefunds'); if (txt && parts.length) txt.textContent = parts.join(' · ') + ' de tu NETWIN. Se cobra solo desde la app.'; // #458
             const promo = _el('lgRefundPromo'); if (promo) { promo.textContent = info.refundPromo || ''; promo.hidden = !info.refundPromo; }
         } catch (_) {}
+        // #530: banner del bono con los % reales (primera carga; con la app instalada el total)
+        try {
+            const w = info.welcome || {}; const big = _el('lgBonusBig'), sub = _el('lgBonusSub');
+            const top = Number(w.withApp) > 0 ? Number(w.withApp) : Number(w.pct);
+            if (big && top > 0) big.textContent = top + '%';
+            if (sub) sub.textContent = (Number(w.withApp) > Number(w.pct) && Number(w.pct) > 0) ? ('EN TU PRIMERA CARGA CON LA APP · ' + w.pct + '% SIN INSTALARLA') : 'EN TU PRIMERA CARGA';
+            const rf = info.refunds || {}; const sr = _el('lgSyRefund'); if (sr && rf.dailyMax) sr.textContent = rf.dailyMax + '%';
+            const rp = Number(info.referralPct); const er2 = _el('lgSyRef'); if (er2 && rp > 0) er2.textContent = rp + '%';
+        } catch (_) {}
         try {
             const min = Number(info.minDepositArs);
             if (min > 0) { const c = _el('lgChipMin'); if (c) c.textContent = '💵 Carga mínima ' + _money(min); const m = _el('lgMin'); if (m) m.textContent = _money(min); }
@@ -81,6 +90,19 @@
             }
         } catch (_) {}
     }
+    // #530: popup de enganche (idea de la landing del owner): a los 12 s, una vez por sesión, sólo en registro rápido y si no escribió nada.
+    setTimeout(() => {
+        try {
+            if (sessionStorage.getItem('vip_lgpop')) return;
+            const ls = _el('loginScreen'); const nm = _el('quickName');
+            if (!ls || ls.classList.contains('hidden') || !document.body.classList.contains('reg-quick')) return;
+            if (VIP.state && (VIP.state.currentToken || VIP.state.currentUser)) return;
+            if (nm && nm.value.trim()) return;
+            const done = _el('quickDone'); if (done && done.style.display !== 'none') return;
+            sessionStorage.setItem('vip_lgpop', '1');
+            const pop = _el('lgPop'); if (pop) pop.classList.add('on');
+        } catch (_) {}
+    }, 12000);
     VIP.loginHero = { init };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
     else setTimeout(init, 50);

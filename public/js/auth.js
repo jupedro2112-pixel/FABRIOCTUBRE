@@ -550,7 +550,7 @@ VIP.auth = (function () {
             const f = document.getElementById('quickEntry'), done = document.getElementById('quickDone');
             if (f) f.style.display = 'none'; if (done) done.style.display = '';
         } catch (_) { if (err) err.textContent = 'Error de conexión. Probá de nuevo.'; }
-        finally { if (btn) { btn.disabled = false; btn.textContent = 'Registrarse ya'; } } // #427
+        finally { if (btn) { btn.disabled = false; btn.textContent = 'CREAR MI CUENTA'; } } // #427/#530
     }
     async function quickGo() {
         const btn = document.getElementById('quickGoBtn');

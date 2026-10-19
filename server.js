@@ -1168,7 +1168,10 @@ app.get('/api/landing/info', async (req, res) => {
     try { const pct = await getDailyRefundPct(); refundPromo = await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) {}
     res.setHeader('Cache-Control', 'public, max-age=60');
     let referralPct = null; try { referralPct = require('./src/utils/referralRate').getConfiguredPct(); } catch (_) {} // #424
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct }); // #421/#424
+    // #530: % de bienvenida REAL para el banner de la pantalla de ingreso (nada hardcodeado): primera carga + extra por instalar la app.
+    let welcome = null;
+    try { const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig(); welcome = { pct: fd, withApp: fd + (ig && ig.enabled ? ig.pct : 0) }; } catch (_) {}
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome }); // #421/#424/#530
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

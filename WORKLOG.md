@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 530. 📝 Pantalla de REGISTRO nueva con la idea de la landing del owner (`landing2.zip`) — SW v376
+**Pedido (owner):** "en el registro quiero algo sencillo que la gente complete su nombre y se registre automáticamente, fondo blanco y las
+3 plataformas que usamos, todos los sistemas de servicio hasta misiones pero resumido" · "buenos íconos y sencillo que la gente no se pierda"
+· zip `landing2.zip`: "la landing que quiero que cargues acá y agregá los 3 íconos de las 3 plataformas y un leve resumen de los sistemas,
+solo con título, sin que moleste, dejando la misma idea".
+**Qué se hizo (PWA `#loginScreen`, misma estructura que la landing del zip pero en BLANCO):** banner "BONO DE BIENVENIDA · 100% · EN TU
+PRIMERA CARGA CON LA APP · 50% sin instalarla" (los % REALES salen de `/api/landing/info.welcome` = `firstDepositBonusPct` + `installGift`,
+nada hardcodeado), frase "Creá tu cuenta en un click…", formulario "¿Cuál es tu nombre?" + botón verde "CREAR MI CUENTA" (mismos ids
+`quickEntry/quickName/quickEntryBtn/quickDone`), línea de confianza (acreditación al instante · retiros rápidos · soporte 24/7), "Elegí dónde
+jugar" con las 3 plataformas como TILES con su logo (Girox · Ganamos Pronto · Jugaygana Pronto, `lgPlatsRow` + clase `lg-plats-tiles`), fila de
+chips SOLO con título e ícono (Carga automática · Reembolso diario 25% · Ruleta diaria · Misiones semanales · Referidos 5% · Niveles VIP ·
+Soporte real · Retiro a tu CBU), reseñas y pie legal "+18". Popup de enganche a los 12 s (una vez por sesión, sólo si no escribió el nombre).
+Los tokens `--p-*` se fuerzan claros dentro de `#loginScreen`: la pantalla es blanca aunque el tema guardado sea nocturno.
+Se sacaron las 4 tarjetas grandes `.lg-feat` y la línea "CARGAS Y PAGOS LAS 24 HS" (quedan sus reglas CSS sin uso). El modo 'sms'
+(`#loginForm`) sigue intacto debajo. La landing de pauta `public/landing/index.html` NO se tocó.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/js/auth.js`, `public/css/pin.css`, `server.js` (`welcome` en landing/info), SW.
+
 ### 529. 🤝 REFERIDOS 2.0 — réplica del paquete `referidos-2.0.zip` del gemelo PAUTANUEVAsantino (#307–#319) — SW v375, admin-sw v120
 **Pedido (owner):** "me subís eso" (el zip con los parches, archivos completos y snippets). Se aplicó bloque por bloque según su README,
 adaptado a este repo (que ya tenía cobro manual #240, % desde el panel #351, novedad de diciembre #472 y NO tiene hub PREMIOS ni asistente).
