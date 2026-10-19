@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 587. 📖 Historias: la foto abarca toda la pantalla y el texto va abajo de todo — SW v412
+**Pedido (owner, con captura):** "así está perfecto, pero bajalo abajo de todo el texto y que la foto abarque toda la pantalla". Sin marco ni
+bordes redondeados; pie de 92 px con el texto y el botón pegados abajo; el sello sigue sobre el borde inferior de la foto. **Archivos:** `public/css/pin.css`, SW.
+
 ### 586. 🎯 Misiones semanales: premios al 50 % en todos los niveles
 **Pedido (owner):** "dentro de los regalos de misiones, entendiendo que ya tenemos muchos regalos, ajustá a un 50 % los premios a cobrar
 en cada nivel". `MISSION_TIERS_DEFAULT` y los items legacy de `STRATEGY_DEFAULT` quedan a la mitad (Bronce $1.500 · Plata $4.000/$5.000 ·

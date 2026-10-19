@@ -1780,4 +1780,12 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .story-viewer .st-foot .st-brand-foot { position: absolute; top: -48px; left: 50%; transform: translateX(-50%); z-index: 3; }
 .story-viewer .st-caption { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.55) !important; font-size: 13.5px !important; margin-top: 2px; }
 .story-viewer .st-foot::before { display: none !important; }
+/* #587 (owner): la foto abarca TODA la pantalla (sin marco) y el texto va abajo de todo */
+.story-viewer .st-media { padding: 0 0 92px !important; }
+.story-viewer .st-media img, .story-viewer .st-media video { border-radius: 0 !important; box-shadow: none !important; }
+.story-viewer .st-foot { min-height: 92px !important; height: 92px; padding: 4px 14px calc(8px + env(safe-area-inset-bottom, 0px)) !important; gap: 5px; justify-content: flex-end; }
+.story-viewer .st-foot .st-brand-foot { top: -46px; }
+.story-viewer .st-caption { font-size: 12.5px !important; max-height: 2.6em; }
+.story-viewer .st-link { padding: 10px 16px !important; font-size: 13px !important; }
+.story-viewer .st-tap { bottom: 92px !important; }
 
