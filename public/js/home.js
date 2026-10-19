@@ -184,15 +184,15 @@
     function _stPaint() {
         const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
         // #536 (owner): "Recordá que tenés {pct}% y {pct+extra}% instalando la app · podés elegir cuál querés una vez que hiciste la carga".
-        // #564 (owner): el cartel se ve SÓLO antes de la PRIMERA carga (promo de primera carga) y sólo en el inicio completo, resumido:
-        // "🎁 Primera carga: 50% · 100% con la app · elegís al cargar". La oferta de 2ª carga (#504) sigue por chat/push, sin cartel.
-        try { const ez = _el('sdBanner'); if (ez) ez.hidden = true; } catch (_) {}
+        // #564/#567 (owner): el cartel "🎁 Primera carga: 50% · 100% con la app" se ve SÓLO en el INICIO (menú intermedio), no en
+        // Carga auto (ahí ya lo vieron), y sólo mientras no hizo la primera carga (`/api/first-deposit-promo.show`).
+        try { const f = _el('sdBannerFull'); if (f) f.hidden = true; } catch (_) {}
         _fdPromoLoad().then((j) => {
-            const el = _el('sdBannerFull'); if (!el) return;
+            const el = _el('sdBanner'); if (!el) return;
             if (!(j && j.show && Number(j.pct) > 0)) { el.hidden = true; return; }
             el.hidden = false;
-            const pe = _el('sdBannerPctFull'); if (pe) pe.textContent = j.pct + '%';
-            const extra = Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el('sdBannerAppWrapFull'), a = _el('sdBannerAppFull');
+            const pe = _el('sdBannerPct'); if (pe) pe.textContent = j.pct + '%';
+            const extra = Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el('sdBannerAppWrap'), a = _el('sdBannerApp');
             if (w) w.hidden = !extra; if (a && extra) a.textContent = (Number(j.pct) + extra) + '%';
         }).catch(() => {});
         const btn = _el('ezMissions'), card = _el('missionsCard'); const nv = d.nivel || null;

@@ -1712,4 +1712,10 @@ body.menu2 .play-now-card { padding-bottom: 0 !important; }
 body.menu2 #bottomNav.bottom-nav { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; order: 99; }
 body.menu2 #chatScreen { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
 body.menu2 #homeFull, body.menu2 #entryView, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #supportPanel { padding-bottom: 16px; }
+/* #567 (owner): MENÚ 2 — el relleno va en los contenedores que SCROLLEAN (no en #chatScreen): nada queda debajo de la barra fija */
+body.menu2 .entry-view, body.menu2 .easy-view, body.menu2 .basic-view, body.menu2 #homeFull, body.menu2 .chat-messages, body.menu2 #supportPanel { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important; }
+body.menu2 .chat-input-container { margin-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
+body.menu2 #chatScreen { padding-bottom: 0 !important; }
+body.menu2 #bottomNav.bottom-nav { box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
+#sdBannerFull { display: none !important; }
 

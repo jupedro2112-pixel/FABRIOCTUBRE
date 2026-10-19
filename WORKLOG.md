@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 567. 📐 Cartel de 1ª carga sólo en el Inicio (no en Carga auto) · menú 2: relleno en los contenedores que scrollean — SW v397
+**Pedido (owner):** "sacá el primera carga y demás una vez que entrás, que se vea sólo en Inicio, no en Carga auto; y sigue tapándose lo de
+abajo". El cartel (`#sdBanner`, resumido) sólo en el menú intermedio y mientras no hizo la primera carga; `#sdBannerFull` (Carga auto)
+oculto. El relleno de 100 px para la barra fija del menú 2 va en `.entry-view/.easy-view/.basic-view/#homeFull/.chat-messages/
+#supportPanel` (son los que scrollean; en `#chatScreen` no servía) y la caja de escribir del chat sube 80 px. **Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 566. 💸 CONFIRMACIÓN DE PAGOS: retiros ≥ $50.000 se revisan (estafa o no) antes de pagar; los menores salen solos — admin-sw v125
 **Pedido (owner):** "abajo de Soporte poné Confirmación de pagos: cuando la gente quiera retirar que podamos revisar el caso y darle
 OK al retiro si está todo bien, por un tema de estafa; editable; confirmar en pagos mayores a 50.000, el resto que salga solo".
