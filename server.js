@@ -5444,7 +5444,10 @@ async function syncPasswordToJugaygana(user, newPassword, context) {
     }
   }
 
-  logger.error(`[pwd-sync] Falló sync con JUGAYGANA para ${user.username} tras ${MAX_ATTEMPTS} intentos. Último error: ${lastError}`);
+  logger.error(`[pwd-sync] Falló sync con 1girox para ${user.username} tras ${MAX_ATTEMPTS} intentos. Último error: ${lastError}`);
+  // #573 (owner): "mismo acceso en la app y en Girox". Si no se pudo sincronizar ahora, queda marcado para que el PRÓXIMO login
+  // vuelva a mandar la clave a 1girox (el login re-sincroniza cuando giroxPasswordSynced !== true).
+  await User.updateOne({ id: user.id }, { $set: { giroxPasswordSynced: false } }).catch(() => {});
 
   try {
     await Message.create({

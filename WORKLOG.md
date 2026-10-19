@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 573. 🔑 Clave de la app = clave de Girox, siempre
+**Pedido (owner):** "si se cambia la clave de la app que se cambie también en Girox, un mismo acceso". Ya estaba: TODOS los cambios de
+clave (app, pendiente, reseteo por SMS, admin, publicista) llaman `syncPasswordToJugaygana` → `girox.changeUserPassword` con 3
+reintentos, y el login re-sincroniza si `giroxPasswordSynced !== true`. Faltaba que el FALLO tras los 3 intentos dejara la cuenta
+marcada (`giroxPasswordSynced:false`): ahora sí, así el próximo ingreso vuelve a mandar la clave solo. **Archivos:** `server.js`.
+
 ### 572. 📎 Fondo sólo en el recuadro Comprobante/Retirar — SW v401
 **Pedido (owner, con captura):** "ponele un fondo a Comprobante y Retirar premio, pero sólo a ese recuadro, ese ancho, no más". La fila fija
 lleva fondo de tarjeta, borde, radio 18 px y sombra, del ancho de los dos botones (5 px de relleno). **Archivos:** `public/css/pin.css`, SW.
