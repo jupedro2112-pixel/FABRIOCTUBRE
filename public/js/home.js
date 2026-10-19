@@ -280,15 +280,17 @@
     function _setMenuLayout(layout) {
         const on = Number(layout) === 2; document.body.classList.toggle('menu2', on);
         const top = document.querySelector('.header.header-toolbar.tb-circles.topnav'); const screen = _el('chatScreen'); if (!top || !screen) return;
-        const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual');
+        // #558 (owner): abajo van Carga auto · Inicio · PERFIL; Soporte queda arriba, en el lugar que tenía Perfil (antes de Historias).
+        const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual'), perf = _el('navPerfil'), hist = _el('navHistorias');
         let bar = _el('bottomNav');
         if (on) {
             if (bar) return;
             const seps = Array.from(top.querySelectorAll('.tn-sep')).slice(0, 2);
-            const nodes = [auto, seps[0], ini, seps[1], man].filter(Boolean);
-            _navPh = nodes.map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
+            const nodes = [auto, seps[0], ini, seps[1], perf].filter(Boolean);
+            _navPh = nodes.concat(man ? [man] : []).map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
             bar = document.createElement('header'); bar.id = 'bottomNav'; bar.className = top.className + ' bottom-nav'; bar.setAttribute('aria-label', 'Menú inferior');
             nodes.forEach((n) => bar.appendChild(n)); screen.appendChild(bar);
+            if (man && hist && hist.parentNode === top) top.insertBefore(man, hist);
         } else if (bar) {
             (_navPh || []).forEach(({ n, ph }) => { if (ph.parentNode) ph.parentNode.replaceChild(n, ph); }); _navPh = null; bar.remove();
         }

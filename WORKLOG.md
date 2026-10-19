@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 558. 🧭 Menú opción 2: Perfil abajo, Soporte arriba — SW v393
+**Pedido (owner):** "cambiá Perfil: ponelo abajo y dejá arriba Soporte en ese lugar". En `_setMenuLayout` (#480) la barra inferior pasa a
+Carga auto · Inicio · Perfil, y Soporte se mueve al lugar de Perfil arriba (antes de Historias). Al volver a la opción 1 todo vuelve a su
+lugar por los placeholders. **Archivos:** `public/js/home.js`, SW.
+
 ### 557. 🌐 Landing de Vercel: "Elegí dónde jugar" con las plataformas debajo en 3 columnas + centrado
 **Pedido (owner, con captura):** "eso está fuera de centro; el 'Jugás en' → 'Elegí dónde jugar' y poné abajo las plataformas". La fila
 horizontal se salía de la pantalla: ahora título centrado y 3 tiles debajo. `overflow-x: hidden`, `main`/cabecera con `margin: 0 auto` y el
