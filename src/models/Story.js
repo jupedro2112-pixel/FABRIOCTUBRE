@@ -36,6 +36,8 @@ const storySchema = new mongoose.Schema({
   publishedAt: { type: Date, default: Date.now, index: true },
   expiresAt: { type: Date, required: true, index: true },
   isActive: { type: Boolean, default: true, index: true },
+  // #591 (owner): programación SEMANAL: cada 7 días desde publishedAt se vuelve a publicar sola (mientras esté activa).
+  repeatWeekly: { type: Boolean, default: false, index: true },
   views: { type: Number, default: 0 },
   createdBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
