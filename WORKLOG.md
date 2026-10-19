@@ -8,6 +8,32 @@
 
 ## Sesión 2026-10-18
 
+### 562. 🔗 WEBHOOKS SALIENTES a publicistas (réplica de `docs/ESPEC-WEBHOOKS-SALIENTES.md`, #334/#346 del gemelo) — admin-sw v124
+**Pedido (owner):** aplicar TAL CUAL la espec que mandó el otro equipo (archivo guardado en `docs/`).
+**Requisitos previos:** todos existían (`_credKey/_credEncrypt/_credDecrypt` de hgcash #192, `Config.set/getConfig`, `getPublicBaseUrl`,
+`metaCapi`, `fbAdsWebhook`, `Transaction.metadata.source`, `Campaign.publisher`, `User.acquisition*`/`metaFbc/metaFbp`/`landingUrl`/
+`registrationIp`, `axios`; en el panel `authFetch/showToast/escapeHtml/fmtFechaHoraAR`). `User.lastTouchCampaign` NO existe (el select lo ignora).
+No hay `scripts/check-tdz.js`.
+**Qué se hizo:** `src/models/OutboundWebhookQueue.js` y `src/services/outboundWebhookService.js` copiados sin cambios (secc. 2 y 3);
+`resolveEventScope` en `metaCapiService.js` (secc. 4); en `server.js`: requires + `configure` tras `fbAdsWebhook` (5.1), `_isFirstDeposit`
+y la config de destinos (`_normalizeOutboundDest/_getOutboundWebhooks/_saveOutboundWebhooks/_outboundDestPublic`) junto a `_credKey`
+(5.2/5.3), rutas `GET/POST /api/admin/webhooks`, `DELETE /:id`, `POST /:id/test` al lado de `/api/admin/hgcash/credentials` (5.4, sólo
+admin general), `outboundWebhook.startWorker()` debajo de los 2 `fbAdsWebhook.startWorker()` (5.5).
+**Hooks (secc. 6), encontrados y enganchados:** registro ×3 (`/api/auth/register`, registro rápido por pauta y `_landingSignupHandler`,
+que también cubre `quick-entry`) · carga manual del agente `_agentDepositHandler` (A, `_depTxId`) · auto-carga banco
+`_hgcashCreditToPlatform` (B: el Transaction del depósito ahora lleva `id: txId` propio, antes era un uuid anónimo) · self-service
+`POST /api/movements/deposit` (C, `unrecorded:true` porque no escribe Transaction) · retiro pagado `notifyPayoutPaid` (D).
+**Panel:** card "🔗 Webhooks salientes" en Configuración debajo de Registro de clientes (secc. 7) + JS (secc. 8) cargado desde
+`loadInstallBonusPct()` junto a las otras cards.
+**Anclas no encontradas:** ninguna (sólo se adaptaron ubicaciones: la config de destinos quedó antes de `_credKey`, y las rutas junto a
+`hgcash/credentials`). **Nota de la espec:** el secreto se cifra con `JWT_SECRET`: si se rota, los destinos quedan ilegibles y hay que
+volver a cargar el secreto desde el panel (la card lo avisa).
+**Probar (secc. 9):** panel → Configuración → "+ Nuevo destino" (URL https de prueba, "Generar uno al azar", TODOS) → Guardar →
+"📤 Enviar prueba" → "✅ último OK"; registrar un usuario → `registro`; cargarle → `primera_carga`; apagar la URL → "en cola" y
+reintento cada 5 min.
+**Archivos:** `src/models/OutboundWebhookQueue.js`, `src/services/outboundWebhookService.js`, `src/services/metaCapiService.js`, `server.js`,
+`public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`, `docs/ESPEC-WEBHOOKS-SALIENTES.md`.
+
 ### 561. 📐 Menú 2: la hoja "Jugar ahora" (carga acreditada) ya no queda tapada por la barra inferior — SW v395
 **Pedido (owner, con captura):** "cuando se elija el menú 2 que no se tape el texto, subilo para que no se corte". La hoja inferior
 `#playNowCard` (#275) quedaba debajo de `#bottomNav`: con `body.menu2` la hoja lleva un relleno inferior de 84 px + safe area y queda

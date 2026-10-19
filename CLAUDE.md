@@ -246,6 +246,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
   (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
   en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
+  **#562 WEBHOOKS SALIENTES** (`docs/ESPEC-WEBHOOKS-SALIENTES.md`): todo flujo NUEVO de registro o de carga acreditada llama
+  `outboundWebhook.notify('registro'|'carga', user, {amount, firstDeposit, transactionId})` (y `'retiro'` al pagar un retiro). Secretos de los
+  destinos cifrados con `JWT_SECRET` (rotarlo ⇒ recargarlos en Configuración → Webhooks salientes).
   **#532:** `executePayoutsForPeriod` RESERVA las comisiones (`status:'paying'`+`payingToken`) antes de acreditar: un flujo nuevo que pague
   comisiones debe pasar por ese servicio, nunca leer `calculated` y acreditar por su cuenta. Las rutas que leen netwin en vivo van con
   `referralLiveLimiter` (comparten los 60 req/min de 1girox con cargas y retiros).

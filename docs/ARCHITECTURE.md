@@ -1288,3 +1288,18 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Front:** `ui.js` bloque Referrals (`openReferralModal`, `maybeShowReferralPromo` 1×/24 h, `shareReferralLink` chooser), `app.js`
   guarda `?ref=` 30 días (`localStorage vip_ref`) y lo fija en el registro; `/linkreferido?ref=` redirige a `/?ref=`.
 - **Copy:** "comisión por la ACTIVIDAD de tus referidos", nunca "lo que pierdan". Sin % hardcodeado en HTML (sale del dashboard).
+
+## Webhooks salientes a publicistas (#562, 2026-10-19) — `docs/ESPEC-WEBHOOKS-SALIENTES.md`
+
+- **Qué:** POST JSON firmado (`X-Webhook-Event/Id/Timestamp/Signature`, HMAC-SHA256 de `"{ts}.{body}"`) a hasta 10 destinos
+  (`Config['outboundWebhooks'].destinations[]`, secreto cifrado con `_credEncrypt`). Eventos `registro` y `primera_carga` siempre;
+  `carga` y `retiro` opcionales por destino; alcance `all` o lista de publicistas/códigos (resuelto por `metaCapi.resolveEventScope`).
+  El payload NO lleva username (sólo `user.id`).
+- **Servicio:** `src/services/outboundWebhookService.js` (`notify(event, user, opts)` fire-and-forget; 3 reintentos 1/4/16 s; cola
+  `OutboundWebhookQueue` reintentada cada 5 min hasta 10; 4xx no se reintenta). `_isFirstDeposit(userId, {unrecorded})` decide
+  `primera_carga` (= exactamente 1 depósito real; `payout_refund` no cuenta).
+- **Hooks:** registro (3 altas), carga manual (A), auto-carga banco (B), self-service (C, `unrecorded`), retiro pagado (D). **Un flujo nuevo
+  de registro o de carga acreditada tiene que llamar `outboundWebhook.notify(...)`** con `transactionId` estable (es el `event_id`).
+- **Panel:** Configuración → "🔗 Webhooks salientes" (`/api/admin/webhooks*`, sólo admin general): alta/edición, prueba, formato para
+  pasarle al publicista. Rotar `JWT_SECRET` ⇒ secretos ilegibles ⇒ recargarlos.
+
