@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 563/564/565. 🎰 Inicio completo reordenado · cartel de 1ª carga resumido · menú 2 sin tapar — SW v396
+**Pedidos (owner):** "la racha al lado de Cambiar menú; el botón de menú principal como 'dejarlo fijo' sin bajar lo demás; que se vea en
+la parte principal el 'dónde querés jugar'; lo de cuando cargan tapa lo que está: que sea una burbuja temporal que desaparezca; el botón
+negro 'después lo instalo' arriba de Cambiar menú" · "el 'Recordá que tenés 50% y 100%' sólo para la primera carga, resumido, en el inicio
+nomás" · "[captura] no ve cómo se tapa [la barra del menú 2], eso no quiero".
+**Qué se hizo:** (#563) fila Cambiar menú · 📌 Fijar/Fijo ✓ · 🔥 Racha en UNA línea; las pestañas de plataformas (`#entryTabs`) pasan a ser lo
+PRIMERO del inicio completo en el recuadro "🎰 Elegí dónde jugar"; `#playNowCard` ("Entró tu carga · Jugar ahora") es una burbuja
+flotante arriba, sin fondo oscuro, que se va sola a los 15 s (si traía la oferta del extra pasa a "lo instalo después"); `#installGiftBar`
+(botón negro "Pendiente · Instalá la app y cargá tu extra") va al tope del inicio, arriba de Cambiar menú. (#564) el cartel pasa a
+"🎁 Primera carga: 50% · 100% con la app · elegís al cargar": sólo en el inicio completo y sólo mientras no hizo la primera carga
+(`/api/first-deposit-promo.show`); la oferta de 2ª carga ya no tiene cartel (sigue por chat/push). (#565) con el menú 2 la barra inferior
+es `position: fixed` y la pantalla deja 84 px abajo: nada queda tapado.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 562. 🔗 WEBHOOKS SALIENTES a publicistas (réplica de `docs/ESPEC-WEBHOOKS-SALIENTES.md`, #334/#346 del gemelo) — admin-sw v124
 **Pedido (owner):** aplicar TAL CUAL la espec que mandó el otro equipo (archivo guardado en `docs/`).
 **Requisitos previos:** todos existían (`_credKey/_credEncrypt/_credDecrypt` de hgcash #192, `Config.set/getConfig`, `getPublicBaseUrl`,

@@ -1693,4 +1693,23 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 body.menu2 .play-now-card { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 9700; }
 body.menu2 .play-now-card .pn-sheet { border-radius: 22px 22px 18px 18px; }
 body.menu2 #homeFull, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #entryView { padding-bottom: 12px; }
+/* ── #563 (owner): fila Cambiar menú · Fijar · Racha en UNA línea; "Elegí dónde jugar" primero; carga acreditada como burbuja
+   temporal (no tapa nada); botón negro "lo instalo después" arriba de Cambiar menú ── */
+.top-row { flex-wrap: nowrap !important; gap: 6px; }
+.menu-pin { flex: 0 0 auto; padding: 7px 9px; } .menu-pin span { overflow: visible; }
+.ev-play-first { margin: 6px 12px 0; padding: 8px 10px 9px; border-radius: 16px; background: var(--p-surface); border: 1px solid var(--p-border); }
+.ev-play-k { display: block; font: 900 13px var(--p-font); color: var(--p-text); margin-bottom: 6px; }
+.ev-play-first .ev-tabs { margin: 0 !important; }
+#installGiftBar.ig-bar { position: static !important; left: auto !important; right: auto !important; bottom: auto !important; margin: 8px 12px 0; width: auto; z-index: auto; background: #111 !important; color: #fff !important; border-radius: 14px; box-shadow: var(--p-shadow); }
+#installGiftBar .ig-bar-k { background: var(--p-red); color: #fff; } #installGiftBar .ig-bar-t { color: #fff; } #installGiftBar .ig-bar-amt { color: #ffd166; }
+.play-now-card { inset: auto 10px auto 10px !important; top: calc(62px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; background: transparent !important; backdrop-filter: none !important; align-items: flex-start !important; padding: 0 !important; pointer-events: none !important; }
+.play-now-card.show .pn-sheet { pointer-events: auto; }
+.play-now-card .pn-sheet { border-radius: 18px !important; box-shadow: 0 14px 40px rgba(0,0,0,.28) !important; padding: 12px 14px !important; border: 1px solid var(--p-border) !important; }
+body.menu2 .play-now-card { padding-bottom: 0 !important; }
+/* #564: cartel de primera carga más chico */
+.sd-banner-full { padding: 8px 12px; } .sd-banner .sd-txt { font-size: 11px; } .sd-banner .sd-txt b { font-size: 12px; } .sd-banner .sd-txt small { display: inline; margin: 0 0 0 4px; font-size: 10px; }
+/* #565 (owner): MENÚ 2 — la barra inferior va FIJA y el contenido deja lugar: no tapa nada */
+body.menu2 #bottomNav.bottom-nav { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; order: 99; }
+body.menu2 #chatScreen { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+body.menu2 #homeFull, body.menu2 #entryView, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #supportPanel { padding-bottom: 16px; }
 

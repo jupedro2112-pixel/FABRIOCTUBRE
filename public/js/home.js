@@ -184,7 +184,17 @@
     function _stPaint() {
         const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
         // #536 (owner): "Recordá que tenés {pct}% y {pct+extra}% instalando la app · podés elegir cuál querés una vez que hiciste la carga".
-        [['sdBanner', 'sdBannerPct', 'sdBannerLeft', 'sdBannerApp', 'sdBannerAppWrap'], ['sdBannerFull', 'sdBannerPctFull', 'sdBannerLeftFull', 'sdBannerAppFull', 'sdBannerAppWrapFull']].forEach(([b, p, l, ap, aw]) => { const el = _el(b); if (!el) return; if (sd && sd.pct > 0) { el.hidden = false; const pe = _el(p); if (pe) pe.textContent = sd.pct + '%'; const le = _el(l); if (le) le.textContent = _stLeft(sd.expiresAt); _fdPromoLoad().then((j) => { const extra = j && Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el(aw), a = _el(ap); if (w) w.hidden = !extra; if (a && extra) a.textContent = (sd.pct + extra) + '%'; }).catch(() => {}); } else el.hidden = true; });
+        // #564 (owner): el cartel se ve SÓLO antes de la PRIMERA carga (promo de primera carga) y sólo en el inicio completo, resumido:
+        // "🎁 Primera carga: 50% · 100% con la app · elegís al cargar". La oferta de 2ª carga (#504) sigue por chat/push, sin cartel.
+        try { const ez = _el('sdBanner'); if (ez) ez.hidden = true; } catch (_) {}
+        _fdPromoLoad().then((j) => {
+            const el = _el('sdBannerFull'); if (!el) return;
+            if (!(j && j.show && Number(j.pct) > 0)) { el.hidden = true; return; }
+            el.hidden = false;
+            const pe = _el('sdBannerPctFull'); if (pe) pe.textContent = j.pct + '%';
+            const extra = Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el('sdBannerAppWrapFull'), a = _el('sdBannerAppFull');
+            if (w) w.hidden = !extra; if (a && extra) a.textContent = (Number(j.pct) + extra) + '%';
+        }).catch(() => {});
         const btn = _el('ezMissions'), card = _el('missionsCard'); const nv = d.nivel || null;
         if (!ms.length) { if (btn) btn.hidden = true; if (card) card.hidden = true; return; }
         const done = ms.filter((m) => m.done).length;
@@ -256,7 +266,7 @@
         const b = _el('menuPinBtn'), t = _el('menuPinTxt'); if (!b || !t) return;
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
         b.classList.toggle('on', on);
-        t.textContent = on ? 'Preseleccionado para el ingreso ✓' : 'Dejar preseleccionado para el ingreso';
+        t.textContent = on ? 'Fijo ✓' : 'Fijar'; b.title = on ? 'Este menú queda fijo para el ingreso (tocá para deshacer)' : 'Dejar este menú preseleccionado para el ingreso';
     }
     function toggleMenuPin() {
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
@@ -988,14 +998,19 @@
         if (b) b.style.display = o.giftOnly ? 'none' : '';
         card.classList.add('show');
         card.setAttribute('aria-hidden', 'false');
+        // #563 (owner): es una BURBUJA temporal (no tapa el inicio): se va sola a los 15 s. Si traía la oferta del extra por instalar,
+        // queda el botón negro grande arriba de "Cambiar menú" ("lo instalo después").
+        clearTimeout(_pnTimer);
+        _pnTimer = setTimeout(() => { try { if (card.dataset.gift === '1') playNowLater(); else hidePlayNow(); } catch (_) {} }, 15000);
     }
+    let _pnTimer = null;
     // #294: "Después" / "Seguir jugando": si el cartel trae la oferta del extra, queda PENDIENTE (barra de abajo).
     function playNowLater() {
         const card = _el('playNowCard');
         if (card && card.dataset.gift === '1') return installGiftLater();
         hidePlayNow();
     }
-    function hidePlayNow() { const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); c.dataset.gift = ''; c.dataset.test = ''; } }
+    function hidePlayNow() { clearTimeout(_pnTimer); const c = _el('playNowCard'); if (c) { c.classList.remove('show'); c.setAttribute('aria-hidden', 'true'); c.dataset.gift = ''; c.dataset.test = ''; } }
     // #296 (owner): "Jugar ahora" abre la plataforma AFUERA de la página (ventana aparte /jugar.html con el login
     // automático ya hecho y una línea finita arriba "‹ Volver a cargas") — así no ven el delay de la app. Vale con y
     // sin la app instalada.
