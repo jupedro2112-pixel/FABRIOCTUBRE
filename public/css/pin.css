@@ -1801,4 +1801,11 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .story-viewer .st-foot .st-brand-foot img { border: 2px solid #111; background: #111; }
 /* #595 (owner): pantalla limpia al entrar: sin la card "Invitá a tus amigos" en el inicio (Referidos sigue en su botón) */
 #referralHomeCard { display: none !important; }
+/* #598: panel "Carga rápida" del casino, chico y simple */
+.casino-load { padding: 10px 12px 12px !important; width: min(320px, calc(100vw - 24px)) !important; }
+.cl-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--p-border); }
+.cl-row small { flex: 0 0 48px; font: 800 9.5px var(--p-font); letter-spacing: .8px; text-transform: uppercase; color: var(--p-muted); }
+.cl-row b { flex: 1; min-width: 0; font: 700 12px var(--p-font); color: var(--p-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-row .cl-copy { flex: 0 0 auto; border-radius: 999px; padding: 4px 9px; font: 800 10.5px var(--p-font); }
+.casino-load .cl-btn { width: 100%; margin-top: 10px; border-radius: 999px !important; padding: 12px !important; font: 900 13px var(--p-font) !important; }
 

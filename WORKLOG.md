@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 598. 🎰 Carga rápida dentro del casino: un botón para el comprobante + alias/CBU/titular para copiar; burbuja que se mueve libre — SW v419
+**Pedido (owner, con captura):** "el carga rápida abrí 1 botón para cargar comprobante, limpiá lo viejo y dejá un botón de carga con los datos de
+copiar CBU, alias, titular, chiquito y sencillo, y que ese círculo se pueda mover". El panel (`toggleCasinoLoad`) pasa a: cabecera, 3 filas
+con Copiar (Alias · CBU · Titular) y el botón "📎 Adjuntar comprobante"; se fueron los pasos, la lista de plataformas y el link "volver". La
+burbuja ya era arrastrable pero se pegaba al borde: ahora queda donde la dejan y recuerda la posición (`localStorage vip_cq_pos`).
+**Archivos:** `public/js/home.js`, `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 597. 🧹 Fuera el cartel violeta "¡Saldo acreditado! · Jugar ahora · ¿Ya estás en Telegram?" tras la carga — SW v418
 **Pedido (owner, con captura):** "este cartel después de la carga limpialo, dejamos el que ya tenemos". `showCasinoInvite` (ui.js, lo
 disparaba el sondeo de saldo cuando subía) ya no muestra nada: queda la burbuja de carga acreditada (#563). **Archivos:** `public/js/ui.js`, SW.

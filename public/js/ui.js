@@ -1437,6 +1437,8 @@ VIP.ui._showCasinoFrame = function() {
       const b = overlay.querySelector('#casinoSupportBubble');
       if (!b || !window.PointerEvent) return; // sin pointer events → burbuja fija como antes
       b.style.touchAction = 'none'; // sin esto, el navegador scrollea en vez de arrastrar
+      // #598: posición recordada
+      try { const pos = JSON.parse(localStorage.getItem('vip_cq_pos') || 'null'); if (pos && pos.left >= 0 && pos.top >= 0 && pos.left < window.innerWidth - 60 && pos.top < window.innerHeight - 40) { b.style.left = pos.left + 'px'; b.style.top = pos.top + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto'; } } catch (_) {}
       let startX = 0, startY = 0, startRect = null, dragging = false;
       b.addEventListener('pointerdown', function(e) {
         startX = e.clientX; startY = e.clientY;
@@ -1460,11 +1462,10 @@ VIP.ui._showCasinoFrame = function() {
       const end = function() {
         if (startRect && dragging) {
           // Imán al borde horizontal más cercano; la altura queda donde la dejó.
+          // #598 (owner): queda DONDE la dejó (sin imán al borde) y se recuerda la posición.
           const r = b.getBoundingClientRect();
-          const toLeft = (r.left + r.width / 2) < window.innerWidth / 2;
-          if (toLeft) { b.style.left = '16px'; b.style.right = 'auto'; }
-          else { b.style.left = 'auto'; b.style.right = '16px'; }
-          VIP.ui._bubbleSide = toLeft ? 'left' : 'right';
+          VIP.ui._bubbleSide = (r.left + r.width / 2) < window.innerWidth / 2 ? 'left' : 'right';
+          try { localStorage.setItem('vip_cq_pos', JSON.stringify({ left: Math.round(r.left), top: Math.round(r.top) })); } catch (_) {}
           // El click que dispara el navegador justo después del arrastre NO
           // debe abrir el chat: se marca y se limpia solo a los 400ms (por si
           // el click nunca llega, no queda un toque "muerto").

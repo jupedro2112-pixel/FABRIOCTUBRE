@@ -1732,16 +1732,12 @@
         const cbu = (VIP.autoload && VIP.autoload.getCbu && VIP.autoload.getCbu()) || null;
         const list = (_platforms && _platforms.platforms) || [];
         const pref = (_platforms && _platforms.preferredPlatform) || null;
+        // #598 (owner): panel CHICO y simple: los datos para copiar (alias · CBU · titular) y UN botón para adjuntar el comprobante.
+        const row = (k, v) => v ? '<div class="cl-row"><small>' + k + '</small><b>' + _esc(v) + '</b><button type="button" class="cl-copy" onclick="VIP.ui.copyText(\'' + _esc(v) + '\')">Copiar</button></div>' : '';
         p.innerHTML =
-            '<div class="cl-head"><span>💳 Carga automática</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
-            '<div class="cl-step"><b>1</b><div><div class="cl-t">Transferí a este CBU</div>' +
-            '<div class="cl-cbu"><span class="mono">' + _esc(cbu && cbu.number ? cbu.number : 'cargando…') + '</span>' +
-            (cbu && cbu.number ? '<button type="button" class="cl-copy" onclick="VIP.ui.copyText(\'' + _esc(cbu.number) + '\')">Copiar</button>' : '') + '</div>' +
-            (cbu ? '<div class="cl-meta">' + _esc(cbu.bank || '') + ' · ' + _esc(cbu.titular || '') + '</div>' : '') + '</div></div>' +
-            (list.length >= 2 ? '<div class="cl-step"><b>2</b><div><div class="cl-t">¿Dónde querés el saldo?</div><div class="cl-plats">' +
-                list.map(x => '<button type="button" class="cl-plat' + (x.id === pref ? ' on' : '') + '" onclick="VIP.home.setPreferred(\'' + _esc(x.id) + '\');setTimeout(function(){VIP.home.toggleCasinoLoad(true)},400)">' + _esc(x.name) + '</button>').join('') + '</div></div></div>' : '') +
-            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Cargar aquí · adjuntar comprobante</button>' +
-            '<div class="cl-meta" style="text-align:center">Se carga automáticamente · <a href="#" onclick="event.preventDefault();VIP.ui.closeCasinoFrame();">volver a la app</a></div>';
+            '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
+            (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
+            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>';
         p.style.display = '';
     }
     function _playOnEmbedded(platformId) {
