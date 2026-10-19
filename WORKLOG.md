@@ -8,7 +8,7 @@
 
 ## Sesión 2026-10-18
 
-### 530. 📝 Pantalla de REGISTRO nueva con la idea de la landing del owner (`landing2.zip`) — SW v376
+### 530. 📝 Pantalla de REGISTRO nueva con la idea de la landing del owner (`landing2.zip`) — SW v376 (v377: si el % sin app es 0, el subtítulo dice 'INSTALANDO LA APP')
 **Pedido (owner):** "en el registro quiero algo sencillo que la gente complete su nombre y se registre automáticamente, fondo blanco y las
 3 plataformas que usamos, todos los sistemas de servicio hasta misiones pero resumido" · "buenos íconos y sencillo que la gente no se pierda"
 · zip `landing2.zip`: "la landing que quiero que cargues acá y agregá los 3 íconos de las 3 plataformas y un leve resumen de los sistemas,

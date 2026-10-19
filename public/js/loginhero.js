@@ -51,7 +51,8 @@
             const w = info.welcome || {}; const big = _el('lgBonusBig'), sub = _el('lgBonusSub');
             const top = Number(w.withApp) > 0 ? Number(w.withApp) : Number(w.pct);
             if (big && top > 0) big.textContent = top + '%';
-            if (sub) sub.textContent = (Number(w.withApp) > Number(w.pct) && Number(w.pct) > 0) ? ('EN TU PRIMERA CARGA CON LA APP · ' + w.pct + '% SIN INSTALARLA') : 'EN TU PRIMERA CARGA';
+            const pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0;
+            if (sub) sub.textContent = pApp > pNo ? (pNo > 0 ? ('EN TU PRIMERA CARGA CON LA APP · ' + pNo + '% SIN INSTALARLA') : 'EN TU PRIMERA CARGA INSTALANDO LA APP') : 'EN TU PRIMERA CARGA';
             const rf = info.refunds || {}; const sr = _el('lgSyRefund'); if (sr && rf.dailyMax) sr.textContent = rf.dailyMax + '%';
             const rp = Number(info.referralPct); const er2 = _el('lgSyRef'); if (er2 && rp > 0) er2.textContent = rp + '%';
         } catch (_) {}
