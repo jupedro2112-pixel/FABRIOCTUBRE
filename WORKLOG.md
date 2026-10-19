@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 527. 📐 Inicio completo: fotos de juegos más chicas, fila de servicios más arriba, las 3 plataformas con logo arriba y texto abajo, botón de cargar más arriba — SW v373
+**Pedido (owner, con captura).** Tarjetas de juegos al 30 % (máx. 132 px); menos aire entre novedad y servicios; pestañas de plataforma en
+columna (logo 34 px arriba, nombre abajo) con "Recomendado" arriba centrado y "Pronto" abajo centrado; el botón rojo sube a 26 px del borde.
+
 ### 526. 🧩 Fila de servicios del Inicio completo prolija — SW v372
 **Pedido (owner, con captura):** "quedó mal: que entre bien todo, que se entienda que se puede expandir, agrandalo un poco y los íconos
 bien dentro del círculo". Grilla de 4 tarjetas de 96 px en columna: círculo de 32 px con el ícono centrado, título en una línea,
