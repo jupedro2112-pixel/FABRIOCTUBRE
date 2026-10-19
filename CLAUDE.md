@@ -246,6 +246,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
   (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
   en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
+  **#532:** `executePayoutsForPeriod` RESERVA las comisiones (`status:'paying'`+`payingToken`) antes de acreditar: un flujo nuevo que pague
+  comisiones debe pasar por ese servicio, nunca leer `calculated` y acreditar por su cuenta. Las rutas que leen netwin en vivo van con
+  `referralLiveLimiter` (comparten los 60 req/min de 1girox con cargas y retiros).
   **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
   **#421:** `Config['registrationMode']` ('sms' | 'quick', tilde en Configuración → Registro de clientes). En 'quick' la pantalla

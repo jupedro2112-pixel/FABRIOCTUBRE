@@ -181,7 +181,8 @@ VIP.auth = (function () {
         const attribution = VIP.campaign ? VIP.campaign.getActive() : null;
         // El código de referido solo cuenta si NO vino por una pauta: en el
         // flujo de pauta la campaña es la atribución relevante.
-        const referralCode = (!attribution && referralInput)
+        // #532: si vino por link de referido (?ref=, queda FIJO) se manda SIEMPRE, aun con pauta: el cliente ve "queda vinculado".
+        const referralCode = (referralInput && (window._vipRefLocked || !attribution))
             ? referralInput.value.trim().toUpperCase()
             : null;
 
@@ -536,7 +537,7 @@ VIP.auth = (function () {
             let campaignCode = null;
             try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) campaignCode = String(inj).toUpperCase().trim(); } catch (_) {}
             try { if (!campaignCode && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); if (a && a.code) campaignCode = String(a.code).toUpperCase().trim(); } } catch (_) {}
-            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, campaignCode: campaignCode || undefined, landingUrl: location.href }) });
+            const r = await fetch(`${VIP.config.API_URL}/api/auth/quick-entry`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, referralCode: window._vipRefLocked || undefined, campaignCode: campaignCode || undefined, landingUrl: location.href }) });
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d.accessToken) { if (err) err.textContent = d.error || 'No pudimos crear tu cuenta. Probá de nuevo.'; return; }
             // #426: paso siguiente — mostrar usuario + clave ("¡Te registraste con éxito!") y recién con "Entrar" se inicia la sesión.

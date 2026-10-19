@@ -94,10 +94,13 @@ const referralCommissionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['calculated', 'paid', 'skipped', 'excluded'],
+    enum: ['calculated', 'paying', 'paid', 'skipped', 'excluded'], // 'paying' (#532): reservada por un pago en curso
     default: 'calculated',
     index: true
   },
+  // #532: reserva atómica del pago (referralPayoutService). Se limpian al pagar o al fallar; > 10 min colgadas vuelven solas.
+  payingToken: { type: String, default: null },
+  payingAt: { type: Date, default: null },
   calculatedAt: {
     type: Date,
     default: Date.now,

@@ -8658,8 +8658,8 @@ function renderReferrersTable(referrers) {
             const fs = r.financialStats || {};
             const hasPending = (fs.totalPendingCommission || 0) > 0;
             return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                <td style="padding:7px 6px;color:#fff;font-weight:bold;">${r.username}${r.excludedFromReferral ? ' <span style="color:#ff4444;font-size:10px;">EXCLUIDO</span>' : ''}</td>
-                <td style="padding:7px 6px;color:#d4af37;letter-spacing:2px;font-size:12px;">${r.referralCode || '—'}</td>
+                <td style="padding:7px 6px;color:#fff;font-weight:bold;">${escHtml(r.username)}${r.excludedFromReferral ? ' <span style="color:#ff4444;font-size:10px;">EXCLUIDO</span>' : ''}</td>
+                <td style="padding:7px 6px;color:#d4af37;letter-spacing:2px;font-size:12px;">${escHtml(r.referralCode || '—')}</td>
                 <td style="padding:7px 6px;color:#00ff88;font-weight:bold;text-align:center;">${r.totalReferreds}</td>
                 ${(() => {
                     const a = referralActivityByReferrer.get(r.id);

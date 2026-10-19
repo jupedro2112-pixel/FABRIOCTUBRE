@@ -28,11 +28,7 @@ const VALID_PAYOUT_STATUSES = ['pending', 'paid', 'failed', 'cancelled'];
 function referralBaseUrl(req) {
   const fromEnv = String(process.env.PUBLIC_BASE_URL || '').trim().replace(/\/$/, '');
   if (fromEnv) return fromEnv + '/';
-  const host = req && req.get && req.get('host');
-  if (host) {
-    const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
-    return `${proto}://${host}/`;
-  }
+  // #532 (seguridad): NUNCA el Host del request (host-header injection → links a otro dominio). Sin env, el dominio fijo.
   return 'https://cargas1girox.com/';
 }
 

@@ -4337,7 +4337,14 @@ async function _landingSignupHandler(req, res) {
       return res.status(410).json({ error: 'El registro rápido no está disponible en este momento.' });
     }
 
-    const { name, campaignCode, utm, fbc, fbp, landingUrl } = req.body || {};
+    const { name, campaignCode, utm, fbc, fbp, landingUrl, referralCode } = req.body || {};
+    // #532 (seguridad/#529): el link de referido (/?ref=CODE) llega hasta acá también en el registro rápido y en la landing.
+    // Mismas reglas que /api/auth/register: código existente, de un usuario activo; si no, se ignora sin romper el alta.
+    let _referrer = null;
+    try {
+      const rc = typeof referralCode === 'string' ? referralCode.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12) : '';
+      if (rc) { _referrer = await User.findOne({ referralCode: rc, isActive: true }).select('id username referralCode').lean(); if (!_referrer) logger.warn(`[landing] código de referido inválido: ${rc}`); }
+    } catch (_) { _referrer = null; }
 
     const nameT = (typeof name === 'string' ? name : '').trim();
     if (nameT.length < 2 || nameT.length > 60) {
@@ -4459,6 +4466,10 @@ async function _landingSignupHandler(req, res) {
       giroxOwnerCampaign: giroxOwner,
       platforms: Object.keys(_platState).length ? _platState : null,
       referralCode: newReferralCode,
+      referredByUserId: _referrer ? _referrer.id : null,
+      referredByCode: _referrer ? _referrer.referralCode : null,
+      referredAt: _referrer ? new Date() : null,
+      referralStatus: _referrer ? 'referred' : 'none',
       acquisitionCampaign: normalizedCode,
       acquisitionSource: 'landing',
       acquisitionUtm: {
@@ -4539,7 +4550,7 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     const name = String((req.body && req.body.name) || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
     req._allowNoApi = !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1'); // #426: sólo entorno de prueba
-    req.body = { name, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
+    req.body = { name, referralCode: (req.body && req.body.referralCode) || null, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
       const fake = { _c: 200, status(c) { this._c = c; return this; }, json(b) { resolve({ code: this._c, body: b }); }, set() { return this; }, setHeader() { return this; }, cookie() { return this; }, end() { resolve({ code: this._c, body: {} }); } };
       Promise.resolve(_landingSignupHandler(req, fake)).catch((e) => resolve({ code: 500, body: { error: e.message } }));
@@ -20694,7 +20705,7 @@ async function _runMonthlyReferralPayout() {
   const key = `referral_autorun_${periodKey}`;
   let claimed = false;
   try {
-    const r = await Config.findOneAndUpdate({ key }, { $setOnInsert: { key, value: { startedAt: new Date(), status: 'running' }, updatedBy: 'auto-referidos' } }, { upsert: true, new: false, rawResult: true });
+    const r = await Config.findOneAndUpdate({ key }, { $setOnInsert: { key, value: { startedAt: new Date(), status: 'running' }, updatedBy: 'auto-referidos' } }, { upsert: true, new: false, includeResultMetadata: true }); // Mongoose 8: includeResultMetadata (rawResult ya no existe)
     claimed = !!(r && r.lastErrorObject && r.lastErrorObject.upserted);
   } catch (e) { if (e && e.code === 11000) claimed = false; else throw e; }
   if (!claimed) return;
@@ -20707,7 +20718,12 @@ async function _runMonthlyReferralPayout() {
     out.pay = { created: pay.payoutsCreated, failed: pay.payoutsFailed, skipped: pay.payoutsSkipped, total: (pay.details || []).reduce((a, d) => a + (Number(d && (d.totalCommissionAmount || d.amount)) || 0), 0) };
     out.status = pay.payoutsFailed > 0 ? (pay.payoutsCreated > 0 ? 'partial' : 'failed') : 'done';
     logger.info(`[referidos] pago AUTOMÁTICO ${periodKey}: pagos=${pay.payoutsCreated} fallidos=${pay.payoutsFailed} salteados=${pay.payoutsSkipped}`);
-  } catch (e) { out.status = 'error'; out.error = String(e && e.message || e).slice(0, 300); logger.error(`[referidos] pago AUTOMÁTICO ${periodKey} falló: ${out.error}`); }
+  } catch (e) {
+    out.status = 'error'; out.error = String(e && e.message || e).slice(0, 300); logger.error(`[referidos] pago AUTOMÁTICO ${periodKey} falló: ${out.error} — se reintenta en 1 h`);
+    // Se LIBERA la reserva para reintentar a la hora (el servicio es incremental: lo ya pagado no se vuelve a pagar).
+    await Config.deleteOne({ key }).catch(() => {});
+    return;
+  }
   out.finishedAt = new Date();
   await Config.updateOne({ key }, { $set: { value: out } }).catch(() => {});
 }
@@ -20736,6 +20752,12 @@ app.post('/api/admin/referral-rate', authMiddleware, adminMiddleware, async (req
 });
 
 async function getReferralMilestonesConfig() { return referralTiers.getReferralTiersConfig(); }
+// Las rutas que leen netwin EN VIVO de 1girox comparten el límite de 60 req/min con cargas y retiros: límite propio por IP
+// (6 por minuto) + cache del tablero por usuario (2 min) para que abrir la app no cueste más de una lectura.
+const referralLiveLimiter = rateLimit({ windowMs: 60 * 1000, max: 6, standardHeaders: true, legacyHeaders: false, store: makeRateStore('ref-live'), message: { error: 'Esperá un momento antes de volver a consultar.' } });
+const _refDashCache = new Map();
+const REF_DASH_TTL_MS = 2 * 60 * 1000;
+setInterval(() => { const now = Date.now(); for (const [k, v] of _refDashCache) if (now - v.at > REF_DASH_TTL_MS) _refDashCache.delete(k); }, 60 * 1000).unref();
 // NETWIN del MES por referido: MISMA función que el cálculo mensual (con la que se PAGA). Cache 15 min por usuario.
 const _refNetwinCache = new Map();
 const REF_NETWIN_TTL_MS = 15 * 60 * 1000;
@@ -20768,8 +20790,10 @@ async function _ensureReferralCode(user) {
   return null;
 }
 // Tablero del referidor: link, totales, tabla por referido y NIVEL de comisión.
-app.get('/api/referrals/dashboard', authMiddleware, async (req, res) => {
+app.get('/api/referrals/dashboard', authMiddleware, referralLiveLimiter, async (req, res) => {
   try {
+    const cached = _refDashCache.get(req.user.userId);
+    if (cached && Date.now() - cached.at < REF_DASH_TTL_MS) return res.json(cached.body);
     const user = await User.findOne({ id: req.user.userId }).lean();
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
     const code = await _ensureReferralCode(user);
@@ -20779,7 +20803,7 @@ app.get('/api/referrals/dashboard', authMiddleware, async (req, res) => {
     const activeCount = Array.from(depBy.values()).filter(v => v.total >= cfg.minChargedARS).length;
     const lv = await referralTiers.resolveReferralRate(user, { activeCount });
     const rate = lv.rate;
-    const { netBy } = await _referralNetwinFor(refs.filter(r => depBy.has(r.id)), 60);
+    const { netBy } = await _referralNetwinFor(refs.filter(r => depBy.has(r.id)), 30);
     const rows = refs.map(r => {
       const d = depBy.get(r.id); const total = d ? d.total : 0;
       const net = netBy.has(r.id) ? netBy.get(r.id) : (d ? null : 0); const netPos = net === null ? null : Math.max(0, net);
@@ -20792,11 +20816,13 @@ app.get('/api/referrals/dashboard', authMiddleware, async (req, res) => {
     const tiers = cfg.tiers.map(t => ({ count: t.count, pct: t.pct, reached: activeCount >= t.count, current: !!(lv.tier && lv.tier.count === t.count) }));
     const link = code ? _referralLinkFor(code) : null;
     let shareTpl = null; try { shareTpl = await renderSystemCommand('/sys_referidos_compartir', '🎰 Sumate a PICA ROJA con mi link: cargas automáticas en segundos y reembolsos todos los días 👉 {link}', { username: user.username, pct: lv.maxPct != null ? lv.maxPct : lv.pct, link: '{link}', codigo: '{codigo}' }); } catch (_) {}
-    res.json({ success: true, referralCode: code, referralLink: link, rate, shareTpl,
+    const body = { success: true, referralCode: code, referralLink: link, rate, shareTpl,
       period: { key: periodKey, label: _periodKey.getPeriodLabel(periodKey), nextCredit: `El 1° de ${_periodKey.getNextPeriodLabel(periodKey)}` },
       totals: { referred: rows.length, active: rows.filter(r => r.active).length, qualified: activeCount, totalCharged: rows.reduce((a, r) => a + r.totalCharged, 0), netLossMonth: Math.round(sumNet), commissionMonth: Math.round(sumNet * rate), netwinPartial: rows.some(r => r.active && r.netLossMonth === null), historicalCommission: Math.round(hist.referral_commission || 0), historicalMilestones: Math.round(hist.bonus || 0) },
       referrals: rows,
-      level: { enabled: cfg.enabled, mode: lv.mode, minChargedARS: cfg.minChargedARS, basePct: cfg.basePct, active: activeCount, pct: lv.pct, maxPct: lv.maxPct, tiers, currentTier: lv.tier ? { count: lv.tier.count, pct: lv.tier.pct } : null, nextTier: lv.nextTier ? { count: lv.nextTier.count, pct: lv.nextTier.pct, missing: lv.missing } : null, maxCount: cfg.tiers.length ? cfg.tiers[cfg.tiers.length - 1].count : 0 } });
+      level: { enabled: cfg.enabled, mode: lv.mode, minChargedARS: cfg.minChargedARS, basePct: cfg.basePct, active: activeCount, pct: lv.pct, maxPct: lv.maxPct, tiers, currentTier: lv.tier ? { count: lv.tier.count, pct: lv.tier.pct } : null, nextTier: lv.nextTier ? { count: lv.nextTier.count, pct: lv.nextTier.pct, missing: lv.missing } : null, maxCount: cfg.tiers.length ? cfg.tiers[cfg.tiers.length - 1].count : 0 } };
+    _refDashCache.set(user.id, { at: Date.now(), body });
+    res.json(body);
   } catch (error) { logger.error(`[referrals] dashboard: ${error.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/referrals/milestones/claim', authMiddleware, sensitiveLimiter, async (req, res) => {
@@ -20829,8 +20855,9 @@ app.post('/api/admin/referrals/milestones-config', authMiddleware, adminMiddlewa
     res.json(Object.assign({}, await referralTiers.getReferralTiersConfig({ force: true }), { flatPct: Math.round(getGlobalReferralRate() * 10000) / 100 }));
   } catch (e) { logger.warn(`[referrals] milestones-config POST: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
-app.get('/api/admin/referrals/:userId/netwin', authMiddleware, adminMiddleware, async (req, res) => {
+app.get('/api/admin/referrals/:userId/netwin', authMiddleware, adminMiddleware, referralLiveLimiter, async (req, res) => {
   try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const referrer = await User.findOne({ id: String(req.params.userId || '') }).lean();
     if (!referrer) return res.status(404).json({ error: 'Referidor no encontrado' });
     const cfg = await getReferralMilestonesConfig();
@@ -20839,7 +20866,7 @@ app.get('/api/admin/referrals/:userId/netwin', authMiddleware, adminMiddleware, 
     const activeCount = Array.from(depBy.values()).filter(v => v.total >= cfg.minChargedARS).length;
     const lv = await referralTiers.resolveReferralRate(referrer, { activeCount });
     const withDeposits = refs.filter(r => depBy.has(r.id));
-    const { netBy, picked } = await _referralNetwinFor(withDeposits, 80);
+    const { netBy, picked } = await _referralNetwinFor(withDeposits, 40);
     const rows = refs.map(r => { const has = depBy.has(r.id); const net = netBy.has(r.id) ? netBy.get(r.id) : (has ? null : 0); return { userId: r.id, username: r.username, netwinMonth: net, commissionMonth: net === null ? null : Math.round(Math.max(0, net) * lv.rate) }; });
     const sumNet = rows.reduce((a, r) => a + (r.netwinMonth === null ? 0 : Math.max(0, r.netwinMonth)), 0);
     res.json({ success: true, period: { key: _periodKey.getCurrentPeriodKey(), label: _periodKey.getPeriodLabel(_periodKey.getCurrentPeriodKey()) }, rate: lv.rate, pct: lv.pct, mode: lv.mode, active: activeCount, totals: { netwinMonth: Math.round(sumNet), commissionMonth: Math.round(sumNet * lv.rate), partial: rows.some(r => r.netwinMonth === null), skipped: Math.max(0, withDeposits.length - picked) }, referrals: rows });

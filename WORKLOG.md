@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-18
 
+### 532. 🔒 Revisión de seguridad de #529–#531 (lectura independiente) y correcciones — SW v378, admin-sw v121
+**Pedido (owner):** "revisá la seguridad y todo". Se hizo revisar el diff completo del día por un agente aparte. Hallazgos y qué se hizo:
+1. **ALTO (corrección):** el cron de pago automático mensual NUNCA corría: usaba `rawResult` (opción que Mongoose 8 eliminó) ⇒ nunca
+   se consideraba dueño de la reserva. Ahora `includeResultMetadata`. Si el pago falla se LIBERA la reserva y reintenta en 1 h (el
+   servicio es incremental). ⚠️ En el próximo arranque va a pagar el mes anterior (septiembre 2026) a los 5 min: sólo lo que falte.
+2. **MEDIO:** `GET /api/admin/referrals/:userId/netwin` aceptaba depositor/withdrawer/comunidad y podía disparar 80 llamadas a la
+   Partner API sin límite. Ahora sólo admin general + `referralLiveLimiter` (6/min por IP) + tope 40.
+3. **MEDIO:** `GET /api/referrals/dashboard` (lo llama la app al entrar) sin límite y hasta 60 llamadas a 1girox en frío. Ahora
+   `referralLiveLimiter`, cache por usuario 2 min (`_refDashCache`) y tope 30.
+4. **MEDIO (funcional):** el link de referido `/?ref=CODE` se guardaba pero NUNCA llegaba al servidor en el registro rápido (el modo
+   actual) ni cuando había pauta. Ahora `quickEntry` y `register` mandan `referralCode` (fijo), `/api/auth/quick-entry` lo pasa y
+   `_landingSignupHandler` lo valida (código existente de usuario activo) y setea `referredByUserId/referredByCode/referredAt/
+   referralStatus`. La landing de pauta también acepta `?ref=`.
+5. **MEDIO (doble pago):** `executePayoutsForPeriod` leía comisiones `calculated` y acreditaba sin reservarlas: dos actores a la vez
+   (cron, botón Pagar, cobro desde la app) ⇒ dos payouts con references distintas ⇒ 1girox pagaba dos veces. Ahora reserva atómica
+   `status:'paying'` + `payingToken` antes de acreditar (si no toma TODAS, saltea); al pagar quedan `paid`, al fallar vuelven a
+   `calculated`; reservas colgadas > 10 min se liberan solas. `ReferralCommission.status` suma `'paying'`.
+6. **BAJO:** `referralBaseUrl` usaba el Host del request sin `PUBLIC_BASE_URL` (host-header injection en los links). Ahora dominio fijo.
+7. **BAJO:** `renderReferrersTable` (panel) interpolaba `username`/`referralCode` sin escapar. Ahora `escHtml`.
+**Se dejó como está (decisión):** el tablero muestra al referidor la pérdida del mes de cada referido (así lo pidió el owner y así
+está en el gemelo). El período del tablero usa hora local del server (puede adelantar un día a fin de mes); bajo impacto.
+**Verificado OK por la revisión:** `/linkreferido` sin open redirect, `/api/landing/info.welcome` sólo números públicos,
+`GET /api/referrals/admin/activity` admin estricto, validaciones de niveles y % plano, escapes en ui.js/app.js/loginhero.js/admin.js
+nuevo, sin secretos en el diff.
+**Archivos:** `server.js`, `src/services/referralPayoutService.js`, `src/models/ReferralCommission.js`, `src/controllers/referralController.js`,
+`public/js/auth.js`, `public/landing/index.html`, `public/adminprivado2026/admin.js`, SWs.
+
 ### 531. 📣 Landing de PAUTA (`/l/CODIGO`) con el mismo diseño nuevo del registro (#530)
 **Pedido (owner):** "pasame la landing, cuál es la que cargaste, para darle al publicista". Las URLs de publicista (`/l/CODIGO`,
 `/CODIGO`, `/ingreso`) servían TODAVÍA la landing violeta vieja; el diseño nuevo estaba sólo en la raíz `/` (pantalla de la app).

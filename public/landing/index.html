@@ -319,7 +319,7 @@
     var utm = { source: qs.get('utm_source'), medium: qs.get('utm_medium'), campaign: qs.get('utm_campaign'), content: qs.get('utm_content'), term: qs.get('utm_term') };
     fetch(baseUrl + '/api/landing/signup', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, campaignCode: campaign, utm: utm, landingUrl: location.href.slice(0, 2000) })
+      body: JSON.stringify({ name: name, campaignCode: campaign, referralCode: String(qs.get('ref') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12) || undefined, utm: utm, landingUrl: location.href.slice(0, 2000) })
     }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); }).then(function (x) {
       if (!x.ok && x.j && x.j.code === 'platform_not_configured') { simulateSignup(true); return; } // #311 modo prueba
       if (!x.ok) { err.textContent = x.j.error || 'No pudimos crear tu cuenta. Probá de nuevo.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'CREAR MI CUENTA'; return; }

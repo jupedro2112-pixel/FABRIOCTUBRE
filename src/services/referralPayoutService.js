@@ -112,6 +112,8 @@ async function executePayoutsForPeriod(periodKey, options = {}) {
     details: []
   };
 
+  // #532: reservas colgadas (crash en medio de un pago hace > 10 min) vuelven a 'calculated' para poder pagarse.
+  await ReferralCommission.updateMany({ periodKey, status: 'paying', payingAt: { $lt: new Date(Date.now() - 10 * 60 * 1000) } }, { $set: { status: 'calculated' }, $unset: { payingToken: 1, payingAt: 1 } }).catch(() => {});
   const commissionQuery = { periodKey, status: 'calculated' };
   if (referrerUserId) commissionQuery.referrerUserId = referrerUserId;
 
@@ -221,6 +223,22 @@ async function executePayoutsForPeriod(periodKey, options = {}) {
     }));
 
     let payoutDoc;
+    // #532: RESERVA atómica de las comisiones de este referidor antes de acreditar. Si otro actor (botón Pagar del panel, cobro
+    // desde la app, cron mensual) ya las tomó, acá no se paga nada: sin esto dos corridas simultáneas creaban dos payouts con
+    // references distintas y 1girox acreditaba dos veces.
+    const payingToken = uuidv4();
+    const eligibleIdsForClaim = eligibleCommissions.map(c => c._id);
+    const claimRes = await ReferralCommission.updateMany(
+      { _id: { $in: eligibleIdsForClaim }, status: 'calculated' },
+      { $set: { status: 'paying', payingToken, payingAt: new Date() } }
+    );
+    if ((claimRes.modifiedCount != null ? claimRes.modifiedCount : claimRes.nModified) !== eligibleIdsForClaim.length) {
+      await ReferralCommission.updateMany({ payingToken }, { $set: { status: 'calculated' }, $unset: { payingToken: 1, payingAt: 1 } }).catch(() => {});
+      logger.warn(`[ReferralPayout] ${group.referrerUsername} period=${periodKey}: otro pago en curso tomó estas comisiones — se saltea`);
+      results.payoutsSkipped++;
+      continue;
+    }
+    const releaseClaim = () => ReferralCommission.updateMany({ payingToken, status: 'paying' }, { $set: { status: 'calculated' }, $unset: { payingToken: 1, payingAt: 1 } }).catch(() => {});
 
     try {
       // Helper to build the full payout document — used for creation and retry after index drop
@@ -469,7 +487,8 @@ async function executePayoutsForPeriod(periodKey, options = {}) {
             status: 'paid',
             paidAt: new Date(),
             payoutId: payoutDoc.id
-          }
+          },
+          $unset: { payingToken: 1, payingAt: 1 }
         }
       );
 
@@ -537,6 +556,7 @@ async function executePayoutsForPeriod(periodKey, options = {}) {
         `finalPayoutStatus=failed paymentApplied=false`
       );
 
+      await releaseClaim(); // #532: las comisiones vuelven a 'calculated' para reintentar
       // Marcar payout como fallido pero no eliminar
       if (payoutDoc) {
         await ReferralPayout.updateOne(
