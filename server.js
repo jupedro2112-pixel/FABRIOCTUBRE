@@ -11880,6 +11880,11 @@ async function initializeData() {
       await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: SUPPORT_WELCOME_TEXT } });
       console.log('✅ /sys_welcome: texto de SOPORTE (#375)');
     }
+    // #603 (owner): el acuse del soporte pasa a "Contame qué necesitás, ya estamos con vos en breve" (migración si tenía el texto anterior)
+    try {
+      const ar = await Command.findOne({ name: '/sys_support_autoreply' }).lean();
+      if (ar && String(ar.response || '') === 'Responde dentro de los 10 minutos') { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
+    } catch (e) { console.warn('[startup-migration] #603:', e.message); }
     // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
     // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
     try {
@@ -12311,7 +12316,7 @@ async function initializeData() {
       name: '/sys_support_sla',
       description: 'Soporte: plazo de respuesta que se muestra debajo de la presentación (ej. "Responde dentro de los 10 minutos"). Vacío = no se muestra.',
       type: 'message',
-      response: 'Responde dentro de los 10 minutos'
+      response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' // #603
     },
     {
       // #376 (2026-10-18): CARGAS PENDIENTES — avisos al cliente del ciclo del comprobante.

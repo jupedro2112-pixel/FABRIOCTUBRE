@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 603. 💬 Soporte: con la charla abierta es sólo chat a pantalla completa · "Chat cerrado" al cerrarla · acuse "Contame qué necesitás" — SW v424
+**Pedido (owner, con captura):** "una vez que abre el chat que no aparezca eso [la barra de temas], que sea sólo chat, toda la pantalla, el
+soporte arriba de todo; cuando se cierre que aparezca 'chat cerrado'; y a lo que escriba que la respuesta sea 'contame qué necesitás, ya
+estamos con vos en breve'". La barra de temas se oculta con la charla abierta; el evento `support_session_reset` muestra "🔒 Chat cerrado"
+(toast + etiqueta en el selector, que se borra al abrir un tema). `/sys_support_autoreply` pasa a "🙌 Contame qué necesitás, ya estamos con
+vos en breve." (default + migración de lo guardado). **Archivos:** `server.js`, `public/js/socket.js`, `public/js/home.js`, `public/index.html`, `public/css/pin.css`, SW.
+
 ### 602. 💬 SOPORTE DE PROBLEMAS: selector de tema → charla limpia (sin comprobantes ni avisos) → cierre desde el panel — SW v423, admin-sw v129
 **Pedido (owner):** "el chat de soporte que tome el de administrador, el otro sacalo; ahí no quiero ver los comprobantes y demás, sólo la
 queja de la gente: preguntarle qué problema tiene (carga, retiro, reembolso u otra cosa), que al apretar un botón abra la charla, que se

@@ -94,7 +94,7 @@ VIP.socket = (function () {
         });
 
         // #401: el server cerró el chat de soporte (6 h sin respuesta) → se recarga: para el cliente arranca de cero
-        VIP.state.socket.on('support_session_reset', function () { try { VIP.state.lastMessagesHash = ''; VIP.chat.loadMessages(true); } catch (_) {} });
+        VIP.state.socket.on('support_session_reset', function () { try { if (VIP.home && VIP.home.supportClosedNotice) VIP.home.supportClosedNotice(); } catch (_) {} try { VIP.state.lastMessagesHash = ''; VIP.chat.loadMessages(true); } catch (_) {} });
         VIP.state.socket.on('new_message', function (data, ack) {
             // Acuse de recibo inmediato: el server emite con ack-timeout 3s.
             // Si no llamamos ack, el server asume socket fantasma y manda push

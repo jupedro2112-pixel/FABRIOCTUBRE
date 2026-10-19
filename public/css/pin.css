@@ -1827,4 +1827,8 @@ body.home-mini:not(.sp-sent) .sp-intro { margin: 12px; padding: 18px 16px !impor
 .sp-topics { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
 .sp-topics button { padding: 12px 10px !important; font: 800 13px var(--p-font) !important; border-radius: 14px !important; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; text-align: center; }
 body.sp-sent .sp-ask { display: none; }
+/* #603 (owner): con la charla abierta es SOLO chat a pantalla completa (sin la barra de temas); "Chat cerrado" en el selector */
+body.home-mini.sp-sent .sp-quickbar { display: none !important; }
+body.home-mini.sp-sent #chatMessages { flex: 1 1 auto; }
+.sp-closed { display: inline-block; font: 800 11.5px var(--p-font); color: var(--p-muted); background: var(--p-surface); border-radius: 999px; padding: 5px 10px; margin: 6px 0 2px; }
 
