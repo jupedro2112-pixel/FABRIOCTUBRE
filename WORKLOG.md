@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 571. 📎 Carga auto: la fila Comprobante/Retirar sólo tapa su línea; los 3 pasos de "Cargá acá" se ven — SW v400
+**Pedido (owner, con captura):** "bajá más Comprobante y Retirar premio, que no se tape el fondo de Cargá acá: que se vean los 3 pasos; que
+solo tape el recuadro de esa línea". Causa: el relleno de #568 estaba en `#homeFull`/`.entry-view` (creaba un hueco blanco) y no en
+`#homePanel`, que es el que scrollea en Carga auto (la tarjeta quedaba cortada detrás de la fila fija). Ahora: fila sin fondo ni sombra, pegada
+al menú (6 px, o 76 px con el menú 2) y el relleno en `#homePanel`. **Archivos:** `public/css/pin.css`, SW.
+
 ### 570. 🌐 Landing (grupospicaroja.com): `API_BASE_DEFAULT` → `https://picaroja.com`
 **Pedido (owner, verificado con curl):** la landing apuntaba a `vipcargas.com`, que es el backend de VIPCARGAS (otra página): ahí no
 existe la pauta MARTINPULSE y Cloudflare mete un challenge al preflight ⇒ "Sin conexión". El backend real de PICA ROJA es
