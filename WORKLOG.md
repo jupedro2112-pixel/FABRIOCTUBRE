@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 579/580. 🌙 Botón de instalar pendiente llamativo en modo nocturno · el recomendado del selector es el BÁSICO — SW v406
+**Pedidos (owner):** "si está el modo nocturno, el de la app pendiente a instalar dejalo en otro color llamativo, en negro se pierde" ·
+"dejar el recomendado como el básico, que es completo y sencillo". En `html[data-theme="dark"]` el botón `#installGiftBar` va en
+degradé ámbar/naranja con texto oscuro. En el selector de menú la etiqueta "Recomendado" y el borde destacado pasan a MENÚ BÁSICO
+("Completo y sencillo: cargar, retirar, dónde jugás, tu nivel y el fueguito"); el intermedio queda como "Más opciones".
+**Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 578. ▭ Menú básico: nivel VIP con progreso y fueguito, en línea debajo del usuario — SW v405
 **Pedido (owner):** "en el menú básico agregá abajo del usuario el nivel que va y el progreso y el fueguito, en línea recta cada uno".
 Dos líneas `.bv-line`: 🏆 nivel actual · próximo · barra · % (abre Niveles VIP) y 🔥 Racha N d · estado (abre el fueguito). Los

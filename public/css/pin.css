@@ -1749,4 +1749,9 @@ body.menu2 #bottomNav.bottom-nav { height: calc(76px + env(safe-area-inset-botto
 .bv-line-t small { font: 600 10px var(--p-font); color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bv-bar { flex: 0 0 72px; height: 8px; border-radius: 999px; background: var(--p-surface-2); overflow: hidden; } .bv-bar i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; }
 .bv-line > em { font: 800 10.5px var(--p-font); color: var(--p-muted); font-style: normal; flex: 0 0 auto; white-space: nowrap; }
+/* #579 (owner): en modo nocturno el botón "Pendiente · Instalá la app y cargá tu extra" va en un color llamativo (en negro se perdía) */
+html[data-theme="dark"] #installGiftBar.ig-bar { background: linear-gradient(135deg, #ffb300, #ff6f00) !important; color: #111 !important; box-shadow: 0 8px 24px rgba(255,140,0,.35); }
+html[data-theme="dark"] #installGiftBar .ig-bar-k { background: #111; color: #ffd166; } html[data-theme="dark"] #installGiftBar .ig-bar-t { color: #111; } html[data-theme="dark"] #installGiftBar .ig-bar-amt { color: #111; }
+/* #580: el recomendado del selector es el BÁSICO */
+.mc-opt.mc-easy { border-color: transparent !important; } .mc-opt.mc-basic { border-color: var(--p-text) !important; }
 
