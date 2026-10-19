@@ -45,33 +45,10 @@
         VIP.loginHero.ready = true; // #533: app.js espera esto para decidir dónde cae el link de referido
         // #533: si hay un código de referido guardado (link de hoy o de los últimos 30 días), se avisa en el registro rápido.
         try { const h = _el('quickRefHint'); if (h && window._vipRefLocked && document.body.classList.contains('reg-quick')) { h.style.display = ''; h.querySelector('b').textContent = window._vipRefLocked; } } catch (_) {}
+        // #549: los % de los chips de servicios (el banner del bono ya no está en la app)
         try {
-            const rf = info.refunds || {};
-            const parts = [];
-            if (rf.dailyMax) parts.push('Diario ' + rf.dailyMax + '%');
-            if (rf.weeklyMax) parts.push('Semanal ' + rf.weeklyMax + '%');
-            if (rf.monthlyMax) parts.push('Mensual ' + rf.monthlyMax + '%');
-            const chip = _el('lgChipRefund');
-            if (chip) chip.textContent = rf.dailyMax ? ('💸 Reembolso diario ' + rf.dailyMax + '%') : (rf.maxPct ? '💸 Reembolsos hasta ' + rf.maxPct + '%' : '💸 Reembolsos');
-            const txt = _el('lgRefunds'); if (txt && parts.length) txt.textContent = parts.join(' · ') + ' de tu NETWIN. Se cobra solo desde la app.'; // #458
-            const promo = _el('lgRefundPromo'); if (promo) { promo.textContent = info.refundPromo || ''; promo.hidden = !info.refundPromo; }
-        } catch (_) {}
-        // #530: banner del bono con los % reales (primera carga; con la app instalada el total)
-        try {
-            // #537 (owner): grande el % CON la app, "EN TU PRIMERA CARGA", y en chico "instalando la app · si no, X%".
-            const w = info.welcome || {}; const big = _el('lgBonusBig'), sub = _el('lgBonusSub'), note = _el('lgBonusNote');
-            const pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0; const top = pApp > 0 ? pApp : pNo;
-            if (big && top > 0) big.textContent = top + '%';
-            if (sub) sub.textContent = 'EN TU PRIMERA CARGA';
-            if (note) { const t = pApp > pNo ? (pNo > 0 ? ('instalando la app · si no, ' + pNo + '%') : 'instalando la app') : ''; note.textContent = t; note.style.display = t ? '' : 'none'; }
             const rf = info.refunds || {}; const sr = _el('lgSyRefund'); if (sr && rf.dailyMax) sr.textContent = rf.dailyMax + '%';
             const rp = Number(info.referralPct); const er2 = _el('lgSyRef'); if (er2 && rp > 0) er2.textContent = rp + '%';
-        } catch (_) {}
-        try {
-            const min = Number(info.minDepositArs);
-            if (min > 0) { const c = _el('lgChipMin'); if (c) c.textContent = '💵 Carga mínima ' + _money(min); const m = _el('lgMin'); if (m) m.textContent = _money(min); }
-            const wm = Number(info.withdrawMinArs);
-            if (wm > 0) { const w = _el('lgWithdrawMin'); if (w) w.textContent = 'Retiros desde ' + _money(wm) + ' con pago automático a tu CBU.'; }
         } catch (_) {}
         // #423: fila visible de plataformas (Girox · Ganamos · jugaygana) con "Próximamente" para las que no tienen API.
         try {
@@ -83,22 +60,6 @@
                 const _nm = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || '')); // #428/#431: 'Jugaygana' con J mayúscula
                 row.innerHTML = list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(_nm(p.name)) + '</b>' + (isSoon(p) ? '<small>Pronto</small>' : '') + '</span>').join(''); // #435: 'Pronto'
                 row.style.display = '';
-            }
-        } catch (_) {}
-        // #424: textos de las tarjetas de beneficios con los % reales
-        try {
-            const rf = info.refunds || {}; const el = _el('lgFeatRefunds');
-            // #447 (owner): sólo el % del diario; semanal y mensual sin número.
-            const parts = []; if (rf.dailyMax) parts.push('Diario ' + rf.dailyMax + '%'); if (rf.weeklyMax) parts.push('semanal'); if (rf.monthlyMax) parts.push('mensual');
-            if (el && parts.length) el.textContent = parts.join(' · ') + ' de tu NETWIN'; // #458
-            const rp = Number(info.referralPct); const er = _el('lgFeatRef');
-            if (er && rp > 0) er.textContent = 'Invitá amigos y cobrás el ' + rp + '% de su actividad, de por vida';
-        } catch (_) {}
-        try {
-            const box = _el('lgPlats');
-            const list = Array.isArray(info.platforms) ? info.platforms : [];
-            if (box && list.length) {
-                box.innerHTML = list.map((p) => '<span class="lg-plat' + (p.connected ? '' : ' soon') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name) + '</b>' + (p.connected ? '' : '<small>Pronto</small>') + '</span>').join('');
             }
         } catch (_) {}
     }

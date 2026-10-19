@@ -392,12 +392,7 @@
             <!-- #530 (owner 2026-10-19): pantalla de REGISTRO con la idea de su landing (landing2.zip): banner del bono, "¿Cuál es tu
                  nombre?" → cuenta automática, línea de confianza, las 3 plataformas con su ícono y los servicios SOLO con título.
                  Fondo blanco (tokens claros forzados en #loginScreen). Los % salen de /api/landing/info (loginhero.js). -->
-            <div class="lg-promo">
-                <span class="lg-promo-eye">Bono de bienvenida</span>
-                <b class="lg-promo-big" id="lgBonusBig">100%</b>
-                <span class="lg-promo-sub" id="lgBonusSub">EN TU PRIMERA CARGA</span>
-                <small class="lg-promo-note" id="lgBonusNote">instalando la app · si no, 50%</small><!-- #537 -->
-            </div>
+            <!-- #549: el banner del bono se quitó del registro de la app (#540): vive en las landings. -->
             <div class="lg-form">
             <!-- #538 (owner): modo "Iniciar sesión" (tilde del panel, Config['entryLogin']): sin bono, usuario + clave + olvidé mi contraseña -->
             <h2 class="lg-login-h">Iniciar sesión</h2>
@@ -500,28 +495,6 @@
             </div>
             <button id="loginReviewsBtn" type="button" hidden aria-hidden="true"></button>
             <div id="errorMessage" class="error-message"></div>
-            <section class="lg-sec lg-sec-info">
-                <h3 class="lg-h3">Lo que te damos</h3>
-                <div class="lg-grid">
-                    <div class="lg-card">
-                        <b>💸 Reembolsos</b>
-                        <small id="lgRefunds">Diario, semanal y mensual sobre lo que perdés con tu plata. Se cobran solos desde la app.</small>
-                        <em class="lg-promo" id="lgRefundPromo" hidden></em>
-                    </div>
-                    <div class="lg-card">
-                        <b>🎮 Plataformas</b>
-                        <div class="lg-plats" id="lgPlats"><span class="lg-plat"><b>Girox</b></span><span class="lg-plat soon"><b>Ganamos</b><small>Pronto</small></span></div>
-                    </div>
-                    <div class="lg-card">
-                        <b>⚡ Carga automática</b>
-                        <small>Transferís al CBU, mandás la foto del comprobante y se acredita sola. Carga mínima <b id="lgMin">$5.000</b>.</small>
-                    </div>
-                    <div class="lg-card">
-                        <b>💬 Soporte real</b>
-                        <small>Una persona te responde en minutos. <span id="lgWithdrawMin">Retiros con pago automático a tu CBU.</span></small>
-                    </div>
-                </div>
-            </section>
             <section class="lg-sec lg-sec-reviews">
                 <!-- #417: las reseñas se deslizan solas, como el slider de adentro (reviews.js renderEntrySlider) -->
                 <div id="loginReviews" class="ev-reviews lg-reviews" style="display:none;"></div>
@@ -2497,7 +2470,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v388</div>
+                    <div class="pf-build" id="appBuildTag">app v389</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

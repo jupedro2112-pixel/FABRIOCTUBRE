@@ -685,8 +685,6 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .lg-brand b { font: 900 17px var(--p-font); letter-spacing: 1.2px; color: var(--p-text); }
 .lg-brand small { font: 600 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .3px; }
 .lg-tg { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; background: var(--p-surface) !important; border: 0 !important; color: var(--p-text) !important; border-radius: 999px !important; padding: 8px 12px !important; font: 700 12px var(--p-font) !important; cursor: pointer; box-shadow: none !important; }
-.lg-title { margin: 6px 0 0; font: 800 28px/1.1 var(--p-font); letter-spacing: -.5px; color: var(--p-text); text-wrap: balance; }
-.lg-title span { color: var(--p-red); }
 .lg-sub { margin: 0; font: 500 13.5px/1.45 var(--p-font); color: var(--p-muted); }
 .lg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .lg-chip { background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 6px 11px; font: 700 11.5px var(--p-font); }
@@ -706,21 +704,13 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .lg-link { border: 0; background: transparent; color: var(--p-muted); font: 700 12px var(--p-font); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 6px 4px; }
 .lg-alt-note { flex: 1 0 100%; font: 500 10.5px var(--p-font); color: var(--p-placeholder); }
 .lg-sec { margin-top: 6px; }
-.lg-h3 { margin: 0 0 8px; font: 800 12px var(--p-font); letter-spacing: 1.4px; text-transform: uppercase; color: var(--p-muted); }
-.lg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.lg-card { background: var(--p-surface); border-radius: 18px; padding: 12px 12px 11px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.lg-card > b { font: 800 13px var(--p-font); color: var(--p-text); }
-.lg-card small { font: 500 11.5px/1.4 var(--p-font); color: var(--p-text-2); }
-.lg-card small b { color: var(--p-text); }
-.lg-promo { display: block; font: 600 10px/1.3 var(--p-font); color: var(--p-muted); font-style: normal; }
-.lg-promo::before { content: "●"; color: var(--p-red); font-size: 6px; vertical-align: 2px; margin-right: 4px; }
 .lg-plats { display: flex; flex-wrap: wrap; gap: 6px; }
 .lg-plat { display: inline-flex; align-items: center; gap: 5px; background: var(--p-card); border-radius: 999px; padding: 4px 9px 4px 5px; font: 800 11px var(--p-font); color: var(--p-text); }
 .lg-plat img { width: 18px; height: 18px; border-radius: 6px; }
 .lg-plat small { font: 700 8px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: .3px; background: var(--p-surface-2); border-radius: 999px; padding: 1px 5px; }
 .lg-reviews { margin: 0 !important; }
 .lg-foot { margin: 4px 0 0; text-align: center; font: 600 10px var(--p-font); color: var(--p-placeholder); }
-@media (max-width: 360px) { .lg-grid { grid-template-columns: 1fr; } .lg-title { font-size: 25px; } }
+@media (max-width: 360px) { .lg-grid { grid-template-columns: 1fr; } }
 
 /* #383 (owner): las plataformas de la carga automática en una sola fila de cuadrados iguales (como el Inicio) */
 .plat-play-row { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px !important; }
@@ -928,7 +918,6 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .lg-ring-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--p-card); background: var(--p-card); }
 .lg-ring-n { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; border-radius: 999px; background: var(--p-red); color: #fff; font: 800 10px/17px var(--p-font); text-align: center; padding: 0 4px; border: 2px solid var(--p-card); }
 @keyframes lgRingPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(238, 42, 123, .35); } 50% { box-shadow: 0 0 0 6px rgba(238, 42, 123, 0); } }
-.lg-app .lg-sec-info { display: none !important; }
 .lg-app .lg-sec-reviews { display: block !important; margin-top: 2px; }
 .lg-app .lg-sec-reviews .ev-reviews { margin: 0 !important; }
 .lg-app .lg-alt { margin-top: 2px; }
@@ -979,7 +968,6 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-quick input:focus { border-color: var(--p-text) !important; outline: none; }
 .lg-quick-btn { padding: 13px !important; font-size: 16px !important; margin: 0 !important; }
 .lg-quick-n { font: 500 11px var(--p-font); color: var(--p-muted); text-align: center; }
-.lg-quick-alt { border: 0; background: transparent; color: var(--p-text); font: 700 12px var(--p-font); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 2px 0 4px; }
 /* ── #423: ingreso — fila de plataformas (logo + nombre; "Próximamente" las que no tienen API) ── */
 .lg-plats-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
 .lg-plats-k { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .6px; text-transform: uppercase; margin-right: 2px; }
@@ -989,20 +977,8 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-plat-pill small { font: 700 9px var(--p-font); color: var(--p-muted); background: var(--p-card); border-radius: 999px; padding: 1px 6px; letter-spacing: .2px; }
 .lg-plat-pill.soon { opacity: .85; } .lg-plat-pill.soon b { color: var(--p-muted); }
 /* ── #424: ingreso — tarjetas de beneficios estilo Pinterest con íconos de línea ── */
-.lg-feat { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 2px 0 0; }
-.lg-fc { display: flex; align-items: flex-start; gap: 8px; background: var(--p-surface); border-radius: 14px; padding: 8px 10px; min-width: 0; }
-.lg-fc-wide { grid-column: 1 / -1; align-items: center; }
-.lg-fi { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 10px; background: var(--p-card); color: var(--p-red); display: flex; align-items: center; justify-content: center; }
-.lg-fi svg { width: 18px; height: 18px; }
-.lg-fc > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.lg-fc b { font: 800 12px var(--p-font); color: var(--p-text); line-height: 1.15; }
-.lg-fc small { font: 500 10.5px/1.3 var(--p-font); color: var(--p-muted); }
-.lg-fc .lg-plats-row { margin-top: 2px; gap: 5px; }
-.lg-fc .lg-plat-pill { background: var(--p-card); padding: 3px 8px 3px 4px; }
-.lg-fc .lg-plat-pill b { font-size: 11px; }
 .lg-app .lg-sub { display: none; }                /* las tarjetas reemplazan la bajada: una sola pantalla */
 .lg-app .lg-title { font-size: 18px; }
-@media (max-height: 700px) { .lg-fc small { display: none; } .lg-fc-wide small { display: block; } .lg-feat { gap: 5px; } .lg-fc { padding: 7px 9px; } }
 /* ── #425 (owner): la ENTRADA CON NOMBRE es la forma de registro → fuera "¿Primera vez acá? / Crear mi cuenta" (registro con SMS) ── */
 .lg-app .lg-alt .lg-alt-q, .lg-app .lg-alt .lg-register { display: none !important; }
 body.reg-quick .lg-quick-alt { display: inline-block; }
@@ -1024,8 +1000,6 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #428: recuadro "Elegí dónde jugar" debajo de Registrarse · sin línea de estrellas · opiniones a la vista ── */
 .lg-play-box { background: var(--p-card); border: 1.5px solid var(--p-border); border-radius: 18px; padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 0 rgba(0, 0, 0, .02); }
 .lg-play-h { display: flex; align-items: center; gap: 9px; }
-.lg-play-h .lg-fi { background: var(--p-red-soft); width: 34px; height: 34px; flex-basis: 34px; border-radius: 11px; }
-.lg-play-h .lg-fi svg { width: 20px; height: 20px; }
 .lg-play-h b { display: block; font: 800 13.5px var(--p-font); color: var(--p-text); } .lg-play-h small { font: 500 10.5px var(--p-font); color: var(--p-muted); }
 .lg-play-box .lg-plats-row { gap: 6px; }
 .lg-play-box .lg-plat-pill { background: var(--p-surface); border: 1px solid var(--p-border); padding: 5px 10px 5px 5px; }
@@ -1041,11 +1015,6 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-app .lg-ring, .lg-app .lg-ring-av { width: 32px; height: 32px; } .lg-app .lg-tg { padding: 5px 9px !important; font-size: 11px !important; }
 .lg-app .lg-title { font-size: 16.5px; margin: 0; }
 /* beneficios: UNA fila de 3, sin bajadas */
-.lg-feat { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-.lg-fc, .lg-fc-wide { grid-column: auto; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 7px 6px; border-radius: 12px; }
-.lg-fc .lg-fi { width: 26px; height: 26px; flex-basis: 26px; border-radius: 8px; } .lg-fc .lg-fi svg { width: 15px; height: 15px; }
-.lg-fc b { font-size: 10.5px; } .lg-fc small, .lg-fc-wide small { display: none !important; }
-.lg-fc > div { align-items: center; }
 /* registro */
 .lg-app .lg-form { padding: 8px 9px 7px; border-radius: 16px; }
 .lg-quick { gap: 5px; } .lg-quick-l { font-size: 11.5px; }
@@ -1054,7 +1023,7 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-quick-n { display: none; }
 /* elegí dónde jugar: una línea */
 .lg-play-box { padding: 7px 9px 8px; gap: 5px; border-radius: 14px; }
-.lg-play-h { gap: 7px; } .lg-play-h .lg-fi { width: 26px; height: 26px; flex-basis: 26px; border-radius: 8px; } .lg-play-h .lg-fi svg { width: 15px; height: 15px; }
+.lg-play-h { gap: 7px; }
 .lg-play-h b { font-size: 12px; } .lg-play-h small { display: none; }
 .lg-play-box .lg-plats-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 5px; } .lg-play-box .lg-plats-row::-webkit-scrollbar { display: none; }
 .lg-play-box .lg-plat-pill { flex: 0 0 auto; padding: 3px 8px 3px 4px; }
@@ -1071,7 +1040,6 @@ body.reg-quick #loginForm { display: none !important; }
 .login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
 .lg-app > * { flex: 0 0 auto; }
 .lg-app .lg-title { font-size: clamp(14px, 4.3vw, 16.5px); }
-.lg-fc { padding: 6px 4px; } .lg-fc b { font-size: clamp(9.5px, 2.7vw, 10.5px); }
 .lg-quick input { padding: 8px 12px !important; font-size: 14px !important; } .lg-app .lg-quick-btn { padding: 9px !important; font-size: 14px !important; }
 .lg-play-box { padding: 6px 9px 7px; }
 .lg-app .lg-sec-reviews { flex: 1 1 auto !important; min-height: 0; display: flex; flex-direction: column; margin: 0; }
@@ -1082,30 +1050,15 @@ body.reg-quick #loginForm { display: none !important; }
 .lg-app #loginReviews .rv-text { -webkit-line-clamp: 3; }
 .lg-app .lg-foot { display: none !important; }
 .gs-bubble { display: none !important; }   /* #430: sin Soporte en el inicio (la columna Visitantes del panel sigue para los hilos existentes) */
-@media (max-height: 640px) { .lg-feat { display: none; } }
 @media (max-height: 560px) { .lg-app .lg-sec-reviews { display: none !important; } }
 /* ── #431 (owner): más aire entre bloques (la sección de opiniones absorbe la diferencia; sigue en una pantalla) ── */
 .login-box.lg-app { gap: 10px !important; }
-.lg-feat { gap: 7px; } .lg-quick { gap: 7px; } .lg-play-box { gap: 7px; }
+.lg-quick { gap: 7px; } .lg-play-box { gap: 7px; }
 .lg-app #loginReviews { gap: 5px; }
 @media (max-height: 700px) { .login-box.lg-app { gap: 7px !important; } }
 /* ── #432 (owner): beneficios con el texto completo, en TRES filas finas (ícono + texto) ── */
-.lg-feat { grid-template-columns: 1fr; gap: 5px; }
-.lg-fc, .lg-fc-wide { flex-direction: row; align-items: center; text-align: left; gap: 9px; padding: 6px 9px; border-radius: 12px; }
-.lg-fc > div { align-items: flex-start; gap: 1px; }
-.lg-fc b { font-size: 12px; line-height: 1.2; }
-.lg-fc small, .lg-fc-wide small { display: block !important; font-size: 10px; line-height: 1.25; }
-.lg-fc .lg-fi { width: 28px; height: 28px; flex-basis: 28px; } .lg-fc .lg-fi svg { width: 16px; height: 16px; }
-@media (max-height: 700px) { .lg-fc small, .lg-fc-wide small { display: none !important; } .lg-fc { padding: 5px 9px; } }
-@media (max-height: 640px) { .lg-feat { display: grid; } .lg-fc b { font-size: 11px; } }
 /* ── #433: "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" bajo el título ── */
-.lg-claim { margin: -4px 0 0 !important; font: 800 clamp(10.5px, 3vw, 12px) var(--p-font); letter-spacing: 1.1px; color: var(--p-text); text-transform: uppercase; }
-.lg-claim::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--p-green); margin: 0 6px 1px 0; }
 /* ── #434: fila prioritaria "Carga automática y atención personalizada" ── */
-.lg-fc-top { background: var(--p-red-soft); }
-.lg-fc-top .lg-fi { background: var(--p-red); color: #fff; }
-.lg-fc-top b { color: var(--p-text); }
-@media (max-height: 720px) { .lg-fc:not(.lg-fc-top) small { display: none !important; } }
 /* ── #436 (owner): la parte superior baja un poco (misma separación arriba que abajo) ── */
 .login-box.lg-app { padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
 .lg-app .lg-head { margin-top: 2px; }
@@ -1143,13 +1096,10 @@ html[data-theme="dark"] .ez-btn .ez-ico, html[data-theme="dark"] .ez-chat .ez-ic
 /* ── #442: alerta "banco con fallas" en el modal de retiro ── */
 .wd-bank-alert { background: var(--p-amber-soft); color: var(--p-amber); border: 1px solid var(--p-amber-line); border-radius: 14px; padding: 10px 12px; font: 600 12.5px/1.4 var(--p-font); margin: 0 0 10px; }
 /* ── #445 (owner): íconos con más "vivencia": trazo 2.4, relleno suave del mismo color (duotono) y caja rojo claro ── */
-.li svg, .lg-fi svg, .im-ico svg, .pi svg, .ez-ico svg, .ez-main-ico svg, .mc-ico svg, .lg-play-h .lg-fi svg, .lg-done-ico svg { stroke-width: 2.4; }
-.li svg path, .li svg circle, .li svg rect, .lg-fi svg path, .lg-fi svg circle, .lg-fi svg rect, .im-ico svg path, .im-ico svg circle, .im-ico svg rect, .pi svg path, .pi svg circle, .pi svg rect, .ez-ico svg path, .ez-ico svg circle, .ez-ico svg rect, .mc-ico svg path, .mc-ico svg circle, .mc-ico svg rect { fill: currentColor; fill-opacity: .14; }
+.li svg, .im-ico svg, .pi svg, .ez-ico svg, .ez-main-ico svg, .mc-ico svg, .lg-done-ico svg { stroke-width: 2.4; }
+.li svg path, .li svg circle, .li svg rect, .im-ico svg path, .im-ico svg circle, .im-ico svg rect, .pi svg path, .pi svg circle, .pi svg rect, .ez-ico svg path, .ez-ico svg circle, .ez-ico svg rect, .mc-ico svg path, .mc-ico svg circle, .mc-ico svg rect { fill: currentColor; fill-opacity: .14; }
 .ez-main-ico svg path { fill: #fff; fill-opacity: .22; }
-.lg-fi, .pi, .ez-btn .ez-ico, .ez-chat .ez-ico, .mc-ico, .lg-play-h .lg-fi { background: var(--p-red-soft) !important; color: var(--p-red); box-shadow: inset 0 0 0 1px rgba(230, 0, 35, .10); }
-.lg-fc-top .lg-fi { background: var(--p-red) !important; color: #fff; box-shadow: none; }
-.lg-fc-top .lg-fi svg path { fill: #fff; fill-opacity: .2; }
-.lg-fc .lg-fi { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; } .lg-fc .lg-fi svg { width: 18px; height: 18px; }
+.pi, .ez-btn .ez-ico, .ez-chat .ez-ico, .mc-ico { background: var(--p-red-soft) !important; color: var(--p-red); box-shadow: inset 0 0 0 1px rgba(230, 0, 35, .10); }
 .im-ico { width: 20px; height: 20px; } .im-ico svg { width: 20px; height: 20px; }
 .li { width: 16px; height: 16px; }
 .pi svg { width: 18px; height: 18px; }
@@ -1609,12 +1559,6 @@ body.home-full #fireHomeCard { display: none !important; }
                 .dash-ref-invite { width:100%; margin-top:8px; background:linear-gradient(135deg,#ffd700,#f7931e); color:#000; border:none; border-radius:10px; padding:9px; font-weight:900; font-size:12px; cursor:pointer; letter-spacing:.4px; }
                 /* Popup promocional */
                 .ref-promo { background:linear-gradient(180deg,#2d0052 0%,#1a0033 70%,#0a001a 100%); border:2.5px solid #ffd700; border-radius:18px; padding:20px 16px 16px; color:#fff; max-width:420px; width:100%; margin:18px auto; position:relative; text-align:center; box-shadow:0 0 40px rgba(255,215,0,.35); overflow:hidden; }
-                .ref-promo-title { font-size:34px; font-weight:900; line-height:.95; letter-spacing:1px; margin:6px 0 2px; color:#ffd700; text-shadow:0 3px 0 #7a5a00, 0 6px 16px rgba(0,0,0,.6); }
-                .ref-promo-title span { display:block; color:#fff; font-size:22px; text-shadow:0 2px 0 #4a0080; }
-                .ref-promo-title em { font-style:normal; color:#c98bff; }
-                .ref-promo-badge { display:inline-block; margin:10px auto 8px; background:rgba(0,0,0,.45); border:1.5px solid #ffd700; border-radius:12px; padding:8px 14px; font-size:14px; font-weight:800; }
-                .ref-promo-badge b { color:#ffd700; font-size:20px; }
-                .ref-promo-gift { font-size:64px; line-height:1; margin:4px 0 10px; filter:drop-shadow(0 6px 14px rgba(255,215,0,.35)); }
                 .ref-promo-btn { width:100%; background:linear-gradient(135deg,#ffd700,#f7931e); color:#000; border:none; border-radius:12px; padding:14px; font-weight:900; font-size:15px; cursor:pointer; letter-spacing:.6px; box-shadow:0 4px 16px rgba(255,215,0,.45); }
                 .ref-promo-link { width:100%; margin-top:8px; background:rgba(255,255,255,.06); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:11px; font-weight:800; font-size:12.5px; cursor:pointer; }
                 .ref-promo-x { position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,.55); border:1px solid #ffd700; color:#ffd700; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
@@ -1629,11 +1573,6 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 /* ── #530 PANTALLA DE REGISTRO (idea de la landing del owner): fondo BLANCO siempre (tokens claros forzados aunque el tema sea nocturno). ── */
 #loginScreen { --p-bg: #ffffff; --p-surface: #f3f3f3; --p-surface-2: #e9e9e9; --p-text: #111111; --p-muted: #6f6f6f; --p-border: #e2e2e2; --p-card: #fff; --p-placeholder: #9a9a9a; --p-text-2: #333; --p-red: #e60023; --p-red-soft: #ffe9ec; background: #fff !important; color: #111; }
 #loginScreen .login-box.lg { background: #fff; }
-.lg-promo { margin-top: 2px; border-radius: 18px; border: 1px solid #f3d6a4; background: linear-gradient(160deg, #fff7e6, #fff1f3); padding: 14px 16px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
-.lg-promo-eye { font: 800 11px var(--p-font); letter-spacing: 2px; text-transform: uppercase; color: var(--p-green); }
-.lg-promo-big { font: 900 clamp(44px, 14vw, 58px)/1 var(--p-font); letter-spacing: -1px; color: #c58a00; text-shadow: 0 4px 24px rgba(227,189,72,.28); }
-.lg-promo-sub { font: 800 12.5px var(--p-font); letter-spacing: .5px; color: var(--p-text); }
-.lg-pitch { margin: 0; text-align: center; font: 600 13.5px/1.45 var(--p-font); color: var(--p-muted); }
 .lg-quick-l { text-align: center; font-size: 14px !important; }
 .lg-quick input { text-align: center; font-size: 17px !important; }
 .lg-quick-btn { background: linear-gradient(135deg, #2ce06e, #0f9a4b) !important; color: #05230f !important; font-weight: 900 !important; letter-spacing: .4px; border: 0 !important; }
@@ -1689,19 +1628,17 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .ref-promo-extra { font: 700 11.5px/1.4 var(--p-font); color: var(--p-green); margin: 0 0 10px; }
 .ref-promo-btn { width: 100%; border: 0; border-radius: 999px; padding: 14px; font: 900 15px var(--p-font); background: var(--p-red); color: #fff; cursor: pointer; box-shadow: none; }
 .ref-promo-link { width: 100%; margin-top: 8px; border: 0; border-radius: 999px; padding: 11px; font: 800 12.5px var(--p-font); background: var(--p-surface); color: var(--p-text); cursor: pointer; }
-.lg-promo-note { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .2px; }
 /* ── #538 modo "Iniciar sesión" (Config entryLogin) + acomodo del bloque de confianza/plataformas/servicios fuera del formulario ── */
 .lg-trustrow { margin-top: 2px; } .lg-sys { padding: 0 2px; }
 .lg-login-h { display: none; margin: 2px 0 8px; text-align: center; font: 900 20px var(--p-font); color: var(--p-text); }
 .lg-login-links { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .lg-login-links .lg-link { font: 700 12px var(--p-font); color: var(--p-text); background: var(--p-card); border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
-body.entry-login .lg-promo, body.entry-login .lg-pitch, body.entry-login .lg-quick, body.entry-login #quickLoading, body.entry-login #quickDone { display: none !important; }
+body.entry-login .lg-quick, body.entry-login #quickLoading, body.entry-login #quickDone { display: none !important; }
 body.entry-login #loginForm { display: block !important; }
 body.entry-login .lg-login-h, body.entry-login .lg-login-links { display: flex; }
 body.entry-login .lg-login-h { display: block; }
 body.entry-login .lg-form { padding-top: 16px; }
 /* #540 (owner): en el registro de la app NO va el bono de bienvenida (la gente ya se registra ahí); queda sólo en la landing. */
-#loginScreen .lg-promo { display: none !important; }
 /* #541 registro desde el inicio: celular + SMS, botón Registrarse */
 .lg-phone { display: flex; align-items: center; gap: 6px; background: var(--p-card); border-radius: 14px; padding: 0 0 0 12px; border: 2px solid transparent; }
 .lg-phone:focus-within { border-color: var(--p-text); } .lg-phone span { font: 800 15px var(--p-font); color: var(--p-muted); }
@@ -1741,7 +1678,6 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .lg-form-reg .lg-quick-l { font-size: 15px !important; }
 .lg-reg-login { align-self: center; background: transparent !important; text-decoration: underline; }
 /* #543 limpieza del ingreso */
-#loginScreen .lg-promo, #loginScreen .lg-promo-note { display: none !important; }
 .lg-regscreen .lg-form-reg { display: block !important; }
 /* ── #548 pantalla de registro "premium" estilo Pinterest (blanca, tarjeta con sombra, píldoras rojas, pasos) ── */
 #quickSmsBox[hidden], #quickOtpStep[hidden], #quickNextBtn[hidden], #quickEntryBtn[hidden], #regSteps[hidden] { display: none !important; }

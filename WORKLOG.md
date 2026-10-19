@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 549. 🧹 Limpieza de código muerto de la pantalla de ingreso — SW v389
+**Pedido (owner):** "limpiá todo lo que veas innecesario, mirá seguridad y demás" (la seguridad va en #550).
+**Qué se sacó:** el banner del bono oculto (`.lg-promo*`) y la sección "Lo que te damos" oculta (`.lg-sec-info`) del `index.html`;
+en `loginhero.js` los rellenos de elementos que ya no existen (chips viejos, tarjetas `.lg-feat`, `lgRefunds/lgPlats/lgMin/
+lgWithdrawMin/lgRefundPromo`, banner del bono); 64 reglas CSS sin uso en `pin.css` (`.lg-feat`, `.lg-fc*`, `.lg-fi`, `.lg-claim`,
+`.lg-title`, `.lg-promo*`, `.lg-pitch`, `.ref-promo-title/-badge/-gift`, `.lg-sec-info`, `.lg-grid`, `.lg-card`, `.lg-h3`, `.lg-quick-alt`,
+también dentro de `@media`); las imágenes `public/img/referidos-promo-*.jpg` (arte violeta del gemelo, sin uso desde #536) y
+`landing/demo.html` (demo del flujo viejo de 1GIROX). Nada funcional cambió.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/img/`, `landing/`, SW.
+
 ### 548. ✨ Pantalla de registro "premium" estilo Pinterest + fix de pasos — SW v388
 **Pedido (owner, con captura):** "hacelo más premium con el mismo estilo de Pinterest". La captura mostraba además CONTINUAR y el bloque del
 celular a la vez: las reglas `#quickSmsBox {display:flex}` / `#quickOtpStep {display:flex}` pisaban el atributo `hidden`.
