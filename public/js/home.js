@@ -143,6 +143,18 @@
     function chooseMenu(pref) { setMenuPref(pref); }
     // #528: el fueguito resumido copia lo que dice la tarjeta grande (la pinta fire.js) — sin duplicar lógica
     function _fireMiniSync() {
+        // #578: líneas de nivel VIP y fueguito del menú básico (copian lo que pintan refunds.js / fire.js en el inicio completo)
+        try {
+            const lv = _el('vipHeadLvl'), nx = _el('vipHeadNext'), pc = _el('vipHeadPct'), bar = _el('vipBarFill');
+            const bl = _el('bvVipLvl'), bn = _el('bvVipNext'), bp = _el('bvVipPct'), bb = _el('bvVipBar');
+            if (lv && bl) bl.textContent = (lv.textContent || '').trim() || 'Nivel';
+            if (nx && bn) bn.textContent = (nx.textContent || '').trim();
+            if (pc && bp) bp.textContent = (pc.textContent || '').trim();
+            if (bar && bb) bb.style.width = bar.style.width || '0%';
+            const st = _el('fireHomeStreak'), su = _el('fireHomeSub'), fn = _el('bvFireN'), fs = _el('bvFireSub');
+            if (st && fn) fn.textContent = (st.textContent || '0').trim();
+            if (su && fs) fs.textContent = (su.textContent || '').trim() || 'Reclamá tu premio de hoy';
+        } catch (_) {}
         try { const s = _el('fireHomeSub'), st = _el('fireHomeStreak'); const ms = _el('fireMiniSub'), mst = _el('fireMiniStreak'); if (s && ms) ms.textContent = (s.textContent || '').trim() || 'Reclamá tu premio de hoy'; if (st && mst) mst.textContent = (st.textContent || '0').trim() + ' d'; } catch (_) {}
     }
     setInterval(_fireMiniSync, 5000);

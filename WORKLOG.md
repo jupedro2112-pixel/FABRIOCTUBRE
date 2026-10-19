@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 578. ▭ Menú básico: nivel VIP con progreso y fueguito, en línea debajo del usuario — SW v405
+**Pedido (owner):** "en el menú básico agregá abajo del usuario el nivel que va y el progreso y el fueguito, en línea recta cada uno".
+Dos líneas `.bv-line`: 🏆 nivel actual · próximo · barra · % (abre Niveles VIP) y 🔥 Racha N d · estado (abre el fueguito). Los
+textos se copian de las tarjetas del inicio completo (`vipHeadLvl/Next/Pct`, `vipBarFill`, `fireHomeStreak/Sub`) en `_fireMiniSync`
+(cada 5 s), sin duplicar lógica. **Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 576/577. 🎰 Etiquetas de las plataformas adentro del tile · "Jugar" abre la plataforma aunque no haya API — SW v404
 **Pedidos (owner):** "se corrió lo de Ganamos/Jugaygana, el Pronto está descentrado" · "en el test que funcione todo como el real, que
 funcione la API de Girox porque no abre la página cuando ponés Jugar".

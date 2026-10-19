@@ -1207,6 +1207,9 @@
                  nada más; abajo elegir otro menú". Tercer modo del Inicio (body.home-basic, reusa el ocultado de home-easy). home.js: _basicPaint. ===== -->
             <div id="basicView" class="basic-view" aria-label="Menú básico">
                 <div class="bv-top"><span id="basicHello">Hola</span><b id="basicBalance">$0</b></div>
+                <!-- #578 (owner): abajo del usuario, en línea: el nivel VIP que va (con progreso) y el fueguito. home.js los copia de las tarjetas del inicio completo. -->
+                <button type="button" class="bv-line" id="bvVip" onclick="VIP.home.openVipLevels()"><i>🏆</i><span class="bv-line-t"><b id="bvVipLvl">Nivel</b><small id="bvVipNext"></small></span><span class="bv-bar"><i id="bvVipBar" style="width:0%"></i></span><em id="bvVipPct"></em></button>
+                <button type="button" class="bv-line" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();"><i>🔥</i><span class="bv-line-t"><b>Racha <span id="bvFireN">0</span> d</b><small id="bvFireSub">Reclamá tu premio de hoy</small></span><em>Ver ›</em></button>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
                 <button type="button" class="bv-btn bv-load" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
@@ -2474,7 +2477,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v404</div>
+                    <div class="pf-build" id="appBuildTag">app v405</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

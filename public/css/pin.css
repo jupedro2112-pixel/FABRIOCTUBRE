@@ -1741,4 +1741,12 @@ body.menu2 #bottomNav.bottom-nav { height: calc(76px + env(safe-area-inset-botto
 .ev-play-first .ev-tab, .ev-play-first .ev-tab.soon, .ev-play-first .ev-tab.active { position: relative !important; padding: 18px 6px 20px !important; min-height: 96px !important; }
 .ev-play-first .ev-tab .ev-reco { position: absolute !important; top: 5px !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translateX(-50%); white-space: nowrap; }
 .ev-play-first .ev-tab .ev-soon { position: absolute !important; bottom: 5px !important; top: auto !important; left: 50% !important; right: auto !important; transform: translateX(-50%); white-space: nowrap; }
+/* #578 menú básico: nivel VIP (con progreso) y fueguito, cada uno en una línea debajo del usuario */
+.bv-line { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--p-surface); border: 0; border-radius: 14px; padding: 8px 12px; color: var(--p-text); font-family: var(--p-font); cursor: pointer; text-align: left; }
+.bv-line > i { font-size: 16px; font-style: normal; flex: 0 0 auto; }
+.bv-line-t { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.15; }
+.bv-line-t b { font: 800 12.5px var(--p-font); color: var(--p-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bv-line-t small { font: 600 10px var(--p-font); color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bv-bar { flex: 0 0 72px; height: 8px; border-radius: 999px; background: var(--p-surface-2); overflow: hidden; } .bv-bar i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; }
+.bv-line > em { font: 800 10.5px var(--p-font); color: var(--p-muted); font-style: normal; flex: 0 0 auto; white-space: nowrap; }
 
