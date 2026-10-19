@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 559/560. 📌 "Dejar preseleccionado para el ingreso" al lado de Cambiar menú · fueguito mini sólo "Racha" — SW v394
+**Pedidos (owner):** "cuando elegís un menú (básico o el que sea) que adentro se pueda poner como predeterminado: al lado de Cambiar
+menú un botón que diga dejar preseleccionado para el ingreso" · "arreglá lo de la racha: dejá sólo la palabra Racha porque se corta".
+**Qué se hizo:** botón `#menuPinBtn` junto a "Cambiar menú" (en los tres menús). Al tocarlo guarda el menú actual en `vip_menu_pref`
+y marca `localStorage vip_menu_fixed = '1'`: al entrar (`maybeShowMenuChooser`) y al volver tras 10 min (#367) ya NO se pregunta, va
+directo a ese menú; el botón queda verde "Preseleccionado para el ingreso ✓" y tocarlo de nuevo lo deshace. "Cambiar menú" sigue
+funcionando para cambiar en el momento. El fueguito del home completo queda "🔥 Racha · N d" (sin "fueguito" ni "Ver más").
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 558. 🧭 Menú opción 2: Perfil abajo, Soporte arriba — SW v393
 **Pedido (owner):** "cambiá Perfil: ponelo abajo y dejá arriba Soporte en ese lugar". En `_setMenuLayout` (#480) la barra inferior pasa a
 Carga auto · Inicio · Perfil, y Soporte se mueve al lugar de Perfil arriba (antes de Historias). Al volver a la opción 1 todo vuelve a su

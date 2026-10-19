@@ -1682,4 +1682,11 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .story-viewer .st-link { width: 100%; max-width: 360px; text-align: center; border-radius: 999px !important; padding: 12px 16px !important; font: 900 14px var(--p-font) !important; letter-spacing: .3px; box-shadow: 0 6px 18px rgba(230,0,35,.3); }
 .story-viewer .st-close { width: 40px !important; height: 40px !important; border-radius: 50% !important; background: rgba(255,255,255,.22) !important; color: #fff !important; font-size: 20px !important; line-height: 40px !important; }
 .story-viewer .st-tap { bottom: 112px !important; }
+/* #559 botón "Dejar preseleccionado para el ingreso" (al lado de Cambiar menú) · #560 fueguito mini sólo "Racha" */
+.top-row { flex-wrap: wrap; }
+.menu-pin { display: inline-flex; align-items: center; gap: 5px; flex: 0 1 auto; min-width: 0; padding: 7px 10px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-muted); font: 700 11px var(--p-font); cursor: pointer; }
+.menu-pin .li { width: 14px; height: 14px; display: inline-flex; color: var(--p-muted); } .menu-pin .li svg { width: 14px; height: 14px; }
+.menu-pin span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-pin.on { background: var(--p-green-soft); border-color: var(--p-green-line); color: var(--p-green); } .menu-pin.on .li { color: var(--p-green); }
+.fire-mini { flex: 0 0 auto; gap: 6px; padding: 6px 9px; } .fire-mini .fm-txt b { font-size: 11.5px; } .fire-mini .fm-more { display: none; }
 

@@ -48,6 +48,8 @@
     const HOME_MODE_KEY = 'vip_home_mode';
     const HOME_BANNER_KEY = 'vip_home_banner';
     const MENU_PREF_KEY = 'vip_menu_pref';
+    const MENU_FIXED_KEY = 'vip_menu_fixed'; // #559: '1' = el menú guardado es el del ingreso (no se vuelve a preguntar)
+    function isMenuFixed() { try { return localStorage.getItem(MENU_FIXED_KEY) === '1'; } catch (_) { return false; } }
     let _homeMode = 'play';
     let _easyTimer = null;
     let _easyRefLoaded = false;
@@ -70,6 +72,7 @@
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Intermedio' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
         try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); _fireMiniSync(); } catch (_) {} // #528
+        try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();
@@ -243,7 +246,25 @@
     function maybeShowMenuChooser() {
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
+        if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); return; } // #559: preseleccionado → entra directo
         setTimeout(openMenuChooser, 350);
+    }
+    // #559 (owner): "Dejar preseleccionado para el ingreso" al lado de Cambiar menú. Guarda el menú actual como preferencia
+    // y marca que NO se pregunte más al entrar (ni al volver tras 10 min). Tocar de nuevo lo deshace.
+    function _prefOfMode() { return _homeMode === 'basic' ? 'basic' : (_homeMode === 'easy' ? 'easy' : 'full'); }
+    function _paintMenuPin() {
+        const b = _el('menuPinBtn'), t = _el('menuPinTxt'); if (!b || !t) return;
+        const on = isMenuFixed() && getMenuPref() === _prefOfMode();
+        b.classList.toggle('on', on);
+        t.textContent = on ? 'Preseleccionado para el ingreso ✓' : 'Dejar preseleccionado para el ingreso';
+    }
+    function toggleMenuPin() {
+        const on = isMenuFixed() && getMenuPref() === _prefOfMode();
+        try {
+            if (on) { localStorage.removeItem(MENU_FIXED_KEY); VIP.ui.showToast('Listo: al entrar te volvemos a preguntar qué menú querés.', 'info'); }
+            else { localStorage.setItem(MENU_PREF_KEY, _prefOfMode()); localStorage.setItem(MENU_FIXED_KEY, '1'); VIP.ui.showToast('Listo: este menú queda preseleccionado para cuando entrás.', 'success'); }
+        } catch (_) {}
+        _paintMenuPin();
     }
     function _menuReaskInit() {
         document.addEventListener('visibilitychange', () => {
@@ -251,7 +272,7 @@
             const away = _hiddenAt ? Date.now() - _hiddenAt : 0;
             _hiddenAt = 0;
             const logged = VIP.state && VIP.state.currentToken && !(_el('chatScreen') || {}).classList?.contains('hidden');
-            if (logged && away >= MENU_REASK_MS) openMenuChooser();
+            if (logged && away >= MENU_REASK_MS && !isMenuFixed()) openMenuChooser(); // #559
         });
     }
     function easyLoad() { setHomeMode('full'); }
@@ -1882,7 +1903,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
