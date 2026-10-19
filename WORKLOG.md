@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 574. 🧹 Sin barra de desplazamiento visible en los menús — SW v402
+**Pedido (owner, con captura del menú básico):** "ese deslizante ahí no es necesario". Se oculta la barra de scroll de `.basic-view`,
+`.easy-view`, `.entry-view`, `#homePanel` y `#homeFull` (el contenido se sigue deslizando) y el relleno del básico con el menú 2 baja a 88 px.
+**Archivos:** `public/css/pin.css`, SW.
+
 ### 573. 🔑 Clave de la app = clave de Girox, siempre
 **Pedido (owner):** "si se cambia la clave de la app que se cambie también en Girox, un mismo acceso". Ya estaba: TODOS los cambios de
 clave (app, pendiente, reseteo por SMS, admin, publicista) llaman `syncPasswordToJugaygana` → `girox.changeUserPassword` con 3

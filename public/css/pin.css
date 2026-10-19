@@ -1732,4 +1732,8 @@ body.home-full .test-mini-row { margin-bottom: 2px; }
 .mc-pin .li { width: 15px; height: 15px; display: inline-flex; color: var(--p-red); } .mc-pin .li svg { width: 15px; height: 15px; }
 .mc-pin.on { background: var(--p-green-soft); border-color: var(--p-green-line); color: var(--p-green); } .mc-pin.on .li { color: var(--p-green); }
 .change-menu span { display: none; }
+/* #574 (owner): sin barra de desplazamiento visible en los menús (el contenido se desliza igual) */
+.basic-view, .easy-view, .entry-view, #homePanel, #homeFull { scrollbar-width: none !important; -ms-overflow-style: none; }
+.basic-view::-webkit-scrollbar, .easy-view::-webkit-scrollbar, .entry-view::-webkit-scrollbar, #homePanel::-webkit-scrollbar, #homeFull::-webkit-scrollbar { display: none; width: 0; height: 0; }
+body.menu2 .basic-view { padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important; }
 
