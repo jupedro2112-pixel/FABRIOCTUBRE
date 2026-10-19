@@ -22,7 +22,7 @@
   /* Header */
   .top {
     width: 100%; max-width: 460px; display: flex; align-items: center;
-    justify-content: space-between; padding: 10px 20px calc(2px + env(safe-area-inset-top,0px));
+    justify-content: space-between; padding: 8px 20px calc(0px + env(safe-area-inset-top,0px));
   }
   .logo { display: flex; align-items: center; gap: 9px; }
   .logo img { width: 40px; height: 40px; border-radius: 12px; object-fit: cover; }
@@ -35,44 +35,44 @@
 
   main {
     width: 100%; max-width: 460px; flex: 1;
-    padding: 8px 20px calc(28px + env(safe-area-inset-bottom,0px));
+    padding: 4px 16px calc(20px + env(safe-area-inset-bottom,0px));
     display: flex; flex-direction: column;
   }
 
   /* Banner de bono */
   .promo {
-    margin-top: 12px; border-radius: 18px; overflow: hidden;
+    margin-top: 8px; border-radius: 18px; overflow: hidden;
     border: 1px solid rgba(212,175,55,0.3);
     background:
       linear-gradient(160deg, rgba(227,189,72,0.14), rgba(15,122,61,0.10)),
       #0e140e;
-    padding: 12px 16px 11px; text-align: center;
+    padding: 8px 14px 8px; text-align: center;
   }
   .promo .eyebrow {
     font-size: 10.5px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
     color: #7bd39b;
   }
   .promo .big {
-    font-size: 40px; font-weight: 900; line-height: 1; letter-spacing: -1px;
-    color: #e3bd48; text-shadow: 0 4px 30px rgba(227,189,72,0.28); margin: 3px 0 1px;
+    font-size: 32px; font-weight: 900; line-height: 1; letter-spacing: -1px;
+    color: #e3bd48; text-shadow: 0 4px 30px rgba(227,189,72,0.28); margin: 2px 0 0;
   }
-  .promo .sub { font-size: 12.5px; font-weight: 800; color: #f3f5f1; letter-spacing: .5px; }
+  .promo .sub { font-size: 11.5px; font-weight: 800; color: #f3f5f1; letter-spacing: .5px; }
   .promo .note { font-size: 10.5px; font-weight: 700; color: #8fa090; margin-top: 2px; }
 
   /* Copy */
-  .pitch { text-align: center; color: #a7b7a8; font-size: 12.5px; line-height: 1.4; margin: 10px 4px 8px; }
+  .pitch { text-align: center; color: #a7b7a8; font-size: 11.5px; line-height: 1.35; margin: 7px 4px 6px; }
 
   /* Form */
-  .qname { text-align: center; font-size: 13px; font-weight: 800; color: #eaf2ea; margin-bottom: 6px; }
+  .qname { text-align: center; font-size: 12.5px; font-weight: 800; color: #eaf2ea; margin-bottom: 5px; }
   input {
-    width: 100%; padding: 12px 14px; font-size: 16px; color: #fff; text-align: center;
+    width: 100%; padding: 10px 12px; font-size: 15px; color: #fff; text-align: center;
     background: #0a0f0a; border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; outline: none;
     transition: border-color .2s, box-shadow .2s;
   }
   input::placeholder { color: #667766; }
   input:focus { border-color: #25d366; box-shadow: 0 0 0 3px rgba(37,211,102,0.16); }
   .cta {
-    width: 100%; margin-top: 8px; padding: 13px; font-size: 15px; font-weight: 900; letter-spacing: .4px;
+    width: 100%; margin-top: 7px; padding: 11px; font-size: 14px; font-weight: 900; letter-spacing: .4px;
     color: #05230f; background: linear-gradient(135deg, #2ce06e, #0f9a4b);
     border: none; border-radius: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 9px;
@@ -138,17 +138,36 @@
 
   /* ── Plataformas (3 íconos) y servicios resumidos (sólo título) — pedido del owner 2026-10-19 ── */
   /* #552: carrusel de juegos (como el Inicio de la app) */
-  .games-h { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; padding: 0 2px; }
+  .games-h { display: flex; align-items: baseline; justify-content: space-between; margin-top: 8px; padding: 0 2px; }
   .games-h b { font-size: 13px; font-weight: 900; color: #eaf2ea; } .games-h small { font-size: 11px; color: #8fa090; display: inline-flex; align-items: center; gap: 5px; }
   .games-h .d { width: 6px; height: 6px; border-radius: 50%; background: #25d366; box-shadow: 0 0 0 3px rgba(37,211,102,.2); display: inline-block; }
   .games { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 6px -4px 0; padding: 0 4px 4px; }
   .games::-webkit-scrollbar { display: none; }
-  .game { flex: 0 0 31%; max-width: 140px; scroll-snap-align: start; border-radius: 14px; overflow: hidden; background: #161622; border: 1px solid rgba(255,255,255,0.08); }
+  .game { flex: 0 0 29%; max-width: 128px; scroll-snap-align: start; border-radius: 14px; overflow: hidden; background: #161622; border: 1px solid rgba(255,255,255,0.08); }
   .game img { width: 100%; aspect-ratio: 300 / 330; height: auto; object-fit: contain; display: block; background: #161622; }
   .game .gn { display: block; padding: 5px 7px 1px; font-size: 10.5px; font-weight: 800; color: #eaf2ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .game .gp { display: flex; align-items: center; gap: 4px; padding: 0 7px 6px; font-size: 10px; color: #8fa090; }
   .game .gp i { width: 6px; height: 6px; border-radius: 50%; background: #25d366; display: inline-block; } .game .gp b { color: #eaf2ea; transition: opacity .25s; } .game .gp b.tick { opacity: .35; }
-  /* bloque unificado del servicio: plataformas + 9 chips en 3 columnas (3 líneas), más chico */
+  /* #554: "Todo nuestro servicio" plegable arriba + plataformas en una fila afuera */
+  details.svc { margin-top: 6px; border-radius: 14px; border: 1.5px solid rgba(227,189,72,0.55); background: linear-gradient(160deg, rgba(227,189,72,0.16), rgba(15,122,61,0.10)), #0e140e; padding: 0; }
+  details.svc summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; }
+  details.svc summary::-webkit-details-marker { display: none; }
+  .svc-t { font-size: 13.5px; font-weight: 900; color: #e3bd48; letter-spacing: .3px; }
+  .svc-more { font-size: 11px; font-weight: 800; color: #0b0f0b; background: #e3bd48; border-radius: 999px; padding: 4px 9px; display: inline-flex; align-items: center; gap: 4px; }
+  .svc-more i { font-style: normal; transition: transform .2s; } details[open] .svc-more i { transform: rotate(180deg); }
+  .svc-more .on-open { display: none; } details[open] .svc-more .on-open { display: inline; } details[open] .svc-more .on-closed { display: none; }
+  .svc-body { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 10px 10px; }
+  .sv { display: flex; gap: 7px; align-items: flex-start; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; padding: 7px 8px; }
+  .sv i { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; background: rgba(227,189,72,0.16); color: #e3bd48; display: inline-flex; align-items: center; justify-content: center; } .sv i svg { width: 12px; height: 12px; }
+  .sv b { display: block; font-size: 11px; font-weight: 900; color: #eaf2ea; line-height: 1.2; } .sv b span { color: #25d366; }
+  .sv small { display: block; font-size: 9.5px; color: #8fa090; line-height: 1.3; margin-top: 1px; }
+  .plats-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .plats-k { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #8fa090; flex: 0 0 auto; }
+  .plats-row .plats { flex: 1; margin-top: 0; gap: 5px; }
+  .plats-row .plat { flex-direction: row; justify-content: center; gap: 5px; padding: 5px 6px; border-radius: 999px; font-size: 10px; }
+  .plats-row .plat img, .plats-row .plat .ini { width: 20px; height: 20px; border-radius: 6px; }
+  .plats-row .plat small { position: static; margin-left: 2px; padding: 1px 4px; font-size: 7.5px; }
+  /* (viejo bloque unificado, ya no se usa) */
   .svc { margin-top: 10px; background: #0e140e; border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 10px 10px 10px; }
   .svc-h { text-align: center; margin-bottom: 8px; } .svc-h b { display: block; font-size: 13px; font-weight: 900; color: #eaf2ea; } .svc-h small { font-size: 10.5px; color: #8fa090; }
   .plats-h { display: none; }
@@ -186,6 +205,22 @@
   </div>
 
   <main>
+    <!-- #554 (owner): "Todo nuestro servicio" ARRIBA, bien remarcado y plegable (Ver todo = el detalle); las plataformas debajo, afuera -->
+    <details class="svc" id="svc">
+      <summary><span class="svc-t">⭐ Todo nuestro servicio</span><span class="svc-more"><b class="on-closed">Ver todo</b><b class="on-open">Cerrar</b> <i>▾</i></span></summary>
+      <div class="svc-body">
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><div><b>Carga automática 24 hs</b><small>Transferís, mandás el comprobante y se acredita solo.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i><div><b>Reembolso diario <span id="sysRefund"></span></b><small>Sobre lo que perdés con tu plata, todos los días. Se cobra desde la app.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"/></svg></i><div><b>Ruleta diaria</b><small>Un giro por día con % extra y premios en plata.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4a8 8 0 0 1-16 0z"/><path d="M12 16v4M8 20h8"/><path d="M4 6H2.5a2 2 0 0 0 0 4H4M20 6h1.5a2 2 0 0 1 0 4H20"/></svg></i><div><b>Misiones semanales</b><small>Cumplís objetivos y cobrás regalos automáticos.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i><div><b>Referidos <span id="sysRef"></span></b><small>Invitás amigos y cobrás un % de su actividad, todos los meses.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i><div><b>Niveles VIP</b><small>Subís de nivel con bonos y rakeback.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/></svg></i><div><b>Soporte real</b><small>Una persona te responde en minutos, por chat.</small></div></div>
+        <div class="sv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg></i><div><b>Retiros a tu CBU</b><small>Pagos automáticos, sin límites, en el acto.</small></div></div>
+      </div>
+    </details>
+    <div class="plats-row"><span class="plats-k">Jugás en</span><div class="plats" id="plats"></div></div>
+
     <!-- Pantalla 1: bono + form -->
     <section id="scForm">
       <div class="promo">
@@ -218,22 +253,6 @@
       <!-- #552 (owner): carrusel de juegos (las fotos del Inicio de la app) y debajo TODO el servicio en un solo bloque -->
       <div class="games-h"><b>Top juegos</b><small><i class="d"></i><span id="gamesLive">0</span> jugando ahora</small></div>
       <div class="games" id="games"></div>
-
-      <div class="svc">
-        <div class="svc-h"><b>Todo nuestro servicio</b><small>Elegí dónde jugar · mismo usuario y clave en todas</small></div>
-        <div class="plats" id="plats"></div>
-        <div class="sys">
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i>Carga automática</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso <b id="sysRefund"></b></span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"/></svg></i>Ruleta diaria</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4a8 8 0 0 1-16 0z"/><path d="M12 16v4M8 20h8"/><path d="M4 6H2.5a2 2 0 0 0 0 4H4M20 6h1.5a2 2 0 0 1 0 4H20"/></svg></i>Misiones</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos <b id="sysRef"></b></span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/></svg></i>Soporte real</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg></i>Retiro a CBU</span>
-          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i>Pagos 24 hs</span>
-        </div>
-      </div>
 
       <p class="legal">
         Bono sujeto a términos: aplica sobre la primera carga. Solo nuevos jugadores.<br>

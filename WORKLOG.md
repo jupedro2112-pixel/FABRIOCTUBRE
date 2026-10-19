@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 554. 🌐 Landing de Vercel: "Todo nuestro servicio" arriba y plegable, plataformas debajo, todo más chico
+**Pedido (owner):** "todo nuestro servicio ponelo arriba de todo, abajo de PICA ROJA, bien remarcado y que figure explayar / ver todo con
+todo el detalle; las plataformas debajo de eso sin explayar, del lado de afuera; achicá un poco todo para que las fotos de Top juegos se
+vean en la página principal". Orden nuevo: cabecera → `<details>` dorado "⭐ Todo nuestro servicio · Ver todo ▾" (adentro los 8
+servicios con título + una línea de detalle, en 2 columnas) → fila "JUGÁS EN" con las 3 plataformas en píldoras chicas (afuera, sin
+plegar) → bono (32 px) → nombre → CREAR MI CUENTA → Top juegos → legal. Márgenes y tamaños reducidos. **Archivos:** `landing/index.html`.
+
 ### 553. 🔒 Segunda revisión de seguridad (todo lo de hoy después de #532) y correcciones — SW v390
 **Pedido (owner):** "mirá seguridad y demás". Revisión independiente del diff `84e4c65..HEAD`. Hallazgos y qué se hizo:
 1. **MEDIO-ALTO:** el SMS obligatorio del registro desde el inicio se salteaba mandando `campaignCode:'INGRESO'` (campaña orgánica que
