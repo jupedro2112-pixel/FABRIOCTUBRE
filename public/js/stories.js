@@ -103,7 +103,8 @@
         const cap = _el('storyCaption');
         if (cap) { cap.textContent = (s.mediaType !== 'none' && s.text) ? s.text : ''; cap.style.display = cap.textContent ? '' : 'none'; }
         // #453 (owner): en las historias con FOTO/VIDEO el texto no se superpone (la foto va completa, con el sello de marca abajo).
-        try { if (cap) cap.style.display = (s.mediaType === 'image' || s.mediaType === 'video') ? 'none' : ''; } catch (_) {}
+        // #582: el texto se muestra también en las historias con foto (tarjeta debajo de la imagen); en las de texto solo ya va grande en el medio
+        try { if (cap) cap.style.display = (s.mediaType === 'none') ? 'none' : ''; } catch (_) {}
         const link = _el('storyLink');
         if (link) {
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.

@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 582/583. 📖 Historias republicadas con recuadro profesional + Telegram al final · "Carga auto" en el básico expande CARGAR — SW v409
+**Pedidos (owner):** "borrá las historias y, sobre el mismo contenido y el sistema de referidos, armalo de vuelta con mejor recuadro y
+profesionalidad; poné 'IMPORTANTE: unite a Telegram para tener todas las novedades de PICA ROJA' como última con el botón Unirme a
+Telegram" · "en el básico, si apretás Carga auto, que expanda la pantalla de cargar (alias, etc.) pero que siga en la misma pantalla".
+**(#582)** Visor: la foto va enmarcada (12 px de margen, bordes redondeados, sombra) sobre el fondo difuminado; debajo, en un pie de 150 px,
+el sello de marca, el TEXTO de la historia (ahora también en las de foto, 2 líneas) y el botón en píldora; la de texto solo va grande y
+centrada. Se borraron las 5 historias y se publicaron 6: las 4 de siempre, referidos ("Quiero referir gente ›" → Referidos) y la última
+"📣 IMPORTANTE: unite a nuestro Telegram…" en azul Telegram con "Unirme a Telegram ›" → `/go/comunidad` (el canal configurado en Comunidad).
+**(#583)** `#navAuto` → `VIP.home.autoTap()`: en el básico abre `bvLoadPanel` (CARGAR) y lo trae a la vista sin cambiar de menú; en los otros
+menús sigue yendo al inicio completo.
+**Archivos:** `public/css/pin.css`, `public/js/stories.js`, `public/js/home.js`, `public/index.html`, SW. (Historias: en la base; en producción se publican desde el panel.)
+
 ### 581. 🌐 Landing: 100% fijo · el alta entra DIRECTO a cargar sin ver la pantalla de registro de la app — SW v407
 **Pedido (owner):** "en /landing se buguea y figura 50 y después 100: dejá 100% siempre; y cuando creás la cuenta que no se vea el menú de
 registro de la app, que entre directamente donde se carga".
