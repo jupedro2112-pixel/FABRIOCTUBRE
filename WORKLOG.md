@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 535. 🌐 Landing de VERCEL (`picaroja-landing.vercel.app`) actualizada — `docs/landing-vercel/`
+**Pedido (owner):** "ya está cargada ahí, estás ajustando sobre otra landing, quiero ahí" (la del `landing2.zip`, oscura, 1GIROX).
+**Qué se hizo:** sobre el `index.html` del zip (más nuevo que el publicado: trae pixel de Meta y escape del navegador de Instagram)
+se agregó: aviso del código de referido (`?ref=`, se manda como `referralCode`), las 3 plataformas con logo en tiles (Girox · Ganamos
+Pronto · Jugaygana Pronto, con los logos del backend y actualizadas desde `/api/landing/info`), servicios sólo con título (reembolso
+diario y referidos con % reales), barra de progreso "Creando tu cuenta… → Entrando a tu cuenta…" y entrada DIRECTA a la sesión (el
+link de acceso loguea solo; usuario y clave quedan en Perfil). El resto (pauta, pixel, dedup, popup, legal) sin cambios.
+**Dónde está:** `docs/landing-vercel/` (index, blank, vercel.json, demo, README) y el zip listo para subir en
+`/home/amnesia/Downloads/landing2-actualizada.zip` (Tails: se pierde al reiniciar; la copia del repo es la que vale). Este backend NO la
+sirve: la sube el owner a Vercel. ⚠️ Antes de subir: `API_BASE_DEFAULT` (zip: 1giroxauto.com; publicada: chat1girox.com) y ese dominio
+tiene que permitir el origen de la landing en `ALLOWED_ORIGINS`.
+
 ### 534. ⏳ Registro automático: nombre → barra de progreso → entra solo (sin paso de credenciales) — SW v380
 **Pedido (owner):** "que se entienda solamente la parte de registrarse completando el nombre y una vez que se registra que cargue una
 barra y entre a la sesión; la clave de Girox y de la app que sean la misma y figuren en el panel de Perfil".
