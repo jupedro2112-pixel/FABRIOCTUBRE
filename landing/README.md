@@ -1,6 +1,6 @@
-# Landing de Vercel (picaroja-landing.vercel.app)
+# Carpeta `landing/` = la landing publicada en Vercel (picaroja-landing.vercel.app)
 
-Copia editable de la landing que el owner tiene publicada en Vercel (vino en `landing2.zip`, 2026-10-19). NO la sirve este
+Es la landing que el owner tiene publicada en Vercel (vino en `landing2.zip`, 2026-10-19). NO la sirve este
 backend: se sube a Vercel a mano (arrastrar la carpeta en el proyecto `picaroja-landing`, o `vercel deploy`).
 
 Cambios de este repo sobre la original (#535): aviso del código de referido (`?ref=`), las 3 plataformas con logo

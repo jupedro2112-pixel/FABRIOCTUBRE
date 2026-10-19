@@ -1700,4 +1700,5 @@ body.entry-login #loginForm { display: block !important; }
 body.entry-login .lg-login-h, body.entry-login .lg-login-links { display: flex; }
 body.entry-login .lg-login-h { display: block; }
 body.entry-login .lg-form { padding-top: 16px; }
-
+/* #540 (owner): en el registro de la app NO va el bono de bienvenida (la gente ya se registra ahí); queda sólo en la landing. */
+#loginScreen .lg-promo { display: none !important; }

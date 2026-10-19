@@ -123,9 +123,9 @@
     // #519 (owner): el botón INICIO es donde cada uno elige su tipo de menú. Si ya estás en el Inicio, abre el selector
     // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
     function goHome() {
-        const atHome = _homeMode === 'easy' || _homeMode === 'basic' || _homeMode === 'play' || _homeMode === 'full';
-        if (atHome) { try { openMenuChooser(); return; } catch (_) {} }
+        // #539 (owner): INICIO va SIEMPRE al inicio del menú ya elegido (sin abrir el selector; para cambiar está "Cambiar menú").
         setHomeMode(_modeFor(getMenuPref()));
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
     }
     function setMenuPref(pref, opts) {
         pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';
@@ -134,7 +134,7 @@
         setHomeMode(_modeFor(pref));
         setTimeout(maybeFirstDepositPopup, 900); // #488
         if (!opts || !opts.quiet) {
-            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras tocando INICIO.' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras tocando INICIO.'), 'success'); } catch (_) {}
+            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras con "Cambiar menú".' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras con "Cambiar menú".'), 'success'); } catch (_) {}
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }

@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 540. 🌐 `landing/` (la de Vercel) con todo el registro de PICA ROJA · sin bono en el registro de la app · INICIO (#539 rehecho) — SW v384
+**Pedidos (owner):** "en el inicio del registro no va el margen de bono (la gente ahí se registra), sí en la landing" · "en esa [captura
+de la landing de Vercel] pongamos todo lo del registro con el servicio de PICA ROJA" · "modificá la carpeta /landing".
+**Qué se hizo:** (1) `#loginScreen .lg-promo` oculto en la app: el bono queda sólo en las landings. (2) La carpeta `landing/` del repo
+(es exactamente lo publicado en Vercel, 14 KB, `chat1girox.com`) se reemplazó por la versión completa: marca PICA ROJA (logo desde el
+backend), banner del bono (100% grande · EN TU PRIMERA CARGA · "instalando la app · si no, 50%", con los % reales si el backend
+responde), nombre → cuenta, aviso de referido `?ref=`, barra de progreso y entrada directa, las 3 plataformas con logo, servicios sólo con
+título, popup, pixel de Meta y escape del navegador de Instagram (del zip). `blank.html` + `vercel.json` (sólo Argentina) del zip.
+`docs/landing-vercel/` se eliminó (duplicado). (3) #539 se rehizo: la primera corrida falló en el script (texto repetido) y no había
+escrito nada; ahora INICIO va al inicio del menú elegido sin abrir el selector.
+**⚠️ `API_BASE_DEFAULT` quedó en `https://vipcargas.com`** (dominio público de este backend según CLAUDE.md; está detrás de Cloudflare y
+no se pudo verificar desde acá). Antes apuntaba a `chat1girox.com`, que es OTRA página. Si el dominio real es otro, cambiar esa línea.
+**Archivos:** `landing/index.html`, `landing/blank.html`, `landing/vercel.json`, `landing/README.md`, `public/css/pin.css`, `public/js/home.js`, SW.
+
 ### 538. 🔐 Tilde "Pantalla de ingreso = Iniciar sesión" + pantalla de ingreso acomodada — SW v383, admin-sw v122
 **Pedido (owner, con captura en modo usuario+clave):** "eso centralo y acomodalo; quiero, tildando en el administrador, que se vea como
 iniciar sesión u olvidé mi contraseña; sacá el bono de bienvenida ahí".
