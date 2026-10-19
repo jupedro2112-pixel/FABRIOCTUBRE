@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 588. ▭ Básico: INICIO cierra el panel de CARGAR / RETIRAR desplegado — SW v413
+**Pedido (owner):** "en el básico, cuando apretás cargar y expande el menú de cargas, si apretás Inicio que se cierre esa expansión".
+`goHome` oculta `bvLoadPanel`/`bvWdPanel` antes de ir al menú elegido. **Archivos:** `public/js/home.js`, SW.
+
 ### 587. 📖 Historias: la foto abarca toda la pantalla y el texto va abajo de todo — SW v412
 **Pedido (owner, con captura):** "así está perfecto, pero bajalo abajo de todo el texto y que la foto abarque toda la pantalla". Sin marco ni
 bordes redondeados; pie de 92 px con el texto y el botón pegados abajo; el sello sigue sobre el borde inferior de la foto. **Archivos:** `public/css/pin.css`, SW.

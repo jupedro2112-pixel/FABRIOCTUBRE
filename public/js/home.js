@@ -127,6 +127,11 @@
     // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
     function goHome() {
         // #539 (owner): INICIO va SIEMPRE al inicio del menú ya elegido (sin abrir el selector; para cambiar está "Cambiar menú").
+        // #588 (owner): en el básico, INICIO cierra los paneles desplegados (CARGAR / RETIRAR).
+        try {
+            const lp = _el('bvLoadPanel'), wp = _el('bvWdPanel'); const lb = document.querySelector('#basicView .bv-load'), wb = document.querySelector('#basicView .bv-wd');
+            if (lp) lp.hidden = true; if (wp) wp.hidden = true; if (lb) lb.setAttribute('aria-expanded', 'false'); if (wb) wb.setAttribute('aria-expanded', 'false');
+        } catch (_) {}
         setHomeMode(_modeFor(getMenuPref()));
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
     }
