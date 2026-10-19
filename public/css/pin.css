@@ -1843,4 +1843,9 @@ body.home-mini:not(.sp-sent) #chatMessages:empty { display: none !important; }
 /* #608 (owner): el aviso de primera carga va debajo de la barra, en los 3 menús (no en Soporte) */
 #sdBanner { margin: 8px 12px 0 !important; }
 body.home-mini #sdBanner { display: none !important; }
+/* #610 (owner): la FRANJA BLANCA que tapaba el final del básico/intermedio: con el regalo de instalar pendiente (`body.ig-pending`)
+   el home completo plegado (#homeFull, alto 0) seguía reservando 84 px de padding para una barra que ya no va abajo (desde #563 está
+   arriba). Nada plegado reserva lugar. */
+body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: 12px !important; }
+body.home-easy #homeFull, body.home-basic #homeFull, body.home-play #homeFull, body.home-mini #homeFull { padding: 0 !important; margin: 0 !important; border: 0 !important; }
 

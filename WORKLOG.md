@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 610/611. 🧹 Franja blanca que tapaba el final del básico · aviso de 1ª carga abre el panel de carga del básico — SW v427
+**Pedidos (owner, con captura):** "ese espacio en blanco está tapando" · "si en el básico aprieto cargar que abra el botón de cargas de
+ahí, como el de Carga auto del menú básico, no de otro". (#610) Causa: con el regalo de instalar pendiente (`body.ig-pending`) el home
+completo plegado (`#homeFull`, alto 0) conservaba `padding-bottom: 84px` reservado para la barra de instalar, que desde #563 va arriba:
+esa era la franja blanca de ~90 px que recortaba RETIRAR. Ahora nada plegado reserva lugar (padding 0 en easy/basic/play/mini). (#611)
+`#sdBanner` llama `autoTap()`: en el básico despliega `bvLoadPanel` (mismo panel que Carga auto); en los otros menús sigue yendo al
+completo. **Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 609. 🔔 Notificaciones: "Lote con regalo" arriba de todo; el resto en acordeones plegados — admin-sw v130
 **Pedido (owner):** "lote por regalo en Notificaciones dejalo en la parte superior y lo otro dejalo tipo menú minimizado, y si se quiere
 maximizar que se pueda abrir". Reordenado el HTML de la sección: cabecera + estadísticas, LOTE CON REGALO, y después Estrategia de
