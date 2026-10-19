@@ -1796,4 +1796,7 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .story-viewer .st-caption { width: 100%; max-width: 440px; margin: 0; font: 700 13px/1.35 var(--p-font) !important; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.6) !important; max-height: 2.7em; }
 .story-viewer .st-link { max-width: 360px; }
 .story-viewer .st-tap { bottom: 130px !important; }
+/* #594 (owner): el sello PICA ROJA de las historias con recuadro bien marcado */
+.story-viewer .st-foot .st-brand-foot { background: #fff !important; border: 2px solid #fff; box-shadow: 0 8px 26px rgba(0,0,0,.45) !important; padding: 6px 16px 6px 6px !important; }
+.story-viewer .st-foot .st-brand-foot img { border: 2px solid #111; background: #111; }
 

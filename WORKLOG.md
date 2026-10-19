@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 594. 🎨 Historias: la foto se arma sola desde el panel (estilo PICA ROJA) · sello con recuadro — SW v415, admin-sw v128
+**Pedido (owner):** "al logo de PICA ROJA en las historias le falta un recuadro; que el estilo de fotos se pueda hacer desde el admin:
+completar los datos y que automáticamente tome el texto y lo arme, y también adjuntar fotos".
+**Qué se hizo:** en Historias → "🎨 Armar la foto automáticamente": frase chica, título grande, píldora roja, texto de abajo, foto opcional
+(va arriba recortada) y fondo claro/oscuro → "Generar vista previa" dibuja en canvas 1080×1920 el mismo estilo de las fotos actuales (logo
+con recuadro, tarjeta, píldora roja, sello al pie) y la deja lista para Publicar (`_stFileDataUrl`, JPEG). Adjuntar un archivo sigue igual
+y reemplaza a la generada. En el visor, el sello PICA ROJA lleva recuadro blanco con sombra y el logo con borde.
+**Archivos:** panel index + admin.js, `public/css/pin.css`, SWs.
+
 ### 590/591/592/593. 🔒 Datos IA con clave · Notificaciones bajo Estrategia · historias semanales · visor con franja difuminada · historial de pagos — SW v414, admin-sw v127
 **Pedidos (owner):** "subí Notificaciones debajo de Estrategia; Datos IA con clave [clave]" · "sección de historias para agregar/eliminar
 y programar semanalmente; arreglá el visor: texto abajo con fondo borroso de la foto y el logo arriba del texto" · "en Confirmación de

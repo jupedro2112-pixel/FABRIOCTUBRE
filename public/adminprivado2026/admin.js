@@ -5997,6 +5997,63 @@ function renderPayHistory() {
         rows.map(function (r) { return '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);' + (r.delayed && r.status !== 'cancelled' ? 'background:rgba(255,80,80,0.08);' : '') + '"><td style="padding:6px;color:#aaa;">' + fmtFechaHoraAR(r.createdAt).slice(-5) + '</td><td style="padding:6px;"><b>' + escapeHtml(r.username) + '</b></td><td style="padding:6px;text-align:right;">' + fmtARS(r.amount) + '</td><td style="padding:6px;">' + stTxt(r) + (r.error ? '<div style="color:#888;font-size:10px;">' + escapeHtml(String(r.error).slice(0, 60)) + '</div>' : '') + '</td><td style="padding:6px;color:#aaa;">' + (r.autoPay ? '⚡ automático' : (r.reviewRequired ? '🔎 revisado' : 'manual')) + (r.paidVia ? ' · ' + escapeHtml(r.paidVia) : '') + '</td><td style="padding:6px;text-align:right;color:' + (r.delayed && r.status !== 'cancelled' ? '#ff8080' : '#aaa') + ';font-weight:' + (r.delayed ? '800' : '400') + ';">' + r.minutes + ' min' + (r.pending ? ' ⏳' : '') + '</td><td style="padding:6px;color:#aaa;">' + escapeHtml(r.paidBy || '—') + (r.paidAt ? ' · ' + fmtFechaHoraAR(r.paidAt).slice(-5) : '') + '</td></tr>'; }).join('') + '</tbody></table>';
 }
 window.loadPayHistory = loadPayHistory; window.renderPayHistory = renderPayHistory; window.phShift = phShift; window.phToday = phToday;
+// #594: generador de la foto de la historia con el estilo PICA ROJA (canvas 1080×1920 → data URL → se publica como imagen)
+function _stLoadImg(src) { return new Promise(function (res, rej) { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
+function _stWrap(ctx, text, maxW) { const words = String(text || '').split(/\s+/); const lines = []; let cur = ''; words.forEach(function (w) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }); if (cur) lines.push(cur); return lines; }
+function _stRound(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+async function stMakeArt() {
+    const g = function (id) { return (document.getElementById(id) || {}).value || ''; };
+    const kicker = (g('stArtKicker') || 'LA NOVEDAD LLEGÓ').toUpperCase(), title = g('stArtTitle') || 'El futuro está acá', pill = (g('stArtPill') || 'CARGAS AUTOMÁTICAS').toUpperCase(), body = g('stArtBody') || 'Transferís, mandás la foto y se acredita solo.';
+    const dark = g('stArtBg') === 'dark';
+    const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H; const ctx = c.getContext('2d');
+    const F = '"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    // fondo
+    const bg = ctx.createLinearGradient(0, 0, 0, H); if (dark) { bg.addColorStop(0, '#1a0a0c'); bg.addColorStop(1, '#070707'); } else { bg.addColorStop(0, '#ffffff'); bg.addColorStop(1, '#f1f1f1'); }
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    // foto opcional arriba (recortada, cover), con bordes redondeados
+    let y = 200; const fileEl = document.getElementById('stArtPhoto'); const f = fileEl && fileEl.files && fileEl.files[0];
+    if (f) {
+        try {
+            const url = URL.createObjectURL(f); const img = await _stLoadImg(url);
+            const ph = 820, px = 60, pw = W - 120; const r = Math.max(pw / img.width, ph / img.height); const dw = img.width * r, dh = img.height * r;
+            ctx.save(); _stRound(ctx, px, 120, pw, ph, 44); ctx.clip(); ctx.drawImage(img, px + (pw - dw) / 2, 120 + (ph - dh) / 2, dw, dh); ctx.restore();
+            URL.revokeObjectURL(url); y = 120 + ph + 70;
+        } catch (e) { showToast('No se pudo leer la foto; se arma sin foto', 'error'); }
+    }
+    // tarjeta
+    const cardX = 60, cardW = W - 120, cardY = f ? y : 260, cardH = f ? H - cardY - 260 : 1100;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,' + (dark ? '.6' : '.12') + ')'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 18;
+    ctx.fillStyle = dark ? '#161616' : '#ffffff'; _stRound(ctx, cardX, cardY, cardW, cardH, 56); ctx.fill(); ctx.restore();
+    let cy = cardY + 80;
+    // logo con recuadro
+    try {
+        const logo = await _stLoadImg('/icons/icon-192x192.png'); const L = f ? 150 : 220;
+        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10; ctx.fillStyle = '#111'; _stRound(ctx, W / 2 - L / 2 - 10, cy - 10, L + 20, L + 20, 44); ctx.fill(); ctx.restore();
+        ctx.save(); _stRound(ctx, W / 2 - L / 2, cy, L, L, 36); ctx.clip(); ctx.drawImage(logo, W / 2 - L / 2, cy, L, L); ctx.restore(); cy += L + 60;
+    } catch (e) { cy += 20; }
+    ctx.textAlign = 'center';
+    ctx.fillStyle = dark ? '#bdbdbd' : '#6f6f6f'; ctx.font = '800 34px ' + F; ctx.letterSpacing = '8px'; ctx.fillText(kicker, W / 2, cy); ctx.letterSpacing = '0px'; cy += 70;
+    ctx.fillStyle = dark ? '#ffffff' : '#111111'; ctx.font = '900 ' + (f ? 86 : 104) + 'px ' + F;
+    const tl = _stWrap(ctx, title, cardW - 140).slice(0, 3); tl.forEach(function (ln) { ctx.fillText(ln, W / 2, cy + (f ? 70 : 86)); cy += (f ? 96 : 112); }); cy += 50;
+    ctx.font = '900 40px ' + F; const pw2 = Math.min(cardW - 120, ctx.measureText(pill).width + 110);
+    ctx.fillStyle = '#e60023'; _stRound(ctx, W / 2 - pw2 / 2, cy, pw2, 92, 46); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(pill, W / 2, cy + 62); cy += 150;
+    ctx.fillStyle = dark ? '#cfcfcf' : '#444'; ctx.font = '600 40px ' + F;
+    _stWrap(ctx, body, cardW - 160).slice(0, 4).forEach(function (ln) { ctx.fillText(ln, W / 2, cy); cy += 56; });
+    // sello de marca al pie de la tarjeta
+    try {
+        const logo2 = await _stLoadImg('/icons/icon-192x192.png'); const by = cardY + cardH - 110;
+        ctx.fillStyle = dark ? '#222' : '#f1f1f1'; _stRound(ctx, W / 2 - 230, by - 44, 460, 88, 44); ctx.fill();
+        ctx.save(); ctx.beginPath(); ctx.arc(W / 2 - 170, by, 32, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(logo2, W / 2 - 202, by - 32, 64, 64); ctx.restore();
+        ctx.textAlign = 'left'; ctx.fillStyle = dark ? '#fff' : '#111'; ctx.font = '900 30px ' + F; ctx.letterSpacing = '3px'; ctx.fillText('PICA ROJA', W / 2 - 120, by - 2); ctx.letterSpacing = '0px';
+        ctx.fillStyle = dark ? '#aaa' : '#666'; ctx.font = '600 22px ' + F; ctx.fillText('oficial · cargas automáticas', W / 2 - 120, by + 30);
+    } catch (e) {}
+    const dataUrl = c.toDataURL('image/jpeg', 0.9);
+    _stFileDataUrl = dataUrl;
+    const pv = document.getElementById('stPreview'), img = document.getElementById('stPreviewImg'); if (pv && img) { img.src = dataUrl; pv.style.display = ''; }
+    const fe = document.getElementById('stFile'); if (fe) fe.value = '';
+    showToast('🎨 Foto armada: revisá la vista previa y tocá Publicar', 'success');
+}
+window.stMakeArt = stMakeArt;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
 async function loadPayReview() {
