@@ -83,7 +83,7 @@ VIP.ui = (function () {
     // ---- Screen switching ----
 
     function showLoginScreen() {
-        try { document.documentElement.classList.remove('has-session'); } catch (_) {} // #342: el token no sirvió → ahora sí el login
+        try { document.documentElement.classList.remove('has-session'); document.documentElement.classList.remove('access-pending'); } catch (_) {} // #581 // #342: el token no sirvió → ahora sí el login
         document.getElementById('loginScreen').classList.remove('hidden');
         // #283: sin sesión no hay carga gratis pendiente que mostrar.
         try { document.body.classList.remove('ig-pending'); document.body.classList.remove('is-tester'); const b = document.getElementById('installGiftBar'); if (b) b.style.display = 'none'; } catch (_) {}
@@ -91,6 +91,7 @@ VIP.ui = (function () {
     }
 
     function showChatScreen() {
+        try { document.documentElement.classList.remove('access-pending'); } catch (_) {} // #581
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('chatScreen').classList.remove('hidden');
         const _username = VIP.state.currentUser?.username || 'Usuario';
@@ -104,7 +105,7 @@ VIP.ui = (function () {
         startBalancePolling();
         sendWelcomeMessages();
         if (VIP.stories && VIP.stories.load) VIP.stories.load(); // #361: historias activas (anillo arriba a la derecha)
-        try { if (VIP.home && VIP.home.maybeShowMenuChooser) VIP.home.maybeShowMenuChooser(); } catch (_) {} // #366: ¿menú fácil o completo?
+        try { if (VIP.home && VIP.home.maybeShowMenuChooser && !VIP.state._openLoadAfterLogin) VIP.home.maybeShowMenuChooser(); } catch (_) {} // #366: ¿menú fácil o completo? (#581: no si viene a cargar)
         try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (_) {} // #376: ¿hay una carga pendiente?
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).

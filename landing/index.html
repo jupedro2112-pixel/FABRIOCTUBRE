@@ -373,11 +373,7 @@
           if (b) b.textContent = x.title; if (sm) sm.textContent = x.detail || '';
         });
       }
-      // % reales del backend (si responde): grande el % con la app; chico "instalando la app · si no, X%"
-      try {
-        var w = d.welcome || {}; var pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0; var top = pApp > 0 ? pApp : pNo;
-        if (top > 0) { document.getElementById('bonusBig').textContent = top + '%'; var note = pApp > pNo ? (pNo > 0 ? ('instalando la app · si no, ' + pNo + '%') : 'instalando la app') : ''; document.getElementById('bonusNote').textContent = note; document.getElementById('bonusNote').style.display = note ? '' : 'none'; }
-      } catch (e) {}
+      // #581 (owner): el bono de la landing es FIJO (BONUS_BIG/BONUS_NOTE de arriba); antes el backend lo pisaba y se veía 50 → 100.
       try { var rf = d.refunds || {}; if (rf.dailyMax) document.getElementById('sysRefund').textContent = rf.dailyMax + '%'; } catch (e) {}
       try { var rp = Number(d.referralPct); if (rp > 0) document.getElementById('sysRef').textContent = rp + '%'; } catch (e) {}
     }).catch(function () {});

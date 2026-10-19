@@ -487,6 +487,12 @@ VIP.auth = (function () {
 
                 // Entrada por la landing (`ir=casino`): abrir el casino directo,
                 // con el chat de cargas en el pop-up "Cargar acá" (owner 2026-08-15).
+                // #581: alta por landing (`ir=cargar`): sin selector de menú, directo a donde se carga.
+                if (VIP.state._openLoadAfterLogin) {
+                    VIP.state._openLoadAfterLogin = false;
+                    try { VIP.home.closeMenuChooser(); } catch (_) {}
+                    setTimeout(function () { try { VIP.home.closeMenuChooser(); VIP.home.setHomeMode('full'); } catch (e) {} }, 400);
+                }
                 if (VIP.state._openCasinoAfterLogin) {
                     VIP.state._openCasinoAfterLogin = false;
                     setTimeout(function () {
@@ -635,9 +641,9 @@ VIP.auth = (function () {
         // `ir=casino` (link de la landing): abrir el casino DIRECTO al loguear.
         // Se lee ANTES de limpiar la URL; verifyToken() lo consume tras showChatScreen.
         try {
-            if (new URLSearchParams(window.location.search).get('ir') === 'casino') {
-                VIP.state._openCasinoAfterLogin = true;
-            }
+            const _ir = new URLSearchParams(window.location.search).get('ir');
+            if (_ir === 'casino') VIP.state._openCasinoAfterLogin = true;
+            if (_ir === 'cargar') VIP.state._openLoadAfterLogin = true; // #581: alta por landing → directo a Cargá acá
         } catch (e) {}
 
         // Sacar el token de la URL YA MISMO: es de un solo uso y no tiene que

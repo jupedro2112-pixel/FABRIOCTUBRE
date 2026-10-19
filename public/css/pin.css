@@ -1754,4 +1754,9 @@ html[data-theme="dark"] #installGiftBar.ig-bar { background: linear-gradient(135
 html[data-theme="dark"] #installGiftBar .ig-bar-k { background: #111; color: #ffd166; } html[data-theme="dark"] #installGiftBar .ig-bar-t { color: #111; } html[data-theme="dark"] #installGiftBar .ig-bar-amt { color: #111; }
 /* #580: el recomendado del selector es el BÁSICO */
 .mc-opt.mc-easy { border-color: transparent !important; } .mc-opt.mc-basic { border-color: var(--p-text) !important; }
+/* #581: canje del link de acceso: la pantalla de registro NO se ve; cartel "Entrando a tu cuenta…" */
+.access-splash { display: none; }
+html.access-pending #loginScreen { display: none !important; }
+html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z-index: 4000; background: #fff; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+.access-splash img { width: 72px; height: 72px; border-radius: 20px; } .access-splash b { font: 900 16px var(--p-font); color: #111; } .access-splash .lg-bar { max-width: 220px; }
 

@@ -4671,7 +4671,7 @@ async function _landingSignupHandler(req, res) {
     //    acá" adentro del casino.
     let accessUrl = null;
     try {
-      accessUrl = await issueAccessLinkFor(newUser.id);
+      accessUrl = (await issueAccessLinkFor(newUser.id)) + '&ir=cargar'; // #581 (owner): entra DIRECTO a donde se carga, sin ver el registro
       // 🪦 #224: antes se agregaba `ir=casino` (abría el casino directo). Ahora el cliente
       // entra al SISTEMA DE CARGAS (home 2.0) — el owner quiere que vea la carga primero.
     } catch (linkErr) {

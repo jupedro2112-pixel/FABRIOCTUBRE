@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 581. 🌐 Landing: 100% fijo · el alta entra DIRECTO a cargar sin ver la pantalla de registro de la app — SW v407
+**Pedido (owner):** "en /landing se buguea y figura 50 y después 100: dejá 100% siempre; y cuando creás la cuenta que no se vea el menú de
+registro de la app, que entre directamente donde se carga".
+**Qué se hizo:** la landing ya no pisa el bono con `/api/landing/info.welcome` (queda `BONUS_BIG`/`BONUS_NOTE` fijos). El alta por landing
+devuelve `accessUrl` con `&ir=cargar`; la app, si la URL trae `?acceso=`, esconde la pantalla de registro desde el primer frame
+(`html.access-pending`, cartel "Entrando a tu cuenta…" `#accessSplash`) hasta que el canje termina, no muestra el selector de menú y
+entra al inicio completo con "Cargá acá" (`ir=cargar` → `_openLoadAfterLogin`). Si el link falla, vuelve la pantalla de ingreso.
+**Archivos:** `landing/index.html`, `server.js`, `public/index.html`, `public/js/auth.js`, `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 579/580. 🌙 Botón de instalar pendiente llamativo en modo nocturno · el recomendado del selector es el BÁSICO — SW v406
 **Pedidos (owner):** "si está el modo nocturno, el de la app pendiente a instalar dejalo en otro color llamativo, en negro se pierde" ·
 "dejar el recomendado como el básico, que es completo y sencillo". En `html[data-theme="dark"]` el botón `#installGiftBar` va en

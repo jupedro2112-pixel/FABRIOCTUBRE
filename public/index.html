@@ -317,6 +317,9 @@
     </style>
 </head>
 <body>
+    <!-- #581: si la URL trae un link de acceso (?acceso=) se esconde la pantalla de registro desde el primer frame y se muestra "Entrando…" -->
+    <script>try { if (location.search.indexOf('acceso=') !== -1) document.documentElement.classList.add('access-pending'); } catch (e) {}</script>
+    <div id="accessSplash" class="access-splash" aria-live="polite"><img src="/icons/icon-192x192.png" alt=""><b>Entrando a tu cuenta…</b><div class="lg-bar"><i></i></div></div>
 <script>
     // Modo oscuro del chat: se aplica ANTES de que se pinte nada, si no el usuario
     // ve un flash del chat en claro y recién después se pone oscuro. Por eso va
@@ -2477,7 +2480,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v406</div>
+                    <div class="pf-build" id="appBuildTag">app v407</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
