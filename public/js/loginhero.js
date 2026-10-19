@@ -51,6 +51,16 @@
         try {
             const rf = info.refunds || {}; const sr = _el('lgSyRefund'); if (sr && rf.dailyMax) sr.textContent = rf.dailyMax + '%';
             const rp = Number(info.referralPct); const er2 = _el('lgSyRef'); if (er2 && rp > 0) er2.textContent = rp + '%';
+            // #555: los títulos salen del panel (COMANDOS → /sys_svc_*); un servicio apagado no se muestra
+            if (Array.isArray(info.services)) {
+                const by = {}; info.services.forEach((x) => { by[x.id] = x; });
+                document.querySelectorAll('.lg-sy[data-s]').forEach((el) => {
+                    const x = by[el.getAttribute('data-s')];
+                    if (!x) { el.style.display = 'none'; return; }
+                    const ico = el.querySelector('i'); el.textContent = ''; if (ico) el.appendChild(ico); el.appendChild(document.createTextNode(String(x.title).replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9]+\s*/, '')));
+                    el.title = x.detail || '';
+                });
+            }
         } catch (_) {}
         // #423: fila visible de plataformas (Girox · Ganamos · jugaygana) con "Próximamente" para las que no tienen API.
         try {

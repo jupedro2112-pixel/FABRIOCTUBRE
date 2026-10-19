@@ -1146,6 +1146,56 @@ app.get('/landing', landingPageHandler);
 // atribuido y medido como cualquier pauta. Va ANTES de /:code para que no lo tome el link corto de publicistas.
 app.get('/ingreso', (req, res, next) => { req.params = Object.assign({}, req.params, { code: 'INGRESO' }); return landingPageHandler(req, res, next); });
 
+// #555 (owner): los textos de "Todo nuestro servicio" (landing de Vercel, landing de pauta y chips del ingreso de la app) salen
+// SIEMPRE de la configuración del panel (reembolsos, misiones, ruleta, referidos, bono, mínimos) y se editan en COMANDOS
+// (`/sys_svc_*`, formato "Título | detalle", con variables). Un servicio apagado en el panel (misiones, ruleta) no se muestra.
+const SVC_DEFAULTS = {
+  carga: ['⚡ Carga automática 24 hs', 'Transferís desde {min_carga}, mandás el comprobante y se acredita solo.'],
+  reembolso: ['Reembolso diario {diario}%', 'Sobre lo que perdés con tu plata: diario {diario}% · semanal {semanal}% · mensual {mensual}%. Se cobra desde la app.'],
+  ruleta: ['Ruleta diaria', 'Un giro por día con % extra para tu próxima carga y premios en plata de hasta {premio_max}.'],
+  misiones: ['Misiones semanales', '{misiones} misiones por semana con regalos de hasta {premio_max}; a medida que subís de nivel, misiones más grandes.'],
+  referidos: ['Referidos {pct}%', 'Invitás amigos con tu link y cobrás el {pct}% de su actividad, todos los meses.'],
+  vip: ['Niveles VIP', '{niveles} niveles con bonos al subir y rakeback semanal.'],
+  soporte: ['Soporte real', 'Una persona te responde en minutos, por chat, todos los días.'],
+  retiros: ['Retiros a tu CBU', 'Pagos automáticos desde {min_retiro}, sin límites, en el acto.']
+};
+const SVC_ORDER = ['carga', 'reembolso', 'ruleta', 'misiones', 'referidos', 'vip', 'soporte', 'retiros'];
+async function _landingServices() {
+  const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+  const vars = {};
+  try { const tbp = await getRefundTiersByPeriod(); const mx = (ts) => (ts || []).reduce((m, t) => (t && t.pct > m ? t.pct : m), 0); vars.diario = mx(tbp.daily); vars.semanal = mx(tbp.weekly); vars.mensual = mx(tbp.monthly); } catch (_) { vars.diario = vars.semanal = vars.mensual = 0; }
+  try { vars.min_carga = money(await getMinDepositArs()); } catch (_) { vars.min_carga = ''; }
+  try { vars.min_retiro = money(await getWithdrawMinArs()); } catch (_) { vars.min_retiro = ''; }
+  try { vars.pct = require('./src/utils/referralRate').getConfiguredPct(); } catch (_) { vars.pct = 0; }
+  try { vars.niveles = vipLevels.listLevels().length; } catch (_) { vars.niveles = 0; }
+  let missionsOn = true, rouletteOn = true;
+  try {
+    const st = await getStrategyConfig(); const ms = st && st.missions; missionsOn = !!(ms && ms.enabled !== false);
+    const base = ms && Array.isArray(ms.tiers) && ms.tiers.length ? (ms.tiers[0].items || []) : (ms && ms.items) || [];
+    const act = base.filter((m) => m && m.active !== false); vars.misiones = act.length;
+    const allItems = (ms && Array.isArray(ms.tiers) ? ms.tiers.flatMap((t) => t.items || []) : act).filter((m) => m && m.active !== false);
+    vars.premio_max_misiones = money(allItems.reduce((m, it) => Math.max(m, Number(it.rewardArs) || 0), 0));
+    if (!act.length) missionsOn = false;
+  } catch (_) { vars.misiones = 0; vars.premio_max_misiones = ''; }
+  try {
+    const rc = await getDailyRouletteConfig(); rouletteOn = !!(rc && rc.enabled !== false);
+    const cash = (rc && rc.prizes || []).filter((p) => p.type === 'cash').reduce((m, p) => Math.max(m, Number(p.value) || 0), 0);
+    vars.premio_max_ruleta = cash ? money(cash) : '';
+  } catch (_) { vars.premio_max_ruleta = ''; }
+  const out = [];
+  for (const id of SVC_ORDER) {
+    if (id === 'misiones' && !missionsOn) continue;
+    if (id === 'ruleta' && !rouletteOn) continue;
+    if (id === 'referidos' && !(Number(vars.pct) > 0)) continue;
+    if (id === 'reembolso' && !(Number(vars.diario) > 0 || Number(vars.semanal) > 0 || Number(vars.mensual) > 0)) continue;
+    const v = Object.assign({}, vars, { premio_max: id === 'ruleta' ? vars.premio_max_ruleta : vars.premio_max_misiones });
+    const d = SVC_DEFAULTS[id];
+    let txt = ''; try { txt = await renderSystemCommand('/sys_svc_' + id, d[0] + ' | ' + d[1], v); } catch (_) { txt = _renderVars(d[0] + ' | ' + d[1], v); }
+    const parts = String(txt || '').split('|'); const title = (parts[0] || '').trim(); const detail = parts.slice(1).join('|').trim();
+    if (title) out.push({ id, title, detail });
+  }
+  return out;
+}
 // Info PÚBLICA para la landing (sin datos sensibles): plataformas habilitadas y escalera de reembolsos.
 app.get('/api/landing/info', async (req, res) => {
   try {
@@ -1175,7 +1225,8 @@ app.get('/api/landing/info', async (req, res) => {
     // #530: % de bienvenida REAL para el banner de la pantalla de ingreso (nada hardcodeado): primera carga + extra por instalar la app.
     let welcome = null;
     try { const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig(); welcome = { pct: fd, withApp: fd + (ig && ig.enabled ? ig.pct : 0) }; } catch (_) {}
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true }); // #421/#424/#530/#538/#541
+    let services = []; try { services = await _landingServices(); } catch (_) {} // #555
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true, services }); // #421/#424/#530/#538/#541/#555
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -11915,6 +11966,54 @@ async function initializeData() {
       description: '% EXTRA por instalar la app: mensaje cuando se acredita (el cliente lo cargó desde la app instalada). Variables: {username}, {monto} (sin $), {pct}, {plataforma}. Vacío = no se manda mensaje.',
       type: 'message',
       response: '🎁 ¡Listo {username}! Te cargamos *${monto} extra* ({pct}%) en {plataforma} por instalar la app. ✅\n\n¡A jugar! 🎰'
+    },
+    {
+      name: '/sys_svc_carga',
+      description: 'Servicio "⚡ Carga automática 24 hs" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: '⚡ Carga automática 24 hs | Transferís desde {min_carga}, mandás el comprobante y se acredita solo.'
+    },
+    {
+      name: '/sys_svc_reembolso',
+      description: 'Servicio "Reembolso diario" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Reembolso diario {diario}% | Sobre lo que perdés con tu plata: diario {diario}% · semanal {semanal}% · mensual {mensual}%. Se cobra desde la app.'
+    },
+    {
+      name: '/sys_svc_ruleta',
+      description: 'Servicio "Ruleta diaria" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Ruleta diaria | Un giro por día con % extra para tu próxima carga y premios en plata de hasta {premio_max}.'
+    },
+    {
+      name: '/sys_svc_misiones',
+      description: 'Servicio "Misiones semanales" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Misiones semanales | {misiones} misiones por semana con regalos de hasta {premio_max}; a medida que subís de nivel, misiones más grandes.'
+    },
+    {
+      name: '/sys_svc_referidos',
+      description: 'Servicio "Referidos" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Referidos {pct}% | Invitás amigos con tu link y cobrás el {pct}% de su actividad, todos los meses.'
+    },
+    {
+      name: '/sys_svc_vip',
+      description: 'Servicio "Niveles VIP" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Niveles VIP | {niveles} niveles con bonos al subir y rakeback semanal.'
+    },
+    {
+      name: '/sys_svc_soporte',
+      description: 'Servicio "Soporte real" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Soporte real | Una persona te responde en minutos, por chat, todos los días.'
+    },
+    {
+      name: '/sys_svc_retiros',
+      description: 'Servicio "Retiros a tu CBU" en la landing y en el ingreso de la app (#555). Formato: "Título | detalle". Variables: {diario} {semanal} {mensual} (% de reembolso), {min_carga}, {min_retiro}, {pct} (% referidos), {niveles} (VIP), {misiones} (cantidad por semana), {premio_max} (premio mayor de la ruleta o de las misiones).',
+      type: 'message',
+      response: 'Retiros a tu CBU | Pagos automáticos desde {min_retiro}, sin límites, en el acto.'
     },
     {
       // #349 (2026-10-17): cartel NOVEDAD del Inicio (debajo del titular de la app). {pct} = % del reembolso diario.

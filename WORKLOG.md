@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 555. 🔁 Textos de "Todo nuestro servicio" siempre iguales a la configuración del panel — SW v391
+**Pedido (owner):** "todo lo que se ajuste sobre el reembolso, misiones, detalles de lo que sea desde el admin, ajustalo en el texto de
+la página principal y que coincida siempre".
+**Qué se hizo:** `GET /api/landing/info.services` = lista `[{id, title, detail}]` armada en el server (`_landingServices`) con las
+variables reales: `{diario}/{semanal}/{mensual}` (rangos de reembolso), `{min_carga}`, `{min_retiro}`, `{pct}` (referidos), `{niveles}`
+(VIP), `{misiones}` (cantidad del nivel base) y `{premio_max}` (premio mayor de la ruleta o de las misiones). Las plantillas son comandos
+editables en COMANDOS: `/sys_svc_carga`, `/sys_svc_reembolso`, `/sys_svc_ruleta`, `/sys_svc_misiones`, `/sys_svc_referidos`, `/sys_svc_vip`,
+`/sys_svc_soporte`, `/sys_svc_retiros` (formato "Título | detalle"). Misiones o ruleta apagadas en el panel, referidos en 0 % o sin
+reembolsos ⇒ ese servicio desaparece. Lo consumen la landing de Vercel (`.sv[data-s]`, título + detalle) y los chips del ingreso de la
+app (`.lg-sy[data-s]`, título; el detalle queda como tooltip). Cache pública de 60 s.
+**Archivos:** `server.js`, `landing/index.html`, `public/index.html`, `public/js/loginhero.js`, SW.
+
 ### 554. 🌐 Landing de Vercel: "Todo nuestro servicio" arriba y plegable, plataformas debajo, todo más chico
 **Pedido (owner):** "todo nuestro servicio ponelo arriba de todo, abajo de PICA ROJA, bien remarcado y que figure explayar / ver todo con
 todo el detalle; las plataformas debajo de eso sin explayar, del lado de afuera; achicá un poco todo para que las fotos de Top juegos se
