@@ -180,7 +180,8 @@
     function _stLeft(exp) { const ms = new Date(exp) - Date.now(); if (ms <= 0) return ''; const h = Math.floor(ms / 3600000), mn = Math.floor((ms % 3600000) / 60000); return h >= 1 ? '· vence en ' + h + ' h' : '· vence en ' + mn + ' min'; }
     function _stPaint() {
         const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
-        [['sdBanner', 'sdBannerPct', 'sdBannerLeft'], ['sdBannerFull', 'sdBannerPctFull', 'sdBannerLeftFull']].forEach(([b, p, l]) => { const el = _el(b); if (!el) return; if (sd && sd.pct > 0) { el.hidden = false; const pe = _el(p); if (pe) pe.textContent = sd.pct + '% EXTRA'; const le = _el(l); if (le) le.textContent = _stLeft(sd.expiresAt); } else el.hidden = true; });
+        // #536 (owner): "Recordá que tenés {pct}% y {pct+extra}% instalando la app · podés elegir cuál querés una vez que hiciste la carga".
+        [['sdBanner', 'sdBannerPct', 'sdBannerLeft', 'sdBannerApp', 'sdBannerAppWrap'], ['sdBannerFull', 'sdBannerPctFull', 'sdBannerLeftFull', 'sdBannerAppFull', 'sdBannerAppWrapFull']].forEach(([b, p, l, ap, aw]) => { const el = _el(b); if (!el) return; if (sd && sd.pct > 0) { el.hidden = false; const pe = _el(p); if (pe) pe.textContent = sd.pct + '%'; const le = _el(l); if (le) le.textContent = _stLeft(sd.expiresAt); _fdPromoLoad().then((j) => { const extra = j && Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el(aw), a = _el(ap); if (w) w.hidden = !extra; if (a && extra) a.textContent = (sd.pct + extra) + '%'; }).catch(() => {}); } else el.hidden = true; });
         const btn = _el('ezMissions'), card = _el('missionsCard'); const nv = d.nivel || null;
         if (!ms.length) { if (btn) btn.hidden = true; if (card) card.hidden = true; return; }
         const done = ms.filter((m) => m.done).length;

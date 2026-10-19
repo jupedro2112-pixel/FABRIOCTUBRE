@@ -464,7 +464,7 @@ VIP.ui = (function () {
 
     async function loadReferralData(force) {
         const c = document.getElementById('referralContent');
-        if (c && !_refData) c.innerHTML = '<span style="color:#888;font-size:12px;">Cargando tus referidos…</span>';
+        if (c && !_refData) c.innerHTML = '<span style="color:var(--p-muted);font-size:12px;">Cargando tus referidos…</span>';
         try {
             const d = await fetchReferralDashboard(force);
             renderReferralModal(d);
@@ -479,13 +479,13 @@ VIP.ui = (function () {
     function _refTierHtml(t, lv) {
         const on = t.reached, cur = t.current;
         let foot;
-        if (cur) foot = '<span class="ref-pill" style="background:rgba(0,255,136,.15);color:#00ff88;border:1px solid rgba(0,255,136,.5);">⭐ Tu nivel actual</span>';
-        else if (on) foot = '<span class="ref-pill" style="background:rgba(255,215,0,.12);color:#ffd700;border:1px solid rgba(255,215,0,.5);">✅ Alcanzado</span>';
-        else foot = '<span class="ref-pill" style="background:rgba(255,255,255,.06);color:#999;border:1px solid rgba(255,255,255,.15);">🔒 Te faltan ' + Math.max(0, t.count - (lv.active || 0)) + '</span>';
-        return '<div style="flex:1;min-width:96px;text-align:center;padding:9px 6px;border-radius:10px;background:' + (cur ? 'rgba(0,255,136,.07)' : (on ? 'rgba(255,215,0,.08)' : 'rgba(255,255,255,.03)')) + ';border:1px solid ' + (cur ? 'rgba(0,255,136,.55)' : (on ? 'rgba(255,215,0,.55)' : 'rgba(255,255,255,.12)')) + ';">' +
-            '<div style="font-size:11px;font-weight:900;color:#fff;margin-top:2px;">' + t.count + ' ACTIVOS</div>' +
-            '<div style="font-size:22px;font-weight:900;color:' + (on ? '#ffd700' : '#bbb') + ';line-height:1.15;">' + _refPctNum(t.pct) + '</div>' +
-            '<div style="font-size:9.5px;color:#aaa;margin-bottom:6px;">de comisión</div>' + foot + '</div>';
+        if (cur) foot = '<span class="ref-pill" style="background:var(--p-green-soft);color:var(--p-green);border:1px solid var(--p-green-soft);">⭐ Tu nivel actual</span>';
+        else if (on) foot = '<span class="ref-pill" style="background:var(--p-red-soft);color:var(--p-red);border:1px solid var(--p-red-soft);">✅ Alcanzado</span>';
+        else foot = '<span class="ref-pill" style="background:var(--p-surface);color:var(--p-muted);border:1px solid var(--p-surface);">🔒 Te faltan ' + Math.max(0, t.count - (lv.active || 0)) + '</span>';
+        return '<div style="flex:1;min-width:96px;text-align:center;padding:9px 6px;border-radius:10px;background:' + (cur ? 'var(--p-green-soft)' : (on ? 'var(--p-red-soft)' : 'var(--p-surface)')) + ';border:1px solid ' + (cur ? 'var(--p-green-soft)' : (on ? 'var(--p-red-soft)' : 'var(--p-surface)')) + ';">' +
+            '<div style="font-size:11px;font-weight:900;color:var(--p-text);margin-top:2px;">' + t.count + ' ACTIVOS</div>' +
+            '<div style="font-size:22px;font-weight:900;color:' + (on ? 'var(--p-red)' : 'var(--p-muted)') + ';line-height:1.15;">' + _refPctNum(t.pct) + '</div>' +
+            '<div style="font-size:9.5px;color:var(--p-muted);margin-bottom:6px;">de comisión</div>' + foot + '</div>';
     }
 
     function renderReferralModal(d) {
@@ -500,41 +500,41 @@ VIP.ui = (function () {
         const netInfoId = 'refNetInfo';
         let html = '';
         // Link (solo el link: más directo que el código)
-        html += '<div style="background:rgba(255,255,255,.05);border:1px solid #d4af37;border-radius:12px;padding:12px;margin-bottom:12px;">' +
+        html += '<div style="background:var(--p-surface);border:1px solid var(--p-red);border-radius:12px;padding:12px;margin-bottom:12px;">' +
             '<span style="color:#b0b0b0;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:5px;">Tu link de referido</span>' +
             '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-            '<span id="myReferralLink" style="font-size:12px;color:#00ff88;word-break:break-all;flex:1;min-width:0;">' + _esc(d.referralLink || '—') + '</span>' +
-            '<button onclick="VIP.ui.copyReferralLink()" style="background:rgba(0,255,136,.1);border:1px solid #00ff88;color:#00ff88;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">📋 Copiar</button>' +
+            '<span id="myReferralLink" style="font-size:12px;color:var(--p-green);word-break:break-all;flex:1;min-width:0;">' + _esc(d.referralLink || '—') + '</span>' +
+            '<button onclick="VIP.ui.copyReferralLink()" style="background:var(--p-green-soft);border:1px solid var(--p-green);color:var(--p-green);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;">📋 Copiar</button>' +
             '</div>' +
-            '<button onclick="VIP.ui.shareReferralLink()" style="width:100%;margin-top:9px;background:linear-gradient(135deg,#ffd700,#f7931e);color:#000;border:none;border-radius:10px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;">🔗 INVITAR A TUS AMIGOS</button>' +
-            '<div style="font-size:10px;color:#888;margin-top:6px;text-align:center;">Tu amigo entra por el link, se registra y queda vinculado a vos para siempre. Código: <b style="color:#d4af37;letter-spacing:1px;">' + _esc(d.referralCode || '') + '</b></div>' +
+            '<button onclick="VIP.ui.shareReferralLink()" style="width:100%;margin-top:9px;background:var(--p-red);color:#fff;border:none;border-radius:10px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;">🔗 INVITAR A TUS AMIGOS</button>' +
+            '<div style="font-size:10px;color:var(--p-muted);margin-top:6px;text-align:center;">Tu amigo entra por el link, se registra y queda vinculado a vos para siempre. Código: <b style="color:var(--p-red);letter-spacing:1px;">' + _esc(d.referralCode || '') + '</b></div>' +
             '</div>';
         // Tiles
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
-            '<div class="ref-modal-tile" style="border-color:rgba(0,255,136,.35);"><span class="v" style="color:#00ff88;">👥 ' + (tiersOn ? (lv.active || 0) : (t.active || 0)) + '</span><span class="l">Referidos activos<br><span style="color:#777;">(' + (tiersOn ? 'cargaron al menos ' + _refMoney(lv.minChargedARS) : 'los que cargaron') + ')</span></span></div>' +
-            '<div class="ref-modal-tile" style="border-color:rgba(255,215,0,.45);"><span class="v" style="color:#ffd700;">💰 ' + _refMoney(t.commissionMonth) + '</span><span class="l">Tu comisión acumulada<br><span style="color:#777;">(' + pct + ' de la actividad de este mes' + (tiersOn ? ' · tu nivel' : '') + ')</span></span></div>' +
-            '<div class="ref-modal-tile" style="border-color:rgba(255,80,80,.4);cursor:pointer;" onclick="VIP.ui.toggleReferralNetLossInfo()"><span class="v" style="color:#ff6b6b;">📉 ' + _refMoney(t.netLossMonth) + '</span><span class="l">Actividad neta de tus referidos (este mes)<br><span style="color:#ff9a9a;">ℹ️ tocá: es un monto variable</span></span></div>' +
+            '<div class="ref-modal-tile" style="border-color:var(--p-green-soft);"><span class="v" style="color:var(--p-green);">👥 ' + (tiersOn ? (lv.active || 0) : (t.active || 0)) + '</span><span class="l">Referidos activos<br><span style="color:var(--p-muted);">(' + (tiersOn ? 'cargaron al menos ' + _refMoney(lv.minChargedARS) : 'los que cargaron') + ')</span></span></div>' +
+            '<div class="ref-modal-tile" style="border-color:var(--p-red-soft);"><span class="v" style="color:var(--p-red);">💰 ' + _refMoney(t.commissionMonth) + '</span><span class="l">Tu comisión acumulada<br><span style="color:var(--p-muted);">(' + pct + ' de la actividad de este mes' + (tiersOn ? ' · tu nivel' : '') + ')</span></span></div>' +
+            '<div class="ref-modal-tile" style="border-color:var(--p-red-soft);cursor:pointer;" onclick="VIP.ui.toggleReferralNetLossInfo()"><span class="v" style="color:#ff6b6b;">📉 ' + _refMoney(t.netLossMonth) + '</span><span class="l">Actividad neta de tus referidos (este mes)<br><span style="color:#ff9a9a;">ℹ️ tocá: es un monto variable</span></span></div>' +
             '<div class="ref-modal-tile" style="border-color:rgba(0,170,255,.4);"><span class="v" style="color:#4fc3ff;">📊 ' + _refMoney(t.totalCharged) + '</span><span class="l">Total cargado por<br>tus referidos</span></div>' +
             '</div>';
-        html += '<div id="' + netInfoId + '" style="display:none;background:rgba(255,80,80,.08);border:1px solid rgba(255,80,80,.4);border-radius:10px;padding:10px;margin-bottom:10px;font-size:11.5px;line-height:1.55;color:#eee;">' +
+        html += '<div id="' + netInfoId + '" style="display:none;background:var(--p-red-soft);border:1px solid var(--p-red-soft);border-radius:10px;padding:10px;margin-bottom:10px;font-size:11.5px;line-height:1.55;color:#eee;">' +
             '<b style="color:#ff9a9a;">¿Por qué cambia este número?</b> Es el resultado neto del juego de tus referidos en el mes (lo que apostaron menos lo que ganaron), sumado. Si un referido gana, el número BAJA (y tu comisión también); si no, SUBE. Por eso puede moverse día a día. Lo que cobrás se calcula con el número final del mes y se acredita solo el 1° del mes siguiente.' +
             (t.netwinPartial ? '<br><span style="color:#ffb347;">⚠️ Ahora mismo no pudimos leer la actividad de algún referido (la plataforma está demorada): el total puede estar incompleto por unos minutos.</span>' : '') + '</div>';
-        html += '<div style="background:rgba(255,255,255,.03);border-radius:10px;padding:9px 11px;margin-bottom:12px;font-size:11.5px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
-            '<span style="color:#b0b0b0;">Período actual: <b style="color:#fff;">' + _esc(per.label || per.key || '—') + '</b></span>' +
-            '<span style="color:#b0b0b0;">Próxima acreditación: <b style="color:#fff;">' + _esc(per.nextCredit || '—') + '</b></span></div>';
+        html += '<div style="background:var(--p-surface);border-radius:10px;padding:9px 11px;margin-bottom:12px;font-size:11.5px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
+            '<span style="color:#b0b0b0;">Período actual: <b style="color:var(--p-text);">' + _esc(per.label || per.key || '—') + '</b></span>' +
+            '<span style="color:#b0b0b0;">Próxima acreditación: <b style="color:var(--p-text);">' + _esc(per.nextCredit || '—') + '</b></span></div>';
         // Tabla de referidos
         const rows = d.referrals || [];
-        html += '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:10px;margin-bottom:12px;">' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="font-size:13px;font-weight:900;color:#ffd700;">👥 MIS REFERIDOS (' + rows.length + ')</span></div>';
+        html += '<div style="background:var(--p-surface);border:1px solid var(--p-red-soft);border-radius:12px;padding:10px;margin-bottom:12px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="font-size:13px;font-weight:900;color:var(--p-red);">👥 MIS REFERIDOS (' + rows.length + ')</span></div>';
         if (!rows.length) {
-            html += '<div style="color:#888;font-size:12px;padding:8px 0;">Todavía no tenés referidos. Compartí tu link y empezá a cobrar.</div>';
+            html += '<div style="color:var(--p-muted);font-size:12px;padding:8px 0;">Todavía no tenés referidos. Compartí tu link y empezá a cobrar.</div>';
         } else {
             html += '<div style="overflow-x:auto;"><table class="ref-table"><thead><tr><th>Usuario</th><th>Estado</th><th style="text-align:right;">Cargado</th><th style="text-align:right;">Actividad</th><th style="text-align:right;">Tu ' + pct + '</th></tr></thead><tbody>';
             rows.forEach(r => {
-                const st = r.active ? '<span class="ref-pill" style="background:rgba(0,255,136,.15);color:#00ff88;">Activo</span>' : '<span class="ref-pill" style="background:rgba(255,80,80,.15);color:#ff8080;">Sin carga</span>';
-                const net = r.netLossMonth === null ? '<span style="color:#777;">…</span>' : _refMoney(Math.max(0, r.netLossMonth));
-                const com = r.commissionMonth === null ? '<span style="color:#777;">…</span>' : '<b style="color:#00ff88;">' + _refMoney(r.commissionMonth) + '</b>';
-                html += '<tr><td><b style="color:#fff;">' + _esc(r.username) + '</b><br><span style="color:#888;font-size:9.5px;">Se registró ' + _refAgo(r.registeredAt) + (r.qualified ? ' · ✔ activo para tu nivel' : (r.active ? ' · cargó menos de ' + _refMoney(lv.minChargedARS) : '')) + '</span></td>' +
+                const st = r.active ? '<span class="ref-pill" style="background:var(--p-green-soft);color:var(--p-green);">Activo</span>' : '<span class="ref-pill" style="background:var(--p-red-soft);color:#ff8080;">Sin carga</span>';
+                const net = r.netLossMonth === null ? '<span style="color:var(--p-muted);">…</span>' : _refMoney(Math.max(0, r.netLossMonth));
+                const com = r.commissionMonth === null ? '<span style="color:var(--p-muted);">…</span>' : '<b style="color:var(--p-green);">' + _refMoney(r.commissionMonth) + '</b>';
+                html += '<tr><td><b style="color:var(--p-text);">' + _esc(r.username) + '</b><br><span style="color:var(--p-muted);font-size:9.5px;">Se registró ' + _refAgo(r.registeredAt) + (r.qualified ? ' · ✔ activo para tu nivel' : (r.active ? ' · cargó menos de ' + _refMoney(lv.minChargedARS) : '')) + '</span></td>' +
                     '<td>' + st + '</td><td style="text-align:right;">' + _refMoney(r.totalCharged) + '</td><td style="text-align:right;color:#ff9a9a;">' + net + '</td><td style="text-align:right;">' + com + '</td></tr>';
             });
             html += '</tbody></table></div>';
@@ -543,19 +543,19 @@ VIP.ui = (function () {
         // #171 Nivel de comisión según referidos activos
         if (tiersOn) {
             const next = lv.nextTier;
-            html += '<div style="background:linear-gradient(135deg,#2d0052,#1a0033);border:1.5px solid #ffd700;border-radius:12px;padding:12px;margin-bottom:12px;">' +
-                '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:900;color:#ffd700;">🏆 TU NIVEL DE COMISIÓN</span><span style="font-size:12px;color:#fff;font-weight:900;">' + (lv.active || 0) + ' / ' + maxCount + ' <span style="font-size:9.5px;color:#aaa;font-weight:400;">referidos activos</span></span></div>' +
+            html += '<div style="background:linear-gradient(135deg,var(--p-text),var(--p-text));border:1.5px solid var(--p-red);border-radius:12px;padding:12px;margin-bottom:12px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;"><span style="font-size:13px;font-weight:900;color:var(--p-red);">🏆 TU NIVEL DE COMISIÓN</span><span style="font-size:12px;color:var(--p-text);font-weight:900;">' + (lv.active || 0) + ' / ' + maxCount + ' <span style="font-size:9.5px;color:var(--p-muted);font-weight:400;">referidos activos</span></span></div>' +
                 '<div style="display:flex;align-items:center;gap:10px;margin:8px 0 6px;">' +
-                '<div style="font-size:34px;font-weight:900;color:#00ff88;line-height:1;">' + _refPctNum(lv.pct) + '</div>' +
-                '<div style="font-size:11px;color:#ddd;line-height:1.45;">' + (lv.currentTier ? 'Estás en el nivel de <b style="color:#fff;">' + lv.currentTier.count + ' referidos activos</b>. ' : 'Todavía no llegaste al primer nivel. ') +
-                (next ? 'Con <b style="color:#ffd700;">' + next.missing + ' más</b> pasás al <b style="color:#ffd700;">' + _refPctNum(next.pct) + '</b>.' : '¡Estás en el <b style="color:#ffd700;">máximo</b>!') + '</div></div>' +
-                '<div style="font-size:10.5px;color:#bbb;margin:0 0 6px;">Cuantos más amigos activos traés, mayor es el % de comisión que cobrás por la actividad de TODOS tus referidos, todos los meses. Referido activo = cargó al menos <b style="color:#fff;">' + _refMoney(lv.minChargedARS) + '</b> en total.</div>' +
+                '<div style="font-size:34px;font-weight:900;color:var(--p-green);line-height:1;">' + _refPctNum(lv.pct) + '</div>' +
+                '<div style="font-size:11px;color:var(--p-muted);line-height:1.45;">' + (lv.currentTier ? 'Estás en el nivel de <b style="color:var(--p-text);">' + lv.currentTier.count + ' referidos activos</b>. ' : 'Todavía no llegaste al primer nivel. ') +
+                (next ? 'Con <b style="color:var(--p-red);">' + next.missing + ' más</b> pasás al <b style="color:var(--p-red);">' + _refPctNum(next.pct) + '</b>.' : '¡Estás en el <b style="color:var(--p-red);">máximo</b>!') + '</div></div>' +
+                '<div style="font-size:10.5px;color:var(--p-muted);margin:0 0 6px;">Cuantos más amigos activos traés, mayor es el % de comisión que cobrás por la actividad de TODOS tus referidos, todos los meses. Referido activo = cargó al menos <b style="color:var(--p-text);">' + _refMoney(lv.minChargedARS) + '</b> en total.</div>' +
                 '<div class="dash-ref-bar" style="height:11px;"><div class="dash-ref-fill" style="width:' + prog + '%;"></div></div>' +
                 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">' + tiers.map(x => _refTierHtml(x, lv)).join('') + '</div>' +
-                (t.historicalMilestones > 0 ? '<div style="font-size:10.5px;color:#00ff88;margin-top:8px;text-align:center;">Ya cobraste ' + _refMoney(t.historicalMilestones) + ' en premios por referidos 🏆</div>' : '') +
+                (t.historicalMilestones > 0 ? '<div style="font-size:10.5px;color:var(--p-green);margin-top:8px;text-align:center;">Ya cobraste ' + _refMoney(t.historicalMilestones) + ' en premios por referidos 🏆</div>' : '') +
                 '</div>';
         }
-        html += '<div style="font-size:10.5px;color:#888;text-align:center;line-height:1.5;">Total cobrado en comisiones: <b style="color:#d4af37;">' + _refMoney(t.historicalCommission) + '</b>. La comisión del mes se calcula con la actividad final del mes y se acredita sola el 1° del mes siguiente. Sin límite de referidos ni de ganancia.</div>';
+        html += '<div style="font-size:10.5px;color:var(--p-muted);text-align:center;line-height:1.5;">Total cobrado en comisiones: <b style="color:var(--p-red);">' + _refMoney(t.historicalCommission) + '</b>. La comisión del mes se calcula con la actividad final del mes y se acredita sola el 1° del mes siguiente. Sin límite de referidos ni de ganancia.</div>';
         c.innerHTML = html;
     }
 
@@ -578,7 +578,7 @@ VIP.ui = (function () {
         c.innerHTML = '<div class="dash-ref">' +
             '<div class="dash-ref-head"><span style="font-size:18px;">👥</span><span class="dash-ref-title">INVITÁ A TUS AMIGOS · cobrá hasta el ' + _refMaxPct(d) + '</span><button class="dash-ref-cta" onclick="VIP.ui.openReferralModal()">VER NIVELES ›</button></div>' +
             (tiersOn ? ('<div class="dash-ref-bar"><div class="dash-ref-fill" style="width:' + prog + '%;"></div></div>' +
-            '<div style="display:flex;justify-content:space-between;font-size:9.5px;color:#bbb;margin-bottom:4px;"><span>' + (lv.active || 0) + ' / ' + maxCount + ' referidos activos · cobrás <b style="color:#00ff88;">' + _refPctNum(lv.pct) + '</b></span><span style="color:#ffd700;">' + (next ? 'Te faltan ' + next.missing + ' para el ' + _refPctNum(next.pct) : '¡Nivel máximo!') + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--p-muted);margin-bottom:4px;"><span>' + (lv.active || 0) + ' / ' + maxCount + ' referidos activos · cobrás <b style="color:var(--p-green);">' + _refPctNum(lv.pct) + '</b></span><span style="color:var(--p-red);">' + (next ? 'Te faltan ' + next.missing + ' para el ' + _refPctNum(next.pct) : '¡Nivel máximo!') + '</span></div>' +
             '<div class="dash-ref-steps">' + steps + '</div>') : '') +
             '<button class="dash-ref-invite" onclick="VIP.ui.shareReferralLink()">🔗 INVITAR AHORA</button>' +
             '</div>';
@@ -651,30 +651,30 @@ VIP.ui = (function () {
         const old = document.getElementById('referralShareChooser'); if (old) old.remove();
         const ov = document.createElement('div');
         ov.id = 'referralShareChooser';
-        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:14px;'; // #317: arriba del casino y del hub PREMIOS
+        ov.style.cssText = 'position:fixed;inset:0;background:var(--p-surface-2);backdrop-filter:blur(3px);z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:14px;'; // #317: arriba del casino y del hub PREMIOS
         ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
         const enc = encodeURIComponent(text);
         const WA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>';
         const TG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>';
         const item = (bg, icon, title, sub, onclick) =>
-            '<button onclick="' + onclick + '" style="width:100%;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;cursor:pointer;margin-top:8px;text-align:left;color:#fff;transition:background .15s;" onmouseover="this.style.background=\'rgba(255,255,255,.08)\'" onmouseout="this.style.background=\'rgba(255,255,255,.04)\'">' +
-            '<span style="flex-shrink:0;width:42px;height:42px;border-radius:12px;background:' + bg + ';display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);">' + icon + '</span>' +
+            '<button onclick="' + onclick + '" style="width:100%;display:flex;align-items:center;gap:12px;background:var(--p-surface);border:1px solid var(--p-surface);border-radius:12px;padding:10px 12px;cursor:pointer;margin-top:8px;text-align:left;color:var(--p-text);transition:background .15s;" onmouseover="this.style.background=\'var(--p-surface)\'" onmouseout="this.style.background=\'var(--p-surface)\'">' +
+            '<span style="flex-shrink:0;width:42px;height:42px;border-radius:12px;background:' + bg + ';display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px var(--p-surface-2);">' + icon + '</span>' +
             '<span style="flex:1;min-width:0;"><span style="display:block;font-weight:800;font-size:14px;">' + title + '</span><span style="display:block;font-size:11px;color:#aab;line-height:1.3;">' + sub + '</span></span>' +
-            '<span style="color:#888;font-size:18px;">›</span></button>';
-        ov.innerHTML = '<div style="background:#14062b;border:1px solid rgba(255,215,0,.45);border-radius:18px;padding:16px;max-width:420px;width:100%;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6);">' +
+            '<span style="color:var(--p-muted);font-size:18px;">›</span></button>';
+        ov.innerHTML = '<div style="background:#14062b;border:1px solid var(--p-red-soft);border-radius:18px;padding:16px;max-width:420px;width:100%;color:var(--p-text);box-shadow:0 20px 60px var(--p-surface-2);">' +
             '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">' +
-            '<span style="flex-shrink:0;width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#d4af37,#ffd700);display:flex;align-items:center;justify-content:center;font-size:20px;">🔗</span>' +
+            '<span style="flex-shrink:0;width:40px;height:40px;border-radius:12px;background:var(--p-red);display:flex;align-items:center;justify-content:center;font-size:20px;">🔗</span>' +
             '<div style="flex:1;min-width:0;"><div style="font-weight:900;font-size:16px;letter-spacing:.2px;">Invitá a tus amigos</div>' +
-            '<div style="font-size:12px;color:#aab;margin-top:2px;">Cobrás hasta el <b style="color:#ffd700;">' + pct + '</b> de comisión por la actividad de tus amigos: cuantos más activos, mayor tu %.</div></div>' +
-            '<button onclick="document.getElementById(\'referralShareChooser\').remove()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#ccc;font-size:16px;cursor:pointer;">✕</button></div>' +
-            '<div style="background:rgba(0,0,0,.35);border:1px dashed rgba(255,215,0,.35);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;">' +
+            '<div style="font-size:12px;color:#aab;margin-top:2px;">Cobrás hasta el <b style="color:var(--p-red);">' + pct + '</b> de comisión por la actividad de tus amigos: cuantos más activos, mayor tu %.</div></div>' +
+            '<button onclick="document.getElementById(\'referralShareChooser\').remove()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--p-surface);border:1px solid var(--p-surface);color:var(--p-muted);font-size:16px;cursor:pointer;">✕</button></div>' +
+            '<div style="background:var(--p-surface-2);border:1px dashed var(--p-red-soft);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;">' +
             '<span style="flex:1;min-width:0;font-size:11.5px;color:#9ff2c7;word-break:break-all;font-family:ui-monospace,Menlo,monospace;">' + _esc(link) + '</span>' +
-            '<span style="flex-shrink:0;font-size:10.5px;font-weight:800;color:' + (copied ? '#00ff88' : '#ffd700') + ';white-space:nowrap;">' + (copied ? '✓ Copiado' : '') + '</span></div>' +
+            '<span style="flex-shrink:0;font-size:10.5px;font-weight:800;color:' + (copied ? 'var(--p-green)' : 'var(--p-red)') + ';white-space:nowrap;">' + (copied ? '✓ Copiado' : '') + '</span></div>' +
             '<div style="font-size:10.5px;color:#778;margin:10px 0 2px;text-transform:uppercase;letter-spacing:1px;font-weight:800;">Enviar por</div>' +
             item('#25d366', WA, 'WhatsApp', 'Se abre con el mensaje y tu link listos', 'window.open(\'https://wa.me/?text=' + enc + '\',\'_blank\')') +
             item('#229ed9', TG, 'Telegram', 'Elegí el chat o grupo donde compartirlo', 'window.open(\'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text.replace(link, '').trim()) + '\',\'_blank\')') +
             (navigator.share ? item('linear-gradient(135deg,#7c3aed,#4f46e5)', '<span style="font-size:20px;">📤</span>', 'Otras apps', 'Instagram, SMS, Messenger, correo…', 'VIP.ui.shareReferralNative()') : '') +
-            item('rgba(255,215,0,.16)', '<span style="font-size:20px;">📋</span>', 'Copiar el link', 'Para pegarlo donde quieras', 'VIP.ui.copyReferralLink()') +
+            item('var(--p-red-soft)', '<span style="font-size:20px;">📋</span>', 'Copiar el link', 'Para pegarlo donde quieras', 'VIP.ui.copyReferralLink()') +
             '</div>';
         document.body.appendChild(ov);
     }

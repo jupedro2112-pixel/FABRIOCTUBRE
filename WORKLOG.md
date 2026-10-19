@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 536. 🔥 Fueguito minimizado · banner "Recordá que tenés 50% y 100%" · referidos en estilo Pinterest — SW v381
+**Pedido (owner):** "el fueguito en carga auto se ve cortado: racha fueguito minimizado que entre ahí y aparezca ver más, sin agrandar el
+recuadro · el '50% extra en tu próxima carga' que diga 'Recordá que tenés 50% y 100% instalando la app, podés elegir cuál querés una vez
+que hiciste la carga' · el estilo nuevo de invitá a tu amigo 100% Pinterest".
+**Qué se hizo:** (1) `#fireMiniBtn`: "🔥 Racha fueguito · N d · Ver más ›", sin el subtexto largo (queda oculto), mismo alto.
+(2) `#sdBanner`/`#sdBannerFull` (oferta de 2ª carga, #504): texto nuevo con `{pct}%` real y `{pct+extra}%` instalando la app (extra =
+regalo por instalar, `/api/first-deposit-promo`); si no hay extra, se oculta esa parte. (3) Referidos: card del home, modal y popup con
+tokens `--p-*` (blanco/gris/rojo; verde para lo positivo); el popup ya no usa el arte violeta del gemelo (las imágenes quedan en
+`public/img/` sin uso); todos los colores fijos del bloque de `ui.js` pasaron a tokens.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 535. 🌐 Landing de VERCEL (`picaroja-landing.vercel.app`) actualizada — `docs/landing-vercel/`
 **Pedido (owner):** "ya está cargada ahí, estás ajustando sobre otra landing, quiero ahí" (la del `landing2.zip`, oscura, 1GIROX).
 **Qué se hizo:** sobre el `index.html` del zip (más nuevo que el publicado: trae pixel de Meta y escape del navegador de Instagram)

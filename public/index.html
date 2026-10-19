@@ -1078,7 +1078,7 @@
             <div class="top-row" id="topRow">
                 <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú <span id="changeMenuCur"></span><em>▾</em></button>
                 <!-- #528 (owner): fueguito resumido al lado de "Cambiar menú" en el home completo (abre el fueguito; home.js lo rellena desde la tarjeta) -->
-                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Fueguito</b><small id="fireMiniSub">Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span></button>
+                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha fueguito</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button><!-- #536: minimizado, sin texto largo -->
             </div>
             <div id="entryView" class="entry-view">
                 <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
@@ -1166,7 +1166,7 @@
                     <span class="ez-main-arrow">›</span>
                 </button>
                 <!-- #504: bono de SEGUNDA carga vigente (lo pinta home.js con /api/strategy/me) -->
-                <button type="button" class="sd-banner" id="sdBanner" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPct">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeft"></small><span>Cargar ›</span></button>
+                <button type="button" class="sd-banner" id="sdBanner" hidden onclick="VIP.home.easyLoad()"><span class="sd-txt">Recordá que tenés <b id="sdBannerPct">50%</b><span id="sdBannerAppWrap"> y <b id="sdBannerApp">100%</b> instalando la app</span> · podés elegir cuál querés una vez que hiciste la carga <small id="sdBannerLeft"></small></span><span>Cargar ›</span></button><!-- #536 -->
                 <!-- #510 (owner): orden fijo — Reembolso · Misiones / Referidos · Ruleta. "Ver la plataforma" y "Soporte" salieron del menú fácil
                      (el soporte sigue en la barra de arriba y en la de abajo con la opción 2; la plataforma, en el menú completo). -->
                 <div class="ez-grid">
@@ -1352,7 +1352,7 @@
                 <!-- ===== NIVEL VIP (#253): barra de progreso plegable debajo de "Guardá tu acceso". Lo pinta home.js
                      con /api/vip/status; cada nivel alcanzado aparece desbloqueado (✓) y los que faltan con 🔒. ===== -->
                 <!-- #257: ¡Felicidades por tu nuevo nivel! → reclamar el bono eligiendo plataforma (lo pinta home.js) -->
-                <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPctFull">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeftFull"></small><span>Cargar ›</span></button>
+                <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><span class="sd-txt">Recordá que tenés <b id="sdBannerPctFull">50%</b><span id="sdBannerAppWrapFull"> y <b id="sdBannerAppFull">100%</b> instalando la app</span> · podés elegir cuál querés una vez que hiciste la carga <small id="sdBannerLeftFull"></small></span><span>Cargar ›</span></button><!-- #536 -->
                 <div class="home-card ms-card" id="missionsCard" hidden><button type="button" class="ms-card-h ms-oneline" onclick="VIP.home.toggleMissionsCard()" aria-expanded="false"><b>🎯 Misiones</b><small id="missionsCardSub"></small><i class="ms-chev">tocá para ver ▾</i></button><div id="missionsCardBody" hidden><div id="missionsCardList" onclick="VIP.home.openMissions()"></div><small class="ms-note" id="missionsCardNote"></small></div></div>
                 <div id="referralHomeCard" style="display:none;"></div><!-- #529: card INVITÁ A TUS AMIGOS (nivel + progreso) -->
                 <div class="home-card vip-claim" id="vipClaimCard" style="display:none;"></div>
@@ -2463,7 +2463,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v380</div>
+                    <div class="pf-build" id="appBuildTag">app v381</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -4884,7 +4884,7 @@
             <button onclick="hideModal('referralModal')" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;z-index:10;">✕</button>
             <div class="modal-header" style="margin-bottom:10px;">
                 <h2 style="margin:0;">🤝 Mis Referidos</h2>
-                <p style="margin:4px 0 0;">Cobrás hasta el <strong style="color:#d4af37;"><span class="referralRatePct">5%</span></strong> de comisión por la actividad de tus referidos, todos los meses. Tu % actual: <strong style="color:#00ff88;"><span class="referralMyPct">5%</span></strong></p>
+                <p style="margin:4px 0 0;">Cobrás hasta el <strong class="ref-hi"><span class="referralRatePct">5%</span></strong> de comisión por la actividad de tus referidos, todos los meses. Tu % actual: <strong class="ref-ok"><span class="referralMyPct">5%</span></strong></p>
                 <!-- #472 (owner): novedad — el % baja en diciembre para los próximos referidos -->
                 <div class="ref-news"><b>NOVEDAD</b> Aprovechá el <b><span class="ref-pct">5</span>%</b> ahora: en diciembre baja al <b>3%</b> para todos los próximos referidos. Los que ya tenés siguen igual.</div>
             </div>
@@ -4895,24 +4895,15 @@
     <!-- #168 Popup promocional de referidos: se muestra cada vez que se abre la app (una vez por
          apertura). Botones: compartir el link / ver el progreso. -->
     <div id="referralPromoModal" class="modal hidden" style="z-index:2147483000;" onclick="if(event.target===this)hideModal('referralPromoModal')">
-        <div class="ref-promo" style="padding:0;overflow:hidden;">
-            <button class="ref-promo-x" onclick="hideModal('referralPromoModal')" style="top:8px;right:8px;">✕</button>
-            <!-- Arte del mockup del encargado en dos recortes; el cartel del % es HTML para que
-                 refleje el porcentaje real (editable en COMANDOS, #169). -->
-            <img src="/img/referidos-promo-top.jpg" alt="Invitá a tus amigos" style="display:block;width:100%;height:auto;">
-            <div style="background:radial-gradient(ellipse at center,#4a0080 0%,#2a0048 70%);padding:6px 14px 2px;">
-                <div style="background:rgba(12,0,30,.85);border:2px solid #ffd700;border-radius:14px;padding:9px 12px;font-size:15px;font-weight:800;color:#fff;line-height:1.3;box-shadow:0 0 16px rgba(255,215,0,.35);">
-                    Cobrá hasta el <b style="color:#ffd700;font-size:24px;"><span class="referralRatePct">3%</span></b> de comisión<br>por la actividad de tus referidos
-                </div>
-            </div>
-            <img src="/img/referidos-promo-bottom.jpg" alt="" style="display:block;width:100%;height:auto;">
-            <div style="padding:10px 14px 16px;background:linear-gradient(180deg,#2a0048 0%,#12002a 100%);">
-                <div id="referralPromoExtra" style="font-size:11.5px;color:#ffd700;font-weight:800;margin:0 0 10px;line-height:1.4;"></div>
-                <button class="ref-promo-btn" onclick="VIP.ui.shareReferralLink()" style="border-radius:999px;font-size:16px;padding:15px;">
-                    <span style="display:inline-flex;align-items:center;gap:10px;"><span style="font-size:18px;">🔗</span> INVITAR A TUS AMIGOS <span style="font-size:18px;">›</span></span>
-                </button>
-                <button class="ref-promo-link" onclick="hideModal('referralPromoModal'); VIP.ui.openReferralModal();" style="border-radius:999px;border-color:rgba(201,139,255,.6);">📊 Mirá el progreso de tus referidos aquí ›</button>
-            </div>
+        <!-- #536 (owner): estilo Pinterest, igual al resto de la app (sin el arte violeta del gemelo). -->
+        <div class="ref-promo">
+            <button class="ref-promo-x" onclick="hideModal('referralPromoModal')" aria-label="Cerrar">✕</button>
+            <div class="ref-promo-ico">🤝</div>
+            <h3 class="ref-promo-h">Invitá a tus amigos</h3>
+            <p class="ref-promo-p">Cobrás hasta el <b><span class="referralRatePct">5%</span></b> de comisión por la actividad de tus referidos, todos los meses.</p>
+            <div id="referralPromoExtra" class="ref-promo-extra"></div>
+            <button class="ref-promo-btn" onclick="VIP.ui.shareReferralLink()">🔗 INVITAR A TUS AMIGOS ›</button>
+            <button class="ref-promo-link" onclick="hideModal('referralPromoModal'); VIP.ui.openReferralModal();">📊 Ver el progreso de mis referidos</button>
         </div>
     </div>
 </body>
