@@ -11966,6 +11966,20 @@ async function initializeData() {
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
+  // #586 (owner 2026-10-19): premios de las misiones al 50 % también en la config GUARDADA (si el panel ya las editó). One-shot.
+  try {
+    if (!(await getConfig('migration_missions_half_v1_done', false))) {
+      const raw = await getConfig('strategyClientes', null);
+      if (raw && raw.missions) {
+        const halve = (arr) => (Array.isArray(arr) ? arr : []).forEach((it) => { if (it && Number(it.rewardArs) > 0) it.rewardArs = Math.round(Number(it.rewardArs) / 2); });
+        halve(raw.missions.items);
+        (Array.isArray(raw.missions.tiers) ? raw.missions.tiers : []).forEach((t) => halve(t && t.items));
+        await Config.set('strategyClientes', raw, 'startup-migration');
+      }
+      await Config.set('migration_missions_half_v1_done', true, 'startup-migration');
+      console.log('✅ Misiones (#586): premios al 50 %');
+    }
+  } catch (e) { console.warn('[startup-migration] misiones al 50 % (#586):', e.message); }
   // #398 (owner 2026-10-18): fueguito de vuelta a la versión anterior (3 hitos). One-shot que deshace lo que #395/#397
   // habían escrito en Config['fireMilestones']; min. de cargas 10 y rollover x5 quedan igual. Después manda el panel.
   try {
@@ -19528,38 +19542,39 @@ const MissionClaim = require('./src/models/MissionClaim');
 // escalera de 19 niveles de #292): Bronce (idx 0–2) · Plata (3–5) · Oro (6–8) · Platino (9–11) · Diamante (12–14) · Black (15–19).
 // `vipFrom` = primer idx VIP de la familia. Al subir de nivel VIP (por lo jugado de por vida) le tocan misiones más difíciles; además,
 // completar TODAS las de su nivel en una semana lo sube una familia de misiones (promo) aunque el VIP todavía no llegue.
+// #586 (owner 2026-10-19): premios al 50 % ("ya tenemos muchos regalos"). Una migración de arranque aplica lo mismo a la config guardada.
 const MISSION_TIERS_DEFAULT = [
   { id: 'bronce', name: 'Bronce', emoji: '🥉', vipFrom: 0, minWeekly: 0, items: [
-    { id: 'b_3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
-    { id: 'b_3dias', title: 'Cargá 3 días distintos', type: 'deposit_days', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
-    { id: 'b_30k', title: 'Cargá $30.000 en la semana', type: 'deposit_total', target: 30000, minAmount: 0, rewardArs: 3000, active: true } ] },
+    { id: 'b_3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 1500, active: true },
+    { id: 'b_3dias', title: 'Cargá 3 días distintos', type: 'deposit_days', target: 3, minAmount: 5000, rewardArs: 1500, active: true },
+    { id: 'b_30k', title: 'Cargá $30.000 en la semana', type: 'deposit_total', target: 30000, minAmount: 0, rewardArs: 1500, active: true } ] },
   { id: 'plata', name: 'Plata', emoji: '🥈', vipFrom: 3, minWeekly: 0, items: [
-    { id: 'p_5cargas', title: '5 cargas en la semana', type: 'deposits_count', target: 5, minAmount: 10000, rewardArs: 8000, active: true },
-    { id: 'p_4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 10000, rewardArs: 8000, active: true },
-    { id: 'p_100k', title: 'Cargá $100.000 en la semana', type: 'deposit_total', target: 100000, minAmount: 0, rewardArs: 10000, active: true } ] },
+    { id: 'p_5cargas', title: '5 cargas en la semana', type: 'deposits_count', target: 5, minAmount: 10000, rewardArs: 4000, active: true },
+    { id: 'p_4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 10000, rewardArs: 4000, active: true },
+    { id: 'p_100k', title: 'Cargá $100.000 en la semana', type: 'deposit_total', target: 100000, minAmount: 0, rewardArs: 5000, active: true } ] },
   { id: 'oro', name: 'Oro', emoji: '🥇', vipFrom: 6, minWeekly: 0, items: [
-    { id: 'o_8cargas', title: '8 cargas en la semana', type: 'deposits_count', target: 8, minAmount: 15000, rewardArs: 20000, active: true },
-    { id: 'o_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 15000, rewardArs: 20000, active: true },
-    { id: 'o_300k', title: 'Cargá $300.000 en la semana', type: 'deposit_total', target: 300000, minAmount: 0, rewardArs: 30000, active: true } ] },
+    { id: 'o_8cargas', title: '8 cargas en la semana', type: 'deposits_count', target: 8, minAmount: 15000, rewardArs: 10000, active: true },
+    { id: 'o_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 15000, rewardArs: 10000, active: true },
+    { id: 'o_300k', title: 'Cargá $300.000 en la semana', type: 'deposit_total', target: 300000, minAmount: 0, rewardArs: 15000, active: true } ] },
   { id: 'platino', name: 'Platino', emoji: '💠', vipFrom: 9, minWeekly: 0, items: [
-    { id: 'pl_10cargas', title: '10 cargas en la semana', type: 'deposits_count', target: 10, minAmount: 20000, rewardArs: 35000, active: true },
-    { id: 'pl_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 20000, rewardArs: 35000, active: true },
-    { id: 'pl_500k', title: 'Cargá $500.000 en la semana', type: 'deposit_total', target: 500000, minAmount: 0, rewardArs: 50000, active: true } ] },
+    { id: 'pl_10cargas', title: '10 cargas en la semana', type: 'deposits_count', target: 10, minAmount: 20000, rewardArs: 17500, active: true },
+    { id: 'pl_5dias', title: 'Cargá 5 días distintos', type: 'deposit_days', target: 5, minAmount: 20000, rewardArs: 17500, active: true },
+    { id: 'pl_500k', title: 'Cargá $500.000 en la semana', type: 'deposit_total', target: 500000, minAmount: 0, rewardArs: 25000, active: true } ] },
   { id: 'diamante', name: 'Diamante', emoji: '💎', vipFrom: 12, minWeekly: 0, items: [
-    { id: 'd_12cargas', title: '12 cargas en la semana', type: 'deposits_count', target: 12, minAmount: 25000, rewardArs: 60000, active: true },
-    { id: 'd_6dias', title: 'Cargá 6 días distintos', type: 'deposit_days', target: 6, minAmount: 25000, rewardArs: 60000, active: true },
-    { id: 'd_1m', title: 'Cargá $1.000.000 en la semana', type: 'deposit_total', target: 1000000, minAmount: 0, rewardArs: 100000, active: true } ] },
+    { id: 'd_12cargas', title: '12 cargas en la semana', type: 'deposits_count', target: 12, minAmount: 25000, rewardArs: 30000, active: true },
+    { id: 'd_6dias', title: 'Cargá 6 días distintos', type: 'deposit_days', target: 6, minAmount: 25000, rewardArs: 30000, active: true },
+    { id: 'd_1m', title: 'Cargá $1.000.000 en la semana', type: 'deposit_total', target: 1000000, minAmount: 0, rewardArs: 50000, active: true } ] },
   { id: 'black', name: 'Black', emoji: '🖤', vipFrom: 15, minWeekly: 0, items: [
-    { id: 'bk_15cargas', title: '15 cargas en la semana', type: 'deposits_count', target: 15, minAmount: 30000, rewardArs: 120000, active: true },
-    { id: 'bk_7dias', title: 'Cargá los 7 días', type: 'deposit_days', target: 7, minAmount: 30000, rewardArs: 120000, active: true },
-    { id: 'bk_2m', title: 'Cargá $2.000.000 en la semana', type: 'deposit_total', target: 2000000, minAmount: 0, rewardArs: 200000, active: true } ] }
+    { id: 'bk_15cargas', title: '15 cargas en la semana', type: 'deposits_count', target: 15, minAmount: 30000, rewardArs: 60000, active: true },
+    { id: 'bk_7dias', title: 'Cargá los 7 días', type: 'deposit_days', target: 7, minAmount: 30000, rewardArs: 60000, active: true },
+    { id: 'bk_2m', title: 'Cargá $2.000.000 en la semana', type: 'deposit_total', target: 2000000, minAmount: 0, rewardArs: 100000, active: true } ] }
 ];
 const STRATEGY_DEFAULT = {
   secondDeposit: { enabled: true, pct: 50, afterHours: 24, validHours: 72 },
   missions: { enabled: true, items: [
-    { id: 'm3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 3000, active: true },
-    { id: 'm4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 5000, rewardArs: 5000, active: true },
-    { id: 'm50k', title: 'Cargá $50.000 en la semana', type: 'deposit_total', target: 50000, minAmount: 0, rewardArs: 4000, active: true }
+    { id: 'm3cargas', title: '3 cargas en la semana', type: 'deposits_count', target: 3, minAmount: 5000, rewardArs: 1500, active: true },
+    { id: 'm4dias', title: 'Cargá 4 días distintos', type: 'deposit_days', target: 4, minAmount: 5000, rewardArs: 2500, active: true },
+    { id: 'm50k', title: 'Cargá $50.000 en la semana', type: 'deposit_total', target: 50000, minAmount: 0, rewardArs: 2000, active: true }
   ] }
 };
 const MISSION_TYPES = { deposits_count: 'cantidad de cargas (de al menos el mínimo)', deposit_days: 'días distintos con carga', deposit_total: 'total cargado en la semana ($)' };

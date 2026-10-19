@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 586. 🎯 Misiones semanales: premios al 50 % en todos los niveles
+**Pedido (owner):** "dentro de los regalos de misiones, entendiendo que ya tenemos muchos regalos, ajustá a un 50 % los premios a cobrar
+en cada nivel". `MISSION_TIERS_DEFAULT` y los items legacy de `STRATEGY_DEFAULT` quedan a la mitad (Bronce $1.500 · Plata $4.000/$5.000 ·
+Oro $10.000/$15.000 · Platino $17.500/$25.000 · Diamante $30.000/$50.000 · Black $60.000/$100.000) y una migración de arranque
+(`migration_missions_half_v1_done`) divide por 2 también lo guardado en `Config['strategyClientes']` (items y tiers), así el panel muestra
+los valores nuevos. Los textos de la landing/app se actualizan solos (#555). **Archivos:** `server.js`.
+
 ### 585. 📖 Historias: sin la banda negra al pie; sello PICA ROJA dentro de la foto; texto y botón sobre el mismo fondo — SW v411
 **Pedido (owner, con captura):** "ese negro abajo del recuadro no va; dejá el logo de PICA ROJA oficial dentro de la foto como parte de la
 marca y abajo el texto, pero no lo cortes con otro color". El fondo de la historia (foto difuminada o su color) cubre toda la pantalla,
