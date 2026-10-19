@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 570. 🌐 Landing (grupospicaroja.com): `API_BASE_DEFAULT` → `https://picaroja.com`
+**Pedido (owner, verificado con curl):** la landing apuntaba a `vipcargas.com`, que es el backend de VIPCARGAS (otra página): ahí no
+existe la pauta MARTINPULSE y Cloudflare mete un challenge al preflight ⇒ "Sin conexión". El backend real de PICA ROJA es
+`https://picaroja.com` (preflight 204 con CORS para www.grupospicaroja.com). No usar el host `.elasticbeanstalk.com` (sólo HTTP).
+Cambiado en `landing/index.html` (y en la copia de Downloads); nada más se tocó (ni el override `?api=` de #553 ni el código de pauta).
+**Archivos:** `landing/index.html`, `landing/README.md`.
+
 ### 569. 📌 "Fijar" adentro del selector de menú · "Cambiar menú" sin la etiqueta del menú actual — SW v399
 **Pedido (owner):** "en Cambiar menú sacá cuál menú está elegido y el Fijar dejalo adentro de ese recuadro, para que entre Racha".
 El botón `#menuPinBtn` pasa al pie del selector (`#menuChooser`) como "Dejar fijo el menú <actual> para el ingreso" / "✓ Menú <actual>

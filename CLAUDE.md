@@ -38,7 +38,8 @@ notificaciones push (FCM).
 
 **Stack:** Node 20 · Express · MongoDB (Atlas) · Mongoose · Socket.IO (+ Redis adapter
 para multi-instancia en AWS EB) · Firebase Admin (FCM) · AWS SNS (SMS OTP).
-Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedro2112-pixel.
+Deploy: AWS Elastic Beanstalk. **Dominio público de ESTE backend: picaroja.com** (#570; vipcargas.com es OTRA página, VIPCARGAS).
+Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: jupedro2112-pixel.
 
 ## Estructura
 
