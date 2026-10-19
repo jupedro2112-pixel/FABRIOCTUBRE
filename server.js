@@ -11771,6 +11771,13 @@ async function initializeData() {
   // (AWS) no se toca: una cuenta de prueba con clave simple NO puede quedar como admin del panel.
   try {
     if (!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1')) throw Object.assign(new Error('skip'), { skip: true });
+    // #551 (owner, base limpia): en Render, si "lalodj" no existe se CREA con la clave inicial de las cuentas nuevas
+    // (`LANDING_DEFAULT_PASSWORD`, la misma que reciben los registros rápidos; `TESTER_PASSWORD` la pisa). Sólo RENDER: en
+    // producción nunca se crea una cuenta con clave conocida.
+    if (process.env.RENDER && !(await User.findOne({ username: 'lalodj' }).select('_id').lean())) {
+      await User.create({ id: uuidv4(), username: 'lalodj', password: String(process.env.TESTER_PASSWORD || process.env.LANDING_DEFAULT_PASSWORD || 'asd123'), role: 'admin', accountNumber: generateAccountNumber(), balance: 0, isActive: true, isBlocked: false, phoneVerified: false, phoneVerificationPending: false, referralCode: generateReferralCode(), acquisitionSource: 'manual', createdAt: new Date() });
+      console.log('✅ Usuario de prueba lalodj creado (#551, sólo Render)');
+    }
     const r = await User.updateOne({ username: { $in: ['lalodj', 'lalodj499910', 'diego576413'] } }, { $set: { role: 'admin', isActive: true, isBlocked: false } }); // #476/#506: usuarios de prueba (sólo entorno de prueba)
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }

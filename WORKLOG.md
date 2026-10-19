@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 551. 🧪 Usuario de prueba `lalodj` se crea solo en Render (base limpia)
+**Pedido (owner):** "haceme un acceso para lalodj [clave inicial] como test y poné todo el test para probarla". Con la base limpia
+(2026-10-19) `lalodj` ya no existía. Ahora, en el arranque y SÓLO con `RENDER=true`, si no existe se crea con la clave inicial de las
+cuentas nuevas (`LANDING_DEFAULT_PASSWORD`; `TESTER_PASSWORD` la pisa) y el bloque #296/#355 le da rol admin. Ya estaba en
+`TESTER_USERNAMES` (botones test de la PWA) y `ROULETTE_TESTERS`. En producción no se crea nada. **Archivos:** `server.js`.
+
+### 552. 🌐 Landing de Vercel: carrusel de juegos del Inicio + "Todo nuestro servicio" en 3 líneas
+**Pedido (owner):** "en /landing poné el carrusel de fotos de juegos del inicio de adentro y abajo todo nuestro servicio; el servicio en
+3 líneas en vez de 5, unificá todo, más chico". Debajo del formulario: "Top juegos" (las 9 fotos de `public/images/games`, copiadas a
+`landing/img/games/`, con "N jugando" que varía cada 9 s como en la app, #494/#495) y un solo bloque "Todo nuestro servicio" con las 3
+plataformas (tiles más chicos) y 9 chips en grilla de 3 columnas = 3 líneas (Carga automática · Reembolso 25% · Ruleta diaria ·
+Misiones · Referidos 5% · Niveles VIP · Soporte real · Retiro a CBU · Pagos 24 hs), letra 9,5 px. **Archivos:** `landing/index.html`, `landing/img/games/`.
+
 ### 549. 🧹 Limpieza de código muerto de la pantalla de ingreso — SW v389
 **Pedido (owner):** "limpiá todo lo que veas innecesario, mirá seguridad y demás" (la seguridad va en #550).
 **Qué se sacó:** el banner del bono oculto (`.lg-promo*`) y la sección "Lo que te damos" oculta (`.lg-sec-info`) del `index.html`;

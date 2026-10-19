@@ -137,20 +137,34 @@
   @media (prefers-reduced-motion: reduce) { .spin { animation: none; } .done.on, .pop.on { animation: none; } }
 
   /* ── Plataformas (3 íconos) y servicios resumidos (sólo título) — pedido del owner 2026-10-19 ── */
-  .plats-h { text-align: center; margin-top: 2px; } /* #547: pegado al formulario */
+  /* #552: carrusel de juegos (como el Inicio de la app) */
+  .games-h { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; padding: 0 2px; }
+  .games-h b { font-size: 13px; font-weight: 900; color: #eaf2ea; } .games-h small { font-size: 11px; color: #8fa090; display: inline-flex; align-items: center; gap: 5px; }
+  .games-h .d { width: 6px; height: 6px; border-radius: 50%; background: #25d366; box-shadow: 0 0 0 3px rgba(37,211,102,.2); display: inline-block; }
+  .games { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 6px -4px 0; padding: 0 4px 4px; }
+  .games::-webkit-scrollbar { display: none; }
+  .game { flex: 0 0 31%; max-width: 140px; scroll-snap-align: start; border-radius: 14px; overflow: hidden; background: #161622; border: 1px solid rgba(255,255,255,0.08); }
+  .game img { width: 100%; aspect-ratio: 300 / 330; height: auto; object-fit: contain; display: block; background: #161622; }
+  .game .gn { display: block; padding: 5px 7px 1px; font-size: 10.5px; font-weight: 800; color: #eaf2ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game .gp { display: flex; align-items: center; gap: 4px; padding: 0 7px 6px; font-size: 10px; color: #8fa090; }
+  .game .gp i { width: 6px; height: 6px; border-radius: 50%; background: #25d366; display: inline-block; } .game .gp b { color: #eaf2ea; transition: opacity .25s; } .game .gp b.tick { opacity: .35; }
+  /* bloque unificado del servicio: plataformas + 9 chips en 3 columnas (3 líneas), más chico */
+  .svc { margin-top: 10px; background: #0e140e; border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 10px 10px 10px; }
+  .svc-h { text-align: center; margin-bottom: 8px; } .svc-h b { display: block; font-size: 13px; font-weight: 900; color: #eaf2ea; } .svc-h small { font-size: 10.5px; color: #8fa090; }
+  .plats-h { display: none; }
   .plats-h b { display: block; font-size: 13px; font-weight: 800; color: #eaf2ea; }
   .plats-h small { font-size: 11px; color: #8fa090; }
-  .plats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+  .plats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 0; }
   /* #545 (owner): fondo BLANCO en las plataformas (sobre el fondo oscuro los logos se veían tapados) */
-  .plat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; background: #ffffff; border: 1px solid rgba(255,255,255,0.35); border-radius: 14px; padding: 12px 6px 9px; font-size: 11.5px; font-weight: 800; color: #111; }
-  .plat img, .plat .ini { width: 36px; height: 36px; border-radius: 11px; object-fit: cover; background: #fff; }
+  .plat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; background: #ffffff; border: 1px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 8px 4px 6px; font-size: 10.5px; font-weight: 800; color: #111; }
+  .plat img, .plat .ini { width: 30px; height: 30px; border-radius: 9px; object-fit: cover; background: #fff; }
   .plat .ini { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #e3bd48, #9c853a); color: #0b0f0b; font-size: 18px; font-weight: 900; }
   .plat small { position: absolute; top: 6px; right: 6px; font-size: 8px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; color: #6f6f6f; background: #f1f1f1; border-radius: 999px; padding: 2px 6px; }
   .plat.soon { color: #6f6f6f; } .plat.soon img { filter: grayscale(.4); opacity: .85; }
-  .sys { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
-  .sy { display: inline-flex; align-items: center; gap: 6px; background: #0e140e; border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 6px 11px 6px 7px; font-size: 11px; font-weight: 700; color: #eaf2ea; }
-  .sy i { width: 20px; height: 20px; border-radius: 50%; background: rgba(227,189,72,0.14); color: #e3bd48; display: inline-flex; align-items: center; justify-content: center; }
-  .sy i svg { width: 12px; height: 12px; }
+  .sys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 8px; }
+  .sy { display: inline-flex; align-items: center; justify-content: center; gap: 4px; background: #0a0f0a; border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 5px 4px; font-size: 9.5px; font-weight: 700; color: #eaf2ea; white-space: nowrap; overflow: hidden; }
+  .sy i { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 50%; background: rgba(227,189,72,0.14); color: #e3bd48; display: inline-flex; align-items: center; justify-content: center; }
+  .sy i svg { width: 10px; height: 10px; }
   .sy b { color: #25d366; font-weight: 900; }
   /* Barra de progreso: nombre → cuenta creada → entra solo */
   .prog { display: none; margin-top: 14px; text-align: center; }
@@ -201,20 +215,24 @@
 
       <!-- #546 (owner): se sacó la línea de confianza (acreditación · retiros · soporte) -->
 
-      <!-- Las 3 plataformas (logos desde el backend; sin API = "Pronto") -->
-      <div class="plats-h"><b>Elegí dónde jugar</b><small>Mismo usuario y clave en todas</small></div>
-      <div class="plats" id="plats"></div>
+      <!-- #552 (owner): carrusel de juegos (las fotos del Inicio de la app) y debajo TODO el servicio en un solo bloque -->
+      <div class="games-h"><b>Top juegos</b><small><i class="d"></i><span id="gamesLive">0</span> jugando ahora</small></div>
+      <div class="games" id="games"></div>
 
-      <!-- Servicios, sólo con título -->
-      <div class="sys" aria-label="Lo que incluye">
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i>Carga automática</span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso diario <b id="sysRefund"></b></span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"/></svg></i>Ruleta diaria</span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4a8 8 0 0 1-16 0z"/><path d="M12 16v4M8 20h8"/><path d="M4 6H2.5a2 2 0 0 0 0 4H4M20 6h1.5a2 2 0 0 1 0 4H20"/></svg></i>Misiones semanales</span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos <b id="sysRef"></b></span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/></svg></i>Soporte real</span>
-        <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg></i>Retiro a tu CBU</span>
+      <div class="svc">
+        <div class="svc-h"><b>Todo nuestro servicio</b><small>Elegí dónde jugar · mismo usuario y clave en todas</small></div>
+        <div class="plats" id="plats"></div>
+        <div class="sys">
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i>Carga automática</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso <b id="sysRefund"></b></span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6"/></svg></i>Ruleta diaria</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v4a8 8 0 0 1-16 0z"/><path d="M12 16v4M8 20h8"/><path d="M4 6H2.5a2 2 0 0 0 0 4H4M20 6h1.5a2 2 0 0 1 0 4H20"/></svg></i>Misiones</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos <b id="sysRef"></b></span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/></svg></i>Soporte real</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg></i>Retiro a CBU</span>
+          <span class="sy"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i>Pagos 24 hs</span>
+        </div>
       </div>
 
       <p class="legal">
@@ -276,6 +294,27 @@
   var REF_CODE = '';
   try { REF_CODE = String(new URLSearchParams(location.search).get('ref') || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 12); } catch (e) {}
   if (REF_CODE) { try { document.getElementById('refCode').textContent = REF_CODE; document.getElementById('refHint').classList.add('on'); } catch (e) {} }
+
+  // ── #552: carrusel de juegos (fotos del Inicio de la app) con "N jugando" que varía rato a rato ──
+  (function games() {
+    var LIST = [['fortune-garuda-1000', 'Fortune Garuda 1000'], ['jokers-jewel', "Joker's Jewel"], ['fortune-garuda-500', 'Fortune Garuda 500'], ['fortune-tiger', 'Fortune Tiger'], ['fortune-gems-2', 'Fortune Gems 2'], ['fortune-rabbit', 'Fortune Rabbit'], ['fortune-gems', 'Fortune Gems'], ['fortune-dragon', 'Fortune Dragon'], ['golden-joker', 'Golden Joker']];
+    var box = document.getElementById('games'); if (!box) return;
+    var n = {}; LIST.forEach(function (g) { n[g[0]] = 50 + Math.floor(Math.random() * 151); });
+    box.innerHTML = LIST.map(function (g) { return '<div class="game" data-g="' + g[0] + '"><img src="img/games/' + g[0] + '.jpg" alt="' + g[1].replace(/"/g, '') + '" loading="lazy"><span class="gn">' + g[1].replace(/</g, '') + '</span><span class="gp"><i></i><b>' + n[g[0]] + '</b> jugando</span></div>'; }).join('');
+    function total() { var t = 0; LIST.forEach(function (g) { t += n[g[0]]; }); var e = document.getElementById('gamesLive'); if (e) e.textContent = t; }
+    total();
+    setInterval(function () {
+      if (document.hidden) return;
+      LIST.forEach(function (g) {
+        if (Math.random() > 0.45) return;
+        var d = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 9));
+        var v = Math.max(50, Math.min(200, n[g[0]] + d)); if (v === n[g[0]]) return; n[g[0]] = v;
+        var el = box.querySelector('.game[data-g="' + g[0] + '"] b'); if (!el) return;
+        el.textContent = v; el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick');
+      });
+      total();
+    }, 9000);
+  })();
 
   // ── Las 3 plataformas + % reales (desde el backend; si no responde quedan los fijos) ──
   function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
