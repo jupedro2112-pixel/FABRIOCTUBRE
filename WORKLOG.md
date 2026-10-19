@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 572. 📎 Fondo sólo en el recuadro Comprobante/Retirar — SW v401
+**Pedido (owner, con captura):** "ponele un fondo a Comprobante y Retirar premio, pero sólo a ese recuadro, ese ancho, no más". La fila fija
+lleva fondo de tarjeta, borde, radio 18 px y sombra, del ancho de los dos botones (5 px de relleno). **Archivos:** `public/css/pin.css`, SW.
+
 ### 571. 📎 Carga auto: la fila Comprobante/Retirar sólo tapa su línea; los 3 pasos de "Cargá acá" se ven — SW v400
 **Pedido (owner, con captura):** "bajá más Comprobante y Retirar premio, que no se tape el fondo de Cargá acá: que se vean los 3 pasos; que
 solo tape el recuadro de esa línea". Causa: el relleno de #568 estaba en `#homeFull`/`.entry-view` (creaba un hueco blanco) y no en

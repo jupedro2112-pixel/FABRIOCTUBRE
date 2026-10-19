@@ -1721,7 +1721,7 @@ body.menu2 #bottomNav.bottom-nav { box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
 /* #568 (owner): en Carga auto la fila "Comprobante aquí · Retirar premio" va FIJA al tope de abajo, pegada arriba del menú (Inicio) */
 /* #571 (owner): la fila sólo tapa SU línea (sin fondo ni sombra), va pegada al menú, y el relleno va en #homePanel (el que scrollea
    en Carga auto): así los 3 pasos de "Cargá acá" se ven completos deslizando, nada queda tapado ni hay huecos blancos. */
-body.home-full .home-actions-row { position: fixed; left: 8px; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 58; margin: 0 !important; background: transparent; padding: 0; box-shadow: none; }
+body.home-full .home-actions-row { position: fixed; left: 8px; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 58; margin: 0 !important; background: var(--p-card); padding: 5px; border-radius: 18px; box-shadow: 0 4px 18px rgba(0,0,0,.12); border: 1px solid var(--p-border); } /* #572: fondo SOLO en ese recuadro */
 body.home-full.menu2 .home-actions-row { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 body.home-full .entry-view, body.home-full #homeFull { padding-bottom: 0 !important; }
 body.home-full #homePanel { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important; }
