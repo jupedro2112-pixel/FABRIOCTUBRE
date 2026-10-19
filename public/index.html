@@ -1051,7 +1051,11 @@
                  plataforma (sin login: el link SSO es de un solo uso) + abajo Carga manual (chat WhatsApp,
                  modo mini) y Carga automática (app completa, modo full). -->
             <!-- #520 (owner): "Cambiar menú" arriba del Inicio (en los tres modos) → abre el selector Básico · Fácil · Completo -->
-            <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú <span id="changeMenuCur"></span><em>▾</em></button>
+            <div class="top-row" id="topRow">
+                <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú <span id="changeMenuCur"></span><em>▾</em></button>
+                <!-- #528 (owner): fueguito resumido al lado de "Cambiar menú" en el home completo (abre el fueguito; home.js lo rellena desde la tarjeta) -->
+                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Fueguito</b><small id="fireMiniSub">Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span></button>
+            </div>
             <div id="entryView" class="entry-view">
                 <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
                 <div class="ev-hero" role="note">
@@ -1194,11 +1198,11 @@
                 <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
                 <!-- #524 (owner): accesos rápidos debajo de "Entrar a jugar", en el orden del Inicio -->
                 <div class="bv-quick">
-                    <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones</button>
-                    <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos</button>
-                    <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos</button>
-                    <button type="button" onclick="VIP.home.openVipLevels()"><i>👑</i>Niveles VIP</button>
-                    <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria</button>
+                    <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.openVipLevels()"><i>👑</i>Niveles VIP<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria<small>Ver más ›</small></button>
                 </div>
                 <!-- #516: el pase a otro menú, con más lugar y explicado -->
                 <div class="bv-switch2">
@@ -1325,7 +1329,7 @@
                      con /api/vip/status; cada nivel alcanzado aparece desbloqueado (✓) y los que faltan con 🔒. ===== -->
                 <!-- #257: ¡Felicidades por tu nuevo nivel! → reclamar el bono eligiendo plataforma (lo pinta home.js) -->
                 <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPctFull">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeftFull"></small><span>Cargar ›</span></button>
-                <div class="home-card ms-card" id="missionsCard" hidden><button type="button" class="ms-card-h" onclick="VIP.home.toggleMissionsCard()" aria-expanded="false"><b>🎯 Misiones de la semana</b><small id="missionsCardSub"></small><i class="ms-chev">▾</i></button><div id="missionsCardBody" hidden><div id="missionsCardList" onclick="VIP.home.openMissions()"></div><small class="ms-note" id="missionsCardNote"></small></div></div>
+                <div class="home-card ms-card" id="missionsCard" hidden><button type="button" class="ms-card-h ms-oneline" onclick="VIP.home.toggleMissionsCard()" aria-expanded="false"><b>🎯 Misiones</b><small id="missionsCardSub"></small><i class="ms-chev">tocá para ver ▾</i></button><div id="missionsCardBody" hidden><div id="missionsCardList" onclick="VIP.home.openMissions()"></div><small class="ms-note" id="missionsCardNote"></small></div></div>
                 <div class="home-card vip-claim" id="vipClaimCard" style="display:none;"></div>
                 <div class="home-card vip-card" id="vipCard" style="display:none;">
                     <button type="button" class="vip-head" onclick="VIP.home.toggleVipCard()">
@@ -2434,7 +2438,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v373</div>
+                    <div class="pf-build" id="appBuildTag">app v374</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

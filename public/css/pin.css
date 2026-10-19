@@ -1572,4 +1572,27 @@ html[data-theme="dark"] .ev-tab .ev-reco { background: var(--p-card) !important;
 .ev-tab .ev-soon { top: auto !important; bottom: -8px !important; right: auto !important; left: 50% !important; transform: translateX(-50%); }
 .ev-frame-wrap.games .ev-cta { bottom: 26px !important; }
 .ev-slides-track.games { padding-bottom: 70px !important; }
+/* ── #528 (owner): "Ver más" en los accesos del básico · opiniones pegadas al botón de cargar · fueguito resumido junto a "Cambiar menú" ·
+   misiones del home completo en una línea · plataformas más chicas y juntas ── */
+.bv-quick button small { font: 700 8.5px var(--p-font); color: var(--p-red); margin-top: 1px; }
+.ev-frame-wrap.games { margin-bottom: 0 !important; }
+.ev-slides-track.games { padding-bottom: 54px !important; }
+.ev-frame-wrap.games .ev-cta { bottom: 10px !important; }
+#entryReviews.ev-reviews { margin-top: 2px !important; }
+.top-row { display: flex; align-items: center; gap: 8px; margin: 6px 12px 0; }
+.top-row .change-menu { margin: 0 !important; flex: 0 0 auto; }
+.fire-mini { display: none; flex: 1 1 auto; min-width: 0; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; border: 1px solid #f59e0b; background: linear-gradient(90deg, rgba(245,158,11,.14), rgba(245,158,11,.04)); color: var(--p-text); font-family: var(--p-font); cursor: pointer; }
+body.home-full .fire-mini:not([hidden]) { display: inline-flex; }
+.fire-mini .fm-flame { font-size: 18px; line-height: 1; } .fire-mini .fm-txt { display: flex; flex-direction: column; min-width: 0; text-align: left; }
+.fire-mini .fm-txt b { font: 900 12px var(--p-font); color: #d97706; } .fire-mini .fm-txt small { font: 600 10px var(--p-font); color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fire-mini .fm-streak { margin-left: auto; font: 900 12px var(--p-font); color: #d97706; background: rgba(245,158,11,.15); border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+body.home-full #fireHomeCard { display: none !important; }
+.ms-card .ms-card-h.ms-oneline { white-space: nowrap; overflow: hidden; }
+.ms-card .ms-card-h.ms-oneline b { flex: 0 0 auto; } .ms-card .ms-card-h.ms-oneline small { margin-left: 6px !important; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.ms-card .ms-chev { font: 700 10px var(--p-font) !important; color: var(--p-red) !important; flex: 0 0 auto; transform: none !important; }
+.ev-tabs { gap: 6px !important; }
+.ev-tab, .ev-tab.soon, .ev-tab.active, .ev-tab.plat-ganamos, .ev-tab.plat-jugaygana { min-height: 70px !important; padding: 10px 6px 8px !important; gap: 4px !important; }
+.ev-tab img { width: 28px !important; height: 28px !important; }
+.ev-tab .ev-name { font-size: 12.5px !important; }
+.plat-play-btn { height: 82px !important; padding: 6px 6px 20px !important; }
 

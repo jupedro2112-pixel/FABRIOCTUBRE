@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 528. 🧩 "Ver más" en los accesos del básico · opiniones pegadas al botón de cargar · fueguito resumido junto a "Cambiar menú" · misiones en una línea · plataformas más chicas — SW v374
+**Pedidos (owner):** "ponele Ver más en cada uno; subí las opiniones al límite del botón de cargar; el fueguito en la carga completa
+ponelo al lado de Cambiar menú, diferenciado y resumido; misiones de la semana en una misma línea con 'tocá para ver'; que se vea
+la carga abajo sin que la gente se pierda; las 3 plataformas más chicas sin tanto espacio".
+**Qué se hizo:** `.bv-quick small` "Ver más ›"; carril de juegos con menos relleno inferior y botón rojo a 10 px, opiniones a 2 px;
+`#topRow` con "Cambiar menú" + `#fireMiniBtn` (🔥 Fueguito · texto de la tarjeta · N d, borde ámbar; sólo en el home completo, que
+esconde la tarjeta grande del fueguito; `_fireMiniSync` copia lo que pinta fire.js); tarjeta de misiones plegada en una sola línea
+"🎯 Misiones · 🥉 Bronce · 0 de 3 cumplidas · tocá para ver ▾"; pestañas de plataforma de 70 px con logo 28 px y tarjetas del home
+completo de 82 px.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 527. 📐 Inicio completo: fotos de juegos más chicas, fila de servicios más arriba, las 3 plataformas con logo arriba y texto abajo, botón de cargar más arriba — SW v373
 **Pedido (owner, con captura).** Tarjetas de juegos al 30 % (máx. 132 px); menos aire entre novedad y servicios; pestañas de plataforma en
 columna (logo 34 px arriba, nombre abajo) con "Recomendado" arriba centrado y "Pronto" abajo centrado; el botón rojo sube a 26 px del borde.

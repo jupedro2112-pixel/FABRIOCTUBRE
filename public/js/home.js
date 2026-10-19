@@ -69,6 +69,7 @@
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Intermedio' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
+        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); _fireMiniSync(); } catch (_) {} // #528
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
         _paintNav();
@@ -137,6 +138,11 @@
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }
+    // #528: el fueguito resumido copia lo que dice la tarjeta grande (la pinta fire.js) — sin duplicar lógica
+    function _fireMiniSync() {
+        try { const s = _el('fireHomeSub'), st = _el('fireHomeStreak'); const ms = _el('fireMiniSub'), mst = _el('fireMiniStreak'); if (s && ms) ms.textContent = (s.textContent || '').trim() || 'Reclamá tu premio de hoy'; if (st && mst) mst.textContent = (st.textContent || '0').trim() + ' d'; } catch (_) {}
+    }
+    setInterval(_fireMiniSync, 5000);
     // #512: MENÚ BÁSICO — saludo + saldo, CARGAR, RETIRAR, chips de plataforma (fija la preferida) y "Entrar a jugar".
     function _basicPaint() {
         try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('basicHello'); if (h) h.textContent = u ? 'Hola, ' + u : 'Hola'; } catch (_) {}
@@ -182,7 +188,7 @@
         const subeTxt = nv ? (nv.next ? (nv.todasCumplidas ? '¡Completaste todas! La semana que viene jugás en ' + nv.next.emoji + ' ' + nv.next.name + '.' : 'Completá las ' + ms.length + ' y la semana que viene pasás a ' + nv.next.emoji + ' ' + nv.next.name + (nv.vipNextName ? ' (también al llegar a VIP ' + nv.vipNextName + ').' : '.')) : 'Estás en el nivel más alto.') + (nv.vipName ? ' Tu nivel VIP: ' + nv.vipName + '.' : '') : '';
         if (btn) { btn.hidden = false; const bd = _el('ezMissionsBadge'); if (bd) { bd.textContent = done + '/' + ms.length; bd.style.display = ''; } const sub = _el('ezMissionsSub'); if (sub) sub.textContent = (nivelTxt ? 'Nivel ' + nivelTxt + ' · ' : '') + (done === ms.length ? '¡Todas cumplidas!' : done + ' de ' + ms.length + ' cumplidas'); const bars = _el('ezMissionsBars'); if (bars) bars.innerHTML = ms.map((m) => '<i class="' + (m.done ? 'ok' : '') + '" style="--w:' + Math.min(100, Math.round((m.value / m.target) * 100)) + '%"></i>').join(''); }
         try { const ev = _el('evSvcMissions'); if (ev) ev.textContent = done + ' de ' + ms.length + ' cumplidas'; } catch (_) {} // #524
-        if (card) { card.hidden = false; const cs = _el('missionsCardSub'); if (cs) cs.textContent = (nivelTxt ? nivelTxt + ' · ' : '') + done + ' de ' + ms.length + ' cumplidas · tocá para ver'; const cl = _el('missionsCardList'); if (cl) cl.innerHTML = ms.map(_msBar).join(''); const nt = _el('missionsCardNote'); if (nt) nt.textContent = (d.rolloverX > 0 ? 'El premio se juega x' + d.rolloverX + ' antes de poder retirarlo. ' : '') + (d.maxRewardPct > 0 ? 'Premio hasta el ' + d.maxRewardPct + '% de lo cargado en la semana.' : ''); let op = '0'; try { op = localStorage.getItem('vip_ms_open') || '0'; } catch (_) {} toggleMissionsCard(op === '1'); }
+        if (card) { card.hidden = false; const cs = _el('missionsCardSub'); if (cs) cs.textContent = (nivelTxt ? nivelTxt + ' · ' : '') + done + ' de ' + ms.length + ' cumplidas'; const cl = _el('missionsCardList'); if (cl) cl.innerHTML = ms.map(_msBar).join(''); const nt = _el('missionsCardNote'); if (nt) nt.textContent = (d.rolloverX > 0 ? 'El premio se juega x' + d.rolloverX + ' antes de poder retirarlo. ' : '') + (d.maxRewardPct > 0 ? 'Premio hasta el ' + d.maxRewardPct + '% de lo cargado en la semana.' : ''); let op = '0'; try { op = localStorage.getItem('vip_ms_open') || '0'; } catch (_) {} toggleMissionsCard(op === '1'); }
         const list = _el('missionsList'); if (list) list.innerHTML = (nv ? '<div class="ms-level"><b>' + _esc(nivelTxt) + '</b><small>' + _esc(subeTxt) + '</small></div>' : '') + ms.map(_msBar).join('');
         // #518: la sección de misiones del modal Info toma los números reales
         try { const r1 = _el('infoMsRoll'); if (r1 && d.rolloverX != null) r1.textContent = d.rolloverX; const c1 = _el('infoMsCap'); if (c1 && d.maxRewardPct != null) c1.textContent = d.maxRewardPct; const mine = _el('infoMsMine'); if (mine) { if (nv) { mine.style.display = ''; mine.innerHTML = '<b>Vos hoy:</b> nivel ' + _esc(nivelTxt) + ' · ' + done + ' de ' + ms.length + ' cumplidas esta semana' + (nv.next ? ' · si completás todas pasás a ' + _esc(nv.next.emoji + ' ' + nv.next.name) : '') + '. Premios de tu nivel: ' + ms.map((m) => _m$(m.rewardArs)).join(' · ') + '.'; } else mine.style.display = 'none'; } } catch (_) {}
