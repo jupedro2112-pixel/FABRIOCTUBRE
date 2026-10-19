@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 600. ▦ Menú intermedio sin hueco abajo — SW v421
+**Pedido (owner, con captura):** "ese espacio ahí no va" (hueco blanco entre las tarjetas y la barra del menú 2). La vista crece y la grilla
+de servicios (`.ez-grid`) estira sus tarjetas hasta llenar la pantalla. **Archivos:** `public/css/pin.css`, SW.
+
 ### 599. 💬 Soporte: botones prediseñados siempre a la vista, primer mensaje "ya te respondemos en breve", fuera el "¿Querés reclamar el 100%?" — SW v420
 **Pedido (owner, con captura):** "corregí esto [mensaje viejo del 100 %] y poné los mensajes prediseñados como botones; que el primer
 mensaje sea 'ya le responden en breve'; prolijo tipo Stake".
