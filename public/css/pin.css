@@ -1771,4 +1771,13 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .story-viewer .st-textonly { display: flex; align-items: center; justify-content: center; text-align: center; padding: 28px 22px; font: 900 22px/1.3 var(--p-font); color: #fff; height: 100%; border-radius: 20px; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
 /* #584: la fila de accesos del básico queda con 4 (sin Niveles VIP) */
 .bv-quick { grid-template-columns: repeat(4, 1fr) !important; }
+/* ── #585 (owner): sin la banda negra al pie: el fondo de la historia (foto difuminada o su color) cubre TODA la pantalla; el sello
+   PICA ROJA va ADENTRO de la foto (parte de la marca); debajo sólo el texto y el botón, sobre el mismo fondo. ── */
+.story-viewer .st-media { inset: 0 !important; padding: 12px 12px 160px !important; }
+.story-viewer .st-media .st-blur { inset: -40px !important; }
+.story-viewer .st-media .st-textonly { height: 100%; }
+.story-viewer .st-foot { background: transparent !important; border-top: 0 !important; min-height: 150px !important; height: 150px; padding-top: 10px !important; }
+.story-viewer .st-foot .st-brand-foot { position: absolute; top: -48px; left: 50%; transform: translateX(-50%); z-index: 3; }
+.story-viewer .st-caption { color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.55) !important; font-size: 13.5px !important; margin-top: 2px; }
+.story-viewer .st-foot::before { display: none !important; }
 

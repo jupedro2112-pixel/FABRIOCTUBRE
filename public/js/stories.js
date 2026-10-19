@@ -87,6 +87,7 @@
         // media
         const media = _el('storyMedia');
         media.style.background = s.bgColor || '#06070d';
+        try { v.style.background = s.bgColor || '#06070d'; } catch (_) {} // #585: el color de la historia cubre toda la pantalla (sin banda al pie)
         let dur = Math.max(2, Number(s.durationSec) || 6) * 1000;
         if (s.mediaType === 'video' && s.mediaUrl) {
             media.innerHTML = '<video src="' + _esc(s.mediaUrl) + '" playsinline autoplay muted preload="auto"></video>';

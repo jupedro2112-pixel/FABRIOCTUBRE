@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 585. 📖 Historias: sin la banda negra al pie; sello PICA ROJA dentro de la foto; texto y botón sobre el mismo fondo — SW v411
+**Pedido (owner, con captura):** "ese negro abajo del recuadro no va; dejá el logo de PICA ROJA oficial dentro de la foto como parte de la
+marca y abajo el texto, pero no lo cortes con otro color". El fondo de la historia (foto difuminada o su color) cubre toda la pantalla,
+el pie es transparente, el sello va superpuesto al borde inferior de la foto, y debajo sólo el texto (con sombra) y el botón. Las 6
+historias se borraron y se volvieron a publicar. **Archivos:** `public/css/pin.css`, `public/js/stories.js`, SW.
+
 ### 584. ▭ Menú básico: fuera "Niveles VIP" de la fila de accesos (ya está arriba con el progreso) — SW v410
 **Pedido (owner, con captura):** "de ahí sacamos niveles, ya que está arriba". La fila `.bv-quick` queda con Misiones · Reembolsos ·
 Referidos · Ruleta diaria (4 columnas). **Archivos:** `public/index.html`, `public/css/pin.css`, SW.
