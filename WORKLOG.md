@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 557. 🌐 Landing de Vercel: "Elegí dónde jugar" con las plataformas debajo en 3 columnas + centrado
+**Pedido (owner, con captura):** "eso está fuera de centro; el 'Jugás en' → 'Elegí dónde jugar' y poné abajo las plataformas". La fila
+horizontal se salía de la pantalla: ahora título centrado y 3 tiles debajo. `overflow-x: hidden`, `main`/cabecera con `margin: 0 auto` y el
+popup con ancho `min(100%, 340px)` centrado. **Archivos:** `landing/index.html`.
+
 ### 556. 📖 Historias: foto completa, pie debajo (sin encimarse), cierre más claro; republicadas + referidos con "Quiero referir gente" — SW v392
 **Pedido (owner):** "en las fotos de historias republiquemos lo mismo pero con mejor cierre, que no se encime con el final; hay fotos
 fuera del recuadro, acomodalo; volvé a publicar lo del sistema de referidos y poné abajo 'quiero referir gente'".
