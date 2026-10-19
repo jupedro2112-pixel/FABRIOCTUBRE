@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 569. 📌 "Fijar" adentro del selector de menú · "Cambiar menú" sin la etiqueta del menú actual — SW v399
+**Pedido (owner):** "en Cambiar menú sacá cuál menú está elegido y el Fijar dejalo adentro de ese recuadro, para que entre Racha".
+El botón `#menuPinBtn` pasa al pie del selector (`#menuChooser`) como "Dejar fijo el menú <actual> para el ingreso" / "✓ Menú <actual>
+fijo · tocá para deshacer" (misma lógica #559); `#changeMenuCur` ya no se pinta. La fila de arriba queda Cambiar menú · 🔥 Racha.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 568. 📎 Carga auto: "Comprobante aquí · Retirar premio" fija abajo, pegada arriba del menú — SW v398
 **Pedido (owner, con captura):** "eso bajalo al tope, arriba de Inicio". `.home-actions-row` pasa a `position: fixed` al pie en el modo
 completo (con el menú 2 queda justo encima de la barra); los contenedores que scrollean dejan lugar debajo. **Archivos:** `public/css/pin.css`, SW.

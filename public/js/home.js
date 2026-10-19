@@ -70,7 +70,7 @@
         document.body.classList.toggle('home-full', mode === 'full'); // #269: carga automática SENCILLA (CSS esconde lo demás)
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
-        try { const cm = _el('changeMenuCur'); if (cm) cm.textContent = mode === 'basic' ? '· Básico' : (mode === 'easy' ? '· Intermedio' : (mode === 'play' || mode === 'full' ? '· Completo' : '')); } catch (_) {} // #520
+        // #569: la etiqueta "· Completo" de Cambiar menú se sacó (no entraba con Racha)
         try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); _fireMiniSync(); } catch (_) {} // #528
         try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
@@ -266,7 +266,8 @@
         const b = _el('menuPinBtn'), t = _el('menuPinTxt'); if (!b || !t) return;
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
         b.classList.toggle('on', on);
-        t.textContent = on ? 'Fijo ✓' : 'Fijar'; b.title = on ? 'Este menú queda fijo para el ingreso (tocá para deshacer)' : 'Dejar este menú preseleccionado para el ingreso';
+        const nm = _homeMode === 'basic' ? 'básico' : (_homeMode === 'easy' ? 'intermedio' : 'completo');
+        t.textContent = on ? ('✓ Menú ' + nm + ' fijo para el ingreso · tocá para deshacer') : ('Dejar fijo el menú ' + nm + ' para el ingreso');
     }
     function toggleMenuPin() {
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
