@@ -548,24 +548,36 @@ VIP.auth = (function () {
             if (p) p.textContent = d.password || '—';
             const notCreated = Array.isArray(d.platforms) && d.platforms.length && !d.platforms.some((x) => x.created);
             if (note) note.textContent = notCreated ? 'Modo prueba: la plataforma no está conectada en este entorno (la cuenta quedó creada en la app).' : 'Con el mismo usuario y clave entrás a las plataformas.';
-            const f = document.getElementById('quickEntry'), done = document.getElementById('quickDone');
-            if (f) f.style.display = 'none'; if (done) done.style.display = '';
+            // #534 (owner): sin paso intermedio — barra de progreso y ENTRA solo. Usuario y clave (la misma en la app y en Girox)
+            // quedan en Perfil. Si el autologin falla, recién ahí se muestran los datos con el botón Entrar.
+            const f = document.getElementById('quickEntry'), ld = document.getElementById('quickLoading');
+            if (f) f.style.display = 'none'; if (ld) { ld.style.display = ''; ld.classList.remove('is-in'); }
+            setTimeout(() => { try { const t = document.getElementById('quickLoadingTxt'); if (t) t.textContent = 'Entrando a tu cuenta…'; if (ld) ld.classList.add('is-in'); } catch (_) {} }, 900);
+            await quickGo(true);
         } catch (_) { if (err) err.textContent = 'Error de conexión. Probá de nuevo.'; }
         finally { if (btn) { btn.disabled = false; btn.textContent = 'CREAR MI CUENTA'; } } // #427/#530
     }
-    async function quickGo() {
+    async function quickGo(auto) {
         const btn = document.getElementById('quickGoBtn');
-        if (!_quickAccess) { document.body.classList.add('reg-quick-login'); return; }
+        const ld = document.getElementById('quickLoading'), done = document.getElementById('quickDone');
+        const fallback = (msg) => { // #534: si no pudo entrar solo → datos + botón Entrar (flujo #426)
+            if (ld) ld.style.display = 'none';
+            if (done) done.style.display = '';
+            if (!auto) document.body.classList.add('reg-quick-login');
+            if (msg) { try { VIP.ui.showToast(msg, 'error'); } catch (_) {} }
+        };
+        if (!_quickAccess) { fallback(null); return; }
         if (btn) { btn.disabled = true; btn.textContent = 'Entrando…'; }
         try {
             const r2 = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _quickAccess }) });
             const d2 = await r2.json().catch(() => ({}));
-            if (!r2.ok || !d2.token) { try { VIP.ui.showToast(d2.error || 'No pudimos entrar automáticamente. Iniciá sesión con tu usuario y clave.', 'error'); } catch (_) {} document.body.classList.add('reg-quick-login'); return; }
+            if (!r2.ok || !d2.token) { fallback(d2.error || 'No pudimos entrar automáticamente. Entrá con tu usuario y clave.'); return; }
             _quickAccess = null;
             VIP.state.currentToken = d2.token;
             localStorage.setItem('userToken', d2.token);
             await verifyToken();
-        } catch (_) { try { VIP.ui.showToast('Error de conexión. Probá de nuevo.', 'error'); } catch (__) {} }
+            if (ld) ld.style.display = 'none';
+        } catch (_) { fallback('Error de conexión. Probá de nuevo.'); }
         finally { if (btn) { btn.disabled = false; btn.textContent = 'Entrar'; } }
     }
     async function tryAccessLink() {

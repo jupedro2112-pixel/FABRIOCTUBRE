@@ -410,6 +410,12 @@
                 <div id="quickErr" class="gs-err"></div>
                 <!-- #427 (owner): sin "Ya tengo cuenta": la pantalla es SOLO registro con el nombre -->
             </form>
+            <!-- #534: barra de progreso mientras se crea la cuenta y entra solo -->
+            <div id="quickLoading" class="lg-quick-loading" style="display:none;" aria-live="polite">
+                <b id="quickLoadingTxt">Creando tu cuenta…</b>
+                <div class="lg-bar"><i></i></div>
+                <small>Tu usuario y tu clave quedan en Perfil. Es la misma clave para la app y para Girox.</small>
+            </div>
             <div id="quickDone" class="lg-quick-done" style="display:none;">
                 <span class="lg-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
                 <b class="lg-done-t">¡Te registraste con éxito!</b>
@@ -2457,7 +2463,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v379</div>
+                    <div class="pf-build" id="appBuildTag">app v380</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

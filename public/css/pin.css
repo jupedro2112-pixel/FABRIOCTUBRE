@@ -1658,3 +1658,10 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .lg-pop-box b { font: 900 19px var(--p-font); color: #111; } .lg-pop-box p { margin: 0 0 6px; font: 500 13.5px/1.45 var(--p-font); color: #6f6f6f; }
 .lg-pop-later { border: 0; background: none; font: 700 12.5px var(--p-font); color: #6f6f6f; text-decoration: underline; cursor: pointer; padding: 6px; }
 .lg-quick-ref { text-align: center; font: 700 11.5px var(--p-font); color: #8a6100; background: #fff7e6; border: 1px solid #f3d6a4; border-radius: 999px; padding: 6px 10px; } .lg-quick-ref b { color: #111; letter-spacing: 1px; }
+/* #534: barra de progreso del registro automático */
+.lg-quick-loading { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 14px 10px; background: var(--p-surface); border-radius: 22px; }
+.lg-quick-loading b { font: 800 15px var(--p-font); color: var(--p-text); } .lg-quick-loading small { font: 500 11px/1.35 var(--p-font); color: var(--p-muted); }
+.lg-bar { width: 100%; max-width: 280px; height: 10px; border-radius: 999px; background: var(--p-card); overflow: hidden; }
+.lg-bar i { display: block; height: 100%; width: 35%; border-radius: 999px; background: linear-gradient(135deg, #2ce06e, #0f9a4b); animation: lgBar 1.6s ease-in-out infinite; }
+.lg-quick-loading.is-in .lg-bar i { width: 92%; animation: none; transition: width .8s ease; }
+@keyframes lgBar { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }

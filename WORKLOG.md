@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 534. ⏳ Registro automático: nombre → barra de progreso → entra solo (sin paso de credenciales) — SW v380
+**Pedido (owner):** "que se entienda solamente la parte de registrarse completando el nombre y una vez que se registra que cargue una
+barra y entre a la sesión; la clave de Girox y de la app que sean la misma y figuren en el panel de Perfil".
+**Qué se hizo:** `quickEntry` ya no muestra la pantalla "¡Te registraste con éxito!" con el botón Entrar (#426): muestra
+`#quickLoading` (barra verde "Creando tu cuenta… → Entrando a tu cuenta…") y llama `quickGo(true)` que canjea el link de acceso y
+entra. Si el autologin falla, recién ahí aparece la pantalla con usuario + clave + Entrar. La clave es la misma en la app y en Girox
+desde el alta (`_landingSignupHandler`, #241) y Perfil ya la muestra (`pfUser`/`pfPass`, guardada en el dispositivo por
+`VIP.autoload.setPassword`): no hizo falta tocar eso. Las plataformas con logo y los servicios resumidos ya estaban en la
+pantalla (#530); el link de referido cae ahí (#533).
+**Archivos:** `public/js/auth.js`, `public/index.html`, `public/css/pin.css`, SW.
+
 ### 533. 🤝 El link de referido cae en el registro AUTOMÁTICO (sólo el nombre) — SW v379
 **Pedido (owner):** "no está el link de referido como lo necesito: sólo automático, que complete el nombre y entre".
 **Antes:** `/?ref=CODE` abría a los 500 ms el formulario largo (`registerModal`: usuario, clave, SMS) encima de la pantalla.
