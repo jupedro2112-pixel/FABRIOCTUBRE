@@ -1303,3 +1303,12 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Panel:** Configuración → "🔗 Webhooks salientes" (`/api/admin/webhooks*`, sólo admin general): alta/edición, prueba, formato para
   pasarle al publicista. Rotar `JWT_SECRET` ⇒ secretos ilegibles ⇒ recargarlos.
 
+## Confirmación de pagos (#566, 2026-10-19)
+
+- `Config['payoutReview']` `{minArs, autoBelow}` (`getPayoutReviewConfig`). En `POST /api/withdrawal/request`, tras crear el `PendingPayout`:
+  ≥ umbral ⇒ `reviewRequired:true` (lo revisa una persona en Panel → Confirmación de pagos); < umbral y hgcash configurado ⇒
+  `autoPay:true` y `_payPendingPayout(id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl())` en background (misma función que `/api/admin/payouts/:id/pay`).
+- `GET /api/admin/payouts/review` (withdrawer+): pendientes/fallidos con `risk` (cargas, retiros, antigüedad, celular, flags, CBU compartido)
+  y `warnings`. `POST /api/admin/payouts/review-config` (admin). Aprobar/rechazar reusan `/pay` y `/cancel`.
+- ⚠️ Un cambio en el flujo de pago va en `_payPendingPayout` (lo usan el botón y el automático).
+

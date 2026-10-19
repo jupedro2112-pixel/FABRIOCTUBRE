@@ -12969,6 +12969,19 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
       logger.error(`[withdrawal/request] No se pudo mover el chat a pagos: ${chatErr.message}`);
     }
 
+    // #566: ≥ umbral → queda en CONFIRMACIÓN DE PAGOS (una persona revisa); por debajo → se paga SOLO por hgcash, ya mismo.
+    try {
+      const prCfg = await getPayoutReviewConfig();
+      const needsReview = amountNum >= prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
+      await PendingPayout.updateOne({ userId: user.id, amount: amountNum, status: 'pending_review' }, { $set: { reviewRequired: needsReview, autoPay: !needsReview } });
+      if (needsReview) {
+        await _emitAdminOnlyChatNote(user.id, user.username, `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} (umbral $${prCfg.minArs.toLocaleString('es-AR')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`).catch(() => {});
+      } else {
+        const pp = await PendingPayout.findOne({ userId: user.id, amount: amountNum, status: 'pending_review' }).sort({ createdAt: -1 }).select('id').lean();
+        if (pp) setImmediate(() => { _payPendingPayout(pp.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl()).then((o) => { logger.info(`[pay-review] pago AUTOMÁTICO $${amountNum} ${user.username} → ${o.code} ${JSON.stringify(o.body).slice(0, 160)}`); }).catch((e) => logger.warn(`[pay-review] pago automático falló: ${e.message}`)); });
+      }
+    } catch (e) { logger.warn(`[pay-review] no se pudo clasificar el retiro: ${e.message}`); }
+
     // Meta CAPI — WithdrawRequest (señal de usuario activo / ganador).
     try {
       metaCapi.track(
@@ -20188,9 +20201,74 @@ async function _deductChipsAtConfirm(payout, agentUser) {
 }
 
 // El agente CONFIRMA el pago → se ejecuta el cash-out automático en hgcash.
-app.post('/api/admin/payouts/:id/pay', authMiddleware, withdrawerMiddleware, async (req, res) => {
+
+// ===== #566 CONFIRMACIÓN DE PAGOS (owner 2026-10-19): retiros ≥ umbral los revisa una persona (Panel → Confirmación de pagos) por
+// posible estafa; por debajo del umbral se pagan SOLOS por hgcash al solicitarlos (sin agente). Config['payoutReview'] =
+// { minArs: 50000, autoBelow: true }. Si hgcash no está configurado, todo queda en revisión como antes.
+const PAYOUT_REVIEW_DEFAULT = { minArs: 50000, autoBelow: true };
+async function getPayoutReviewConfig() {
   try {
-    const { id } = req.params;
+    const raw = await getConfig('payoutReview', null); const r = raw && typeof raw === 'object' ? raw : {};
+    const min = Number(r.minArs); return { minArs: Number.isFinite(min) && min >= 0 ? Math.round(min) : PAYOUT_REVIEW_DEFAULT.minArs, autoBelow: r.autoBelow !== false };
+  } catch (_) { return Object.assign({}, PAYOUT_REVIEW_DEFAULT); }
+}
+const PAYOUT_AUTO_ACTOR = { userId: 'system', username: 'auto-retiros', role: 'system' };
+// Ficha anti-estafa del cliente para la revisión (todo de nuestra base; sin llamadas a la plataforma).
+async function _payoutRiskProfile(userId) {
+  const out = { deposits: 0, depositsTotal: 0, withdrawalsPaid: 0, withdrawalsTotal: 0, phoneVerified: false, createdAt: null, fraudFlags: [], fraudNotes: [], cbuUsers: [], daysOld: null, acquisitionSource: null };
+  try {
+    const u = await User.findOne({ id: userId }).select('createdAt phoneVerified fraudFlags fraudNotes acquisitionSource withdrawalAccount').lean();
+    if (u) { out.phoneVerified = !!u.phoneVerified; out.createdAt = u.createdAt; out.fraudFlags = u.fraudFlags || []; out.fraudNotes = (u.fraudNotes || []).slice(-3); out.acquisitionSource = u.acquisitionSource || null; out.daysOld = u.createdAt ? Math.floor((Date.now() - new Date(u.createdAt).getTime()) / 86400000) : null; }
+    const dep = await Transaction.aggregate([{ $match: { userId: String(userId), type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $ne: 'payout_refund' } } }, { $group: { _id: null, n: { $sum: 1 }, t: { $sum: '$amount' } } }]);
+    if (dep[0]) { out.deposits = dep[0].n; out.depositsTotal = Math.round(dep[0].t); }
+    const wd = await PendingPayout.aggregate([{ $match: { userId: String(userId), status: 'paid' } }, { $group: { _id: null, n: { $sum: 1 }, t: { $sum: '$amount' } } }]);
+    if (wd[0]) { out.withdrawalsPaid = wd[0].n; out.withdrawalsTotal = Math.round(wd[0].t); }
+  } catch (_) {}
+  return out;
+}
+async function _payoutCbuUsers(payout) {
+  try {
+    const cbu = String(payout.cbu || '').replace(/\D/g, ''); if (cbu.length < 10) return [];
+    const others = await PendingPayout.find({ cbu: { $regex: cbu.slice(-10) + '$' }, userId: { $ne: payout.userId } }).select('username').limit(5).lean();
+    return [...new Set(others.map((o) => o.username).filter(Boolean))];
+  } catch (_) { return []; }
+}
+app.get('/api/admin/payouts/review', authMiddleware, withdrawerMiddleware, async (req, res) => {
+  try {
+    const cfg = await getPayoutReviewConfig();
+    const items = await PendingPayout.find({ status: { $in: ['pending_review', 'failed'] } }).sort({ createdAt: -1 }).limit(100).lean();
+    const out = [];
+    for (const p of items) {
+      const risk = await _payoutRiskProfile(p.userId); risk.cbuUsers = await _payoutCbuUsers(p);
+      const warn = [];
+      if (risk.fraudFlags.length) warn.push('marcado: ' + risk.fraudFlags.join(', '));
+      if (risk.cbuUsers.length) warn.push('CBU usado por ' + risk.cbuUsers.join(', '));
+      if (risk.depositsTotal > 0 && p.amount > risk.depositsTotal * 3) warn.push('retira más de 3× lo cargado');
+      if (risk.deposits === 0) warn.push('nunca cargó');
+      if (risk.daysOld !== null && risk.daysOld < 2) warn.push('cuenta de menos de 2 días');
+      if (!risk.phoneVerified) warn.push('celular sin verificar');
+      out.push(Object.assign({}, p, { risk, warnings: warn, hgcashEnabled: hgcashPay.isEnabled() }));
+    }
+    res.json({ success: true, config: cfg, hgcashEnabled: hgcashPay.isEnabled(), items: out, canEditConfig: req.user.role === 'admin' });
+  } catch (e) { logger.error(`[pay-review] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/payouts/review-config', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; const min = Number(b.minArs);
+    if (!Number.isFinite(min) || min < 0 || min > 100000000) return res.status(400).json({ error: 'Umbral inválido' });
+    const next = { minArs: Math.round(min), autoBelow: b.autoBelow !== false };
+    await Config.set('payoutReview', next, req.user.username);
+    logger.info(`[pay-review] umbral ${next.minArs} auto=${next.autoBelow} por ${req.user.username}`);
+    res.json({ success: true, config: next });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #566: el pago de un retiro pendiente vive en una FUNCIÓN (la ruta /pay y el pago AUTOMÁTICO por debajo del umbral la comparten).
+// `actor` = { userId, username, role } (agente o 'auto-retiros'); `baseUrl` = origen para el webhook de hgcash. Devuelve { code, body }.
+async function _payPendingPayout(id, actor, baseUrl) {
+  const res = { status(c) { this._c = c; return this; }, json(b) { return { code: this._c || 200, body: b }; }, _c: 200 };
+  const req = { user: actor };
+  try {
     if (!hgcashPay.isEnabled()) {
       return res.status(400).json({ error: 'Pago automático no configurado (falta HGCASH_API_TOKEN). Pagá manual.' });
     }
@@ -20248,7 +20326,7 @@ app.post('/api/admin/payouts/:id/pay', authMiddleware, withdrawerMiddleware, asy
       }
     }
 
-    const webhookUrl = `${req.protocol}://${req.get('host')}/api/hgcash/webhook`;
+    const webhookUrl = `${baseUrl}/api/hgcash/webhook`;
     const buildCashOut = (acct) => hgcashPay.createCashOut({
       accountId: acct,
       amount: payout.amount,
@@ -20313,11 +20391,15 @@ app.post('/api/admin/payouts/:id/pay', authMiddleware, withdrawerMiddleware, asy
     else { setTimeout(function () { _pollPayingPayouts(); }, 7000); }
 
     logger.info(`[hgcash-pay] cash-out iniciado payout=${id} user=${payout.username} $${payout.amount} hgId=${hgId} status=${hgStatus} por ${req.user.username}`);
-    res.json({ success: true, status: isDone ? 'paid' : 'paying', hgTransactionId: hgId, hgStatus });
+    return res.json({ success: true, status: isDone ? 'paid' : 'paying', hgTransactionId: hgId, hgStatus });
   } catch (error) {
     console.error('Error pagando payout:', error);
-    res.status(500).json({ error: 'Error del servidor' });
+    return res.status(500).json({ error: 'Error del servidor' });
   }
+}
+app.post('/api/admin/payouts/:id/pay', authMiddleware, withdrawerMiddleware, async (req, res) => {
+  const out = await _payPendingPayout(req.params.id, req.user, `${req.protocol}://${req.get('host')}`);
+  res.status(out.code).json(out.body);
 });
 
 // El agente RECHAZA el pago: NO se paga y se le DEVUELVEN las fichas al cliente

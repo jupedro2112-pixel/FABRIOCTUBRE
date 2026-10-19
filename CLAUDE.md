@@ -246,6 +246,8 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
   (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
   en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
+  **#566 CONFIRMACIÓN DE PAGOS:** retiros ≥ `Config['payoutReview'].minArs` ($50.000) esperan OK humano (Panel → Confirmación de pagos);
+  los menores se pagan SOLOS por hgcash al pedirlos vía `_payPendingPayout` (misma función que el botón Pagar: tocar el pago = tocar ahí).
   **#562 WEBHOOKS SALIENTES** (`docs/ESPEC-WEBHOOKS-SALIENTES.md`): todo flujo NUEVO de registro o de carga acreditada llama
   `outboundWebhook.notify('registro'|'carga', user, {amount, firstDeposit, transactionId})` (y `'retiro'` al pagar un retiro). Secretos de los
   destinos cifrados con `JWT_SECRET` (rotarlo ⇒ recargarlos en Configuración → Webhooks salientes).

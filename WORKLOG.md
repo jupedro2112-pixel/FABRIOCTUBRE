@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 566. 💸 CONFIRMACIÓN DE PAGOS: retiros ≥ $50.000 se revisan (estafa o no) antes de pagar; los menores salen solos — admin-sw v125
+**Pedido (owner):** "abajo de Soporte poné Confirmación de pagos: cuando la gente quiera retirar que podamos revisar el caso y darle
+OK al retiro si está todo bien, por un tema de estafa; editable; confirmar en pagos mayores a 50.000, el resto que salga solo".
+**Antes:** TODO retiro quedaba `pending_review` y un agente lo pagaba a mano desde Pagos (`/api/admin/payouts/:id/pay`).
+**Ahora:** `Config['payoutReview'] = { minArs: 50000, autoBelow: true }` (editable en la sección, sólo admin general). Al pedir el
+retiro: monto ≥ umbral (o banco no configurado) ⇒ `reviewRequired:true`, nota interna "🔎 RETIRO EN REVISIÓN" y queda en la sección;
+monto menor ⇒ `autoPay:true` y se paga SOLO al instante por hgcash (`_payPendingPayout`, actor `auto-retiros`): descuenta fichas con
+verificación anti-fantasma y hace el cash-out, igual que el botón Pagar. La ruta `/pay` ahora llama a esa misma función.
+**Panel → 💸 Confirmación de pagos** (debajo de Soporte, badge con la cantidad): regla editable (umbral + tilde "pagar solos los
+menores"), y por cada retiro pendiente/fallido la ficha anti-estafa (`GET /api/admin/payouts/review`): días de la cuenta, cargas (n y
+total), retiros pagados (n y total), celular verificado, origen, marcas `fraudFlags`, CBU usado por otras cuentas, y alertas automáticas
+("retira más de 3× lo cargado", "nunca cargó", "cuenta de menos de 2 días", "celular sin verificar"); botones ✅ Confirmar y pagar
+(`/pay`) y ⛔ Rechazar (`/cancel` con motivo). La sección Pagos de siempre sigue igual.
+**Archivos:** `server.js`, `src/models/PendingPayout.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`.
+
 ### 563/564/565. 🎰 Inicio completo reordenado · cartel de 1ª carga resumido · menú 2 sin tapar — SW v396
 **Pedidos (owner):** "la racha al lado de Cambiar menú; el botón de menú principal como 'dejarlo fijo' sin bajar lo demás; que se vea en
 la parte principal el 'dónde querés jugar'; lo de cuando cargan tapa lo que está: que sea una burbuja temporal que desaparezca; el botón

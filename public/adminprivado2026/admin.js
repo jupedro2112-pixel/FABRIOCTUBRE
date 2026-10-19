@@ -4973,6 +4973,7 @@ function switchSection(section) {
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
     if (section === 'support') loadSupport(); // #377
+    if (section === 'payReview') loadPayReview(); // #566
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -5926,6 +5927,65 @@ async function saveRegistrationMode() {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.loadRegistrationMode = loadRegistrationMode; window.saveRegistrationMode = saveRegistrationMode;
+// ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
+let _prItems = [];
+async function loadPayReview() {
+    const box = document.getElementById('payReviewList'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/payouts/review'); const j = await r.json();
+        if (!r.ok) { box.innerHTML = '<span style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</span>'; return; }
+        _prItems = j.items || [];
+        const min = document.getElementById('prMinArs'), auto = document.getElementById('prAutoBelow'), st = document.getElementById('prState'), sb = document.getElementById('prSaveBtn');
+        if (min) { min.value = j.config.minArs; min.disabled = !j.canEditConfig; } if (auto) { auto.checked = j.config.autoBelow !== false; auto.disabled = !j.canEditConfig; } if (sb) sb.style.display = j.canEditConfig ? '' : 'none';
+        if (st) st.textContent = j.hgcashEnabled ? '' : '⚠️ Banco no configurado: todo queda en revisión y se paga a mano.';
+        const review = _prItems.filter(function (p) { return p.reviewRequired || p.status === 'failed'; });
+        const badge = document.getElementById('payReviewBadge'); if (badge) { badge.textContent = String(review.length); badge.style.display = review.length ? '' : 'none'; }
+        if (!_prItems.length) { box.innerHTML = '<span style="color:#aaa;font-size:12px;">No hay retiros esperando confirmación.</span>'; return; }
+        box.innerHTML = _prItems.map(function (p) {
+            const rk = p.risk || {}; const warn = p.warnings || [];
+            const color = warn.length >= 2 ? '#ff5050' : (warn.length ? '#ffb347' : '#66ff99');
+            return '<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.04);border-left:4px solid ' + color + ';font-size:12.5px;line-height:1.6;">' +
+                '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;"><div><b style="font-size:16px;">' + fmtARS(p.amount) + '</b> · <b>' + escapeHtml(p.username) + '</b> · ' + escapeHtml(p.platform || 'girox') + (p.status === 'failed' ? ' · <span style="color:#ff8080;">FALLÓ: ' + escapeHtml(p.error || '') + '</span>' : (p.reviewRequired ? ' · <span style="color:#ffb347;">en revisión</span>' : ' · <span style="color:#aaa;">pago automático pendiente</span>')) + '</div><div style="color:#888;font-size:11px;">' + fmtFechaHoraAR(p.createdAt) + '</div></div>' +
+                '<div style="color:#aaa;">CBU/alias: <code>' + escapeHtml(p.cbu || p.alias || '—') + '</code> · titular: ' + escapeHtml(p.titular || '—') + ' · saldo al pedir: ' + fmtARS(p.balanceBefore || 0) + '</div>' +
+                '<div style="color:#aaa;">Cliente: ' + (rk.daysOld !== null && rk.daysOld !== undefined ? rk.daysOld + ' días' : '—') + ' · cargó ' + rk.deposits + ' veces (' + fmtARS(rk.depositsTotal) + ') · retiró ' + rk.withdrawalsPaid + ' veces (' + fmtARS(rk.withdrawalsTotal) + ') · celular ' + (rk.phoneVerified ? '✅' : '❌') + (rk.acquisitionSource ? ' · origen ' + escapeHtml(rk.acquisitionSource) : '') + '</div>' +
+                (warn.length ? '<div style="color:' + color + ';font-weight:700;">⚠️ ' + warn.map(escapeHtml).join(' · ') + '</div>' : '<div style="color:#66ff99;">✅ Sin señales de alerta</div>') +
+                (rk.fraudNotes && rk.fraudNotes.length ? '<div style="color:#888;font-size:11px;">' + rk.fraudNotes.map(function (n) { return escapeHtml(n.note || ''); }).join(' · ') + '</div>' : '') +
+                '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
+                '<button type="button" class="btn-primary btn-small" onclick="payReviewApprove(\'' + p.id + '\')">✅ Confirmar y pagar</button>' +
+                '<button type="button" class="btn-secondary btn-small" onclick="payReviewReject(\'' + p.id + '\')" style="color:#ff8080;">⛔ Rechazar</button>' +
+                '<button type="button" class="btn-secondary btn-small" onclick="try{viewUserChat(\'' + p.userId + '\')}catch(e){showSection(\'chats\')}">💬 Ver chat</button>' +
+                '</div></div>';
+        }).join('');
+    } catch (_) { box.innerHTML = '<span style="color:#ff8080;">Error de conexión</span>'; }
+}
+async function payReviewSaveCfg() {
+    const minArs = Number(document.getElementById('prMinArs').value), autoBelow = document.getElementById('prAutoBelow').checked;
+    try {
+        const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Regla guardada: desde ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' : ''), 'success');
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function payReviewApprove(id) {
+    const p = _prItems.find(function (x) { return x.id === id; });
+    if (!confirm('¿Confirmar y PAGAR ' + (p ? fmtARS(p.amount) + ' a ' + p.username : 'este retiro') + '? Se descuentan las fichas y sale por el banco.')) return;
+    try {
+        const r = await authFetch('/api/admin/payouts/' + encodeURIComponent(id) + '/pay', { method: 'POST' }); const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) { showToast(j.error || 'No se pudo pagar', 'error'); } else if (j.success === false) { showToast(j.message || 'No se pagó', 'error'); } else showToast('Pago iniciado (' + (j.status || 'ok') + ')', 'success');
+        loadPayReview();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function payReviewReject(id) {
+    const p = _prItems.find(function (x) { return x.id === id; });
+    const reason = prompt('Motivo del rechazo (se guarda en el caso):', 'Revisión anti-estafa'); if (reason === null) return;
+    if (!confirm('¿RECHAZAR el retiro de ' + (p ? fmtARS(p.amount) + ' de ' + p.username : '') + '? No se paga.')) return;
+    try {
+        const r = await authFetch('/api/admin/payouts/' + encodeURIComponent(id) + '/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }); const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) showToast(j.error || 'No se pudo rechazar', 'error'); else showToast('Retiro rechazado', 'success');
+        loadPayReview();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadPayReview = loadPayReview; window.payReviewSaveCfg = payReviewSaveCfg; window.payReviewApprove = payReviewApprove; window.payReviewReject = payReviewReject;
 // ====== #197 WEBHOOKS SALIENTES (réplica del #334/#346 del gemelo; Configuración, solo admin general) ======
 let _whDests = [];
 let _whPublishers = [];

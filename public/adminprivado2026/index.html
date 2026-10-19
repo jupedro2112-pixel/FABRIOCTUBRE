@@ -124,6 +124,12 @@ document.addEventListener('change', function (ev) {
                     <span>Soporte</span>
                     <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
                 </a>
+                <!-- #566 (owner): CONFIRMACIÓN DE PAGOS debajo de Soporte: retiros ≥ umbral se revisan antes de pagar (estafa o no) -->
+                <a href="#" class="nav-item" data-section="payReview">
+                    <span>💸</span>
+                    <span>Confirmación de pagos</span>
+                    <span id="payReviewBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
+                </a>
                 <!-- #480 (owner): elegir el menú de la app (opción 1 actual / opción 2 barra inferior) -->
                 <a href="#" class="nav-item" data-section="menuLayout">
                     <span>🧭</span>
@@ -2818,6 +2824,24 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
 
             <!-- #361: HISTORIAS de la app (solo admin general) -->
             <!-- #377: SOPORTE paralelo — la columna del chat de Martín / Sofía / Agustina -->
+            <!-- #566: CONFIRMACIÓN DE PAGOS -->
+            <section id="payReviewSection" class="section">
+                <div class="panel-header">
+                    <h2>💸 Confirmación de pagos</h2>
+                    <button class="refresh-btn" onclick="loadPayReview()" title="Refrescar">🔄</button>
+                </div>
+                <div class="cbu-form" id="payReviewCfg" style="margin-bottom:14px;">
+                    <h3 style="margin:0 0 6px;">⚙️ Regla</h3>
+                    <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Los retiros <b>desde el umbral</b> quedan acá para que una persona revise el caso (estafa o no) y los confirme. Los <b>menores</b> salen solos por el banco al pedirlos. Si el banco no está configurado, todo queda en revisión.</p>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;">Umbral $ <input type="number" id="prMinArs" min="0" step="1000" style="width:130px;"></label>
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="prAutoBelow" style="width:auto;"> Pagar solos los menores al umbral</label>
+                        <button class="btn-primary btn-small" id="prSaveBtn" onclick="payReviewSaveCfg()"><span class="icon icon-save"></span> Guardar</button>
+                        <span id="prState" style="font-size:11.5px;color:#9ab;"></span>
+                    </div>
+                </div>
+                <div id="payReviewList" style="display:grid;gap:10px;">Cargando…</div>
+            </section>
             <section id="supportSection" class="section">
                 <div class="panel-header">
                     <h2>💬 Soporte</h2>

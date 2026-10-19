@@ -73,6 +73,12 @@ const pendingPayoutSchema = new mongoose.Schema({
   // solicitar) → mantiene el comportamiento previo (no re-descontar; devolver al rechazar).
   deductAtPay: { type: Boolean, default: false },
 
+  // #566 (owner): CONFIRMACIÓN DE PAGOS. reviewRequired = monto ≥ umbral (Config['payoutReview'].minArs): lo revisa una persona en
+  // Panel → Confirmación de pagos antes de pagar. autoPay = por debajo del umbral se pagó solo (sin agente).
+  reviewRequired: { type: Boolean, default: false, index: true },
+  autoPay: { type: Boolean, default: false },
+  reviewedBy: { type: String, default: null },
+  reviewNote: { type: String, default: null },
   createdAt: { type: Date, default: Date.now, index: true }
 }, {
   timestamps: true
