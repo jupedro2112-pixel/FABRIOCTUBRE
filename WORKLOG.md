@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 531. 📣 Landing de PAUTA (`/l/CODIGO`) con el mismo diseño nuevo del registro (#530)
+**Pedido (owner):** "pasame la landing, cuál es la que cargaste, para darle al publicista". Las URLs de publicista (`/l/CODIGO`,
+`/CODIGO`, `/ingreso`) servían TODAVÍA la landing violeta vieja; el diseño nuevo estaba sólo en la raíz `/` (pantalla de la app).
+**Qué se hizo:** `public/landing/index.html` re-estilizada en BLANCO con la misma estructura que la landing del owner y la pantalla
+de registro de la app: marca + 18, banner del bono (% reales de `/api/landing/info.welcome`), "¿Cuál es tu nombre?" → CREAR MI
+CUENTA, línea de confianza, las 3 plataformas como tiles con logo (Pronto para las sin API, Girox nunca), chips de servicios sólo con
+título (reembolso diario {pct} y referidos {pct} reales), legal "+18", popup de enganche a los 12 s (1× por sesión). El paso 2 (cuenta
+creada, captura, Chrome desde Instagram), la explicación del servicio, los legales y TODA la lógica de pauta/signup quedaron igual.
+**Para el publicista:** `https://<dominio>/l/<CODIGO>` (el código de la campaña del panel → Publicistas) o el link corto
+`https://<dominio>/<CODIGO>`. Vista previa sin crear cuentas: `/l/demo`. Dominio = `PUBLIC_BASE_URL` (hoy cargas1girox.com).
+**Archivos:** `public/landing/index.html`.
+
 ### 530. 📝 Pantalla de REGISTRO nueva con la idea de la landing del owner (`landing2.zip`) — SW v376 (v377: si el % sin app es 0, el subtítulo dice 'INSTALANDO LA APP')
 **Pedido (owner):** "en el registro quiero algo sencillo que la gente complete su nombre y se registre automáticamente, fondo blanco y las
 3 plataformas que usamos, todos los sistemas de servicio hasta misiones pero resumido" · "buenos íconos y sencillo que la gente no se pierda"
