@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 538. 🔐 Tilde "Pantalla de ingreso = Iniciar sesión" + pantalla de ingreso acomodada — SW v383, admin-sw v122
+**Pedido (owner, con captura en modo usuario+clave):** "eso centralo y acomodalo; quiero, tildando en el administrador, que se vea como
+iniciar sesión u olvidé mi contraseña; sacá el bono de bienvenida ahí".
+**Qué se hizo:** (1) la línea de confianza, las 3 plataformas y los servicios salieron del recuadro del formulario (quedaban con un hueco
+cuando el formulario rápido estaba oculto) y van centrados debajo. (2) `Config['entryLogin']` (Configuración → Registro de clientes, tilde
+nuevo, misma ruta `/api/admin/registration-mode`): con el tilde la pantalla muestra "Iniciar sesión" (usuario + clave) y los links
+"Olvidé mi contraseña" / "Crear mi cuenta", SIN el banner del bono ni la frase; `/api/landing/info.entryLogin` lo expone y `loginhero.js`
+pone `body.entry-login`. Los links de publicidad y de referido (`?ref=`) siguen mostrando el registro aunque el tilde esté activo.
+"Crear mi cuenta" vuelve al registro (nombre, o formulario SMS si ese tilde está activo).
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `server.js`, `public/adminprivado2026/index.html`, `admin.js`, SWs.
+
 ### 537. 🎁 Banner del bono: grande el % con la app, "EN TU PRIMERA CARGA", chico "instalando la app · si no, 50%" — SW v382
 **Pedido (owner, con captura):** "es 100% en tu primera carga y dejá abajo chico: instalando la app, si no un 50%".
 **Qué se hizo:** en la pantalla de la app (`lgBonusBig/lgBonusSub/lgBonusNote`), la landing de pauta (`bonusNote`) y la copia de Vercel

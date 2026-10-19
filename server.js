@@ -1174,7 +1174,7 @@ app.get('/api/landing/info', async (req, res) => {
     // #530: % de bienvenida REAL para el banner de la pantalla de ingreso (nada hardcodeado): primera carga + extra por instalar la app.
     let welcome = null;
     try { const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig(); welcome = { pct: fd, withApp: fd + (ig && ig.enabled ? ig.pct : 0) }; } catch (_) {}
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome }); // #421/#424/#530
+    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true }); // #421/#424/#530/#538
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -4589,15 +4589,18 @@ app.post('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, 
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
 app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
-  res.json({ success: true, mode: await getRegistrationMode(), canEdit: req.user.role === 'admin' });
+  res.json({ success: true, mode: await getRegistrationMode(), entryLogin: (await getConfig('entryLogin', false)) === true, canEdit: req.user.role === 'admin' }); // #538
 });
 app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general.' });
     const mode = req.body && req.body.mode === 'quick' ? 'quick' : 'sms';
     await Config.set('registrationMode', mode, req.user.username);
-    logger.info(`[registration-mode] ${mode} por ${req.user.username}`);
-    res.json({ success: true, mode });
+    // #538: pantalla de ingreso = Iniciar sesión (usuario + clave + olvidé mi contraseña, sin bono de bienvenida)
+    const entryLogin = !!(req.body && req.body.entryLogin === true);
+    await Config.set('entryLogin', entryLogin, req.user.username);
+    logger.info(`[registration-mode] ${mode} · pantalla de ingreso: ${entryLogin ? 'INICIAR SESIÓN' : 'registro'} por ${req.user.username}`);
+    res.json({ success: true, mode, entryLogin });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 

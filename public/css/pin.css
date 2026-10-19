@@ -1690,3 +1690,14 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .ref-promo-btn { width: 100%; border: 0; border-radius: 999px; padding: 14px; font: 900 15px var(--p-font); background: var(--p-red); color: #fff; cursor: pointer; box-shadow: none; }
 .ref-promo-link { width: 100%; margin-top: 8px; border: 0; border-radius: 999px; padding: 11px; font: 800 12.5px var(--p-font); background: var(--p-surface); color: var(--p-text); cursor: pointer; }
 .lg-promo-note { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .2px; }
+/* ── #538 modo "Iniciar sesión" (Config entryLogin) + acomodo del bloque de confianza/plataformas/servicios fuera del formulario ── */
+.lg-trustrow { margin-top: 2px; } .lg-sys { padding: 0 2px; }
+.lg-login-h { display: none; margin: 2px 0 8px; text-align: center; font: 900 20px var(--p-font); color: var(--p-text); }
+.lg-login-links { display: none; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.lg-login-links .lg-link { font: 700 12px var(--p-font); color: var(--p-text); background: var(--p-card); border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+body.entry-login .lg-promo, body.entry-login .lg-pitch, body.entry-login .lg-quick, body.entry-login #quickLoading, body.entry-login #quickDone { display: none !important; }
+body.entry-login #loginForm { display: block !important; }
+body.entry-login .lg-login-h, body.entry-login .lg-login-links { display: flex; }
+body.entry-login .lg-login-h { display: block; }
+body.entry-login .lg-form { padding-top: 16px; }
+

@@ -34,6 +34,10 @@
             try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) viaAd = true; } catch (_) {}
             try { if (!viaAd && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); viaAd = !!(a && a.code); } } catch (_) {}
             document.body.classList.toggle('reg-quick', info.registrationMode === 'quick' || viaAd);
+            // #538: tilde del panel "Pantalla de ingreso = Iniciar sesión": usuario + clave + olvidé mi contraseña, sin bono.
+            // Un link de publicidad o de referido SIEMPRE muestra el registro (si no, el cliente nuevo no sabría qué hacer).
+            const viaRef = !!(window._vipRefLocked && new URLSearchParams(location.search).get('ref'));
+            document.body.classList.toggle('entry-login', !!info.entryLogin && !viaAd && !viaRef);
         } catch (_) {}
         VIP.loginHero.ready = true; // #533: app.js espera esto para decidir dónde cae el link de referido
         // #533: si hay un código de referido guardado (link de hoy o de los últimos 30 días), se avisa en el registro rápido.
@@ -108,7 +112,13 @@
             const pop = _el('lgPop'); if (pop) pop.classList.add('on');
         } catch (_) {}
     }, 12000);
-    VIP.loginHero = { init, ready: false };
+    // #538: "Crear mi cuenta" desde el modo Iniciar sesión → vuelve al registro (nombre, o formulario SMS según el tilde)
+    function showRegister() {
+        document.body.classList.remove('entry-login');
+        if (!document.body.classList.contains('reg-quick')) { try { const b = _el('registerBtn'); if (b) b.click(); } catch (_) {} }
+        try { const q = _el('quickName'); if (q) { q.focus(); q.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (_) {}
+    }
+    VIP.loginHero = { init, showRegister, ready: false };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
     else setTimeout(init, 50);
 })();
