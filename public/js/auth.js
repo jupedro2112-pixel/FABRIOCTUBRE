@@ -542,6 +542,7 @@ VIP.auth = (function () {
         if (((inp && inp.value) || '').trim().length < 2) { if (err) err.textContent = 'Escribí tu nombre.'; try { inp.focus(); } catch (_) {} return; }
         const sb = document.getElementById('quickSmsBox'), nb = document.getElementById('quickNextBtn'), eb = document.getElementById('quickEntryBtn');
         if (sb) sb.hidden = false; if (nb) nb.hidden = true; if (eb) eb.hidden = false;
+        try { document.getElementById('regScreen').dataset.step = '2'; } catch (_) {}
         try { inp.readOnly = true; document.getElementById('quickPhone').focus(); } catch (_) {}
     }
     async function quickSendOtp() {
@@ -556,6 +557,7 @@ VIP.auth = (function () {
             if (!r.ok) { if (err) err.textContent = d.error || 'No pudimos mandar el SMS. Revisá el número.'; if (b) { b.disabled = false; b.textContent = 'Enviar código por SMS'; } return; }
             _quickPhone = phone;
             if (step) step.hidden = false;
+            try { document.getElementById('regScreen').dataset.step = '3'; } catch (_) {}
             if (msg) msg.textContent = 'Te mandamos un código al ' + (d.phone || phone) + '. Ponelo acá y tocá CREAR MI CUENTA.';
             try { document.getElementById('quickOtp').focus(); } catch (_) {}
             let left = 60; if (b) b.textContent = 'Reenviar en 60 s';

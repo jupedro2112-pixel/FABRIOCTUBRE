@@ -533,9 +533,11 @@
         <div id="regScreen" class="lg-regscreen" hidden>
             <div class="lg-reg-head">
                 <button type="button" class="lg-reg-back" onclick="VIP.loginHero.closeRegister()" aria-label="Volver">‹</button>
-                <div class="lg-brand"><b>Crear mi cuenta</b><small>PICA ROJA · oficial</small></div>
+                <div class="lg-brand"><b>Crear mi cuenta</b><small>PICA ROJA · oficial · en menos de un minuto</small></div>
                 <img src="/icons/icon-192x192.png" class="lg-logo lg-logo-sm" alt="">
             </div>
+            <!-- #548: indicador de pasos (sólo con SMS obligatorio) -->
+            <div class="lg-steps" id="regSteps"><span data-s="1"><i>1</i>Nombre</span><span data-s="2"><i>2</i>Celular</span><span data-s="3"><i>3</i>Código</span></div>
             <div class="lg-form lg-form-reg">
             <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
                  sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
@@ -547,7 +549,8 @@
                 <button type="button" id="quickNextBtn" class="btn btn-primary lg-quick-btn" onclick="VIP.auth.quickNext()" hidden>CONTINUAR</button>
                 <!-- #541 (owner): desde el inicio de la app el registro pide verificar el celular por SMS antes de crear la cuenta -->
                 <div id="quickSmsBox" hidden>
-                    <label class="lg-quick-l" for="quickPhone">Tu celular (te mandamos un código por SMS)</label>
+                    <label class="lg-quick-l" for="quickPhone">Tu celular</label>
+                    <small class="lg-quick-n">Te mandamos un código por SMS para confirmar que sos vos.</small>
                     <div class="lg-phone"><span>+54</span><input type="tel" id="quickPhone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="9 11 1234-5678"></div>
                     <button type="button" id="quickOtpBtn" class="lg-quick-otp" onclick="VIP.auth.quickSendOtp()">Enviar código por SMS</button>
                     <div id="quickOtpStep" hidden>
@@ -577,6 +580,7 @@
             </div>
             <!-- #417 (owner): el ingreso vuelve a como estaba (#414 lo había plegado); "Crear mi cuenta" abajo. -->
             </div>
+            <p class="lg-reg-trust">🔒 Datos protegidos · sin tarjeta · gratis · +18</p>
             <button type="button" class="lg-link lg-reg-login" onclick="VIP.loginHero.closeRegister(true)">Ya tengo cuenta · Iniciar sesión</button>
         </div>
         <!-- #530: popup de enganche de la landing (una vez por sesión, a los 12 s, sólo si todavía no escribió el nombre) -->
@@ -2493,7 +2497,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v387</div>
+                    <div class="pf-build" id="appBuildTag">app v388</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

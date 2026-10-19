@@ -1743,3 +1743,35 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 /* #543 limpieza del ingreso */
 #loginScreen .lg-promo, #loginScreen .lg-promo-note { display: none !important; }
 .lg-regscreen .lg-form-reg { display: block !important; }
+/* ── #548 pantalla de registro "premium" estilo Pinterest (blanca, tarjeta con sombra, píldoras rojas, pasos) ── */
+#quickSmsBox[hidden], #quickOtpStep[hidden], #quickNextBtn[hidden], #quickEntryBtn[hidden], #regSteps[hidden] { display: none !important; }
+.lg-regscreen { gap: 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+.lg-reg-head .lg-brand b { font-size: 19px; letter-spacing: .3px; } .lg-reg-head .lg-brand small { font-size: 10.5px; }
+.lg-reg-back { box-shadow: var(--p-shadow); background: #fff; }
+.lg-steps { display: flex; gap: 6px; max-width: 420px; width: 100%; margin: 0 auto; }
+.lg-steps span { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: 800 11px var(--p-font); color: var(--p-placeholder); background: var(--p-surface); border-radius: 999px; padding: 7px 6px; }
+.lg-steps span i { width: 18px; height: 18px; border-radius: 50%; background: var(--p-surface-2); color: var(--p-muted); font: 900 10px/18px var(--p-font); text-align: center; font-style: normal; }
+.lg-regscreen[data-step="1"] .lg-steps span[data-s="1"], .lg-regscreen[data-step="2"] .lg-steps span[data-s="2"], .lg-regscreen[data-step="3"] .lg-steps span[data-s="3"] { background: var(--p-red); color: #fff; }
+.lg-regscreen[data-step="1"] .lg-steps span[data-s="1"] i, .lg-regscreen[data-step="2"] .lg-steps span[data-s="2"] i, .lg-regscreen[data-step="3"] .lg-steps span[data-s="3"] i { background: #fff; color: var(--p-red); }
+.lg-regscreen[data-step="2"] .lg-steps span[data-s="1"], .lg-regscreen[data-step="3"] .lg-steps span[data-s="1"], .lg-regscreen[data-step="3"] .lg-steps span[data-s="2"] { color: var(--p-text); }
+.lg-regscreen[data-step="2"] .lg-steps span[data-s="1"] i, .lg-regscreen[data-step="3"] .lg-steps span[data-s="1"] i, .lg-regscreen[data-step="3"] .lg-steps span[data-s="2"] i { background: var(--p-green); color: #fff; }
+.lg-form-reg { background: #fff !important; border-radius: 24px !important; padding: 18px 16px 16px !important; box-shadow: var(--p-shadow); border: 1px solid var(--p-border); }
+.lg-form-reg .lg-quick { gap: 9px; }
+.lg-form-reg .lg-quick-l { font-size: 15px !important; font-weight: 900 !important; text-align: center; }
+.lg-form-reg .lg-quick input, .lg-form-reg .lg-phone { background: var(--p-surface) !important; border-radius: 16px !important; }
+.lg-form-reg .lg-quick input { padding: 14px 14px !important; font-size: 17px !important; font-weight: 700; }
+.lg-form-reg .lg-quick input:focus, .lg-form-reg .lg-phone:focus-within { border-color: var(--p-red) !important; box-shadow: 0 0 0 3px rgba(230,0,35,.12); }
+.lg-form-reg .lg-phone { padding-left: 14px; } .lg-form-reg .lg-phone span { color: var(--p-text); }
+.lg-form-reg .lg-phone input { padding: 13px 12px !important; font-size: 17px !important; }
+.lg-form-reg .lg-quick-btn { background: var(--p-red) !important; color: #fff !important; border-radius: 999px !important; padding: 14px !important; font: 900 15px var(--p-font) !important; letter-spacing: .4px; box-shadow: 0 6px 18px rgba(230,0,35,.25); }
+.lg-form-reg .lg-quick-btn:disabled { opacity: .7; box-shadow: none; }
+.lg-form-reg .lg-quick-otp { border-radius: 999px; padding: 12px 14px; font-size: 13.5px; background: var(--p-text); color: #fff; }
+.lg-form-reg #quickSmsBox { gap: 8px; margin: 4px 0 2px; padding-top: 10px; border-top: 1px dashed var(--p-border); }
+.lg-form-reg #quickSmsBox .lg-quick-l { font-size: 14px !important; }
+.lg-form-reg #quickOtpStep input { letter-spacing: 8px; font-size: 24px !important; font-weight: 900; }
+.lg-form-reg #quickOtpStep input::placeholder { letter-spacing: 0; font-size: 14px; font-weight: 600; color: var(--p-placeholder); }
+.lg-form-reg .lg-quick-n { font-size: 11.5px; }
+.lg-form-reg .lg-quick-loading { background: #fff; }
+.lg-reg-trust { margin: 0; text-align: center; font: 700 11px var(--p-font); color: var(--p-muted); }
+.lg-reg-login { font-size: 12.5px; color: var(--p-text); }
+

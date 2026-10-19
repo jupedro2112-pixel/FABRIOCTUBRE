@@ -121,9 +121,10 @@
     function showRegister() {
         document.body.classList.remove('entry-login');
         document.body.classList.add('reg-quick');
-        const rs = _el('regScreen'); if (rs) rs.hidden = false;
+        const rs = _el('regScreen'); if (rs) { rs.hidden = false; rs.dataset.step = '1'; }
         try {
             const sms = !!VIP.loginHero.quickSms;
+            const st = _el('regSteps'); if (st) st.hidden = !sms;
             const sb = _el('quickSmsBox'); if (sb) sb.hidden = true; // recién después de CONTINUAR
             const nb = _el('quickNextBtn'); if (nb) nb.hidden = !sms;
             const eb = _el('quickEntryBtn'); if (eb) eb.hidden = sms;

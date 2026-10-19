@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 548. ✨ Pantalla de registro "premium" estilo Pinterest + fix de pasos — SW v388
+**Pedido (owner, con captura):** "hacelo más premium con el mismo estilo de Pinterest". La captura mostraba además CONTINUAR y el bloque del
+celular a la vez: las reglas `#quickSmsBox {display:flex}` / `#quickOtpStep {display:flex}` pisaban el atributo `hidden`.
+**Qué se hizo:** `[hidden]` con `display:none !important` para esos bloques (ahora: nombre → CONTINUAR → celular → código). Diseño:
+tarjeta blanca con sombra y borde suave, indicador de pasos "1 Nombre · 2 Celular · 3 Código" (`#regSteps`, `data-step` en `#regScreen`;
+activo en rojo, hechos en verde; se oculta si no hay SMS), inputs grises redondeados grandes con foco rojo, botones píldora rojos con sombra,
+"Enviar código" en negro, código en dígitos grandes (placeholder normal), línea "🔒 Datos protegidos · sin tarjeta · gratis · +18".
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/js/auth.js`, `public/css/pin.css`, SW.
+
 ### 547. 🌐 Landing de Vercel: "Elegí dónde jugar" pegado al formulario
 **Pedido (owner, con captura):** "juntá más elegí dónde jugar". Se sacó el espacio vacío que dejaba el contenedor de mensajes
 (`.msg` sin alto mínimo) y el margen superior del bloque de plataformas. **Archivos:** `landing/index.html`.
