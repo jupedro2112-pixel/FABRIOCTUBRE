@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 545. 🌐 Landing de Vercel: plataformas con fondo blanco
+**Pedido (owner):** "ponele fondo blanco a las plataformas en /landing porque se ven tapadas". Tiles `.plat` en blanco con texto oscuro
+y etiqueta Pronto gris claro; los logos sin fondo negro. **Archivos:** `landing/index.html`.
+
 ### 544. 🌐 Landing de Vercel: logos locales de las plataformas + todo más chico (entra en una pantalla)
 **Pedido (owner):** "en la landing no se ven los logos de las plataformas; achicá el 100 % del bono, lo de cuál es tu nombre y crear
 cuenta, así todo lo de abajo entra en una hoja".
