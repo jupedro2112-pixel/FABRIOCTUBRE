@@ -1070,6 +1070,10 @@
                     <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b><small>con tu carga de <b class="rl-min">$5.000</b></small>
                     </button>
+                    <!-- #524: Misiones en la misma fila -->
+                    <button type="button" class="ev-svc svc-missions" onclick="VIP.home.openMissions()" title="Misiones de la semana">
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones</b><small id="evSvcMissions">de la semana</small>
+                    </button>
                     <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b><small>cobrá todos los meses</small>
                     </button>
@@ -1188,6 +1192,14 @@
                 <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
                 <div class="bv-plats" id="basicPlats"></div>
                 <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
+                <!-- #524 (owner): accesos rápidos debajo de "Entrar a jugar", en el orden del Inicio -->
+                <div class="bv-quick">
+                    <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones</button>
+                    <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos</button>
+                    <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos</button>
+                    <button type="button" onclick="VIP.home.openVipLevels()"><i>👑</i>Niveles VIP</button>
+                    <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria</button>
+                </div>
                 <!-- #516: el pase a otro menú, con más lugar y explicado -->
                 <div class="bv-switch2">
                     <div class="bv-switch2-h">¿Querés ver más?</div>
@@ -2422,7 +2434,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v369</div>
+                    <div class="pf-build" id="appBuildTag">app v370</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

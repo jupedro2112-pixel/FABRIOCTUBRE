@@ -1537,4 +1537,12 @@ html[data-theme="dark"] .ev-tab.active, html[data-theme="dark"] .ev-tab.active .
 html[data-theme="dark"] .ev-tab.active { background: var(--p-card) !important; border-color: #f2f2f2 !important; }
 html[data-theme="dark"] .ev-tab .ev-reco { background: var(--p-card) !important; }
 .ev-tab.plat-ganamos .ev-name, .ev-tab.plat-jugaygana .ev-name { color: #fff !important; }
+/* ── #524: accesos rápidos del básico + 4 servicios en la fila del Inicio completo ── */
+.bv-quick { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 2px; }
+.bv-quick button { border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 14px; padding: 8px 2px; display: flex; flex-direction: column; align-items: center; gap: 3px; font: 800 9.5px var(--p-font); cursor: pointer; min-width: 0; }
+.bv-quick button i { font-style: normal; font-size: 18px; line-height: 1; }
+.ev-services { display: flex; gap: 6px; }
+.ev-svc { flex: 1 1 0; min-width: 0; padding: 8px 4px !important; }
+.ev-svc b { font-size: 11.5px !important; } .ev-svc small { font-size: 9.5px !important; line-height: 1.25 !important; }
+.ev-svc.svc-missions b { color: var(--p-text) !important; } .ev-svc.svc-missions small { color: var(--p-muted) !important; }
 

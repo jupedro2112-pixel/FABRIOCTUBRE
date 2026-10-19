@@ -181,6 +181,7 @@
         const nivelTxt = nv ? (nv.emoji + ' ' + nv.name) : '';
         const subeTxt = nv ? (nv.next ? (nv.todasCumplidas ? '¡Completaste todas! La semana que viene jugás en ' + nv.next.emoji + ' ' + nv.next.name + '.' : 'Completá las ' + ms.length + ' y la semana que viene pasás a ' + nv.next.emoji + ' ' + nv.next.name + (nv.vipNextName ? ' (también al llegar a VIP ' + nv.vipNextName + ').' : '.')) : 'Estás en el nivel más alto.') + (nv.vipName ? ' Tu nivel VIP: ' + nv.vipName + '.' : '') : '';
         if (btn) { btn.hidden = false; const bd = _el('ezMissionsBadge'); if (bd) { bd.textContent = done + '/' + ms.length; bd.style.display = ''; } const sub = _el('ezMissionsSub'); if (sub) sub.textContent = (nivelTxt ? 'Nivel ' + nivelTxt + ' · ' : '') + (done === ms.length ? '¡Todas cumplidas!' : done + ' de ' + ms.length + ' cumplidas'); const bars = _el('ezMissionsBars'); if (bars) bars.innerHTML = ms.map((m) => '<i class="' + (m.done ? 'ok' : '') + '" style="--w:' + Math.min(100, Math.round((m.value / m.target) * 100)) + '%"></i>').join(''); }
+        try { const ev = _el('evSvcMissions'); if (ev) ev.textContent = done + ' de ' + ms.length + ' cumplidas'; } catch (_) {} // #524
         if (card) { card.hidden = false; const cs = _el('missionsCardSub'); if (cs) cs.textContent = (nivelTxt ? nivelTxt + ' · ' : '') + done + ' de ' + ms.length + ' cumplidas · tocá para ver'; const cl = _el('missionsCardList'); if (cl) cl.innerHTML = ms.map(_msBar).join(''); const nt = _el('missionsCardNote'); if (nt) nt.textContent = (d.rolloverX > 0 ? 'El premio se juega x' + d.rolloverX + ' antes de poder retirarlo. ' : '') + (d.maxRewardPct > 0 ? 'Premio hasta el ' + d.maxRewardPct + '% de lo cargado en la semana.' : ''); let op = '0'; try { op = localStorage.getItem('vip_ms_open') || '0'; } catch (_) {} toggleMissionsCard(op === '1'); }
         const list = _el('missionsList'); if (list) list.innerHTML = (nv ? '<div class="ms-level"><b>' + _esc(nivelTxt) + '</b><small>' + _esc(subeTxt) + '</small></div>' : '') + ms.map(_msBar).join('');
         // #518: la sección de misiones del modal Info toma los números reales
@@ -1754,7 +1755,7 @@
                 if (m && mx(tbp.monthly)) m.textContent = mx(tbp.monthly);
                 // #269/#359: tarjeta "Reembolso" del Inicio — % máximo real entre DIARIO (#349), semanal y mensual.
                 const top = Math.max(mx(tbp.daily), mx(tbp.weekly), mx(tbp.monthly));
-                const sv = _el('evSvcRefund'); if (sv) sv.textContent = (mx(tbp.daily) ? ('diario ' + mx(tbp.daily) + '%') : ('hasta ' + top + '%')) + ' de tu NETWIN · semanal y mensual'; // #447/#458
+                const sv = _el('evSvcRefund'); if (sv) sv.textContent = mx(tbp.daily) ? ('Diario ' + mx(tbp.daily) + '%') : ('hasta ' + top + '%'); // #447/#458 · #524 (owner): sólo "Diario 25%"
                 const d = _el('infoDailyMax'); if (d && mx(tbp.daily)) d.textContent = mx(tbp.daily);
             }
         } catch (_) {}

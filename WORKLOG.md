@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 524. ▭ Básico con accesos (Misiones · Reembolsos · Referidos · Niveles VIP · Ruleta) · Inicio completo con Misiones en la fila y "Reembolso · Diario 25%" — SW v370
+**Pedidos (owner):** "en el básico, abajo de Entrar a jugar: misiones, reembolsos, referidos y niveles VIP, ruleta diaria"; "en el
+Inicio completo un recuadro más en la fila de Reembolso con las misiones; en Reembolso poné 'Reembolso' y abajo 'Diario 25%',
+sin más texto".
+**Qué se hizo:** `.bv-quick` (5 accesos chicos con ícono) debajo de "Entrar a jugar" en el básico. En el Inicio completo la fila
+de servicios pasa a 4: Reembolso (sub "Diario 25%" real, sin "de tu NETWIN · semanal y mensual") · Ruleta · **Misiones** ("N de 3
+cumplidas", de `/api/strategy/me`) · Referidos, más compactos para que entren.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/firebase-messaging-sw.js`.
+
 ### 523. 🧱 Inicio completo: sin el titular, NOVEDAD en una fila con "Pagos sin límites en el acto", plataformas en línea, Recomendado con recuadro, Girox legible en nocturno — SW v369
 **Pedido (owner, con captura):** "sacá 'la única app que paga en el momento'; en la novedad agregá '/ pagos sin límites en el acto'
 y que entre en la misma fila; la letra de Girox en blanco; las 3 plataformas con texto y fotos en línea; el Recomendado tipo
