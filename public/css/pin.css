@@ -1595,4 +1595,35 @@ body.home-full #fireHomeCard { display: none !important; }
 .ev-tab img { width: 28px !important; height: 28px !important; }
 .ev-tab .ev-name { font-size: 12.5px !important; }
 .plat-play-btn { height: 82px !important; padding: 6px 6px 20px !important; }
+/* ── #529 REFERIDOS 2.0 (réplica): card del home, popup y modal. Mantienen su estética violeta/dorada en los dos temas (el modal y el popup se fuerzan a tarjeta oscura: sus textos son claros). ── */
+                .dash-ref { background:linear-gradient(135deg,#1a0033,#2d0052); border:1.5px solid #d4af37; border-radius:13px; padding:9px 11px; color:#fff; box-shadow:0 3px 12px rgba(212,175,55,.35); }
+                .dash-ref-head { display:flex; align-items:center; gap:8px; }
+                .dash-ref-title { font-size:12.5px; font-weight:900; color:#ffd700; letter-spacing:.5px; flex:1; }
+                .dash-ref-cta { font-size:9px; font-weight:900; color:#1a0033; background:linear-gradient(135deg,#d4af37,#ffd700); border-radius:999px; padding:4px 8px; border:none; cursor:pointer; white-space:nowrap; }
+                .dash-ref-bar { position:relative; height:9px; background:rgba(255,255,255,.12); border-radius:999px; margin:9px 0 6px; overflow:hidden; }
+                .dash-ref-fill { height:100%; background:linear-gradient(90deg,#d4af37,#ffd700); border-radius:999px; transition:width .5s ease; }
+                .dash-ref-steps { display:flex; justify-content:space-between; gap:4px; }
+                .dash-ref-step { flex:1; text-align:center; font-size:9px; color:#bbb; line-height:1.25; }
+                .dash-ref-step b { display:block; font-size:16px; line-height:1; }
+                .dash-ref-step.on { color:#00ff88; }
+                .dash-ref-invite { width:100%; margin-top:8px; background:linear-gradient(135deg,#ffd700,#f7931e); color:#000; border:none; border-radius:10px; padding:9px; font-weight:900; font-size:12px; cursor:pointer; letter-spacing:.4px; }
+                /* Popup promocional */
+                .ref-promo { background:linear-gradient(180deg,#2d0052 0%,#1a0033 70%,#0a001a 100%); border:2.5px solid #ffd700; border-radius:18px; padding:20px 16px 16px; color:#fff; max-width:420px; width:100%; margin:18px auto; position:relative; text-align:center; box-shadow:0 0 40px rgba(255,215,0,.35); overflow:hidden; }
+                .ref-promo-title { font-size:34px; font-weight:900; line-height:.95; letter-spacing:1px; margin:6px 0 2px; color:#ffd700; text-shadow:0 3px 0 #7a5a00, 0 6px 16px rgba(0,0,0,.6); }
+                .ref-promo-title span { display:block; color:#fff; font-size:22px; text-shadow:0 2px 0 #4a0080; }
+                .ref-promo-title em { font-style:normal; color:#c98bff; }
+                .ref-promo-badge { display:inline-block; margin:10px auto 8px; background:rgba(0,0,0,.45); border:1.5px solid #ffd700; border-radius:12px; padding:8px 14px; font-size:14px; font-weight:800; }
+                .ref-promo-badge b { color:#ffd700; font-size:20px; }
+                .ref-promo-gift { font-size:64px; line-height:1; margin:4px 0 10px; filter:drop-shadow(0 6px 14px rgba(255,215,0,.35)); }
+                .ref-promo-btn { width:100%; background:linear-gradient(135deg,#ffd700,#f7931e); color:#000; border:none; border-radius:12px; padding:14px; font-weight:900; font-size:15px; cursor:pointer; letter-spacing:.6px; box-shadow:0 4px 16px rgba(255,215,0,.45); }
+                .ref-promo-link { width:100%; margin-top:8px; background:rgba(255,255,255,.06); color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:11px; font-weight:800; font-size:12.5px; cursor:pointer; }
+                .ref-promo-x { position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:rgba(0,0,0,.55); border:1px solid #ffd700; color:#ffd700; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+
+#referralModal .modal-content, #referralPromoModal .ref-promo { background: #14062b !important; color: #fff !important; border: 1px solid rgba(255,215,0,.35) !important; }
+#referralModal .modal-header h2, #referralModal .modal-header p { color: #fff !important; }
+#referralModal .ref-news { background: rgba(230,0,35,.18); color: #fff; }
+#referralModal .ref-table { width: 100%; border-collapse: collapse; font-size: 11.5px; } #referralModal .ref-table th { color: #aaa; font-weight: 700; text-align: left; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.12); } #referralModal .ref-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,.06); color: #ddd; }
+.ref-pill { display: inline-block; border-radius: 999px; padding: 2px 7px; font-size: 10px; font-weight: 800; }
+.ref-modal-tile { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 3px; } .ref-modal-tile .v { font-size: 18px; font-weight: 900; } .ref-modal-tile .l { font-size: 10.5px; color: #bbb; line-height: 1.3; }
+body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: none !important; }
 

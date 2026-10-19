@@ -1271,3 +1271,20 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Moneda:** `Config['usdtRate']` (manual o `?fetch=1` desde criptoya); `cur=usd&usdRate=` en análisis y panorama hace que
   los textos del server salgan en USDT; el panel convierte el resto (`_diaM`, `localStorage dia_cur`).
 - **Medidor de uso:** la PWA pinguea `POST /api/activity/ping` cada 60 s (gap > 3 min = sesión nueva) → `AppSession`.
+
+
+## Referidos 2.0 (#529, 2026-10-19) — réplica del gemelo PAUTANUEVAsantino
+
+- **Tasa:** `referralTierService.resolveReferralRate(user, {activeCount})` → override por usuario > niveles por referidos ACTIVOS
+  (`Config['referralMilestones']`: `{enabled, minChargedARS, basePct, tiers:[{count,pct}]}`, apagados por defecto acá) > % plano
+  (`Config['referralCommissionPct']`, panel → Referidos). Es la ÚNICA función con la que se calcula (`referralCalculationService`) y se
+  muestra (`/api/referrals/dashboard`, panel).
+- **Pago automático:** `_runMonthlyReferralPayout` (server.js) el día 1 ART por el mes anterior; reserva idempotente
+  `Config referral_autorun_<YYYY-MM>`; Calcular → Pagar con `adminUsername 'auto-referidos'`. El cobro manual (#240) sigue existiendo.
+- **Tablero del cliente:** `GET /api/referrals/dashboard` (link `/?ref=CODE`, nivel, tabla por referido con netwin del mes leído de
+  1girox vía `getReferredNetwinForRange`, cache 15 min, tope 60). No llamarlo masivamente: consulta la Partner API por referido con cargas.
+- **Admin:** `GET /api/referrals/admin/activity` (sin 1girox), `GET /api/admin/referrals/:userId/netwin` (en vivo),
+  `GET/POST /api/admin/referrals/milestones-config`, `GET/POST /api/admin/referral-rate`.
+- **Front:** `ui.js` bloque Referrals (`openReferralModal`, `maybeShowReferralPromo` 1×/24 h, `shareReferralLink` chooser), `app.js`
+  guarda `?ref=` 30 días (`localStorage vip_ref`) y lo fija en el registro; `/linkreferido?ref=` redirige a `/?ref=`.
+- **Copy:** "comisión por la ACTIVIDAD de tus referidos", nunca "lo que pierdan". Sin % hardcodeado en HTML (sale del dashboard).

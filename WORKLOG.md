@@ -8,6 +8,35 @@
 
 ## Sesión 2026-10-18
 
+### 529. 🤝 REFERIDOS 2.0 — réplica del paquete `referidos-2.0.zip` del gemelo PAUTANUEVAsantino (#307–#319) — SW v375, admin-sw v120
+**Pedido (owner):** "me subís eso" (el zip con los parches, archivos completos y snippets). Se aplicó bloque por bloque según su README,
+adaptado a este repo (que ya tenía cobro manual #240, % desde el panel #351, novedad de diciembre #472 y NO tiene hub PREMIOS ni asistente).
+**Backend (`src/`):** `referralTierService.js` (NUEVO: override > niveles por referidos ACTIVOS > % plano; `depositsByReferred`,
+`levelForCount`, `resolveReferralRate(user)` = la ÚNICA función con la que se paga y se muestra el %), `ReferralMilestoneClaim.js`
+(sólo historial), `referralCalculationService.js` (tasa por referidor desde el tier service + `getReferredNetwinForRange`),
+`referralController.js` (+ `adminGetReferralActivity`; se conservó el cobro desde la app `getMyClaimable/claimMyCommission`),
+`referralRoutes.js` (+ `GET /admin/activity`). `referralRate.js`: fuente ÚNICA = `Config['referralCommissionPct']` (#351); expone
+los nombres que usa el código replicado (`setGlobalReferralRate`, `getGlobalReferralRate`, `refreshReferralRateFromCommand`,
+`REFERRAL_PCT_COMMAND`) sin segundo lugar para el número. **Niveles APAGADOS por defecto** (`DEFAULTS.enabled=false`): rige el 5 %
+plano hasta que el owner los prenda en el panel (el README advertía que con niveles ON un referidor con < 3 activos cobra 0 %).
+**server.js:** pago AUTOMÁTICO el día 1 (`_runMonthlyReferralPayout`, reserva `Config referral_autorun_<YYYY-MM>`, 5 min tras
+el arranque y cada hora), `GET /linkreferido?ref=` → `/?ref=`, comando `/sys_referidos_compartir`, rutas `GET/POST
+/api/admin/referral-rate` (escriben la Config del panel), `GET /api/referrals/dashboard` (tablero vivo con netwin del mes de 1girox,
+cache 15 min, tope 60; incluye `shareTpl`), `POST /api/referrals/milestones/claim` → 410, `GET/POST /api/admin/referrals/milestones-config`,
+`GET /api/admin/referrals/:userId/netwin`.
+**PWA:** bloque Referrals nuevo en `ui.js` (tablero, popup 1× cada 24 h `vip_refPromoAt`, chooser WhatsApp/Telegram/nativo/copiar,
+card del home completo), modales `#referralModal` (con la novedad de diciembre) y `#referralPromoModal` con las imágenes
+`public/img/referidos-promo-*.jpg`, `?ref=` guardado 30 días y FIJO en el registro (`app.js`/`auth.js`), hooks al arrancar.
+Estilo: el modal y el popup mantienen su tarjeta violeta/dorada en los dos temas (sus textos son claros).
+**Panel:** en Referidos: "📈 Actividad y evolución", "🏆 Mejores referidores", "🏆 Niveles de comisión por referidos activos"
+(con el aviso de que arrancan apagados), filtros "Con activos" / "Nuevos 30d", columnas nuevas en la tabla y netwin del mes en vivo
+en el detalle. NO se agregó la card de % en COMANDOS (ya existe el editor en Referidos, #351).
+**Pendiente del owner:** decidir si prende los niveles (3 → 1 % · 5 → 2 % · 10 → 3 %, base 0 %) y con qué valores; el cobro
+manual desde la app queda sin uso real después del pago automático del día 1.
+**Archivos:** `src/services/referralTierService.js`, `src/models/ReferralMilestoneClaim.js`, `src/services/referralCalculationService.js`,
+`src/controllers/referralController.js`, `src/routes/referralRoutes.js`, `src/utils/referralRate.js`, `server.js`, `public/index.html`,
+`public/js/ui.js`, `public/js/app.js`, `public/js/auth.js`, `public/css/pin.css`, `public/img/`, `public/adminprivado2026/index.html`, `admin.js`, SWs.
+
 ### 528. 🧩 "Ver más" en los accesos del básico · opiniones pegadas al botón de cargar · fueguito resumido junto a "Cambiar menú" · misiones en una línea · plataformas más chicas — SW v374
 **Pedidos (owner):** "ponele Ver más en cada uno; subí las opiniones al límite del botón de cargar; el fueguito en la carga completa
 ponelo al lado de Cambiar menú, diferenciado y resumido; misiones de la semana en una misma línea con 'tocá para ver'; que se vea

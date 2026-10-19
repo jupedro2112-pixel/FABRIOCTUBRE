@@ -1330,6 +1330,7 @@
                 <!-- #257: ¡Felicidades por tu nuevo nivel! → reclamar el bono eligiendo plataforma (lo pinta home.js) -->
                 <button type="button" class="sd-banner sd-banner-full" id="sdBannerFull" hidden onclick="VIP.home.easyLoad()"><b id="sdBannerPctFull">50% EXTRA</b> en tu próxima carga <small id="sdBannerLeftFull"></small><span>Cargar ›</span></button>
                 <div class="home-card ms-card" id="missionsCard" hidden><button type="button" class="ms-card-h ms-oneline" onclick="VIP.home.toggleMissionsCard()" aria-expanded="false"><b>🎯 Misiones</b><small id="missionsCardSub"></small><i class="ms-chev">tocá para ver ▾</i></button><div id="missionsCardBody" hidden><div id="missionsCardList" onclick="VIP.home.openMissions()"></div><small class="ms-note" id="missionsCardNote"></small></div></div>
+                <div id="referralHomeCard" style="display:none;"></div><!-- #529: card INVITÁ A TUS AMIGOS (nivel + progreso) -->
                 <div class="home-card vip-claim" id="vipClaimCard" style="display:none;"></div>
                 <div class="home-card vip-card" id="vipCard" style="display:none;">
                     <button type="button" class="vip-head" onclick="VIP.home.toggleVipCard()">
@@ -1776,7 +1777,7 @@
                 <div class="input-group" id="registerReferralGroup" style="display:none;"><!-- #418: sólo si viene ?ref=CODE -->
                     <label>Código de Referido (opcional)</label>
                     <input type="text" id="registerReferralCode" name="referralCode" placeholder="Ej: VIP3X7" autocomplete="off" maxlength="12" style="text-transform:uppercase;letter-spacing:2px;">
-                    <span style="font-size: 11px; color: #888;">Si te invitó alguien, ingresá su código para vincularte.</span>
+                    <span id="registerReferralHint" style="font-size: 11px; color: #888;">Si te invitó alguien, ingresá su código para vincularte.</span>
                 </div>
                 <!-- SMS OBLIGATORIO en el auto-registro (owner 2026-08-05): el que se
                      registra solo verifica su número SÍ o SÍ (anti cuentas duplicadas).
@@ -2438,7 +2439,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v374</div>
+                    <div class="pf-build" id="appBuildTag">app v375</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -4850,128 +4851,43 @@
         };
     })();
     </script>
-    <div id="referralModal" class="modal hidden" onclick="if(event.target===this)hideModal('referralModal')">
-        <div class="modal-content" style="position:relative;max-width:500px;max-height:90vh;overflow-y:auto;">
-            <button onclick="hideModal('referralModal')" style="position:absolute;top:15px;right:15px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;z-index:10;">✕</button>
-            <div class="modal-header">
-                <h2>🤝 Mis Referidos</h2>
-                <p>Invitá amigos y cobrá <strong style="color:#d4af37;">todos los meses el <span class="ref-pct">5</span>%</strong> de su actividad — sin límite de referidos</p>
+    <!-- #529 (réplica referidos 2.0): el modal viejo (código + link + stats + cobro) se reemplazó por el tablero nuevo. -->
+    <!-- #317 (réplica #168): modal de referidos — link + nivel + tablero por referido. Lo pinta ui.js
+         (renderReferralModal). z-index alto: en este repo el cliente está dentro del casino (99999)
+         y del hub PREMIOS; si no, quedaba tapado. -->
+    <div id="referralModal" class="modal hidden" style="z-index:2147483000;" onclick="if(event.target===this)hideModal('referralModal')">
+        <div class="modal-content" style="position:relative;max-width:560px;max-height:92vh;overflow-y:auto;padding:16px 14px;">
+            <button onclick="hideModal('referralModal')" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;z-index:10;">✕</button>
+            <div class="modal-header" style="margin-bottom:10px;">
+                <h2 style="margin:0;">🤝 Mis Referidos</h2>
+                <p style="margin:4px 0 0;">Cobrás hasta el <strong style="color:#d4af37;"><span class="referralRatePct">5%</span></strong> de comisión por la actividad de tus referidos, todos los meses. Tu % actual: <strong style="color:#00ff88;"><span class="referralMyPct">5%</span></strong></p>
                 <!-- #472 (owner): novedad — el % baja en diciembre para los próximos referidos -->
                 <div class="ref-news"><b>NOVEDAD</b> Aprovechá el <b><span class="ref-pct">5</span>%</b> ahora: en diciembre baja al <b>3%</b> para todos los próximos referidos. Los que ya tenés siguen igual.</div>
             </div>
-            <div id="referralContent">
-                <!-- #239 (owner): "en referidos veo mucha info: el cómo funciona adentro de un deslizante, sin
-                     maximizar, así todo lo otro se ve en una pantalla". -->
-                <!-- #465 (owner): CONDICIONES del programa de referidos (estilo 1win) -->
-                <div class="cond-wrap">
-                    <button type="button" class="cond-head" onclick="var b=this.nextElementSibling;var o=b.style.display==='none';b.style.display=o?'':'none';this.querySelector('.cond-chev').textContent=o?'▲':'▼';"><span>📄 Condiciones del programa de referidos</span><span class="cond-chev">▼</span></button>
-                    <div class="cond-body" style="display:none;">
-                        <div class="cond-sec"><b>1 · Cuánto ganás</b><p>El <b><span class="ref-pct">5</span>%</b> de la actividad de cada persona que invitás, <b>de por vida</b> y <b>sin límite de referidos</b>. La actividad es lo que tu referido deja en la plataforma (su NETWIN del mes).</p></div>
-                        <div class="cond-sec"><b>2 · Quién cuenta como referido</b><p>Alguien que se registra <b>con tu código</b> o entrando por <b>tu link</b>. Queda vinculado a vos para siempre: no se puede cambiar de referidor después.</p></div>
-                        <div class="cond-sec"><b>3 · Cuándo empieza a sumar</b><p>Desde su <b>primera carga</b>. Mientras tenga actividad, vos cobrás, mes a mes.</p></div>
-                        <div class="cond-sec"><b>4 · Cuándo y cómo cobrás</b><p>La comisión se calcula <b>el 1 de cada mes</b> sobre la actividad del mes anterior y queda disponible acá, en Referidos, para que la cobres cuando quieras. Se acredita a tu saldo al instante.</p></div>
-                        <div class="cond-sec"><b>5 · Qué no cuenta</b><p>Bonos, regalos, reembolsos y promociones de tu referido no generan comisión: sólo su juego real. Si en un mes tu referido gana, ese mes no suma comisión (nunca descuenta).</p></div>
-                        <div class="cond-sec"><b>6 · Reglas de juego limpio</b><p>Una persona = una cuenta. No vale referirse a uno mismo ni usar cuentas duplicadas; en esos casos la comisión se anula. Podés compartir tu link donde quieras: WhatsApp, Telegram, redes.</p></div>
-                        <div class="cond-note">Mismo esquema que los programas de referidos de los grandes casinos online (1win y similares): comisión mensual por la actividad real de tus invitados, de por vida.</div>
-                    </div>
+            <div id="referralContent"><span style="color:#888;font-size:12px;">Cargando tus referidos…</span></div>
+        </div>
+    </div>
+
+    <!-- #168 Popup promocional de referidos: se muestra cada vez que se abre la app (una vez por
+         apertura). Botones: compartir el link / ver el progreso. -->
+    <div id="referralPromoModal" class="modal hidden" style="z-index:2147483000;" onclick="if(event.target===this)hideModal('referralPromoModal')">
+        <div class="ref-promo" style="padding:0;overflow:hidden;">
+            <button class="ref-promo-x" onclick="hideModal('referralPromoModal')" style="top:8px;right:8px;">✕</button>
+            <!-- Arte del mockup del encargado en dos recortes; el cartel del % es HTML para que
+                 refleje el porcentaje real (editable en COMANDOS, #169). -->
+            <img src="/img/referidos-promo-top.jpg" alt="Invitá a tus amigos" style="display:block;width:100%;height:auto;">
+            <div style="background:radial-gradient(ellipse at center,#4a0080 0%,#2a0048 70%);padding:6px 14px 2px;">
+                <div style="background:rgba(12,0,30,.85);border:2px solid #ffd700;border-radius:14px;padding:9px 12px;font-size:15px;font-weight:800;color:#fff;line-height:1.3;box-shadow:0 0 16px rgba(255,215,0,.35);">
+                    Cobrá hasta el <b style="color:#ffd700;font-size:24px;"><span class="referralRatePct">3%</span></b> de comisión<br>por la actividad de tus referidos
                 </div>
-                <div class="ref-how-wrap">
-                    <button type="button" class="ref-how-head" onclick="VIP.home.toggleRefHow()">
-                        <span>💡 ¿Cómo funciona y cuándo cobro?</span><span class="ref-how-chevron" id="refHowChevron">▼</span>
-                    </button>
-                    <div id="refHowBody" style="display:none;">
-                <!-- Cómo funciona, en 3 pasos (pedido del owner 2026-08-03: que sea
-                     BIEN explicativo — antes solo había un microcopy chiquito) -->
-                <div style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:14px;margin-bottom:16px;">
-                    <div style="color:#d4af37;font-size:13px;font-weight:800;margin-bottom:10px;">💡 ¿Cómo funciona? Así de simple:</div>
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <div style="display:flex;gap:10px;align-items:flex-start;">
-                            <span style="flex:0 0 26px;height:26px;background:linear-gradient(135deg,#d4af37,#ffd700);color:#1a0033;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;">1</span>
-                            <div style="flex:1;font-size:12px;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Compartí tu código o tu link</strong> (los tenés acá abajo) con tus amigos por WhatsApp, Telegram o donde quieras.</div>
-                        </div>
-                        <div style="display:flex;gap:10px;align-items:flex-start;">
-                            <span style="flex:0 0 26px;height:26px;background:linear-gradient(135deg,#d4af37,#ffd700);color:#1a0033;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;">2</span>
-                            <div style="flex:1;font-size:12px;color:#ddd;line-height:1.5;"><strong style="color:#fff;">Tu amigo se registra con tu código</strong> (o entrando por tu link) y juega normalmente en la sala. Queda vinculado a vos para siempre.</div>
-                        </div>
-                        <div style="display:flex;gap:10px;align-items:flex-start;">
-                            <span style="flex:0 0 26px;height:26px;background:linear-gradient(135deg,#d4af37,#ffd700);color:#1a0033;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;">3</span>
-                            <div style="flex:1;font-size:12px;color:#ddd;line-height:1.5;"><strong style="color:#00ff88;">Cobrás el <span class="ref-pct">5</span>% de lo que tus referidos dejan en la sala</strong> (su pérdida neta jugando), todos los meses, en fichas directo a tu cuenta. Mientras sigan jugando, vos seguís cobrando — <strong style="color:#fff;">de por vida</strong>.</div>
-                        </div>
-                    </div>
-                    <div style="font-size:11px;color:#999;line-height:1.5;margin-top:10px;border-top:1px solid rgba(212,175,55,0.15);padding-top:8px;">
-                        📌 La comisión se calcula al inicio de cada mes sobre la actividad del mes anterior y se acredita sola. Ejemplo: si tus referidos pierden $100.000 en el mes, vos cobrás <strong style="color:#d4af37;">$8.000</strong>. No hay límite de referidos ni de ganancia.
-                    </div>
-                </div>
-                <!-- Aclaración de los cortes de pago -->
-                <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:10px;padding:12px;margin-bottom:16px;">
-                    <p style="color:#b0b0b0;font-size:11px;margin:0;line-height:1.6;">
-                        💰 <strong style="color:#d4af37;">Lo cobrás acá mismo.</strong> Lo que tus referidos generan durante el mes se desbloquea el <strong>1 del mes siguiente</strong>: ese día el botón "Cobrar" te muestra el monto y lo acreditás en tu cuenta al instante. Nunca se pierde nada.
-                    </p>
-                </div>
-                    </div>
-                </div>
-                <!-- #240: cobro desde la app (lo llena home.js desde /api/referrals/claimable) -->
-                <div class="ref-claim" id="referralClaimBox">
-                    <div class="ref-claim-row">
-                        <div class="ref-claim-text"><span class="ref-claim-k">Disponible para cobrar</span><span class="ref-claim-v" id="refClaimAmount">—</span></div>
-                        <button type="button" class="ref-claim-btn" id="refClaimBtn" onclick="VIP.home.claimReferral()" disabled>Cobrar acá mismo</button>
-                    </div>
-                    <div class="ref-claim-note" id="refClaimNote">Cargando…</div>
-                </div>
-                <!-- Código y link -->
-                <div style="background:rgba(255,255,255,0.05);border:1px solid #d4af37;border-radius:12px;padding:16px;margin-bottom:16px;">
-                    <div style="margin-bottom:12px;">
-                        <span style="color:#b0b0b0;font-size:11px;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Tu código de referido</span>
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span id="myReferralCode" style="font-size:24px;font-weight:bold;color:#d4af37;letter-spacing:5px;">—</span>
-                            <button onclick="copyReferralCode()" style="background:rgba(212,175,55,0.2);border:1px solid #d4af37;color:#d4af37;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;">📋 Copiar</button>
-                        </div>
-                    </div>
-                    <div>
-                        <span style="color:#b0b0b0;font-size:11px;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Tu link de referido</span>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span id="myReferralLink" style="font-size:11px;color:#00ff88;word-break:break-all;flex:1;min-width:0;">—</span>
-                            <button onclick="copyReferralLink()" style="background:rgba(0,255,136,0.1);border:1px solid #00ff88;color:#00ff88;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap;flex-shrink:0;">📋 Copiar</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Stats (4 tarjetas 2x2) -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-                    <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:10px;padding:12px;text-align:center;">
-                        <span style="font-size:22px;font-weight:bold;color:#00ff88;" id="referralActiveCount">0</span>
-                        <span style="display:block;font-size:11px;color:#b0b0b0;margin-top:4px;">Referidos activos</span>
-                    </div>
-                    <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:10px;padding:12px;text-align:center;">
-                        <span style="font-size:22px;font-weight:bold;color:#d4af37;" id="referralHistoricalTotal">$0</span>
-                        <span style="display:block;font-size:11px;color:#b0b0b0;margin-top:4px;">Total acreditado</span>
-                    </div>
-                    <div style="background:rgba(247,147,30,0.05);border:1px solid rgba(247,147,30,0.2);border-radius:10px;padding:12px;text-align:center;">
-                        <span style="font-size:22px;font-weight:bold;color:#f7931e;" id="referralPendingAmount">$0</span>
-                        <span style="display:block;font-size:11px;color:#b0b0b0;margin-top:4px;">Pendiente del período</span>
-                    </div>
-                    <div style="background:rgba(136,136,136,0.05);border:1px solid rgba(136,136,136,0.2);border-radius:10px;padding:12px;text-align:center;">
-                        <span style="font-size:16px;font-weight:bold;color:#b0b0b0;" id="referralLastPayoutAmount">—</span>
-                        <span style="display:block;font-size:11px;color:#888;margin-top:4px;">Último pago acreditado</span>
-                    </div>
-                </div>
-                <!-- Período actual -->
-                <div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:16px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                        <span style="color:#b0b0b0;font-size:12px;">Período actual:</span>
-                        <span id="referralCurrentPeriod" style="color:#fff;font-size:12px;font-weight:600;">—</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="color:#b0b0b0;font-size:12px;">Próxima acreditación:</span>
-                        <span id="referralCreditDate" style="color:#888;font-size:11px;">—</span>
-                    </div>
-                </div>
-                <!-- Historial agrupado por período -->
-                <div>
-                    <span style="color:#b0b0b0;font-size:12px;font-weight:600;display:block;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Historial de pagos</span>
-                    <div id="referralPayoutHistory" style="max-height:220px;overflow-y:auto;">
-                        <span style="color:#888;font-size:12px;">Cargando...</span>
-                    </div>
-                </div>
+            </div>
+            <img src="/img/referidos-promo-bottom.jpg" alt="" style="display:block;width:100%;height:auto;">
+            <div style="padding:10px 14px 16px;background:linear-gradient(180deg,#2a0048 0%,#12002a 100%);">
+                <div id="referralPromoExtra" style="font-size:11.5px;color:#ffd700;font-weight:800;margin:0 0 10px;line-height:1.4;"></div>
+                <button class="ref-promo-btn" onclick="VIP.ui.shareReferralLink()" style="border-radius:999px;font-size:16px;padding:15px;">
+                    <span style="display:inline-flex;align-items:center;gap:10px;"><span style="font-size:18px;">🔗</span> INVITAR A TUS AMIGOS <span style="font-size:18px;">›</span></span>
+                </button>
+                <button class="ref-promo-link" onclick="hideModal('referralPromoModal'); VIP.ui.openReferralModal();" style="border-radius:999px;border-color:rgba(201,139,255,.6);">📊 Mirá el progreso de tus referidos aquí ›</button>
             </div>
         </div>
     </div>

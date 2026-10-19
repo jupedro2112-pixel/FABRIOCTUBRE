@@ -243,6 +243,9 @@ Deploy: AWS Elastic Beanstalk. Dominio público: vipcargas.com. Git user: jupedr
   **#504 ESTRATEGIA:** `Config['strategyClientes']` (segunda carga + misiones). Bono de 2ª carga = `User.secondDepositOffer`, lo consume
   `resolveAutoBonus` (orden: instalar → código → **segunda carga** → ruleta → lote → 1ª carga → auto). Misiones: Transaction tipo `mission`
   (está en `CASHBACK_GIFT_TX_TYPES`), `MissionClaim` único por usuario/misión/semana. Un tipo de regalo nuevo va a esa lista SIEMPRE.
+  **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
+  (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
+  en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
   **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
   **#421:** `Config['registrationMode']` ('sms' | 'quick', tilde en Configuración → Registro de clientes). En 'quick' la pantalla

@@ -480,6 +480,8 @@ VIP.auth = (function () {
                 VIP.socket.startMessagePolling();
                 VIP.refunds.loadRefundStatus();
                 VIP.fire.loadFireStatus();
+                if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529 card INVITÁ A TUS AMIGOS (home completo)
+                if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529 popup (1× cada 24 h)
 
                 // Entrada por la landing (`ir=casino`): abrir el casino directo,
                 // con el chat de cargas en el pop-up "Cargar acá" (owner 2026-08-15).
@@ -700,6 +702,8 @@ VIP.auth = (function () {
         VIP.socket.startMessagePolling();
         VIP.refunds.loadRefundStatus();
         VIP.fire.loadFireStatus();
+        if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529
+        if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529
         VIP.ui.loadCanalInformativoUrl();
         refreshVerifyPhoneBanner();
         if (VIP.appTest && VIP.appTest.maybeShowAppCheck) VIP.appTest.maybeShowAppCheck();
@@ -1483,13 +1487,22 @@ VIP.auth = (function () {
         const attribution = VIP.campaign && VIP.campaign.getActive();
 
         if (banner) banner.style.display = attribution ? '' : 'none';
-        if (attribution) {
+        // #529 (réplica #168): si vino por link de referido (?ref=), el código queda FIJO y no editable: un solo invitador
+        // por cuenta. Tiene prioridad sobre la atribución de pauta.
+        const lockedRef = window._vipRefLocked || null;
+        const hint = document.getElementById('registerReferralHint');
+        if (lockedRef) {
+            if (referralGroup) referralGroup.style.display = '';
+            if (referralInput) { referralInput.value = lockedRef; referralInput.readOnly = true; referralInput.style.opacity = '.85'; referralInput.style.borderColor = '#d4af37'; }
+            if (hint) { hint.textContent = '🤝 Viniste invitado con este código. Queda vinculado a tu cuenta.'; hint.style.color = '#d4af37'; }
+        } else if (attribution) {
             if (referralGroup) referralGroup.style.display = 'none';
-            if (referralInput) referralInput.value = '';
+            if (referralInput) { referralInput.value = ''; referralInput.readOnly = false; }
         } else {
             // #418 (owner): el registro pide SOLO usuario, contraseña y teléfono (SMS). El código de referido aparece
             // únicamente si vino cargado por el link (?ref=CODE).
             if (referralGroup) referralGroup.style.display = (referralInput && referralInput.value.trim()) ? '' : 'none';
+            if (referralInput) referralInput.readOnly = false;
         }
         // Registro con SMS obligatorio en 2 fases: arranca en la fase de envío.
         resetRegisterOtp();

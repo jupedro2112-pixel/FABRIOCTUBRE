@@ -23,6 +23,10 @@
 
 /** Tasa por defecto, en decimal. 0.05 = 5% del netwin del referido (#351, owner 2026-10-17: "es un 5%, no un 8"). */
 const DEFAULT_REFERRAL_RATE = 0.05;
+// #529 (réplica referidos 2.0): el paquete gemelo leía el % del comando /sys_referidos_pct. ACÁ la fuente única sigue siendo
+// Config['referralCommissionPct'] (panel → Referidos → % de comisión); se exponen los mismos nombres para que el código
+// replicado (referralTierService, rutas /api/admin/referral-rate) funcione sin dos lugares para el mismo número.
+const REFERRAL_PCT_COMMAND = '/sys_referidos_pct';
 
 // #351: % editable desde el panel (Referidos → "% de comisión"), guardado en Config['referralCommissionPct'].
 // Cache por proceso: server.js lo refresca al arrancar y cada 60 s (multi-instancia) y el panel al guardar.
@@ -76,12 +80,37 @@ function getReferralRateForUser(user) {
   return getConfiguredRate();
 }
 
+/**
+ * #529: nombre que usa el código replicado. Relee la Config del panel (misma fuente que #351) y devuelve la tasa plana.
+ */
+async function resolveReferralRate() { await refreshFromConfig(); return getConfiguredRate(); }
+
+/**
+ * #317 (réplica #169 del gemelo): tasa GLOBAL plana en memoria. Acá la fuente sigue
+ * siendo el comando /sys_referidos_pct (#307) — server.js la relee al arrancar y cada
+ * 60 s (`refreshReferralRateFromCommand`) y el endpoint /api/admin/referral-rate la
+ * escribe en el comando y la fija con `setGlobalReferralRate`. null = env/default.
+ * ⚠️ Esta es la tasa PLANA: la que se PAGA sale de
+ * referralTierService.resolveReferralRate(user) (override > niveles > plana).
+ */
+function setGlobalReferralRate(rate) {
+  const n = Number(rate);
+  setConfiguredPct(rate != null && Number.isFinite(n) && n > 0 && n <= 1 ? n * 100 : null);
+}
+function getGlobalReferralRate() { return getConfiguredRate(); }
+
 module.exports = {
   DEFAULT_REFERRAL_RATE,
   CONFIG_KEY,
   setConfiguredPct,
   refreshFromConfig,
   getConfiguredPct,
+  REFERRAL_PCT_COMMAND,
   getConfiguredRate,
-  getReferralRateForUser
+  getReferralRateForUser,
+  resolveReferralRate,
+  // #317: alias con nombre claro (no confundir con referralTierService.resolveReferralRate(user))
+  refreshReferralRateFromCommand: resolveReferralRate,
+  setGlobalReferralRate,
+  getGlobalReferralRate
 };
