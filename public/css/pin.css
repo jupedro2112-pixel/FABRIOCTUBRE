@@ -1836,4 +1836,11 @@ body.home-mini.sp-sent #chatMessages { flex: 1 1 auto; }
 /* #604: con el chat cerrado se ve el aviso del agente arriba del selector */
 body.home-mini:not(.sp-sent) #chatMessages { display: flex !important; flex: 0 0 auto; max-height: 40vh; }
 body.home-mini:not(.sp-sent) #chatMessages:empty { display: none !important; }
+/* #607 (owner): historias — la foto NO se corta: se achica (sin recuadro) y queda centrada arriba, el pie reserva su lugar */
+.story-viewer .st-media { padding: 0 0 150px 0 !important; }
+.story-viewer .st-media img, .story-viewer .st-media video { object-fit: contain !important; object-position: 50% 0 !important; }
+.story-viewer .st-foot { min-height: 150px !important; }
+/* #608 (owner): el aviso de primera carga va debajo de la barra, en los 3 menús (no en Soporte) */
+#sdBanner { margin: 8px 12px 0 !important; }
+body.home-mini #sdBanner { display: none !important; }
 

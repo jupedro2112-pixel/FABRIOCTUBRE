@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 607/608. 📖 Historias: la foto no se corta (achicada, centrada arriba) · aviso de 1ª carga debajo de la barra en los 3 menús — SW v426
+**Pedidos (owner):** "no quiero que se corte la foto: achicala, sin recuadro, centrada arriba sin cortar" · "el cartel del bono de
+primera carga (50 o 100) que aparezca en los 3 menús, abajo del perfil, como aviso sólo de primera carga". (#607) El área de la foto
+termina 150 px antes (lugar del pie), `object-fit: contain` y `object-position: 50% 0`; además migración del aviso de cierre guardado
+(#604). (#608) `#sdBanner` sale del menú intermedio y va debajo de la barra superior (antes del botón de instalar), visible en básico,
+intermedio y completo, oculto en Soporte; sigue mostrándose sólo mientras no hizo la primera carga.
+**Archivos:** `public/index.html`, `public/css/pin.css`, `server.js`, SW.
+
 ### 604/605/606. 💬 "El agente cerró el chat" visible · básico sin recorte · INICIO vuelve arriba — SW v425
 **Pedidos (owner):** "cuando el agente ponga cerrar chat que aparezca en el chat: el agente cerró el chat, cualquier consulta volvé a
 seleccionar la opción" · "[básico] sigue cortado ahí" · "siempre que ponés Carga auto y después Inicio, que vuelva a la pantalla inicial

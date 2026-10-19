@@ -11885,6 +11885,11 @@ async function initializeData() {
       const ar = await Command.findOne({ name: '/sys_support_autoreply' }).lean();
       if (ar && /En breve te va a responder nuestro agente/.test(String(ar.response || ''))) { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
     } catch (e) { console.warn('[startup-migration] #603:', e.message); }
+    // #607: aviso de cierre de charla con el texto nuevo si quedó el anterior
+    try {
+      const cl = await Command.findOne({ name: '/sys_support_closed' }).lean();
+      if (cl && /^✅ Charla cerrada por Soporte/.test(String(cl.response || ''))) { await Command.updateOne({ name: '/sys_support_closed' }, { $set: { response: '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.' } }); console.log('✅ /sys_support_closed (#607)'); }
+    } catch (e) { console.warn('[startup-migration] #607:', e.message); }
     // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
     // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
     try {
