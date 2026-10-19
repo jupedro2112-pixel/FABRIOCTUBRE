@@ -279,10 +279,10 @@
   // usa el backend de producción. Solo se acepta https://.
   var API_BASE = API_BASE_DEFAULT;
   try {
+    // #553 (seguridad): el override sólo acepta el entorno de PRUEBA conocido; antes aceptaba cualquier https:// y la landing
+    // podía usarse como fachada para mandar los datos a otro servidor y redirigir a donde quisiera.
     var _apiOverride = new URLSearchParams(location.search).get('api');
-    if (_apiOverride && /^https:\/\//.test(_apiOverride)) {
-      API_BASE = _apiOverride.replace(/\/+$/, '');
-    }
+    if (_apiOverride === 'https://fabrioctubre.onrender.com') API_BASE = _apiOverride;
   } catch (e) {}
 
   try { var bl = document.getElementById('brandLogo'); bl.src = 'img/picaroja.png'; bl.style.display = ''; } catch (e) {}
@@ -317,7 +317,7 @@
   })();
 
   // ── Las 3 plataformas + % reales (desde el backend; si no responde quedan los fijos) ──
-  function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function paintPlats(list) {
     var box = document.getElementById('plats'); if (!box) return;
     var nm = function (n) { return /^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || ''); };
@@ -349,12 +349,6 @@
     }).catch(function () {});
   } catch (e) {}
 
-  // PIXEL DEL NAVEGADOR de Meta (owner 2026-08-26). Antes la landing NO tenía
-  // pixel → el asistente de Meta decía "no se encontraron píxeles" y el _fbp real
-  // no se creaba (se generaba uno sintético). Ahora se carga fbevents.js y se
-  // inicializan los Pixel IDs que sirve el backend desde SSM (propio + partners):
-  // genera el _fbp REAL, dispara PageView y permite DEDUP navegador+CAPI del
-  // CompleteRegistration (con el mismo event_id `reg_<id>`).
   // ============================================================
   // ESCAPE del navegador EMBEBIDO de Instagram/Facebook/TikTok (#260).
   // Los anuncios abren la landing DENTRO de la app (webview): la cuenta queda
@@ -430,33 +424,7 @@
     else document.addEventListener('DOMContentLoaded', mount);
   })();
 
-  (function loadMetaPixel() {
-    // Qué pixel carga la landing lo decide el backend según la campaña del
-    // visitante (/api/meta-pixel-id?c=CODIGO): SOLO el pixel del publicista de esa
-    // campaña. Sin código → NINGÚN pixel (ni siquiera se carga fbevents.js). El
-    // pixel propio no va al navegador; recibe registro/compra por CAPI (2026-08-28).
-    // Si el fetch falla, tampoco se carga nada (el _fbp sintético cubre el signup).
-    var _inited = false;
-    function initPixels(ids) {
-      if (_inited || !ids || !ids.length) return;
-      _inited = true;
-      window.__giroxPixelIds = ids;
-      try {
-        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      } catch (e) { return; }
-      ids.forEach(function (id) { try { fbq('init', id); } catch (e) {} });
-      try { fbq('track', 'PageView'); } catch (e) {}
-    }
-    try {
-      var _pixCampaign = '';
-      try { _pixCampaign = resolveCampaign() || ''; } catch (e) {}
-      if (!_pixCampaign) return; // sin campaña → sin pixel
-      fetch(API_BASE + '/api/meta-pixel-id?c=' + encodeURIComponent(_pixCampaign))
-        .then(function (r) { return r.json(); })
-        .then(function (d) { initPixels(d && d.pixelIds ? d.pixelIds : []); })
-        .catch(function () {});
-    } catch (e) {}
-  })();
+  // (#553: el pixel de Meta por publicista no existe en este backend; se quitó el bloque que lo pedía.)
 
   function resolveCampaign() {
     if (CAMPAIGN_CODE) return CAMPAIGN_CODE;
@@ -549,6 +517,7 @@
         // Las credenciales viajan en el FRAGMENTO (#lc=...) — el fragmento no
         // llega al servidor ni queda en logs; la PWA lo lee y limpia la URL.
         var dest = res.d.accessUrl || res.d.enterUrl;
+        if (!(dest === API_BASE || String(dest).indexOf(API_BASE + '/') === 0)) dest = API_BASE + '/'; // #553: sólo al backend
         try {
           dest += '#lc=' + encodeURIComponent((res.d.username || '') + ':' + (res.d.password || ''));
         } catch (e) {}
@@ -602,23 +571,6 @@
     var signed = null;
     try { signed = localStorage.getItem('girox_signed'); } catch (e) {}
     if (!signed) return;
-
-    // LAST-TOUCH (owner 2026-08-22): si el jugador YA registrado vuelve por OTRA
-    // campaña/anuncio (viene con fbclid nuevo), actualizamos su atribución de
-    // Meta al último clic → la próxima carga se acredita a ESA campaña. No crea
-    // cuenta ni dispara registro. Solo si hay fbclid (o sea, vino de un anuncio).
-    try {
-      var _hasClick = new URLSearchParams(location.search).get('fbclid');
-      if (_hasClick && signed && signed !== '1') {
-        fetch(API_BASE + '/api/landing/touch', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: signed, campaignCode: resolveCampaign(),
-            fbc: fbcFromUrl(), fbp: fbpFromCookieOrGen(), landingUrl: location.href
-          })
-        }).catch(function () {});
-      }
-    } catch (e) {}
 
     if (scForm) scForm.style.display = 'none';
     var box = document.createElement('section');

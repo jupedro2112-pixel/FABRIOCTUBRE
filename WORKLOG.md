@@ -8,6 +8,28 @@
 
 ## Sesión 2026-10-18
 
+### 553. 🔒 Segunda revisión de seguridad (todo lo de hoy después de #532) y correcciones — SW v390
+**Pedido (owner):** "mirá seguridad y demás". Revisión independiente del diff `84e4c65..HEAD`. Hallazgos y qué se hizo:
+1. **MEDIO-ALTO:** el SMS obligatorio del registro desde el inicio se salteaba mandando `campaignCode:'INGRESO'` (campaña orgánica que
+   existe siempre) o entrando con `?p=INGRESO`. Ahora sólo un código de PUBLICISTA (≠ INGRESO) exime del SMS, en el server y en la app.
+2. **MEDIO:** la landing de Vercel aceptaba `?api=https://cualquier-dominio` → fachada para robar datos y redirigir. Ahora el override
+   sólo acepta el entorno de prueba de Render, y el redirect final sólo va al backend (`accessUrl` que empiece con `API_BASE`).
+3. **BAJO-MEDIO:** el código SMS se consumía sin atomicidad (dos pedidos a la vez pasaban los dos). `verifyOTP` ahora borra con
+   `findOneAndDelete` y sólo el que lo borra lo usa.
+4. **BAJO:** el alta rápida quemaba el código antes de ver si el celular ya estaba registrado. Orden invertido.
+5. **BAJO:** `send-register-otp` comparaba por `phone` exacto y el alta por `phoneKey`: ahora los dos por `phoneKey`.
+6. **BAJO:** el origen de Vercel estaba en el CORS CON credenciales para todas las rutas. Se sacó; `/api/landing/info` se abre sin
+   credenciales como ya estaba `/api/landing/signup` (es todo lo que la landing necesita).
+7. **BAJO:** `esc()` de la landing no escapaba comillas (se usa dentro de `src="…"`). Corregido.
+8. **BAJO:** `POST /api/admin/registration-mode` apagaba `entryLogin` si el campo no venía. Ahora sólo cambia si viene como booleano.
+**Limpieza extra (de la revisión):** en la landing se quitaron el bloque del pixel de Meta y el "last-touch" (`/api/meta-pixel-id` y
+`/api/landing/touch` no existen en este backend); `landing/vercel.json` nuevo SÓLO con reescrituras (`/CODIGO` → landing; sin geo-bloqueo)
+porque sin él los links por path dan 404 en Vercel; más reglas CSS muertas de versiones viejas del ingreso (`.lg-sub`, `.lg-chips`,
+`.lg-ticker`, `.lg-stories*`, `.lg-quote*`, `.lg-title`, `.lg-plat(s)`, `.lg-reg-main`…).
+**Verificado OK:** sin XSS en el front nuevo (todo `textContent`/escapado), `?ref=` saneado en los dos lados, tokens de acceso
+aleatorios de un solo uso, pago de referidos y limitadores de #532 correctos.
+**Archivos:** `server.js`, `src/services/otpService.js`, `public/js/loginhero.js`, `landing/index.html`, `landing/vercel.json`, `landing/README.md`, `public/css/pin.css`, SW.
+
 ### 551. 🧪 Usuario de prueba `lalodj` se crea solo en Render (base limpia)
 **Pedido (owner):** "haceme un acceso para lalodj [clave inicial] como test y poné todo el test para probarla". Con la base limpia
 (2026-10-19) `lalodj` ya no existía. Ahora, en el arranque y SÓLO con `RENDER=true`, si no existe se crea con la clave inicial de las

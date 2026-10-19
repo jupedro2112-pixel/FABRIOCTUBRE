@@ -161,8 +161,10 @@ async function verifyOTP(phone, code, purpose) {
     };
   }
 
-  // Código correcto: eliminar para que no pueda reutilizarse
-  await OtpCode.deleteOne({ _id: otp._id });
+  // Código correcto: CONSUMIRLO de forma atómica. Dos pedidos simultáneos con el mismo código ven el mismo doc; sólo el que
+  // logra borrarlo lo usa (#553). Antes: compare → deleteOne, y ambos pasaban.
+  const consumed = await OtpCode.findOneAndDelete({ _id: otp._id });
+  if (!consumed) return { valid: false, error: 'Código incorrecto o expirado' };
 
   return { valid: true };
 }

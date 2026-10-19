@@ -31,8 +31,10 @@
         // (atribución de campaña); el inicio normal sigue con Iniciar sesión / Crear mi cuenta.
         try {
             let viaAd = false;
-            try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1) viaAd = true; } catch (_) {}
-            try { if (!viaAd && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); viaAd = !!(a && a.code); } } catch (_) {}
+            // #553: la campaña orgánica INGRESO no cuenta como publicidad (el server exige SMS igual)
+            const _isAd = (c) => !!c && String(c).toUpperCase() !== 'INGRESO';
+            try { const inj = window.__VIP_CAMPAIGN_CODE__; if (inj && typeof inj === 'string' && inj.indexOf('__VIP_CAMPAIGN') === -1 && _isAd(inj)) viaAd = true; } catch (_) {}
+            try { if (!viaAd && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); viaAd = !!(a && _isAd(a.code)); } } catch (_) {}
             document.body.classList.toggle('reg-quick', info.registrationMode === 'quick' || viaAd);
             // #538: tilde del panel "Pantalla de ingreso = Iniciar sesión": usuario + clave + olvidé mi contraseña, sin bono.
             // Un link de publicidad o de referido SIEMPRE muestra el registro (si no, el cliente nuevo no sabría qué hacer).

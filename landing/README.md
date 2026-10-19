@@ -7,7 +7,8 @@ Cambios de este repo sobre la original (#535): aviso del código de referido (`?
 (Girox · Ganamos Pronto · Jugaygana Pronto; se actualizan solas desde `GET /api/landing/info` del backend), los servicios sólo
 con título, barra de progreso y entrada DIRECTA a la sesión (sin pantalla de credenciales: quedan en Perfil, dentro de la app).
 
-⚠️ NO subir `vercel.json`/`blank.html` del zip original: mandaban a una página en blanco a todo visitante fuera de Argentina (y a quien
+`vercel.json` (#553): SÓLO reescrituras para que `picaroja-landing.vercel.app/CODIGO` sirva la landing (Vercel sirve primero los
+archivos reales, `img/` incluido). ⚠️ NO subir el `vercel.json`/`blank.html` del zip original: mandaban a una página en blanco a todo visitante fuera de Argentina (y a quien
 entra por VPN/Tor, como el owner desde Tails). Se sacaron el 2026-10-19 (#543).
 
 Antes de subir, revisá en `index.html`:

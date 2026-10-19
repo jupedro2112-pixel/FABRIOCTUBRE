@@ -685,15 +685,8 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .lg-brand b { font: 900 17px var(--p-font); letter-spacing: 1.2px; color: var(--p-text); }
 .lg-brand small { font: 600 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .3px; }
 .lg-tg { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; background: var(--p-surface) !important; border: 0 !important; color: var(--p-text) !important; border-radius: 999px !important; padding: 8px 12px !important; font: 700 12px var(--p-font) !important; cursor: pointer; box-shadow: none !important; }
-.lg-sub { margin: 0; font: 500 13.5px/1.45 var(--p-font); color: var(--p-muted); }
-.lg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.lg-chip { background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 6px 11px; font: 700 11.5px var(--p-font); }
 .lg-chip-red { background: var(--p-red); color: #fff; }
-.lg-ticker { display: flex !important; align-items: center; gap: 8px; background: var(--p-surface) !important; border: 0 !important; border-radius: 999px !important; padding: 7px 10px 7px 12px !important; }
-.lg-live { display: inline-flex; align-items: center; gap: 5px; font: 800 9.5px var(--p-font); letter-spacing: .8px; color: var(--p-red) !important; flex: 0 0 auto; }
-.lg-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--p-red); animation: rlPulse 1.4s ease-in-out infinite; }
 .lg-ticker-t { flex: 1; min-width: 0; font: 600 11.5px var(--p-font); color: var(--p-text) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lg-gifts { flex: 0 0 auto; border: 0; background: var(--p-card); border-radius: 50%; width: 28px; height: 28px; font-size: 14px; cursor: pointer; }
 .lg-form { background: var(--p-surface); border-radius: 22px; padding: 14px 14px 6px; margin-top: 2px; }
 .lg-form .input-group { margin-bottom: 10px; }
 .lg-form .input-group input { background: var(--p-card) !important; }
@@ -704,13 +697,8 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .lg-link { border: 0; background: transparent; color: var(--p-muted); font: 700 12px var(--p-font); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 6px 4px; }
 .lg-alt-note { flex: 1 0 100%; font: 500 10.5px var(--p-font); color: var(--p-placeholder); }
 .lg-sec { margin-top: 6px; }
-.lg-plats { display: flex; flex-wrap: wrap; gap: 6px; }
-.lg-plat { display: inline-flex; align-items: center; gap: 5px; background: var(--p-card); border-radius: 999px; padding: 4px 9px 4px 5px; font: 800 11px var(--p-font); color: var(--p-text); }
-.lg-plat img { width: 18px; height: 18px; border-radius: 6px; }
-.lg-plat small { font: 700 8px var(--p-font); color: var(--p-muted); text-transform: uppercase; letter-spacing: .3px; background: var(--p-surface-2); border-radius: 999px; padding: 1px 5px; }
 .lg-reviews { margin: 0 !important; }
 .lg-foot { margin: 4px 0 0; text-align: center; font: 600 10px var(--p-font); color: var(--p-placeholder); }
-@media (max-width: 360px) { .lg-grid { grid-template-columns: 1fr; } }
 
 /* #383 (owner): las plataformas de la carga automática en una sola fila de cuadrados iguales (como el Inicio) */
 .plat-play-row { display: grid !important; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px !important; }
@@ -828,14 +816,8 @@ body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 body.is-tester .profile-modal .pf-logout, body.can-logout .profile-modal .pf-logout { display: flex !important; color: var(--p-red) !important; } /* #437 */
 body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .pf-logout small { color: var(--p-muted) !important; }
 /* ── #414: pantalla de ingreso = REGISTRO primero; "Ya tengo cuenta" despliega el login ── */
-.lg-reg { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .lg-reg-main { display: flex !important; flex-direction: column; align-items: center; gap: 2px; padding: 13px 14px !important; font-size: 16px !important; margin: 0 !important; }
 .lg-reg-main small { font: 600 11px var(--p-font); opacity: .92; text-transform: none; letter-spacing: 0; }
-.lg-login-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; background: var(--p-card); color: var(--p-text); border-radius: 14px; padding: 11px 14px; font: 800 13px var(--p-font); cursor: pointer; }
-.lg-login-toggle span { color: var(--p-muted); transition: transform .2s; }
-.lg-login-toggle[aria-expanded="true"] span { transform: rotate(180deg); }
-.lg-login-form { display: none; margin-top: 4px; }
-.lg-login-form.lg-open { display: block; }
 .lg-alt .lg-link { font: 700 12px var(--p-font); color: var(--p-text); background: var(--p-surface); border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
 /* ── #414: ticker sobrio ── */
 .lg-ticker-t { display: flex !important; align-items: baseline; gap: 6px; transition: opacity .25s; }
@@ -882,35 +864,23 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .login-box.lg-app { gap: 8px !important; padding: 12px 16px 12px !important; max-width: 420px; }
 .lg-app .lg-logo { width: 42px; height: 42px; border-radius: 12px; }
 .lg-app .lg-brand b { font-size: 16px; } .lg-app .lg-brand small { font-size: 10px; }
-.lg-app .lg-title { margin: 4px 0 0; font-size: 24px; line-height: 1.12; }
-.lg-app .lg-sub { font-size: 12.5px; line-height: 1.4; }
-.lg-app .lg-chips { gap: 5px; } .lg-app .lg-chip { padding: 5px 10px; font-size: 11px; }
-.lg-app .lg-ticker { padding: 6px 10px !important; }
 .lg-app .lg-form { padding: 12px 12px 8px; border-radius: 20px; }
 .lg-app .lg-reg-main { padding: 14px !important; font-size: 17px !important; }
-.lg-app .lg-login-toggle { padding: 10px 14px; }
-.lg-app .lg-login-form { max-height: 46vh; overflow-y: auto; }
 .lg-app .lg-sec, .lg-app #loginReviewsBtn { display: none !important; }   /* "Lo que te damos" y el slider: fuera de la pantalla única */
 .lg-app .lg-alt { gap: 6px; } .lg-app .lg-alt .lg-link { padding: 7px 11px; font-size: 11.5px; } .lg-app .lg-alt-note { font-size: 10px; }
 .lg-trust { display: flex; align-items: center; gap: 6px; font: 600 12px var(--p-font); color: var(--p-muted); padding: 2px 2px 0; }
 .lg-trust b { color: var(--p-text); font-weight: 800; }
 .lg-stars { color: #f5a623; letter-spacing: 1px; font-size: 13px; } .lg-stars i { color: var(--p-border); font-style: normal; }
 .lg-app .lg-foot { margin: 0; }
-@media (max-height: 700px) { .lg-app .lg-title { font-size: 21px; } .lg-app .lg-sub { font-size: 12px; } .lg-app .lg-chips .lg-chip:nth-child(3) { display: none; } .lg-app .lg-reg-main { padding: 12px !important; font-size: 16px !important; } }
-@media (max-height: 620px) { .lg-app .lg-ticker { display: none !important; } .lg-app .lg-alt-note { display: none; } }
+@media (max-height: 620px) { .lg-app .lg-alt-note { display: none; } }
 /* ── #416: ingreso — tira de HISTORIAS y una reseña corta que rota (sin chips ni ticker) ── */
-.lg-stories { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 0; }
 .lg-stories-t { font: 800 10.5px var(--p-font); letter-spacing: 1.2px; text-transform: uppercase; color: var(--p-muted); }
 .lg-stories-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 4px; scrollbar-width: none; }
 .lg-stories-row::-webkit-scrollbar { display: none; }
-.lg-story { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; border: 0; background: transparent; padding: 0; cursor: pointer; font-family: var(--p-font); }
 .lg-story-ring { width: 54px; height: 54px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, var(--p-red), #ff8a9a); display: flex; align-items: center; justify-content: center; }
 .lg-story-ring img, .lg-story-ring i { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--p-card); display: flex; align-items: center; justify-content: center; font: 800 14px var(--p-font); font-style: normal; color: #fff; background: var(--bg, #06070d); }
-.lg-story small { font: 600 10px var(--p-font); color: var(--p-text); max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lg-quote { display: flex; flex-direction: column; gap: 2px; background: var(--p-surface); border-radius: 14px; padding: 9px 12px; transition: opacity .25s; }
 .lg-quote-t { font: 500 12.5px/1.4 var(--p-font); color: var(--p-text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .lg-quote-n { font: 700 10.5px var(--p-font); color: var(--p-muted); }
-@media (max-height: 640px) { .lg-quote { display: none !important; } }
 /* ── #417: ingreso — anillo de HISTORIAS arriba a la derecha (Instagram), reseñas deslizándose, registro como estaba ── */
 .lg-ring { position: relative; flex: 0 0 auto; width: 44px; height: 44px; border: 0; background: transparent; padding: 0; cursor: pointer; }
 .lg-ring-av { display: flex; width: 44px; height: 44px; border-radius: 50%; padding: 2.5px; background: linear-gradient(135deg, #f9ce34, #ee2a7b, #6228d7); }
@@ -922,7 +892,6 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .lg-app .lg-sec-reviews .ev-reviews { margin: 0 !important; }
 .lg-app .lg-alt { margin-top: 2px; }
 .lg-app .lg-register { padding: 11px !important; font-size: 13.5px !important; }
-.lg-app .lg-login-form, .lg-app .lg-reg, .lg-app .lg-login-toggle, .lg-app .lg-quote, .lg-app .lg-stories { display: none !important; } /* restos de #414-#416 */
 .login-screen:has(.lg-app) { align-items: flex-start !important; }          /* centrado por margin:auto de .login-box: no recorta arriba */
 .login-box.lg-app { margin: auto !important; }
 /* ── #419 (owner): ingreso — todo lo de arriba más chico, reseñas con el comentario visible, Soporte abajo en la punta ── */
@@ -932,8 +901,6 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .lg-app .lg-brand b { font-size: 14px; letter-spacing: 1px; } .lg-app .lg-brand small { font-size: 9.5px; }
 .lg-app .lg-tg { padding: 6px 10px !important; font-size: 11.5px !important; }
 .lg-app .lg-ring, .lg-app .lg-ring-av { width: 36px; height: 36px; } .lg-app .lg-ring-n { min-width: 15px; height: 15px; font-size: 9px; line-height: 15px; }
-.lg-app .lg-title { margin: 2px 0 0; font-size: 19px; line-height: 1.15; }
-.lg-app .lg-sub { font-size: 11.5px; line-height: 1.35; }
 .lg-app .lg-form { padding: 10px 10px 6px; border-radius: 18px; }
 .lg-app .lg-form .input-group { margin-bottom: 7px; }
 .lg-app .lg-form .input-group label { font-size: 12px; }
@@ -955,7 +922,7 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .gs-bubble { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 5px 12px 5px 5px; gap: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
 .gs-bubble .gs-av { flex-basis: 36px; width: 36px; height: 36px; }
 .gs-bubble-t b { font-size: 12px; } .gs-bubble-t small { display: none; }
-@media (max-height: 700px) { .lg-app .lg-title { font-size: 18px; } .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
+@media (max-height: 700px) { .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
 /* ── #420 (owner): botón de ingreso "Iniciar sesión", más chico y sin el estilo llamativo de publicista ── */
 .lg-app .lg-form .btn-primary.lg-login-btn, .lg-app .lg-form .btn-primary.publisher-cta { padding: 9px 12px !important; font-size: 13px !important; font-weight: 700 !important; width: auto !important; min-width: 56%; margin: 2px auto 4px !important; display: block; animation: none !important; box-shadow: none !important; }
 /* ── #421: ENTRADA RÁPIDA (registro desactivado desde el panel) ── */
@@ -970,15 +937,12 @@ body.reg-quick.reg-quick-login .lg-quick { display: none; }
 .lg-quick-n { font: 500 11px var(--p-font); color: var(--p-muted); text-align: center; }
 /* ── #423: ingreso — fila de plataformas (logo + nombre; "Próximamente" las que no tienen API) ── */
 .lg-plats-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
-.lg-plats-k { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .6px; text-transform: uppercase; margin-right: 2px; }
 .lg-plat-pill { display: inline-flex; align-items: center; gap: 5px; background: var(--p-surface); border-radius: 999px; padding: 4px 9px 4px 5px; font-family: var(--p-font); }
 .lg-plat-pill img, .lg-plat-pill i { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; background: var(--p-card); font-style: normal; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .lg-plat-pill b { font: 800 11.5px var(--p-font); color: var(--p-text); }
 .lg-plat-pill small { font: 700 9px var(--p-font); color: var(--p-muted); background: var(--p-card); border-radius: 999px; padding: 1px 6px; letter-spacing: .2px; }
 .lg-plat-pill.soon { opacity: .85; } .lg-plat-pill.soon b { color: var(--p-muted); }
 /* ── #424: ingreso — tarjetas de beneficios estilo Pinterest con íconos de línea ── */
-.lg-app .lg-sub { display: none; }                /* las tarjetas reemplazan la bajada: una sola pantalla */
-.lg-app .lg-title { font-size: 18px; }
 /* ── #425 (owner): la ENTRADA CON NOMBRE es la forma de registro → fuera "¿Primera vez acá? / Crear mi cuenta" (registro con SMS) ── */
 .lg-app .lg-alt .lg-alt-q, .lg-app .lg-alt .lg-register { display: none !important; }
 body.reg-quick .lg-quick-alt { display: inline-block; }
@@ -995,7 +959,7 @@ body.reg-quick .lg-quick-alt { display: inline-block; }
 .lg-quick-done .lg-quick-btn { width: 100%; margin-top: 2px !important; }
 /* ── #427 (owner): la pantalla inicial es SOLO "Completá tu nombre para registrarte": sin Olvidé mi contraseña, sin link Soporte,
    sin "Ya tengo cuenta" (los clientes con sesión guardada entran directo). ── */
-.lg-app .lg-alt, .lg-app .lg-quick-alt { display: none !important; }
+.lg-app .lg-alt { display: none !important; }
 body.reg-quick #loginForm { display: none !important; }
 /* ── #428: recuadro "Elegí dónde jugar" debajo de Registrarse · sin línea de estrellas · opiniones a la vista ── */
 .lg-play-box { background: var(--p-card); border: 1.5px solid var(--p-border); border-radius: 18px; padding: 10px 12px 11px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 1px 0 rgba(0, 0, 0, .02); }
@@ -1013,7 +977,6 @@ body.reg-quick #loginForm { display: none !important; }
 .login-box.lg-app { gap: 5px !important; padding: 8px 12px 8px !important; }
 .lg-app .lg-logo { width: 30px; height: 30px; } .lg-app .lg-brand b { font-size: 13px; } .lg-app .lg-brand small { font-size: 9px; }
 .lg-app .lg-ring, .lg-app .lg-ring-av { width: 32px; height: 32px; } .lg-app .lg-tg { padding: 5px 9px !important; font-size: 11px !important; }
-.lg-app .lg-title { font-size: 16.5px; margin: 0; }
 /* beneficios: UNA fila de 3, sin bajadas */
 /* registro */
 .lg-app .lg-form { padding: 8px 9px 7px; border-radius: 16px; }
@@ -1039,7 +1002,6 @@ body.reg-quick #loginForm { display: none !important; }
 .login-screen:has(.lg-app) { height: 100dvh; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; align-items: stretch !important; }
 .login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
 .lg-app > * { flex: 0 0 auto; }
-.lg-app .lg-title { font-size: clamp(14px, 4.3vw, 16.5px); }
 .lg-quick input { padding: 8px 12px !important; font-size: 14px !important; } .lg-app .lg-quick-btn { padding: 9px !important; font-size: 14px !important; }
 .lg-play-box { padding: 6px 9px 7px; }
 .lg-app .lg-sec-reviews { flex: 1 1 auto !important; min-height: 0; display: flex; flex-direction: column; margin: 0; }
@@ -1382,7 +1344,7 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ez-btn.ez-missions > b { margin-top: 0; }
 .ez-mis-bars { margin-top: 6px; }
 /* ── #511 (owner): "Pronto" sutil en todos lados (pestañas del Inicio, tarjetas de plataformas, ingreso, selector del menú fácil) ── */
-.ev-tab.soon .ev-soon, .ev-tab .ev-soon, .plat-soon-badge, .lg-plat small, .ep-item.soon em { background: transparent !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; font: 700 8px/1.2 var(--p-font) !important; letter-spacing: .4px !important; text-transform: uppercase !important; padding: 2px 7px !important; border-radius: 999px !important; box-shadow: none !important; opacity: .85; }
+.ev-tab.soon .ev-soon, .ev-tab .ev-soon, .plat-soon-badge, .ep-item.soon em { background: transparent !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; font: 700 8px/1.2 var(--p-font) !important; letter-spacing: .4px !important; text-transform: uppercase !important; padding: 2px 7px !important; border-radius: 999px !important; box-shadow: none !important; opacity: .85; }
 .ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-jugaygana .ev-soon, .plat-play-btn.plat-ganamos .plat-soon-badge, .plat-play-btn.plat-jugaygana .plat-soon-badge, .ep-item.ep-ganamos.soon em, .ep-item.ep-jugaygana.soon em { color: rgba(255,255,255,.85) !important; border-color: rgba(255,255,255,.35) !important; }
 /* ── #512: MENÚ BÁSICO ── */
 .basic-view { display: none; flex-direction: column; gap: 10px; margin: 8px 12px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }

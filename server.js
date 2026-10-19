@@ -650,12 +650,13 @@ function resolveAllowedOrigins() {
 
 // #535: la landing de pauta del owner vive en Vercel (docs/landing-vercel) y llama a /api/landing/* desde otro origen.
 // Se permite SIEMPRE (además de ALLOWED_ORIGINS) para que un cambio de SSM no la deje sin registro.
-const LANDING_ORIGINS = ['https://picaroja-landing.vercel.app'];
+// #553: la landing NO entra al CORS con credenciales: /api/landing/info y /api/landing/signup se abren a cualquier origen SIN
+// credenciales (bloque de abajo), igual que siempre fue el signup. Así un compromiso del proyecto de Vercel no gana un canal con cookies.
 function corsOriginFn(origin, callback) {
   const allowed = resolveAllowedOrigins();
   // Requests sin cabecera Origin (same-origin, curl, mobile) siempre se permiten.
   if (!origin) return callback(null, true);
-  if (allowed.includes(origin) || LANDING_ORIGINS.includes(origin)) return callback(null, true);
+  if (allowed.includes(origin)) return callback(null, true);
   logger.warn(`CORS bloqueado para origen: ${origin}`);
   return callback(new Error('No autorizado por CORS'));
 }
@@ -751,10 +752,10 @@ app.use((req, res, next) => {
   // landings puente en dominios/hosts rotables (Vercel, Cloudflare, etc.)
   // funcionen sin agregar cada uno a ALLOWED_ORIGINS ni redeployar. Reflejamos
   // el origin (no `*`) y NO mandamos Allow-Credentials: la landing no usa cookies.
-  if (req.path === '/api/landing/signup') {
+  if (req.path === '/api/landing/signup' || req.path === '/api/landing/info') { // #553: + info (plataformas, %, modo) para la landing de Vercel
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Vary', 'Origin');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     return next();
@@ -4559,15 +4560,19 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     if (phoneRaw || otpCode) {
       if (!validateInternationalPhone(phoneRaw)) return res.status(400).json({ error: 'Número de celular inválido.' });
       if (!/^\d{4,8}$/.test(otpCode)) return res.status(400).json({ error: 'Ingresá el código que te llegó por SMS.' });
-      const v = await verifyOTP(phoneRaw, otpCode, 'register');
-      if (!v || !v.valid) return res.status(400).json({ error: (v && v.error) || 'Código incorrecto o vencido.' });
+      // #553: el chequeo de "ya registrado" va ANTES de consumir el código (si no, un celular repetido quemaba el SMS).
       const taken = await User.findOne({ phoneKey: normalizePhoneKey(phoneRaw), phoneVerified: true }).select('_id').lean();
       if (taken) return res.status(400).json({ error: 'Ese celular ya está registrado. Iniciá sesión con tu usuario.' });
+      const v = await verifyOTP(phoneRaw, otpCode, 'register');
+      if (!v || !v.valid) return res.status(400).json({ error: (v && v.error) || 'Código incorrecto o vencido.' });
       verifiedPhone = phoneRaw;
     }
-    const smsRequired = !code && (await getConfig('quickEntrySms', true)) === true;
+    // #553 (seguridad): sólo un código de PUBLICISTA (campaña activa distinta de INGRESO) exime del SMS. INGRESO es la campaña
+    // orgánica que crea el boot y cualquiera la conoce: mandarla a mano no puede saltear la verificación.
+    const isAdLink = !!code && code !== 'INGRESO';
+    const smsRequired = !isAdLink && (await getConfig('quickEntrySms', true)) === true;
     if (smsRequired && !verifiedPhone) return res.status(400).json({ code: 'SMS_REQUIRED', error: 'Verificá tu celular por SMS para crear la cuenta.' });
-    if (mode !== 'quick' && !code && !verifiedPhone) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
+    if (mode !== 'quick' && !isAdLink && !verifiedPhone) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
     req._allowNoApi = !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1'); // #426: sólo entorno de prueba
     req.body = { name, referralCode: (req.body && req.body.referralCode) || null, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
@@ -4616,8 +4621,8 @@ app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async 
     const mode = req.body && req.body.mode === 'quick' ? 'quick' : 'sms';
     await Config.set('registrationMode', mode, req.user.username);
     // #538: pantalla de ingreso = Iniciar sesión (usuario + clave + olvidé mi contraseña, sin bono de bienvenida)
-    const entryLogin = !!(req.body && req.body.entryLogin === true);
-    await Config.set('entryLogin', entryLogin, req.user.username);
+    let entryLogin = (await getConfig('entryLogin', false)) === true;
+    if (req.body && typeof req.body.entryLogin === 'boolean') { entryLogin = req.body.entryLogin; await Config.set('entryLogin', entryLogin, req.user.username); } // #553: sólo si viene
     if (req.body && typeof req.body.quickEntrySms === 'boolean') await Config.set('quickEntrySms', req.body.quickEntrySms, req.user.username); // #541
     logger.info(`[registration-mode] ${mode} · pantalla de ingreso: ${entryLogin ? 'INICIAR SESIÓN' : 'registro'} por ${req.user.username}`);
     res.json({ success: true, mode, entryLogin });
@@ -5940,7 +5945,7 @@ app.post('/api/auth/send-register-otp', sensitiveLimiter, smsIpLimiter, async (r
     }
 
     // Verificar que el teléfono no esté ya registrado y verificado
-    const existingPhone = await User.findOne({ phone: normalizedPhone, phoneVerified: true }).lean();
+    const existingPhone = await User.findOne({ phoneKey: normalizePhoneKey(normalizedPhone), phoneVerified: true }).select('_id').lean(); // #553: por phoneKey, como el alta
     if (existingPhone) {
       return res.status(400).json({ error: 'Este número de teléfono ya está registrado' });
     }
