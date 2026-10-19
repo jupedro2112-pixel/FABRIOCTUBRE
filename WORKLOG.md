@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 547. 🌐 Landing de Vercel: "Elegí dónde jugar" pegado al formulario
+**Pedido (owner, con captura):** "juntá más elegí dónde jugar". Se sacó el espacio vacío que dejaba el contenedor de mensajes
+(`.msg` sin alto mínimo) y el margen superior del bloque de plataformas. **Archivos:** `landing/index.html`.
+
 ### 546. 🌐 Landing de Vercel: sin la línea de confianza
 **Pedido (owner, con captura):** "eso sacalo" = la fila "Acreditación al instante · Retiros rápidos · Soporte 24/7" entre el formulario y
 las plataformas. Eliminada. **Archivos:** `landing/index.html`.
