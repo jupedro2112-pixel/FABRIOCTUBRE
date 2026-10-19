@@ -1769,4 +1769,6 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .story-viewer .st-caption:empty { display: none !important; }
 .story-viewer .st-tap { bottom: 150px !important; }
 .story-viewer .st-textonly { display: flex; align-items: center; justify-content: center; text-align: center; padding: 28px 22px; font: 900 22px/1.3 var(--p-font); color: #fff; height: 100%; border-radius: 20px; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
+/* #584: la fila de accesos del básico queda con 4 (sin Niveles VIP) */
+.bv-quick { grid-template-columns: repeat(4, 1fr) !important; }
 

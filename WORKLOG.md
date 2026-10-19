@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 584. ▭ Menú básico: fuera "Niveles VIP" de la fila de accesos (ya está arriba con el progreso) — SW v410
+**Pedido (owner, con captura):** "de ahí sacamos niveles, ya que está arriba". La fila `.bv-quick` queda con Misiones · Reembolsos ·
+Referidos · Ruleta diaria (4 columnas). **Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 582/583. 📖 Historias republicadas con recuadro profesional + Telegram al final · "Carga auto" en el básico expande CARGAR — SW v409
 **Pedidos (owner):** "borrá las historias y, sobre el mismo contenido y el sistema de referidos, armalo de vuelta con mejor recuadro y
 profesionalidad; poné 'IMPORTANTE: unite a Telegram para tener todas las novedades de PICA ROJA' como última con el botón Unirme a
