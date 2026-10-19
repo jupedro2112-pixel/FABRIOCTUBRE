@@ -1657,4 +1657,4 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .lg-pop-box { width: 100%; max-width: 340px; background: #fff; border: 1px solid #f3d6a4; border-radius: 20px; padding: 22px 18px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 24px 70px rgba(0,0,0,.35); }
 .lg-pop-box b { font: 900 19px var(--p-font); color: #111; } .lg-pop-box p { margin: 0 0 6px; font: 500 13.5px/1.45 var(--p-font); color: #6f6f6f; }
 .lg-pop-later { border: 0; background: none; font: 700 12.5px var(--p-font); color: #6f6f6f; text-decoration: underline; cursor: pointer; padding: 6px; }
-
+.lg-quick-ref { text-align: center; font: 700 11.5px var(--p-font); color: #8a6100; background: #fff7e6; border: 1px solid #f3d6a4; border-radius: 999px; padding: 6px 10px; } .lg-quick-ref b { color: #111; letter-spacing: 1px; }

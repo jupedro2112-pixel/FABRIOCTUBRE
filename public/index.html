@@ -402,6 +402,7 @@
             <!-- #421 (owner): ENTRADA RÁPIDA cuando el registro está desactivado en el panel (body.reg-quick, lo pone loginhero.js):
                  sólo el nombre → cuenta automática + ingreso directo. "Ya tengo cuenta" muestra el login de siempre. -->
             <form id="quickEntry" class="lg-quick" onsubmit="VIP.auth.quickEntry(event)">
+                <div id="quickRefHint" class="lg-quick-ref" style="display:none;">🤝 Te invitó un amigo · código <b></b> · queda vinculado a tu cuenta</div><!-- #533 -->
                 <label class="lg-quick-l" for="quickName">¿Cuál es tu nombre?</label>
                 <input type="text" id="quickName" maxlength="60" placeholder="Ej: Juan" autocomplete="given-name" required>
                 <button type="submit" id="quickEntryBtn" class="btn btn-primary lg-quick-btn">CREAR MI CUENTA</button>
@@ -2456,7 +2457,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v378</div>
+                    <div class="pf-build" id="appBuildTag">app v379</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

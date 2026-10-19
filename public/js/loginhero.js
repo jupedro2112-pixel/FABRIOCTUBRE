@@ -26,7 +26,7 @@
         } catch (_) {}
         let info = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/landing/info'); if (r.ok) info = await r.json(); } catch (_) {}
-        if (!info) return;
+        if (!info) { VIP.loginHero.ready = true; return; }
         // #421/#422: entrada rápida (sólo nombre) si el panel está en 'quick' O si la persona llegó por un LINK DE PUBLICIDAD
         // (atribución de campaña); el inicio normal sigue con Iniciar sesión / Crear mi cuenta.
         try {
@@ -35,6 +35,9 @@
             try { if (!viaAd && VIP.campaign && VIP.campaign.getActive) { const a = VIP.campaign.getActive(); viaAd = !!(a && a.code); } } catch (_) {}
             document.body.classList.toggle('reg-quick', info.registrationMode === 'quick' || viaAd);
         } catch (_) {}
+        VIP.loginHero.ready = true; // #533: app.js espera esto para decidir dónde cae el link de referido
+        // #533: si hay un código de referido guardado (link de hoy o de los últimos 30 días), se avisa en el registro rápido.
+        try { const h = _el('quickRefHint'); if (h && window._vipRefLocked && document.body.classList.contains('reg-quick')) { h.style.display = ''; h.querySelector('b').textContent = window._vipRefLocked; } } catch (_) {}
         try {
             const rf = info.refunds || {};
             const parts = [];
@@ -104,7 +107,7 @@
             const pop = _el('lgPop'); if (pop) pop.classList.add('on');
         } catch (_) {}
     }, 12000);
-    VIP.loginHero = { init };
+    VIP.loginHero = { init, ready: false };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
     else setTimeout(init, 50);
 })();

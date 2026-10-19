@@ -52,16 +52,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const refInput = document.getElementById('registerReferralCode');
         if (refInput) { refInput.value = refCode; refInput.readOnly = true; }
         try { const g = document.getElementById('registerReferralGroup'); if (g) g.style.display = ''; } catch (_) {} // #418
-        // Si LLEGÓ por el link (?ref= en esta carga) y no tiene sesión, se abre solo el registro con el código puesto.
+        // #533 (owner): el link de referido cae en el registro AUTOMÁTICO (sólo el nombre → entra) con el código ya vinculado.
+        // Se espera a que loginhero.js resuelva el modo (reg-quick) y recién ahí: modo rápido → se marca el aviso y se enfoca
+        // el nombre; modo SMS → se abre el formulario con el código puesto (como antes).
         if (urlParams.get('ref') && !VIP.state.currentToken) {
-            setTimeout(() => {
+            let tries = 0;
+            const go = () => {
                 if (VIP.state.currentToken || VIP.state.currentUser) return;
+                const ready = !!(VIP.loginHero && VIP.loginHero.ready);
+                if (!ready && tries++ < 40) return setTimeout(go, 150);
+                if (document.body.classList.contains('reg-quick')) {
+                    try { const h = document.getElementById('quickRefHint'); if (h) { h.style.display = ''; h.querySelector('b').textContent = refCode; } } catch (_) {}
+                    try { const q = document.getElementById('quickName'); if (q) { q.focus(); q.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (_) {}
+                    return;
+                }
                 const open = Array.from(document.querySelectorAll('.modal')).find(m => !m.classList.contains('hidden'));
                 if (open && open.id !== 'registerModal') return;
                 if (VIP.auth && VIP.auth.applyRegisterModalMode) VIP.auth.applyRegisterModalMode();
                 VIP.ui.showModal('registerModal');
                 try { const u = document.getElementById('registerUsername'); if (u) u.focus(); } catch (_) {}
-            }, 500);
+            };
+            setTimeout(go, 300);
         }
         const registerBtn = document.getElementById('registerBtn');
         if (registerBtn) {

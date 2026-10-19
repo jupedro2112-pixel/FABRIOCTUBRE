@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 533. 🤝 El link de referido cae en el registro AUTOMÁTICO (sólo el nombre) — SW v379
+**Pedido (owner):** "no está el link de referido como lo necesito: sólo automático, que complete el nombre y entre".
+**Antes:** `/?ref=CODE` abría a los 500 ms el formulario largo (`registerModal`: usuario, clave, SMS) encima de la pantalla.
+**Ahora:** `app.js` espera a que `loginhero.js` resuelva el modo (`VIP.loginHero.ready`); en modo rápido (el actual) NO abre nada:
+muestra el aviso "🤝 Te invitó un amigo · código XXXX · queda vinculado" dentro del formulario de nombre (`#quickRefHint`) y
+enfoca el nombre; el alta rápida ya manda el código (#532) y el cliente queda referido. En modo SMS sigue abriendo el formulario
+con el código fijo. El aviso también aparece si el código quedó guardado de un link anterior (30 días).
+**Archivos:** `public/js/app.js`, `public/js/loginhero.js`, `public/index.html`, `public/css/pin.css`, SW.
+
 ### 532. 🔒 Revisión de seguridad de #529–#531 (lectura independiente) y correcciones — SW v378, admin-sw v121
 **Pedido (owner):** "revisá la seguridad y todo". Se hizo revisar el diff completo del día por un agente aparte. Hallazgos y qué se hizo:
 1. **ALTO (corrección):** el cron de pago automático mensual NUNCA corría: usaba `rawResult` (opción que Mongoose 8 eliminó) ⇒ nunca
