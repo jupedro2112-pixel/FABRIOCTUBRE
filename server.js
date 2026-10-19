@@ -11883,7 +11883,7 @@ async function initializeData() {
     // #603 (owner): el acuse del soporte pasa a "Contame qué necesitás, ya estamos con vos en breve" (migración si tenía el texto anterior)
     try {
       const ar = await Command.findOne({ name: '/sys_support_autoreply' }).lean();
-      if (ar && String(ar.response || '') === '⏳ En breve te va a responder nuestro agente disponible. ¡Gracias por escribirnos!') { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
+      if (ar && /En breve te va a responder nuestro agente/.test(String(ar.response || ''))) { await Command.updateOne({ name: '/sys_support_autoreply' }, { $set: { response: '🙌 Contame qué necesitás, ya estamos con vos en breve.' } }); console.log('✅ /sys_support_autoreply (#603)'); }
     } catch (e) { console.warn('[startup-migration] #603:', e.message); }
     // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
     // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
@@ -12225,7 +12225,7 @@ async function initializeData() {
       name: '/sys_support_closed',
       description: 'Soporte de problemas: mensaje que ve el cliente cuando cerrás la charla desde el panel (después vuelve al selector de problema). Vacío = sin aviso.',
       type: 'message',
-      response: '✅ Charla cerrada por Soporte. Si necesitás algo más, abrí una nueva desde los botones.'
+      response: '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.'
     },
     {
       // #373 (2026-10-18): SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat.
@@ -19945,9 +19945,11 @@ app.post('/api/admin/support/:userId/close', authMiddleware, async (req, res) =>
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
     const u = await User.findOne({ id: String(req.params.userId) }).select('id username').lean();
     if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
-    await _sendUserSystemMessage(u, await renderSystemCommand('/sys_support_closed', '✅ Charla cerrada por Soporte. Si necesitás algo más, abrí una nueva desde los botones.', {}), { metadata: { kind: 'support_closed', channel: 'support' } }).catch(() => {});
     const now = new Date();
     await User.updateOne({ id: u.id }, { $set: { supportSessionSince: now } });
+    // #604: el aviso va DESPUÉS del corte, así el cliente lo ve en el chat ("el agente cerró el chat…") y abajo el selector.
+    await new Promise((r) => setTimeout(r, 30));
+    await _sendUserSystemMessage(u, await renderSystemCommand('/sys_support_closed', '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.', {}), { metadata: { kind: 'support_closed', channel: 'support' } }).catch(() => {});
     await _emitAdminOnlyChatNote(u.id, u.username, `🔒 Charla de Soporte cerrada por ${req.user.username}. Para el cliente el chat vuelve al selector de problema.`).catch(() => {});
     try { io.to('user_' + u.id).emit('support_session_reset', { since: now.toISOString() }); } catch (_) {}
     res.json({ success: true, since: now });

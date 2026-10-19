@@ -133,7 +133,8 @@
             if (lp) lp.hidden = true; if (wp) wp.hidden = true; if (lb) lb.setAttribute('aria-expanded', 'false'); if (wb) wb.setAttribute('aria-expanded', 'false');
         } catch (_) {}
         setHomeMode(_modeFor(getMenuPref()));
-        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
+        // #606 (owner): INICIO vuelve ARRIBA de la pantalla inicial (los que scrollean son los contenedores internos, no la ventana)
+        try { ['basicView', 'easyView', 'entryView', 'homePanel', 'homeFull', 'chatScreen'].forEach((id) => { const el = _el(id); if (el) el.scrollTop = 0; }); window.scrollTo({ top: 0 }); } catch (_) {}
     }
     function setMenuPref(pref, opts) {
         pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';

@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 604/605/606. 💬 "El agente cerró el chat" visible · básico sin recorte · INICIO vuelve arriba — SW v425
+**Pedidos (owner):** "cuando el agente ponga cerrar chat que aparezca en el chat: el agente cerró el chat, cualquier consulta volvé a
+seleccionar la opción" · "[básico] sigue cortado ahí" · "siempre que ponés Carga auto y después Inicio, que vuelva a la pantalla inicial
+arriba". (#604) El cierre fija `supportSessionSince` ANTES de mandar el aviso (`/sys_support_closed` = "🔒 El agente cerró el chat. Para
+cualquier consulta, volvé a seleccionar una opción."), así el cliente lo ve en el chat con el selector; la migración del acuse (#603) pasa a
+regex. (#605) `.basic-view` es el que scrollea (flex 1, min-height 0): con el menú 2 quedaba recortado por el alto fijo de la pantalla.
+(#606) `goHome` resetea el scroll de las vistas internas (`basicView/easyView/entryView/homePanel/homeFull`), no sólo el de la ventana.
+**Archivos:** `server.js`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 603. 💬 Soporte: con la charla abierta es sólo chat a pantalla completa · "Chat cerrado" al cerrarla · acuse "Contame qué necesitás" — SW v424
 **Pedido (owner, con captura):** "una vez que abre el chat que no aparezca eso [la barra de temas], que sea sólo chat, toda la pantalla, el
 soporte arriba de todo; cuando se cierre que aparezca 'chat cerrado'; y a lo que escriba que la respuesta sea 'contame qué necesitás, ya
