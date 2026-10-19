@@ -1819,4 +1819,12 @@ body.home-mini .sp-intro .sp-chips { display: none; } /* los botones viven en la
 .easy-view { flex: 1 1 auto !important; min-height: 0; }
 .easy-view .ez-grid { flex: 1 1 auto; min-height: 0; grid-auto-rows: minmax(104px, 1fr); align-content: stretch; }
 .easy-view .ez-btn { height: 100%; min-height: 104px; }
+/* ── #602 (owner): SOPORTE DE PROBLEMAS — sin charla abierta se ve SOLO el selector (nombre, "¿Con qué tenés problema?" y 4 botones);
+   al elegir, aparece la charla (mensajes + caja + barra de temas). Cerrada desde el panel ⇒ vuelve el selector. ── */
+body.home-mini:not(.sp-sent) #chatMessages, body.home-mini:not(.sp-sent) .chat-input-container, body.home-mini:not(.sp-sent) .sp-quickbar { display: none !important; }
+body.home-mini:not(.sp-sent) .sp-intro { margin: 12px; padding: 18px 16px !important; }
+.sp-ask { font: 900 15px var(--p-font); color: var(--p-text); margin: 10px 0 8px; }
+.sp-topics { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sp-topics button { padding: 12px 10px !important; font: 800 13px var(--p-font) !important; border-radius: 14px !important; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; text-align: center; }
+body.sp-sent .sp-ask { display: none; }
 

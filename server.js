@@ -6950,7 +6950,7 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
         id: uuidv4(),
         senderId: 'system',
         senderUsername: 'Sistema',
-        senderRole: 'admin',
+        senderRole: 'admin', channel: 'support', // #602
         receiverId: userId,
         receiverRole: 'user',
         content,
@@ -6964,7 +6964,7 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
         id: msg.id,
         senderId: 'system',
         senderUsername: 'Sistema',
-        senderRole: 'admin',
+        senderRole: 'admin', channel: 'support', // #602
         receiverId: userId,
         receiverRole: 'user',
         content,
@@ -7681,7 +7681,13 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
     // #380: y SOLO el canal de soporte (lo suyo, las respuestas de la columna Soporte y los mensajes de sistema): lo que
     // un agente escribe desde la sección Chats (chat viejo) no le llega. El panel pide lo mismo con ?channel=support.
     if (!isAdminRole || req.query.channel === 'support') {
-      matchStage.$and = [{ $or: [{ channel: 'support' }, { type: 'system' }, { senderRole: 'user' }] }];
+      // #602 (owner): SOPORTE DE PROBLEMAS: sólo la charla (lo que escribe el cliente en texto, las respuestas de la columna Soporte y
+      // los avisos propios del soporte). Fuera comprobantes (imágenes) y los mensajes de sistema de cargas / regalos / retiros.
+      matchStage.$and = [{ $or: [
+        { channel: 'support', type: { $ne: 'image' } },
+        { 'metadata.channel': 'support' },
+        { 'metadata.kind': { $in: ['support_ack', 'support_closed'] } }
+      ] }];
     }
     if (!isAdminRole) {
       let since = await getSupportChannelSince();
@@ -12210,6 +12216,13 @@ async function initializeData() {
       response: '🎰 Sumate a PICA ROJA con mi link: cargas automáticas en segundos y reembolsos todos los días 👉 {link}'
     },
     {
+      // #602: aviso al cliente cuando Soporte cierra la charla
+      name: '/sys_support_closed',
+      description: 'Soporte de problemas: mensaje que ve el cliente cuando cerrás la charla desde el panel (después vuelve al selector de problema). Vacío = sin aviso.',
+      type: 'message',
+      response: '✅ Charla cerrada por Soporte. Si necesitás algo más, abrí una nueva desde los botones.'
+    },
+    {
       // #373 (2026-10-18): SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat.
       // #377: nombres separados por coma; rotan cada 8 h (08–16 / 16–24 / 00–08, hora AR).
       name: '/sys_support_names',
@@ -13292,7 +13305,7 @@ const SUPPORT_AUTOREPLY_DEFAULT = '⏳ En breve te va a responder nuestro agente
 // con un botón que lleva al sector. Texto editable ({min} = carga mínima, {retiro_min} = retiro mínimo).
 const SUPPORT_QUICK_CARGAR_DEFAULT = '⚡ Las cargas son 100% automáticas: transferís al CBU, mandás la foto del comprobante y se acredita sola en minutos (carga mínima {min}). Tocá el botón y te llevo a la carga automática. Si ya la hiciste y algo falló, contame acá y lo reviso.';
 const SUPPORT_QUICK_RETIRAR_DEFAULT = '💸 Los retiros también son automáticos: en "Retirar premio" completás tus datos, confirmás con el código SMS y se paga solo a tu CBU (retiro mínimo {retiro_min}). Tocá el botón para ir. Si ya lo pediste y tenés dudas, contame acá.';
-const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro'];
+const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro', 'carga', 'retiro', 'reembolso']; // #602: temas del soporte de problemas
 async function _supportQuickReply(userId, username, quick) {
   try {
     if (quick !== 'cargar' && quick !== 'retirar') return _supportAutoReply(userId, username);
@@ -19920,6 +19933,20 @@ app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
     const raw = (await renderSystemCommand('/sys_support_names', SUPPORT_NAMES_DEFAULT, {})) || SUPPORT_NAMES_DEFAULT;
     res.json({ name: await getSupportAgentName(), shift: _supportShiftLabel(), names: String(raw).split(/[,;\n]/).map((s) => s.trim()).filter(Boolean) });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #602 (owner): CERRAR LA CHARLA desde el panel: para el cliente el chat vuelve al selector de problema (como el cierre automático #401).
+app.post('/api/admin/support/:userId/close', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const u = await User.findOne({ id: String(req.params.userId) }).select('id username').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    await _sendUserSystemMessage(u, await renderSystemCommand('/sys_support_closed', '✅ Charla cerrada por Soporte. Si necesitás algo más, abrí una nueva desde los botones.', {}), { metadata: { kind: 'support_closed', channel: 'support' } }).catch(() => {});
+    const now = new Date();
+    await User.updateOne({ id: u.id }, { $set: { supportSessionSince: now } });
+    await _emitAdminOnlyChatNote(u.id, u.username, `🔒 Charla de Soporte cerrada por ${req.user.username}. Para el cliente el chat vuelve al selector de problema.`).catch(() => {});
+    try { io.to('user_' + u.id).emit('support_session_reset', { since: now.toISOString() }); } catch (_) {}
+    res.json({ success: true, since: now });
+  } catch (e) { logger.error(`[support-close] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => {
   try {

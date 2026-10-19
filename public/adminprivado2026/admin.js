@@ -16078,7 +16078,7 @@ async function spSelect(userId, username) {
     _spSelected = { userId: userId, username: username };
     _spRenderList(); try { _gsRenderList(); } catch (_) {} // #414
     const h = document.getElementById('spHead');
-    if (h) h.innerHTML = '<b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
+    if (h) h.innerHTML = '<button type="button" class="btn-secondary btn-small" onclick="spClose()" title="Cierra la charla: el cliente vuelve al selector de problema" style="margin-left:auto;order:9;color:#ff8080;">✅ Cerrar charla</button><b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
     await spLoadMessages(userId, false);
     try { await authFetch('/api/messages/read/' + encodeURIComponent(userId), { method: 'POST' }); } catch (_) {}
     const c = _spConvs.find(function (x) { return x.userId === userId; }); if (c) { c.unread = 0; _spRenderList(); _spSetBadge(_spConvs.reduce(function (s, x) { return s + (x.unread || 0); }, 0)); }
@@ -16102,6 +16102,18 @@ function _spMsgHtml(m) {
     const bg = sys ? (m.adminOnly ? 'rgba(38,224,127,0.12)' : 'rgba(255,170,0,0.12)') : (mine ? 'rgba(37,211,102,0.18)' : 'rgba(255,255,255,0.08)');
     return '<div style="align-self:' + (mine || sys ? 'flex-end' : 'flex-start') + ';max-width:78%;background:' + bg + ';border-radius:12px;padding:7px 10px;color:#eee;font-size:13px;">' + who + (sys && m.adminOnly ? '<div style="font-size:10px;color:#26e07f;">🔒 INTERNO</div>' : '') + body + '<div style="font-size:10px;color:#888;text-align:right;margin-top:3px;">' + t + '</div></div>';
 }
+// #602: cerrar la charla desde el panel (el cliente vuelve al selector de problema; la próxima vez arranca de cero)
+async function spClose() {
+    if (!_spSelected || _spSelected.guest) return;
+    if (!confirm('¿Cerrar la charla con @' + _spSelected.username + '? Para el cliente el chat vuelve al selector de problema.')) return;
+    try {
+        const r = await authFetch('/api/admin/support/' + encodeURIComponent(_spSelected.userId) + '/close', { method: 'POST' });
+        const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) { showToast(j.error || 'No se pudo cerrar', 'error'); return; }
+        showToast('Charla cerrada', 'success'); spLoadMessages(_spSelected.userId, false); loadSupport();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.spClose = spClose;
 async function spSend() {
     if (_spSelected && _spSelected.guest) return gsSend(); // #414
     const inp = document.getElementById('spInput'); const btn = document.getElementById('spSendBtn');

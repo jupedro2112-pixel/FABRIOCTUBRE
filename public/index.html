@@ -1660,11 +1660,13 @@
                     <div class="sp-body">
                         <div class="sp-name"><b id="spName">Martín</b><span>· Soporte</span><em class="sp-online">en línea</em></div>
                         <div class="sp-msg" id="spMsg">¡Hola! Soy Martín, un gusto 👋 Yo me voy a encargar de tu caso: contame tu problema y lo resolvemos.</div>
-                        <div class="sp-chips">
-                            <!-- #384: mandan el mensaje solos; cargar / retirar reciben respuesta automática con botón al sector -->
-                            <button type="button" onclick="VIP.home.supportQuick('cargar')">💳 Cargar</button>
-                            <button type="button" onclick="VIP.home.supportQuick('retirar')">💸 Retirar</button>
-                            <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otro problema</button>
+                        <!-- #602 (owner): SOPORTE DE PROBLEMAS — elegís el tema y se abre la charla -->
+                        <div class="sp-ask">¿Con qué tenés problema?</div>
+                        <div class="sp-chips sp-topics">
+                            <button type="button" onclick="VIP.home.supportQuick('carga')">💳 Con una carga</button>
+                            <button type="button" onclick="VIP.home.supportQuick('retiro')">💸 Con un retiro</button>
+                            <button type="button" onclick="VIP.home.supportQuick('reembolso')">🎁 Con un reembolso</button>
+                            <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra cosa</button>
                         </div>
                         <div class="sp-sla" id="spSla">⏱ Responde dentro de los 10 minutos</div>
                     </div>
@@ -1687,12 +1689,10 @@
 
         <!-- #599 (owner): mensajes prediseñados como BOTONES, siempre a la vista arriba de la caja (estilo Stake) -->
         <div class="sp-quickbar" id="spQuickBar">
-            <button type="button" onclick="VIP.home.supportQuick('cargar')">💳 Cargar</button>
-            <button type="button" onclick="VIP.home.supportQuick('retirar')">💸 Retirar</button>
+            <button type="button" onclick="VIP.home.supportQuick('carga')">💳 Carga</button>
+            <button type="button" onclick="VIP.home.supportQuick('retiro')">💸 Retiro</button>
             <button type="button" onclick="VIP.home.supportQuick('reembolso')">🎁 Reembolso</button>
-            <button type="button" onclick="VIP.home.supportQuick('referidos')">🤝 Referidos</button>
-            <button type="button" onclick="VIP.home.supportQuick('clave')">🔑 Mi clave</button>
-            <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra consulta</button>
+            <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra cosa</button>
         </div>
         <!-- Chat Input -->
         <div class="chat-input-container">
@@ -2489,7 +2489,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v422</div>
+                    <div class="pf-build" id="appBuildTag">app v423</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

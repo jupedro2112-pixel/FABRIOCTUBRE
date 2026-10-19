@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 602. 💬 SOPORTE DE PROBLEMAS: selector de tema → charla limpia (sin comprobantes ni avisos) → cierre desde el panel — SW v423, admin-sw v129
+**Pedido (owner):** "el chat de soporte que tome el de administrador, el otro sacalo; ahí no quiero ver los comprobantes y demás, sólo la
+queja de la gente: preguntarle qué problema tiene (carga, retiro, reembolso u otra cosa), que al apretar un botón abra la charla, que se
+pueda cerrar desde el administrador y que al cliente le vuelva a aparecer para abrir otra de la misma manera".
+**Cliente (`body.home-mini`):** sin charla abierta se ve SOLO el selector: presentación de Soporte + "¿Con qué tenés problema?" + 💳 Con una
+carga · 💸 Con un retiro · 🎁 Con un reembolso · ❓ Otra cosa. Al tocar uno manda el primer mensaje (ej. "Tengo un problema con una carga")
+y aparece la charla (mensajes, caja, barra de temas). `GET /api/messages/:userId` para clientes devuelve SÓLO la charla: textos del
+cliente (sin imágenes), respuestas de la columna Soporte (`channel:'support'`), bienvenida y avisos de soporte (`metadata.channel/kind`).
+Los mensajes de sistema de cargas, regalos y retiros ya no se ven ahí (siguen llegando por socket para la burbuja de carga y el panel).
+**Panel → Soporte:** botón "✅ Cerrar charla" (`POST /api/admin/support/:userId/close`): aviso `/sys_support_closed` al cliente, `User.supportSessionSince = ahora`
+y `support_session_reset` por socket ⇒ el cliente vuelve al selector; la próxima charla arranca de cero (el panel sigue viendo todo).
+El cierre automático a las 6 h (#401) sigue igual. `SUPPORT_QUICK_KINDS` suma carga/retiro/reembolso (reciben el acuse #384).
+**Archivos:** `server.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, panel admin.js, SWs.
+
 ### 601. 🎰 Dentro del casino: sin chat, sólo el panel de carga automática — SW v422
 **Pedido (owner, con captura de picaroja.com):** "eso limpiá todo, dejá el botón de cargas del básico que funcione desde ahí, sin chat ni
 nada, sólo carga automática". `VIP.ui.toggleCasinoChat` (lo que abría el cajón "Carga rápida 1GIROX · Quiero depositar / Solicitar
