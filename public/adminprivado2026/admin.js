@@ -4962,7 +4962,7 @@ function switchSection(section) {
     }
     if (section === 'commands') { loadCommands(); try { initCommandsAccordion(); } catch (_) {} } // #383: sectores plegables
     if (section === 'datos') loadDatos();
-    if (section === 'datosIa') diaInit(); // #459
+    if (section === 'datosIa') { datosIaGate().then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
     if (section === 'menuLayout') loadMenuLayout(); // #480
     if (section === 'cierres') cierresLoad(); // #500
     if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
@@ -5945,6 +5945,58 @@ async function savePublicBaseUrl() {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.loadPublicBaseUrl = loadPublicBaseUrl; window.savePublicBaseUrl = savePublicBaseUrl;
+// #590: clave de Datos IA
+async function datosIaGate() {
+    try {
+        const r = await authFetch('/api/admin/datos-ia-pin'); const j = r.ok ? await r.json() : { enabled: false };
+        if (!j.enabled) return true;
+        let pin = sessionStorage.getItem('datos_pin');
+        if (!pin) { pin = prompt('🔒 Datos IA está protegido. Ingresá la clave:'); if (!pin) { showSection('commands'); return false; } sessionStorage.setItem('datos_pin', pin.trim()); }
+        const t = await authFetch('/api/admin/datos-ia/usdt');
+        if (t.status === 423) { sessionStorage.removeItem('datos_pin'); showToast('Clave incorrecta', 'error'); showSection('commands'); return false; }
+        return true;
+    } catch (_) { return true; }
+}
+async function loadDatosIaPin() {
+    try { const r = await authFetch('/api/admin/datos-ia-pin'); if (!r.ok) return; const j = await r.json(); const st = document.getElementById('dpState'); if (st) st.textContent = j.enabled ? 'Ahora: CON clave' : 'Ahora: sin clave'; } catch (_) {}
+}
+async function saveDatosIaPin(remove) {
+    const pin = remove ? '' : (document.getElementById('dpPin').value || '').trim();
+    if (!remove && !pin) { showToast('Escribí la clave', 'error'); return; }
+    try {
+        const r = await authFetch('/api/admin/datos-ia-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        try { sessionStorage.removeItem('datos_pin'); } catch (_) {}
+        document.getElementById('dpPin').value = ''; showToast(j.enabled ? 'Clave de Datos IA guardada' : 'Datos IA sin clave', 'success'); loadDatosIaPin();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.datosIaGate = datosIaGate; window.loadDatosIaPin = loadDatosIaPin; window.saveDatosIaPin = saveDatosIaPin;
+// #593: historial y análisis de pagos por día
+let _phData = null;
+function _phDayKey(d) { const z = new Date(d.getTime() - 3 * 3600000); return z.toISOString().slice(0, 10); }
+function phToday() { const el = document.getElementById('phDay'); if (el) el.value = _phDayKey(new Date()); loadPayHistory(); }
+function phShift(n) { const el = document.getElementById('phDay'); if (!el) return; const d = new Date((el.value || _phDayKey(new Date())) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); el.value = d.toISOString().slice(0, 10); loadPayHistory(); }
+async function loadPayHistory() {
+    const el = document.getElementById('phDay'); if (el && !el.value) el.value = _phDayKey(new Date());
+    const dm = document.getElementById('prDelayMin'); const q = '?day=' + encodeURIComponent(el ? el.value : '') + (dm && dm.value ? '&delayMin=' + encodeURIComponent(dm.value) : '');
+    const box = document.getElementById('phList'); if (box) box.innerHTML = 'Cargando…';
+    try { const r = await authFetch('/api/admin/payouts/history' + q); const j = await r.json(); if (!r.ok) { if (box) box.innerHTML = '<span style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</span>'; return; } _phData = j; renderPayHistory(); }
+    catch (_) { if (box) box.innerHTML = '<span style="color:#ff8080;">Error de conexión</span>'; }
+}
+function renderPayHistory() {
+    const j = _phData; if (!j) return; const s = j.summary || {};
+    const card = function (v, l, c) { return '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:18px;font-weight:900;color:' + (c || '#fff') + ';">' + v + '</div><div style="font-size:10.5px;color:#888;">' + l + '</div></div>'; };
+    const sm = document.getElementById('phSummary');
+    if (sm) sm.innerHTML = card(s.total, 'Pedidos del día') + card(s.paid, 'Pagados', '#66ff99') + card(fmtARS(s.paidTotal), 'Total pagado', '#66ff99') + card(s.pending, 'Pendientes', '#ffb347') + card(s.cancelled, 'Rechazados', '#ff8080') + card(s.failed, 'Fallidos', '#ff8080') + card(s.auto + ' / ' + s.reviewed, 'Automáticos / revisados') + card(s.avgMin + ' min', 'Demora promedio (máx. ' + s.maxMin + ')') + card(s.delayed, 'Demorados (> ' + s.delayMin + ' min)', s.delayed ? '#ff8080' : '#66ff99');
+    const only = !!(document.getElementById('phOnlyDelayed') || {}).checked;
+    const rows = (j.items || []).filter(function (r) { return !only || r.delayed; });
+    const box = document.getElementById('phList'); if (!box) return;
+    if (!rows.length) { box.innerHTML = '<span style="color:#aaa;font-size:12px;">Sin pagos ' + (only ? 'demorados ' : '') + 'ese día.</span>'; return; }
+    const stTxt = function (r) { return r.status === 'paid' ? '<span style="color:#66ff99;">✅ pagado</span>' : r.status === 'cancelled' ? '<span style="color:#ff8080;">⛔ rechazado</span>' : r.status === 'failed' ? '<span style="color:#ff8080;">❌ falló</span>' : r.status === 'paying' ? '<span style="color:#ffb347;">⏳ pagando</span>' : '<span style="color:#ffb347;">🔎 en revisión</span>'; };
+    box.innerHTML = '<table style="width:100%;border-collapse:collapse;min-width:760px;font-size:12px;"><thead><tr style="color:#888;font-size:11px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:6px;">Hora</th><th style="padding:6px;">Usuario</th><th style="padding:6px;text-align:right;">Monto</th><th style="padding:6px;">Estado</th><th style="padding:6px;">Cómo</th><th style="padding:6px;text-align:right;">Demora</th><th style="padding:6px;">Pagó</th></tr></thead><tbody>' +
+        rows.map(function (r) { return '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);' + (r.delayed && r.status !== 'cancelled' ? 'background:rgba(255,80,80,0.08);' : '') + '"><td style="padding:6px;color:#aaa;">' + fmtFechaHoraAR(r.createdAt).slice(-5) + '</td><td style="padding:6px;"><b>' + escapeHtml(r.username) + '</b></td><td style="padding:6px;text-align:right;">' + fmtARS(r.amount) + '</td><td style="padding:6px;">' + stTxt(r) + (r.error ? '<div style="color:#888;font-size:10px;">' + escapeHtml(String(r.error).slice(0, 60)) + '</div>' : '') + '</td><td style="padding:6px;color:#aaa;">' + (r.autoPay ? '⚡ automático' : (r.reviewRequired ? '🔎 revisado' : 'manual')) + (r.paidVia ? ' · ' + escapeHtml(r.paidVia) : '') + '</td><td style="padding:6px;text-align:right;color:' + (r.delayed && r.status !== 'cancelled' ? '#ff8080' : '#aaa') + ';font-weight:' + (r.delayed ? '800' : '400') + ';">' + r.minutes + ' min' + (r.pending ? ' ⏳' : '') + '</td><td style="padding:6px;color:#aaa;">' + escapeHtml(r.paidBy || '—') + (r.paidAt ? ' · ' + fmtFechaHoraAR(r.paidAt).slice(-5) : '') + '</td></tr>'; }).join('') + '</tbody></table>';
+}
+window.loadPayHistory = loadPayHistory; window.renderPayHistory = renderPayHistory; window.phShift = phShift; window.phToday = phToday;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
 async function loadPayReview() {
@@ -5955,6 +6007,8 @@ async function loadPayReview() {
         _prItems = j.items || [];
         const min = document.getElementById('prMinArs'), auto = document.getElementById('prAutoBelow'), st = document.getElementById('prState'), sb = document.getElementById('prSaveBtn');
         if (min) { min.value = j.config.minArs; min.disabled = !j.canEditConfig; } if (auto) { auto.checked = j.config.autoBelow !== false; auto.disabled = !j.canEditConfig; } if (sb) sb.style.display = j.canEditConfig ? '' : 'none';
+        const dmi = document.getElementById('prDelayMin'); if (dmi) { dmi.value = j.config.delayMin || 30; dmi.disabled = !j.canEditConfig; } // #593
+        try { loadPayHistory(); } catch (_) {} // #593
         if (st) st.textContent = j.hgcashEnabled ? '' : '⚠️ Banco no configurado: todo queda en revisión y se paga a mano.';
         const review = _prItems.filter(function (p) { return p.reviewRequired || p.status === 'failed'; });
         const badge = document.getElementById('payReviewBadge'); if (badge) { badge.textContent = String(review.length); badge.style.display = review.length ? '' : 'none'; }
@@ -5977,9 +6031,9 @@ async function loadPayReview() {
     } catch (_) { box.innerHTML = '<span style="color:#ff8080;">Error de conexión</span>'; }
 }
 async function payReviewSaveCfg() {
-    const minArs = Number(document.getElementById('prMinArs').value), autoBelow = document.getElementById('prAutoBelow').checked;
+    const minArs = Number(document.getElementById('prMinArs').value), autoBelow = document.getElementById('prAutoBelow').checked, delayMin = Number((document.getElementById('prDelayMin') || {}).value) || 30;
     try {
-        const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow }) });
+        const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow, delayMin }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         showToast('Regla guardada: desde ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' : ''), 'success');
     } catch (_) { showToast('Error de conexión', 'error'); }
@@ -6195,6 +6249,7 @@ window.webhookScopeChanged = webhookScopeChanged; window.webhookSave = webhookSa
 
 async function loadInstallBonusPct() {
     try { loadPublicBaseUrl(); } catch (_) {} // #589
+    try { loadDatosIaPin(); } catch (_) {} // #590
     try { loadRegistrationMode(); } catch (_) {} // #421
     try { loadBankOutage(); } catch (_) {} // #442
     try { loadWebhooksCard(); } catch (_) {} // #562 webhooks salientes
@@ -11376,6 +11431,7 @@ async function retryRouletteCredit(spinId) {
 function authFetch(url, opts) {
     const o = opts || {};
     o.headers = Object.assign({}, o.headers || {}, { 'Authorization': 'Bearer ' + currentToken });
+    if (String(url).indexOf('/api/admin/datos-ia/') === 0) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590
     if (o.body && !o.headers['Content-Type']) o.headers['Content-Type'] = 'application/json';
     return fetch(API_URL + url, o);
 }
@@ -15739,7 +15795,7 @@ async function loadStories() {
                 + '<div style="flex:1;min-width:0;font-size:12px;line-height:1.5;">'
                 + '<div><b>' + escapeHtml(s.title || 'CARGAS AUTOMATIC') + '</b> · ' + st + '</div>'
                 + '<div style="color:#ddd;">' + escapeHtml(s.text || '(sin texto)') + '</div>'
-                + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas' + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
+                + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas' + (s.repeatWeekly ? ' · <span style="color:#00c853;font-weight:800;">🔁 semanal</span>' : '') + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
                 + '</div>'
                 + '<div style="display:flex;flex-direction:column;gap:6px;">'
                 + '<button class="btn-secondary btn-sm" onclick="extendStory(\'' + s.id + '\')" title="Vuelve a contar las horas desde ahora">⏱ Extender</button>'
@@ -15752,7 +15808,7 @@ async function loadStories() {
 async function publishStory() {
     const msg = document.getElementById('stMsg'), btn = document.getElementById('stPublishBtn');
     const v = function (id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-    const body = { title: v('stTitle'), text: v('stText'), mediaDataUrl: _stFileDataUrl || '', mediaUrl: v('stMediaUrl'), hours: v('stHours') ? Number(v('stHours')) : undefined, durationSec: v('stDuration') ? Number(v('stDuration')) : undefined, linkUrl: v('stLink'), linkLabel: v('stLinkLabel'), bgColor: v('stBg') || '#06070d' };
+    const body = { repeatWeekly: !!(document.getElementById('stRepeat') || {}).checked, title: v('stTitle'), text: v('stText'), mediaDataUrl: _stFileDataUrl || '', mediaUrl: v('stMediaUrl'), hours: v('stHours') ? Number(v('stHours')) : undefined, durationSec: v('stDuration') ? Number(v('stDuration')) : undefined, linkUrl: v('stLink'), linkLabel: v('stLinkLabel'), bgColor: v('stBg') || '#06070d' };
     if (!body.text && !body.mediaDataUrl && !body.mediaUrl) { showToast('Poné un texto o una imagen/video', 'error'); return; }
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Publicando…'; }
     try {

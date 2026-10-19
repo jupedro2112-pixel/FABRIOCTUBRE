@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-18
 
+### 590/591/592/593. 🔒 Datos IA con clave · Notificaciones bajo Estrategia · historias semanales · visor con franja difuminada · historial de pagos — SW v414, admin-sw v127
+**Pedidos (owner):** "subí Notificaciones debajo de Estrategia; Datos IA con clave [clave]" · "sección de historias para agregar/eliminar
+y programar semanalmente; arreglá el visor: texto abajo con fondo borroso de la foto y el logo arriba del texto" · "en Confirmación de
+pagos detallá todos los pagos, historial y análisis por día, cuántos hubo, demoras: cuántos y quiénes".
+**(#590)** `app.use('/api/admin/datos-ia')` exige el header `x-datos-pin` si hay `Config['datosIaPinHash']` (sha256). Se carga/quita en
+Configuración → "🔒 Clave de Datos IA" (`GET/POST /api/admin/datos-ia-pin`, admin). El panel la pide una vez por sesión (`sessionStorage
+datos_pin`) y `authFetch` la manda sola. La clave NO está en el código ni en los docs: se cargó por el panel en Render; en producción
+hay que cargarla igual. Notificaciones pasó debajo de Estrategia.
+**(#591)** Historias (#361, ya permitía subir/borrar): "🔁 Repetir cada semana" (`Story.repeatWeekly`); cron `_storiesRepeatTick` (cada
+hora) la vuelve a publicar a los 7 días mientras esté activa; la lista marca "🔁 semanal".
+**(#592)** Visor: foto completa; franja inferior de vidrio (la misma foto difuminada) con logo, texto y botón centrados.
+**(#593)** `GET /api/admin/payouts/history?day=YYYY-MM-DD&delayMin=` (día AR): cada pedido del día con estado, cómo se pagó
+(automático / revisado / manual), demora en minutos (pedido → pagado) y quién pagó; resumen: pedidos, pagados, total, pendientes,
+rechazados, fallidos, automáticos/revisados, demora promedio y máxima, demorados. Umbral de demora editable en la regla
+(`payoutReview.delayMin`, default 30). Panel: bloque "📊 Historial y análisis de pagos" con selector de día, anterior/siguiente/hoy y
+filtro "Sólo demorados" (los demorados en rojo).
+**Archivos:** `server.js`, `src/models/Story.js`, panel index + admin.js, `public/css/pin.css`, SWs.
+
 ### 589. 🌐 "Página de la app" = picaroja.com, editable en Configuración · Configuración arriba de todo del panel — admin-sw v126
 **Pedido (owner, con captura de Perfil):** "ahí poné la página picaroja.com y que sea editable desde el administrador, adentro de
 Configuración; y la Configuración ponela arriba de todo del panel".

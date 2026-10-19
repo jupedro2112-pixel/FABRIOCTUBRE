@@ -151,6 +151,11 @@ document.addEventListener('change', function (ev) {
                     <span>🎯</span>
                     <span>Estrategia clientes · publicidad</span>
                 </a>
+                <!-- #590 (owner): Notificaciones debajo de Estrategia -->
+                <a href="#" class="nav-item" data-section="notifications">
+                    <span class="icon icon-bell"></span>
+                    <span>Notificaciones</span>
+                </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
@@ -201,10 +206,6 @@ document.addEventListener('change', function (ev) {
                     <span>Reembolsos reclamados</span>
                 </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Notificaciones</div>
-                <a href="#" class="nav-item" data-section="notifications">
-                    <span class="icon icon-bell"></span>
-                    <span>Notificaciones</span>
-                </a>
                 <a href="#" class="nav-item" data-section="cronograma">
                     <span>📅</span>
                     <span>Cronograma</span>
@@ -699,6 +700,17 @@ document.addEventListener('change', function (ev) {
                                 <input type="text" id="pbuUrl" placeholder="https://picaroja.com" style="flex:1;min-width:220px;">
                                 <button class="btn-primary btn-small" id="pbuSaveBtn" onclick="savePublicBaseUrl()"><span class="icon icon-save"></span> Guardar</button>
                                 <span id="pbuState" style="font-size:11.5px;color:#9ab;"></span>
+                            </div>
+                        </div>
+                        <!-- #590 (owner): clave propia para Datos IA -->
+                        <div class="cbu-form" id="datosPinForm" style="margin-bottom:14px;">
+                            <h3 style="margin:0 0 6px;">🔒 Clave de Datos IA</h3>
+                            <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Además del login del panel, la sección Datos IA pide esta clave (una vez por sesión). Vacío = sin clave.</p>
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <input type="password" id="dpPin" placeholder="Clave nueva" autocomplete="new-password" style="width:180px;">
+                                <button class="btn-primary btn-small" onclick="saveDatosIaPin()"><span class="icon icon-save"></span> Guardar</button>
+                                <button class="btn-secondary btn-small" onclick="saveDatosIaPin(true)">Quitar clave</button>
+                                <span id="dpState" style="font-size:11.5px;color:#9ab;"></span>
                             </div>
                         </div>
                         <div class="cbu-form" id="registrationModeForm" style="margin-bottom:14px;">
@@ -2847,11 +2859,25 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <label style="margin:0;display:flex;align-items:center;gap:6px;">Umbral $ <input type="number" id="prMinArs" min="0" step="1000" style="width:130px;"></label>
                         <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="prAutoBelow" style="width:auto;"> Pagar solos los menores al umbral</label>
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;">Demorado si tarda más de <input type="number" id="prDelayMin" min="1" step="5" style="width:70px;"> min</label>
                         <button class="btn-primary btn-small" id="prSaveBtn" onclick="payReviewSaveCfg()"><span class="icon icon-save"></span> Guardar</button>
                         <span id="prState" style="font-size:11.5px;color:#9ab;"></span>
                     </div>
                 </div>
                 <div id="payReviewList" style="display:grid;gap:10px;">Cargando…</div>
+                <!-- #593 (owner): historial y análisis de pagos por día -->
+                <div class="cbu-form" id="payHistoryBox" style="margin-top:18px;">
+                    <h3 style="margin:0 0 8px;">📊 Historial y análisis de pagos</h3>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;">Día <input type="date" id="phDay" onchange="loadPayHistory()"></label>
+                        <button class="btn-secondary btn-small" onclick="phShift(-1)">‹ Día anterior</button>
+                        <button class="btn-secondary btn-small" onclick="phShift(1)">Día siguiente ›</button>
+                        <button class="btn-secondary btn-small" onclick="phToday()">Hoy</button>
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="phOnlyDelayed" style="width:auto;" onchange="renderPayHistory()"> Sólo demorados</label>
+                    </div>
+                    <div id="phSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px;"></div>
+                    <div id="phList" style="overflow-x:auto;">Cargando…</div>
+                </div>
             </section>
             <section id="supportSection" class="section">
                 <div class="panel-header">
@@ -2916,6 +2942,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                         <div class="form-group" style="margin:0;"><label>Imagen o video (png/jpg/webp ≤ 4 MB · mp4 ≤ 8 MB)</label><input type="file" id="stFile" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>…o URL de imagen (ruta /images/… o https)</label><input type="text" id="stMediaUrl" maxlength="500" placeholder="/images/stories/prueba-1.png" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>Horas visible</label><input type="number" id="stHours" min="1" max="720" step="1" placeholder="24" style="width:100%;"></div>
+                        <div class="form-group" style="margin:0;"><label>Programación</label><label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:6px 0 0;"><input type="checkbox" id="stRepeat" style="width:auto;"> 🔁 Repetir cada semana (se vuelve a publicar sola a los 7 días)</label></div><!-- #591 -->
                         <div class="form-group" style="margin:0;"><label>Segundos por historia (imagen/texto)</label><input type="number" id="stDuration" min="2" max="60" step="1" placeholder="6" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>Link (botón abajo, opcional)</label><input type="text" id="stLink" maxlength="500" placeholder="https://… o / o app:referidos · app:cargar · app:ruleta · app:reembolso" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>Texto del botón</label><input type="text" id="stLinkLabel" maxlength="40" placeholder="Cargar ahora ›" style="width:100%;"></div>

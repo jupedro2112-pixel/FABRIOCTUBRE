@@ -19234,6 +19234,30 @@ async function _diaUsdt(fetchNow) {
   } catch (e) { return cur ? { ...cur, fetchError: e.message } : { rate: 0, fetchError: e.message }; }
 }
 function _diaMoneyOpts(q) { const cur = q && q.cur === 'usd' ? 'usd' : 'ars'; const usdRate = Number(q && q.usdRate) > 0 ? Number(q.usdRate) : 0; return { cur, usdRate }; }
+// #590 (owner): DATOS IA con CLAVE propia (además del login del panel). Config['datosIaPinHash'] = sha256 de la clave; el panel manda
+// `x-datos-pin` (la guarda por sesión). Sin clave configurada no se exige. La clave se carga/cambia en Configuración → 🔒 Clave de Datos IA.
+let _datosPinCache = { at: 0, hash: null };
+async function _datosPinHash() { if (Date.now() - _datosPinCache.at < 60000) return _datosPinCache.hash; let h = null; try { h = await getConfig('datosIaPinHash', null); } catch (_) {} _datosPinCache = { at: Date.now(), hash: h || null }; return _datosPinCache.hash; }
+const _sha = (v) => crypto.createHash('sha256').update(String(v)).digest('hex');
+app.use('/api/admin/datos-ia', async (req, res, next) => {
+  try {
+    const h = await _datosPinHash(); if (!h) return next();
+    const pin = String(req.get('x-datos-pin') || '');
+    if (pin && _sha(pin) === h) return next();
+    return res.status(423).json({ error: 'Datos IA está protegido con clave.', code: 'PIN_REQUIRED' });
+  } catch (_) { return res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/datos-ia-pin', authMiddleware, adminMiddleware, async (req, res) => { res.json({ enabled: !!(await _datosPinHash()), canEdit: req.user.role === 'admin' }); });
+app.post('/api/admin/datos-ia-pin', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general.' });
+    const pin = String((req.body && req.body.pin) || '').trim();
+    if (pin && !/^\S{4,32}$/.test(pin)) return res.status(400).json({ error: 'La clave tiene que tener entre 4 y 32 caracteres, sin espacios.' });
+    await Config.set('datosIaPinHash', pin ? _sha(pin) : null, req.user.username); _datosPinCache = { at: 0, hash: null };
+    logger.info(`[datos-ia] clave ${pin ? 'cargada' : 'quitada'} por ${req.user.username}`);
+    res.json({ success: true, enabled: !!pin });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => { try { const d = await _diaUsdt(req.query.fetch === '1' && req.user.role === 'admin'); /* sólo admin general dispara la consulta externa y la escritura */ res.json({ success: true, rate: (d && Number(d.rate)) || 0, updatedAt: d && d.updatedAt || null, source: d && d.source || null, fetchError: d && d.fetchError || null }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -19721,6 +19745,19 @@ async function _missionsTick() {
   } catch (e) { logger.warn('[misiones] tick: ' + e.message); } finally { _missionsBusy = false; }
 }
 setTimeout(() => { _missionsTick(); setInterval(_missionsTick, 15 * 60 * 1000); }, 120 * 1000);
+// #591: historias programadas SEMANALMENTE: a los 7 días de publicada (y activa) se vuelve a publicar sola con las mismas horas.
+async function _storiesRepeatTick() {
+  try {
+    const lim = new Date(Date.now() - 7 * 86400000);
+    const due = await Story.find({ repeatWeekly: true, isActive: true, publishedAt: { $lte: lim } }).select('id hours title').lean();
+    for (const st of due) {
+      const now = new Date();
+      await Story.updateOne({ id: st.id }, { $set: { publishedAt: now, expiresAt: new Date(now.getTime() + (Number(st.hours) || 24) * 36e5) } });
+      logger.info(`[historias] republicada (semanal): ${st.title || st.id}`);
+    }
+  } catch (e) { logger.warn(`[historias] repetición semanal: ${e.message}`); }
+}
+setInterval(() => { _storiesRepeatTick().catch(() => {}); }, 60 * 60 * 1000);
 // Segunda carga: ofrece a los que hicieron UNA sola carga hace entre afterHours y afterHours+48 h; expira los vencidos.
 async function _secondDepositTick() {
   try {
@@ -20255,7 +20292,7 @@ const PAYOUT_REVIEW_DEFAULT = { minArs: 50000, autoBelow: true };
 async function getPayoutReviewConfig() {
   try {
     const raw = await getConfig('payoutReview', null); const r = raw && typeof raw === 'object' ? raw : {};
-    const min = Number(r.minArs); return { minArs: Number.isFinite(min) && min >= 0 ? Math.round(min) : PAYOUT_REVIEW_DEFAULT.minArs, autoBelow: r.autoBelow !== false };
+    const min = Number(r.minArs); return { minArs: Number.isFinite(min) && min >= 0 ? Math.round(min) : PAYOUT_REVIEW_DEFAULT.minArs, autoBelow: r.autoBelow !== false, delayMin: Number(r.delayMin) > 0 ? Math.round(Number(r.delayMin)) : 30 };
   } catch (_) { return Object.assign({}, PAYOUT_REVIEW_DEFAULT); }
 }
 const PAYOUT_AUTO_ACTOR = { userId: 'system', username: 'auto-retiros', role: 'system' };
@@ -20298,12 +20335,36 @@ app.get('/api/admin/payouts/review', authMiddleware, withdrawerMiddleware, async
     res.json({ success: true, config: cfg, hgcashEnabled: hgcashPay.isEnabled(), items: out, canEditConfig: req.user.role === 'admin' });
   } catch (e) { logger.error(`[pay-review] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #593 (owner): HISTORIAL y ANÁLISIS de pagos por día (hora AR): cuántos, total, promedio de demora y los DEMORADOS (quiénes).
+app.get('/api/admin/payouts/history', authMiddleware, withdrawerMiddleware, async (req, res) => {
+  try {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) ? String(req.query.day) : _rouletteDateKeyART();
+    const cfg = await getPayoutReviewConfig();
+    const delayMin = Number(req.query.delayMin) > 0 ? Number(req.query.delayMin) : (Number(cfg.delayMin) > 0 ? Number(cfg.delayMin) : 30);
+    const from = new Date(day + 'T00:00:00-03:00'), to = new Date(from.getTime() + 86400000);
+    const items = await PendingPayout.find({ createdAt: { $gte: from, $lt: to } }).sort({ createdAt: -1 }).limit(500).lean();
+    const rows = items.map((p) => {
+      const end = p.paidAt ? new Date(p.paidAt) : (p.status === 'cancelled' ? new Date(p.updatedAt || p.createdAt) : null);
+      const mins = end ? Math.max(0, Math.round((end.getTime() - new Date(p.createdAt).getTime()) / 60000)) : Math.round((Date.now() - new Date(p.createdAt).getTime()) / 60000);
+      return { id: p.id, username: p.username, userId: p.userId, amount: p.amount, status: p.status, createdAt: p.createdAt, paidAt: p.paidAt || null, paidBy: p.paidBy || null, paidVia: p.paidVia || null, autoPay: !!p.autoPay, reviewRequired: !!p.reviewRequired, error: p.error || null, minutes: mins, pending: !end, delayed: mins >= delayMin };
+    });
+    const paid = rows.filter((r) => r.status === 'paid');
+    const sum = {
+      day, delayMin, total: rows.length, paid: paid.length, paidTotal: Math.round(paid.reduce((a, r) => a + Number(r.amount || 0), 0)),
+      cancelled: rows.filter((r) => r.status === 'cancelled').length, failed: rows.filter((r) => r.status === 'failed').length,
+      pending: rows.filter((r) => r.pending).length, auto: paid.filter((r) => r.autoPay).length, reviewed: paid.filter((r) => r.reviewRequired).length,
+      avgMin: paid.length ? Math.round(paid.reduce((a, r) => a + r.minutes, 0) / paid.length) : 0, maxMin: paid.length ? Math.max(...paid.map((r) => r.minutes)) : 0,
+      delayed: rows.filter((r) => r.delayed && r.status !== 'cancelled').length
+    };
+    res.json({ success: true, summary: sum, items: rows });
+  } catch (e) { logger.error(`[pay-history] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/payouts/review-config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const b = req.body || {}; const min = Number(b.minArs);
     if (!Number.isFinite(min) || min < 0 || min > 100000000) return res.status(400).json({ error: 'Umbral inválido' });
-    const next = { minArs: Math.round(min), autoBelow: b.autoBelow !== false };
+    const next = { minArs: Math.round(min), autoBelow: b.autoBelow !== false, delayMin: Number(b.delayMin) > 0 ? Math.round(Number(b.delayMin)) : 30 }; // #593 demora
     await Config.set('payoutReview', next, req.user.username);
     logger.info(`[pay-review] umbral ${next.minArs} auto=${next.autoBelow} por ${req.user.username}`);
     res.json({ success: true, config: next });
@@ -23108,7 +23169,8 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     const doc = await Story.create({
       id: uuidv4(), title, text, mediaType, mediaUrl, mediaData, mediaMime, bgColor,
       linkUrl, linkLabel: String(b.linkLabel || '').trim().slice(0, 40), durationSec, hours,
-      publishedAt: now, expiresAt: new Date(now.getTime() + hours * 36e5), isActive: true, createdBy: req.user.username
+      publishedAt: now, expiresAt: new Date(now.getTime() + hours * 36e5), isActive: true, createdBy: req.user.username,
+      repeatWeekly: b.repeatWeekly === true // #591
     });
     logger.info(`[stories] publicada por ${req.user.username}: "${title || text.slice(0, 40)}" (${mediaType}, ${hours} h)`);
     res.json({ success: true, story: _storyPublic(doc.toObject(), req) });
