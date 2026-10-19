@@ -19,6 +19,10 @@ link de acceso loguea solo; usuario y clave quedan en Perfil). El resto (pauta, 
 `/home/amnesia/Downloads/landing2-actualizada.zip` (Tails: se pierde al reiniciar; la copia del repo es la que vale). Este backend NO la
 sirve: la sube el owner a Vercel. ⚠️ Antes de subir: `API_BASE_DEFAULT` (zip: 1giroxauto.com; publicada: chat1girox.com) y ese dominio
 tiene que permitir el origen de la landing en `ALLOWED_ORIGINS`.
+**CORS:** este backend ahora permite SIEMPRE el origen `https://picaroja-landing.vercel.app` (`LANDING_ORIGINS`, server.js), sin tocar SSM.
+**⚠️ Hallazgo:** la landing publicada apunta a `chat1girox.com`, que sirve OTRA app ("CARGAS 1GIROX | 24/7", sin `/api/landing/info`): hoy
+registra en la otra página, no en PICA ROJA. `1giroxauto.com` y `cargas1girox.com` también responden sin esa ruta. El owner tiene que
+poner en `API_BASE_DEFAULT` el dominio donde corre ESTE backend (vipcargas.com está detrás de Cloudflare; no se pudo verificar desde acá).
 
 ### 534. ⏳ Registro automático: nombre → barra de progreso → entra solo (sin paso de credenciales) — SW v380
 **Pedido (owner):** "que se entienda solamente la parte de registrarse completando el nombre y una vez que se registra que cargue una

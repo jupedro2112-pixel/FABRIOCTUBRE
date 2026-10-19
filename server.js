@@ -648,11 +648,14 @@ function resolveAllowedOrigins() {
   return DEV_ORIGINS;
 }
 
+// #535: la landing de pauta del owner vive en Vercel (docs/landing-vercel) y llama a /api/landing/* desde otro origen.
+// Se permite SIEMPRE (además de ALLOWED_ORIGINS) para que un cambio de SSM no la deje sin registro.
+const LANDING_ORIGINS = ['https://picaroja-landing.vercel.app'];
 function corsOriginFn(origin, callback) {
   const allowed = resolveAllowedOrigins();
   // Requests sin cabecera Origin (same-origin, curl, mobile) siempre se permiten.
   if (!origin) return callback(null, true);
-  if (allowed.includes(origin)) return callback(null, true);
+  if (allowed.includes(origin) || LANDING_ORIGINS.includes(origin)) return callback(null, true);
   logger.warn(`CORS bloqueado para origen: ${origin}`);
   return callback(new Error('No autorizado por CORS'));
 }
