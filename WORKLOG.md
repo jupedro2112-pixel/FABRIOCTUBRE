@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 561. 📐 Menú 2: la hoja "Jugar ahora" (carga acreditada) ya no queda tapada por la barra inferior — SW v395
+**Pedido (owner, con captura):** "cuando se elija el menú 2 que no se tape el texto, subilo para que no se corte". La hoja inferior
+`#playNowCard` (#275) quedaba debajo de `#bottomNav`: con `body.menu2` la hoja lleva un relleno inferior de 84 px + safe area y queda
+por encima de la barra. **Archivos:** `public/css/pin.css`, SW.
+
 ### 559/560. 📌 "Dejar preseleccionado para el ingreso" al lado de Cambiar menú · fueguito mini sólo "Racha" — SW v394
 **Pedidos (owner):** "cuando elegís un menú (básico o el que sea) que adentro se pueda poner como predeterminado: al lado de Cambiar
 menú un botón que diga dejar preseleccionado para el ingreso" · "arreglá lo de la racha: dejá sólo la palabra Racha porque se corta".
