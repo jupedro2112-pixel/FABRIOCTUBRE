@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 546. 🌐 Landing de Vercel: sin la línea de confianza
+**Pedido (owner, con captura):** "eso sacalo" = la fila "Acreditación al instante · Retiros rápidos · Soporte 24/7" entre el formulario y
+las plataformas. Eliminada. **Archivos:** `landing/index.html`.
+
 ### 545. 🌐 Landing de Vercel: plataformas con fondo blanco
 **Pedido (owner):** "ponele fondo blanco a las plataformas en /landing porque se ven tapadas". Tiles `.plat` en blanco con texto oscuro
 y etiqueta Pronto gris claro; los logos sin fondo negro. **Archivos:** `landing/index.html`.
