@@ -51,11 +51,12 @@
         } catch (_) {}
         // #530: banner del bono con los % reales (primera carga; con la app instalada el total)
         try {
-            const w = info.welcome || {}; const big = _el('lgBonusBig'), sub = _el('lgBonusSub');
-            const top = Number(w.withApp) > 0 ? Number(w.withApp) : Number(w.pct);
+            // #537 (owner): grande el % CON la app, "EN TU PRIMERA CARGA", y en chico "instalando la app · si no, X%".
+            const w = info.welcome || {}; const big = _el('lgBonusBig'), sub = _el('lgBonusSub'), note = _el('lgBonusNote');
+            const pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0; const top = pApp > 0 ? pApp : pNo;
             if (big && top > 0) big.textContent = top + '%';
-            const pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0;
-            if (sub) sub.textContent = pApp > pNo ? (pNo > 0 ? ('EN TU PRIMERA CARGA CON LA APP · ' + pNo + '% SIN INSTALARLA') : 'EN TU PRIMERA CARGA INSTALANDO LA APP') : 'EN TU PRIMERA CARGA';
+            if (sub) sub.textContent = 'EN TU PRIMERA CARGA';
+            if (note) { const t = pApp > pNo ? (pNo > 0 ? ('instalando la app · si no, ' + pNo + '%') : 'instalando la app') : ''; note.textContent = t; note.style.display = t ? '' : 'none'; }
             const rf = info.refunds || {}; const sr = _el('lgSyRefund'); if (sr && rf.dailyMax) sr.textContent = rf.dailyMax + '%';
             const rp = Number(info.referralPct); const er2 = _el('lgSyRef'); if (er2 && rp > 0) er2.textContent = rp + '%';
         } catch (_) {}

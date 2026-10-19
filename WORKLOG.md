@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 537. 🎁 Banner del bono: grande el % con la app, "EN TU PRIMERA CARGA", chico "instalando la app · si no, 50%" — SW v382
+**Pedido (owner, con captura):** "es 100% en tu primera carga y dejá abajo chico: instalando la app, si no un 50%".
+**Qué se hizo:** en la pantalla de la app (`lgBonusBig/lgBonusSub/lgBonusNote`), la landing de pauta (`bonusNote`) y la copia de Vercel
+(`BONUS_NOTE` + `welcome` del backend): grande = `welcome.withApp` (primera carga + extra por instalar), subtítulo fijo "EN TU PRIMERA
+CARGA", línea chica "instalando la app · si no, {pct}%" (si el % sin app es 0: "instalando la app"; si no hay extra: sin línea).
+⚠️ En Render la captura mostró 50% porque `Config['firstDepositBonusPct']` está en 0 ahí (default del código: 50): se corrige en el panel.
+**Archivos:** `public/index.html`, `public/js/loginhero.js`, `public/css/pin.css`, `public/landing/index.html`, `docs/landing-vercel/index.html`, SW.
+
 ### 536. 🔥 Fueguito minimizado · banner "Recordá que tenés 50% y 100%" · referidos en estilo Pinterest — SW v381
 **Pedido (owner):** "el fueguito en carga auto se ve cortado: racha fueguito minimizado que entre ahí y aparezca ver más, sin agrandar el
 recuadro · el '50% extra en tu próxima carga' que diga 'Recordá que tenés 50% y 100% instalando la app, podés elegir cuál querés una vez

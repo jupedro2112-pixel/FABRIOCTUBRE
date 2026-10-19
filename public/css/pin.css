@@ -1689,4 +1689,4 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .ref-promo-extra { font: 700 11.5px/1.4 var(--p-font); color: var(--p-green); margin: 0 0 10px; }
 .ref-promo-btn { width: 100%; border: 0; border-radius: 999px; padding: 14px; font: 900 15px var(--p-font); background: var(--p-red); color: #fff; cursor: pointer; box-shadow: none; }
 .ref-promo-link { width: 100%; margin-top: 8px; border: 0; border-radius: 999px; padding: 11px; font: 800 12.5px var(--p-font); background: var(--p-surface); color: var(--p-text); cursor: pointer; }
-
+.lg-promo-note { font: 700 10.5px var(--p-font); color: var(--p-muted); letter-spacing: .2px; }

@@ -55,6 +55,7 @@
     color: #e3bd48; text-shadow: 0 4px 30px rgba(227,189,72,0.28); margin: 6px 0 2px;
   }
   .promo .sub { font-size: 15px; font-weight: 800; color: #f3f5f1; letter-spacing: .5px; }
+  .promo .note { font-size: 11.5px; font-weight: 700; color: #8fa090; margin-top: 3px; }
 
   /* Copy */
   .pitch { text-align: center; color: #a7b7a8; font-size: 14.5px; line-height: 1.5; margin: 20px 4px 16px; }
@@ -174,6 +175,7 @@
         <div class="eyebrow">Bono de bienvenida</div>
         <div class="big" id="bonusBig">100%</div>
         <div class="sub" id="bonusSub">EN TU PRIMERA CARGA</div>
+        <div class="note" id="bonusNote">instalando la app · si no, 50%</div>
       </div>
 
       <p class="pitch">Creá tu cuenta en un click y entrá a jugar. Sin formularios, sin esperas.</p>
@@ -252,6 +254,7 @@
   var CAMPAIGN_CODE = '';                            // fijo, o vacío = tomar de la URL
   var BONUS_BIG = '100%';                             // ⚠️ tu oferta REAL
   var BONUS_SUB = 'EN TU PRIMERA CARGA';
+  var BONUS_NOTE = 'instalando la app · si no, 50%';          // línea chica debajo (vacío = no se muestra)
   // ====================
 
   // Override del backend por URL (para PROBAR contra otro entorno sin editar el
@@ -267,6 +270,7 @@
 
   document.getElementById('bonusBig').textContent = BONUS_BIG;
   document.getElementById('bonusSub').textContent = BONUS_SUB;
+  document.getElementById('bonusNote').textContent = BONUS_NOTE; document.getElementById('bonusNote').style.display = BONUS_NOTE ? '' : 'none';
 
   // ── Código de REFERIDO (?ref=CODIGO): queda vinculado a la cuenta nueva (el backend lo valida). ──
   var REF_CODE = '';
@@ -294,6 +298,11 @@
     fetch(API_BASE + '/api/landing/info').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) return;
       if (Array.isArray(d.platforms) && d.platforms.length) paintPlats(d.platforms);
+      // % reales del backend (si responde): grande el % con la app; chico "instalando la app · si no, X%"
+      try {
+        var w = d.welcome || {}; var pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0; var top = pApp > 0 ? pApp : pNo;
+        if (top > 0) { document.getElementById('bonusBig').textContent = top + '%'; var note = pApp > pNo ? (pNo > 0 ? ('instalando la app · si no, ' + pNo + '%') : 'instalando la app') : ''; document.getElementById('bonusNote').textContent = note; document.getElementById('bonusNote').style.display = note ? '' : 'none'; }
+      } catch (e) {}
       try { var rf = d.refunds || {}; if (rf.dailyMax) document.getElementById('sysRefund').textContent = rf.dailyMax + '%'; } catch (e) {}
       try { var rp = Number(d.referralPct); if (rp > 0) document.getElementById('sysRef').textContent = rp + '%'; } catch (e) {}
     }).catch(function () {});

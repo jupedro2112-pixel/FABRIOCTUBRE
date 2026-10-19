@@ -48,6 +48,7 @@
   .promo .eye { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--green); }
   .promo .big { font-size: clamp(44px, 14vw, 58px); font-weight: 900; line-height: 1; letter-spacing: -1px; color: var(--gold); text-shadow: 0 4px 24px rgba(227,189,72,.28); }
   .promo .psub { font-size: 12.5px; font-weight: 800; letter-spacing: .5px; }
+  .promo .pnote { font-size: 10.5px; font-weight: 700; color: var(--muted); }
   .pitch { margin: 0; font-size: 13.5px; line-height: 1.45; font-weight: 600; color: var(--muted); }
   form { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border-radius: 22px; padding: 14px 14px 12px; }
   .qname { font-size: 14px; font-weight: 800; }
@@ -116,7 +117,7 @@
   <!-- PASO 1: nombre (#531: misma idea que la landing del owner / pantalla de registro de la app) -->
   <section class="card" id="step1">
     <div class="top"><img class="logo" src="/icons/icon-192x192.png" alt="PICA ROJA"><div class="brand"><b>PICA ROJA</b><small>oficial · cargas automáticas</small></div><span class="plus18">+18</span></div>
-    <div class="promo"><span class="eye">Bono de bienvenida</span><b class="big" id="bonusBig">100%</b><span class="psub" id="bonusSub">EN TU PRIMERA CARGA</span></div>
+    <div class="promo"><span class="eye">Bono de bienvenida</span><b class="big" id="bonusBig">100%</b><span class="psub" id="bonusSub">EN TU PRIMERA CARGA</span><span class="pnote" id="bonusNote">instalando la app · si no, 50%</span></div>
     <p class="pitch">Creá tu cuenta en un click y entrá a jugar. Sin formularios, sin esperas.</p>
     <form id="form" autocomplete="off" novalidate>
       <label class="qname" for="name">¿Cuál es tu nombre?</label>
@@ -264,7 +265,8 @@
     try {
       var w = info.welcome || {}; var pApp = Number(w.withApp) || 0, pNo = Number(w.pct) || 0; var top = pApp > 0 ? pApp : pNo;
       if (top > 0) $('bonusBig').textContent = top + '%';
-      $('bonusSub').textContent = pApp > pNo ? (pNo > 0 ? ('EN TU PRIMERA CARGA CON LA APP · ' + pNo + '% SIN INSTALARLA') : 'EN TU PRIMERA CARGA INSTALANDO LA APP') : 'EN TU PRIMERA CARGA';
+      $('bonusSub').textContent = 'EN TU PRIMERA CARGA'; // #537
+      var note = pApp > pNo ? (pNo > 0 ? ('instalando la app · si no, ' + pNo + '%') : 'instalando la app') : ''; $('bonusNote').textContent = note; $('bonusNote').style.display = note ? '' : 'none';
       var rf = info.refunds || {}; if (rf.dailyMax) $('sysRefund').textContent = rf.dailyMax + '%';
       var rp = Number(info.referralPct); if (rp > 0) $('sysRef').textContent = rp + '%';
     } catch (e) {}
