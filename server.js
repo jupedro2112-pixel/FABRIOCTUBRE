@@ -1633,7 +1633,7 @@ async function maybeSendRecoveryMessage(user) {
     if (tags.includes('comunidad') || tags.includes('no comunidad')) return;
     const content = await renderSystemCommand(
       '/sys_recover_100',
-      '🎁 ¿Querés reclamar el 100% de tu carga?\n\nSi jugaste y perdiste lo que cargaste, ¡podés recuperarlo! 💪\n\nPara reclamarlo: sumate a nuestra Comunidad y tené la app instalada. ✅\n\n¡Te esperamos! 🚀',
+      '' /* #599: sin texto por defecto */,
       {}
     );
     if (!content) return;
@@ -11874,6 +11874,14 @@ async function initializeData() {
       await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: SUPPORT_WELCOME_TEXT } });
       console.log('✅ /sys_welcome: texto de SOPORTE (#375)');
     }
+    // #599 (owner 2026-10-19): bienvenida corta ("ya te respondemos en breve" + botones) y FUERA el mensaje viejo
+    // "¿Querés reclamar el 100% de tu carga?" (/sys_recover_100: vacío = no se envía). One-shot sobre lo guardado.
+    try {
+      const w3 = await Command.findOne({ name: '/sys_welcome' }).lean();
+      if (w3 && /Para cargar usá la \*Carga automática\* de arriba/.test(String(w3.response || ''))) { await Command.updateOne({ name: '/sys_welcome' }, { $set: { response: SUPPORT_WELCOME_TEXT } }); console.log('✅ /sys_welcome: "ya te respondemos en breve" (#599)'); }
+      const r100 = await Command.findOne({ name: '/sys_recover_100' }).lean();
+      if (r100 && /reclamar el 100%/.test(String(r100.response || ''))) { await Command.updateOne({ name: '/sys_recover_100' }, { $set: { response: '' } }); console.log('✅ /sys_recover_100 vaciado (#599)'); }
+    } catch (e) { console.warn('[startup-migration] soporte #599:', e.message); }
     // #273 (owner 2026-10-17): "agregá 33 reseñas y que en total promedie 4,7 estrellas". Se siembran UNA
   // vez (flag en Config) como reseñas aprobadas: 26×5 + 4×4 + 3×3 = 155 puntos / 33 = 4,70. Usuarios
   // ficticios (userId 'seed-review-NN', nunca chocan con clientes reales); el feed los enmascara igual.
@@ -12431,7 +12439,7 @@ async function initializeData() {
       name: '/sys_recover_100',
       description: 'Oferta de "100% de recuperación" que se envía tras cada carga (manual o automática). NO se envía a clientes con la etiqueta "comunidad" o "no comunidad". Sin variables. Si lo dejás vacío, no se envía.',
       type: 'message',
-      response: '🎁 ¿Querés reclamar el 100% de tu carga?\n\nSi jugaste y perdiste lo que cargaste, ¡podés recuperarlo! 💪\n\nPara reclamarlo: sumate a nuestra Comunidad y tené la app instalada. ✅\n\n¡Te esperamos! 🚀'
+      response: '' // #599: vacío = no se envía (era el "¿Querés reclamar el 100%?")
     },
     {
       name: '/sys_withdrawal_insufficient',
@@ -13323,7 +13331,7 @@ async function getSupportChannelSince() {
 
 
 // #375: bienvenida automática del chat de SOPORTE (/sys_welcome). Variables: {username}, {plataformas}, {escalera}, {cbu}.
-const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Este es tu chat de SOPORTE.\n\nContame tu duda, consulta o problema y lo resolvemos: te respondemos en minutos.\n\n⚡ Para cargar usá la *Carga automática* de arriba: transferís, mandás la foto del comprobante y se acredita solo.";
+const SUPPORT_WELCOME_TEXT = "👋 ¡Hola, {username}! Ya te respondemos en breve.\n\nMientras tanto, elegí con los botones de abajo qué necesitás (cargar, retirar, reembolso, referidos u otra consulta)."; // #599 (owner): primer mensaje "ya te responden en breve" + botones
 async function getDailyRefundPct() { try { const t = (await getRefundTiersByPeriod()).daily || []; return t.reduce((m, x) => Math.max(m, Number(x.pct) || 0), 0); } catch (_) { return 0; } }
 const INSTALL_BONUS_BANNER_DEFAULT = '¡{pct}% de bono en tu próxima carga!';
 const INSTALL_BONUS_BANNER_NOTE_DEFAULT = '⚠️ Es por única vez. Se aplica automáticamente en tu próxima carga: el {pct}% extra entra junto con la carga.';

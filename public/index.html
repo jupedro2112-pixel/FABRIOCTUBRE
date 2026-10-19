@@ -1685,6 +1685,15 @@
                 <div id="typingIndicator" style="display: none; padding: 8px 15px; color: #667781; font-size: 12px; font-style: italic; text-align: left;"></div>
             </div>
 
+        <!-- #599 (owner): mensajes prediseñados como BOTONES, siempre a la vista arriba de la caja (estilo Stake) -->
+        <div class="sp-quickbar" id="spQuickBar">
+            <button type="button" onclick="VIP.home.supportQuick('cargar')">💳 Cargar</button>
+            <button type="button" onclick="VIP.home.supportQuick('retirar')">💸 Retirar</button>
+            <button type="button" onclick="VIP.home.supportQuick('reembolso')">🎁 Reembolso</button>
+            <button type="button" onclick="VIP.home.supportQuick('referidos')">🤝 Referidos</button>
+            <button type="button" onclick="VIP.home.supportQuick('clave')">🔑 Mi clave</button>
+            <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra consulta</button>
+        </div>
         <!-- Chat Input -->
         <div class="chat-input-container">
             <!-- CORREGIDO: Indicador de envío de imagen -->
@@ -2480,7 +2489,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v419</div>
+                    <div class="pf-build" id="appBuildTag">app v420</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

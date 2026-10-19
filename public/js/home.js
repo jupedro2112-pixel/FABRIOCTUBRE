@@ -480,7 +480,7 @@
         } catch (_) {}
     }
     // #384 (owner): los chips MANDAN el mensaje solos. 'cargar' / 'retirar' reciben respuesta automática con botón al sector.
-    const SUPPORT_QUICK_TEXT = { cargar: '💳 Quiero hacer una carga', retirar: '💸 Quiero retirar mi premio', otro: '❓ Tengo otro problema' };
+    const SUPPORT_QUICK_TEXT = { cargar: '💳 Quiero hacer una carga', retirar: '💸 Quiero retirar mi premio', reembolso: '🎁 Quiero consultar por mi reembolso', referidos: '🤝 Quiero consultar por mis referidos', clave: '🔑 Necesito ayuda con mi usuario o clave', otro: '❓ Tengo otra consulta' }; // #599
     function supportQuick(kind) {
         try {
             const k = SUPPORT_QUICK_TEXT[kind] ? kind : 'otro';

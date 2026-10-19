@@ -1808,4 +1808,11 @@ html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z
 .cl-row b { flex: 1; min-width: 0; font: 700 12px var(--p-font); color: var(--p-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cl-row .cl-copy { flex: 0 0 auto; border-radius: 999px; padding: 4px 9px; font: 800 10.5px var(--p-font); }
 .casino-load .cl-btn { width: 100%; margin-top: 10px; border-radius: 999px !important; padding: 12px !important; font: 900 13px var(--p-font) !important; }
+/* #599 (owner): botones prediseñados del soporte, siempre a la vista arriba de la caja de escribir (estilo Stake) */
+.sp-quickbar { display: none; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; background: var(--p-card); border-top: 1px solid var(--p-border); }
+.sp-quickbar::-webkit-scrollbar { display: none; }
+body.home-mini .sp-quickbar { display: flex; }
+.sp-quickbar button { flex: 0 0 auto; border: 1px solid var(--p-border); background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 7px 12px; font: 800 12px var(--p-font); cursor: pointer; white-space: nowrap; }
+.sp-quickbar button:active { background: var(--p-surface-2); }
+body.home-mini .sp-intro .sp-chips { display: none; } /* los botones viven en la barra de abajo */
 

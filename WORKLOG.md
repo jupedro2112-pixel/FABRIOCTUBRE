@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 599. 💬 Soporte: botones prediseñados siempre a la vista, primer mensaje "ya te respondemos en breve", fuera el "¿Querés reclamar el 100%?" — SW v420
+**Pedido (owner, con captura):** "corregí esto [mensaje viejo del 100 %] y poné los mensajes prediseñados como botones; que el primer
+mensaje sea 'ya le responden en breve'; prolijo tipo Stake".
+**Qué se hizo:** `/sys_recover_100` (el "🎁 ¿Querés reclamar el 100% de tu carga?") queda VACÍO (no se envía; migración sobre lo guardado
+y default vacío). `/sys_welcome` (SUPPORT_WELCOME_TEXT) pasa a "👋 ¡Hola, {username}! Ya te respondemos en breve. Mientras tanto, elegí con
+los botones de abajo qué necesitás…" (migración si tenía el texto anterior; después se edita en COMANDOS). Barra `#spQuickBar` arriba de la
+caja de escribir, sólo en Soporte (`body.home-mini`): 💳 Cargar · 💸 Retirar · 🎁 Reembolso · 🤝 Referidos · 🔑 Mi clave · ❓ Otra consulta
+(`supportQuick`, mandan el mensaje solos; cargar/retiro siguen con respuesta automática #384). Los chips de la presentación se ocultan ahí.
+**Archivos:** `server.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 598. 🎰 Carga rápida dentro del casino: un botón para el comprobante + alias/CBU/titular para copiar; burbuja que se mueve libre — SW v419
 **Pedido (owner, con captura):** "el carga rápida abrí 1 botón para cargar comprobante, limpiá lo viejo y dejá un botón de carga con los datos de
 copiar CBU, alias, titular, chiquito y sencillo, y que ese círculo se pueda mover". El panel (`toggleCasinoLoad`) pasa a: cabecera, 3 filas
