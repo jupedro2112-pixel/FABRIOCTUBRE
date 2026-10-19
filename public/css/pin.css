@@ -1718,4 +1718,10 @@ body.menu2 .chat-input-container { margin-bottom: calc(80px + env(safe-area-inse
 body.menu2 #chatScreen { padding-bottom: 0 !important; }
 body.menu2 #bottomNav.bottom-nav { box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
 #sdBannerFull { display: none !important; }
+/* #568 (owner): en Carga auto la fila "Comprobante aquí · Retirar premio" va FIJA al tope de abajo, pegada arriba del menú (Inicio) */
+body.home-full .home-actions-row { position: fixed; left: 8px; right: 8px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 58; margin: 0 !important; background: var(--p-bg); padding: 6px 0 0; box-shadow: 0 -8px 18px rgba(0,0,0,.06); }
+body.home-full.menu2 .home-actions-row { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+body.home-full .entry-view, body.home-full #homeFull { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)) !important; }
+body.home-full.menu2 .entry-view, body.home-full.menu2 #homeFull { padding-bottom: calc(176px + env(safe-area-inset-bottom, 0px)) !important; }
+body.home-full .test-mini-row { margin-bottom: 4px; }
 

@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 568. 📎 Carga auto: "Comprobante aquí · Retirar premio" fija abajo, pegada arriba del menú — SW v398
+**Pedido (owner, con captura):** "eso bajalo al tope, arriba de Inicio". `.home-actions-row` pasa a `position: fixed` al pie en el modo
+completo (con el menú 2 queda justo encima de la barra); los contenedores que scrollean dejan lugar debajo. **Archivos:** `public/css/pin.css`, SW.
+
 ### 567. 📐 Cartel de 1ª carga sólo en el Inicio (no en Carga auto) · menú 2: relleno en los contenedores que scrollean — SW v397
 **Pedido (owner):** "sacá el primera carga y demás una vez que entrás, que se vea sólo en Inicio, no en Carga auto; y sigue tapándose lo de
 abajo". El cartel (`#sdBanner`, resumido) sólo en el menú intermedio y mientras no hizo la primera carga; `#sdBannerFull` (Carga auto)
