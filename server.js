@@ -4777,6 +4777,21 @@ app.post('/api/admin/menu-layout', authMiddleware, adminMiddleware, async (req, 
     res.json({ success: true, layout });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
+// #589: Página de la app (dominio público) editable desde el panel.
+app.get('/api/admin/public-base-url', authMiddleware, adminMiddleware, async (req, res) => {
+  res.json({ success: true, url: getPublicBaseUrl(), source: _publicBaseUrlOverride ? 'panel' : (process.env.PUBLIC_BASE_URL ? 'env' : 'default'), canEdit: req.user.role === 'admin' });
+});
+app.post('/api/admin/public-base-url', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general.' });
+    const url = String((req.body && req.body.url) || '').trim().replace(/\/$/, '');
+    if (url && !/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}$/i.test(url)) return res.status(400).json({ error: 'Poné el dominio con https:// y sin barras ni rutas (ej: https://picaroja.com).' });
+    await Config.set('publicBaseUrl', url || null, req.user.username);
+    await _loadPublicBaseUrlOverride(); _resetRenderedHtmlCaches();
+    logger.info(`[public-base-url] ${url || '(default)'} por ${req.user.username}`);
+    res.json({ success: true, url: getPublicBaseUrl(), source: _publicBaseUrlOverride ? 'panel' : (process.env.PUBLIC_BASE_URL ? 'env' : 'default') });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
   res.json({ success: true, mode: await getRegistrationMode(), entryLogin: (await getConfig('entryLogin', false)) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true, canEdit: req.user.role === 'admin' }); // #538/#541
 });
@@ -11218,9 +11233,16 @@ app.post('/api/admin/send-notification', authMiddleware, adminMiddleware, async 
 // se evaluaba antes y quedaba clavada en el default aunque el parámetro
 // estuviera perfecto (los links de acceso salían con vipcargas.com). Misma
 // regla que los lazy getters de JWT_SECRET (ver CLAUDE.md). No volver a const.
+// #589 (owner): la "Página de la app" (links de referidos, de acceso, Perfil, landing) se edita desde el panel (Configuración →
+// 🌐 Página de la app, Config['publicBaseUrl']); panel > env PUBLIC_BASE_URL > default picaroja.com (el dominio de ESTE backend).
+let _publicBaseUrlOverride = null;
 function getPublicBaseUrl() {
-  return (process.env.PUBLIC_BASE_URL || 'https://cargas1girox.com').replace(/\/$/, '');
+  return (_publicBaseUrlOverride || process.env.PUBLIC_BASE_URL || 'https://picaroja.com').replace(/\/$/, '');
 }
+async function _loadPublicBaseUrlOverride() {
+  try { const v = await getConfig('publicBaseUrl', null); _publicBaseUrlOverride = (typeof v === 'string' && /^https:\/\/[^\s/]+$/i.test(v.trim())) ? v.trim().replace(/\/$/, '') : null; } catch (_) { _publicBaseUrlOverride = null; }
+}
+function _resetRenderedHtmlCaches() { try { _indexHtmlBase = null; } catch (_) {} try { _adminHtmlRendered = null; } catch (_) {} try { _landingHtmlBase = null; } catch (_) {} }
 
 // ── Cookie de campaña (pauta) ──────────────────────────────────────────────
 // Cuando un visitante entra por una vanity URL de pauta (ej: /santinopauta) el
@@ -11961,6 +11983,7 @@ async function initializeData() {
       await User.create({ id: uuidv4(), username: 'lalodj', password: String(process.env.TESTER_PASSWORD || process.env.LANDING_DEFAULT_PASSWORD || 'asd123'), role: 'admin', accountNumber: generateAccountNumber(), balance: 0, isActive: true, isBlocked: false, phoneVerified: false, phoneVerificationPending: false, referralCode: generateReferralCode(), acquisitionSource: 'manual', createdAt: new Date() });
       console.log('✅ Usuario de prueba lalodj creado (#551, sólo Render)');
     }
+    await _loadPublicBaseUrlOverride(); // #589: página de la app desde el panel
     const r = await User.updateOne({ username: { $in: ['lalodj', 'lalodj499910', 'diego576413'] } }, { $set: { role: 'admin', isActive: true, isBlocked: false } }); // #476/#506: usuarios de prueba (sólo entorno de prueba)
     if (r && (r.modifiedCount || r.nModified)) console.log('✅ Usuario de prueba lalodj con acceso admin (#296)');
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }

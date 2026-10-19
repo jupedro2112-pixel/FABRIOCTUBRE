@@ -5927,6 +5927,24 @@ async function saveRegistrationMode() {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.loadRegistrationMode = loadRegistrationMode; window.saveRegistrationMode = saveRegistrationMode;
+// #589: Página de la app (dominio público) editable
+async function loadPublicBaseUrl() {
+    try {
+        const r = await authFetch('/api/admin/public-base-url'); if (!r.ok) return; const j = await r.json();
+        const inp = document.getElementById('pbuUrl'), st = document.getElementById('pbuState'), b = document.getElementById('pbuSaveBtn');
+        if (inp) { inp.value = j.url || ''; inp.disabled = !j.canEdit; } if (b) b.style.display = j.canEdit ? '' : 'none';
+        if (st) st.textContent = 'Ahora: ' + (j.url || '—') + (j.source === 'panel' ? ' (cargado acá)' : j.source === 'env' ? ' (del servidor)' : ' (por defecto)');
+    } catch (_) {}
+}
+async function savePublicBaseUrl() {
+    const url = (document.getElementById('pbuUrl').value || '').trim();
+    try {
+        const r = await authFetch('/api/admin/public-base-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('Página de la app: ' + j.url, 'success'); loadPublicBaseUrl();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadPublicBaseUrl = loadPublicBaseUrl; window.savePublicBaseUrl = savePublicBaseUrl;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
 async function loadPayReview() {
@@ -6176,6 +6194,7 @@ window.loadWebhooksCard = loadWebhooksCard; window.webhookCopyFormat = webhookCo
 window.webhookScopeChanged = webhookScopeChanged; window.webhookSave = webhookSave; window.webhookDelete = webhookDelete; window.webhookTest = webhookTest;
 
 async function loadInstallBonusPct() {
+    try { loadPublicBaseUrl(); } catch (_) {} // #589
     try { loadRegistrationMode(); } catch (_) {} // #421
     try { loadBankOutage(); } catch (_) {} // #442
     try { loadWebhooksCard(); } catch (_) {} // #562 webhooks salientes

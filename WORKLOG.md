@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 589. 🌐 "Página de la app" = picaroja.com, editable en Configuración · Configuración arriba de todo del panel — admin-sw v126
+**Pedido (owner, con captura de Perfil):** "ahí poné la página picaroja.com y que sea editable desde el administrador, adentro de
+Configuración; y la Configuración ponela arriba de todo del panel".
+**Qué se hizo:** `getPublicBaseUrl()` = panel (`Config['publicBaseUrl']`, cargado al arranque y al guardar) > env `PUBLIC_BASE_URL` >
+default **https://picaroja.com** (antes cargas1girox.com). Al guardar se vacían los HTML cacheados (app, panel, landing) para que el
+nuevo dominio salga en `window.__VIP_PUBLIC_BASE_URL__` (Perfil → "Página de la app"), en los links de referidos y de acceso.
+Rutas `GET/POST /api/admin/public-base-url` (sólo admin). Panel: card "🌐 Página de la app" al principio de Configuración, y el ítem
+Configuración pasó al tope del menú lateral. **Archivos:** `server.js`, `public/adminprivado2026/index.html`, `admin.js`, `public/admin-sw.js`.
+
 ### 588. ▭ Básico: INICIO cierra el panel de CARGAR / RETIRAR desplegado — SW v413
 **Pedido (owner):** "en el básico, cuando apretás cargar y expande el menú de cargas, si apretás Inicio que se cierre esa expansión".
 `goHome` oculta `bvLoadPanel`/`bvWdPanel` antes de ir al menú elegido. **Archivos:** `public/js/home.js`, SW.
