@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 526. 🧩 Fila de servicios del Inicio completo prolija — SW v372
+**Pedido (owner, con captura):** "quedó mal: que entre bien todo, que se entienda que se puede expandir, agrandalo un poco y los íconos
+bien dentro del círculo". Grilla de 4 tarjetas de 96 px en columna: círculo de 32 px con el ícono centrado, título en una línea,
+detalle en hasta 2 líneas y una flechita ▾ abajo a la derecha.
+
 ### 525. 🆕 Novedad: "NOVEDAD: aprovechá reembolso 25% hasta diciembre", una sola línea, letra más chica — SW v371
 **Pedido (owner).** Default y comando `/sys_entry_news` actualizados (también en Render vía API); pastilla con letra 8,5–10 px adaptable y sin corte.
 

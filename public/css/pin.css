@@ -1548,4 +1548,14 @@ html[data-theme="dark"] .ev-tab .ev-reco { background: var(--p-card) !important;
 /* ── #525 (owner): novedad en una sola línea recta, letra un poco más chica ── */
 .ev-hero-new { font: 800 clamp(8.5px, 2.5vw, 10px) var(--p-font) !important; letter-spacing: .2px !important; padding: 6px 10px !important; white-space: nowrap !important; text-overflow: clip !important; }
 .ev-hero-new b { font-weight: 900; }
+/* ── #526 (owner): la fila de servicios del Inicio completo entra bien: tarjetas un poco más altas, ícono dentro del círculo,
+   título y detalle legibles, y una flechita que indica que se puede abrir ── */
+.ev-services { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.ev-svc, .ev-svc.svc-refund, .ev-svc.svc-roulette, .ev-svc.svc-ref, .ev-svc.svc-missions { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; gap: 3px !important; padding: 9px 4px 6px !important; min-height: 96px !important; border-radius: 16px !important; min-width: 0; position: relative; }
+.ev-svc b { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 5px !important; font: 900 10.5px/1.1 var(--p-font) !important; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ev-svc b .li { width: 32px !important; height: 32px !important; border-radius: 50% !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; background: var(--p-red-soft) !important; color: var(--p-red) !important; flex: 0 0 auto; margin: 0 !important; }
+.ev-svc b .li svg { width: 17px !important; height: 17px !important; display: block; }
+.ev-svc small { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font: 600 9px/1.2 var(--p-font) !important; text-align: center; max-width: 100%; margin: 0 !important; }
+.ev-svc small b, .ev-svc small .rl-min { display: inline !important; font-size: 9px !important; }
+.ev-svc::after { content: "▾"; position: absolute; right: 6px; bottom: 3px; font: 800 10px var(--p-font); color: var(--p-muted); }
 
