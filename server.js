@@ -5831,6 +5831,8 @@ async function platformSessionHandler(req, res) {
         `GIROX_API_URL=${process.env.GIROX_API_URL ? 'ok' : 'FALTA'} ` +
         `GIROX_API_KEY=${process.env.GIROX_API_KEY ? 'ok' : 'FALTA'}. ` +
         'Revisar GET /api/admin/girox/health.');
+      // #577 (owner): sin API (entorno de prueba) "Jugar" abre igual el sitio público de Girox, sin login único.
+      try { const _pub = girox.getPlayUrl && girox.getPlayUrl(); if (_pub) return res.json({ success: true, external: true, noSso: true, platform: 'girox', redirectUrl: _pub, platformUrl: _pub }); } catch (_) {}
       return res.status(503).json({ error: 'El casino no está disponible en este momento. Escribinos por chat.' });
     }
 
