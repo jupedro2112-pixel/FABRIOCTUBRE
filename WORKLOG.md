@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 595. 🧼 Entrada limpia: sin cartel de instalar ni popup de referidos; sólo el selector de menú; todo minimizado — SW v416
+**Pedido (owner):** "cuando entrás con el registro sacá lo de la app como cartel inicial, sacá lo de invitá a tu amigo, dejá limpia la
+pantalla completa, sólo para que elija el menú, y que cuando entre quede todo minimizado".
+**Qué se hizo:** al entrar ya no se llama al cartel "Agregar a Inicio" (#541) ni al popup de referidos (#529; Referidos queda en su botón
+y la card "Invitá a tus amigos" del inicio se ocultó); el alta por landing/registro (`ir=cargar`, #581) ya NO fuerza el inicio completo:
+entra limpio y se abre el selector de menú como siempre; al entrar se pliegan Misiones y Niveles VIP y se cierran los paneles del básico.
+**Archivos:** `public/js/auth.js`, `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 594. 🎨 Historias: la foto se arma sola desde el panel (estilo PICA ROJA) · sello con recuadro — SW v415, admin-sw v128
 **Pedido (owner):** "al logo de PICA ROJA en las historias le falta un recuadro; que el estilo de fotos se pueda hacer desde el admin:
 completar los datos y que automáticamente tome el texto y lo arme, y también adjuntar fotos".

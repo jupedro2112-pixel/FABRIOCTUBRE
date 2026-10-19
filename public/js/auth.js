@@ -482,17 +482,14 @@ VIP.auth = (function () {
                 VIP.refunds.loadRefundStatus();
                 VIP.fire.loadFireStatus();
                 if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529 card INVITÁ A TUS AMIGOS (home completo)
-                if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529 popup (1× cada 24 h)
-                setTimeout(() => { try { if (window.deferredPrompt && window.showInstallButton) window.showInstallButton(); } catch (_) {} }, 1500); // #541
+                // #595 (owner): sin popup de referidos al entrar (queda en Referidos)
+                // #595 (owner): sin el cartel "Agregar a Inicio" al entrar (instalar queda en Perfil)
 
                 // Entrada por la landing (`ir=casino`): abrir el casino directo,
                 // con el chat de cargas en el pop-up "Cargar acá" (owner 2026-08-15).
                 // #581: alta por landing (`ir=cargar`): sin selector de menú, directo a donde se carga.
-                if (VIP.state._openLoadAfterLogin) {
-                    VIP.state._openLoadAfterLogin = false;
-                    try { VIP.home.closeMenuChooser(); } catch (_) {}
-                    setTimeout(function () { try { VIP.home.closeMenuChooser(); VIP.home.setHomeMode('full'); } catch (e) {} }, 400);
-                }
+                // #595 (owner): al entrar con el registro la pantalla queda limpia y sólo se elige el menú (el selector lo abre ui.js).
+                VIP.state._openLoadAfterLogin = false;
                 if (VIP.state._openCasinoAfterLogin) {
                     VIP.state._openCasinoAfterLogin = false;
                     setTimeout(function () {
@@ -769,8 +766,8 @@ VIP.auth = (function () {
         VIP.refunds.loadRefundStatus();
         VIP.fire.loadFireStatus();
         if (VIP.ui.loadReferralHomeCard) VIP.ui.loadReferralHomeCard(); // #529
-        if (VIP.ui.maybeShowReferralPromo) VIP.ui.maybeShowReferralPromo(); // #529
-        setTimeout(() => { try { if (window.deferredPrompt && window.showInstallButton) window.showInstallButton(); } catch (_) {} }, 1500); // #541
+        // #595: sin popup de referidos al entrar
+        // #595: sin el cartel "Agregar a Inicio" al entrar
         VIP.ui.loadCanalInformativoUrl();
         refreshVerifyPhoneBanner();
         if (VIP.appTest && VIP.appTest.maybeShowAppCheck) VIP.appTest.maybeShowAppCheck();
