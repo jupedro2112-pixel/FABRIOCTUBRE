@@ -73,7 +73,7 @@ VIP.auth = (function () {
         if (!banner) return;
         const user = VIP.state.currentUser;
         const needsVerify = user && (!user.role || user.role === 'user') && user.phoneVerified !== true;
-        banner.style.display = needsVerify ? '' : 'none';
+        banner.style.display = 'none'; void needsVerify; // #596: sin cartel "verificá tu teléfono" (se pide al retirar)
     }
 
     // Registro directo: solo usuario + contraseña, sin SMS. Si hay una pauta
@@ -770,8 +770,7 @@ VIP.auth = (function () {
         // #595: sin el cartel "Agregar a Inicio" al entrar
         VIP.ui.loadCanalInformativoUrl();
         refreshVerifyPhoneBanner();
-        if (VIP.appTest && VIP.appTest.maybeShowAppCheck) VIP.appTest.maybeShowAppCheck();
-        if (VIP.appTest && VIP.appTest.maybeRunNotifTest) VIP.appTest.maybeRunNotifTest();
+        // #596 (owner, limpieza): sin el chequeo "¿tenés la app instalada?" ni el test de notificaciones al entrar (quedan en Perfil / botón test)
 
         return userLoaded;
     }

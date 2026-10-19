@@ -59,7 +59,7 @@
     function setHomeMode(mode, opts) {
         _applyMenuLayout(); // #482
         setTimeout(function () { try { loadStrategy(false); } catch (_) {} }, 600); // #504
-        setTimeout(function () { try { if (!document.body.classList.contains('mc-open')) maybeFirstDepositPopup(); } catch (_) {} }, 1500); // #488: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
+        // #596 (owner, limpieza): sin el popup de primera carga (queda el cartel chico del Inicio, #564) // #488: la opción de menú (barra abajo) aplica en TODOS los modos (fácil y completo)
         mode = (mode === 'full' || mode === 'mini' || mode === 'easy' || mode === 'basic') ? mode : 'play'; // #512: basic
         _homeMode = mode;
         const p = _el('supportPanel');
@@ -140,7 +140,7 @@
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
         closeMenuChooser();
         setHomeMode(_modeFor(pref));
-        setTimeout(maybeFirstDepositPopup, 900); // #488
+        // #596: sin popup de primera carga // #488
         if (!opts || !opts.quiet) {
             try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras con "Cambiar menú".' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras con "Cambiar menú".'), 'success'); } catch (_) {}
         }

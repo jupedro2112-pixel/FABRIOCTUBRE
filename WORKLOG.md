@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 596. 🧹 Limpieza de carteles sin sentido al entrar — SW v417
+**Pedido (owner):** "hacé una buena limpieza de carteles sin sentido, limpiá todo y dejala óptima para cargarla".
+**Inventario de lo que saltaba al entrar y qué quedó:**
+- ❌ Popup "Tu primera carga viene con X%" (`fdModal`, #488): duplicaba el cartel chico del Inicio (#564) → fuera.
+- ❌ Chequeo "¿tenés la app instalada?" y test automático de notificaciones (`apptest.js`) → no saltan solos (quedan para el tester/Perfil).
+- ❌ Encuesta obligatoria de plan de notificaciones (`notifSurvey`) → no salta sola (se elige desde Perfil/Configuración).
+- ❌ Cartel dorado "verificá tu teléfono" en el chat → fuera (el teléfono se pide al retirar).
+- ❌ Cartel del bono por instalar (`installBonus`, flag apagada #221) → ya no se inicializa.
+- ❌ (#595) Cartel "Agregar a Inicio", popup y card "Invitá a tus amigos".
+- ✅ Quedan: selector de menú al entrar, NOVEDAD en una línea, cartel chico de primera carga (sólo Inicio, sólo sin cargas), burbuja de
+  carga acreditada (15 s), botón negro de instalar pendiente (sólo si dejó el extra para después), presentación de Soporte y las historias.
+**Archivos:** `public/js/auth.js`, `public/js/ui.js`, `public/js/home.js`, SW.
+
 ### 595. 🧼 Entrada limpia: sin cartel de instalar ni popup de referidos; sólo el selector de menú; todo minimizado — SW v416
 **Pedido (owner):** "cuando entrás con el registro sacá lo de la app como cartel inicial, sacá lo de invitá a tu amigo, dejá limpia la
 pantalla completa, sólo para que elija el menú, y que cuando entre quede todo minimizado".

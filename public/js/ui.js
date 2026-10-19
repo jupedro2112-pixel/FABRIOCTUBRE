@@ -112,15 +112,11 @@ VIP.ui = (function () {
         try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (_) {} // #376: ¿hay una carga pendiente?
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).
-        if (VIP.installBonus && typeof VIP.installBonus.init === 'function') {
-            VIP.installBonus.init();
-        }
+        // #596 (owner, limpieza): el cartel del bono por instalar quedó apagado (#221) y no se inicializa más.
 
         // Encuesta de notificaciones: aparece una sola vez para que el
         // usuario elija su grupo (suave / normal / activo / solo reembolsos).
-        if (VIP.notifSurvey && typeof VIP.notifSurvey.maybeShow === 'function') {
-            VIP.notifSurvey.maybeShow();
-        }
+        // #596 (owner, limpieza): la encuesta de notificaciones ya NO salta sola al entrar (se puede elegir desde Perfil/Configuración).
         // NOTA: el welcome del publicista NO se muestra acá. Se muestra
         // pre-auth desde app.js al cargar la página si el visitante llegó
         // por una vanity URL / ?p=CODE. Ver public/js/publisherwelcome.js.
