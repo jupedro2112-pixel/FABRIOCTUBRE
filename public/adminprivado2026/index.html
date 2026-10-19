@@ -2113,170 +2113,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     </div>
                 </div>
 
-                <!-- Estrategia de Notificaciones: plantillas editables -->
-                <div style="background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;">
-                    <h3 style="margin-bottom:.8rem;font-size:1rem;color:#d4af37;">🎯 Estrategia de Notificaciones</h3>
-                    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
-                        <label style="font-size:.85rem;color:#aaa;">Usuario de prueba:</label>
-                        <input type="text" id="notifTestUser" class="form-input" placeholder="usuario para probar" style="min-width:170px;">
-                        <span style="font-size:.78rem;color:#888;">El botón "Probar" envía solo a este usuario.</span>
-                    </div>
-                    <div id="notifStrategyContainer">
-                        <p style="color:#888;font-size:.85rem;">Cargando plantillas…</p>
-                    </div>
-
-                    <div style="margin-top:1.3rem;border-top:1px solid #333;padding-top:1rem;">
-                        <h4 style="color:#d4af37;font-size:.92rem;margin-bottom:.7rem;">⏰ Notificaciones programadas</h4>
-                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.6rem;">
-                            <select id="schedType" class="form-input">
-                                <!-- bono_50 / bono_100 eliminados (tope 30% en lo automático) -->
-                                <option value="invitacion">Invitación a jugar</option>
-                                <option value="regalo">Regalo</option>
-                                <option value="reembolso">Reembolso disponible</option>
-                            </select>
-                            <select id="schedPlan" class="form-input">
-                                <option value="suave">Plan Suave</option>
-                                <option value="normal">Plan Normal</option>
-                                <option value="activo">Plan Activo</option>
-                                <option value="solo_reembolsos">Solo reembolsos</option>
-                                <option value="todos">Todos</option>
-                            </select>
-                            <select id="schedMode" class="form-input" onchange="updateSchedFields()">
-                                <option value="once">Una vez</option>
-                                <option value="daily">Todos los días</option>
-                                <option value="weekly">Semanal</option>
-                            </select>
-                            <input type="datetime-local" id="schedRunAt" class="form-input">
-                            <input type="time" id="schedTime" class="form-input" style="display:none;">
-                            <select id="schedDow" class="form-input" style="display:none;">
-                                <option value="1">Lunes</option>
-                                <option value="2">Martes</option>
-                                <option value="3">Miércoles</option>
-                                <option value="4">Jueves</option>
-                                <option value="5">Viernes</option>
-                                <option value="6">Sábado</option>
-                                <option value="0">Domingo</option>
-                            </select>
-                            <button class="btn btn-sm btn-primary" onclick="addSchedule()">➕ Programar</button>
-                        </div>
-                        <div style="font-size:.74rem;color:#888;margin-bottom:.7rem;">Las horas son en horario de Argentina.</div>
-                        <div id="schedList"><p style="color:#888;font-size:.85rem;">Cargando…</p></div>
-                    </div>
-                </div>
-
-                <!-- Compositor de notificación -->
-                <div class="commands-section" style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
-                    <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text-secondary,#aaa)">✉️ Redactar notificación</h3>
-                    <div class="form-group">
-                        <label class="form-label">Título *</label>
-                        <input type="text" id="notifTitle" class="form-input" placeholder="Ej: 🎉 Nuevo bono disponible" maxlength="100" />
-                    </div>
-                    <div class="form-group" style="margin-top:.75rem">
-                        <label class="form-label">Mensaje *</label>
-                        <textarea id="notifBody" class="form-input" rows="3" placeholder="Ej: Ingresá ahora y reclamá tu bono de reactivación." maxlength="250" style="resize:vertical"></textarea>
-                    </div>
-
-                    <!-- Modo de envío -->
-                    <div style="margin-top:1rem;padding:1rem;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px">
-                        <label class="form-label" style="display:block;margin-bottom:.5rem;font-weight:600">📡 Modo de envío</label>
-                        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-                            <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .9rem;border-radius:8px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.15)">
-                                <input type="radio" name="notifMode" id="notifModeAllApp" value="all_app" onchange="updateNotifModeUI()" style="accent-color:#6366f1">
-                                <span>📱 Todos con app <small style="color:#aaa">(de una sola vez)</small></span>
-                            </label>
-                            <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.1)">
-                                <input type="radio" name="notifMode" id="notifModeBatch" value="batch" checked onchange="updateNotifModeUI()" style="accent-color:#6366f1">
-                                <span>📦 Por lote <small style="color:#aaa">(segmentado)</small></span>
-                            </label>
-                        </div>
-                        <!-- Info del modo seleccionado -->
-                        <div id="notifModeInfo" style="margin-top:.6rem;font-size:.82rem;color:#a5b4fc;display:none"></div>
-                    </div>
-
-                    <!-- Controles modo lote -->
-                    <div id="notifBatchControls" style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;align-items:center">
-                        <!-- Segmento -->
-                        <div id="notifSegmentDiv">
-                            <label class="form-label" style="display:block;margin-bottom:.3rem">Segmento</label>
-                            <select id="notifSegment" class="form-input" style="min-width:200px">
-                                <option value="all">Todos con app instalada</option>
-                                <option value="active">Activos (login últimos 30 días)</option>
-                                <option value="inactive_7d">Inactivos últimos 7 días</option>
-                                <option value="inactive">Inactivos (+30 días sin login)</option>
-                                <option value="with_balance">Con saldo &gt; 0</option>
-                                <option value="specific">Usuarios específicos</option>
-                            </select>
-                        </div>
-                        <!-- Tamaño de lote -->
-                        <div id="notifBatchSizeDiv">
-                            <label class="form-label" style="display:block;margin-bottom:.3rem">Tamaño de lote</label>
-                            <select id="notifBatchSize" class="form-input" style="min-width:120px">
-                                <option value="50">50</option>
-                                <option value="100" selected>100</option>
-                                <option value="200">200</option>
-                            </select>
-                        </div>
-                        <!-- Offset (seguimiento) -->
-                        <div id="notifOffsetDiv" style="display:none">
-                            <label class="form-label" style="display:block;margin-bottom:.3rem">Desde usuario N°</label>
-                            <input type="number" id="notifBatchOffset" class="form-input" value="0" min="0" style="min-width:90px">
-                        </div>
-                        <!-- Botones enviar modo lote -->
-                        <div style="align-self:flex-end;display:flex;gap:.5rem;flex-wrap:wrap">
-                            <button id="notifSendBtn" class="btn btn-primary" onclick="sendBatchNotification()">🚀 Enviar lote</button>
-                            <button id="notifNextBatchBtn" class="btn btn-secondary" onclick="sendNextBatch()" style="display:none" title="Continúa desde donde terminó el último envío">➡️ Siguiente lote</button>
-                            <button class="btn btn-secondary btn-sm" onclick="resetNotifBatch()" title="Reiniciar offset a 0">🔄 Reiniciar lote</button>
-                        </div>
-                    </div>
-
-                    <!-- Controles modo todos con app -->
-                    <div id="notifAllAppControls" style="display:none;margin-top:1rem">
-                        <div style="padding:.75rem 1rem;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);border-radius:8px;margin-bottom:.75rem;font-size:.85rem;color:#86efac">
-                            📱 Se enviará a <strong>TODOS</strong> los usuarios con app instalada, en lotes automáticos de 100 con pausa entre cada uno (envío lento y seguro). Si un lote falla, el envío se detiene y se muestra exactamente hasta dónde se llegó, con opción manual de reanudar — nunca se duplican mensajes.
-                        </div>
-                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-                            <button id="notifSendAllBtn" class="btn btn-primary" onclick="sendAllWithApp()" style="background:linear-gradient(135deg,#059669,#10b981)">📤 Enviar a TODOS con app</button>
-                        </div>
-                        <div id="notifAllAppProgress" style="display:none;margin-top:.75rem;padding:.6rem 1rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:.85rem;color:#6ee7b7"></div>
-                    </div>
-
-                    <!-- Estado del lote -->
-                    <div id="notifBatchStatus" style="display:none;margin-top:.75rem;padding:.6rem 1rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:8px;font-size:.85rem;color:#a5b4fc;"></div>
-
-                    <!-- Selección de usuarios específicos (oculto por defecto) -->
-                    <div id="notifSpecificUsers" style="display:none;margin-top:1rem">
-                        <label class="form-label">Usernames (uno por línea o separados por coma)</label>
-                        <textarea id="notifUsernames" class="form-input" rows="4" placeholder="usuario1&#10;usuario2&#10;usuario3"></textarea>
-                    </div>
-                </div>
-
-                <!-- Difusión por etiqueta -->
-                <div class="commands-section" style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
-                    <h3 style="margin-bottom:1rem;font-size:1rem;color:#d4af37">📣 Difusión por etiqueta</h3>
-                    <p style="margin:0 0 1rem;color:#bbb;font-size:.82rem;line-height:1.5;">Enviá una notificación push a todos los clientes que tengan una etiqueta determinada (ej: VIP, en-riesgo). Solo admin general.</p>
-                    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.75rem">
-                        <div>
-                            <label class="form-label" style="display:block;margin-bottom:.3rem">Etiqueta</label>
-                            <select id="tagBroadcastSelect" class="form-input" style="min-width:220px">
-                                <option value="">— Elegí una etiqueta —</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-secondary btn-sm" onclick="loadTagBroadcastOptions()" title="Actualizar lista de etiquetas">🔄</button>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Título *</label>
-                        <input type="text" id="tagBroadcastTitle" class="form-input" placeholder="Ej: 🎁 Bono exclusivo para vos" maxlength="100" />
-                    </div>
-                    <div class="form-group" style="margin-top:.75rem">
-                        <label class="form-label">Mensaje *</label>
-                        <textarea id="tagBroadcastBody" class="form-input" rows="3" placeholder="Ej: Ingresá ahora y reclamá tu bono." maxlength="250" style="resize:vertical"></textarea>
-                    </div>
-                    <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-                        <button id="tagBroadcastSendBtn" class="btn btn-primary" onclick="sendTagBroadcast()">🚀 Enviar a la etiqueta</button>
-                        <span id="tagBroadcastStatus" style="font-size:.85rem;color:#a5b4fc"></span>
-                    </div>
-                </div>
-
+                <!-- #609 (owner): LOTE CON REGALO arriba de todo; el resto en acordeones plegados (se abren si hace falta) -->
                 <!-- LOTE CON REGALO (owner 2026-08-10): notificación a una lista
                      de usuarios con bono (% próxima carga o $ fijo), por CÓDIGO
                      exclusivo del lote o por VENTANA de tiempo. El bono es un
@@ -2544,6 +2381,177 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <div id="giftBatchPreview" style="margin-top:.75rem"></div>
                 </div>
 
+                <details class="nf-acc"><summary>🎯 Estrategia de Notificaciones</summary>
+                <!-- Estrategia de Notificaciones: plantillas editables -->
+                <div style="background:rgba(212,175,55,.06);border:1px solid rgba(212,175,55,.3);border-radius:12px;padding:1.2rem;margin-bottom:1.5rem;">
+                    <h3 style="margin-bottom:.8rem;font-size:1rem;color:#d4af37;">🎯 Estrategia de Notificaciones</h3>
+                    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+                        <label style="font-size:.85rem;color:#aaa;">Usuario de prueba:</label>
+                        <input type="text" id="notifTestUser" class="form-input" placeholder="usuario para probar" style="min-width:170px;">
+                        <span style="font-size:.78rem;color:#888;">El botón "Probar" envía solo a este usuario.</span>
+                    </div>
+                    <div id="notifStrategyContainer">
+                        <p style="color:#888;font-size:.85rem;">Cargando plantillas…</p>
+                    </div>
+
+                    <div style="margin-top:1.3rem;border-top:1px solid #333;padding-top:1rem;">
+                        <h4 style="color:#d4af37;font-size:.92rem;margin-bottom:.7rem;">⏰ Notificaciones programadas</h4>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.6rem;">
+                            <select id="schedType" class="form-input">
+                                <!-- bono_50 / bono_100 eliminados (tope 30% en lo automático) -->
+                                <option value="invitacion">Invitación a jugar</option>
+                                <option value="regalo">Regalo</option>
+                                <option value="reembolso">Reembolso disponible</option>
+                            </select>
+                            <select id="schedPlan" class="form-input">
+                                <option value="suave">Plan Suave</option>
+                                <option value="normal">Plan Normal</option>
+                                <option value="activo">Plan Activo</option>
+                                <option value="solo_reembolsos">Solo reembolsos</option>
+                                <option value="todos">Todos</option>
+                            </select>
+                            <select id="schedMode" class="form-input" onchange="updateSchedFields()">
+                                <option value="once">Una vez</option>
+                                <option value="daily">Todos los días</option>
+                                <option value="weekly">Semanal</option>
+                            </select>
+                            <input type="datetime-local" id="schedRunAt" class="form-input">
+                            <input type="time" id="schedTime" class="form-input" style="display:none;">
+                            <select id="schedDow" class="form-input" style="display:none;">
+                                <option value="1">Lunes</option>
+                                <option value="2">Martes</option>
+                                <option value="3">Miércoles</option>
+                                <option value="4">Jueves</option>
+                                <option value="5">Viernes</option>
+                                <option value="6">Sábado</option>
+                                <option value="0">Domingo</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" onclick="addSchedule()">➕ Programar</button>
+                        </div>
+                        <div style="font-size:.74rem;color:#888;margin-bottom:.7rem;">Las horas son en horario de Argentina.</div>
+                        <div id="schedList"><p style="color:#888;font-size:.85rem;">Cargando…</p></div>
+                    </div>
+                </div>
+                </details>
+
+                <details class="nf-acc"><summary>✉️ Redactar notificación</summary>
+                <!-- Compositor de notificación -->
+                <div class="commands-section" style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
+                    <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text-secondary,#aaa)">✉️ Redactar notificación</h3>
+                    <div class="form-group">
+                        <label class="form-label">Título *</label>
+                        <input type="text" id="notifTitle" class="form-input" placeholder="Ej: 🎉 Nuevo bono disponible" maxlength="100" />
+                    </div>
+                    <div class="form-group" style="margin-top:.75rem">
+                        <label class="form-label">Mensaje *</label>
+                        <textarea id="notifBody" class="form-input" rows="3" placeholder="Ej: Ingresá ahora y reclamá tu bono de reactivación." maxlength="250" style="resize:vertical"></textarea>
+                    </div>
+
+                    <!-- Modo de envío -->
+                    <div style="margin-top:1rem;padding:1rem;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:10px">
+                        <label class="form-label" style="display:block;margin-bottom:.5rem;font-weight:600">📡 Modo de envío</label>
+                        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+                            <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .9rem;border-radius:8px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.15)">
+                                <input type="radio" name="notifMode" id="notifModeAllApp" value="all_app" onchange="updateNotifModeUI()" style="accent-color:#6366f1">
+                                <span>📱 Todos con app <small style="color:#aaa">(de una sola vez)</small></span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;padding:.5rem .9rem;border-radius:8px;border:1px solid rgba(255,255,255,.1)">
+                                <input type="radio" name="notifMode" id="notifModeBatch" value="batch" checked onchange="updateNotifModeUI()" style="accent-color:#6366f1">
+                                <span>📦 Por lote <small style="color:#aaa">(segmentado)</small></span>
+                            </label>
+                        </div>
+                        <!-- Info del modo seleccionado -->
+                        <div id="notifModeInfo" style="margin-top:.6rem;font-size:.82rem;color:#a5b4fc;display:none"></div>
+                    </div>
+
+                    <!-- Controles modo lote -->
+                    <div id="notifBatchControls" style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;align-items:center">
+                        <!-- Segmento -->
+                        <div id="notifSegmentDiv">
+                            <label class="form-label" style="display:block;margin-bottom:.3rem">Segmento</label>
+                            <select id="notifSegment" class="form-input" style="min-width:200px">
+                                <option value="all">Todos con app instalada</option>
+                                <option value="active">Activos (login últimos 30 días)</option>
+                                <option value="inactive_7d">Inactivos últimos 7 días</option>
+                                <option value="inactive">Inactivos (+30 días sin login)</option>
+                                <option value="with_balance">Con saldo &gt; 0</option>
+                                <option value="specific">Usuarios específicos</option>
+                            </select>
+                        </div>
+                        <!-- Tamaño de lote -->
+                        <div id="notifBatchSizeDiv">
+                            <label class="form-label" style="display:block;margin-bottom:.3rem">Tamaño de lote</label>
+                            <select id="notifBatchSize" class="form-input" style="min-width:120px">
+                                <option value="50">50</option>
+                                <option value="100" selected>100</option>
+                                <option value="200">200</option>
+                            </select>
+                        </div>
+                        <!-- Offset (seguimiento) -->
+                        <div id="notifOffsetDiv" style="display:none">
+                            <label class="form-label" style="display:block;margin-bottom:.3rem">Desde usuario N°</label>
+                            <input type="number" id="notifBatchOffset" class="form-input" value="0" min="0" style="min-width:90px">
+                        </div>
+                        <!-- Botones enviar modo lote -->
+                        <div style="align-self:flex-end;display:flex;gap:.5rem;flex-wrap:wrap">
+                            <button id="notifSendBtn" class="btn btn-primary" onclick="sendBatchNotification()">🚀 Enviar lote</button>
+                            <button id="notifNextBatchBtn" class="btn btn-secondary" onclick="sendNextBatch()" style="display:none" title="Continúa desde donde terminó el último envío">➡️ Siguiente lote</button>
+                            <button class="btn btn-secondary btn-sm" onclick="resetNotifBatch()" title="Reiniciar offset a 0">🔄 Reiniciar lote</button>
+                        </div>
+                    </div>
+
+                    <!-- Controles modo todos con app -->
+                    <div id="notifAllAppControls" style="display:none;margin-top:1rem">
+                        <div style="padding:.75rem 1rem;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);border-radius:8px;margin-bottom:.75rem;font-size:.85rem;color:#86efac">
+                            📱 Se enviará a <strong>TODOS</strong> los usuarios con app instalada, en lotes automáticos de 100 con pausa entre cada uno (envío lento y seguro). Si un lote falla, el envío se detiene y se muestra exactamente hasta dónde se llegó, con opción manual de reanudar — nunca se duplican mensajes.
+                        </div>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                            <button id="notifSendAllBtn" class="btn btn-primary" onclick="sendAllWithApp()" style="background:linear-gradient(135deg,#059669,#10b981)">📤 Enviar a TODOS con app</button>
+                        </div>
+                        <div id="notifAllAppProgress" style="display:none;margin-top:.75rem;padding:.6rem 1rem;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;font-size:.85rem;color:#6ee7b7"></div>
+                    </div>
+
+                    <!-- Estado del lote -->
+                    <div id="notifBatchStatus" style="display:none;margin-top:.75rem;padding:.6rem 1rem;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:8px;font-size:.85rem;color:#a5b4fc;"></div>
+
+                    <!-- Selección de usuarios específicos (oculto por defecto) -->
+                    <div id="notifSpecificUsers" style="display:none;margin-top:1rem">
+                        <label class="form-label">Usernames (uno por línea o separados por coma)</label>
+                        <textarea id="notifUsernames" class="form-input" rows="4" placeholder="usuario1&#10;usuario2&#10;usuario3"></textarea>
+                    </div>
+                </div>
+                </details>
+
+                <details class="nf-acc"><summary>📣 Difusión por etiqueta</summary>
+                <!-- Difusión por etiqueta -->
+                <div class="commands-section" style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
+                    <h3 style="margin-bottom:1rem;font-size:1rem;color:#d4af37">📣 Difusión por etiqueta</h3>
+                    <p style="margin:0 0 1rem;color:#bbb;font-size:.82rem;line-height:1.5;">Enviá una notificación push a todos los clientes que tengan una etiqueta determinada (ej: VIP, en-riesgo). Solo admin general.</p>
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.75rem">
+                        <div>
+                            <label class="form-label" style="display:block;margin-bottom:.3rem">Etiqueta</label>
+                            <select id="tagBroadcastSelect" class="form-input" style="min-width:220px">
+                                <option value="">— Elegí una etiqueta —</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadTagBroadcastOptions()" title="Actualizar lista de etiquetas">🔄</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Título *</label>
+                        <input type="text" id="tagBroadcastTitle" class="form-input" placeholder="Ej: 🎁 Bono exclusivo para vos" maxlength="100" />
+                    </div>
+                    <div class="form-group" style="margin-top:.75rem">
+                        <label class="form-label">Mensaje *</label>
+                        <textarea id="tagBroadcastBody" class="form-input" rows="3" placeholder="Ej: Ingresá ahora y reclamá tu bono." maxlength="250" style="resize:vertical"></textarea>
+                    </div>
+                    <div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                        <button id="tagBroadcastSendBtn" class="btn btn-primary" onclick="sendTagBroadcast()">🚀 Enviar a la etiqueta</button>
+                        <span id="tagBroadcastStatus" style="font-size:.85rem;color:#a5b4fc"></span>
+                    </div>
+                </div>
+                </details>
+
+                <details class="nf-acc"><summary>📤 Lotes enviados</summary>
                 <!-- Historial de lotes enviados: quién lo mandó y a quiénes -->
                 <div class="commands-section" style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
@@ -2558,7 +2566,9 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <h3 style="margin-bottom:1rem;font-size:1rem;color:var(--text-secondary,#aaa)">📋 Resultado del envío</h3>
                     <div id="notifResultContent"></div>
                 </div>
+                </details>
 
+                <details class="nf-acc"><summary>👥 Usuarios y estado de app</summary>
                 <!-- Lista de usuarios con estado de token -->
                 <div style="background:var(--bg-secondary,#1a1a2e);border-radius:12px;padding:1.5rem">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
@@ -2577,6 +2587,8 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     </div>
                     <div id="notifPagination" style="margin-top:1rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap"></div>
                 </div>
+                </details>
+
             </section>
 
             <!-- ============================================

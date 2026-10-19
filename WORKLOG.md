@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 609. 🔔 Notificaciones: "Lote con regalo" arriba de todo; el resto en acordeones plegados — admin-sw v130
+**Pedido (owner):** "lote por regalo en Notificaciones dejalo en la parte superior y lo otro dejalo tipo menú minimizado, y si se quiere
+maximizar que se pueda abrir". Reordenado el HTML de la sección: cabecera + estadísticas, LOTE CON REGALO, y después Estrategia de
+Notificaciones · Redactar notificación · Difusión por etiqueta · Lotes enviados · Usuarios y estado de app, cada uno en un `<details
+class="nf-acc">` cerrado. Ningún id cambió (el JS sigue igual). **Archivos:** `public/adminprivado2026/index.html`, `pin-admin.css`, `public/admin-sw.js`.
+
 ### 607/608. 📖 Historias: la foto no se corta (achicada, centrada arriba) · aviso de 1ª carga debajo de la barra en los 3 menús — SW v426
 **Pedidos (owner):** "no quiero que se corte la foto: achicala, sin recuadro, centrada arriba sin cortar" · "el cartel del bono de
 primera carga (50 o 100) que aparezca en los 3 menús, abajo del perfil, como aviso sólo de primera carga". (#607) El área de la foto
