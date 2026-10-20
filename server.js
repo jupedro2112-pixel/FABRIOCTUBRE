@@ -14691,10 +14691,11 @@ async function _countRealDepositsDays(userId, username, days) {
 // racha), que va escalando por hito; el contador vuelve a 0 al cobrar un premio o al pasar al hito siguiente. Las columnas de cargas
 // (requireDeposits/depositDays) quedaron sin efecto.
 const FIRE_MILESTONES_DEFAULT = [
-  { day: 10, reward: 10000, type: 'cash', rollover: 100000, requireDeposits: 0, depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 20000, type: 'cash', rollover: 200000, requireDeposits: 0, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 30000, type: 'cash', rollover: 300000, requireDeposits: 0, depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
-  { day: 50, reward: 50000, type: 'cash', rollover: 500000, requireDeposits: 0, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
+  // #658 (owner): rollover = 30× el premio ("configurá ×3 lo que pusiste")
+  { day: 10, reward: 10000, type: 'cash', rollover: 300000,  requireDeposits: 0, depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
+  { day: 20, reward: 20000, type: 'cash', rollover: 600000,  requireDeposits: 0, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 30000, type: 'cash', rollover: 900000,  requireDeposits: 0, depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
+  { day: 50, reward: 50000, type: 'cash', rollover: 1500000, requireDeposits: 0, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
@@ -14710,7 +14711,7 @@ async function getFireMilestones() {
         reward: Math.max(0, Math.round(Number(m.reward) || 0)),
         type: 'cash',
         // #654: rollover del hito ($ a apostar); si la config vieja no lo tiene, 10× el premio
-        rollover: (m.rollover != null && m.rollover !== '') ? Math.max(0, Math.round(Number(m.rollover) || 0)) : Math.max(0, Math.round((Number(m.reward) || 0) * 10)),
+        rollover: (m.rollover != null && m.rollover !== '') ? Math.max(0, Math.round(Number(m.rollover) || 0)) : Math.max(0, Math.round((Number(m.reward) || 0) * 30)), // #658: 30× el premio si falta
         requireDeposits: Math.max(0, Math.round(Number(m.requireDeposits) || 0)),
         depositDays: Math.max(1, Math.min(365, parseInt(m.depositDays, 10) || 30)),
         desc: String(m.desc || '').slice(0, 80) || ('Recompensa Fueguito ' + (parseInt(m.day, 10) || '') + ' días')

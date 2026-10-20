@@ -6993,7 +6993,7 @@ function addFireMilestoneRow(m) {
     tr.innerHTML =
         '<td style="min-width:80px;">' + inp('fm-day', m.day, 'ej. 10', 1) + '</td>' +
         '<td style="min-width:100px;">' + inp('fm-reward', m.reward, 'ej. 10000', 0) + '</td>' +
-        '<td style="min-width:140px;">' + inp('fm-roll', m.rollover != null ? m.rollover : (Number(m.reward) || 0) * 10, 'ej. 100000', 0) + '</td>' + // #654
+        '<td style="min-width:140px;">' + inp('fm-roll', m.rollover != null ? m.rollover : (Number(m.reward) || 0) * 30, 'ej. 300000', 0) + '</td>' + // #654
         '<td style="min-width:160px;">' + inp('fm-desc', m.desc, 'descripción') + '</td>' +
         '<td><button onclick="this.closest(\'tr\').remove()" title="Quitar" style="background:#7a1010;color:#fff;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;">✕</button></td>';
     body.appendChild(tr);

@@ -29,6 +29,14 @@ ese día hasta el reinicio, porque las stats son por día); el cobro lee las sta
 unos minutos" (nunca se pierde el premio ni se cobra sin verificar). **Archivos:** `server.js`, `src/models/FireStreak.js`,
 `public/js/fire.js`, `public/js/home.js`, `public/adminprivado2026/{index.html,admin.js}`, SWs.
 
+### 658. 🔥🎰 Rollover del fueguito ×3 (150k · 300k · 600k · 900k en Render; default 30× el premio) y "×5" de la ruleta en Info e historia — SW v468
+**Pedido (owner):** "configurá ×3 el rollover que pusiste (de 50.000 a 150.000 y así el resto), y el rollover de la ruleta diaria poné
+que todo es ×5 en la información de las historias y de la Info, así la gente no se queja". Config de Render actualizada por API
+(hitos 10/20/30/50: $150.000 · $300.000 · $600.000 · $900.000); `FIRE_MILESTONES_DEFAULT` y el default del panel pasan a 30× el premio.
+Info → Ruleta diaria: "Los premios en plata se juegan ×5 antes de poder retirarlos". Historia de la ruleta regenerada (`st-5b.png`,
+píldora "PREMIOS CON ROLLOVER ×5" y la aclaración en el texto) y republicadas las 7 en orden. **Archivos:** `server.js`,
+`public/adminprivado2026/admin.js`, `public/index.html`, `public/images/stories/st-5b.png`, SW.
+
 ### 657. 🔥 Todas las explicaciones del fueguito actualizadas al rollover — SW v467
 **Pedido (owner):** "cambiando esto de los fueguitos cambiá la explicación de todos los detalles". Regla estática del modal (`#fireRuleTop`),
 regla del home (`#fireHomeRule`), tarjeta Fueguito del Info y subtítulo en Perfil: ya no hablan de cargas ni de "vuelve a 0 si no cargás";
