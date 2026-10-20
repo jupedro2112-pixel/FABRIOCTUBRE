@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 640. ℹ️ Info reordenado: Por qué elegirnos · Niveles VIP · Reembolsos · Ruleta diaria · Referidos · Fueguito (nuevo) · Misiones — SW v454
+**Pedido (owner):** "en la Info cambiá el orden: primero por qué elegirnos, segundo niveles VIP, tercero reembolsos, cuarto ruleta diaria,
+quinto referidos, y agregá fueguito". Se reordenaron los bloques `.im-sec` de `#infoMsg` (la tarjeta "La plataforma que quieras" sigue
+pegada a "Por qué elegirnos", sólo con 2+ plataformas) y se agregó la tarjeta **Fueguito** (racha de cargas, premio por hito, mínimo en su
+plazo o vuelve a 0, botón "Ver mi racha ›" que abre el fueguito). Misiones, que no estaba en el pedido, quedó al final.
+**Archivos:** `public/index.html`, SW.
+
 ### 639. 🧭 Inicio ordenado: nivel+fueguito · carga pendiente · "Cambiar menú" centrado · cartel de bono debajo; "Copiar" en rojo — SW v453
 **Pedidos (owner):** "[captura] esto está mal: la carga pendiente siempre parte superior sin tapar nada; reembolsos dejalo ahí y poné el
 resto al lado: ruleta diaria, misiones y referidos" · "en Carga auto, 'Copiar' diferencialo del resto del texto" · "Cambiar menú centrado en
