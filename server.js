@@ -19372,7 +19372,8 @@ function _diaMoneyOpts(q) { const cur = q && q.cur === 'usd' ? 'usd' : 'ars'; co
 let _datosPinCache = { at: 0, hash: null };
 async function _datosPinHash() { if (Date.now() - _datosPinCache.at < 60000) return _datosPinCache.hash; let h = null; try { h = await getConfig('datosIaPinHash', null); } catch (_) {} _datosPinCache = { at: Date.now(), hash: h || null }; return _datosPinCache.hash; }
 const _sha = (v) => crypto.createHash('sha256').update(String(v)).digest('hex');
-app.use('/api/admin/datos-ia', async (req, res, next) => {
+// #665 (seguridad): primero login + rol (401/403), recién después la clave: sin sesión no se puede ni probar claves.
+app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, async (req, res, next) => {
   try {
     const h = await _datosPinHash(); if (!h) return next();
     const pin = String(req.get('x-datos-pin') || '');

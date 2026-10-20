@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 665. 🔐 Auditoría de seguridad pre-producción + fix: la clave de Datos IA se pedía antes del login
+**Pedido (owner):** "¿miraste seguridad y todo?". **Revisado (OK):** las 385 rutas Express: toda `/api/admin/*` exige `authMiddleware`
++ `adminMiddleware` o un chequeo de rol inline (bulk-sms / export CSV sólo `admin`; soporte y visitantes `SUPPORT_ROLES`; cargas
+`depositor`, retiros `withdrawer`) — probado en Render con un token de usuario común: 403 en 17 rutas de admin (GET y POST) y 401 sin
+token. Los GET públicos sin auth son públicos a propósito (landing/info, campaña por código, niveles VIP, historias públicas, reseñas,
+claims-feed con nombres enmascarados, comprobante de pago por UUID inadivinable, health). Rate limits: `generalLimiter` 300/min en
+`/api/`, `authLimiter` 10/min en login/registro/OTP, `sensitiveLimiter` 10 cada 15 min en reset/verificación, más límites por IP de
+SMS. Cabeceras vivas en Render: CSP, HSTS preload, X-Frame-Options DENY, nosniff, Referrer-Policy, sin x-powered-by. Cookies del
+panel `HttpOnly; SameSite=Strict; Secure` (NODE_ENV=production en `npm start`), JWT del panel 8 h, de la app 30 d con `tokenVersion`
+(revocable); Socket.IO revalida token + tokenVersion contra la DB. Cosas de prueba (casino simulado, OTP 000000, admin `lalodj`,
+`_allowNoApi`) sólo con `RENDER`/`TESTER_ADMIN_PROMOTE`: en AWS no aplican. Secretos: ninguno en el repo (sólo la apiKey web de
+Firebase, pública por diseño). **Fix:** `app.use('/api/admin/datos-ia', …)` chequeaba la clave de Datos IA ANTES del login (un
+anónimo recibía 423 y podía probar claves a ciegas); ahora va `authMiddleware, adminMiddleware` primero ⇒ sin sesión 401, sin rol 403.
+
 ### 664. ℹ️ Info con el estilo de la página: tarjetas con ícono de color, textos legibles y "Ver más ›" recuadrado — SW v473
 **Pedido (owner, captura):** "dale mejor formato a esto, más como la página, más Pinterest, que se lean más los textos y el ver más que
 esté bien recuadrado". **CSS (pin.css, bloque #664 al final, pisa el look compacto de #641):** cada sección `.im-sec` es una tarjeta
