@@ -182,6 +182,7 @@
         closeMenuChooser();
         setHomeMode(_modeFor(pref));
         _afterPref(pref); // #670
+        setTimeout(installManifestSync, 300); // #673: el manifest lleva el menú elegido
         // #596: sin popup de primera carga // #488
         if (!opts || !opts.quiet) {
             try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras con "Cambiar menú".' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : (pref === 'girox' ? '🎰 Girox directo: entrás a jugar al toque; cargás y retirás desde el panel de adentro.' : '🧭 Menú completo activado. Lo cambiás cuando quieras con "Cambiar menú".')), 'success'); } catch (_) {}
@@ -381,6 +382,7 @@
             else { localStorage.setItem(MENU_PREF_KEY, _prefOfMode()); localStorage.setItem(MENU_FIXED_KEY, '1'); VIP.ui.showToast('Listo: este menú queda preseleccionado para cuando entrás.', 'success'); }
         } catch (_) {}
         _paintMenuPin();
+        setTimeout(installManifestSync, 300); // #673
     }
     function _menuReaskInit() {
         document.addEventListener('visibilitychange', () => {
@@ -570,6 +572,7 @@
         try { const c = localStorage.getItem(HOME_BANNER_KEY); if (c) _paintHomeBanner(JSON.parse(c)); } catch (_) {}
         _mirrorHeadBits();
         _watchHeadBits();
+        setTimeout(installManifestSync, 1500); // #673
     }
     // Cartel: el texto ya viene renderizado del server ({pct} resuelto). text === null ⇒ vaciado en
     // COMANDOS → sólo el título. El "N%" se resalta en verde.
@@ -1841,6 +1844,26 @@
         setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(true); } catch (_) {} } }, 60);
     }
     function playOn(platformId) { openPlatform(platformId); }
+    // #673 (owner): INSTALAR EN iPHONE CON LA SESIÓN. iOS no comparte el localStorage de Safari con la app instalada: el manifest
+    // (que iOS captura al instalar) lleva un token de acceso de un solo uso del propio cliente + el menú elegido, y la app instalada
+    // arranca logueada (auth.js tryAccessLink) con el mismo menú; Girox abre con SSO. Token cacheado 7 días por usuario.
+    function _isIOS() { try { return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream; } catch (_) { return false; } }
+    async function installManifestSync() {
+        try {
+            if (!_isIOS() || _isStandalone()) return;
+            const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username, tk = VIP.state && VIP.state.currentToken;
+            if (!u || !tk) return;
+            let c = null; try { c = JSON.parse(localStorage.getItem('vip_install_tok') || 'null'); } catch (_) {}
+            if (!c || c.u !== u || !c.t || Date.now() - (c.at || 0) > 7 * 86400000) {
+                const r = await fetch(VIP.config.API_URL + '/api/auth/install-link', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tk } });
+                const j = await r.json(); if (!r.ok || !j.token) return;
+                c = { u, t: j.token, at: Date.now() }; try { localStorage.setItem('vip_install_tok', JSON.stringify(c)); } catch (_) {}
+            }
+            const pref = getMenuPref(), fixed = isMenuFixed();
+            const href = '/manifest.json?a=' + encodeURIComponent(c.t) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '');
+            const l = document.querySelector('link[rel="manifest"]'); if (l && l.getAttribute('href') !== href) l.setAttribute('href', href);
+        } catch (_) {}
+    }
     // #670: Retirar desde la Carga rápida del casino. El modal de retiro vive en la página; CSS lo pone por encima del casino.
     function casinoWithdraw() { try { if (VIP.withdraw && VIP.withdraw.openWithdrawModal) VIP.withdraw.openWithdrawModal(); else VIP.ui.showToast('Retiros no disponibles ahora', 'error'); } catch (_) {} }
 
@@ -2107,7 +2130,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

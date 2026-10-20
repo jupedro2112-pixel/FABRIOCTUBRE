@@ -322,6 +322,12 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // #673: 'install' = token que pidió el PROPIO cliente para que la app instalada en iPhone arranque con su sesión (no fuerza
+  // cambio de clave al canjearse); null = link generado por un agente (flujo de siempre).
+  accessLinkPurpose: {
+    type: String,
+    default: null
+  },
 
 
   // Token FCM para notificaciones push (último registrado – se mantiene para compatibilidad y vista admin)

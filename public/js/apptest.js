@@ -70,6 +70,7 @@ VIP.appTest = (function () {
     function showInstallHelp() {
         const steps = _isIOS()
             ? ['Abrí esta página en <strong>Safari</strong>.',
+               'Quedate con tu cuenta abierta acá en Safari: la app nueva arranca con tu sesión y Girox ya logueado.', // #673
                'Tocá el botón <strong>Compartir</strong> ⬆️ en la barra de abajo.',
                'Elegí <strong>"Agregar a pantalla de inicio"</strong> y después <strong>"Agregar"</strong>.',
                'Abrí la app desde el ícono nuevo en tu pantalla de inicio.']

@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 673. 📲 iPhone: la app instalada desde Safari arranca con la sesión (app + Girox por SSO) y el mismo menú — SW v481
+**Pedido (owner):** "tema instalar la app en iPhone: cuando instalen del navegador que entre iniciado sesión en la app y en la plataforma
+de Girox". **Problema de iOS:** Safari y la app agregada a la pantalla de inicio NO comparten localStorage ni cookies ⇒ la app
+instalada arrancaba deslogueada. El único canal que iOS captura al instalar es el `start_url` del manifest.
+**Mecanismo:** (1) `POST /api/auth/install-link` (cliente logueado, rol user, `authLimiter`) genera un token de acceso de un solo uso
+con `issueAccessLinkFor(id, { purpose: 'install' })` (nuevo `User.accessLinkPurpose`). (2) home.js `installManifestSync()` (sólo iOS y no
+standalone; al entrar, al cambiar de menú y al fijarlo) lo cachea 7 días por usuario en `localStorage vip_install_tok` y apunta
+`<link rel="manifest">` a `/manifest.json?a=<token>&menu=<pref>&fixed=1`. (3) Ruta nueva `GET /manifest.json` (antes de `express.static`)
+devuelve el manifest con `start_url = /?source=pwa&acceso=<token>&menu=…&fixed=1` (sin token/menú válidos, el de siempre; no-store).
+(4) La app instalada abre con ese start_url: auth.js `tryAccessLink` guarda el menú (`vip_menu_pref`/`vip_menu_fixed`) y canjea el token
+→ entra logueada (JWT propio en SU localStorage); como el start_url se repite en cada apertura, si ya hay `userToken` el `?acceso=` se
+ignora en silencio. Girox abre con SSO como siempre (y con menú Girox directo, al toque). (5) El canje con `accessLinkPurpose:'install'`
+NO fuerza cambio de clave (`forcePwd`), a diferencia de los links de agente; el `findOneAndUpdate` lee el doc previo (`new:false`) para
+ver el purpose (el hash igual se borra atómicamente). Logout limpia el token cacheado y vuelve el manifest a `manifest.json`.
+Paso agregado a la guía de instalación iOS (apptest.js): "quedate con tu cuenta abierta en Safari".
+
 ### 672. 🎰 Girox directo: la tarjeta aclara que abre Girox por ser la plataforma seleccionada; abre la preferida cuando tenga API — SW v480
 **Pedido (owner):** "en la parte de Girox, avisar que es esa porque está seleccionada Girox; cuando esté el resto de páginas se
 preselecciona cualquier otra; resumido y que se entienda". **App:** texto de la tarjeta `.mc-girox` ("Abre Girox porque es la

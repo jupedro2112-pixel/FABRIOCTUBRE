@@ -633,7 +633,15 @@ VIP.auth = (function () {
     async function tryAccessLink() {
         let token = null;
         try { token = new URLSearchParams(window.location.search).get('acceso'); } catch (e) {}
+        // #673 (iPhone): la app instalada arranca con ?menu=<pref>&fixed=1 (del manifest): se replica el menú elegido en Safari.
+        try {
+            const sp = new URLSearchParams(window.location.search); const mn = sp.get('menu');
+            if (mn && ['full', 'basic', 'easy', 'girox'].includes(mn)) { localStorage.setItem('vip_menu_pref', mn); if (sp.get('fixed') === '1') localStorage.setItem('vip_menu_fixed', '1'); }
+        } catch (e) {}
         if (!token) return false;
+        // #673: la app instalada abre SIEMPRE con el mismo ?acceso= (start_url): si ya tiene sesión propia, el token ya se canjeó →
+        // se ignora en silencio (sin toast de "link usado") y sigue con la sesión guardada.
+        if (localStorage.getItem('userToken')) { try { history.replaceState(null, '', window.location.pathname); } catch (e) {} return false; }
 
         // `ir=casino` (link de la landing): abrir el casino DIRECTO al loguear.
         // Se lee ANTES de limpiar la URL; verifyToken() lo consume tras showChatScreen.
@@ -692,6 +700,7 @@ VIP.auth = (function () {
         VIP.state.sessionPassword = '';
         try { if (VIP.autoload) VIP.autoload.forgetPassword(); } catch (_) {}
         localStorage.removeItem('userToken');
+        try { localStorage.removeItem('vip_install_tok'); const l = document.querySelector('link[rel="manifest"]'); if (l) l.setAttribute('href', 'manifest.json'); } catch (_) {} // #673
         // El fcmToken local también se borra para que la sesión siguiente
         // (otro usuario en el mismo dispositivo) registre uno fresco asociado
         // a su cuenta y no herede el del usuario anterior.

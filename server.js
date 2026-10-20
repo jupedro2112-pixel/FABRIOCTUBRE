@@ -1295,6 +1295,25 @@ app.get('/:code', async (req, res, next) => {
   }
 });
 
+// #673 (owner): INSTALAR EN iPHONE CON LA SESIÓN. iOS NO comparte localStorage/cookies entre Safari y la app instalada; el único
+// canal es el `start_url` del manifest, que iOS captura al instalar. La PWA logueada apunta <link rel="manifest"> a
+// /manifest.json?a=<token de acceso de un solo uso>&menu=<pref>&fixed=1 (home.js installManifestSync) y acá se devuelve el manifest
+// con ese start_url. La app instalada abre /?source=pwa&acceso=… → auth.js lo canjea UNA vez → entra logueada; Girox abre con SSO.
+let _manifestBase = null;
+app.get('/manifest.json', (req, res) => {
+  try {
+    if (!_manifestBase) _manifestBase = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'public', 'manifest.json'), 'utf8'));
+    const m = Object.assign({}, _manifestBase);
+    const a = String(req.query.a || ''), menu = String(req.query.menu || ''), fixed = req.query.fixed === '1';
+    let su = '/?source=pwa';
+    if (/^[A-Za-z0-9_-]{20,64}$/.test(a)) su += '&acceso=' + a;
+    if (['full', 'basic', 'easy', 'girox'].includes(menu)) su += '&menu=' + menu + (fixed ? '&fixed=1' : '');
+    m.start_url = su;
+    res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.json(m);
+  } catch (e) { logger.warn(`[manifest] ${e.message}`); res.status(500).json({ error: 'manifest' }); }
+});
 app.use(express.static(path.join(__dirname, 'public'), {
   dotfiles: 'deny',
   index: false,
@@ -20149,13 +20168,23 @@ app.get('/api/admin/hgcash/movements', authMiddleware, adminMiddleware, async (r
 // Genera (o regenera) el link para un usuario: guarda SOLO el sha256 del token
 // (un dump de la base no regala logins) y devuelve el link en claro. Lo usan el
 // endpoint del admin/depositor, el del publisher_admin y el alta del publicista.
-async function issueAccessLinkFor(userId) {
+async function issueAccessLinkFor(userId, opts) {
   // 24 bytes random → 32 chars URL-safe (192 bits: no se puede adivinar).
   const token = crypto.randomBytes(24).toString('base64url');
   const hash = crypto.createHash('sha256').update(token).digest('hex');
-  await User.updateOne({ id: userId }, { $set: { accessLinkHash: hash, accessLinkCreatedAt: new Date() } });
+  const purpose = (opts && opts.purpose === 'install') ? 'install' : null; // #673
+  await User.updateOne({ id: userId }, { $set: { accessLinkHash: hash, accessLinkCreatedAt: new Date(), accessLinkPurpose: purpose } });
   return `${getPublicBaseUrl()}/?acceso=${token}`;
 }
+// #673: el PROPIO cliente pide un token de acceso (de un solo uso) para que la app instalada en iPhone arranque con su sesión.
+app.post('/api/auth/install-link', authMiddleware, authLimiter, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
+    const link = await issueAccessLinkFor(req.user.id, { purpose: 'install' });
+    const token = new URL(link).searchParams.get('acceso');
+    res.json({ success: true, token });
+  } catch (e) { logger.warn(`[install-link] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/users/:userId/access-link', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     // Admin general y depositor (decisión del owner 2026-08-03: los depositors
@@ -20195,8 +20224,8 @@ app.post('/api/auth/access-link', authLimiter, async (req, res) => {
     const user = await User.findOneAndUpdate(
       { accessLinkHash: hash, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
       { $set: { accessLinkHash: null, lastLogin: new Date() } },
-      { new: true }
-    ).select('id username role tokenVersion acquisitionSource mustChangePassword').lean();
+      { new: false } // #673: con el doc ANTERIOR se lee accessLinkPurpose (el hash ya quedó borrado atómicamente igual)
+    ).select('id username role tokenVersion acquisitionSource mustChangePassword accessLinkPurpose').lean();
 
     if (!user) {
       // Genérico a propósito: no revelar si el link existió, venció o la cuenta
@@ -20208,7 +20237,7 @@ app.post('/api/auth/access-link', authLimiter, async (req, res) => {
     // temporal tipo "asd123" que el cliente todavía no eligió). Las cuentas de
     // la LANDING (`acquisitionSource:'landing'`) ya recibieron su usuario+clave
     // en pantalla, así que NO se les pide cambiarla (pedido owner 2026-08-16).
-    const forcePwd = user.acquisitionSource !== 'landing';
+    const forcePwd = user.acquisitionSource !== 'landing' && user.accessLinkPurpose !== 'install'; // #673: el token de instalación no fuerza cambio de clave
     if (forcePwd && user.mustChangePassword !== true) {
       await User.updateOne({ id: user.id }, { $set: { mustChangePassword: true } });
     }
