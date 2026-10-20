@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 619. 🔔 "Un paso más" y los carteles de instalar con el estilo de la app — SW v434
+**Pedido (owner, con captura):** "eso ponele el mismo estilo que tenemos" (el cartel violeta/dorado con la caja naranja de notificaciones).
+Los modales `.ios-install-modal/.ios-install-content` (ui.js `showInstallInstructions` + los dos inline de index.html) pasan a tarjeta
+blanca con tokens `--p-*`: título negro, pasos, nota "Lo más importante: permitir notificaciones" en caja gris con título rojo, botón
+rojo redondeado. Los estilos inline naranjas de ui.js se reemplazaron por clases (`.ios-notif-note`, `.ios-note`).
+**Archivos:** `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 618. 📱 Instalar app: fuera el botón verde flotante; barra propia abajo de todo y el menú inferior sube (nada se tapa) — SW v433
 **Pedido (owner, con captura):** "ese instalar app en verde no va, y el otro [la mini-barra nativa de Chrome] está tapando la barra
 inferior de inicio … dejalo abajo pero subime el menú inferior, que no se tape el instalar app". `beforeinstallprompt` ahora hace
