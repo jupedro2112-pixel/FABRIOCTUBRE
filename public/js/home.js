@@ -156,7 +156,8 @@
     // adjuntar + Retirar). Se usa al elegir el menú, al entrar con ese menú fijo y al tocar Inicio.
     function _giroxDirect() {
         try { if (VIP.ui && VIP.ui._casinoOpen) return; } catch (_) {}
-        setTimeout(() => { try { openPlatform('girox', { embed: true }); } catch (_) {} }, 350);
+        // #672 (owner): abre Girox porque es la plataforma seleccionada; cuando haya otras con API, abre la preferida del cliente.
+        setTimeout(() => { try { const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
     }
     function _afterPref(pref) { _curPref = pref; if (pref === 'girox') _giroxDirect(); }
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.

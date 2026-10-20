@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 672. 🎰 Girox directo: la tarjeta aclara que abre Girox por ser la plataforma seleccionada; abre la preferida cuando tenga API — SW v480
+**Pedido (owner):** "en la parte de Girox, avisar que es esa porque está seleccionada Girox; cuando esté el resto de páginas se
+preselecciona cualquier otra; resumido y que se entienda". **App:** texto de la tarjeta `.mc-girox` ("Abre Girox porque es la
+plataforma seleccionada; cuando estén las otras, abre la que tengas elegida. Cargás y retirás desde adentro") y del botón del básico.
+`_giroxDirect()` abre `_platforms.preferredPlatform` si esa plataforma está `connected` (API), si no Girox.
+
 ### 671. 🎰 Girox directo: al abrir la app entra a 1girox sin preguntar el menú — SW v479
 **Pedido (owner):** "al iniciar, el de la página entra a 1girox porque es la que tiene la API y aparece el chat rápido, ¿me seguís?".
 Con #670 el menú 'girox' seguía la regla de los demás (#367: si no está "fijo", al entrar y tras 10 min en segundo plano se vuelve a
