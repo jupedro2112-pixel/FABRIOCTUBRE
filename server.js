@@ -1936,7 +1936,20 @@ async function _depositReviewConsume(userId, amount, by) {
 // no. Pensado para correr fire-and-forget: NUNCA frena la entrega del mensaje.
 async function analyzeComprobanteFromMessage({ userId, username, content, messageId }) {
   try {
-    if (!comprobanteAi.isEnabled()) return; // sin ANTHROPIC_API_KEY → dormido
+    if (!comprobanteAi.isEnabled()) {
+      // #614 (owner): SIN IA (sin ANTHROPIC_API_KEY, p. ej. en Render) el comprobante no se perdía pero el cliente no recibía nada y
+      // el panel no lo veía en la cola. Ahora igual entra a la cola de Cargas pendientes (sin datos leídos) y el cliente recibe el
+      // acuse "recibimos tu comprobante".
+      try {
+        const base = { id: uuidv4(), userId, username, messageId, isComprobante: true, aiConfidence: 0, amount: null, status: 'no_key', model: 'sin-ia', createdAt: new Date() };
+        await Comprobante.create({ ...base, reviewStatus: 'pending', reviewQueuedAt: new Date() });
+        await _emitAdminOnlyChatNote(userId, username, '🧾 Comprobante recibido (sin lectura automática: la IA de comprobantes no está configurada en este entorno). Verificalo a mano en Cargas pendientes.');
+        const ackTxt = await renderSystemCommand('/sys_receipt_received', RECEIPT_RECEIVED_DEFAULT, { amount: '' });
+        if (ackTxt) await _sendUserSystemMessage({ id: userId, username }, ackTxt, { metadata: { kind: 'deposit_pending', comprobanteId: base.id, amount: 0 } });
+        _emitDepositReviewUpdate(userId, { action: 'queued', id: base.id, username, amount: 0 });
+      } catch (e) { logger.warn(`[comprobante] sin IA: ${e.message}`); }
+      return;
+    }
     const result = await comprobanteAi.analyzeComprobante(content);
 
     // La IA no pudo analizar (error técnico): registrar y salir en silencio.

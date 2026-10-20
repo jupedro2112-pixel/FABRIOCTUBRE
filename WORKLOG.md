@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 614. 🧾 Comprobante sin IA entra igual a Cargas pendientes + acuse al cliente · prueba100 ve los tests — SW v430
+**Pedido (owner):** "adjunté la foto del comprobante y no la cargó, ¿qué pasó?" · "poneme el test en prueba100 para cargas o retiros".
+**Diagnóstico en Render:** la API de 1girox NO está cargada (`source:none`) ⇒ nada se puede acreditar; las credenciales de hgcash guardadas
+en el panel dan `decryptError:true` (cifradas con OTRO `JWT_SECRET`, seguramente desde producción) ⇒ el webhook del banco no valida; y la
+IA de comprobantes está apagada (sin `ANTHROPIC_API_KEY`) ⇒ la imagen quedaba como mensaje sin Comprobante, sin cola ni acuse.
+**Fix:** sin IA, `analyzeComprobanteFromMessage` crea igual el `Comprobante` (`status:'no_key'`, `reviewStatus:'pending'`, `model:'sin-ia'`),
+nota interna al panel, acuse `/sys_receipt_received` al cliente y `_emitDepositReviewUpdate`. Con IA todo sigue igual. `prueba100` entra en
+`TESTER_USERNAMES` y `LOGOUT_USERNAMES` (home.js). **Archivos:** `server.js`, `public/js/home.js`, SW.
+
 ### 613. 💬 Soporte: "Chat cerrado · fecha" fijado debajo de las opciones; el historial se conserva al reabrir — SW v429
 **Pedido (owner):** "cuando cierro chat está bien que se ve que cerró, pero dejalo visible abajo de las opciones como un mensaje fijado de
 chat cerrado; si se abre que quede el historial viejo y que tenga fecha". `GET /api/messages/:userId` para el cliente ya NO corta por

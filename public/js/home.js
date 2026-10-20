@@ -671,9 +671,9 @@
         try { await fetch(VIP.config.API_URL + '/api/me/avatar', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (VIP.state && VIP.state.currentToken) }, body: JSON.stringify({ avatar: key }) }); } catch (_) {}
     }
     // #296: los botoncitos "test" sólo los ve el usuario de prueba (owner: "que la página quede original; el test sólo en lalodj").
-    const TESTER_USERNAMES = ['lalodj', 'lalodj499910', 'diego576413']; // #476 · #506
+    const TESTER_USERNAMES = ['lalodj', 'lalodj499910', 'diego576413', 'prueba100']; // #476 · #506 · #614 prueba100
     // #437 (owner): cuentas que ven "Cerrar sesión" al pie de Perfil (body.can-logout). Los testers también lo ven.
-    const LOGOUT_USERNAMES = ['lalodj', 'lalodj499910', 'diego294290', 'diego576413']; // #505
+    const LOGOUT_USERNAMES = ['lalodj', 'lalodj499910', 'diego294290', 'diego576413', 'prueba100']; // #505 · #614
     function _applyTesterClass() {
         const u = String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toLowerCase();
         try { document.body.classList.toggle('can-logout', LOGOUT_USERNAMES.includes(u)); } catch (_) {}
