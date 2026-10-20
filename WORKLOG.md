@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 629. 🐛 La tarjeta "🎯 Misiones" del inicio completo no abría — SW v443
+**Pedido (owner):** "[Misiones · tocá para ver] eso no abre". **Causa:** #595 ("todo minimizado al entrar") plegaba `#missionsCardBody` con
+`style.display='none'` (ui.js), pero `toggleMissionsCard` abre/cierra con el atributo `hidden`: sacaba el `hidden` y el inline seguía tapando.
+Ahora ui.js la pliega con `hidden` y el toggle además limpia `style.display`. La tarjeta VIP no tenía el problema (usa `style.display` en los
+dos lados). **Archivos:** `public/js/ui.js`, `public/js/home.js`, SW.
+
 ### 628. 🔥 Básico: saldo pegado al nombre y píldora "🔥 Fueguito N d" con etiqueta roja "Novedad" — SW v442
 **Pedido (owner):** "poné el saldo más a la izquierda y en el fueguito poné Fueguito, en rojo chiquito Novedad". `.bv-top` alinea a la
 izquierda (nombre · saldo) y la píldora `.bv-fire` va a la derecha con `margin-left:auto`, texto "🔥 Fueguito **N d**" y badge `.bv-new`.

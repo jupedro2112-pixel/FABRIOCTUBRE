@@ -108,7 +108,7 @@ VIP.ui = (function () {
         try { if (VIP.home && VIP.home.maybeShowMenuChooser) VIP.home.maybeShowMenuChooser(); } catch (_) {} // #366: ¿menú fácil o completo? (#595: siempre, también al entrar con el registro)
         // #595 (owner): "cuando entre quede todo minimizado": misiones y VIP plegados, paneles del básico cerrados
         try { localStorage.removeItem('vip_ms_open'); } catch (_) {}
-        try { const mb = document.getElementById('missionsCardBody'); if (mb) mb.style.display = 'none'; const vb = document.getElementById('vipCardBody'); if (vb) vb.style.display = 'none'; ['bvLoadPanel', 'bvWdPanel'].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; }); } catch (_) {}
+        try { const mb = document.getElementById('missionsCardBody'); if (mb) { mb.hidden = true; mb.style.display = ''; } /* #629: con `hidden`, que es lo que lee toggleMissionsCard; el display:none inline la dejaba trabada */ const vb = document.getElementById('vipCardBody'); if (vb) vb.style.display = 'none'; ['bvLoadPanel', 'bvWdPanel'].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; }); } catch (_) {}
         try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (_) {} // #376: ¿hay una carga pendiente?
 
         // Cartel del bono por instalar la app (se muestra si no lo reclamó aún).

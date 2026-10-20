@@ -256,7 +256,7 @@
     // #508: en el home completo la tarjeta de misiones arranca PLEGADA (no tapa la carga); se recuerda si la abrió.
     function toggleMissionsCard(force) {
         const body = _el('missionsCardBody'), head = document.querySelector('#missionsCard .ms-card-h'); if (!body) return;
-        const open = typeof force === 'boolean' ? force : body.hidden; body.hidden = !open; if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const open = typeof force === 'boolean' ? force : body.hidden; body.hidden = !open; body.style.display = ''; if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false'); // #629
         try { localStorage.setItem('vip_ms_open', open ? '1' : '0'); } catch (_) {}
     }
     function openMissions() { loadStrategy(true); try { VIP.ui.showModal('missionsModal'); } catch (_) { const m = _el('missionsModal'); if (m) m.classList.remove('hidden'); } }
