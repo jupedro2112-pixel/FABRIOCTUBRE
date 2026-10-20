@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 653. 📽️ Historias: orden definitivo (SMS · Cargá en segundos · Referidos · Reembolsos · Ruleta · Misiones · Telegram), Misiones simple
+**Pedido (owner):** "el orden tiene que ser: primera la de carga en segundos, segunda referidos, tercera reembolsos, cuarta ruleta diaria,
+quinta misiones (armala más sencilla, sin tanto texto), última Telegram; y primera dejá la de verificación de SMS obligatoria. Borrá y
+publicá todas, con ese estilo que está bien". Fotos nuevas `st-1..7.png` (se borraron todas las `pr-*`): SMS con kicker "OBLIGATORIO PARA
+RETIRAR" · "Cargá en segundos" · Referidos · Reembolsos · Ruleta · Misiones sin los 3 pasos (blanco + 3 metas + una línea) · Telegram sin
+el título pisado por la cinta roja. La de Soporte quedó fuera (no está en la lista del owner; el generador la sigue sabiendo hacer).
+Se borraron y publicaron las 7 en ese orden. **Archivos:** `public/images/stories/st-1..7.png`.
+
 ### 652. 📽️ Telegram: "Regalamos PLATA a las primeras 100 · regalo todas las semanas" · número de corrido en la verificación — SW v465
 **Pedidos (owner):** "en la última de Telegram poné más llamativo que la semana próxima vamos a regalar plata a las primeras 100 que
 canjeen el código, y que se unan porque va a haber regalo todas las semanas" · "en lo del SMS, cuando eligen una provincia se genera un
