@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 667. 🎰 Ruleta: la lista de ganadores muestra también los % EXTRA (20%, 50%, 100%) y no sólo $5.000 — SW v475
+**Pedido (owner):** "en los premios regalá sobre lo que hay en márgenes, no todo 5000; después, mientras la gente va ganando real,
+metelos ahí en el momento; poné 5000, poné 20%, poné 50%". **Causa:** las entradas de ejemplo (#666) sólo tomaban premios en plata y en
+Render la tabla tiene 20% (45%) · 50% (22%) · 100% (8%) · $5.000 (4,9%) · $100.000 (0,1%) · nada (20%) ⇒ salía siempre $5.000.
+**Server:** `_rouletteSimWinners` sortea con la tabla completa y emite también `prizeType:'percent'` (`prizePct`); la consulta de
+ganadores REALES (`/api/roulette/recent-winners`) ahora incluye a los que ganaron % (`prizeType:'percent', prizePct>0`), antes sólo
+`prizeARS>0`; la respuesta trae `prizeType`/`prizePct`. Los reales entran al momento (la app refresca cada 30 s y al abrir el modal).
+**App:** la fila muestra "+20% extra" o "+$5.000" según el tipo.
+
 ### 666. 🎰 Ruleta: premios resumidos (minimizados) y ganadores constantes con nombres tapados — SW v474
 **Pedido (owner):** "dentro de la ruleta resumí los premios, minimizalo; y los ganadores: tirá usuarios random, tapado el principio y
 poné asterisco al final, como que la gente va ganando constantemente, siempre respetando los márgenes que pusimos".

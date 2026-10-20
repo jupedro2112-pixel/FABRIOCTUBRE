@@ -21907,7 +21907,7 @@ app.post('/api/admin/roulette/reset-daily', authMiddleware, adminMiddleware, asy
 // 80% inicial del username. Default 50, máximo 100.
 // #666: ganadores simulados de la ruleta (ver comentario en /api/roulette/recent-winners). Determinístico por `dateKey`:
 // turnos cada `slotMin` minutos desde las 00:00 ART; cada turno sortea con los pesos reales (incluido "sin premio"), así la
-// frecuencia y los montos respetan los márgenes configurados. Sólo premios en plata (los % no se muestran en la lista).
+// frecuencia y los montos respetan los márgenes configurados. Premios en plata y en % (#667).
 async function _rouletteSimWinners(dateKey, nowMs) {
   let simCfg = null; try { simCfg = await getConfig('rouletteFeedSim', null); } catch (_) {}
   if (simCfg && simCfg.enabled === false) return [];
@@ -21927,8 +21927,11 @@ async function _rouletteSimWinners(dateKey, nowMs) {
     let r = rnd() * W, pick = null;
     for (const p of prizes) { r -= Number(p.weight); if (r <= 0) { pick = p; break; } }
     const nameIdx = Math.floor(rnd() * _CLAIMS_EXAMPLE_NAMES.length), num = 10 + Math.floor(rnd() * 90);
-    if (at > nowMs || !pick || pick.type !== 'cash' || !(Number(pick.value) > 0)) continue;
-    out.push({ username: _CLAIMS_EXAMPLE_NAMES[nameIdx] + num, prizeARS: Number(pick.value), spunAt: new Date(at), sim: true });
+    if (at > nowMs || !pick || !(Number(pick.value) > 0) || (pick.type !== 'cash' && pick.type !== 'percent')) continue;
+    // #667 (owner): también los premios en % ("poné 5000, poné 20%, poné 50%"): salen con la misma proporción que la tabla.
+    out.push(pick.type === 'percent'
+      ? { username: _CLAIMS_EXAMPLE_NAMES[nameIdx] + num, prizeARS: 0, prizeType: 'percent', prizePct: Number(pick.value), spunAt: new Date(at), sim: true }
+      : { username: _CLAIMS_EXAMPLE_NAMES[nameIdx] + num, prizeARS: Number(pick.value), prizeType: 'cash', prizePct: 0, spunAt: new Date(at), sim: true });
   }
   return out;
 }
@@ -21936,13 +21939,14 @@ app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 50));
     const dateKey = _rouletteDateKeyART();
+    // #667 (owner): también los que ganaron % EXTRA (antes sólo plata) — entran al momento, igual que los de plata.
     const winners = await DailyRouletteSpin.find({
       dateKey,
-      prizeARS: { $gt: 0 }
+      $or: [{ prizeARS: { $gt: 0 } }, { prizeType: 'percent', prizePct: { $gt: 0 } }]
     })
       .sort({ spunAt: -1 })
       .limit(limit)
-      .select('username prizeARS spunAt')
+      .select('username prizeARS prizeType prizePct spunAt')
       .lean();
     // Tapa ~70% del username. Visible: últimas 2 letras del nombre + todos
     // los números finales. Ej: "lalodj777" → "****dj777", "atojoaquin" → "********in",
@@ -21975,7 +21979,9 @@ app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
       const minutesAgo = Math.max(0, Math.floor(ageMs / 60000));
       return {
         username: isMe ? w.username : _maskEnd(w.username),
-        prizeARS: w.prizeARS,
+        prizeARS: Number(w.prizeARS) || 0,
+        prizeType: w.prizeType === 'percent' ? 'percent' : 'cash', // #667
+        prizePct: w.prizeType === 'percent' ? (Number(w.prizePct) || 0) : 0,
         spunAt: w.spunAt,
         minutesAgo,
         isMe

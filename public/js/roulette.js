@@ -348,7 +348,7 @@
             } catch (_) { hhmm = ''; }
             html += '<div class="winner-row' + (w.isMe ? ' is-me' : '') + '">';
             html += '<span class="winner-user">👤 ' + _esc(w.username) + '</span>';
-            html += '<span class="winner-prize">+$' + _fmt(w.prizeARS) + '</span>';
+            html += '<span class="winner-prize">' + (w.prizeType === 'percent' ? ('+' + _fmt(w.prizePct) + '% extra') : ('+$' + _fmt(w.prizeARS))) + '</span>'; // #667: también los % extra
             html += '<span class="winner-time">' + hhmm + '</span>';
             html += '</div>';
         }
