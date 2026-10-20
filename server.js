@@ -23231,6 +23231,7 @@ function _storyPublic(s, req) {
     id: s.id, title: s.title || '', text: s.text || '', mediaType: s.mediaType || 'none', mediaUrl, bgColor: s.bgColor || '#06070d',
     linkUrl: s.linkUrl || '', linkLabel: s.linkLabel || '', durationSec: s.durationSec || 6, hours: s.hours,
     publishedAt: s.publishedAt, expiresAt: s.expiresAt, isActive: !!s.isActive, views: s.views || 0, createdBy: s.createdBy || null,
+    repeatWeekly: !!s.repeatWeekly, // #660: el panel lo muestra ("semanal") y nunca llegaba
     hoursLeft: Math.max(0, Math.round((new Date(s.expiresAt).getTime() - Date.now()) / 36e5 * 10) / 10),
     expired: new Date(s.expiresAt).getTime() <= Date.now()
   };

@@ -8,6 +8,28 @@
 
 ## Sesión 2026-10-18
 
+### 660. 🔍 Revisión de punta a punta antes de subir a producción — admin-sw v134
+**Pedido (owner):** "revisá que esté todo ok de punta a punta que la voy a subir, todo todo todo".
+**Qué se revisó (todo OK salvo lo corregido abajo):** `node --check` de server.js, src/, scripts/, public/js y los dos SW (sólo falla
+`scripts/_archive/sync-all-users.js`, archivado, no se carga); balance de etiquetas y sin ids duplicados en `index.html` y el panel;
+llaves `{}` balanceadas en todos los CSS; los 25 js y 7 css del bundle existen; todos los `onclick` inline de la app (96) y del panel
+(341) resuelven a una función; sin rutas Express duplicadas; versiones app v469 = SW v469 (bundles con `?v=v469` e `immutable` en
+Render); `/api/public/menu-layout`, `/api/admin/strategy/rollover` (todo ×5), hitos del fueguito (150k/300k/600k/900k), 7 historias
+`st2-1..7` activas con sus imágenes; escaneo de secretos en archivos trackeados (sólo la apiKey web de Firebase, que es pública por
+diseño; "asd123" es la clave inicial decidida en #241, no una filtración). Todos los `creditUserBalance` del server llevan el rollover
+que corresponde (referidos y devolución de retiro sin rollover, a propósito).
+**Corregido:** (1) **panel:** había DOS `async function deleteStory` en admin.js (historias de publicistas #? y Historias de la app
+#361); por hoisting ganaba la segunda y el botón 🗑 de una historia de publicista pegaba a `/api/admin/stories/:id` (borraba la
+historia equivocada o fallaba). La de publicistas pasa a `deleteInfluencerStory` (botón + `window.*`). (2) **server:** `_storyPublic`
+no devolvía `repeatWeekly`, así que el panel nunca mostraba la etiqueta "semanal" de una historia; ahora lo manda. (3) **docs:**
+`docs/ARCHITECTURE.md` no reflejaba #654 (fueguito por rollover) ni #659 (rollover global en todos los regalos): actualizados §4.5,
+reembolsos, nivel VIP y fueguito; se aclara en CLAUDE.md/ARCHITECTURE que `docs/ESPEC-REEMBOLSO-1GIROX.md` vive en el repo gemelo
+(acá no está, por eso la referencia parecía rota). Sin cambios de js/css de la app ⇒ app sigue en v469.
+**Para tener en cuenta al subir a producción (no son bugs):** la base de producción es otra ⇒ las 7 historias hay que publicarlas de
+nuevo desde el panel (vencen a los 7 días si no se marcan "semanal"), el rollover global se fija desde Estrategia (si no, usa 5 por
+default), los menús activos (`Config['menusEnabled']`) y los hitos del fueguito arrancan con sus defaults. En Render hoy el menú
+"intermedio/fácil" está DESACTIVADO (`easy:false`) — si eso no fue a propósito, se prende desde Configuración → Menús activos.
+
 ### 654. 🔥 Fueguito: los premios se cobran por ROLLOVER escalonado (apostado en la racha), no por cargas — SW v466 · admin-sw v133
 **Pedido (owner):** "lo de los fueguitos, en vez de cargas exigimos rollover: poné un rollover razonable dentro de lo que hay en plata,
 que se vea cómo va escalando el monto exigido para cada reclamo; si pasa al siguiente fueguito el rollover se reinicia a 0" · "si llega

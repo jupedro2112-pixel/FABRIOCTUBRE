@@ -111,7 +111,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **Desde 2026-09-11 la base es la pérdida sobre plata REAL** (`netwin −
   bonus.granted` del período) y además existe el **reembolso ACUMULATIVO de por
   vida** (`_cashbackStateToday`, `src/utils/cashbackFormula.js`, modelo
-  `CashbackClaim`) que sigue `docs/ESPEC-REEMBOLSO-1GIROX.md` de la gemela: pct% de
+  `CashbackClaim`) que sigue `docs/ESPEC-REEMBOLSO-1GIROX.md` de la gemela (ese doc vive en el repo gemelo, acá NO está): pct% de
   (neto de por vida − TODO lo regalado, reembolsos cobrados incluidos) − cobrado.
   Un tipo nuevo de regalo ⇒ sumarlo a `CASHBACK_GIFT_TX_TYPES`. Validar cambios con
   `node scripts/test-cashback-spec.js`. Detalle: ARCHITECTURE §5.

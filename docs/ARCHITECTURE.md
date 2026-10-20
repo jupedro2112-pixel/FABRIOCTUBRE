@@ -436,6 +436,13 @@ reintento manda la misma reference y la plataforma responde `duplicate:true`.
   pendiente). `getUserBalance` devuelve `balance`, `available`, `locked`, `bonusLocked`.
   Validar contra `balance` ⇒ la plataforma rechaza con `rollover_locked` y queda un
   retiro colgado en el panel. El confirm de payouts (~L12898) ya usa `available`.
+- **⚠️ #659 (2026-10-20): TODOS los regalos van con el ROLLOVER GLOBAL** `Config['bonusRolloverX']` (×5, panel → Estrategia →
+  rollover; `POST /api/admin/strategy/rollover {x}` lo copia también a `fireRolloverMultiplier`, `communityWelcomeRolloverX`,
+  misiones, premios en plata de la ruleta e `instantCashback.rolloverX`). En server.js el helper `_giftRolloverX()` lee ese valor y
+  los tres reembolsos por período, el bono de nivel VIP y el rakeback lo pasan como `{ multiplier }` a `creditUserBalance`
+  (ruleta/misiones/acumulativo ya iban por `creditGift` con su `rolloverX`). **ÚNICA excepción: comisiones de REFERIDOS**
+  (`referralPayoutService`, sin multiplier ⇒ bono 0, retirables sin apostar). La devolución de retiro rechazado tampoco lleva
+  rollover (no es regalo). El párrafo siguiente describe el mecanismo "bono 0" que hoy aplica sólo a referidos.
 - **REGALOS = BONO 0 "regalo directo" (2026-09-07, Partner API v1.10+ — manual
   v1.15 §2.9/§2.12 en `docs/PARTNER-APIv1.15.pdf`).** `creditUserBalance` SIN
   `opts.multiplier` (reembolsos, ruleta, rakeback, bono de nivel VIP, comisiones
@@ -725,9 +732,9 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   Config['refundPercents'] quedaron `enUso:false` y su card del panel fue
   reemplazada por el editor de rangos. **El RefundClaim se CREA antes de acreditar** (el índice único
   `userId+type+periodKey` es el candado atómico contra doble cobro; si el crédito
-  falla se borra la reserva). El crédito va por `creditUserBalance` = **bono 0
-  regalo directo** (figura como Bono en 1girox; fallback a depósito si el monto
-  queda fuera de los límites del bono — ver §4.5) con la reference derivada del período.
+  falla se borra la reserva). El crédito va por `creditUserBalance` con `{ multiplier: _giftRolloverX() }`
+  (**#659: rollover global ×5**; antes bono 0 regalo directo — ver §4.5; fallback a depósito si el monto
+  queda fuera de los límites del bono) con la reference derivada del período.
   Ver #96 y §4.4. ⚠️ En la UI los reembolsos muestran SOLO el % — los nombres
   Bronce/Plata/Oro son del nivel VIP (abajo). **Desde 2026-09-11 (ESPEC-REEMBOLSO
   §5) la base del período es la pérdida sobre plata REAL:** `netLoss = max(0,
@@ -735,7 +742,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   lo ya cobrado como reembolso ACUMULATIVO dentro del período
   (`_cashbackPaidBetween`). Un bono otorgado la semana anterior y perdido esta
   semana no se descuenta (imprecisión aceptada).
-- **Reembolso ACUMULATIVO de por vida** (2026-09-11, `docs/ESPEC-REEMBOLSO-1GIROX.md`
+- **Reembolso ACUMULATIVO de por vida** (2026-09-11, `docs/ESPEC-REEMBOLSO-1GIROX.md` (vive en el repo gemelo, NO en este)
   de la gemela; #208): `pct%` de lo que el jugador perdió **con su plata** desde el
   alta, nunca de regalos ni de lo que ganó, sin que el mismo peso se reembolse dos
   veces. `_cashbackStateToday` (server.js) + fórmula pura en
@@ -771,7 +778,7 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   (valida umbrales crecientes; `reset:true` = defaults) y `vipLevels.refreshFromConfig(Config)` (boot + 60 s +
   al guardar). Los idx se persisten: sólo AGREGAR niveles al final, nunca reordenar.
   Cada nivel destraba: (a) **bono one-time** al alcanzarlo (lo acredita el motor con
-  bono 0 regalo directo (§4.5), reference `vip-lvl-<userId>-<idx>`, aviso por chat+push vía
+  bono con el rollover global `_giftRolloverX()` (#659; antes bono 0 — §4.5), reference `vip-lvl-<userId>-<idx>`, aviso por chat+push vía
   `/sys_vip_levelup`; `duplicate:true` = otra instancia ya pagó → no re-notificar) y
   (b) **rakeback semanal**: `POST /api/vip/rakeback/claim` paga `rakebackPct` del
   APOSTADO de casino de la semana pasada (gane o pierda) — mismo patrón de reserva
@@ -799,10 +806,15 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   reference y el rollover del giro. Cada premio en $ escribe una **Transaction type
   'roulette'** (idempotente por metadata.spinId). ⚠️ Sigue el candado de pushes de
   ruleta (#204).
-- **Fueguito**: reclamo diario sin requisitos; premios de hitos (editables en panel,
-  Config['fireMilestones']) exigen actividad de cargas y expiran el mismo día. Crédito
-  como bono (rollover >0 → /bonus con multiplier; 0 → bono 0; fallback depósito —
-  ver §4.5) (`vip-fire-<userId>-d<día>-<fecha>`).
+- **Fueguito (#654, 2026-10-20 — por ROLLOVER)**: reclamo diario sin requisitos; el premio de cada hito
+  (Config['fireMilestones'], panel columna "Rollover $") se cobra habiendo APOSTADO `milestone.rollover` (default 30× el
+  premio: 150k/300k/600k/900k… ) en la plataforma desde `FireStreak.rolloverSince` (stats `wagered` vía
+  `_fireWageredSince`, cache 60 s; si la API no responde → 503 `STATS_UNAVAILABLE`, nunca se pierde el premio).
+  `rolloverSince` vuelve a "ahora" (contador a 0) al cobrar, al pasar al hito siguiente sin cobrar (el pendiente se
+  limpia) y al reiniciar la racha; el premio del hito N queda cobrable hasta el hito siguiente. Ya NO exige cargas
+  (`requireDeposits`/`fireMinDeposits` sin efecto). `/api/fire/status` expone `rolloverNeed/Have/Unknown/ForDay/
+  ExpiresDay/Since`. Crédito como bono con `fireRolloverMultiplier` (= rollover global, §4.5) vía `_creditFireReward`
+  (`vip-fire-<userId>-d<día>-<fecha>`).
 - **BONO AUTOMÁTICO EN LA CARGA** (2026-09-18, #210): `resolveAutoBonus(user, amount,
   usedBy)` (server.js) reserva atómico UN bono pendiente por carga, en orden: bono por
   instalar la app (% congelado) → código de bienvenida `next_charge` → % de la ruleta

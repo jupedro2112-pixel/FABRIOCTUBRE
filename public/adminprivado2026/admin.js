@@ -14709,7 +14709,7 @@ function renderStoriesTable() {
             <td style="padding:8px;text-align:center;white-space:nowrap;">${verdict(r)}</td>
             <td style="padding:8px;text-align:center;white-space:nowrap;">
                 <button onclick="editStory('${r.storyId}')" style="padding:3px 7px;background:#2a2a3a;color:#6cf;border:none;border-radius:4px;cursor:pointer;font-size:11px;">✎</button>
-                <button onclick="deleteStory('${r.storyId}')" style="padding:3px 7px;background:#3a1a1a;color:#ff6666;border:none;border-radius:4px;cursor:pointer;font-size:11px;">🗑</button>
+                <button onclick="deleteInfluencerStory('${r.storyId}')" style="padding:3px 7px;background:#3a1a1a;color:#ff6666;border:none;border-radius:4px;cursor:pointer;font-size:11px;">🗑</button>
             </td>
         </tr>`;
 
@@ -14833,7 +14833,7 @@ function editStory(id) {
     document.getElementById('isNewCost').focus();
 }
 
-async function deleteStory(id) {
+async function deleteInfluencerStory(id) { // #660: antes se llamaba deleteStory y la pisaba la de Historias de la app (hoisting)
     if (!confirm('¿Borrar esta historia? Los registros se reasignan a la historia anterior (por ventana horaria).')) return;
     try {
         const r = await fetch(`${API_URL}/api/admin/influencer-stories/${encodeURIComponent(id)}`, {
@@ -14853,7 +14853,7 @@ window.loadInfluencerStories = loadInfluencerStories;
 window.renderStoriesTable = renderStoriesTable;
 window.submitNewStory = submitNewStory;
 window.editStory = editStory;
-window.deleteStory = deleteStory;
+window.deleteInfluencerStory = deleteInfluencerStory;
 window.closeInfluencerStoriesModal = closeInfluencerStoriesModal;
 
 // ----- Wrappers por índice (evitan escapar comillas del nombre en el onclick) -----
