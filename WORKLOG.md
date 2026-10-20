@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 637. 📏 Inicio (completo): línea recta arriba de todo con NIVEL + FUEGUITO; instalar/bono debajo; barra inferior más baja — SW v451
+**Pedido (owner):** "achicá el menú de abajo de altura para que entre arriba el fuego y nivel; el nivel en la parte superior de todo en
+forma recta y en la misma línea el fueguito al lado; si hay un bono disponible o lo de instalar la app negro ponelo abajo de eso".
+Nuevo `#statusRow` (antes de `#installGiftBar`) con `#vipMiniBtn` + `#fireMiniBtn` rectos a mitad de ancho cada uno; `setHomeMode`
+mueve las píldoras: en el Inicio (play) a la línea de estado; en el básico el nivel vuelve al lado de "Cambiar menú" (#627) y el
+fueguito no (ya está en la línea del saldo). La barra inferior (opción 2) baja de 76 a 60 px (y los offsets de 82 → 66 px).
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 636. 🧹 Carga automática (completo) limpia; "Cambiar menú" sólo en el Inicio; el COMPLETO es el recomendado — SW v450
 **Pedidos (owner):** "sacá de Auto cargas del completo el nivel y fueguito; que quede limpio: los pasos de carga, sacá misiones, fueguito;
 sólo el saldo y el usuario con su logo" · "el Cambiar menú que aparezca sólo del Inicio y no de cargas" · "dejá predeterminado como

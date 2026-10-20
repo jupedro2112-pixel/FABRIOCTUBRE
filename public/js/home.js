@@ -91,7 +91,16 @@
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         // #569: la etiqueta "· Completo" de Cambiar menú se sacó (no entraba con Racha)
-        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = true; /* #636: el fueguito ya no va en la completa */ const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic'); /* #636: sólo en el básico */ _fireMiniSync(); } catch (_) {} // #528 · #627
+        // #637 (owner): nivel VIP + fueguito en la LÍNEA DE ESTADO (#statusRow) arriba de todo del Inicio (play); en el básico el nivel
+        // va al lado de "Cambiar menú" (#627) y la racha ya está en la línea del saldo; en los demás modos no se muestran.
+        try {
+            const sr = _el('statusRow'), tr = _el('topRow'), vm = _el('vipMiniBtn'), fm = _el('fireMiniBtn');
+            if (mode === 'play') { if (sr) { if (vm) sr.appendChild(vm); if (fm) sr.appendChild(fm); } if (vm) vm.hidden = false; if (fm) fm.hidden = false; }
+            else if (mode === 'basic') { if (tr && vm) tr.appendChild(vm); if (vm) vm.hidden = false; if (fm) fm.hidden = true; }
+            else { if (vm) vm.hidden = true; if (fm) fm.hidden = true; }
+            if (sr) sr.hidden = mode !== 'play';
+            _fireMiniSync();
+        } catch (_) {}
         try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');

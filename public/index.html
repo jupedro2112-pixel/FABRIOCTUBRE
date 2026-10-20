@@ -1092,15 +1092,11 @@
             <!-- #520 (owner): "Cambiar menú" arriba del Inicio (en los tres modos) → abre el selector Básico · Fácil · Completo -->
                 <!-- #626 (owner 2026-10-20): el aviso de PRIMERA CARGA ya no va acá: es una línea resumida (.fd-note) junto a cada "Adjuntar comprobante" -->
             <!-- #563 (owner): el botón negro "lo instalo después" va ARRIBA de Cambiar menú, como importante -->
-            <button type="button" id="installGiftBar" class="ig-bar" style="display:none;" onclick="VIP.home.installGiftOpen()">
-                <span class="ig-bar-in"><span class="ig-bar-k">Pendiente</span><span class="ig-bar-t" id="igBarText">Instalá la app y cargá tu extra</span><span class="ig-bar-amt" id="igBarAmt">+$0</span></span>
-            </button>
-            <div class="top-row" id="topRow">
-                <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú<em>▾</em></button><!-- #569: sin "· Completo" -->
-                <!-- #528 (owner): fueguito resumido al lado de "Cambiar menú" en el home completo (abre el fueguito; home.js lo rellena desde la tarjeta) -->
-                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button>
+            <!-- #637 (owner 2026-10-20): LÍNEA DE ESTADO arriba de todo del Inicio (completo): nivel VIP + fueguito en la misma fila, rectos.
+                 Debajo va lo de instalar la app (negro) / bono. home.js (setHomeMode) mueve las píldoras acá en el Inicio y al lado de "Cambiar menú" en el básico. -->
+            <div class="status-row" id="statusRow" hidden>
                 <!-- #627 (owner): en el BÁSICO, el nivel VIP resumido va al lado de "Cambiar menú" (home.js _fireMiniSync lo copia de la tarjeta grande) -->
-                <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" hidden><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
+                <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" ><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
             </div>
             <div id="entryView" class="entry-view">
                 <!-- #563 (owner): "dónde querés jugar" es lo más importante: va PRIMERO -->
@@ -1119,6 +1115,14 @@
                     <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso</b><small id="evSvcRefund">de tu NETWIN</small>
                     </button>
+                <!-- #528 (owner): fueguito resumido al lado de "Cambiar menú" en el home completo (abre el fueguito; home.js lo rellena desde la tarjeta) -->
+                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button>
+            </div>
+            <button type="button" id="installGiftBar" class="ig-bar" style="display:none;" onclick="VIP.home.installGiftOpen()">
+                <span class="ig-bar-in"><span class="ig-bar-k">Pendiente</span><span class="ig-bar-t" id="igBarText">Instalá la app y cargá tu extra</span><span class="ig-bar-amt" id="igBarAmt">+$0</span></span>
+            </button>
+            <div class="top-row" id="topRow">
+                <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú<em>▾</em></button><!-- #569: sin "· Completo" -->
                     <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b><small>con tu carga de <b class="rl-min">$5.000</b></small>
                     </button>
@@ -2495,7 +2499,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v450</div>
+                    <div class="pf-build" id="appBuildTag">app v451</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
