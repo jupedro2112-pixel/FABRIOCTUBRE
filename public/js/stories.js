@@ -109,7 +109,7 @@
         const link = _el('storyLink');
         if (link) {
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
-            const APP_LINKS = { referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini') }; // #646: verificar (Perfil → teléfono) y soporte
+            const APP_LINKS = { referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
             if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()]; try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }; }
             else if (s.linkUrl) { link.href = s.linkUrl; link.onclick = null; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }

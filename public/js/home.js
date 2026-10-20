@@ -503,7 +503,22 @@
             h.textContent = perm === 'granted' ? 'Activadas ✓ · si no te llegan, tocá Activar de nuevo' : (perm === 'denied' ? 'Bloqueadas en el teléfono · tocá Activar para ver cómo' : 'Tocá Activar y aceptá el permiso');
         } catch (_) {}
     }
+    // #648 (owner): ayudante de la verificación — provincia/ciudad → código de área y cómo completar el número (+54 9 + área sin 0 + número)
+    const VP_AREAS = [['Buenos Aires (CABA y GBA)', '11'], ['La Plata', '221'], ['Mar del Plata', '223'], ['Bahía Blanca', '291'], ['Tandil', '249'], ['Junín', '236'], ['Pergamino', '2477'], ['Olavarría', '2284'],
+        ['Córdoba capital', '351'], ['Río Cuarto', '358'], ['Villa María', '353'], ['Rosario', '341'], ['Santa Fe capital', '342'], ['Mendoza', '261'], ['San Rafael', '260'], ['Tucumán', '381'], ['Salta', '387'], ['Jujuy', '388'],
+        ['Neuquén', '299'], ['Bariloche', '294'], ['Comodoro Rivadavia', '297'], ['Trelew / Rawson', '280'], ['Corrientes', '379'], ['Resistencia (Chaco)', '362'], ['Posadas (Misiones)', '376'], ['Paraná', '343'], ['Concordia', '345'],
+        ['San Juan', '264'], ['San Luis', '266'], ['Santiago del Estero', '385'], ['Catamarca', '383'], ['La Rioja', '380'], ['Formosa', '370'], ['Santa Rosa (La Pampa)', '2954'], ['Viedma', '2920'], ['Río Gallegos', '2966'], ['Ushuaia', '2901']];
+    function _vpFill() { const sel = _el('vpArea'); if (!sel || sel.options.length > 1) return; VP_AREAS.forEach(([n, c]) => { const o = document.createElement('option'); o.value = c; o.textContent = n + ' · ' + c; sel.appendChild(o); }); }
+    function vpHelpToggle(force) { _vpFill(); const b = _el('vpHelpBody'); if (!b) return; b.hidden = typeof force === 'boolean' ? !force : !b.hidden; }
+    function vpHelpOpen() { vpHelpToggle(true); }
+    function vpAreaPick(code) {
+        const h = _el('vpHelpHint'), inp = _el('verifyPhoneInput'); if (!code) { if (h) h.textContent = ''; return; }
+        const rest = 10 - code.length; const ej = code === '11' ? '11 5555 1234' : (code.length === 3 ? code + ' 555 1234' : code + ' 55 1234');
+        if (h) h.innerHTML = 'Tu número: <b>+54 9 ' + code + '</b> + tus <b>' + rest + ' dígitos</b> (sin el 0 ni el 15). Ej.: <b>' + ej + '</b>';
+        if (inp) { inp.value = code + ' '; try { inp.focus(); } catch (_) {} }
+    }
     function openVerifyPhone() {
+        try { const b = _el('vpHelpBody'); if (b) b.hidden = true; const h = _el('vpHelpHint'); if (h) h.textContent = ''; } catch (_) {}
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
         try {
             const s1 = _el('verifyPhoneStep1'), s2 = _el('verifyPhoneStep2'), inp = _el('verifyPhoneInput'), err = _el('verifyPhoneError');
@@ -2065,7 +2080,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

@@ -1590,7 +1590,7 @@ VIP.auth = (function () {
 
         if (!number || number.replace(/\D/g, '').length < 7) {
             errorDiv.textContent = 'Ingresá un número válido (mínimo 7 dígitos)';
-            errorDiv.classList.add('show');
+            errorDiv.classList.add('show'); try { if (VIP.home && VIP.home.vpHelpOpen) VIP.home.vpHelpOpen(); } catch (_) {} // #648
             return;
         }
 
@@ -1620,11 +1620,11 @@ VIP.auth = (function () {
                 document.getElementById('verifyPhoneOtpError').classList.remove('show');
             } else {
                 errorDiv.textContent = data.error || 'Error al enviar el código SMS';
-                errorDiv.classList.add('show');
+                errorDiv.classList.add('show'); try { if (VIP.home && VIP.home.vpHelpOpen) VIP.home.vpHelpOpen(); } catch (_) {} // #648
             }
         } catch (error) {
             errorDiv.textContent = 'Error de conexión';
-            errorDiv.classList.add('show');
+            errorDiv.classList.add('show'); try { if (VIP.home && VIP.home.vpHelpOpen) VIP.home.vpHelpOpen(); } catch (_) {} // #648
         } finally {
             if (btn) { btn.textContent = '📱 Enviar código SMS'; btn.disabled = false; }
         }

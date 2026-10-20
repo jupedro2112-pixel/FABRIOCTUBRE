@@ -1938,3 +1938,9 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 .story-viewer .st-head .st-logo { display: none !important; }
 /* #647: prefijo fijo +54 9 en la verificación */
 .vp-prefix { flex: 0 0 auto; display: inline-flex; align-items: center; height: 42px; padding: 0 12px; border-radius: 10px; background: var(--p-surface); color: var(--p-text); font: 900 15px var(--p-font); border: 1px solid var(--p-border); }
+/* #648: ayudante "¿cuál es mi número?" en la verificación */
+.vp-help { margin: 6px 0 10px; }
+.vp-help-btn { width: 100%; text-align: left; background: none; border: 0; padding: 4px 0; color: var(--p-red); font: 800 12px var(--p-font); cursor: pointer; }
+#vpHelpBody { background: var(--p-surface); border-radius: 12px; padding: 10px; margin-top: 6px; }
+#vpArea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); font: 700 13px var(--p-font); }
+.vp-help-hint { margin-top: 8px; font: 600 12px/1.4 var(--p-font); color: var(--p-text); } .vp-help-hint:empty { display: none; }

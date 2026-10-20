@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 648. 📱 "¿Cuál es mi número?" por provincia/ciudad en la verificación · historia de MISIONES antes de la de SMS — SW v462
+**Pedidos (owner):** "agregá un 'verificar cuál es mi número' si tira error: que elijan su provincia o localidad y sepan cómo completar
+el número" · "agregá una foto antes de lo del teléfono de las misiones explicando bien". **Verificación:** debajo del campo hay un link
+"¿No sabés cómo completar tu número? Elegí tu provincia o ciudad ›" que abre un selector con 37 ciudades/provincias (`VP_AREAS` en
+home.js, código de área sin 0); al elegir, escribe el código en el campo y muestra "Tu número: +54 9 351 + tus 7 dígitos (sin el 0 ni el
+15). Ej.: 351 555 1234". Si Enviar código da error (número inválido o rechazo del server), el ayudante se abre solo (auth.js). **Historias:**
+nueva `pr-0.png` Misiones de la semana (blanco de tiro + 3 metas tildadas + 3 pasos; link `app:misiones`, permitido en server y en
+`APP_LINKS`); se republicaron las 8 en orden: Misiones · SMS · Cargá · Reembolsos · Ruleta · Referidos · Soporte · Telegram.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/js/auth.js`, `public/js/stories.js`, `server.js`, `public/css/pin.css`,
+`public/images/stories/pr-0.png`, SW.
+
 ### 647. 📱 Verificación por SMS con el +54 9 FIJO y explicación clara; historias con links verificar/soporte habilitados — SW v461
 **Pedidos (owner):** "en la verificación de SMS poné fijo el 549 y abajo aclará poner el prefijo de tu localidad; resumilo y explicalo
 bien" · "+54 + 9 + código de área (sin el 0) + número local: el 549 va fijo, el resto se completa; explicalo bien sin dar info de más".

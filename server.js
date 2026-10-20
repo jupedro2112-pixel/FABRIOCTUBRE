@@ -23318,7 +23318,7 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     }
     if (mediaType === 'none' && !text) return res.status(400).json({ error: 'Poné un texto o una imagen/video.' });
     const linkUrl = String(b.linkUrl || '').trim().slice(0, 500);
-    if (linkUrl && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso|verificar|soporte)$)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso / app:verificar / app:soporte.' });
+    if (linkUrl && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso|verificar|soporte|misiones)$)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso / app:verificar / app:soporte / app:misiones.' });
     const bgColor = /^#[0-9a-f]{3,8}$/i.test(String(b.bgColor || '')) ? String(b.bgColor) : '#06070d';
     const now = new Date();
     const doc = await Story.create({
@@ -23340,7 +23340,7 @@ app.patch('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req,
     if (b.text != null) set.text = String(b.text).trim().slice(0, 300);
     if (b.title != null) set.title = String(b.title).trim().slice(0, 60);
     // #474: también se puede cambiar el botón de una historia ya publicada
-    if (b.linkUrl != null) { const lu = String(b.linkUrl).trim().slice(0, 500); if (lu && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso|verificar|soporte)$)/i.test(lu)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso / app:verificar / app:soporte.' }); set.linkUrl = lu; }
+    if (b.linkUrl != null) { const lu = String(b.linkUrl).trim().slice(0, 500); if (lu && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso|verificar|soporte|misiones)$)/i.test(lu)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso / app:verificar / app:soporte / app:misiones.' }); set.linkUrl = lu; }
     if (b.linkLabel != null) set.linkLabel = String(b.linkLabel).trim().slice(0, 40);
     if (b.hours != null) {
       const h = Number(b.hours); if (!Number.isFinite(h) || h < 1 || h > 720) return res.status(400).json({ error: 'Horas: entre 1 y 720.' });

@@ -2533,7 +2533,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v461</div>
+                    <div class="pf-build" id="appBuildTag">app v462</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2752,6 +2752,14 @@
                     </div>
                 </div>
                 <div id="verifyPhoneError" class="error-message"></div>
+                <!-- #648 (owner): "¿Cuál es mi número?" — elegís tu provincia o ciudad y te dice el código de área y cómo completar; se abre solo si el número da error -->
+                <div class="vp-help" id="vpHelp">
+                    <button type="button" class="vp-help-btn" onclick="VIP.home.vpHelpToggle()">¿No sabés cómo completar tu número? Elegí tu provincia o ciudad ›</button>
+                    <div id="vpHelpBody" hidden>
+                        <select id="vpArea" onchange="VIP.home.vpAreaPick(this.value)"><option value="">Elegí tu provincia o ciudad…</option></select>
+                        <div class="vp-help-hint" id="vpHelpHint"></div>
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="VIP.ui.hideModal('verifyPhoneModal')">Cancelar</button>
                     <button type="button" id="verifyPhoneSendBtn" class="btn btn-primary">📱 Enviar código SMS</button>
