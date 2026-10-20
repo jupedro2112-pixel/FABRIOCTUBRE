@@ -1975,3 +1975,22 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 #vipLevelsModal .modal-content { max-width: 420px !important; }
 #vipLevelsModal .rs-close { position: absolute; top: 12px; right: 12px; background: none; border: 0; font-size: 22px; line-height: 1; cursor: pointer; z-index: 10; padding: 4px; }
 #vipLevelsModal .vl-actions { margin-top: 12px; }
+
+/* ── #663 (owner): Niveles VIP como Reembolsos — tarjetas; abre plegado con sólo el nivel actual; "Ver más ›" despliega ── */
+#vipLevelsModal .vl-cols { display: none !important; }
+#vipLevelsModal .vl-list { max-height: none !important; overflow: visible !important; gap: 10px !important; padding: 6px 0 2px; }
+#vipLevelsModal .vl-card { display: block !important; opacity: 1 !important; padding: 12px 12px 10px !important; border-radius: 18px !important; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; }
+#vipLevelsModal .vl-card.cur { border-color: var(--p-red) !important; background: var(--p-red-soft) !important; }
+#vipLevelsModal .vl-card.on:not(.cur) { background: var(--p-green-soft) !important; }
+#vipLevelsModal .vl-card .ur-head b { font: 900 15px var(--p-font); color: var(--p-text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+#vipLevelsModal .vl-card .ur-head small { font: 600 12px var(--p-font); color: var(--p-muted); }
+#vipLevelsModal .vl-card .ur-state { font: 600 12.5px var(--p-font); color: var(--p-text-2, var(--p-text)); margin-top: 8px; }
+#vipLevelsModal .vl-card .ur-state b { color: var(--p-text); }
+#vipLevelsModal .vl-li { font-size: 19px; }
+.vl-badge { display: inline-block; font: 800 10px var(--p-font); letter-spacing: .3px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--p-card); color: var(--p-muted); border: 1px solid var(--p-border); }
+.vl-badge.cur { background: var(--p-red); color: #fff; border-color: var(--p-red); }
+.vl-badge.ok { background: var(--p-green-soft); color: var(--p-green); border-color: transparent; }
+.vl-badge.nx { background: var(--p-card); color: var(--p-text); }
+#vipLevelsList.vl-less .vl-card:not(.keep) { display: none !important; }
+#vipLevelsList.vl-less ~ .vl-black-note { display: none !important; }
+#vipLevelsModal .vl-more { margin: 8px auto 0; display: block; }

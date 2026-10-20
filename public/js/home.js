@@ -1538,19 +1538,25 @@
         const cur = levels.find((l) => l.idx === curIdx), nx = levels.find((l) => l.idx === nextIdx);
         const mine = _el('vipLevelsMine'), list = _el('vipLevelsList');
         if (mine) mine.innerHTML = (cur ? 'Tu nivel: <b style="color:' + _esc(cur.color || '#fff') + '">' + _esc(cur.emoji + ' ' + cur.name) + '</b>' : 'Todavía sin nivel') + (nx ? ' · <b>' + pct + '%</b> hacia ' + _esc(nx.emoji + ' ' + nx.name) : ' · nivel máximo') + (sample ? ' <small>(ejemplo del test)</small>' : '');
-        if (list) list.innerHTML = levels.length ? levels.map((l) =>
-            '<div class="vl-row' + (l.idx <= curIdx ? ' on' : '') + (l.idx === nextIdx ? ' next' : '') + '">' +
-            '<span class="vl-st">' + (l.idx <= curIdx ? '✓' : '🔒') + '</span>' +
-            '<span class="vl-name" style="color:' + _esc(l.color || '#fff') + '">' + _esc(l.emoji + ' ' + l.name) + (l.idx === nextIdx ? ' <small>próximo</small>' : '') + '</span>' +
-            '<span class="vl-th">' + (Number(l.thresholdArs) > 0 ? '$' + Math.round(Number(l.thresholdArs)).toLocaleString('es-AR') : '—') + '</span>' + // #465: apostado necesario
-            '<span class="vl-gift">' + (Number(l.levelUpBonusArs) > 0 ? '🎁 $' + Math.round(Number(l.levelUpBonusArs)).toLocaleString('es-AR') : '') + '</span>' +
-            '<span class="vl-rake">' + Number(l.rakebackPct).toLocaleString('es-AR') + '% rakeback' + (/black/i.test(String(l.key || l.name)) ? '<small class="vl-black">+ soporte personalizado Telegram</small>' : '') + '</span></div>').join('')
-            : '<p class="vl-empty">No pudimos cargar los niveles. Probá de nuevo.</p>';
+        // #663 (owner): tarjetas como las de Reembolsos; abre PLEGADO mostrando sólo el nivel actual ("Nivel actual") — o el
+        // próximo si todavía no tiene — y "Ver más ›" despliega la escalera completa.
+        const _money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        const keepIdx = cur ? curIdx : (nx ? nextIdx : null);
+        if (list) list.innerHTML = levels.length ? levels.map((l) => {
+            const isCur = !!cur && l.idx === curIdx, reached = !!cur && l.idx <= curIdx, isNext = l.idx === nextIdx, keep = l.idx === keepIdx;
+            const badge = isCur ? '<span class="vl-badge cur">Nivel actual</span>' : reached ? '<span class="vl-badge ok">✓ Alcanzado</span>' : isNext ? '<span class="vl-badge nx">' + (cur ? 'Próximo' : 'Próximo nivel') + '</span>' : '';
+            const black = /black/i.test(String(l.key || l.name));
+            return '<div class="ur-card vl-card' + (isCur ? ' cur' : '') + (reached ? ' on' : '') + (isNext ? ' next' : '') + (keep ? ' keep' : '') + '">' +
+                '<div class="ur-head"><i class="li vl-li" style="background:' + _esc(l.color || '#e60023') + '">' + _esc(l.emoji || '👑') + '</i><div><b>' + _esc(l.name) + ' ' + badge + '</b>' +
+                '<small>Apostado acumulado <em>' + (Number(l.thresholdArs) > 0 ? _money(l.thresholdArs) : '—') + '</em></small></div></div>' +
+                '<div class="ur-state">' + (Number(l.levelUpBonusArs) > 0 ? '🎁 Bono al subir <b>' + _money(l.levelUpBonusArs) + '</b> · ' : '') + '<b>' + Number(l.rakebackPct).toLocaleString('es-AR') + '%</b> rakeback semanal' + (black ? ' · 🖤 soporte personalizado por Telegram' : '') + '</div></div>';
+        }).join('') : '<p class="vl-empty">No pudimos cargar los niveles. Probá de nuevo.</p>';
+        if (list) { list.classList.add('vl-less'); const b = _el('vlLessBtn'); if (b) b.textContent = 'Ver más ›'; }
         try { VIP.ui.showModal('vipLevelsModal'); } catch (_) { const m = _el('vipLevelsModal'); if (m) m.classList.remove('hidden'); }
     }
     function vipStripOpen() { openVipLevels(); }
     // #659 (owner): "Ver menos" en los niveles VIP — deja sólo los alcanzados y el próximo; "Ver todos" vuelve a la lista completa.
-    function vipLevelsLess(btn) { const l = _el('vipLevelsList'); if (!l) return; const less = l.classList.toggle('vl-less'); if (btn) btn.textContent = less ? 'Ver todos' : 'Ver menos'; }
+    function vipLevelsLess(btn) { const l = _el('vipLevelsList'); if (!l) return; const less = l.classList.toggle('vl-less'); if (btn) btn.textContent = less ? 'Ver más ›' : 'Ver menos'; } // #663: plegado = sólo el nivel actual
     try {
         window.addEventListener('beforeinstallprompt', () => setTimeout(paintInstallButtons, 0));
         window.addEventListener('appinstalled', () => setTimeout(paintInstallButtons, 0));

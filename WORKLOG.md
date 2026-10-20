@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 663. 👑 Niveles VIP como Reembolsos: tarjetas, abre plegado en el nivel actual, "Ver más ›" y Cerrar — SW v472
+**Pedido (owner, captura de Reembolsos):** "en niveles cuando abrís que se vea así: ver más y todo cerrado excepto el nivel que está,
+el que está que figure como nivel actual". **App:** `openVipLevels` (home.js) pinta cada nivel como tarjeta `.ur-card.vl-card` (ícono
+con el color del nivel, nombre + etiqueta, "Apostado acumulado $X", "🎁 Bono al subir $Y · Z% rakeback semanal", Black con soporte
+Telegram). Etiquetas: **Nivel actual** (rojo), **✓ Alcanzado**, **Próximo** (o "Próximo nivel" si todavía no tiene). Al abrir la lista
+arranca con `vl-less`: sólo se ve la tarjeta `.keep` (el nivel actual, o el próximo si no tiene nivel); `Ver más ›` (`.im-more`) despliega
+la escalera y pasa a "Ver menos"; Cerrar a todo el ancho abajo; la cabecera de columnas y la nota Black quedan ocultas al estar plegado.
+Las condiciones del programa siguen en su plegable cerrado. CSS en pin.css (`.vl-card`, `.vl-badge`, `vl-less`).
+
 ### 662. 🔥 Fueguito: en todos lados "rollover = apostar, NO cargar" — SW v471
 **Pedido (owner):** "explicá en la racha que apostar no es cargar, apostar es el rollover; en vez de decir carga decí rollover en todas
 las partes donde pusiste cargar". **Textos tocados:** regla del Inicio (`#fireHomeRule`, home.js `_paintFireLevels`), regla arriba del

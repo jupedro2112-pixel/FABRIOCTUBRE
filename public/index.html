@@ -1629,7 +1629,9 @@
                     <div class="vl-cols"><span>Nivel</span><span>Apostado acumulado</span><span>Bono al subir</span><span>Rakeback</span></div>
                     <div id="vipLevelsList" class="vl-list"></div>
                     <div class="vl-black-note">🖤 <b>Black I a V:</b> además del bono y el rakeback, soporte personalizado por Telegram para cualquier situación.</div>
-                    <div class="modal-actions vl-actions" style="margin-top:12px;"><button type="button" class="btn btn-secondary" id="vlLessBtn" onclick="VIP.home.vipLevelsLess(this)">Ver menos</button><button type="button" class="btn btn-primary" onclick="hideModal('vipLevelsModal')">Cerrar</button></div><!-- #659 (owner): dos recuadros -->
+                    <!-- #663 (owner): como Reembolsos — "Ver más ›" despliega la escalera (abre plegado en el nivel actual) y Cerrar a todo el ancho -->
+                    <button type="button" class="im-more vl-more" id="vlLessBtn" onclick="VIP.home.vipLevelsLess(this)">Ver más ›</button>
+                    <button type="button" class="btn btn-secondary" style="width:100%;margin-top:6px;" onclick="hideModal('vipLevelsModal')">Cerrar</button><!-- #659 (owner): dos recuadros -->
                 </div>
             </div>
             <!-- ===== #275: CARTEL "JUGAR AHORA" (hoja inferior). Lo muestra home.js al llegar el mensaje de carga
@@ -2535,7 +2537,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v471</div>
+                    <div class="pf-build" id="appBuildTag">app v472</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
