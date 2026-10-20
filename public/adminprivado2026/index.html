@@ -122,12 +122,18 @@ document.addEventListener('change', function (ev) {
                     <span class="icon icon-terminal"></span>
                     <span>Configuración</span>
                 </a>
-                <!-- #387 (owner 2026-10-18): Soporte ARRIBA DE TODO del menú, en su grupo "Atención". El chat viejo sigue abajo. -->
+                <!-- #387 (owner 2026-10-18): Soporte ARRIBA DE TODO del menú, en su grupo "Atención". El chat viejo sigue abajo.
+                     #625 (owner 2026-10-20): "Atención" = lo que hay que atender: Soporte · Cargas pendientes · Confirmación de pagos · Reseñas. -->
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">💬 Atención</div>
                 <a href="#" class="nav-item" data-section="support">
                     <span>💬</span>
                     <span>Soporte</span>
                     <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
+                </a>
+                <a href="#" class="nav-item" data-section="depositReviews">
+                    <span>⏳</span>
+                    <span>Cargas pendientes</span>
+                    <span id="depositReviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
                 </a>
                 <!-- #566 (owner): CONFIRMACIÓN DE PAGOS debajo de Soporte: retiros ≥ umbral se revisan antes de pagar (estafa o no) -->
                 <a href="#" class="nav-item" data-section="payReview">
@@ -135,28 +141,39 @@ document.addEventListener('change', function (ev) {
                     <span>Confirmación de pagos</span>
                     <span id="payReviewBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
                 </a>
-                <!-- #480 (owner): elegir el menú de la app (opción 1 actual / opción 2 barra inferior) -->
-                <a href="#" class="nav-item" data-section="menuLayout">
-                    <span>🧭</span>
-                    <span>Elegir menú</span>
+                <a href="#" class="nav-item" data-section="reviews">
+                    <span>⭐</span>
+                    <span>Reseñas</span>
+                    <span id="reviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:4px;">0</span>
                 </a>
-                <!-- #500 (owner): cierres automáticos del día (sin empleados que los hagan) -->
-                <a href="#" class="nav-item" data-section="cierres">
-                    <span>🧾</span>
-                    <span>Cierres</span>
-                    <span id="cierresBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:auto;">0</span>
-                </a>
-                <!-- #504 (owner): estrategia de clientes y publicidad, automática y ajustable -->
-                <a href="#" class="nav-item" data-section="strategy">
-                    <span>🎯</span>
-                    <span>Estrategia clientes · publicidad</span>
+                <!-- #625 (owner): Historias, Notificaciones, Estrategia y Elegir menú juntas bajo "App" -->
+                <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">📱 App</div>
+                <a href="#" class="nav-item" data-section="stories">
+                    <span>📽️</span>
+                    <span>Historias</span>
                 </a>
                 <!-- #590 (owner): Notificaciones debajo de Estrategia -->
                 <a href="#" class="nav-item" data-section="notifications">
                     <span class="icon icon-bell"></span>
                     <span>Notificaciones</span>
                 </a>
+                <!-- #504 (owner): estrategia de clientes y publicidad, automática y ajustable -->
+                <a href="#" class="nav-item" data-section="strategy">
+                    <span>🎯</span>
+                    <span>Estrategia clientes · publicidad</span>
+                </a>
+                <!-- #480 (owner): elegir el menú de la app (opción 1 actual / opción 2 barra inferior) -->
+                <a href="#" class="nav-item" data-section="menuLayout">
+                    <span>🧭</span>
+                    <span>Elegir menú</span>
+                </a>
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#d4af37;text-transform:uppercase;opacity:.7;">Principal</div>
+                <!-- #500 (owner): cierres automáticos del día (sin empleados que los hagan) -->
+                <a href="#" class="nav-item" data-section="cierres">
+                    <span>🧾</span>
+                    <span>Cierres</span>
+                    <span id="cierresBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:auto;">0</span>
+                </a>
                 <a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
                     <span>⏱️</span>
                     <span>Demoras</span>
@@ -222,20 +239,6 @@ document.addEventListener('change', function (ev) {
                 <a href="#" class="nav-item" data-section="roulette">
                     <span>🎰</span>
                     <span>Ruleta diaria</span>
-                </a>
-                <a href="#" class="nav-item" data-section="reviews">
-                    <span>⭐</span>
-                    <span>Reseñas</span>
-                    <span id="reviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:4px;">0</span>
-                </a>
-                <a href="#" class="nav-item" data-section="depositReviews">
-                    <span>⏳</span>
-                    <span>Cargas pendientes</span>
-                    <span id="depositReviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
-                </a>
-                <a href="#" class="nav-item" data-section="stories">
-                    <span>📽️</span>
-                    <span>Historias</span>
                 </a>
                 <a href="#" class="nav-item" data-section="referrals">
                     <span class="icon icon-chart"></span>

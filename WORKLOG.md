@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 625. 🗂️ Menú del panel: Cargas pendientes, Reseñas e Historias arriba, cada una bajo su título — admin-sw v131
+**Pedido (owner):** "subí Cargas pendientes, Reseñas, Historias arriba de todo; armalos con buen orden y en su título correspondiente".
+Orden nuevo del menú: **Configuración** · **💬 Atención** (lo que hay que atender, con sus badges): Soporte · Cargas pendientes ·
+Confirmación de pagos · Reseñas · **📱 App** (lo que el cliente ve): Historias · Notificaciones · Estrategia clientes · publicidad · Elegir
+menú · **Principal**: Cierres (bajó acá desde Atención) · Usuarios · Transacciones · Datos IA… El resto igual (el grupo "Nuevo" queda con
+Ruleta diaria y Referidos). Sólo se movieron nodos `<a data-section>`: ids, badges y `showSection` intactos.
+**Archivos:** `public/adminprivado2026/index.html`, `public/admin-sw.js`.
+
 ### 624. 🧹 Accesos del menú básico centrados (4 columnas) + fix de pin.css roto por restos de comentario — SW v439
 **Pedido (owner):** "dejá centrado en el menú [básico] lo de abajo de Entrar a jugar ahora, son 4, los quiero centrados". **Causa real:** al
 borrar el visor viejo de historias (#615) quedaron 4 líneas sueltas de comentario (terminadas en `*/` sin apertura) en `pin.css`; en CSS un
