@@ -412,7 +412,8 @@
         if (on) {
             if (bar) return;
             const seps = Array.from(top.querySelectorAll('.tn-sep')).slice(0, 2);
-            const nodes = [auto, seps[0], ini, seps[1], perf].filter(Boolean);
+            const menuB = _el('navMenu'); // #644 (owner): abajo van CAMBIAR MENÚ · Inicio · Perfil (Carga auto ya no va abajo: queda oculta con menú 2)
+            const nodes = [menuB, seps[0], ini, seps[1], perf].filter(Boolean);
             _navPh = nodes.concat(man ? [man] : []).map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
             bar = document.createElement('header'); bar.id = 'bottomNav'; bar.className = top.className + ' bottom-nav'; bar.setAttribute('aria-label', 'Menú inferior');
             nodes.forEach((n) => bar.appendChild(n)); screen.appendChild(bar);

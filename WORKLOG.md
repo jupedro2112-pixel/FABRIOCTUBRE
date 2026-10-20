@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 644. 🧭 Barra inferior = CAMBIAR MENÚ · Inicio · Perfil; franja segura con fondo; "Retirar premio" más verde — SW v458
+**Pedidos (owner):** "cambiá el Carga auto de abajo del menú completo y ponele el Cambiar menú ahí, y sacalo del principal; lo mismo del
+básico" · "si vas a dejar un espacio abajo que no sea en blanco: agrandá la parte baja de la barra y que el texto esté arriba" · "Retirar
+premio del completo ponelo más fuerte el verde, tampoco tanto". Nuevo `#navMenu.tn-menu` en el header (oculto arriba); con la opción 2
+`_setMenuLayout` baja `[navMenu, sep, navInicio, sep, navPerfil]` y `#navAuto` queda oculto (`body.menu2`). Con barra inferior,
+"Cambiar menú" desaparece de `#topRow` (Inicio y básico). La barra inferior toma fondo `--p-surface` y alinea arriba, así la franja del
+área segura es parte de ella y no un hueco blanco. `.withdraw-row-btn` verde `#c6ecd6` / borde `#7fcf9f` (oscuro: `#164a2c`).
+También: una llave `}` de más en pin.css (zona #450) eliminada. Con menú 1 todo sigue como antes. **Archivos:** `public/index.html`,
+`public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 643. 📱 Margen inferior seguro: los botones del teléfono no tapan la barra de Inicio (respaldo Android) — SW v457
 **Pedido (owner):** "abajo detectá si el teléfono tiene botones y no tapar con sus botones nuestro Inicio". iPhone (barra de gestos) y
 Android borde a borde ya informan `env(safe-area-inset-bottom)` y la app lo usaba; ahora TODO pin.css usa `var(--sab)` (definida en `:root`

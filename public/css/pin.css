@@ -1915,3 +1915,14 @@ body.home-play .ev-cta.ev-cta-top { display: flex !important; }
 .im-more { display: block; margin: -4px 0 8px auto; background: none; border: 0; color: var(--p-red); font: 800 11.5px var(--p-font); padding: 2px 6px; cursor: pointer; }
 .info-msg .im-sec { margin-bottom: 2px !important; }
 html.android-edge { --sab: max(24px, env(safe-area-inset-bottom, 0px)); }
+/* ===== #644 (owner 2026-10-20): barra inferior = CAMBIAR MENÚ · Inicio · Perfil (Carga auto sale; Cambiar menú sale del Inicio y del
+   básico cuando hay barra inferior); la franja segura de abajo es parte de la barra (fondo, botones arriba); "Retirar premio" más verde ===== */
+.tn-menu { display: none !important; }
+.bottom-nav #navMenu { display: flex !important; flex-direction: column; align-items: center; justify-content: center; }
+body.menu2 #navAuto { display: none !important; }
+body.menu2 .top-row .change-menu { display: none !important; }
+body.menu2.home-play .top-row { display: none !important; }
+body.menu2 #bottomNav.bottom-nav { background: var(--p-surface) !important; align-items: flex-start !important; }
+.withdraw-row-btn { background: #c6ecd6 !important; border-color: #7fcf9f !important; }
+html[data-theme="dark"] .withdraw-row-btn { background: #164a2c !important; border-color: #2e7a4c !important; }
+html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important; }
