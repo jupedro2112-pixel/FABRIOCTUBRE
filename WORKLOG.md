@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 664. ℹ️ Info con el estilo de la página: tarjetas con ícono de color, textos legibles y "Ver más ›" recuadrado — SW v473
+**Pedido (owner, captura):** "dale mejor formato a esto, más como la página, más Pinterest, que se lean más los textos y el ver más que
+esté bien recuadrado". **CSS (pin.css, bloque #664 al final, pisa el look compacto de #641):** cada sección `.im-sec` es una tarjeta
+`--p-surface` con borde fino y radio 18 (sin la barra de color a la izquierda); el título va en fila con el ícono dentro de un recuadro
+36px del color de acento de la sección (`--im-acc`) y texto 15px; el cuerpo 13px/1.5 en `--p-text-2`; plegado = 138px con fundido al
+color de la tarjeta; el botón `.im-more` es una pastilla con borde y fondo `--p-card` que se superpone al pie de la tarjeta (margen
+negativo, la tarjeta reserva 40px abajo) — "Ver más ›" / "Minimizar ▴" bien recuadrado. Sin cambios de HTML ni JS (`infoMore` /
+`infoFoldInit` siguen igual).
+
 ### 663. 👑 Niveles VIP como Reembolsos: tarjetas, abre plegado en el nivel actual, "Ver más ›" y Cerrar — SW v472
 **Pedido (owner, captura de Reembolsos):** "en niveles cuando abrís que se vea así: ver más y todo cerrado excepto el nivel que está,
 el que está que figure como nivel actual". **App:** `openVipLevels` (home.js) pinta cada nivel como tarjeta `.ur-card.vl-card` (ícono

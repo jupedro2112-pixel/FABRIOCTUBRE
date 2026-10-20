@@ -1994,3 +1994,23 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 #vipLevelsList.vl-less .vl-card:not(.keep) { display: none !important; }
 #vipLevelsList.vl-less ~ .vl-black-note { display: none !important; }
 #vipLevelsModal .vl-more { margin: 8px auto 0; display: block; }
+
+/* ── #664 (owner): INFO con el estilo de la página (Pinterest): tarjetas con ícono en recuadro de color, textos legibles (13px) y
+   "Ver más ›" como pastilla recuadrada adentro de la tarjeta (abajo a la derecha). Reemplaza el look compacto de #641. ── */
+#infoModal .modal-content { padding: 14px 14px 12px !important; }
+.info-msg.im-compact { margin: 8px 0 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.info-msg.im-compact .im-sec { position: relative; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; border-left-width: 1px !important; border-radius: 18px !important; padding: 12px 14px 40px !important; margin: 0 0 10px !important; font: 500 13px/1.5 var(--p-font) !important; color: var(--p-text-2, var(--p-text)) !important; max-height: 138px; overflow: hidden; }
+.info-msg.im-compact .im-sec.open { max-height: none; }
+.info-msg.im-compact .im-sec:not(.open)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34px; background: linear-gradient(180deg, transparent, var(--p-surface)); pointer-events: none; }
+.info-msg.im-compact .im-sec > b:first-child { display: flex !important; align-items: center; gap: 10px !important; background: transparent !important; border: 0 !important; padding: 0 !important; margin: 0 0 8px !important; font: 900 15px/1.2 var(--p-font) !important; color: var(--p-text) !important; }
+.info-msg.im-compact .im-sec > b:first-child .im-ico { width: 36px !important; height: 36px !important; margin: 0 !important; border-radius: 12px; background: var(--im-acc, var(--p-red)); color: #fff !important; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.info-msg.im-compact .im-sec > b:first-child .im-ico svg { width: 20px !important; height: 20px !important; }
+.info-msg.im-compact .im-sec > b:first-child .im-ico svg path, .info-msg.im-compact .im-sec > b:first-child .im-ico svg circle, .info-msg.im-compact .im-sec > b:first-child .im-ico svg rect { fill: rgba(255,255,255,.18); }
+.info-msg.im-compact .im-sec b { color: var(--p-text) !important; }
+.info-msg.im-compact .im-sec .info-badge { font-size: 10px !important; padding: 2px 8px !important; }
+.info-msg.im-compact .im-line { margin-top: 4px !important; }
+.info-msg.im-compact .im-link { font: 800 13px var(--p-font) !important; color: var(--p-red) !important; text-decoration: none !important; }
+.info-msg.im-compact .im-sec.im-missions { border-color: var(--p-border) !important; }
+.info-msg.im-compact .im-sec.im-missions > b { color: var(--p-text) !important; }
+.info-msg.im-compact .im-sec:nth-of-type(7) { --im-acc: #e60023; } .info-msg.im-compact .im-sec:nth-of-type(8) { --im-acc: #0ea5e9; }
+.info-msg.im-compact .im-more { position: relative; z-index: 2; margin: -32px 12px 12px auto !important; padding: 6px 12px !important; background: var(--p-card) !important; border: 1px solid var(--p-border) !important; border-radius: 999px; color: var(--p-red) !important; font: 800 12px var(--p-font) !important; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
