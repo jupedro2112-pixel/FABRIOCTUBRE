@@ -1840,7 +1840,7 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .info-msg.im-compact .info-badge { font-size: 9px !important; padding: 1px 6px !important; }
 #infoModal #closeInfoModal { padding: 9px 14px !important; font-size: 13px !important; }
 /* ===== #624 (owner 2026-10-20): los 4 accesos del menú básico (debajo de "Entrar a jugar") CENTRADOS. Además se sacaron 4 restos de
-   comentario que dejó #615 (líneas sueltas terminadas en "*/") y que anulaban la regla siguiente: .top-row (#559), .bv-quick 4 columnas
+   comentario que dejó #615 (líneas sueltas con un cierre de comentario sin apertura) y que anulaban la regla siguiente: .top-row (#559), .bv-quick 4 columnas
    (#584) y #referralHomeCard oculto (#595). ===== */
 .bv-quick { grid-template-columns: repeat(4, 1fr) !important; justify-items: stretch; }
 .bv-quick button { text-align: center; justify-content: center; }
