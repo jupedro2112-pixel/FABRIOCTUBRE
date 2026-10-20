@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 634. ⚡ VELOCIDAD: un solo JS y un solo CSS versionados e inmutables; se acabó el "viejo y después se actualiza" — SW v448
+**Pedido (owner):** "revisá la velocidad de la app y limpiá lo que trabe; si hay configuraciones que no aparezcan cosas viejas y después
+se actualice al nuevo, afiná eso". **Diagnóstico:** cada apertura bajaba 25 `<script>` + 7 `<link>` sueltos (~300 KB gz, ~32 requests,
+todos con `no-store`), y el SW los servía **stale-while-revalidate** (`isStaleWhileRevalidate` iba ANTES que `isNetworkFirst`, así que la
+regla "network-first" de #348 nunca aplicaba) ⇒ se veía el JS viejo del caché, en segundo plano bajaba el nuevo y la recarga automática
+de #303 (`controllerchange`) hacía el "parpadeo y se actualiza". **Cambios:** (1) `server.js` arma en memoria `/js/bundle.js` y
+`/css/bundle.css` (concatenación en el orden de index.html, validada con `vm.Script`; si no compila, sirve los sueltos versionados) y
+`renderIndexHtml` reemplaza las 32 etiquetas por 2 con `?v=<CACHE_VERSION del SW>`; los assets con `?v=` llevan `Cache-Control: immutable`
+(también en `express.static`). (2) SW: `/js/` y `/css/` ya no van SWR; con `?v=` son cache-first (inmutables), sin `?v=` network-first.
+(3) index.html: se eliminó la recarga automática al cambiar el SW (#303) — HTML siempre fresco + assets versionados ⇒ no pueden quedar
+desparejos; la fuente de Google carga sin bloquear el primer pintado. **Resultado esperado:** primera apertura tras un deploy baja 2
+archivos grandes en vez de 32; las siguientes aperturas los toman del caché al instante; nunca se ve una versión vieja. La lista de
+archivos se lee del propio index.html: agregar un js/css sigue siendo sólo agregar la etiqueta ahí. **Archivos:** `server.js`,
+`public/firebase-messaging-sw.js`, `public/index.html`.
+
 ### 633. 🎰 Adentro del casino no se cambia de plataforma: barra sólo con "‹ Volver" y "Estás en Girox" — SW v447
 **Pedidos (owner):** (1) "[captura con el cajón verde Quiero Depositar…] dejá sólo la Carga rápida; el chat con los comprobantes y todo lo
 otro no" → ya estaba hecho en #630 (v444); la captura era de una versión vieja en caché (Render sirve ui.js sin el cajón: verificado por

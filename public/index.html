@@ -235,7 +235,8 @@
     <link rel="stylesheet" href="/css/header.css">
     <!-- #223: tipografía geométrica del tema futurista (fallback system-ui si no carga) -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" media="print" onload="this.media='all'"><!-- #634: no bloquea el primer pintado -->
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap"></noscript>
     <link rel="stylesheet" href="/css/chat.css">
     <link rel="stylesheet" href="/css/modals.css">
     <link rel="stylesheet" href="/css/responsive.css">
@@ -2493,7 +2494,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v447</div>
+                    <div class="pf-build" id="appBuildTag">app v448</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -3039,20 +3040,8 @@
                 // FCM asocia el token FCM a la registration del SW. Si el SW activo es
                 // user-sw.js y FCM usa firebase-messaging-sw.js, los tokens no coinciden.
                 // Al usar un único SW (firebase-messaging-sw.js) se elimina ese conflicto.
-                // #303: si YA había un SW controlando y entra uno nuevo (CACHE_VERSION nueva), recargar UNA vez para que
-                // HTML y JS queden de la misma versión (antes el JS viejo quedaba del caché y "se veía y desaparecía").
-                try {
-                    if (!window.__swReloadHooked) {
-                        window.__swReloadHooked = true;
-                        const hadController = !!navigator.serviceWorker.controller;
-                        let refreshing = false;
-                        navigator.serviceWorker.addEventListener('controllerchange', function () {
-                            if (!hadController || refreshing) return;
-                            refreshing = true;
-                            setTimeout(function () { location.reload(); }, 300);
-                        });
-                    }
-                } catch (_) {}
+                // #303 → #634: la recarga automática al cambiar el SW se ELIMINÓ: el HTML va siempre fresco (no-store) y el JS/CSS
+                // van versionados (?v=) e inmutables, así que HTML y JS ya no pueden quedar desparejos; el SW nuevo se activa solo.
                 const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
                     updateViaCache: 'none'
                 });

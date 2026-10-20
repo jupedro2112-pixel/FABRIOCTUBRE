@@ -285,5 +285,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
    node_modules local, así que no se puede correr el server; sólo syntax check).
    En cambios de la PWA: bumpear `CACHE_VERSION` de `public/firebase-messaging-sw.js` **y** el texto
    `app vNNN` de `#appBuildTag` en `public/index.html` (mismo número; es la versión visible en Perfil, #309).
+   **El bump del SW es OBLIGATORIO en cualquier cambio de js/css (#634):** `server.js` sirve `/js/bundle.js?v=<CACHE_VERSION>` y
+   `/css/bundle.css?v=…` (concatenación en memoria de las etiquetas de index.html) con caché inmutable; sin bump, el navegador y el
+   SW siguen usando el bundle viejo. Un js/css nuevo se agrega sólo como etiqueta en index.html (la lista se lee de ahí).
 3. Actualizar `WORKLOG.md`.
 4. Commitear y pushear a `main` cuando el owner lo pida (o si pidió "todo seguido").

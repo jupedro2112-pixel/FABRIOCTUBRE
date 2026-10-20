@@ -1303,6 +1303,8 @@ app.use(express.static(path.join(__dirname, 'public'), {
   // installed PWAs and browsers without waiting 24 hours.
   maxAge: '1d',
   setHeaders: (res, filePath) => {
+    // #634: un js/css pedido con ?v=<versión> es inmutable (la versión nueva es otra URL): caché larga en navegador y SW.
+    try { if ((filePath.endsWith('.js') || filePath.endsWith('.css')) && res.req && res.req.query && res.req.query.v) { res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); return; } } catch (_) {}
     // Never cache files that change with every deploy so installed PWAs always
     // get fresh code after a redeploy on AWS Elastic Beanstalk.
     const noCache =
@@ -11319,11 +11321,71 @@ function renderIndexHtml(extras = {}) {
     const content = readFileCached(indexPath);
     if (!content) return null;
     const pixelId = (process.env.META_PIXEL_ID || '').trim();
-    _indexHtmlBase = content
+    _indexHtmlBase = _injectAssets(content
       .replace(/__META_PIXEL_ID_PLACEHOLDER__/g, pixelId)
-      .replace(/__VIP_PUBLIC_BASE_URL_PLACEHOLDER__/g, getPublicBaseUrl());
+      .replace(/__VIP_PUBLIC_BASE_URL_PLACEHOLDER__/g, getPublicBaseUrl()));
   }
   return _indexHtmlBase.replace(/__VIP_CAMPAIGN_CODE_PLACEHOLDER__/g, extras.campaignCode || '');
+}
+
+// ============================================
+// #634 (owner 2026-10-20): VELOCIDAD DE LA PWA — un solo JS y un solo CSS, versionados y cacheables.
+// Antes: 25 <script> + 7 <link> sueltos, servidos con no-store y con el SW en stale-while-revalidate ⇒ cada apertura
+// bajaba ~30 archivos (lento en 4G) y encima se veía la versión VIEJA del caché un rato y después se "actualizaba".
+// Ahora: /js/bundle.js?v=<CACHE_VERSION> y /css/bundle.css?v=<CACHE_VERSION> (concatenación en memoria, en el MISMO orden
+// que index.html), con Cache-Control immutable: el navegador y el SW los guardan para siempre; una versión nueva = URL
+// nueva ⇒ nunca más "viejo y después nuevo". index.html sigue con no-store (siempre fresco) y es la única fuente de la
+// lista de archivos: NO hace falta mantener ninguna lista acá al agregar un js/css (se leen del propio index.html).
+// Si la concatenación no compila (vm.Script), se sirven los archivos sueltos pero versionados (?v=) — nunca se rompe.
+// ============================================
+const _ASSET_VER = (() => {
+  try { const m = fs.readFileSync(path.join(__dirname, 'public', 'firebase-messaging-sw.js'), 'utf8').match(/CACHE_VERSION = '([^']+)'/); return m ? m[1] : String(Date.now()); }
+  catch (_) { return String(Date.now()); }
+})();
+let _bundleState = null; // { ok, js, css, jsFiles, cssFiles }
+function _buildBundles() {
+  if (_bundleState) return _bundleState;
+  const st = { ok: false, js: '', css: '', jsFiles: [], cssFiles: [] };
+  try {
+    const html = readFileCached(path.join(__dirname, 'public', 'index.html')) || '';
+    st.jsFiles = Array.from(html.matchAll(/<script src="\/js\/([\w-]+)\.js"><\/script>/g)).map((m) => m[1]);
+    st.cssFiles = Array.from(html.matchAll(/<link rel="stylesheet" href="\/css\/([\w-]+)\.css">/g)).map((m) => m[1]);
+    if (!st.jsFiles.length || !st.cssFiles.length) throw new Error('index.html sin <script>/<link> reconocibles');
+    let js = '';
+    for (const f of st.jsFiles) js += '\n;/* ---- ' + f + '.js ---- */\n' + fs.readFileSync(path.join(__dirname, 'public', 'js', f + '.js'), 'utf8') + '\n;\n';
+    new (require('vm').Script)(js, { filename: 'bundle.js' }); // si no compila, se sirven sueltos
+    let css = '';
+    for (const f of st.cssFiles) css += '\n/* ---- ' + f + '.css ---- */\n' + fs.readFileSync(path.join(__dirname, 'public', 'css', f + '.css'), 'utf8');
+    st.js = js; st.css = css; st.ok = true;
+    logger.info(`[bundle] listo: ${st.jsFiles.length} js (${Math.round(js.length / 1024)} KB) + ${st.cssFiles.length} css (${Math.round(css.length / 1024)} KB) · v=${_ASSET_VER}`);
+  } catch (e) {
+    logger.error('[bundle] no se pudo armar (' + e.message + '): se sirven los archivos sueltos, versionados');
+  }
+  _bundleState = st;
+  return st;
+}
+function _assetHeaders(req, res, type) {
+  res.setHeader('Content-Type', type);
+  if (req.query && req.query.v) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  else { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate'); res.setHeader('Pragma', 'no-cache'); }
+}
+app.get('/js/bundle.js', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('// sin bundle'); _assetHeaders(req, res, 'application/javascript; charset=utf-8'); res.send(b.js); });
+app.get('/css/bundle.css', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('/* sin bundle */'); _assetHeaders(req, res, 'text/css; charset=utf-8'); res.send(b.css); });
+function _injectAssets(html) {
+  const b = _buildBundles(); const v = encodeURIComponent(_ASSET_VER);
+  const jsFiles = b.jsFiles.length ? b.jsFiles : Array.from(html.matchAll(/<script src="\/js\/([\w-]+)\.js"><\/script>/g)).map((m) => m[1]);
+  const cssFiles = b.cssFiles.length ? b.cssFiles : Array.from(html.matchAll(/<link rel="stylesheet" href="\/css\/([\w-]+)\.css">/g)).map((m) => m[1]);
+  jsFiles.forEach((f, i) => {
+    const tag = '<script src="/js/' + f + '.js"></script>';
+    const rep = b.ok ? (i === 0 ? '<script src="/js/bundle.js?v=' + v + '"></script>' : '') : '<script src="/js/' + f + '.js?v=' + v + '"></script>';
+    html = html.replace(tag, () => rep);
+  });
+  cssFiles.forEach((f, i) => {
+    const tag = '<link rel="stylesheet" href="/css/' + f + '.css">';
+    const rep = b.ok ? (i === 0 ? '<link rel="stylesheet" href="/css/bundle.css?v=' + v + '">' : '') : '<link rel="stylesheet" href="/css/' + f + '.css?v=' + v + '">';
+    html = html.replace(tag, () => rep);
+  });
+  return html;
 }
 
 app.get('/', async (req, res) => {
