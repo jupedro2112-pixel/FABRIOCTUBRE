@@ -2533,7 +2533,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v464</div>
+                    <div class="pf-build" id="appBuildTag">app v465</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2736,7 +2736,7 @@
             <div class="vp-box"><b>Cómo se verifica, paso a paso</b>
                 <ol>
                     <li>El <b>+54 9</b> ya está puesto: es fijo para celulares de Argentina.</li>
-                    <li>Completá con tu <b>código de área sin el 0</b> y después tu <b>número</b>. Ej.: 11 5555 1234 (CABA y GBA) · 351 555 1234 (Córdoba).</li>
+                    <li>Completá con tu <b>código de área sin el 0</b> y después tu <b>número</b>. Todo seguido, sin espacios. Ej.: 1155551234 (CABA y GBA) · 3515551234 (Córdoba).</li>
                     <li>Tocá <b>Enviar código</b>: te llega un SMS con 6 dígitos. Escribilo y tocá <b>Confirmar</b>.</li>
                 </ol>
                 <small>Formato: +54 + 9 + código de área (sin el 0) + número local. Es obligatorio para retirar.</small>
@@ -2748,7 +2748,7 @@
                     <label>Tu celular: código de área (sin el 0) + número</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <input type="hidden" id="verifyPhonePrefix" value="+549"><span class="vp-prefix">+54 9</span>
-                        <input type="tel" id="verifyPhoneInput" placeholder="11 5555 1234" inputmode="numeric" style="flex: 1;">
+                        <input type="tel" id="verifyPhoneInput" placeholder="1155551234" inputmode="numeric" style="flex: 1;">
                     </div>
                 </div>
                 <div id="verifyPhoneError" class="error-message"></div>

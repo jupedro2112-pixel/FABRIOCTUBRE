@@ -513,9 +513,9 @@
     function vpHelpOpen() { vpHelpToggle(true); }
     function vpAreaPick(code) {
         const h = _el('vpHelpHint'), inp = _el('verifyPhoneInput'); if (!code) { if (h) h.textContent = ''; return; }
-        const rest = 10 - code.length; const ej = code === '11' ? '11 5555 1234' : (code.length === 3 ? code + ' 555 1234' : code + ' 55 1234');
-        if (h) h.innerHTML = 'Tu número: <b>+54 9 ' + code + '</b> + tus <b>' + rest + ' dígitos</b> (sin el 0 ni el 15). Ej.: <b>' + ej + '</b>';
-        if (inp) { inp.value = code + ' '; try { inp.focus(); } catch (_) {} }
+        const rest = 10 - code.length; const ej = code === '11' ? '1155551234' : (code.length === 3 ? code + '5551234' : code + '551234');
+        if (h) h.innerHTML = 'Tu número: <b>+54 9 ' + code + '</b> + tus <b>' + rest + ' dígitos</b> seguidos, sin espacios (sin el 0 ni el 15). Ej.: <b>' + ej + '</b>';
+        if (inp) { inp.value = code; try { inp.focus(); inp.setSelectionRange(code.length, code.length); } catch (_) {} } // #652: de corrido, sin espacio
     }
     function openVerifyPhone() {
         try { const b = _el('vpHelpBody'); if (b) b.hidden = true; const h = _el('vpHelpHint'); if (h) h.textContent = ''; } catch (_) {}

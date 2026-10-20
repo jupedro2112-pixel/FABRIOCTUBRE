@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 652. 📽️ Telegram: "Regalamos PLATA a las primeras 100 · regalo todas las semanas" · número de corrido en la verificación — SW v465
+**Pedidos (owner):** "en la última de Telegram poné más llamativo que la semana próxima vamos a regalar plata a las primeras 100 que
+canjeen el código, y que se unan porque va a haber regalo todas las semanas" · "en lo del SMS, cuando eligen una provincia se genera un
+espacio: tiene que ser de corrido". Nueva `pr-7b.png` (cinta roja "¡LA SEMANA QUE VIENE!", avión + moneda, "PRIMERAS 100 PERSONAS",
+3 pasos, "Regalamos PLATA", píldora "UNITE · REGALO TODAS LAS SEMANAS"); se borró la anterior y se publicó ésta (queda última).
+Verificación: al elegir provincia el campo queda con el código sin espacio y el cursor al final; ejemplos y placeholder de corrido
+(1155551234). **Archivos:** `public/images/stories/pr-7b.png`, `public/js/home.js`, `public/index.html`, SW.
+
 ### 651. 🤝 Referidos: botón con lo ACUMULADO (se desbloquea solo el 1°) y cartel "Invitá a tus amigos" con el estilo de la app — SW v464
 **Pedidos (owner):** "en Referidos mostrá un botón de cuánto tiene acumulado y que el 1° se desbloquea desde ahí mismo de forma automática"
 · "[cartel oscuro de compartir] este formato ponelo igual al de la página, se ve diferente". En `renderReferralModal` (ui.js) va arriba
