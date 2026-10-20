@@ -1326,67 +1326,9 @@ VIP.ui._showCasinoFrame = function() {
         '<span id="casinoChatBadge" style="display:none;position:absolute;top:-2px;right:-2px;' +
         'background:#e53935;color:#fff;border-radius:11px;min-width:20px;height:20px;line-height:20px;' +
         'font-size:12px;font-weight:800;padding:0 5px;text-align:center;">0</span></button>' +
-      // WIDGET de soporte flotante en la ESQUINA (owner 2026-08-17, referencia
-      // Bet33): se abre "medio abierto" sobre el casino, NO parte la pantalla.
-      // Ancho fijo pegado abajo a la derecha (arriba de la burbuja). El chat real
-      // se muda al body al abrir y vuelve a su lugar al cerrar.
-      '<div id="casinoChatDrawer" style="display:none;position:absolute;z-index:7;' +
-      'right:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));' +
-      'width:min(380px,calc(100vw - 24px));height:min(600px,72vh);' +
-      'flex-direction:column;background:#0d0d1a;border:1px solid rgba(212,175,55,0.4);' +
-      'border-radius:16px;overflow:hidden;box-shadow:0 14px 44px rgba(0,0,0,0.6);">' +
-        // Header verde con "EN LÍNEA" + cerrar.
-        '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;flex:0 0 auto;' +
-        'background:linear-gradient(135deg,#128c4a,#0f7a3d);">' +
-          '<div style="width:34px;height:34px;border-radius:50%;background:#0d0d1a;flex:0 0 auto;' +
-          'display:flex;align-items:center;justify-content:center;overflow:hidden;">' +
-          '<img src="/icons/icon-96x96.png" alt="1G" style="width:26px;height:26px;object-fit:contain;"></div>' +
-          '<div style="flex:1;min-width:0;">' +
-            // "Carga rápida", NO "Soporte" (owner 2026-08-25): con "Soporte 1GIROX"
-            // los clientes lo confundían con el soporte propio de la página del casino.
-            '<div style="color:#fff;font-weight:800;font-size:14px;">Carga rápida 1GIROX</div>' +
-            '<div style="color:#c9f5d8;font-size:11px;display:flex;align-items:center;gap:5px;">' +
-              '<span style="width:7px;height:7px;border-radius:50%;background:#7dffa8;box-shadow:0 0 6px #7dffa8;"></span>EN LÍNEA</div>' +
-          '</div>' +
-          '<button type="button" onclick="VIP.ui.toggleCasinoChat()" title="Cerrar" ' +
-            'style="background:rgba(255,255,255,0.18);color:#fff;border:none;border-radius:50%;' +
-            'width:28px;height:28px;font-size:14px;cursor:pointer;flex:0 0 auto;">✕</button>' +
-        '</div>' +
-        // Acciones principales: Depositar (despliega montos) + Retirar (grandes).
-        '<div style="flex:0 0 auto;padding:8px;display:flex;flex-direction:column;gap:6px;' +
-        'background:#100e18;border-bottom:1px solid rgba(212,175,55,0.15);">' +
-          '<div style="display:flex;gap:6px;">' +
-            '<button type="button" onclick="VIP.ui.casinoQuickAction(\'cargar-toggle\')" ' +
-              'style="flex:1;background:linear-gradient(135deg,#128c4a,#25d366);color:#fff;border:none;' +
-              'border-radius:10px;padding:11px 8px;font-size:13px;font-weight:800;cursor:pointer;">💰 Quiero Depositar</button>' +
-            '<button type="button" onclick="VIP.ui.casinoQuickAction(\'retirar\')" ' +
-              'style="flex:1;background:rgba(212,175,55,0.15);color:#e3bd48;border:1px solid rgba(212,175,55,0.45);' +
-              'border-radius:10px;padding:11px 8px;font-size:13px;font-weight:800;cursor:pointer;">💸 Solicitar Retiro</button>' +
-          '</div>' +
-          // Sub-fila de montos (se despliega al tocar "Quiero Depositar").
-          '<div id="casinoAmountRow" style="display:none;gap:6px;flex-wrap:wrap;">' +
-            _casinoChip('$2.000', "VIP.ui.casinoQuickAction('cargar','2000')") +
-            _casinoChip('$5.000', "VIP.ui.casinoQuickAction('cargar','5000')") +
-            _casinoChip('$10.000', "VIP.ui.casinoQuickAction('cargar','10000')") +
-            _casinoChip('$20.000', "VIP.ui.casinoQuickAction('cargar','20000')") +
-          '</div>' +
-          // Fila chica: pasos del depósito + hablar.
-          '<div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
-            _casinoChip('📋 Pedir CBU', "VIP.ui.casinoQuickAction('cbu')") +
-            _casinoChip('✅ Ya transferí', "VIP.ui.casinoQuickAction('comprobante')") +
-            _casinoChip('💬 Hablar', "VIP.ui.casinoQuickAction('escribir')") +
-          '</div>' +
-        '</div>' +
-        // Escapes discretos (una barrita fina de links).
-        '<div style="flex:0 0 auto;display:flex;gap:14px;justify-content:center;padding:4px;' +
-        'background:#0b0a12;border-bottom:1px solid rgba(255,255,255,0.05);">' +
-          '<button type="button" onclick="VIP.ui.openCasinoInTab()" style="background:none;border:none;' +
-          'color:#8a7a3a;font-size:10.5px;cursor:pointer;text-decoration:underline;">↗ Casino aparte</button>' +
-          '<button type="button" onclick="VIP.ui.closeCasinoFrame()" style="background:none;border:none;' +
-          'color:#8a8a8a;font-size:10.5px;cursor:pointer;text-decoration:underline;">🚪 Salir del casino</button>' +
-        '</div>' +
-        '<div id="casinoChatDrawerBody" style="flex:1;display:flex;flex-direction:column;min-height:0;"></div>' +
-      '</div>';
+      // #630 (owner 2026-10-20): el cajón de chat de adentro del casino (#casinoChatDrawer: Quiero Depositar, Pedir CBU, Hablar…)
+      // se ELIMINÓ. En el casino sólo existe el panel chico de Carga rápida (home.js toggleCasinoLoad): datos + adjuntar, y la ✕ lo saca.
+      '';
     document.body.appendChild(overlay);
 
     // Cuando el casino termina de cargar, se esconde el "cargando" y se muestra el juego.
@@ -1479,52 +1421,18 @@ VIP.ui._showCasinoFrame = function() {
   // (chat.js sigue appendeando ahí aunque el casino lo tape) y cuenta lo que
   // llega con el panel de chat CERRADO. Vive para siempre; los guards de arriba
   // lo apagan fuera del casino.
-  if (!VIP.ui._casinoChatObserver && window.MutationObserver) {
-    const msgs = document.getElementById('chatMessages');
-    if (msgs) {
-      VIP.ui._casinoChatObserver = new MutationObserver(function(muts) {
-        if (!VIP.ui._casinoOpen) return;
-        const drawer = document.getElementById('casinoChatDrawer');
-        if (drawer && drawer.style.display !== 'none') return; // chat a la vista: nada que avisar
-        let added = 0;
-        for (let i = 0; i < muts.length; i++) added += muts[i].addedNodes.length;
-        if (!added) return;
-        VIP.ui._casinoChatUnread = (VIP.ui._casinoChatUnread || 0) + added;
-        const badge = document.getElementById('casinoChatBadge');
-        if (badge) {
-          badge.textContent = VIP.ui._casinoChatUnread > 9 ? '9+' : String(VIP.ui._casinoChatUnread);
-          badge.style.display = 'inline-block';
-        }
-      });
-      VIP.ui._casinoChatObserver.observe(msgs, { childList: true });
-    }
-  }
-  VIP.ui._casinoChatUnread = 0;
+  // #630: sin cajón de chat no hay contador de no leídos en la pastilla.
 
-  // El panel arranca ABIERTO en cada entrada al casino (owner 2026-08-25): así
-  // el jugador VE que es la carga rápida NUESTRA y no un soporte de la página.
-  // Lo cierra con la ✕ y queda cerrado hasta la próxima entrada al casino.
-  const drawer0 = document.getElementById('casinoChatDrawer');
-  if (drawer0 && (drawer0.style.display === 'none' || !drawer0.style.display)) {
-    if (VIP.ui._bubbleSide === 'left') { drawer0.style.left = '16px'; drawer0.style.right = 'auto'; }
-    VIP.ui._casinoChatMount();
-  }
+  // #630: al entrar no se abre nada encima del juego; la pastilla CARGA RÁPIDA abre el panel chico cuando el cliente la toca.
 };
 
 /** Abre/cierra el chat de cargas SOBRE el casino (el juego no se corta). */
 VIP.ui.toggleCasinoChat = function() {
   // Si lo que hubo fue un ARRASTRE de la burbuja, el click posterior no abre.
   if (VIP.ui._bubbleWasDragged) return;
-  // #601 (owner): dentro del casino NO hay chat: la burbuja abre SIEMPRE el panel chico de carga automática
-  // (alias · CBU · titular + adjuntar comprobante, #598). El cajón de chat viejo queda sin uso.
-  try { if (VIP.home && VIP.home.toggleCasinoLoad) { VIP.home.toggleCasinoLoad(); return; } } catch (_) {}
-  const drawer = document.getElementById('casinoChatDrawer');
-  if (!drawer) return;
-  // El panel se abre del mismo lado en que quedó la burbuja arrastrable.
-  if (VIP.ui._bubbleSide === 'left') { drawer.style.left = '16px'; drawer.style.right = 'auto'; }
-  else if (VIP.ui._bubbleSide === 'right') { drawer.style.left = 'auto'; drawer.style.right = '16px'; }
-  if (drawer.style.display === 'none' || !drawer.style.display) VIP.ui._casinoChatMount();
-  else VIP.ui._casinoChatUnmount();
+  // #601/#630 (owner): dentro del casino NO hay chat: la pastilla abre SIEMPRE el panel chico de Carga rápida (alias · CBU · titular +
+  // adjuntar comprobante). El cajón de chat se eliminó.
+  try { if (VIP.home && VIP.home.toggleCasinoLoad) VIP.home.toggleCasinoLoad(); } catch (_) {}
 };
 
 /** Muda el chat REAL (cabecera+mensajes+barra de escribir) adentro del panel.

@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 630. 🎰 Casino: se ELIMINÓ el cajón de chat; la pastilla abre sólo el panel Carga rápida (datos + adjuntar) — SW v444
+**Pedido (owner):** "[captura: panel Carga rápida con el chat atrás] eso está mal, sólo quiero que se abra y aparezcan los datos y adjuntar;
+todo el chat restante borrá todo; y si apretás la ✕ que se pueda sacar y volver a jugar". **Causa:** `_showCasinoFrame` (ui.js) todavía
+creaba el cajón `#casinoChatDrawer` (Quiero Depositar · Solicitar Retiro · Pedir CBU · Hablar + el chat real mudado adentro) y lo ABRÍA
+solo en cada entrada al casino (regla de 2026-08-25), debajo del panel chico (#598/#601). Ahora: sin cajón (markup, auto-apertura y
+contador de no leídos eliminados), `toggleCasinoChat` sólo llama `toggleCasinoLoad`; la ✕ del panel lo cierra y la ✕ de la pastilla la
+saca para seguir jugando. `_casinoChatMount/Unmount` quedan como no-op seguros. **Archivos:** `public/js/ui.js`, SW.
+
 ### 629. 🐛 La tarjeta "🎯 Misiones" del inicio completo no abría — SW v443
 **Pedido (owner):** "[Misiones · tocá para ver] eso no abre". **Causa:** #595 ("todo minimizado al entrar") plegaba `#missionsCardBody` con
 `style.display='none'` (ui.js), pero `toggleMissionsCard` abre/cierra con el atributo `hidden`: sacaba el `hidden` y el inline seguía tapando.
