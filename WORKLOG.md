@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 676. 📖 Historia del SMS: código centrado adentro de la burbuja y pasa a ser la ÚLTIMA
+**Pedido (owner, captura):** "esta historia ponela en la última y arreglá el recuadro del código, dejalo centrado adentro". **Foto**
+`st2-1.png` regenerada (gen_stories.py `s1`: burbuja más ancha y "Código: 4 8 2 1" centrado por ancho de texto). **Orden republicado
+(las 8, semanales):** Instalá la app · Cargá en segundos · Referidos · Reembolsos · Ruleta · Misiones · Telegram · **Verificación SMS**.
+El cache-buster `?v=publishedAt` de `_storyPublic` hace que todos vean la foto nueva.
+
 ### 675. 🧭 Guía de PRIMERA CARGA: cartel con flecha a CARGÁ AHORA en el Inicio del completo y versión corta en el básico — SW v483
 **Pedido (owner):** "para las primeras cargas, cuando entran al menú completo poné flechas grandes y prolijas marcando dónde cargás o
 un cartel explicativo mejor, que diga que en la parte superior del Inicio van a poder hacer sus cargas y esté remarcado dónde; está
