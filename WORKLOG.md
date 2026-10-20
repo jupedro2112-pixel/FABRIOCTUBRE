@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 645. 👤 Perfil: verificación de teléfono (estado + paso a paso), Notificaciones con botón ACTIVAR, sin "Cambiar menú" ni fueguito — SW v459
+**Pedidos (owner):** "sacá el cambio de menú del Perfil, ya no hace falta" · "el fueguito de Perfil también sacalo, y en Notificaciones
+poné un botón para activar; aunque figure que lo tiene, que pueda apretarlo igual por las dudas" · "necesito en el Perfil verificación de
+número de teléfono: que adentro se pueda verificar, con una explicación paso a paso; si queda verificado, que esa sección aparezca como
+Verificado al entrar al Perfil". **Perfil:** se eliminó `#pfMenuBtn`; la fila del fueguito queda oculta (`#pfFireRow`; `#fireBtn` sigue
+en el DOM porque toda la app lo abre con `.click()`); Notificaciones es una fila con estado (`#pfNotifHint`: Activadas ✓ / Bloqueadas /
+Tocá Activar) + el ícono `#notificationBtn` (conserva toda la lógica FCM) + botón rojo **Activar** siempre apretable; nueva fila
+**Verificación de teléfono** (`#pfPhoneRow`): "Sin verificar · necesaria para retirar" + botón Verificar, o "Verificado ✓ · +549…" con
+botón verde (`paintPfPhone`, también tras confirmar el código en auth.js). **Modal verifyPhone:** la caja dorada se reemplazó por
+`.vp-box` con los 3 pasos (país + número sin 0 ni 15 → Enviar código → Confirmar) con el estilo de la app. **pin.css:** la "llave de más"
+de #644 era en realidad un bloque de declaraciones huérfano (sin selector, restos de #615) en la zona #450; se eliminó (llaves 1727/1727).
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/js/auth.js`, `public/css/pin.css`, SW.
+
 ### 644. 🧭 Barra inferior = CAMBIAR MENÚ · Inicio · Perfil; franja segura con fondo; "Retirar premio" más verde — SW v458
 **Pedidos (owner):** "cambiá el Carga auto de abajo del menú completo y ponele el Cambiar menú ahí, y sacalo del principal; lo mismo del
 básico" · "si vas a dejar un espacio abajo que no sea en blanco: agrandá la parte baja de la barra y que el texto esté arriba" · "Retirar

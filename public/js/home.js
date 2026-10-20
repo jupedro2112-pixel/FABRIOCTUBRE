@@ -486,7 +486,32 @@
                 : (pw === 'asd123' ? 'Es la clave inicial: te recomendamos cambiarla desde "Cambiar clave".' : 'Es la misma clave para entrar a la app y a las plataformas.');
         }
     }
+    // #645 (owner): Perfil — estado de la verificación de teléfono y de las notificaciones
+    function paintPfPhone() {
+        try {
+            const u = (VIP.state && VIP.state.currentUser) || {}; const ok = u.phoneVerified === true;
+            const h = _el('pfPhoneHint'), b = _el('pfPhoneBtn'); if (!h || !b) return;
+            h.textContent = ok ? ('Verificado ✓ · ' + (u.phone || '')) : 'Sin verificar · necesaria para retirar';
+            b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok); b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
+        } catch (_) {}
+    }
+    function paintPfNotif() {
+        try {
+            const h = _el('pfNotifHint'); if (!h) return;
+            const perm = ('Notification' in window) ? Notification.permission : 'default';
+            h.textContent = perm === 'granted' ? 'Activadas ✓ · si no te llegan, tocá Activar de nuevo' : (perm === 'denied' ? 'Bloqueadas en el teléfono · tocá Activar para ver cómo' : 'Tocá Activar y aceptá el permiso');
+        } catch (_) {}
+    }
+    function openVerifyPhone() {
+        try { VIP.ui.hideModal('profileModal'); } catch (_) {}
+        try {
+            const s1 = _el('verifyPhoneStep1'), s2 = _el('verifyPhoneStep2'), inp = _el('verifyPhoneInput'), err = _el('verifyPhoneError');
+            if (s1) s1.style.display = ''; if (s2) s2.style.display = 'none'; if (inp) inp.value = ''; if (err) err.classList.remove('show');
+        } catch (_) {}
+        try { VIP.ui.showModal('verifyPhoneModal'); } catch (_) { const m = _el('verifyPhoneModal'); if (m) m.classList.remove('hidden'); }
+    }
     function openProfile() {
+        paintPfPhone(); paintPfNotif(); // #645
         _pfShown = true; // #393
         try { if (VIP.autoload && VIP.autoload.hidePreview) VIP.autoload.hidePreview(); } catch (_) {}
         _pfPaint();
@@ -2039,7 +2064,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

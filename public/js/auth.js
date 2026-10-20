@@ -1665,6 +1665,7 @@ VIP.auth = (function () {
                     VIP.state.currentUser.phone = phone;
                     VIP.state.currentUser.phoneVerified = true;
                     VIP.state.currentUser.phoneVerificationPending = false;
+                    try { if (VIP.home && VIP.home.paintPfPhone) VIP.home.paintPfPhone(); } catch (_) {} // #645: Perfil muestra Verificado ✓
                 }
                 window._verifyPhoneFullPhone = null;
                 VIP.ui.hideModal('verifyPhoneModal');

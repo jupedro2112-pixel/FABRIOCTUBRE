@@ -2505,18 +2505,22 @@
                  · usuario + datos + Capturar · Fueguito · el resto. Todo más compacto (.pf-compact). -->
             <div class="pf-actions pf-actions-top">
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8"/><path d="M12 8v12"/><path d="M12 8c-2.5 0-4.5-1.3-4.5-3S9 2.5 10 3.5 12 8 12 8zm0 0c2.5 0 4.5-1.3 4.5-3S15 2.5 14 3.5 12 8 12 8z"/></svg></i><span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
-                <!-- #366: elegir menú fácil / completo cuando quieran -->
-                <button type="button" class="pf-act" id="pfMenuBtn" onclick="hideModal('profileModal');VIP.home.openMenuChooser()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i><span>Menú intermedio / completo<small id="pfMenuHint">Elegí cómo ver la app</small></span></button>
             </div>
             <!-- #399 (owner): modo nocturno ARRIBA de todo de Perfil, con botón Activar / Desactivar (default: desactivado) -->
             <div class="pf-theme-row">
                 <span class="pf-theme-k"><b><i class="pi pi-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></i>Modo nocturno</b><small id="pfThemeHint">Desactivado</small></span>
                 <button type="button" class="pf-theme-btn" id="pfThemeBtn" onclick="vipToggleTheme()">Activar</button>
             </div>
+            <!-- #645 (owner): VERIFICACIÓN DE TELÉFONO en el Perfil: estado (Verificado ✓ / Sin verificar) + botón que abre el modal con la explicación paso a paso -->
+            <div class="pf-theme-row" id="pfPhoneRow">
+                <span class="pf-theme-k"><b><i class="pi pi-sm">📱</i>Verificación de teléfono</b><small id="pfPhoneHint">Necesaria para retirar</small></span>
+                <button type="button" class="pf-theme-btn" id="pfPhoneBtn" onclick="VIP.home.openVerifyPhone()">Verificar</button>
+            </div>
             <div class="pf-actions pf-actions-top">
-                <div class="pf-act pf-wrap">
-                    <button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Tocá para activar notificaciones" aria-label="Notificaciones">🔔</button>
-                    <span onclick="var b=document.getElementById('notificationBtn'); if(b) b.click();">Notificaciones<small>Activá los avisos de cargas, reembolsos y premios</small></span>
+                <!-- #645 (owner): Notificaciones = estado + botón ACTIVAR siempre apretable (aunque figure activado, por las dudas). #notificationBtn conserva toda la lógica FCM. -->
+                <div class="pf-theme-row" id="pfNotifRow">
+                    <span class="pf-theme-k"><b><i class="pi pi-sm">🔔</i>Notificaciones</b><small id="pfNotifHint">Avisos de cargas, reembolsos y premios</small></span>
+                    <span style="display:inline-flex;align-items:center;"><button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Estado de las notificaciones" aria-label="Notificaciones">🔔</button><button type="button" class="pf-theme-btn" id="pfNotifActivate" onclick="var b=document.getElementById('notificationBtn'); if(b){ b.disabled=false; b.click(); }">Activar</button></span>
                 </div>
             </div>
             <!-- #304 (owner): recuadro de USUARIO con avatar (tocar = elegir ícono; los de nivel se desbloquean al subir). -->
@@ -2529,7 +2533,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v458</div>
+                    <div class="pf-build" id="appBuildTag">app v459</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2542,7 +2546,8 @@
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
             <div class="pf-actions">
-                <div class="pf-act pf-wrap">
+                <!-- #645 (owner): el fueguito salió del Perfil (fila oculta; #fireBtn sigue acá porque toda la app lo abre con .click()) -->
+                <div class="pf-act pf-wrap" id="pfFireRow">
                     <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
                     <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · reclamá tu premio cada día</small></span>
                 </div>
@@ -2727,11 +2732,14 @@
                 <p>Te enviaremos un SMS para confirmar tu número.</p>
             </div>
 
-            <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
-                <p style="color: #d4af37; font-size: 12px; font-weight: 700; margin: 0 0 6px;">🔒 ¿Por qué verificar? — 100% recomendado</p>
-                <p style="color: #b0b0b0; font-size: 11px; margin: 0 0 3px; line-height: 1.45;">✅ Recuperás tu cuenta si olvidás la contraseña.</p>
-                <p style="color: #b0b0b0; font-size: 11px; margin: 0 0 3px; line-height: 1.45;">✅ Es obligatorio para poder retirar.</p>
-                <p style="color: #b0b0b0; font-size: 11px; margin: 0; line-height: 1.45;">✅ Es un paso para la seguridad de tu cuenta.</p>
+            <!-- #645 (owner): cómo se verifica, paso a paso -->
+            <div class="vp-box"><b>Cómo se verifica, paso a paso</b>
+                <ol>
+                    <li>Elegí tu país y escribí tu número con el código de área, sin el 0 ni el 15 (ej.: 11 5555 1234).</li>
+                    <li>Tocá <b>Enviar código</b>: te llega un SMS con un código de 6 dígitos.</li>
+                    <li>Escribí el código y tocá <b>Confirmar</b>. Listo: tu número queda verificado.</li>
+                </ol>
+                <small>Es obligatorio para retirar y sirve para recuperar tu cuenta si olvidás la contraseña.</small>
             </div>
 
             <!-- Paso 1: ingresar teléfono -->

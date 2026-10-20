@@ -1109,13 +1109,6 @@ html[data-theme="dark"] .lg-fi, html[data-theme="dark"] .pi, html[data-theme="da
 .rvm-send { width: 100%; border: 0; background: var(--p-red); color: #fff; border-radius: 999px; padding: 13px; font: 800 14.5px var(--p-font); cursor: pointer; }
 .rvm-send:disabled { opacity: .6; }
 .rvm-close { width: 100%; margin-top: 8px; border: 0; background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 10px; font: 700 12.5px var(--p-font); cursor: pointer; }
-  background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, .028) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(45deg, rgba(0, 0, 0, .35) 0 2px, transparent 2px 9px),
-    radial-gradient(ellipse at 15% 20%, rgba(255, 255, 255, .07), transparent 45%),
-    radial-gradient(ellipse at 85% 80%, rgba(255, 255, 255, .05), transparent 40%),
-    linear-gradient(180deg, #1c1c1c, #0d0d0d) !important;
-  border-top: 1px solid rgba(255, 255, 255, .08); }
 /* ── #456 (owner): arriba sólo el nombre (sin logo) ── */
 /* ── #458 (owner): "Promoción válida hasta diciembre…" NO en el Inicio (antes de abrir); sólo adentro de los modales ── */
 .refund-promo { display: none !important; }
@@ -1926,3 +1919,14 @@ body.menu2 #bottomNav.bottom-nav { background: var(--p-surface) !important; alig
 .withdraw-row-btn { background: #c6ecd6 !important; border-color: #7fcf9f !important; }
 html[data-theme="dark"] .withdraw-row-btn { background: #164a2c !important; border-color: #2e7a4c !important; }
 html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important; }
+/* ===== #645 (owner 2026-10-20): PERFIL — sin "Cambiar menú" ni fueguito; Notificaciones con botón ACTIVAR siempre apretable;
+   Verificación de teléfono con estado (Verificado ✓) y explicación paso a paso adentro del modal ===== */
+#pfFireRow { display: none !important; }
+#pfNotifRow #notificationBtn { display: inline-flex !important; width: 30px; height: 30px; min-width: 0; padding: 0; border-radius: 50%; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; color: var(--p-text) !important; font-size: 15px; margin-right: 6px; box-shadow: none !important; }
+#pfNotifRow .pf-theme-btn, #pfPhoneRow .pf-theme-btn { white-space: nowrap; }
+#pfPhoneBtn.ok { background: var(--p-green) !important; color: #fff !important; }
+.vp-box { background: var(--p-surface); border-radius: 14px; padding: 10px 12px; margin: 0 0 12px; color: var(--p-text); text-align: left; }
+.vp-box > b { display: block; font: 900 12.5px var(--p-font); margin-bottom: 6px; color: var(--p-red); }
+.vp-box ol { margin: 0; padding-left: 18px; font: 600 12px/1.45 var(--p-font); color: var(--p-text); }
+.vp-box ol li { margin: 0 0 4px; }
+.vp-box small { display: block; margin-top: 6px; font: 600 10.5px var(--p-font); color: var(--p-muted); }
