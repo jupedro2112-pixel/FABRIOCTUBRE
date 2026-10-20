@@ -1077,9 +1077,12 @@
     // #296 (owner): "Jugar ahora" abre la plataforma AFUERA de la página (ventana aparte /jugar.html con el login
     // automático ya hecho y una línea finita arriba "‹ Volver a cargas") — así no ven el delay de la app. Vale con y
     // sin la app instalada.
+    // #632 (owner): "también cuando la gente carga adjuntando comprobante y le aparece el botón para jugar": con la app instalada
+    // "Jugar ahora" abre el casino ADENTRO (y el panel Carga rápida se abre solo, #631); en navegador sigue aparte (#296).
     function playNow(pid) {
         hidePlayNow();
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
+        if (_isStandalone()) return openPlatform(pid || 'girox');
         openPlatformTab(pid || 'girox');
     }
     // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.

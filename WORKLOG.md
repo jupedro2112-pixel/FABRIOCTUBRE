@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 632. 🎰 "Jugar ahora" (tras cargar con comprobante) abre el casino ADENTRO con el panel Carga rápida — SW v446
+**Pedido (owner):** "también cuando la gente carga adjuntando comprobante y le aparece el botón para jugar". `playNow` ahora, con la app
+instalada (standalone), llama `openPlatform` (casino adentro + panel Carga rápida abierto solo, #631); en navegador sigue `openPlatformTab`
+(ventana aparte /jugar.html, #296). Trade-off aceptado: adentro se ve el "Entrando al casino…" que #296 quería evitar.
+**Archivos:** `public/js/home.js`, SW.
+
 ### 631. 💳 El panel Carga rápida se abre SOLO al entrar a jugar (JUGÁ AQUÍ y al cargar el casino) — SW v445
 **Pedido (owner):** "el chat rápido lo quiero cuando la gente elige la plataforma desde JUGÁ AQUÍ y cuando carga". `openPlatform` (todas las
 entradas dentro de la app: selector JUGÁ AQUÍ, "Entrar a jugar" del básico, pestañas) abre `toggleCasinoLoad(true)` apenas se monta el
