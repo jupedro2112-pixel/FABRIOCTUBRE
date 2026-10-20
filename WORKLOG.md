@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 650. 🤝 Referidos: NOVEDAD "los que referís antes de diciembre te dejan el 5% para siempre" — SW v463
+**Pedido (owner):** "[captura del aviso en Referidos] los que referís antes de diciembre vas a tener el 5% para siempre". El `.ref-news`
+del modal de referidos (index.html) ahora dice: "Los que referís antes de diciembre te dejan el {pct}% para siempre. Desde diciembre, los
+referidos nuevos pagan 3%" (el % actual sigue saliendo de `.ref-pct`). **Archivos:** `public/index.html`, SW.
+
 ### 649. 📽️ Historia de Soporte corregida (texto dentro del recuadro) · Misiones pasa a justo antes de Telegram
 **Pedido (owner):** "corregí esas fotos que están fuera del recuadro, algunas el texto, y agregá la de Misiones antes de la final de
 Telegram" · "borrá y publicá de vuelta si tenés que volver a actualizar". La burbuja de `pr-6` se salía del recuadro: ahora `pr-6b.png`
