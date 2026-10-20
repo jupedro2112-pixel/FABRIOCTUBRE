@@ -74,7 +74,7 @@ VIP.fire = (function () {
         const _fA = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
         const _st = VIP.state.fireStatus || {};
         const _rqA = Number(_st.nextReqAmount) || 0, _rqD = Number(_st.nextReqDays) || 0, _rqH = Number(_st.nextReqHave) || 0, _rqDay = Number(_st.nextReqDay) || 0;
-        try { const top = document.getElementById('fireRuleTop'); const _rN = Number(_st.rolloverNeed) || 0, _rH = Number(_st.rolloverHave) || 0, _rD = Number(_st.rolloverForDay) || 0, _rX = Number(_st.rolloverExpiresDay) || 0; if (top) { top.innerHTML = _rN > 0 ? ('🎯 Para cobrar el premio del día ' + _rD + ': apostá <b>' + _fA(_rN) + '</b> en esta racha · llevás <b>' + _fA(_rH) + '</b>' + (_st.rolloverUnknown ? ' <i>(no pudimos leer tus apuestas ahora)</i>' : '') + ' · no hacen falta más fueguitos: sólo llegar al rollover · vuelve a 0 con cada premio') : ''; top.style.display = _rN > 0 ? '' : 'none'; } } catch (_) {} // #654
+        try { const top = document.getElementById('fireRuleTop'); const _rN = Number(_st.rolloverNeed) || 0, _rH = Number(_st.rolloverHave) || 0, _rD = Number(_st.rolloverForDay) || 0, _rX = Number(_st.rolloverExpiresDay) || 0; if (top) { top.innerHTML = _rN > 0 ? ('🎯 Para cobrar el premio del día ' + _rD + ': rollover de <b>' + _fA(_rN) + '</b> en esta racha (apostar en la plataforma, <b>no cargar</b>) · llevás <b>' + _fA(_rH) + '</b>' + (_st.rolloverUnknown ? ' <i>(no pudimos leer tus apuestas ahora)</i>' : '') + ' · no hacen falta más fueguitos: sólo llegar al rollover · vuelve a 0 con cada premio') : ''; top.style.display = _rN > 0 ? '' : 'none'; } } catch (_) {} // #654
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
             // #347: si el server todavía no manda el mínimo (sin redeploy) se muestra el default 10; sólo 0 explícito lo apaga.
@@ -85,7 +85,7 @@ VIP.fire = (function () {
             const _msL = (VIP.state.fireStatus.milestones || []).filter((m) => Number(m.rollover) > 0);
             const _esc = _msL.map((m) => 'día ' + m.day + ' → ' + _fA(m.rollover)).join(' · ');
             activityConditionEl.innerHTML = _msL.length
-                ? '📋 <strong>Condición:</strong> cada premio pide <strong>apostar</strong> un monto en la plataforma (rollover) que va subiendo: ' + _esc + '. Al llegar al hito sólo te falta completar el rollover (no hacen falta más fueguitos). Al cobrar, o si una racha llega a un hito nuevo, el contador vuelve a <strong>0</strong>.'
+                ? '📋 <strong>Condición:</strong> cada premio pide un <strong>rollover</strong> que va subiendo: ' + _esc + '. <strong>Rollover = apostar en la plataforma, no cargar</strong>: lo que cargás no suma, suma lo que jugás. Al llegar al hito sólo te falta completar el rollover (no hacen falta más fueguitos). Al cobrar, o si una racha llega a un hito nuevo, el contador vuelve a <strong>0</strong>.'
                 : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.';
         }
 
@@ -109,11 +109,11 @@ VIP.fire = (function () {
                 // que apostar (multiplicador × premio) — lo exige la plataforma.
                 const _mult = VIP.state.fireStatus.rolloverMultiplier || 0;
                 const _rolloverNote = _mult > 0
-                    ? `<span style="font-size:11px;color:#ffb84d;">🎯 Para poder retirarlo: apostá $${Math.round(pendingCash * _mult).toLocaleString('es-AR')} (rollover x${_mult})</span><br>`
+                    ? `<span style="font-size:11px;color:#ffb84d;">🎯 Para poder retirarlo: rollover x${_mult} = apostar $${Math.round(pendingCash * _mult).toLocaleString('es-AR')} (apostar, no cargar)</span><br>`
                     : '';
                 pendingCashEl.style.display = 'block';
                 const _pN = Number(VIP.state.fireStatus.rolloverNeed) || 0, _pH = Number(VIP.state.fireStatus.rolloverHave) || 0, _pX = Number(VIP.state.fireStatus.rolloverExpiresDay) || 0; // #654
-                const _pBar = _pN > 0 ? `<div style="margin:6px 0 4px;height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;"><i style="display:block;height:100%;width:${Math.min(100, Math.round(_pH / _pN * 100))}%;background:#ffd700;"></i></div><span style="font-size:11px;color:#ffe08a;">Apostaste $${_pH.toLocaleString('es-AR')} de $${_pN.toLocaleString('es-AR')}</span><br>` : '';
+                const _pBar = _pN > 0 ? `<div style="margin:6px 0 4px;height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;"><i style="display:block;height:100%;width:${Math.min(100, Math.round(_pH / _pN * 100))}%;background:#ffd700;"></i></div><span style="font-size:11px;color:#ffe08a;">Rollover: apostaste $${_pH.toLocaleString('es-AR')} de $${_pN.toLocaleString('es-AR')} (no cuenta lo cargado)</span><br>` : '';
                 pendingCashEl.innerHTML = `
                     <strong style="color:#ffd700;">🏆 ¡Tenés $${pendingCash.toLocaleString('es-AR')} para reclamar!</strong><br>
                     <span style="font-size:12px;color:#ccc;">Premio de tu racha Fueguito día ${VIP.state.fireStatus.pendingCashRewardDay}</span><br>
@@ -159,7 +159,7 @@ VIP.fire = (function () {
                     : '';
                 // #405: requisito por monto de cada premio
                 const reqNote = (Number(m.rollover) > 0)
-                    ? `<br><span style="font-size:10.5px;color:#aaa;">apostar ${_fA(m.rollover)} en la racha para cobrarlo</span>`
+                    ? `<br><span style="font-size:10.5px;color:#aaa;">rollover ${_fA(m.rollover)} (apostar en la racha, no cargar) para cobrarlo</span>`
                     : ''; // #654
                 return `<div class="milestone-item ${statusClass}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
                     <span>${statusIcon} <strong>Día ${m.day}</strong>: ${rewardText}${depositNote}${reqNote}</span>

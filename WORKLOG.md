@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 662. 🔥 Fueguito: en todos lados "rollover = apostar, NO cargar" — SW v471
+**Pedido (owner):** "explicá en la racha que apostar no es cargar, apostar es el rollover; en vez de decir carga decí rollover en todas
+las partes donde pusiste cargar". **Textos tocados:** regla del Inicio (`#fireHomeRule`, home.js `_paintFireLevels`), regla arriba del
+modal (`#fireRuleTop`), condición del modal (escalera), nota del premio pendiente y barra "Rollover: apostaste $X de $Y (no cuenta lo
+cargado)", nota de cada hito ("rollover $X (apostar en la racha, no cargar)"), Info → Fueguito ("Rollover = lo que apostás en la
+plataforma, no lo que cargás: cargar no suma, jugar sí"), fila Fueguito del Perfil, y en el server los mensajes de `/api/fire/claim-reward`
+(error `ROLLOVER`) y del premio acreditado. Las ramas viejas por cargas (`minDeposits`/`nextReqAmount`) quedan sin uso (0).
+
 ### 661. 👑 Niveles VIP: X arriba como Reembolsos y el modal termina arriba de la barra inferior — SW v470
 **Pedido (owner, con capturas):** "a este menú ponele así [el de Reembolsos, con la X] … porque se pierde" — en menú 2 el modal de
 Niveles VIP llegaba hasta abajo y la barra fija (Cambiar menú · Inicio · Perfil) tapaba los botones Ver menos / Cerrar.

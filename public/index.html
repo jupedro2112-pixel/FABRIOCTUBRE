@@ -1335,7 +1335,7 @@
                 <span class="fh-text"><b>Fueguito diario</b><small id="fireHomeSub">Reclamá tu premio de hoy</small></span>
                 <span class="fh-streak"><b id="fireHomeStreak">0</b><small>días</small></span>
                 <!-- #340 (owner): la regla a la vista, afuera del modal (el mínimo real lo pinta home.js desde fireStatus.minDeposits) -->
-                <small class="fh-rule" id="fireHomeRule" style="display:none;">🎯 Cada premio se cobra apostando un monto (rollover) · vuelve a 0 con cada premio</small>
+                <small class="fh-rule" id="fireHomeRule" style="display:none;">🎯 Cada premio se cobra con <b>rollover</b> = apostar en la plataforma (apostar no es cargar) · vuelve a 0 con cada premio</small>
             </button>
             <!-- Panel del home (colapsable con #homePanelToggle). -->
             <div id="homePanel">
@@ -2300,7 +2300,7 @@
                 <h2>🔥 Fueguito</h2>
                 <p>Entrá cada día y tocá reclamar. Al llegar a cada hito cobrás el premio.</p>
                 <!-- #348 (owner): la regla ARRIBA, visible desde el día 1 (fire.js pone el mínimo real) -->
-                <p class="fire-rule-top" id="fireRuleTop" style="display:none;">🎯 Cada premio se cobra <b>apostando</b> un monto (rollover) que va subiendo · vuelve a 0 con cada premio</p>
+                <p class="fire-rule-top" id="fireRuleTop" style="display:none;">🎯 Cada premio se cobra con <b>rollover</b>: apostar un monto en la plataforma, que va subiendo. <b>Apostar no es cargar</b>: cuenta lo que jugás, no lo que cargás · vuelve a 0 con cada premio</p>
             </div>
             <div class="fire-details fire-compact">
                 <div class="fire-info-row fire-streak-row">
@@ -2400,7 +2400,7 @@
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b>Invitá con tu link y cobrá cada mes el <b><span class="ref-pct">5</span>%</b> de su actividad, de por vida. <b>Se retira sin apostar</b> (sin rollover).</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
-                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.2-3.3C9.5 9.5 10 11 11 11.5 11 8 12 6 12 3z"/><path d="M8 13.5c-.6 1-1 2-1 3a5 5 0 0 0 10 0c0-1-.4-2-1-3"/></svg></i>Fueguito</b>Reclamá tu fueguito cada día y sumás <b>días de racha</b>; en cada hito hay un <b>premio</b>. Para cobrarlo tenés que haber <b>apostado</b> un monto en la plataforma (rollover) que va subiendo por hito; al cobrar vuelve a 0. El premio se juega <b>×5</b> antes de retirarlo. <button type="button" class="im-link" onclick="hideModal('infoModal'); var b=document.getElementById('fireBtn'); if(b) b.click();">Ver mi racha ›</button></p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.2-3.3C9.5 9.5 10 11 11 11.5 11 8 12 6 12 3z"/><path d="M8 13.5c-.6 1-1 2-1 3a5 5 0 0 0 10 0c0-1-.4-2-1-3"/></svg></i>Fueguito</b>Reclamá tu fueguito cada día y sumás <b>días de racha</b>; en cada hito hay un <b>premio</b>. Para cobrarlo tenés que cumplir un <b>rollover</b> que va subiendo por hito. <b>Rollover = lo que apostás en la plataforma, no lo que cargás</b>: cargar no suma, jugar sí. Al cobrar vuelve a 0. El premio se juega <b>×5</b> antes de retirarlo. <button type="button" class="im-link" onclick="hideModal('infoModal'); var b=document.getElementById('fireBtn'); if(b) b.click();">Ver mi racha ›</button></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec im-missions"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones de la semana</b>
                     <span class="im-line">Metas de carga de <b>lunes a domingo</b>. Cumplís una y el premio <b>se acredita solo</b>.</span>
@@ -2535,7 +2535,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v470</div>
+                    <div class="pf-build" id="appBuildTag">app v471</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2551,7 +2551,7 @@
                 <!-- #645 (owner): el fueguito salió del Perfil (fila oculta; #fireBtn sigue acá porque toda la app lo abre con .click()) -->
                 <div class="pf-act pf-wrap" id="pfFireRow">
                     <button class="pf-ico-btn fire-topbar-btn" id="fireBtn" title="Fueguito — racha diaria, reclamá tu premio cada día">🔥<span id="fireStreak" class="fire-streak-badge">0</span></button>
-                    <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · premios que se cobran apostando</small></span>
+                    <span onclick="var b=document.getElementById('fireBtn'); if(b) b.click();">Fueguito<small>Racha diaria · premios que se cobran con rollover (apostar, no cargar)</small></span>
                 </div>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.home.openChangePassword()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="4.5"/><path d="M11.5 10.5L20 2M16 6l2.5 2.5M13.5 8.5L16 11"/></svg></i><span>Cambiar clave<small>Se cambia en la app y en todas las plataformas</small></span></button>
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');VIP.ui.installApp()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></svg></i><span>Instalar la app<small>Acceso directo en tu teléfono</small></span></button>

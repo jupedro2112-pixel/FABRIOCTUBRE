@@ -15045,7 +15045,7 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
       if (_have === null) return res.status(503).json({ error: 'No pudimos leer tus apuestas en la plataforma. Probá de nuevo en unos minutos.', code: 'STATS_UNAVAILABLE' });
       if (_have < _need) {
         return res.status(400).json({
-          error: `Para cobrar el premio del día ${_pDay} tenés que apostar ${_fmt(_need)} en esta racha (llevás ${_fmt(_have)}). Seguí jugando y volvé a tocar Reclamar. 🔥`,
+          error: `Para cobrar el premio del día ${_pDay} te falta rollover: tenés que apostar ${_fmt(_need)} en esta racha (llevás ${_fmt(_have)}). Rollover es lo que jugás en la plataforma, no lo que cargás. Seguí jugando y volvé a tocar Reclamar. 🔥`,
           code: 'ROLLOVER', have: _have, need: _need
         });
       }
@@ -15147,7 +15147,7 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
     logger.info(`[FIRE_REWARD] claim-reward OK userId=${userId} username=${username} amount=${rewardAmount}`);
 
     const _rolloverMsg = _fireMult > 0
-      ? ` Para poder RETIRARLOS tenés que apostar $${Math.round(rewardAmount * _fireMult).toLocaleString('es-AR')} (rollover x${_fireMult}). ¡Ya podés jugarlos!` +
+      ? ` Para poder RETIRARLOS tenés que cumplir el rollover x${_fireMult}: apostar $${Math.round(rewardAmount * _fireMult).toLocaleString('es-AR')} en la plataforma (apostar, no cargar). ¡Ya podés jugarlos!` +
         (bonusResult.claimRequired ? ' Cuando completes el objetivo, tocá el regalito 🎁 en el casino para liberarlos.' : '')
       : '';
     res.json({
