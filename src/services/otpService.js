@@ -66,11 +66,12 @@ function buildOtpMessage(purpose, code) {
  * @param {string} purpose - 'register' o 'reset'
  * @returns {Promise<{success: boolean, error?: string, smsSent?: boolean}>}
  */
-// #617 (owner): ENTORNO DE PRUEBA sin SMS (Render sin AWS_REGION): el OTP no se puede recibir, así que se acepta el código de prueba
-// 000000 en cualquier verificación (registro, retiro, cambio de clave). En producción (AWS, con SNS) NO aplica nunca.
+// #617 (owner): ENTORNO DE PRUEBA (Render: RENDER=true, o TESTER_ADMIN_PROMOTE=1): además del código real por SMS (si hay SNS),
+// vale el código de prueba 000000 en cualquier verificación (registro, retiro, cambio de clave), para poder probar sin leer el
+// celular. `OTP_TEST_BYPASS=0` lo apaga. En producción (AWS, sin esas variables) NO aplica nunca.
 const OTP_TEST_CODE = '000000';
 function _testOtpBypass() {
-  return !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && !(process.env.AWS_REGION || process.env.AWS_SNS_REGION) && process.env.OTP_TEST_BYPASS !== '0';
+  return !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && process.env.OTP_TEST_BYPASS !== '0';
 }
 async function generateAndSendOTP(phone, purpose) {
   const now = new Date();

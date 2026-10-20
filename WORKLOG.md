@@ -10,9 +10,10 @@
 
 ### 617. 📲 OTP de prueba 000000 en el entorno de test sin SMS
 **Por qué:** probando el retiro de diego651917 contra el casino simulado (#616), el flujo pide el código SMS y en Render no hay AWS SNS
-(`AWS_REGION` ausente) ⇒ imposible recibirlo. Ahora, SOLO con `RENDER`/`TESTER_ADMIN_PROMOTE=1` y SIN `AWS_REGION`/`AWS_SNS_REGION`
-(`OTP_TEST_BYPASS=0` lo apaga), `generateAndSendOTP` responde ok (`testMode:true`, sin SMS) y `verifyOTP` acepta `000000` para
-cualquier propósito (registro, retiro, cambio de clave). En producción con SNS no cambia nada. **Archivo:** `src/services/otpService.js`.
+(`AWS_REGION` ausente) ⇒ imposible recibirlo. Ahora, SOLO con `RENDER`/`TESTER_ADMIN_PROMOTE=1`
+(`OTP_TEST_BYPASS=0` lo apaga), `verifyOTP` acepta `000000` para cualquier propósito (registro, retiro, cambio de clave) ADEMÁS del
+código real; sin SNS, `generateAndSendOTP` responde ok (`testMode:true`). Render SÍ tiene SNS: el SMS real llega y el 000000 también vale.
+En producción (AWS, sin `RENDER`) no cambia nada. **Archivo:** `src/services/otpService.js`.
 
 ### 616. 🎰 CASINO SIMULADO en el entorno de prueba: cargas, retiros, regalos, alta y stats funcionan sin la API real — SW v432
 **Pedido (owner):** "diego651917 poneme en ese usuario para probar la carga tipo test y retiro para ver cómo figura" (y antes: "necesito que
