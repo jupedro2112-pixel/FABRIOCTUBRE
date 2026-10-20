@@ -2533,7 +2533,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v460</div>
+                    <div class="pf-build" id="appBuildTag">app v461</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2735,32 +2735,20 @@
             <!-- #645 (owner): cómo se verifica, paso a paso -->
             <div class="vp-box"><b>Cómo se verifica, paso a paso</b>
                 <ol>
-                    <li>Elegí tu país y escribí tu número con el código de área, sin el 0 ni el 15 (ej.: 11 5555 1234).</li>
-                    <li>Tocá <b>Enviar código</b>: te llega un SMS con un código de 6 dígitos.</li>
-                    <li>Escribí el código y tocá <b>Confirmar</b>. Listo: tu número queda verificado.</li>
+                    <li>El <b>+54 9</b> ya está puesto: es fijo para celulares de Argentina.</li>
+                    <li>Completá con tu <b>código de área sin el 0</b> y después tu <b>número</b>. Ej.: 11 5555 1234 (CABA y GBA) · 351 555 1234 (Córdoba).</li>
+                    <li>Tocá <b>Enviar código</b>: te llega un SMS con 6 dígitos. Escribilo y tocá <b>Confirmar</b>.</li>
                 </ol>
-                <small>Es obligatorio para retirar y sirve para recuperar tu cuenta si olvidás la contraseña.</small>
+                <small>Formato: +54 + 9 + código de área (sin el 0) + número local. Es obligatorio para retirar.</small>
             </div>
 
             <!-- Paso 1: ingresar teléfono -->
             <div id="verifyPhoneStep1">
                 <div class="input-group">
-                    <label>Número de Teléfono *</label>
+                    <label>Tu celular: código de área (sin el 0) + número</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <select id="verifyPhonePrefix" style="flex-shrink:0; width: 110px; padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.3); background: rgba(0,0,0,0.4); color: #fff; font-size: 14px;">
-                            <option value="+54">🇦🇷 +54</option>
-                            <option value="+591">🇧🇴 +591</option>
-                            <option value="+55">🇧🇷 +55</option>
-                            <option value="+56">🇨🇱 +56</option>
-                            <option value="+57">🇨🇴 +57</option>
-                            <option value="+593">🇪🇨 +593</option>
-                            <option value="+52">🇲🇽 +52</option>
-                            <option value="+595">🇵🇾 +595</option>
-                            <option value="+51">🇵🇪 +51</option>
-                            <option value="+598">🇺🇾 +598</option>
-                            <option value="+58">🇻🇪 +58</option>
-                        </select>
-                        <input type="tel" id="verifyPhoneInput" placeholder="9 11 1234-5678" style="flex: 1;">
+                        <input type="hidden" id="verifyPhonePrefix" value="+549"><span class="vp-prefix">+54 9</span>
+                        <input type="tel" id="verifyPhoneInput" placeholder="11 5555 1234" inputmode="numeric" style="flex: 1;">
                     </div>
                 </div>
                 <div id="verifyPhoneError" class="error-message"></div>
@@ -2841,7 +2829,7 @@
             <!-- Paso 1: Ingresar teléfono -->
             <div id="resetStep1">
                 <div class="input-group">
-                    <label>Número de Teléfono *</label>
+                    <label>Tu celular: código de área (sin el 0) + número</label>
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select id="resetPhonePrefix" style="flex-shrink:0; width: 110px; padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.3); background: rgba(0,0,0,0.4); color: #fff; font-size: 14px;">
                             <option value="+54">🇦🇷 +54</option>

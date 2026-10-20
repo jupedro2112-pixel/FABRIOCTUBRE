@@ -1936,3 +1936,5 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 .pf-imp { display: inline-block; margin-left: 6px; background: var(--p-red); color: #fff; font: 900 8.5px/1 var(--p-font); letter-spacing: .4px; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; font-style: normal; vertical-align: middle; }
 .pf-imp[hidden] { display: none !important; }
 .story-viewer .st-head .st-logo { display: none !important; }
+/* #647: prefijo fijo +54 9 en la verificación */
+.vp-prefix { flex: 0 0 auto; display: inline-flex; align-items: center; height: 42px; padding: 0 12px; border-radius: 10px; background: var(--p-surface); color: var(--p-text); font: 900 15px var(--p-font); border: 1px solid var(--p-border); }

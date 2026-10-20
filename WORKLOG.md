@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 647. 📱 Verificación por SMS con el +54 9 FIJO y explicación clara; historias con links verificar/soporte habilitados — SW v461
+**Pedidos (owner):** "en la verificación de SMS poné fijo el 549 y abajo aclará poner el prefijo de tu localidad; resumilo y explicalo
+bien" · "+54 + 9 + código de área (sin el 0) + número local: el 549 va fijo, el resto se completa; explicalo bien sin dar info de más".
+El selector de país se reemplazó por una etiqueta fija "+54 9" (input oculto `#verifyPhonePrefix=+549`, auth.js sigue igual); el campo
+dice "código de área (sin el 0) + número" (ej. 11 5555 1234); auth.js saca un 0 inicial o un 9 repetido. La caja `.vp-box` explica los 3
+pasos y el formato. **Historias:** el server ahora acepta `app:verificar` y `app:soporte` (las de SMS y Soporte habían rebotado al
+publicar); se republicaron las 7 en orden (el cliente las ve por `publishedAt` ascendente: la de SMS primero, Telegram última).
+**Archivos:** `server.js`, `public/index.html`, `public/js/auth.js`, `public/css/pin.css`, SW.
+
 ### 646. 📽️ Historias nuevas (7, con la pica de la marca) + verificación de teléfono ARRIBA del Perfil como Importante — SW v460
 **Pedidos (owner):** "en las historias borrá todas y poné primera una que explique la verificación por SMS (seguridad para vos y para
 todos, verificá tu teléfono para poder retirar) con un botón que lleve a la sección nueva del Perfil; sacá el logo de arriba, que se vea

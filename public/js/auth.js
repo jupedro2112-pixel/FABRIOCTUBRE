@@ -1594,7 +1594,10 @@ VIP.auth = (function () {
             return;
         }
 
-        const fullPhone = prefix + number.replace(/[\s\-().]/g, '');
+        // #647 (owner): el +54 9 va fijo; si la persona escribe el 0 del área o repite el 9, se sacan solos.
+        let digits = number.replace(/[\s\-().]/g, '');
+        if (prefix === '+549') digits = digits.replace(/^0+/, '').replace(/^9(?=\d{9,})/, '');
+        const fullPhone = prefix + digits;
         if (btn) { btn.textContent = 'Enviando...'; btn.disabled = true; }
 
         try {
