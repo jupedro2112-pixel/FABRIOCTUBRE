@@ -513,6 +513,12 @@ VIP.ui = (function () {
             '<button onclick="VIP.ui.shareReferralLink()" style="width:100%;margin-top:9px;background:var(--p-red);color:#fff;border:none;border-radius:10px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;">🔗 INVITAR A TUS AMIGOS</button>' +
             '<div style="font-size:10px;color:var(--p-muted);margin-top:6px;text-align:center;">Tu amigo entra por el link, se registra y queda vinculado a vos para siempre. Código: <b style="color:var(--p-red);letter-spacing:1px;">' + _esc(d.referralCode || '') + '</b></div>' +
             '</div>';
+        // #651 (owner): botón grande con lo ACUMULADO del mes; se desbloquea y acredita solo el 1° (pago automático de referidos)
+        html += '<button type="button" class="ref-acc-btn" onclick="VIP.ui.toggleReferralNetLossInfo()">' +
+            '<span class="ra-k">💰 Tu comisión acumulada este mes</span>' +
+            '<span class="ra-v">' + _refMoney(t.commissionMonth) + '</span>' +
+            '<span class="ra-s">Se desbloquea y se acredita sola en tu saldo · ' + _esc(per.nextCredit || 'el 1° del mes que viene') + '</span>' +
+            '</button>';
         // Tiles
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
             '<div class="ref-modal-tile" style="border-color:var(--p-green-soft);"><span class="v" style="color:var(--p-green);">👥 ' + (tiersOn ? (lv.active || 0) : (t.active || 0)) + '</span><span class="l">Referidos activos<br><span style="color:var(--p-muted);">(' + (tiersOn ? 'cargaron al menos ' + _refMoney(lv.minChargedARS) : 'los que cargaron') + ')</span></span></div>' +
@@ -655,30 +661,30 @@ VIP.ui = (function () {
         const old = document.getElementById('referralShareChooser'); if (old) old.remove();
         const ov = document.createElement('div');
         ov.id = 'referralShareChooser';
-        ov.style.cssText = 'position:fixed;inset:0;background:var(--p-surface-2);backdrop-filter:blur(3px);z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:14px;'; // #317: arriba del casino y del hub PREMIOS
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);z-index:2147483200;display:flex;align-items:center;justify-content:center;padding:14px;'; // #317: arriba del casino y del hub PREMIOS
         ov.onclick = (e) => { if (e.target === ov) ov.remove(); };
         const enc = encodeURIComponent(text);
         const WA = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>';
         const TG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>';
         const item = (bg, icon, title, sub, onclick) =>
-            '<button onclick="' + onclick + '" style="width:100%;display:flex;align-items:center;gap:12px;background:var(--p-surface);border:1px solid var(--p-surface);border-radius:12px;padding:10px 12px;cursor:pointer;margin-top:8px;text-align:left;color:var(--p-text);transition:background .15s;" onmouseover="this.style.background=\'var(--p-surface)\'" onmouseout="this.style.background=\'var(--p-surface)\'">' +
-            '<span style="flex-shrink:0;width:42px;height:42px;border-radius:12px;background:' + bg + ';display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px var(--p-surface-2);">' + icon + '</span>' +
-            '<span style="flex:1;min-width:0;"><span style="display:block;font-weight:800;font-size:14px;">' + title + '</span><span style="display:block;font-size:11px;color:#aab;line-height:1.3;">' + sub + '</span></span>' +
+            '<button onclick="' + onclick + '" style="width:100%;display:flex;align-items:center;gap:12px;background:var(--p-surface);border:1px solid var(--p-border);border-radius:14px;padding:10px 12px;cursor:pointer;margin-top:8px;text-align:left;color:var(--p-text);transition:background .15s;" onmouseover="this.style.background=\'var(--p-surface)\'" onmouseout="this.style.background=\'var(--p-surface)\'">' +
+            '<span style="flex-shrink:0;width:42px;height:42px;border-radius:12px;background:' + bg + ';display:flex;align-items:center;justify-content:center;box-shadow:none;">' + icon + '</span>' +
+            '<span style="flex:1;min-width:0;"><span style="display:block;font-weight:800;font-size:14px;">' + title + '</span><span style="display:block;font-size:11px;color:var(--p-muted);line-height:1.3;">' + sub + '</span></span>' +
             '<span style="color:var(--p-muted);font-size:18px;">›</span></button>';
-        ov.innerHTML = '<div style="background:#14062b;border:1px solid var(--p-red-soft);border-radius:18px;padding:16px;max-width:420px;width:100%;color:var(--p-text);box-shadow:0 20px 60px var(--p-surface-2);">' +
+        ov.innerHTML = '<div style="background:var(--p-card);border:1px solid var(--p-border);border-radius:22px;padding:16px;max-width:420px;width:100%;color:var(--p-text);box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:var(--p-font);">' /* #651: estilo de la app */ +
             '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">' +
             '<span style="flex-shrink:0;width:40px;height:40px;border-radius:12px;background:var(--p-red);display:flex;align-items:center;justify-content:center;font-size:20px;">🔗</span>' +
             '<div style="flex:1;min-width:0;"><div style="font-weight:900;font-size:16px;letter-spacing:.2px;">Invitá a tus amigos</div>' +
-            '<div style="font-size:12px;color:#aab;margin-top:2px;">Cobrás hasta el <b style="color:var(--p-red);">' + pct + '</b> de comisión por la actividad de tus amigos: cuantos más activos, mayor tu %.</div></div>' +
-            '<button onclick="document.getElementById(\'referralShareChooser\').remove()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--p-surface);border:1px solid var(--p-surface);color:var(--p-muted);font-size:16px;cursor:pointer;">✕</button></div>' +
-            '<div style="background:var(--p-surface-2);border:1px dashed var(--p-red-soft);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;">' +
-            '<span style="flex:1;min-width:0;font-size:11.5px;color:#9ff2c7;word-break:break-all;font-family:ui-monospace,Menlo,monospace;">' + _esc(link) + '</span>' +
+            '<div style="font-size:12px;color:var(--p-muted);margin-top:2px;">Cobrás hasta el <b style="color:var(--p-red);">' + pct + '</b> de comisión por la actividad de tus amigos: cuantos más activos, mayor tu %.</div></div>' +
+            '<button onclick="document.getElementById(\'referralShareChooser\').remove()" aria-label="Cerrar" style="flex-shrink:0;width:32px;height:32px;border-radius:50%;background:var(--p-surface);border:1px solid var(--p-border);color:var(--p-text);font-size:16px;cursor:pointer;">✕</button></div>' +
+            '<div style="background:var(--p-surface);border:1px dashed var(--p-border-hi, var(--p-border));border-radius:12px;padding:9px 11px;display:flex;align-items:center;gap:8px;">' +
+            '<span style="flex:1;min-width:0;font-size:11.5px;color:var(--p-text);font-weight:700;word-break:break-all;">' + _esc(link) + '</span>' +
             '<span style="flex-shrink:0;font-size:10.5px;font-weight:800;color:' + (copied ? 'var(--p-green)' : 'var(--p-red)') + ';white-space:nowrap;">' + (copied ? '✓ Copiado' : '') + '</span></div>' +
-            '<div style="font-size:10.5px;color:#778;margin:10px 0 2px;text-transform:uppercase;letter-spacing:1px;font-weight:800;">Enviar por</div>' +
+            '<div style="font-size:10.5px;color:var(--p-muted);margin:10px 0 2px;text-transform:uppercase;letter-spacing:1px;font-weight:800;">Enviar por</div>' +
             item('#25d366', WA, 'WhatsApp', 'Se abre con el mensaje y tu link listos', 'window.open(\'https://wa.me/?text=' + enc + '\',\'_blank\')') +
             item('#229ed9', TG, 'Telegram', 'Elegí el chat o grupo donde compartirlo', 'window.open(\'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text.replace(link, '').trim()) + '\',\'_blank\')') +
             (navigator.share ? item('linear-gradient(135deg,#7c3aed,#4f46e5)', '<span style="font-size:20px;">📤</span>', 'Otras apps', 'Instagram, SMS, Messenger, correo…', 'VIP.ui.shareReferralNative()') : '') +
-            item('var(--p-red-soft)', '<span style="font-size:20px;">📋</span>', 'Copiar el link', 'Para pegarlo donde quieras', 'VIP.ui.copyReferralLink()') +
+            item('var(--p-red)', '<span style="font-size:20px;">📋</span>', 'Copiar el link', 'Para pegarlo donde quieras', 'VIP.ui.copyReferralLink()') +
             '</div>';
         document.body.appendChild(ov);
     }

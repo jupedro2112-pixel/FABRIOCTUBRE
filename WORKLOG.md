@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 651. 🤝 Referidos: botón con lo ACUMULADO (se desbloquea solo el 1°) y cartel "Invitá a tus amigos" con el estilo de la app — SW v464
+**Pedidos (owner):** "en Referidos mostrá un botón de cuánto tiene acumulado y que el 1° se desbloquea desde ahí mismo de forma automática"
+· "[cartel oscuro de compartir] este formato ponelo igual al de la página, se ve diferente". En `renderReferralModal` (ui.js) va arriba
+de las tarjetas el botón rojo `.ref-acc-btn`: "Tu comisión acumulada este mes · $X · Se desbloquea y se acredita sola en tu saldo · El 1°
+de {mes}" (`totals.commissionMonth` + `period.nextCredit` del tablero; el pago lo hace solo `_runMonthlyReferralPayout` #529). El chooser
+de compartir (`shareReferralLink`) dejó los colores fijos del tema viejo (#14062b, #aab, #9ff2c7…) por los tokens `--p-*` (tarjeta blanca,
+bordes, muted, link en negro, "Copiar el link" en rojo). **Archivos:** `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 650. 🤝 Referidos: NOVEDAD "los que referís antes de diciembre te dejan el 5% para siempre" — SW v463
 **Pedido (owner):** "[captura del aviso en Referidos] los que referís antes de diciembre vas a tener el 5% para siempre". El `.ref-news`
 del modal de referidos (index.html) ahora dice: "Los que referís antes de diciembre te dejan el {pct}% para siempre. Desde diciembre, los

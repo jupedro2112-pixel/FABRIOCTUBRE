@@ -1944,3 +1944,8 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 #vpHelpBody { background: var(--p-surface); border-radius: 12px; padding: 10px; margin-top: 6px; }
 #vpArea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); font: 700 13px var(--p-font); }
 .vp-help-hint { margin-top: 8px; font: 600 12px/1.4 var(--p-font); color: var(--p-text); } .vp-help-hint:empty { display: none; }
+/* ===== #651 (owner 2026-10-20): Referidos — botón de lo acumulado (se desbloquea solo el 1°); el cartel de compartir ya va con los tokens ===== */
+.ref-acc-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--p-red); color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(230, 0, 35, .25); font-family: var(--p-font); }
+.ref-acc-btn .ra-k { font: 800 12px var(--p-font); opacity: .92; }
+.ref-acc-btn .ra-v { font: 900 30px/1.1 var(--p-font); letter-spacing: -.5px; }
+.ref-acc-btn .ra-s { font: 700 10.5px var(--p-font); opacity: .9; text-align: center; }
