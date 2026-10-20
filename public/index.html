@@ -1231,6 +1231,9 @@
             <div id="basicView" class="basic-view" aria-label="Menú básico">
                 <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
                 <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas"><span class="bv-new">Novedad</span>🔥 Fueguito <b><span id="bvFireN">0</span> d</b></button></div>
+                <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
+                <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
+                <div class="bv-plats" id="basicPlats"></div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
                 <button type="button" class="bv-btn bv-load" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
@@ -1254,8 +1257,6 @@
                     </ol>
                     <button type="button" class="bv-action bv-action-wd" onclick="VIP.withdraw.openWithdrawModal()">💸 Retirar ahora</button>
                 </div>
-                <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
-                <div class="bv-plats" id="basicPlats"></div>
                 <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
                 <!-- #524 (owner): accesos rápidos debajo de "Entrar a jugar", en el orden del Inicio -->
                 <div class="bv-quick">
@@ -2518,7 +2519,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v455</div>
+                    <div class="pf-build" id="appBuildTag">app v456</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

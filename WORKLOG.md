@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 642. ▭ Básico: "¿Dónde jugás?" y los chips de plataforma suben arriba de CARGAR — SW v456
+**Pedido (owner):** "cambiá Dónde jugás: subilo en el simple y poné las plataformas de elegir arriba de Cargar". Sólo se movió el bloque
+`.bv-plats-h` + `#basicPlats` (Entrar a jugar queda donde estaba, debajo de RETIRAR). **Archivos:** `public/index.html`, SW.
+
 ### 641. ⚡ "CARGÁ AHORA" grande arriba del Inicio · Info resumido con "Ver más" / "Minimizar" — SW v455
 **Pedidos (owner):** "[el botón rojo 'Para cargar ahora mismo' del carrusel] subilo, ponelo más en grande, debajo del menú superior y arriba
 del nivel VIP, centrado" · "todo lo de la Info ponelo resumido y que se pueda poner Ver más; que muestre lo primero y después Ver más, y
