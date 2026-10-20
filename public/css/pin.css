@@ -1961,3 +1961,6 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 .vp-step { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 7px; font: 500 12.5px/1.4 var(--p-font); color: var(--p-text); }
 .vp-step i { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--p-red); color: #fff; font: 900 12px/22px var(--p-font); text-align: center; font-style: normal; }
 .vp-step b { font-weight: 800; }
+/* #659: niveles VIP — Ver menos / Cerrar en dos recuadros */
+.vl-actions { display: flex; gap: 8px; } .vl-actions .btn { flex: 1 1 0; }
+#vipLevelsList.vl-less .vl-row:not(.on):not(.next) { display: none !important; }

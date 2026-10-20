@@ -29,6 +29,20 @@ ese día hasta el reinicio, porque las stats son por día); el cobro lee las sta
 unos minutos" (nunca se pierde el premio ni se cobra sin verificar). **Archivos:** `server.js`, `src/models/FireStreak.js`,
 `public/js/fire.js`, `public/js/home.js`, `public/adminprivado2026/{index.html,admin.js}`, SWs.
 
+### 659. 🎯 ROLLOVER ×5 en TODOS los regalos (menos referidos), explicado en Info y en las fotos; rakeback explicado; VIP con Ver menos/Cerrar — SW v469
+**Pedidos (owner):** "subí las fotos con el rollover explicado en cada sección: misiones, reembolsos, fueguito, ruleta, hasta el bono de
+bienvenida, ×5; explicá en todos lados, Info y fotos, y dejalo ajustado así en el admin" · "excepto referidos, que se pueda retirar sin
+apostar, explicalo también" · "donde dice rakeback poné entre paréntesis el significado" · "[foto SMS] está mal; [Telegram] armala más
+premium; borrá y publicá todo detallando el rollover ×5 en chico en cada foto" · "[niveles VIP] poné Cerrar y Ver menos en dos recuadros".
+**Backend:** los REEMBOLSOS (diario/semanal/mensual) se acreditan ahora con `multiplier = _giftRolloverX()` (antes ×0, retirables al
+instante); también el bono de nivel VIP y el rakeback. El rollover global (`POST /api/admin/strategy/rollover`) además fija el del
+reembolso acumulativo. Referidos siguen ×0. En Render: rollover global = 5 y reembolso acumulativo 5. **Info:** Por qué elegirnos,
+Reembolsos, Fueguito, Niveles VIP ("rakeback = te devolvemos un % de lo que apostaste", bonos ×5), Referidos ("se retira sin apostar"),
+aviso de 1ª carga (bono ×5), modal de niveles. **Fotos:** `st2-1..7.png` (tilde del SMS fuera del código; Telegram con tarjeta negra y
+dorado; nota chica "se juega ×5 (rollover) para retirarlo" en Cargá/Reembolsos/Ruleta/Misiones/Telegram y "se retiran sin apostar" en
+Referidos); borradas y republicadas en orden. **Niveles VIP:** botones "Ver menos" (deja alcanzados + próximo) y "Cerrar".
+**Archivos:** `server.js`, `public/index.html`, `public/js/home.js`, `public/css/pin.css`, `public/images/stories/st2-*.png`, `CLAUDE.md`, SW.
+
 ### 658. 🔥🎰 Rollover del fueguito ×3 (150k · 300k · 600k · 900k en Render; default 30× el premio) y "×5" de la ruleta en Info e historia — SW v468
 **Pedido (owner):** "configurá ×3 el rollover que pusiste (de 50.000 a 150.000 y así el resto), y el rollover de la ruleta diaria poné
 que todo es ×5 en la información de las historias y de la Info, así la gente no se queja". Config de Render actualizada por API

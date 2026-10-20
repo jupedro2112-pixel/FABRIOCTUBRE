@@ -8494,7 +8494,7 @@ app.post('/api/refunds/claim/daily', authMiddleware, async (req, res) => {
         throw e;
       }
 
-      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId));
+      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId), { multiplier: await _giftRolloverX(), description: 'Reembolso ' + _refundPeriodKey }); // #659 (owner): los reembolsos se juegan ×N (rollover global) antes de retirarse
       if (!depositResult.success) {
         await RefundClaim.deleteOne({ id: _refundClaimId }).catch(() => {});
         return res.json({ success: false, message: 'Error al acreditar el reembolso: ' + depositResult.error, canClaim: true });
@@ -8641,7 +8641,7 @@ app.post('/api/refunds/claim/weekly', authMiddleware, async (req, res) => {
         throw e;
       }
 
-      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId));
+      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId), { multiplier: await _giftRolloverX(), description: 'Reembolso ' + _refundPeriodKey }); // #659 (owner): los reembolsos se juegan ×N (rollover global) antes de retirarse
 
       if (!depositResult.success) {
         // No se pudo acreditar → liberar la reserva para permitir reintentar.
@@ -8807,7 +8807,7 @@ app.post('/api/refunds/claim/monthly', authMiddleware, async (req, res) => {
         throw e;
       }
 
-      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId));
+      const depositResult = await girox.creditUserBalance(username, refundAmount, _refundReference(_refundPeriodKey, userId), { multiplier: await _giftRolloverX(), description: 'Reembolso ' + _refundPeriodKey }); // #659 (owner): los reembolsos se juegan ×N (rollover global) antes de retirarse
 
       if (!depositResult.success) {
         // No se pudo acreditar → liberar la reserva para permitir reintentar.
@@ -9343,7 +9343,7 @@ app.post('/api/vip/level-bonus/claim', authMiddleware, authLimiter, async (req, 
     if (!(user.vipPendingLevelBonuses || []).includes(idx)) return res.status(409).json({ error: 'Ese bono ya fue reclamado.', code: 'NOT_PENDING' });
     const adapter = platforms.getAdapter(pid) || girox;
     const ref = `vip-lvl-${user.id}-${idx}`;
-    const r = await adapter.creditUserBalance(user.username, level.levelUpBonusArs, ref, { description: `Bono por alcanzar el nivel VIP ${level.name}` });
+    const r = await adapter.creditUserBalance(user.username, level.levelUpBonusArs, ref, { multiplier: await _giftRolloverX(), description: `Bono por alcanzar el nivel VIP ${level.name}` }); // #659: rollover global
     if (!r || !r.success) {
       logger.warn(`[vip] reclamo nivel ${level.name} de ${user.username} en ${pid} falló: ${(r && r.error) || 's/detalle'}`);
       return res.status(502).json({ error: 'No pudimos acreditar el bono ahora. Probá en unos minutos.' });
@@ -9413,6 +9413,7 @@ app.post('/api/vip/rakeback/claim', authMiddleware, async (req, res) => {
       }
 
       const depositResult = await girox.creditUserBalance(username, amount, _rakebackReference(week.fromDateStr, userId), {
+        multiplier: await _giftRolloverX(), // #659: rollover global
         description: `Rakeback semanal VIP (${week.fromDateStr} a ${week.toDateStr})`
       });
 
@@ -19956,6 +19957,7 @@ app.post('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async 
     await Config.set('bonusRolloverX', x, by); await Config.set('fireRolloverMultiplier', x, by); await Config.set('communityWelcomeRolloverX', x, by);
     const cur = await getStrategyConfig(); cur.missions.antiFraud.rolloverX = x; await Config.set('strategyClientes', cur, by);
     try { const rc = await getDailyRouletteConfig(); if (rc && rc.prizes) { rc.prizes = rc.prizes.map((p) => (p.type === 'cash' ? Object.assign({}, p, { rolloverX: x }) : p)); await Config.set('dailyRoulette', rc, by); } } catch (_) {}
+    try { const ic = Object.assign({}, INSTANT_CASHBACK_DEFAULT, (await getConfig('instantCashback', null)) || {}, { rolloverX: x }); await Config.set('instantCashback', ic, by); } catch (_) {} // #659: reembolso acumulativo también
     logger.info(`[anti-estafa] rollover global ×${x} por ${by}`);
     res.json({ success: true, x });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
