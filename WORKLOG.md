@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 616. 🎰 CASINO SIMULADO en el entorno de prueba: cargas, retiros, regalos, alta y stats funcionan sin la API real — SW v432
+**Pedido (owner):** "diego651917 poneme en ese usuario para probar la carga tipo test y retiro para ver cómo figura" (y antes: "necesito que
+en el test funcione todo como el real"). Nuevo `src/services/giroxSimulator.js`: responde las rutas de la Partner API que usa
+`giroxService._request` (alta, GET jugador, validate, password, session, deposit, withdraw, bonus, bonus/claim, stats, stats/batch, config)
+con JSON de la misma forma; jugadores y saldos en `Config['giroxSimState']`; idempotencia por `reference` (duplicate:true). Se activa SOLO
+con `RENDER` / `TESTER_ADMIN_PROMOTE=1` y SIN credenciales reales (`GIROX_SIMULATE=0` apaga, `=1` fuerza); con API real se apaga solo.
+`isEnabled()` incluye el simulador ⇒ Girox figura conectada, la landing crea cuentas, el panel carga, el cliente retira. Panel/API:
+`GET/POST /api/admin/girox-sim` (lista, `{username, netwin, wagered, balance}` para probar reembolsos y referidos, `{reset:true}`);
+`/api/admin/girox/credentials` devuelve `simulated:true` y `source:'simulado'`. `diego651917` sumado a `TESTER_USERNAMES`.
+**Archivos:** `src/services/giroxSimulator.js`, `src/services/giroxService.js`, `server.js`, `public/js/home.js`, SW.
+
 ### 615. 📖 HISTORIAS tipo Instagram: visor de un solo bloque, foto completa sin recortes, botón abajo y nada tapa el texto; artes re-encuadradas (ig-1…ig-6) — SW v431
 **Pedido (owner):** "las historias quiero que se vean tipo Instagram, se ven mal así; armala mejor, borrá todo y subí, que no sea diferente a
 lo normal y que no se tape el texto". Se ELIMINARON todas las capas superpuestas del visor en `pin.css` (#452/#453/#454/#455/#556/#582/

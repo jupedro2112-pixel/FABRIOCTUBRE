@@ -70,9 +70,15 @@ function setCredentialsOverride(o) {
   _credOverride = { baseUrl: o && o.baseUrl ? String(o.baseUrl).trim().replace(/\/+$/, '') : null, apiKey: o && o.apiKey ? String(o.apiKey).trim() : null };
   try { _invalidatePlayer && _invalidatePlayer(); } catch (_) {}
 }
+// #616: CASINO SIMULADO del entorno de prueba (src/services/giroxSimulator.js). Sólo con RENDER / TESTER_ADMIN_PROMOTE y SIN
+// credenciales reales; con una API cargada se apaga solo. Reemplaza únicamente el viaje HTTP de `_request`.
+const _sim = require('./giroxSimulator');
+function _hasRealCredentials() { return !!((_credOverride.apiKey && _credOverride.baseUrl) || (process.env.GIROX_API_KEY && process.env.GIROX_API_URL)); }
+function isSimulated() { return _sim.active({ hasRealCredentials: _hasRealCredentials() }); }
 function getCredentialsSource() {
   if (_credOverride.apiKey && _credOverride.baseUrl) return 'panel';
   if (process.env.GIROX_API_KEY && process.env.GIROX_API_URL) return 'env';
+  if (isSimulated()) return 'simulado';
   return 'none';
 }
 function getBaseUrl() {
@@ -192,7 +198,7 @@ function getPlayUrl() {
 }
 /** true si el cliente está configurado y puede operar. */
 function isEnabled() {
-  return !!(getBaseUrl() && getApiKey());
+  return !!(getBaseUrl() && getApiKey()) || isSimulated(); // #616
 }
 
 const TIMEOUT_MS = Number(process.env.GIROX_TIMEOUT_MS || 20000);
@@ -367,6 +373,11 @@ async function _request({ method, path, body, label, retryable = true, username 
   if (!isEnabled()) {
     logger.error('[girox] GIROX_API_URL / GIROX_API_KEY no configurados');
     return { ok: false, error: 'La plataforma no está configurada. Avisale al soporte.', code: 'not_configured', httpStatus: null };
+  }
+  if (isSimulated()) { // #616: entorno de prueba sin API ⇒ casino simulado (misma forma de respuesta)
+    const r = await _sim.handle({ method, path, body, playUrl: getPlayUrl() });
+    if (!r.ok) logger.warn(`[girox-sim] ${label}: ${r.code}`);
+    return r;
   }
 
   // Se resuelve UNA vez (no por reintento): la key del dueño no cambia en medio.
@@ -1544,6 +1555,7 @@ async function claimPendingBonus(username, requirementId = null) {
 }
 
 module.exports = {
+  isSimulated, // #616
   // config
   isEnabled,
   getPlayUrl,

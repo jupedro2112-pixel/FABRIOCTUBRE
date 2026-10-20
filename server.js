@@ -18884,13 +18884,29 @@ app.delete('/api/admin/hgcash/credentials', authMiddleware, adminMiddleware, asy
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // #310 API de 1girox desde el panel (Base URL + API key) — solo admin general.
+// #616: CASINO SIMULADO (sólo entorno de prueba sin API real): ver / ajustar jugadores simulados (netwin para reembolsos y referidos,
+// saldo) y reiniciar. En producción con API real responde 404.
+app.get('/api/admin/girox-sim', authMiddleware, adminMiddleware, async (req, res) => {
+  if (!girox.isSimulated()) return res.status(404).json({ error: 'El casino simulado no está activo (hay API real o no es entorno de prueba).' });
+  const giroxSim = require('./src/services/giroxSimulator');
+  res.json({ success: true, simulated: true, players: await giroxSim.listPlayers() });
+});
+app.post('/api/admin/girox-sim', authMiddleware, adminMiddleware, async (req, res) => {
+  if (!girox.isSimulated()) return res.status(404).json({ error: 'El casino simulado no está activo.' });
+  const giroxSim = require('./src/services/giroxSimulator');
+  const b = req.body || {};
+  if (b.reset === true) { await giroxSim.reset(); return res.json({ success: true, reset: true }); }
+  if (!b.username) return res.status(400).json({ error: 'Falta username' });
+  const p = await giroxSim.adjustPlayer(String(b.username), { netwin: b.netwin, wagered: b.wagered, balance: b.balance });
+  res.json({ success: true, player: p });
+});
 app.get('/api/admin/girox/credentials', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     await _loadGiroxCredentials();
     const m = _giroxCredMeta || {};
     res.json({
-      source: girox.getCredentialsSource(), enabled: girox.isEnabled(),
+      source: girox.getCredentialsSource(), enabled: girox.isEnabled(), simulated: girox.isSimulated(), // #616
       baseUrl: girox.getBaseUrl() || null, panelBaseUrl: m.baseUrl || null, keyLast4: m.keyLast4 || null,
       updatedBy: m.updatedBy || null, updatedAt: m.updatedAt || null, decryptError: !!m.decryptError,
       envUrl: !!process.env.GIROX_API_URL, envKey: !!process.env.GIROX_API_KEY
