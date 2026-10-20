@@ -1949,3 +1949,15 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 .ref-acc-btn .ra-k { font: 800 12px var(--p-font); opacity: .92; }
 .ref-acc-btn .ra-v { font: 900 30px/1.1 var(--p-font); letter-spacing: -.5px; }
 .ref-acc-btn .ra-s { font: 700 10.5px var(--p-font); opacity: .9; text-align: center; }
+/* #655: mantener apretado = pausa (sin selección ni callout de iOS) */
+.story-viewer, .story-viewer .st-tap, .story-viewer .st-media img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.story-viewer .st-tap { touch-action: none !important; }
+/* #656: explicación del SMS prolija (pasos separados, formato visual) */
+.vp-box > b { font-size: 13px; margin-bottom: 8px; }
+.vp-fmt { display: flex; align-items: stretch; gap: 6px; margin: 0 0 10px; }
+.vp-fmt > span { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 7px 4px; border-radius: 10px; background: var(--p-card); border: 1px solid var(--p-border); font: 800 11.5px var(--p-font); color: var(--p-text); text-align: center; }
+.vp-fmt > span small { font: 600 9.5px var(--p-font); color: var(--p-muted); }
+.vp-fmt > .vp-fmt-k { flex: 0 0 auto; padding: 7px 12px; background: var(--p-red); border-color: var(--p-red); color: #fff; font-size: 14px; }
+.vp-step { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 7px; font: 500 12.5px/1.4 var(--p-font); color: var(--p-text); }
+.vp-step i { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; background: var(--p-red); color: #fff; font: 900 12px/22px var(--p-font); text-align: center; font-style: normal; }
+.vp-step b { font-weight: 800; }

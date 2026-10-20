@@ -64,6 +64,16 @@ const fireStreakSchema = new mongoose.Schema({
   pendingCashRewardDate: {
     type: String,
     default: ''
+  },
+  // #654: inicio del tramo de rollover (vuelve a "ahora" al cobrar un premio, al pasar al hito siguiente o al reiniciar la racha)
+  rolloverSince: {
+    type: Date,
+    default: null
+  },
+  // #654: lo ya apostado el día del reinicio (las stats son por día): se descuenta para que el contador arranque en 0
+  rolloverBase: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true

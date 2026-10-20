@@ -658,7 +658,9 @@
         const _reqA = Number(st && st.nextReqAmount) || 0, _reqD = Number(st && st.nextReqDays) || 0, _reqH = Number(st && st.nextReqHave) || 0, _reqDay = Number(st && st.nextReqDay) || 0;
         if (rule && st) {
             const min = Number(st.minDeposits) || 0;
-            if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas</b> entre racha y racha · si no, vuelve a 0'; rule.style.display = ''; } // #354: una sola línea
+            const _rN = Number(st.rolloverNeed) || 0, _rH = Number(st.rolloverHave) || 0, _rD = Number(st.rolloverForDay) || 0; // #654
+            if (_rN > 0) { rule.innerHTML = '🎯 Premio del día ' + _rD + ': apostá <b>' + _fmtA(_rN) + '</b> · llevás <b>' + _fmtA(_rH) + '</b> · vuelve a 0 con cada premio'; rule.style.display = ''; }
+            else if (min > 0) { rule.innerHTML = '⚠️ Mínimo <b>' + min + ' cargas</b> entre racha y racha · si no, vuelve a 0'; rule.style.display = ''; } // #354: una sola línea
             else if (_reqA > 0) { rule.innerHTML = '⚠️ Premio del día ' + _reqDay + ': cargá <b>' + _fmtA(_reqA) + '</b> en ' + _reqD + ' días · llevás <b>' + _fmtA(_reqH) + '</b> · si no, vuelve a 0'; rule.style.display = ''; }
             else rule.style.display = 'none';
         }

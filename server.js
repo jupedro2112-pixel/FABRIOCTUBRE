@@ -14687,11 +14687,14 @@ async function _countRealDepositsDays(userId, username, days) {
 // #346 (owner 2026-10-17): premios ×5 ("subí los premios un 500%"): 10k→50k · 50k→250k · 200k→1M. Editables en el panel.
 // #411 (owner 2026-10-18, captura del panel): tabla vigente — premio chico con requisito de MONTO cargado en N días (#405).
 // Guardada también en Config['fireMilestones'] vía API; este default sólo aplica si la base no tiene config. Panel manda.
+// #654 (owner 2026-10-20): el requisito de cada premio es ROLLOVER (monto APOSTADO en la plataforma desde que empezó este tramo de
+// racha), que va escalando por hito; el contador vuelve a 0 al cobrar un premio o al pasar al hito siguiente. Las columnas de cargas
+// (requireDeposits/depositDays) quedaron sin efecto.
 const FIRE_MILESTONES_DEFAULT = [
-  { day: 10, reward: 10000, type: 'cash', requireDeposits: 200000,  depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 20000, type: 'cash', requireDeposits: 300000,  depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 30000, type: 'cash', requireDeposits: 400000,  depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
-  { day: 50, reward: 50000, type: 'cash', requireDeposits: 1000000, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
+  { day: 10, reward: 10000, type: 'cash', rollover: 100000, requireDeposits: 0, depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
+  { day: 20, reward: 20000, type: 'cash', rollover: 200000, requireDeposits: 0, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 30000, type: 'cash', rollover: 300000, requireDeposits: 0, depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
+  { day: 50, reward: 50000, type: 'cash', rollover: 500000, requireDeposits: 0, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
@@ -14706,6 +14709,8 @@ async function getFireMilestones() {
         day: Math.max(1, Math.min(365, parseInt(m.day, 10) || 0)),
         reward: Math.max(0, Math.round(Number(m.reward) || 0)),
         type: 'cash',
+        // #654: rollover del hito ($ a apostar); si la config vieja no lo tiene, 10× el premio
+        rollover: (m.rollover != null && m.rollover !== '') ? Math.max(0, Math.round(Number(m.rollover) || 0)) : Math.max(0, Math.round((Number(m.reward) || 0) * 10)),
         requireDeposits: Math.max(0, Math.round(Number(m.requireDeposits) || 0)),
         depositDays: Math.max(1, Math.min(365, parseInt(m.depositDays, 10) || 30)),
         desc: String(m.desc || '').slice(0, 80) || ('Recompensa Fueguito ' + (parseInt(m.day, 10) || '') + ' días')
@@ -14719,6 +14724,35 @@ async function getFireMilestones() {
   return FIRE_MILESTONES_DEFAULT;
 }
 
+// #654: APOSTADO (stats de la plataforma = total apostado / movimiento de saldo en el juego) desde `FireStreak.rolloverSince`.
+// Las stats son por DÍA, así que al reiniciar el tramo se guarda `rolloverBase` = lo apostado ese día hasta ese momento y se descuenta:
+// el contador arranca en 0 de verdad. Devuelve null si la plataforma no respondió (el caller decide: nunca "pierde" el premio por eso).
+const _fireWagerCache = new Map();
+async function _fireWageredRaw(username, since, fresh) {
+  const now = new Date(); let from = since ? new Date(since) : null;
+  if (!from || isNaN(from.getTime())) return null;
+  if (now - from > 90 * 86400000) from = new Date(now.getTime() - 90 * 86400000);
+  const key = String(username).toLowerCase() + '|' + from.toISOString().slice(0, 10);
+  const c = _fireWagerCache.get(key); if (!fresh && c && Date.now() - c.at < 60000) return c.v;
+  const r = await girox.getPlayerStats(username, from, now, 'fire-rollover', { fresh: !!fresh });
+  if (!(r && r.success)) return c ? c.v : null;
+  const v = Math.max(0, Math.round(Number(r.wagered) || 0));
+  _fireWagerCache.set(key, { at: Date.now(), v });
+  return v;
+}
+async function _fireWageredSince(username, fs, fresh) {
+  const since = fs && (fs.rolloverSince || fs.lastReset || fs.createdAt);
+  const raw = await _fireWageredRaw(username, since, fresh);
+  if (raw === null) return null;
+  return Math.max(0, raw - (Number(fs && fs.rolloverBase) || 0));
+}
+// Reinicia el tramo: contador a 0 (base = lo ya apostado hoy). Devuelve los campos a guardar.
+async function _fireRolloverResetFields(username) {
+  const now = new Date();
+  const base = await _fireWageredRaw(username, now, true);
+  return { rolloverSince: now, rolloverBase: Math.max(0, Number(base) || 0) };
+}
+function _fireNextAfter(ms, day) { return ms.find(m => m.day > Number(day)) || null; }
 // Rollover de los premios del fueguito (owner 2026-08-05): el premio se acredita
 // como DEPÓSITO CON `multiplier` en 1girox → la plata queda JUGABLE al instante
 // pero NO RETIRABLE hasta apostar (multiplier × premio); el retiro ya valida
@@ -14808,34 +14842,23 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
     if (lastClaim !== yesterdayArgentina && lastClaim !== todayArgentina && fireStreak.streak > 0) {
       await FireStreak.updateOne(
         { userId },
-        { streak: 0, lastReset: new Date() },
+        { streak: 0, lastReset: new Date() }, // #654: el premio pendiente (si hay) NO se pierde: sólo le falta el rollover para cobrarlo
         { upsert: true }
       );
       fireStreak.streak = 0;
     }
 
     const currentStreak = fireStreak.streak || 0;
+    const FIRE_MILESTONES = await getFireMilestones();
 
     // Auto-expirar recompensa pendiente si no fue reclamada el mismo día (req 1)
     let pendingCashReward = fireStreak.pendingCashReward || 0;
     let pendingCashRewardDay = fireStreak.pendingCashRewardDay || 0;
     let pendingCashRewardDesc = fireStreak.pendingCashRewardDesc || '';
-    if (pendingCashReward > 0) {
-      const rewardDate = fireStreak.pendingCashRewardDate || '';
-      if (rewardDate !== todayArgentina) {
-        // La recompensa expiró — limpiarla silenciosamente
-        await FireStreak.updateOne(
-          { userId },
-          { pendingCashReward: 0, pendingCashRewardDay: 0, pendingCashRewardDesc: '', pendingCashRewardDate: '' }
-        );
-        pendingCashReward = 0;
-        pendingCashRewardDay = 0;
-        pendingCashRewardDesc = '';
-      }
-    }
+    // #654 (owner): el premio pendiente queda hasta que lo cobra (sólo le falta el rollover; no hacen falta más fueguitos). Se reemplaza
+    // recién cuando una racha llega a un hito nuevo (ahí "se limpia" y el contador vuelve a 0) — eso pasa en /api/fire/claim.
 
     // Construir lista de milestones con estado para la UI (premios editables desde el panel)
-    const FIRE_MILESTONES = await getFireMilestones();
     const _fireNextDay = ((FIRE_MILESTONES.find(m => m.day > currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || {}).day) || 10; // #291
     const milestones = FIRE_MILESTONES.map(m => {
       let status;
@@ -14850,12 +14873,20 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
         day: m.day,
         type: m.type,
         reward: m.type === 'cash' ? m.reward : null,
-        hasDepositRequirement: m.requireDeposits > 0,
-        requireDeposits: m.requireDeposits || 0, // #405: monto a cargar…
-        depositDays: m.depositDays || 0,         // …en estos días
+        hasDepositRequirement: false, // #654: el requisito es rollover
+        requireDeposits: 0,
+        depositDays: m.depositDays || 0,
+        rollover: Number(m.rollover) || 0, // #654: $ a apostar en el tramo para cobrar este premio
         status
       };
     });
+    // #654: rollover del tramo actual — para el premio pendiente (si hay) o para el próximo hito
+    const _rollFor = pendingCashReward > 0 ? (FIRE_MILESTONES.find(m => m.day === Number(pendingCashRewardDay)) || null) : (_fireNextAfter(FIRE_MILESTONES, currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || null);
+    const _rollNeed = _rollFor ? (Number(_rollFor.rollover) || 0) : 0;
+    const _rollSince = fireStreak.rolloverSince || fireStreak.lastReset || fireStreak.createdAt || null;
+    const _rollHaveRaw = _rollNeed > 0 ? await _fireWageredSince(req.user.username, fireStreak) : 0;
+    const _rollHave = _rollHaveRaw === null ? 0 : _rollHaveRaw;
+    const _rollAfter = _rollFor ? _fireNextAfter(FIRE_MILESTONES, _rollFor.day) : null;
     // #405: requisito por MONTO del próximo premio (para la regla del home y del modal).
     const _nextMs = FIRE_MILESTONES.find(m => m.day > currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || null;
     const _nextReqAmount = _nextMs ? (Number(_nextMs.requireDeposits) || 0) : 0;
@@ -14876,8 +14907,9 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
       // x del rollover con que se acreditan los premios (0 = libres). El front lo
       // usa para avisar "para retirarlo apostá X×" antes de que el cliente reclame.
       rolloverMultiplier: await getFireRolloverMultiplier(),
-      // #291: mínimo de cargas en el plazo del próximo premio (y cuántas lleva) para la barra del home.
-      minDeposits: await getFireMinDeposits(),
+      // #654: ROLLOVER del tramo actual (reemplaza al mínimo de cargas, que queda en 0)
+      rolloverNeed: _rollNeed, rolloverHave: _rollHave, rolloverUnknown: _rollHaveRaw === null, rolloverForDay: _rollFor ? _rollFor.day : null, rolloverSince: _rollSince, rolloverExpiresDay: _rollAfter ? _rollAfter.day : null,
+      minDeposits: 0,
       depositsWindowDays: _fireNextDay,
       depositsCount: await _countRealDepositsDays(userId, req.user.username, _fireNextDay),
       // #405: requisito por MONTO del próximo premio
@@ -14919,6 +14951,7 @@ app.post('/api/fire/claim', authMiddleware, async (req, res) => {
       fireStreak.streak = 0;
       fireStreak.lastReset = new Date();
     }
+    if (!fireStreak.streak && !(fireStreak.pendingCashReward > 0)) { Object.assign(fireStreak, await _fireRolloverResetFields(username)); } // #654: racha nueva sin premio pendiente ⇒ contador a 0
     
     fireStreak.streak += 1;
     fireStreak.lastClaim = new Date();
@@ -14941,6 +14974,8 @@ app.post('/api/fire/claim', authMiddleware, async (req, res) => {
         // La verificación de actividad ocurre al reclamar la recompensa (/api/fire/claim-reward).
         // Solo setear si no hay ya una recompensa pendiente vigente del mismo día para no sobreescribir.
         const existingDate = fireStreak.pendingCashRewardDate || '';
+        // #654: si quedaba un premio de un hito anterior sin cobrar, al llegar al siguiente se limpia y el rollover vuelve a 0
+        if (fireStreak.pendingCashReward > 0 && Number(fireStreak.pendingCashRewardDay) !== fireStreak.streak) { fireStreak.pendingCashReward = 0; fireStreak.pendingCashRewardDate = ''; Object.assign(fireStreak, await _fireRolloverResetFields(username)); }
         if (!fireStreak.pendingCashReward || existingDate !== todayArgentina) {
           rewardType = 'cash_pending';
           reward = milestone.reward;
@@ -14996,68 +15031,24 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'No hay recompensa pendiente para reclamar.' });
     }
 
-    // Req 1: Verificar que la recompensa no expiró (solo reclamable el mismo día)
-    const todayArg = getArgentinaDateString();
-    const rewardDateStr = fireStreak.pendingCashRewardDate || '';
-    if (rewardDateStr && rewardDateStr !== todayArg) {
-      // Limpiar recompensa expirada
-      fireStreak.pendingCashReward = 0;
-      fireStreak.pendingCashRewardDay = 0;
-      fireStreak.pendingCashRewardDesc = '';
-      fireStreak.pendingCashRewardDate = '';
-      await fireStreak.save();
-      return res.status(400).json({ error: 'La recompensa expiró. Solo podés reclamarla el mismo día que llegaste al hito.' });
-    }
-
-    // #291 (owner): para que el premio se acredite tiene que tener MÍNIMO N cargas reales dentro del plazo
-    // del hito (día 10 ⇒ últimos 10 días). Si no llega, la racha se REINICIA y el premio se pierde.
-    const _minDep = await getFireMinDeposits();
-    if (_minDep > 0) {
-      const _days = Math.max(1, Number(fireStreak.pendingCashRewardDay) || 1);
-      const _have = await _countRealDepositsDays(userId, username, _days);
-      if (_have < _minDep) {
-        fireStreak.streak = 0;
-        fireStreak.lastReset = new Date();
-        fireStreak.pendingCashReward = 0;
-        fireStreak.pendingCashRewardDay = 0;
-        fireStreak.pendingCashRewardDesc = '';
-        fireStreak.pendingCashRewardDate = '';
-        await fireStreak.save();
-        _emitAdminOnlyChatNote(userId, username, `🔥 Fueguito: quiso cobrar el premio del día ${_days} pero tenía ${_have} carga(s) en los últimos ${_days} días (mínimo ${_minDep}). Premio perdido y racha reiniciada (regla #291). No hay que hacer nada.`).catch(() => {});
+    // #654 (owner): para cobrar el premio del hito hay que haber APOSTADO su rollover (movimiento de saldo en el juego) desde que
+    // empezó este tramo. No hacen falta más fueguitos ni cargas. Si la plataforma no responde, NO se pierde nada: se pide reintentar.
+    const _msAll = await getFireMilestones();
+    const _pDay = Number(fireStreak.pendingCashRewardDay) || 0;
+    const _ms = _msAll.find(m => m.day === _pDay) || null;
+    const _need = _ms ? (Number(_ms.rollover) || 0) : 0;
+    if (_need > 0) {
+      const _fmt = (n) => '$' + Math.round(n).toLocaleString('es-AR');
+      const _have = await _fireWageredSince(username, fireStreak, true);
+      if (_have === null) return res.status(503).json({ error: 'No pudimos leer tus apuestas en la plataforma. Probá de nuevo en unos minutos.', code: 'STATS_UNAVAILABLE' });
+      if (_have < _need) {
         return res.status(400).json({
-          error: `Para desbloquear este premio necesitás mínimo ${_minDep} cargas en los últimos ${_days} días (tenés ${_have}). La racha se reinició: ¡arrancá de nuevo y cargá seguido! 🔥`,
-          code: 'MIN_DEPOSITS', have: _have, min: _minDep, days: _days, streakReset: true
+          error: `Para cobrar el premio del día ${_pDay} tenés que apostar ${_fmt(_need)} en esta racha (llevás ${_fmt(_have)}). Seguí jugando y volvé a tocar Reclamar. 🔥`,
+          code: 'ROLLOVER', have: _have, need: _need
         });
       }
     }
-    // #405 (owner 2026-10-18): requisito por MONTO — "que sea por monto depositado, no por cantidad de cargas". El hito
-    // (panel: Requisito carga $ / En N días) exige haber cargado ≥ requireDeposits en los últimos depositDays días. Si no
-    // llega, igual que la regla #291: premio perdido y racha a 0. (Este gate había sido eliminado el 2026-08-05 a favor del
-    // rollover; el owner lo vuelve a pedir, y el rollover x5 sigue aplicándose al acreditar.)
-    try {
-      const _msAll = await getFireMilestones();
-      const _ms = _msAll.find(m => m.day === Number(fireStreak.pendingCashRewardDay));
-      const _need = _ms ? (Number(_ms.requireDeposits) || 0) : 0;
-      if (_need > 0) {
-        const _dd = Math.max(1, Number(_ms.depositDays) || 30);
-        const _sum = await _sumRealDepositsDays(userId, username, _dd);
-        if (_sum < _need) {
-          const _fmt = (n) => '$' + Math.round(n).toLocaleString('es-AR');
-          fireStreak.streak = 0;
-          fireStreak.lastReset = new Date();
-          fireStreak.pendingCashReward = 0;
-          fireStreak.pendingCashRewardDay = 0;
-          fireStreak.pendingCashRewardDesc = '';
-          fireStreak.pendingCashRewardDate = '';
-          await fireStreak.save();
-          _emitAdminOnlyChatNote(userId, username, `🔥 Fueguito: quiso cobrar el premio del día ${_ms.day} pero cargó ${_fmt(_sum)} en los últimos ${_dd} días (requisito ${_fmt(_need)}). Premio perdido y racha reiniciada (regla #405, por monto). No hay que hacer nada.`).catch(() => {});
-          return res.status(400).json({
-            error: `Para desbloquear este premio necesitás haber cargado ${_fmt(_need)} en los últimos ${_dd} días (llevás ${_fmt(_sum)}). La racha se reinició: ¡arrancá de nuevo y cargá seguido! 🔥`,
-            code: 'MIN_AMOUNT', have: _sum, min: _need, days: _dd, streakReset: true
-          });
-        }
-      }
-    } catch (e) { logger.warn('[fire] gate por monto: ' + e.message); }
+    const _resetFields = await _fireRolloverResetFields(username); // #654: cobró ⇒ contador a 0 para el próximo hito
 
     // RESERVA ATÓMICA anti doble/N-cobro (TOCTOU): consumimos el premio pendiente
     // ANTES de acreditar. `findOneAndUpdate` con guard `pendingCashReward > 0` es
@@ -15067,7 +15058,7 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
     // requests leían el mismo pendingCashReward>0 y cobraban el premio N veces.
     const reserved = await FireStreak.findOneAndUpdate(
       { userId, pendingCashReward: { $gt: 0 } },
-      { $set: { pendingCashReward: 0, pendingCashRewardDay: 0, pendingCashRewardDesc: '', pendingCashRewardDate: '' } },
+      { $set: Object.assign({ pendingCashReward: 0, pendingCashRewardDay: 0, pendingCashRewardDesc: '', pendingCashRewardDate: '' }, _resetFields) }, // #654: cobró ⇒ rollover a 0 para el próximo
       { new: false } // devuelve el doc PREVIO → de ahí sale el monto a acreditar
     );
     if (!reserved || !reserved.pendingCashReward || reserved.pendingCashReward <= 0) {
@@ -15276,7 +15267,8 @@ app.post('/api/admin/fire-milestones', authMiddleware, adminMiddleware, async (r
       day: Math.max(1, Math.min(365, parseInt(m.day, 10) || 0)),
       reward: Math.max(0, Math.round(Number(m.reward) || 0)),
       type: 'cash',
-      requireDeposits: Math.max(0, Math.round(Number(m.requireDeposits) || 0)),
+      rollover: Math.max(0, Math.round(Number(m.rollover) || 0)), // #654
+      requireDeposits: 0,
       depositDays: Math.max(1, Math.min(365, parseInt(m.depositDays, 10) || 30)),
       desc: String(m.desc || '').slice(0, 80)
     }))

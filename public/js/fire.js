@@ -74,18 +74,19 @@ VIP.fire = (function () {
         const _fA = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
         const _st = VIP.state.fireStatus || {};
         const _rqA = Number(_st.nextReqAmount) || 0, _rqD = Number(_st.nextReqDays) || 0, _rqH = Number(_st.nextReqHave) || 0, _rqDay = Number(_st.nextReqDay) || 0;
-        try { const top = document.getElementById('fireRuleTop'); const r0 = _st.minDeposits; const m0 = (r0 == null || r0 === '') ? 0 : (Number(r0) || 0); if (top) { top.innerHTML = m0 > 0 ? ('⚠️ Mínimo <b>' + m0 + ' cargas entre racha y racha</b> para poder reclamar cada premio · si no, el fueguito vuelve a 0') : (_rqA > 0 ? ('⚠️ Para cobrar el premio del día ' + _rqDay + ' tenés que haber cargado <b>' + _fA(_rqA) + ' en ' + _rqD + ' días</b> (llevás ' + _fA(_rqH) + ') · si no, el fueguito vuelve a 0') : ''); top.style.display = (m0 > 0 || _rqA > 0) ? '' : 'none'; } } catch (_) {}
+        try { const top = document.getElementById('fireRuleTop'); const _rN = Number(_st.rolloverNeed) || 0, _rH = Number(_st.rolloverHave) || 0, _rD = Number(_st.rolloverForDay) || 0, _rX = Number(_st.rolloverExpiresDay) || 0; if (top) { top.innerHTML = _rN > 0 ? ('🎯 Para cobrar el premio del día ' + _rD + ': apostá <b>' + _fA(_rN) + '</b> en esta racha · llevás <b>' + _fA(_rH) + '</b>' + (_st.rolloverUnknown ? ' <i>(no pudimos leer tus apuestas ahora)</i>' : '') + ' · no hacen falta más fueguitos: sólo llegar al rollover · vuelve a 0 con cada premio') : ''; top.style.display = _rN > 0 ? '' : 'none'; } } catch (_) {} // #654
         const activityConditionEl = document.getElementById('fireActivityCondition');
         if (activityConditionEl) {
             // #347: si el server todavía no manda el mínimo (sin redeploy) se muestra el default 10; sólo 0 explícito lo apaga.
             const _mdRaw = VIP.state.fireStatus.minDeposits;
             const _md = (_mdRaw == null || _mdRaw === '') ? 0 : (Number(_mdRaw) || 0); // #405: default 0 (la regla es por monto)
             const _d1 = ((VIP.state.fireStatus.milestones || [])[0] || {}).day || 10; // #294: ejemplo con el primer hito
-            activityConditionEl.innerHTML = _md > 0
-                ? '📋 <strong>Condición:</strong> entre racha y racha necesitás como mínimo <strong>' + _md + ' cargas</strong> para poder reclamar el premio (ej.: para el premio del día ' + _d1 + ', al menos ' + _md + ' cargas en esos ' + _d1 + ' días). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
-                : (_rqA > 0
-                    ? '📋 <strong>Condición:</strong> cada premio pide un <strong>monto cargado</strong> dentro de su plazo (ej.: premio del día ' + _rqDay + ' → <strong>' + _fA(_rqA) + ' en ' + _rqD + ' días</strong>; llevás ' + _fA(_rqH) + '). Si no llegás, <strong>no podés reclamarlo y el fueguito vuelve a 0</strong>.'
-                    : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.');
+            // #654: la regla es por ROLLOVER (apostado), escalando por hito; vuelve a 0 al cobrar o al pasar al hito siguiente
+            const _msL = (VIP.state.fireStatus.milestones || []).filter((m) => Number(m.rollover) > 0);
+            const _esc = _msL.map((m) => 'día ' + m.day + ' → ' + _fA(m.rollover)).join(' · ');
+            activityConditionEl.innerHTML = _msL.length
+                ? '📋 <strong>Condición:</strong> cada premio pide <strong>apostar</strong> un monto en la plataforma (rollover) que va subiendo: ' + _esc + '. Al llegar al hito sólo te falta completar el rollover (no hacen falta más fueguitos). Al cobrar, o si una racha llega a un hito nuevo, el contador vuelve a <strong>0</strong>.'
+                : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.';
         }
 
         const pendingBonusEl = document.getElementById('firePendingBonus');
@@ -111,9 +112,12 @@ VIP.fire = (function () {
                     ? `<span style="font-size:11px;color:#ffb84d;">🎯 Para poder retirarlo: apostá $${Math.round(pendingCash * _mult).toLocaleString('es-AR')} (rollover x${_mult})</span><br>`
                     : '';
                 pendingCashEl.style.display = 'block';
+                const _pN = Number(VIP.state.fireStatus.rolloverNeed) || 0, _pH = Number(VIP.state.fireStatus.rolloverHave) || 0, _pX = Number(VIP.state.fireStatus.rolloverExpiresDay) || 0; // #654
+                const _pBar = _pN > 0 ? `<div style="margin:6px 0 4px;height:8px;border-radius:999px;background:rgba(255,255,255,.15);overflow:hidden;"><i style="display:block;height:100%;width:${Math.min(100, Math.round(_pH / _pN * 100))}%;background:#ffd700;"></i></div><span style="font-size:11px;color:#ffe08a;">Apostaste $${_pH.toLocaleString('es-AR')} de $${_pN.toLocaleString('es-AR')}</span><br>` : '';
                 pendingCashEl.innerHTML = `
                     <strong style="color:#ffd700;">🏆 ¡Tenés $${pendingCash.toLocaleString('es-AR')} para reclamar!</strong><br>
                     <span style="font-size:12px;color:#ccc;">Premio de tu racha Fueguito día ${VIP.state.fireStatus.pendingCashRewardDay}</span><br>
+                    ${_pBar}
                     ${_rolloverNote}
                     <button id="claimFireRewardBtn" onclick="VIP.fire.claimFireReward()" style="margin-top:8px;background:linear-gradient(135deg,#d4af37,#ffd700);color:#000;border:none;padding:10px 20px;border-radius:20px;font-weight:900;font-size:14px;cursor:pointer;">💰 Reclamar $${pendingCash.toLocaleString('es-AR')}</button>
                 `;
@@ -154,9 +158,9 @@ VIP.fire = (function () {
                     ? ` <span style="font-size:10px;color:#ffb84d;">(retiro con rollover x${_fsMult})</span>`
                     : '';
                 // #405: requisito por monto de cada premio
-                const reqNote = (Number(m.requireDeposits) > 0)
-                    ? `<br><span style="font-size:10.5px;color:#aaa;">requiere ${_fA(m.requireDeposits)} cargados en ${Number(m.depositDays) || 30} días</span>`
-                    : '';
+                const reqNote = (Number(m.rollover) > 0)
+                    ? `<br><span style="font-size:10.5px;color:#aaa;">apostar ${_fA(m.rollover)} en la racha para cobrarlo</span>`
+                    : ''; // #654
                 return `<div class="milestone-item ${statusClass}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
                     <span>${statusIcon} <strong>Día ${m.day}</strong>: ${rewardText}${depositNote}${reqNote}</span>
                     <span style="font-size:11px;color:#aaa;">${statusLabel}</span>

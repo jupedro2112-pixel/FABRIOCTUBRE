@@ -1173,23 +1173,23 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                         </div>
                         <div class="cbu-form" id="fireMilestonesForm">
                             <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 10px;">
-                                Premios en <b>efectivo</b> que gana el cliente al llegar a X días de racha. Si pierde un
-                                día, la racha se reinicia. El premio se acredita al instante (jugable) pero con
-                                <b>ROLLOVER</b>: para poder RETIRARLO tiene que apostar el multiplicador × el premio
-                                (lo controla la propia plataforma). Solo el admin general.
+                                Premios en <b>efectivo</b> al llegar a X días de racha. <b>#654:</b> para cobrar cada premio el cliente tiene que haber
+                                <b>APOSTADO</b> el "Rollover $" de ese hito desde que empezó el tramo (va escalando); al cobrar, o al pasar al hito
+                                siguiente sin cobrar, el contador vuelve a 0. El premio del día 10 se puede cobrar hasta el día 20. El multiplicador de
+                                abajo sigue siendo el candado de RETIRO del premio (lo aplica la plataforma). Solo el admin general.
                             </p>
                             <div class="form-group" style="max-width:340px;">
                                 <label>🎯 Rollover de los premios (x):</label>
                                 <input type="number" id="fireRolloverMultiplier" min="0" max="50" step="0.5" placeholder="5" style="width:100%;">
-                                <label style="margin-top:10px;display:block;">🧾 Mínimo de CANTIDAD de cargas en el plazo del premio <small style="font-weight:400;">(#405: 0 = apagado; el requisito vigente es por MONTO: columnas "Requisito carga $" y "En N días" de cada premio)</small>:</label>
-                                <input type="number" id="fireMinDeposits" min="0" max="500" step="1" placeholder="10" style="width:100%;">
+                                <label style="margin-top:10px;display:none;">🧾 Mínimo de CANTIDAD de cargas en el plazo del premio <small style="font-weight:400;">(#405: 0 = apagado; el requisito vigente es por MONTO: columnas "Requisito carga $" y "En N días" de cada premio)</small>:</label>
+                                <input type="number" id="fireMinDeposits" min="0" max="500" step="1" placeholder="10" style="width:100%;display:none;">
                                 <small style="color:#aaa;font-size:11px;">#291: para cobrar el premio del día N el cliente tiene que tener al menos estas cargas reales en los últimos N días; si no, pierde el premio y la racha se reinicia. 0 = sin requisito.</small>
                                 <small style="color:#aaa;font-size:11px;">Ej. 5 = un premio de $10.000 exige apostar $50.000 antes de poder retirarse. 0 = sin rollover (premio libre). Las columnas "Requisito carga" ya NO se usan para reclamar (quedaron reemplazadas por el rollover).</small>
                             </div>
                             <div style="overflow-x:auto;">
                                 <table class="data-table" style="min-width:680px;font-size:12px;">
                                     <thead><tr>
-                                        <th>Día de racha</th><th>Premio $</th><th>Requisito carga $</th><th>En N días</th><th>Descripción</th><th></th>
+                                        <th>Día de racha</th><th>Premio $</th><th>Rollover $ (a apostar en la racha)</th><th>Descripción</th><th></th>
                                     </tr></thead>
                                     <tbody id="fireMilestonesRows"></tbody>
                                 </table>

@@ -265,6 +265,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
+- **FUEGUITO por ROLLOVER (#654, 2026-10-20):** el premio de cada hito se cobra habiendo APOSTADO `milestone.rollover` (stats de la
+  plataforma) desde `FireStreak.rolloverSince`; ese campo vuelve a "ahora" al cobrar, al pasar al hito siguiente sin cobrar (el premio
+  pendiente se limpia) o al reiniciar la racha. Ya no hay requisito de cargas (`requireDeposits`/`fireMinDeposits` sin efecto).
 - **ENTORNO DE PRUEBA = casino simulado + OTP de prueba (#616/#617, 2026-10-20):** en Render (`RENDER=true`) sin API real de
   1girox, `src/services/giroxSimulator.js` responde la Partner API (alta, saldo, cargas, retiros, regalos, stats; estado en
   `Config['giroxSimState']`; `GET/POST /api/admin/girox-sim`) y `giroxService.isSimulated()` es true (`source:'simulado'`). El OTP acepta `000000`

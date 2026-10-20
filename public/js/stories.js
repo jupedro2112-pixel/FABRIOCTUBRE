@@ -161,7 +161,8 @@
         let holdT = null, held = false, downX = 0;
         const zone = _el('storyTap');
         if (zone) {
-            zone.addEventListener('pointerdown', (e) => { downX = e.clientX; held = false; holdT = setTimeout(() => { held = true; pause(); }, 220); });
+            zone.addEventListener('pointerdown', (e) => { try { zone.setPointerCapture(e.pointerId); } catch (_) {} downX = e.clientX; held = false; holdT = setTimeout(() => { held = true; pause(); }, 150); }); // #655: 150 ms y captura del puntero (no se pierde al mover el dedo)
+            zone.addEventListener('contextmenu', (e) => e.preventDefault()); // #655: sin menú de guardar imagen al mantener
             zone.addEventListener('pointerup', (e) => {
                 clearTimeout(holdT);
                 if (held) { resume(); return; }

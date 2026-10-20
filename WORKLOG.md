@@ -8,6 +8,38 @@
 
 ## Sesión 2026-10-18
 
+### 654. 🔥 Fueguito: los premios se cobran por ROLLOVER escalonado (apostado en la racha), no por cargas — SW v466 · admin-sw v133
+**Pedido (owner):** "lo de los fueguitos, en vez de cargas exigimos rollover: poné un rollover razonable dentro de lo que hay en plata,
+que se vea cómo va escalando el monto exigido para cada reclamo; si pasa al siguiente fueguito el rollover se reinicia a 0" · "si llega
+al rollover (ej. día 10) se limpia en el día 20; si llega al día 15 lo cobra y pasa a la siguiente racha desde 0". **Regla nueva:** cada
+hito tiene `rollover` ($ a APOSTAR en la plataforma; defaults 10× el premio: día 10 → $100.000, 20 → $200.000, 30 → $300.000, 50 →
+$500.000; editable en el panel, columna "Rollover $"). Lo apostado se lee de las stats de la plataforma (`girox.getPlayerStats`,
+`wagered`) desde `FireStreak.rolloverSince` (nuevo campo; cache 60 s). `rolloverSince` vuelve a "ahora" (contador a 0) al cobrar un
+premio, al pasar al hito siguiente sin cobrarlo (ahí el premio pendiente se limpia) y al reiniciar la racha. El premio del hito N queda
+cobrable hasta el hito siguiente (antes vencía el mismo día). `/api/fire/claim-reward` ya no mira cargas (gates #291/#405 eliminados):
+sólo el rollover (error `ROLLOVER` con llevás/necesitás y hasta qué día). `/api/fire/status` devuelve `rolloverNeed/Have/ForDay/
+ExpiresDay/Since` y cada hito trae `rollover`; `minDeposits` queda en 0. **App:** regla arriba del modal y en el home ("Premio del día
+10: apostá $100.000 · llevás $X · vuelve a 0 con cada premio"), condición con la escalera, lista de hitos con "apostar $…", caja del
+premio pendiente con barra apostado/necesario y hasta qué día. **Panel:** tabla con Rollover $ (sin las columnas de cargas; el mínimo de
+cargas queda oculto). **Aclaraciones del owner (misma sesión):** "si llega a 10 fueguitos y no llegó al rollover, sólo le falta llegar al rollover para
+reclamar; no hacen falta más fueguitos; si llega a ambos siguen los días a la siguiente racha" · "que no pueda haber fallas; rollover =
+apuestas: si pongo 500.000 tuvo que apostar eso en la plataforma". **Robustez:** el premio pendiente NO vence ni se pierde al cortarse
+la racha (sólo se reemplaza cuando una racha llega a un hito nuevo); el contador arranca en 0 de verdad (`rolloverBase` = lo apostado
+ese día hasta el reinicio, porque las stats son por día); el cobro lee las stats frescas; si la plataforma no responde → 503 "probá en
+unos minutos" (nunca se pierde el premio ni se cobra sin verificar). **Archivos:** `server.js`, `src/models/FireStreak.js`,
+`public/js/fire.js`, `public/js/home.js`, `public/adminprivado2026/{index.html,admin.js}`, SWs.
+
+### 656. 📱 Explicación del SMS prolija: formato visual (+54 9 · código de área · número) y 3 pasos separados — SW v466
+**Pedido (owner):** "emprolijá lo del texto de SMS, quedó mucho texto negro; que quede prolijo, separado y entendible". `.vp-box` ahora
+tiene una tira de formato (pastilla roja +54 9 · código de área sin el 0 · número sin el 15) y 3 pasos con círculo numerado rojo.
+**Archivos:** `public/index.html`, `public/css/pin.css`.
+
+### 655. 📽️ Historias: mantener apretado el dedo pausa la historia (más confiable) — SW v466
+**Pedido (owner):** "dejá que si la gente tiene apretado con el dedo la historia se frena, es importante para que siga leyendo". Ya existía
+(#pointerdown 220 ms) pero en celulares se perdía: ahora 150 ms, `setPointerCapture` (no se corta al mover el dedo), `touch-action: none`
+en la zona de toque, sin menú contextual ni callout de iOS (`-webkit-touch-callout: none`, `user-select: none`). Soltar reanuda.
+**Archivos:** `public/js/stories.js`, `public/css/pin.css`.
+
 ### 653. 📽️ Historias: orden definitivo (SMS · Cargá en segundos · Referidos · Reembolsos · Ruleta · Misiones · Telegram), Misiones simple
 **Pedido (owner):** "el orden tiene que ser: primera la de carga en segundos, segunda referidos, tercera reembolsos, cuarta ruleta diaria,
 quinta misiones (armala más sencilla, sin tanto texto), última Telegram; y primera dejá la de verificación de SMS obligatoria. Borrá y

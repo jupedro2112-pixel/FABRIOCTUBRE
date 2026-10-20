@@ -6993,8 +6993,7 @@ function addFireMilestoneRow(m) {
     tr.innerHTML =
         '<td style="min-width:80px;">' + inp('fm-day', m.day, 'ej. 10', 1) + '</td>' +
         '<td style="min-width:100px;">' + inp('fm-reward', m.reward, 'ej. 10000', 0) + '</td>' +
-        '<td style="min-width:110px;">' + inp('fm-req', m.requireDeposits, '0 = sin requisito', 0) + '</td>' +
-        '<td style="min-width:80px;">' + inp('fm-days', m.depositDays != null ? m.depositDays : 30, '30', 1) + '</td>' +
+        '<td style="min-width:140px;">' + inp('fm-roll', m.rollover != null ? m.rollover : (Number(m.reward) || 0) * 10, 'ej. 100000', 0) + '</td>' + // #654
         '<td style="min-width:160px;">' + inp('fm-desc', m.desc, 'descripción') + '</td>' +
         '<td><button onclick="this.closest(\'tr\').remove()" title="Quitar" style="background:#7a1010;color:#fff;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;">✕</button></td>';
     body.appendChild(tr);
@@ -7006,8 +7005,7 @@ async function saveFireMilestones() {
     const milestones = rows.map(tr => ({
         day: parseInt((tr.querySelector('.fm-day') || {}).value, 10) || 0,
         reward: Math.round(Number((tr.querySelector('.fm-reward') || {}).value) || 0),
-        requireDeposits: Math.round(Number((tr.querySelector('.fm-req') || {}).value) || 0),
-        depositDays: parseInt((tr.querySelector('.fm-days') || {}).value, 10) || 30,
+        rollover: Math.round(Number((tr.querySelector('.fm-roll') || {}).value) || 0), // #654
         desc: ((tr.querySelector('.fm-desc') || {}).value || '').trim()
     })).filter(m => m.day > 0 && m.reward > 0);
     if (!milestones.length) { if (msg) { msg.style.color = '#ff6b6b'; msg.textContent = 'Cargá al menos un premio con día y monto.'; } return; }
