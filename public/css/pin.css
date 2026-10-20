@@ -2014,3 +2014,11 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 .info-msg.im-compact .im-sec.im-missions > b { color: var(--p-text) !important; }
 .info-msg.im-compact .im-sec:nth-of-type(7) { --im-acc: #e60023; } .info-msg.im-compact .im-sec:nth-of-type(8) { --im-acc: #0ea5e9; }
 .info-msg.im-compact .im-more { position: relative; z-index: 2; margin: -32px 12px 12px auto !important; padding: 6px 12px !important; background: var(--p-card) !important; border: 1px solid var(--p-border) !important; border-radius: 999px; color: var(--p-red) !important; font: 800 12px var(--p-font) !important; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+/* ── #666 (owner): ruleta — premios resumidos en una línea y ganadores plegados, con "Ver más ›" recuadrado ── */
+.rl-prize-sum { font: 800 12.5px/1.5 var(--p-font); color: var(--p-text); background: var(--p-card); border: 1px solid var(--p-border); border-radius: 14px; padding: 9px 12px; text-align: center; }
+.rl-prizes.rl-fold .rl-prize-list { display: none; }
+.rl-prizes.rl-fold.open .rl-prize-list { display: flex; }
+.rl-win-list.rl-fold { max-height: 165px; }
+.rl-win-list.rl-fold.open { max-height: 320px; }
+.rl-more { display: block; margin: 6px auto 0; padding: 6px 12px; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 999px; color: var(--p-red); font: 800 12px var(--p-font); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); }

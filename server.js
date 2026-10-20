@@ -21905,6 +21905,33 @@ app.post('/api/admin/roulette/reset-daily', authMiddleware, adminMiddleware, asy
 // Lista pública (requiere auth para evitar scraping pero no expone identidades).
 // Usado en el home para social-proof debajo del card de Ruleta Diaria. Tapa
 // 80% inicial del username. Default 50, máximo 100.
+// #666: ganadores simulados de la ruleta (ver comentario en /api/roulette/recent-winners). Determinístico por `dateKey`:
+// turnos cada `slotMin` minutos desde las 00:00 ART; cada turno sortea con los pesos reales (incluido "sin premio"), así la
+// frecuencia y los montos respetan los márgenes configurados. Sólo premios en plata (los % no se muestran en la lista).
+async function _rouletteSimWinners(dateKey, nowMs) {
+  let simCfg = null; try { simCfg = await getConfig('rouletteFeedSim', null); } catch (_) {}
+  if (simCfg && simCfg.enabled === false) return [];
+  const slotMin = Math.max(3, Math.min(120, Number(simCfg && simCfg.slotMin) || 10));
+  const rc = await getDailyRouletteConfig();
+  const prizes = (rc && Array.isArray(rc.prizes) ? rc.prizes : []).filter((p) => p && Number(p.weight) > 0);
+  const W = prizes.reduce((acc, p) => acc + Number(p.weight), 0);
+  if (!(W > 0)) return [];
+  const seed = crypto.createHash('sha256').update('rl-sim:' + dateKey).digest();
+  let k = 0;
+  const rnd = () => crypto.createHash('sha256').update(seed).update(String(k++)).digest().readUInt32BE(0) / 4294967296;
+  const start = new Date(dateKey + 'T00:00:00-03:00').getTime();
+  if (!Number.isFinite(start)) return [];
+  const out = [];
+  for (let t = start; t <= nowMs && out.length < 200; t += slotMin * 60000) {
+    const at = t + Math.floor(rnd() * slotMin * 60000 * 0.8);
+    let r = rnd() * W, pick = null;
+    for (const p of prizes) { r -= Number(p.weight); if (r <= 0) { pick = p; break; } }
+    const nameIdx = Math.floor(rnd() * _CLAIMS_EXAMPLE_NAMES.length), num = 10 + Math.floor(rnd() * 90);
+    if (at > nowMs || !pick || pick.type !== 'cash' || !(Number(pick.value) > 0)) continue;
+    out.push({ username: _CLAIMS_EXAMPLE_NAMES[nameIdx] + num, prizeARS: Number(pick.value), spunAt: new Date(at), sim: true });
+  }
+  return out;
+}
 app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
   try {
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 50));
@@ -21933,12 +21960,21 @@ app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
       return '*'.repeat(maskedCount) + visibleLetters + numbers;
     };
     const me = String((req.user && req.user.username) || '').toLowerCase();
-    const items = winners.map(w => {
-      const isMe = String(w.username || '').toLowerCase() === me;
+    // #666 (owner): la lista se completa con ganadores SIMULADOS determinísticos por día (misma lista para todos y entre
+    // refrescos), sorteados con los MISMOS pesos de la config de premios (`Config['dailyRoulette'].prizes`) ⇒ respeta los
+    // márgenes: ~20% de los turnos gana y los montos salen en la proporción real. Nombres: inicio tapado + asterisco al final.
+    // Apagar/ajustar: Config['rouletteFeedSim'] = { enabled, slotMin }.
+    let simItems = [];
+    try { simItems = await _rouletteSimWinners(dateKey, Date.now()); } catch (e) { logger.warn(`[roulette] sim winners: ${e.message}`); }
+    const _maskEnd = (u) => { const t = String(u || '').trim(); if (!t) return '—'; const vis = t.length >= 6 ? 3 : (t.length >= 4 ? 2 : 1); return '*'.repeat(Math.max(3, t.length - vis)) + t.slice(-vis) + '*'; };
+    const merged = winners.map((w) => Object.assign({}, w, { sim: false })).concat(simItems)
+      .sort((x, y) => new Date(y.spunAt) - new Date(x.spunAt)).slice(0, limit);
+    const items = merged.map(w => {
+      const isMe = !w.sim && String(w.username || '').toLowerCase() === me;
       const ageMs = Date.now() - new Date(w.spunAt).getTime();
       const minutesAgo = Math.max(0, Math.floor(ageMs / 60000));
       return {
-        username: isMe ? w.username : _mask(w.username),
+        username: isMe ? w.username : _maskEnd(w.username),
         prizeARS: w.prizeARS,
         spunAt: w.spunAt,
         minutesAgo,

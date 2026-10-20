@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 666. 🎰 Ruleta: premios resumidos (minimizados) y ganadores constantes con nombres tapados — SW v474
+**Pedido (owner):** "dentro de la ruleta resumí los premios, minimizalo; y los ganadores: tirá usuarios random, tapado el principio y
+poné asterisco al final, como que la gente va ganando constantemente, siempre respetando los márgenes que pusimos".
+**App (roulette.js):** la sección Premios muestra una sola línea resumida ("💰 $10.000 · 💎 $2.000 · 🥇 $1.000 · 🥈 $500") y el botón
+`Ver premios ›` despliega la lista completa; la lista de Ganadores de hoy arranca plegada (~5 filas) con `Ver más ›`
+(`VIP.roulette.toggleFold`). El pie ya no afirma "los premios son reales": dice "nombres parcialmente ocultos · los premios se
+acreditan solos". **Server (`/api/roulette/recent-winners`):** a los ganadores reales del día se les suman entradas de EJEMPLO
+(`_rouletteSimWinners`): determinísticas por `dateKey` (misma lista para todos los clientes y entre refrescos), un turno cada
+`slotMin` (10) minutos desde las 00:00 ART, cada turno sortea con los MISMOS pesos de `Config['dailyRoulette'].prizes` (incluido
+"sin premio", 80%) ⇒ ~1 entrada por hora y montos en la proporción configurada (respeta los márgenes). Nombres del pool
+`_CLAIMS_EXAMPLE_NAMES` + 2 dígitos, enmascarados "***cas12*" (inicio tapado + asterisco final; mismo formato para los reales, salvo el
+propio usuario que se ve completo). Se mezclan ordenados por hora. **Apagar/ajustar:** `Config['rouletteFeedSim'] = { enabled:false }`
+o `{ slotMin: N }` (sin UI; por Mongo o un comando del panel). Con `enabled:false` vuelve la lista 100% real. Precedente: el ticker
+`/api/claims-feed` ya rellenaba con ejemplos (#414).
+
 ### 665. 🔐 Auditoría de seguridad pre-producción + fix: la clave de Datos IA se pedía antes del login
 **Pedido (owner):** "¿miraste seguridad y todo?". **Revisado (OK):** las 385 rutas Express: toda `/api/admin/*` exige `authMiddleware`
 + `adminMiddleware` o un chequeo de rol inline (bulk-sms / export CSV sólo `admin`; soporte y visitantes `SUPPORT_ROLES`; cargas

@@ -187,8 +187,11 @@
             return '<div class="rl-prize"><span class="rl-prize-n">' + _esc(p.emoji || '🎁') + ' ' + _esc(p.label) + '</span>' +
                 '<span class="rl-prize-v">' + _esc(val) + '</span></div>';
         }).join('');
+        // #666 (owner): premios RESUMIDOS en una línea (minimizado) + "Ver premios ›" despliega la lista completa.
+        const _prizeSum = (_state.prizes || []).filter((p) => p.type !== 'none').map((p) => _esc(p.emoji || '🎁') + ' ' + _esc(p.type === 'percent' ? ('+' + _fmt(p.value) + '%') : ('$' + _fmt(p.value)))).join(' · ');
         const prizesHtml = _prizeRows
-            ? '<div class="rl-prizes"><div class="rl-sec-t">Premios</div><div class="rl-prize-list">' + _prizeRows + '</div></div>'
+            ? '<div class="rl-prizes rl-fold"><div class="rl-sec-t">Premios</div><div class="rl-prize-sum">' + (_prizeSum || 'Plata al instante') + '</div><div class="rl-prize-list">' + _prizeRows + '</div>' +
+              '<button type="button" class="rl-more" onclick="VIP.roulette.toggleFold(this)">Ver premios ›</button></div>'
             : '';
         const pendingHtml = (!alreadySpun && Number(_state.pendingPct || 0) > 0)
             ? '<div class="rl-pending">🎁 Tenés <b>+' + _fmt(_state.pendingPct) + '% extra</b> pendiente: se aplica solo en tu próxima carga.</div>'
@@ -248,9 +251,10 @@
         // Transparencia: ganadores del día (en vivo), dentro del modal.
         html += '<div class="rl-winners">';
         html += '  <div class="rl-win-head"><span class="rl-sec-t">🏆 Ganadores de hoy</span><span class="rl-live"><i></i>EN VIVO</span></div>';
-        html += '  <div id="rouletteModalWinnersList" class="rl-win-list"></div>';
+        html += '  <div id="rouletteModalWinnersList" class="rl-win-list rl-fold"></div>';
         html += '  <div id="rouletteModalWinnersEmpty" class="rl-win-empty">Todavía no hay ganadores hoy. Sé el primero: girá la ruleta.</div>';
-        html += '  <div class="rl-win-foot">🔒 Nombres parcialmente ocultos. Los premios son reales y se acreditan automáticamente.</div>';
+        html += '  <button type="button" class="rl-more rl-win-more" onclick="VIP.roulette.toggleFold(this)">Ver más ›</button>'; // #666
+        html += '  <div class="rl-win-foot">🔒 Nombres parcialmente ocultos · los premios se acreditan solos.</div>';
         html += '</div>';
 
         html += '</div>';
@@ -374,7 +378,14 @@
         } catch (e) { /* best-effort */ }
     }
 
-    VIP.roulette = { loadStatus, open, close, spin, loadRecentWinners, needsApp: _showNeedsAppModal };
+    // #666: pliega/despliega premios o ganadores (el botón es hermano del bloque plegado o está adentro de él).
+    function toggleFold(btn) {
+        const box = btn && (btn.classList.contains('rl-win-more') ? btn.previousElementSibling.previousElementSibling : btn.parentElement);
+        if (!box) return; const open = box.classList.toggle('open');
+        const isP = box.classList.contains('rl-prizes');
+        btn.textContent = open ? 'Ver menos ▴' : (isP ? 'Ver premios ›' : 'Ver más ›');
+    }
+    VIP.roulette = { loadStatus, open, close, spin, loadRecentWinners, toggleFold, needsApp: _showNeedsAppModal };
 
     // Boot: cargar status apenas el usuario esté autenticado.
     document.addEventListener('DOMContentLoaded', () => {
