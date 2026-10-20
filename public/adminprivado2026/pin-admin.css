@@ -244,3 +244,7 @@ tr.fin td { opacity: .92; }
 .nf-acc[open] > summary { border-bottom: 1px solid var(--p-border, rgba(255,255,255,.12)); }
 .nf-acc > :not(summary) { margin: 10px !important; }
 
+
+/* #635: menús activos */
+.ml-menus { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.ml-menus label { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; cursor: pointer; }

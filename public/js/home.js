@@ -48,6 +48,26 @@
     const HOME_MODE_KEY = 'vip_home_mode';
     const HOME_BANNER_KEY = 'vip_home_banner';
     const MENU_PREF_KEY = 'vip_menu_pref';
+    // #635 (owner): qué menús puede elegir la gente (panel → Elegir menú → "Menús activos"); llega en /api/public/menu-layout
+    // (Config['menusEnabled']) y se recuerda en localStorage para aplicarlo al instante al arrancar (sin "viejo y después nuevo").
+    const MENUS_ON_KEY = 'vip_menus_on'; const MENU_ORDER = ['basic', 'easy', 'full'];
+    let _menusOn = { basic: true, easy: true, full: true };
+    try { const c = JSON.parse(localStorage.getItem(MENUS_ON_KEY) || 'null'); if (c && typeof c === 'object') _menusOn = { basic: c.basic !== false, easy: c.easy !== false, full: c.full !== false }; } catch (_) {}
+    function _menuOn(p) { return _menusOn[p] !== false; }
+    function _firstMenuOn() { return MENU_ORDER.find(_menuOn) || 'basic'; }
+    function _applyMenusEnabled(m) {
+        if (m && typeof m === 'object') {
+            _menusOn = { basic: m.basic !== false, easy: m.easy !== false, full: m.full !== false };
+            if (!MENU_ORDER.some(_menuOn)) _menusOn = { basic: true, easy: true, full: true };
+            try { localStorage.setItem(MENUS_ON_KEY, JSON.stringify(_menusOn)); } catch (_) {}
+        }
+        MENU_ORDER.forEach((p) => document.body.classList.toggle('no-menu-' + p, !_menuOn(p)));
+        const on = MENU_ORDER.filter(_menuOn); document.body.classList.toggle('menus-one', on.length === 1);
+        try {
+            if (on.length === 1) { const ch = _el('menuChooser'); if (ch && ch.classList.contains('open')) setMenuPref(on[0], { quiet: true }); }
+            if (_homeMode && (_homeMode === 'basic' || _homeMode === 'easy' || _homeMode === 'play') && !_menuOn(_prefOfMode())) setHomeMode(_modeFor(getMenuPref()), { persist: false });
+        } catch (_) {}
+    }
     const MENU_FIXED_KEY = 'vip_menu_fixed'; // #559: '1' = el menú guardado es el del ingreso (no se vuelve a preguntar)
     function isMenuFixed() { try { return localStorage.getItem(MENU_FIXED_KEY) === '1'; } catch (_) { return false; } }
     let _homeMode = 'play';
@@ -71,7 +91,7 @@
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         // #569: la etiqueta "· Completo" de Cambiar menú se sacó (no entraba con Racha)
-        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic'); _fireMiniSync(); } catch (_) {} // #528 · #627
+        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic' || mode === 'full'); /* #635: también en la completa */ _fireMiniSync(); } catch (_) {} // #528 · #627
         try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
@@ -120,8 +140,8 @@
         Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode || (id === 'navInicio' && _homeMode === 'easy')); });
     }
     // ---------------- #366: MENÚ FÁCIL / COMPLETO ----------------
-    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); return (v === 'easy' || v === 'full' || v === 'basic') ? v : null; } catch (_) { return null; } } // #512: + basic
-    const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : 'play'));
+    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); const p = (v === 'easy' || v === 'full' || v === 'basic') ? v : null; return (p && !_menuOn(p)) ? _firstMenuOn() : p; } catch (_) { return null; } } // #512: + basic · #635: si está deshabilitado, el primero activo
+    const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : (_menuOn('full') ? 'play' : (_firstMenuOn() === 'easy' ? 'easy' : 'basic'))));
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
     // #519 (owner): el botón INICIO es donde cada uno elige su tipo de menú. Si ya estás en el Inicio, abre el selector
     // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
@@ -138,6 +158,7 @@
     }
     function setMenuPref(pref, opts) {
         pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';
+        if (!_menuOn(pref)) pref = _firstMenuOn(); // #635
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
         closeMenuChooser();
         setHomeMode(_modeFor(pref));
@@ -313,6 +334,7 @@
     const MENU_REASK_MS = 10 * 60 * 1000;
     let _hiddenAt = 0;
     function maybeShowMenuChooser() {
+        const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true }); return; } // #635: un solo menú activo → directo
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
         if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); return; } // #559: preseleccionado → entra directo
@@ -389,7 +411,7 @@
     }
     async function _applyMenuLayout() {
         if (Date.now() - _menuLayoutAt < 120000) return; _menuLayoutAt = Date.now();
-        try { const r = await fetch(VIP.config.API_URL + '/api/public/menu-layout'); const j = await r.json(); _setMenuLayout(j && j.layout); } catch (_) {}
+        try { const r = await fetch(VIP.config.API_URL + '/api/public/menu-layout'); const j = await r.json(); _setMenuLayout(j && j.layout); if (j && j.menus) _applyMenusEnabled(j.menus); } catch (_) {} // #635
     }
     function _easyPaint() {
         const v = _el('easyView'); if (!v) return;
@@ -470,6 +492,7 @@
         // #307 (owner): al entrar SIEMPRE arranca en Inicio; desde ahí van a Carga auto / manual. (Antes se
         // recordaba el último modo dentro de la sesión: ya no.)
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
+        _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();

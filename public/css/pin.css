@@ -1857,3 +1857,9 @@ body.home-basic .vip-mini:not([hidden]) { display: inline-flex; }
 .bv-fire b { font-weight: 900; font-size: 12.5px; }
 .bv-fire .bv-new { position: absolute; top: -7px; right: 6px; background: var(--p-red); color: #fff; font: 900 7.5px/1 var(--p-font); letter-spacing: .4px; text-transform: uppercase; padding: 2px 5px; border-radius: 999px; }
 .bv-top { margin-top: 4px; overflow: visible; }
+/* ===== #635 (owner): menús deshabilitados desde el panel no se ofrecen; nivel VIP también en la completa ===== */
+body.no-menu-basic .mc-opt.mc-basic, body.no-menu-easy .mc-opt.mc-easy, body.no-menu-full .mc-opt.mc-full { display: none !important; }
+body.no-menu-easy .ev-easy-link, body.no-menu-easy .bv-sw[onclick*="'easy'"], body.no-menu-full .ez-switch, body.no-menu-full .bv-sw[onclick*="'full'"] { display: none !important; }
+body.no-menu-easy.no-menu-full .bv-switch2 { display: none !important; }
+body.menus-one .change-menu, body.menus-one .menu-pin { display: none !important; }
+body.home-full .vip-mini:not([hidden]) { display: inline-flex; }

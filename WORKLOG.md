@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 635. 🧭 Menús activos desde el panel (Básico · Intermedio · Completo); nivel VIP en la completa; Cierres al final de App — SW v449 · admin-sw v132
+**Pedidos (owner):** "poné fueguito y niveles en la completa" · "sacá por panel por lo menos para configurar cuál de las 3 activo para la
+gente: si las 3, o si quiero desactivar la intermedia que lo pueda deshabilitar desde el panel" · "Cierres en el panel ponelo dentro de App
+abajo de todo, y esto último [menús activos] ponelo abajo de Elegir menú". **Backend:** `Config['menusEnabled'] = {basic,easy,full}`
+(`_menusEnabledNorm`, al menos uno), `GET/POST /api/admin/menus-enabled`, y `GET /api/public/menu-layout` ahora devuelve también `menus`.
+**App:** `home.js` guarda `vip_menus_on` en localStorage (se aplica al instante al arrancar, sin "viejo y después nuevo") y pone
+`body.no-menu-basic|easy|full` (+ `menus-one`): el selector, los botones "Pasar al menú…" y "Cambiar menú" esconden lo deshabilitado;
+`getMenuPref/_modeFor/setMenuPref` caen al primer menú activo; con uno solo activo la app entra directo sin preguntar. El fueguito ya
+estaba en la completa (#528); ahora la píldora de nivel VIP (`#vipMiniBtn`) también se ve ahí. **Panel:** card "Menús activos para la gente"
+debajo de las opciones de Elegir menú (`loadMenusEnabled/saveMenusEnabled`); Cierres pasó al final del grupo 📱 App.
+**Archivos:** `server.js`, `public/js/home.js`, `public/css/pin.css`, `public/adminprivado2026/{index.html,admin.js,pin-admin.css}`, SWs.
+
 ### 634. ⚡ VELOCIDAD: un solo JS y un solo CSS versionados e inmutables; se acabó el "viejo y después se actualiza" — SW v448
 **Pedido (owner):** "revisá la velocidad de la app y limpiá lo que trabe; si hay configuraciones que no aparezcan cosas viejas y después
 se actualice al nuevo, afiná eso". **Diagnóstico:** cada apertura bajaba 25 `<script>` + 7 `<link>` sueltos (~300 KB gz, ~32 requests,
