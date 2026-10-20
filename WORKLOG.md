@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 649. 📽️ Historia de Soporte corregida (texto dentro del recuadro) · Misiones pasa a justo antes de Telegram
+**Pedido (owner):** "corregí esas fotos que están fuera del recuadro, algunas el texto, y agregá la de Misiones antes de la final de
+Telegram" · "borrá y publicá de vuelta si tenés que volver a actualizar". La burbuja de `pr-6` se salía del recuadro: ahora `pr-6b.png`
+(texto más corto y centrado). El generador quedó con un chequeo automático: ninguna historia dibuja fuera de la tarjeta (0 píxeles en las
+8). Se borraron y republicaron las 8 en el orden: SMS · Cargá · Reembolsos · Ruleta · Referidos · Soporte · **Misiones** · Telegram.
+**Archivos:** `public/images/stories/pr-6b.png` (pr-6 borrada).
+
 ### 648. 📱 "¿Cuál es mi número?" por provincia/ciudad en la verificación · historia de MISIONES antes de la de SMS — SW v462
 **Pedidos (owner):** "agregá un 'verificar cuál es mi número' si tira error: que elijan su provincia o localidad y sepan cómo completar
 el número" · "agregá una foto antes de lo del teléfono de las misiones explicando bien". **Verificación:** debajo del campo hay un link
@@ -37,7 +44,7 @@ publicamos todas las semanas: armá una foto final resumida, bien explicada e in
 como importante". **Fotos:** generadas con PIL (script `gen_stories.py`, 1080×1920, contenido centrado en la zona segura, pica de
 `icon-512` con fondo transparente arriba + "PICA ROJA · oficial", tarjeta gris, titular negro + palabra roja, píldora negra, pie "Gracias
 por confiar"): pr-1 Verificá tu teléfono (link `app:verificar`) · pr-2 Cargá en minutos (`app:cargar`) · pr-3 Reembolsos (`app:reembolso`)
-· pr-4 Ruleta diaria (`app:ruleta`) · pr-5 Referidos (`app:referidos`) · pr-6 Hablá con Soporte (`app:soporte`) · pr-7 Unite a Telegram:
+· pr-4 Ruleta diaria (`app:ruleta`) · pr-5 Referidos (`app:referidos`) · pr-6b Hablá con Soporte (burbuja centrada, #649) (`app:soporte`) · pr-7 Unite a Telegram:
 código exclusivo, 3 pasos, primeros 100, uno por semana (`/go/comunidad`). Las 6 viejas se borraron por API y se publicaron las 7 nuevas
 (168 h, `repeatWeekly`, fondo blanco). **stories.js:** `APP_LINKS` suma `verificar` (abre el modal de verificación) y `soporte`.
 **Visor:** `.st-logo` oculto (sólo el texto PICA ROJA arriba). **Perfil:** `#pfPhoneRow` pasa arriba de todo, con etiqueta "Importante",
