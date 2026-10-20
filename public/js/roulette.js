@@ -188,10 +188,10 @@
                 '<span class="rl-prize-v">' + _esc(val) + '</span></div>';
         }).join('');
         // #666 (owner): premios RESUMIDOS en una línea (minimizado) + "Ver premios ›" despliega la lista completa.
-        const _prizeSum = (_state.prizes || []).filter((p) => p.type !== 'none').map((p) => _esc(p.emoji || '🎁') + ' ' + _esc(p.type === 'percent' ? ('+' + _fmt(p.value) + '%') : ('$' + _fmt(p.value)))).join(' · ');
+        // #668 (owner): SOLO la línea resumida (sin lista desplegable), con "Sin premio" incluido — "ya es suficiente".
+        const _prizeSum = (_state.prizes || []).map((p) => _esc(p.emoji || '🎁') + ' ' + _esc(p.type === 'percent' ? ('+' + _fmt(p.value) + '%') : (p.type === 'cash' ? ('$' + _fmt(p.value)) : 'Sin premio'))).join(' · ');
         const prizesHtml = _prizeRows
-            ? '<div class="rl-prizes rl-fold"><div class="rl-sec-t">Premios</div><div class="rl-prize-sum">' + (_prizeSum || 'Plata al instante') + '</div><div class="rl-prize-list">' + _prizeRows + '</div>' +
-              '<button type="button" class="rl-more" onclick="VIP.roulette.toggleFold(this)">Ver premios ›</button></div>'
+            ? '<div class="rl-prizes"><div class="rl-sec-t">Premios</div><div class="rl-prize-sum">' + (_prizeSum || 'Plata al instante') + '</div></div>'
             : '';
         const pendingHtml = (!alreadySpun && Number(_state.pendingPct || 0) > 0)
             ? '<div class="rl-pending">🎁 Tenés <b>+' + _fmt(_state.pendingPct) + '% extra</b> pendiente: se aplica solo en tu próxima carga.</div>'

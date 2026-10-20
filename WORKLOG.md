@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 668. 🎰 Ruleta: sólo la línea resumida de premios (sin lista desplegable), con "Sin premio" — SW v476
+**Pedido (owner, captura de la lista desplegada):** "sacá eso y poné arriba Sin premio también en el resumido, ya es suficiente".
+**App (roulette.js):** `prizesHtml` queda sólo con `.rl-prize-sum` ("🎉 +20% · 🎁 +50% · 🚀 +100% · 💰 $5.000 · 🏆 $100.000 · 😅 Sin
+premio"); se eliminan la lista `.rl-prize-list` y el botón "Ver premios ›" de #666. `toggleFold` sigue para la lista de ganadores.
+
 ### 667. 🎰 Ruleta: la lista de ganadores muestra también los % EXTRA (20%, 50%, 100%) y no sólo $5.000 — SW v475
 **Pedido (owner):** "en los premios regalá sobre lo que hay en márgenes, no todo 5000; después, mientras la gente va ganando real,
 metelos ahí en el momento; poné 5000, poné 20%, poné 50%". **Causa:** las entradas de ejemplo (#666) sólo tomaban premios en plata y en
