@@ -16,12 +16,12 @@ Telegram: en unos días publicamos un código exclusivo para reclamar plata, vá
 publicamos todas las semanas: armá una foto final resumida, bien explicada e interactiva" · "el verificar SMS ponelo en el Perfil arriba
 como importante". **Fotos:** generadas con PIL (script `gen_stories.py`, 1080×1920, contenido centrado en la zona segura, pica de
 `icon-512` con fondo transparente arriba + "PICA ROJA · oficial", tarjeta gris, titular negro + palabra roja, píldora negra, pie "Gracias
-por confiar"): ig-1 Verificá tu teléfono (link `app:verificar`) · ig-2 Cargá en minutos (`app:cargar`) · ig-3 Reembolsos (`app:reembolso`)
-· ig-4 Ruleta diaria (`app:ruleta`) · ig-5 Referidos (`app:referidos`) · ig-6 Hablá con Soporte (`app:soporte`) · ig-7 Unite a Telegram:
+por confiar"): pr-1 Verificá tu teléfono (link `app:verificar`) · pr-2 Cargá en minutos (`app:cargar`) · pr-3 Reembolsos (`app:reembolso`)
+· pr-4 Ruleta diaria (`app:ruleta`) · pr-5 Referidos (`app:referidos`) · pr-6 Hablá con Soporte (`app:soporte`) · pr-7 Unite a Telegram:
 código exclusivo, 3 pasos, primeros 100, uno por semana (`/go/comunidad`). Las 6 viejas se borraron por API y se publicaron las 7 nuevas
 (168 h, `repeatWeekly`, fondo blanco). **stories.js:** `APP_LINKS` suma `verificar` (abre el modal de verificación) y `soporte`.
 **Visor:** `.st-logo` oculto (sólo el texto PICA ROJA arriba). **Perfil:** `#pfPhoneRow` pasa arriba de todo, con etiqueta "Importante",
-borde y botón rojos hasta que verifique (`paintPfPhone` saca la marca al verificar). **Archivos:** `public/images/stories/ig-1..7.png`,
+borde y botón rojos hasta que verifique (`paintPfPhone` saca la marca al verificar). **Archivos:** `public/images/stories/pr-1..7.png` (nombre nuevo: el navegador cachea las imágenes 1 día y la ruta no admite `?v=`),
 `public/index.html`, `public/js/home.js`, `public/js/stories.js`, `public/css/pin.css`, SW.
 
 ### 645. 👤 Perfil: verificación de teléfono (estado + paso a paso), Notificaciones con botón ACTIVAR, sin "Cambiar menú" ni fueguito — SW v459
