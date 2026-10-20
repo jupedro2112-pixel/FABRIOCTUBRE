@@ -4770,7 +4770,8 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
 });
 // #480 (owner): ELEGIR MENÚ de la app. Config['menuLayout'] = 1 (menú fácil actual) | 2 (barra inferior: Carga auto · Inicio · Info · Soporte).
 // #635 (owner): qué MENÚS puede elegir la gente (Básico · Intermedio · Completo). Config['menusEnabled'] = {basic,easy,full}; al menos uno activo.
-function _menusEnabledNorm(v) { const m = { basic: !(v && v.basic === false), easy: !(v && v.easy === false), full: !(v && v.full === false) }; return (m.basic || m.easy || m.full) ? m : { basic: true, easy: true, full: true }; }
+// #670: + girox ("Girox directo": entra a jugar al toque, con carga rápida y retiro adentro)
+function _menusEnabledNorm(v) { const m = { basic: !(v && v.basic === false), easy: !(v && v.easy === false), full: !(v && v.full === false), girox: !(v && v.girox === false) }; return (m.basic || m.easy || m.full || m.girox) ? m : { basic: true, easy: true, full: true, girox: true }; }
 app.get('/api/public/menu-layout', async (req, res) => { try { const v = await getConfig('menuLayout', 1); const menus = _menusEnabledNorm(await getConfig('menusEnabled', null)); res.set('Cache-Control', 'no-store'); res.json({ layout: Number(v) === 2 ? 2 : 1, menus }); } catch (_) { res.json({ layout: 1, menus: { basic: true, easy: true, full: true } }); } });
 app.get('/api/admin/menus-enabled', authMiddleware, adminMiddleware, async (req, res) => { try { res.json({ success: true, menus: _menusEnabledNorm(await getConfig('menusEnabled', null)) }); } catch (_) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/menus-enabled', authMiddleware, adminMiddleware, async (req, res) => {
@@ -4778,8 +4779,8 @@ app.post('/api/admin/menus-enabled', authMiddleware, adminMiddleware, async (req
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const b = (req.body && req.body.menus) || {};
     const on = (x) => !(x === false || x === 'false' || x === 0 || x === '0');
-    const m = { basic: on(b.basic), easy: on(b.easy), full: on(b.full) };
-    if (!m.basic && !m.easy && !m.full) return res.status(400).json({ error: 'Tiene que quedar al menos un menú activo' });
+    const m = { basic: on(b.basic), easy: on(b.easy), full: on(b.full), girox: on(b.girox) }; // #670
+    if (!m.basic && !m.easy && !m.full && !m.girox) return res.status(400).json({ error: 'Tiene que quedar al menos un menú activo' });
     await Config.set('menusEnabled', m, req.user.username); logger.info('[menus-enabled] ' + JSON.stringify(m) + ' por ' + req.user.username);
     res.json({ success: true, menus: m });
   } catch (e) { res.status(500).json({ error: 'Error' }); }

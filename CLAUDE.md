@@ -189,7 +189,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
   CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; se elige en el selector que aparece en CADA arranque
-  y tras 10 min en segundo plano (#367; `localStorage vip_menu_pref` = 'easy'|'full' sólo fija dónde arranca; cambiable en Perfil) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
+  y tras 10 min en segundo plano (#367; `localStorage vip_menu_pref` = 'easy'|'full'|'basic'|'girox' sólo fija dónde arranca; #670: 'girox' = "Girox directo", modo play + casino embebido abierto al toque con Carga rápida y Retirar adentro; menús activos por panel `Config['menusEnabled']`, #635) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
   tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
   Carga automática (→ full). **mini (= SOPORTE desde #373; antes "Carga manual"):** se entra al CHAT
   (`#supportPanel` inline con cabecera `#waHead` "Soporte" y la presentación de Martín `#supportIntro`, textos

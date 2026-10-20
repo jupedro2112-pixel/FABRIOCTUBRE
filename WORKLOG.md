@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 670. 🎰 Menú "GIROX DIRECTO" (abre la plataforma al toque) + botón Retirar dentro de la Carga rápida del casino — SW v478 · admin-sw v136
+**Pedido (owner):** "agregame un menú directo de Girox en el inicio, que abra la página directo y tenga el chat de carga rápida; en ese
+chat agregale un botón de retiro como el de afuera para que la gente pueda jugar y retirar desde ahí". **App (home.js):** cuarto menú
+`girox` en `MENU_ORDER` / `Config['menusEnabled']` / `localStorage vip_menus_on` (tarjeta "GIROX DIRECTO" en el selector `.mc-girox` y
+botón en "¿Querés ver más?" del básico). `_modeFor('girox')` = modo `play` (Inicio) y `_afterPref('girox')` llama `_giroxDirect()`:
+`openPlatform('girox', { embed: true })` ⇒ el casino se abre ADENTRO de la app con sesión (SSO) aunque no sea standalone (el `embed`
+saltea el `openPlatformTab` de #261) y el panel de Carga rápida se abre solo (#631). Se dispara al elegir el menú, al entrar con el menú
+fijo y al tocar Inicio (goHome); "‹ Volver" del casino deja el Inicio del completo. `_curPref` distingue girox del completo (comparten
+modo) para "Dejar fijo" y el nombre del menú. **Retirar adentro:** `toggleCasinoLoad` agrega `💸 Retirar premio` (`.cl-btn.cl-wd`, verde)
+→ `VIP.home.casinoWithdraw()` → `VIP.withdraw.openWithdrawModal()` (mismo flujo de afuera: datos + SMS + pago automático); como el
+overlay del casino tiene z-index 99999, `#withdrawModal` pasa a 100001 y `.toast` a 100002 en pin.css. **Server:** `_menusEnabledNorm`
+y el POST aceptan `girox` (las configs guardadas sin el campo lo dan por activo). **Panel:** tilde "🎰 Girox directo" en Menús activos.
+
 ### 669. 🎰 La ruleta se desbloquea con una carga de $20.000 (propia de la ruleta), no con la mínima general de $5.000 — SW v477 · admin-sw v135
 **Pedido (owner):** "hacé que la ruleta se desbloquee con una carga de 20.000, no de 5.000, para no generar tantos regalos; ¿podés
 hacer que detecte eso?". **Antes:** el gate "activo de la semana" (`_rouletteIsActiveThisWeek`, #228/#374) buscaba una carga real

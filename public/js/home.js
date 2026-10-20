@@ -50,15 +50,16 @@
     const MENU_PREF_KEY = 'vip_menu_pref';
     // #635 (owner): qué menús puede elegir la gente (panel → Elegir menú → "Menús activos"); llega en /api/public/menu-layout
     // (Config['menusEnabled']) y se recuerda en localStorage para aplicarlo al instante al arrancar (sin "viejo y después nuevo").
-    const MENUS_ON_KEY = 'vip_menus_on'; const MENU_ORDER = ['full', 'basic', 'easy']; // #636: el completo es el predeterminado
-    let _menusOn = { basic: true, easy: true, full: true };
-    try { const c = JSON.parse(localStorage.getItem(MENUS_ON_KEY) || 'null'); if (c && typeof c === 'object') _menusOn = { basic: c.basic !== false, easy: c.easy !== false, full: c.full !== false }; } catch (_) {}
+    const MENUS_ON_KEY = 'vip_menus_on'; const MENU_ORDER = ['full', 'basic', 'easy', 'girox']; // #636: el completo es el predeterminado · #670: + Girox directo
+    let _menusOn = { basic: true, easy: true, full: true, girox: true };
+    let _curPref = null; // #670: preferencia vigente (para distinguir 'girox' del completo, que comparten el modo play)
+    try { const c = JSON.parse(localStorage.getItem(MENUS_ON_KEY) || 'null'); if (c && typeof c === 'object') _menusOn = { basic: c.basic !== false, easy: c.easy !== false, full: c.full !== false, girox: c.girox !== false }; } catch (_) {}
     function _menuOn(p) { return _menusOn[p] !== false; }
     function _firstMenuOn() { return MENU_ORDER.find(_menuOn) || 'basic'; }
     function _applyMenusEnabled(m) {
         if (m && typeof m === 'object') {
-            _menusOn = { basic: m.basic !== false, easy: m.easy !== false, full: m.full !== false };
-            if (!MENU_ORDER.some(_menuOn)) _menusOn = { basic: true, easy: true, full: true };
+            _menusOn = { basic: m.basic !== false, easy: m.easy !== false, full: m.full !== false, girox: m.girox !== false };
+            if (!MENU_ORDER.some(_menuOn)) _menusOn = { basic: true, easy: true, full: true, girox: true };
             try { localStorage.setItem(MENUS_ON_KEY, JSON.stringify(_menusOn)); } catch (_) {}
         }
         MENU_ORDER.forEach((p) => document.body.classList.toggle('no-menu-' + p, !_menuOn(p)));
@@ -149,8 +150,15 @@
         Object.keys(map).forEach((id) => { const b = _el(id); if (b) b.classList.toggle('active', map[id] === _homeMode || (id === 'navInicio' && _homeMode === 'easy')); });
     }
     // ---------------- #366: MENÚ FÁCIL / COMPLETO ----------------
-    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); const p = (v === 'easy' || v === 'full' || v === 'basic') ? v : null; return (p && !_menuOn(p)) ? _firstMenuOn() : p; } catch (_) { return null; } } // #512: + basic · #635: si está deshabilitado, el primero activo
-    const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : (_menuOn('full') ? 'play' : (_firstMenuOn() === 'easy' ? 'easy' : 'basic'))));
+    function getMenuPref() { try { const v = localStorage.getItem(MENU_PREF_KEY); const p = (v === 'easy' || v === 'full' || v === 'basic' || v === 'girox') ? v : null; return (p && !_menuOn(p)) ? _firstMenuOn() : p; } catch (_) { return null; } } // #512: + basic · #635: si está deshabilitado, el primero activo
+    const _modeFor = (pref) => (pref === 'easy' ? 'easy' : (pref === 'basic' ? 'basic' : (pref === 'girox' ? 'play' : (_menuOn('full') ? 'play' : (_firstMenuOn() === 'easy' ? 'easy' : 'basic'))))); // #670: girox = Inicio + casino abierto
+    // #670 (owner): MENÚ "GIROX DIRECTO": abre la plataforma ADENTRO de la app (con sesión) y el panel de Carga rápida (datos +
+    // adjuntar + Retirar). Se usa al elegir el menú, al entrar con ese menú fijo y al tocar Inicio.
+    function _giroxDirect() {
+        try { if (VIP.ui && VIP.ui._casinoOpen) return; } catch (_) {}
+        setTimeout(() => { try { openPlatform('girox', { embed: true }); } catch (_) {} }, 350);
+    }
+    function _afterPref(pref) { _curPref = pref; if (pref === 'girox') _giroxDirect(); }
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
     // #519 (owner): el botón INICIO es donde cada uno elige su tipo de menú. Si ya estás en el Inicio, abre el selector
     // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
@@ -162,18 +170,20 @@
             if (lp) lp.hidden = true; if (wp) wp.hidden = true; if (lb) lb.setAttribute('aria-expanded', 'false'); if (wb) wb.setAttribute('aria-expanded', 'false');
         } catch (_) {}
         setHomeMode(_modeFor(getMenuPref()));
+        _afterPref(getMenuPref()); // #670: con Girox directo, Inicio vuelve a abrir la plataforma
         // #606 (owner): INICIO vuelve ARRIBA de la pantalla inicial (los que scrollean son los contenedores internos, no la ventana)
         try { ['basicView', 'easyView', 'entryView', 'homePanel', 'homeFull', 'chatScreen'].forEach((id) => { const el = _el(id); if (el) el.scrollTop = 0; }); window.scrollTo({ top: 0 }); } catch (_) {}
     }
     function setMenuPref(pref, opts) {
-        pref = (pref === 'easy' || pref === 'basic') ? pref : 'full';
+        pref = (pref === 'easy' || pref === 'basic' || pref === 'girox') ? pref : 'full'; // #670: + girox
         if (!_menuOn(pref)) pref = _firstMenuOn(); // #635
         try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {}
         closeMenuChooser();
         setHomeMode(_modeFor(pref));
+        _afterPref(pref); // #670
         // #596: sin popup de primera carga // #488
         if (!opts || !opts.quiet) {
-            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras con "Cambiar menú".' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : '🧭 Menú completo activado. Lo cambiás cuando quieras con "Cambiar menú".'), 'success'); } catch (_) {}
+            try { VIP.ui.showToast(pref === 'easy' ? '☰ Menú intermedio activado. Lo cambiás cuando quieras con "Cambiar menú".' : (pref === 'basic' ? '▭ Menú básico activado: cargar, retirar y elegir dónde jugás.' : (pref === 'girox' ? '🎰 Girox directo: entrás a jugar al toque; cargás y retirás desde el panel de adentro.' : '🧭 Menú completo activado. Lo cambiás cuando quieras con "Cambiar menú".')), 'success'); } catch (_) {}
         }
     }
     function chooseMenu(pref) { setMenuPref(pref); }
@@ -349,17 +359,17 @@
         const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true }); return; } // #635: un solo menú activo → directo
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
-        if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); return; } // #559: preseleccionado → entra directo
+        if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #559: preseleccionado → entra directo · #670
         setTimeout(openMenuChooser, 350);
     }
     // #559 (owner): "Dejar preseleccionado para el ingreso" al lado de Cambiar menú. Guarda el menú actual como preferencia
     // y marca que NO se pregunte más al entrar (ni al volver tras 10 min). Tocar de nuevo lo deshace.
-    function _prefOfMode() { return _homeMode === 'basic' ? 'basic' : (_homeMode === 'easy' ? 'easy' : 'full'); }
+    function _prefOfMode() { return _homeMode === 'basic' ? 'basic' : (_homeMode === 'easy' ? 'easy' : (_curPref === 'girox' ? 'girox' : 'full')); } // #670
     function _paintMenuPin() {
         const b = _el('menuPinBtn'), t = _el('menuPinTxt'); if (!b || !t) return;
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
         b.classList.toggle('on', on);
-        const nm = _homeMode === 'basic' ? 'básico' : (_homeMode === 'easy' ? 'intermedio' : 'completo');
+        const nm = _homeMode === 'basic' ? 'básico' : (_homeMode === 'easy' ? 'intermedio' : (_curPref === 'girox' ? 'Girox directo' : 'completo')); // #670
         t.textContent = on ? ('✓ Menú ' + nm + ' fijo para el ingreso · tocá para deshacer') : ('Dejar fijo el menú ' + nm + ' para el ingreso');
     }
     function toggleMenuPin() {
@@ -554,6 +564,7 @@
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
+        _curPref = getMenuPref(); // #670 (si el menú está fijo, maybeShowMenuChooser abre Girox directo)
         try { const c = localStorage.getItem(HOME_BANNER_KEY); if (c) _paintHomeBanner(JSON.parse(c)); } catch (_) {}
         _mirrorHeadBits();
         _watchHeadBits();
@@ -1816,7 +1827,7 @@
     }
     function openPlatform(platformId, opts) {
         const test = !!(opts && opts.test);
-        if (!_isStandalone()) return openPlatformTab(platformId, { test });
+        if (!_isStandalone() && !(opts && opts.embed)) return openPlatformTab(platformId, { test }); // #670: embed = siempre adentro (Girox directo)
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, name: platformId, connected: platformId === 'girox' };
         if (test) _embedExternal({ id: p.id, name: p.name, playUrl: p.playUrl || p.externalUrl, externalUrl: p.externalUrl });
@@ -1828,6 +1839,8 @@
         setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(true); } catch (_) {} } }, 60);
     }
     function playOn(platformId) { openPlatform(platformId); }
+    // #670: Retirar desde la Carga rápida del casino. El modal de retiro vive en la página; CSS lo pone por encima del casino.
+    function casinoWithdraw() { try { if (VIP.withdraw && VIP.withdraw.openWithdrawModal) VIP.withdraw.openWithdrawModal(); else VIP.ui.showToast('Retiros no disponibles ahora', 'error'); } catch (_) {} }
 
     // ---- Carga rápida DENTRO del casino (#261): formato CARGA (no chat), descartable como el soporte ----
     let _quickDismissed = false, _quickOpen = false;
@@ -1884,7 +1897,9 @@
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
-            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>';
+            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>' +
+            // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
+            '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>';
         p.style.display = '';
         _fdNotesPaint();
         if (!cbu) setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, 1500); // #631
@@ -2090,7 +2105,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

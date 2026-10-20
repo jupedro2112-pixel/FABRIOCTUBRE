@@ -5906,15 +5906,15 @@ async function saveMenuLayout(layout) {
 // #635: menús activos (Básico · Intermedio · Completo)
 async function loadMenusEnabled() {
     try { const r = await authFetch('/api/admin/menus-enabled'); const j = await r.json(); if (!r.ok) return; const m = j.menus || {};
-        [['mnBasic', 'basic'], ['mnEasy', 'easy'], ['mnFull', 'full']].forEach(function (x) { const c = document.getElementById(x[0]); if (c) c.checked = m[x[1]] !== false; });
-        const on = ['basic', 'easy', 'full'].filter(function (k) { return m[k] !== false; }); const nm = { basic: 'básico', easy: 'intermedio', full: 'completo' };
-        const st = document.getElementById('mnState'); if (st) st.innerHTML = on.length === 3 ? 'Hoy se ofrecen los <b>3 menús</b>.' : ('Hoy se ofrece' + (on.length > 1 ? 'n' : '') + ': <b>' + on.map(function (k) { return nm[k]; }).join(' · ') + '</b>' + (on.length === 1 ? ' (la app entra directo ahí).' : '.'));
+        [['mnBasic', 'basic'], ['mnEasy', 'easy'], ['mnFull', 'full'], ['mnGirox', 'girox']].forEach(function (x) { const c = document.getElementById(x[0]); if (c) c.checked = m[x[1]] !== false; }); // #670
+        const on = ['basic', 'easy', 'full', 'girox'].filter(function (k) { return m[k] !== false; }); const nm = { basic: 'básico', easy: 'intermedio', full: 'completo', girox: 'Girox directo' };
+        const st = document.getElementById('mnState'); if (st) st.innerHTML = on.length === 4 ? 'Hoy se ofrecen los <b>4 menús</b>.' : ('Hoy se ofrece' + (on.length > 1 ? 'n' : '') + ': <b>' + on.map(function (k) { return nm[k]; }).join(' · ') + '</b>' + (on.length === 1 ? ' (la app entra directo ahí).' : '.'));
     } catch (_) {}
 }
 async function saveMenusEnabled() {
     const g = function (id) { const c = document.getElementById(id); return !!(c && c.checked); };
-    const menus = { basic: g('mnBasic'), easy: g('mnEasy'), full: g('mnFull') };
-    if (!menus.basic && !menus.easy && !menus.full) { showToast('Tiene que quedar al menos un menú activo', 'error'); return; }
+    const menus = { basic: g('mnBasic'), easy: g('mnEasy'), full: g('mnFull'), girox: g('mnGirox') }; // #670
+    if (!menus.basic && !menus.easy && !menus.full && !menus.girox) { showToast('Tiene que quedar al menos un menú activo', 'error'); return; }
     try { const r = await authFetch('/api/admin/menus-enabled', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ menus: menus }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Menús guardados ✓', 'success'); loadMenusEnabled(); } catch (_) { showToast('No se pudo', 'error'); }
 }
 window.loadMenusEnabled = loadMenusEnabled; window.saveMenusEnabled = saveMenusEnabled;

@@ -2022,3 +2022,11 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 .rl-win-list.rl-fold { max-height: 165px; }
 .rl-win-list.rl-fold.open { max-height: 320px; }
 .rl-more { display: block; margin: 6px auto 0; padding: 6px 12px; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 999px; color: var(--p-red); font: 800 12px var(--p-font); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+
+/* ── #670 (owner): menú GIROX DIRECTO + Retirar dentro de la Carga rápida del casino ── */
+.mc-opt.mc-girox { border-color: transparent !important; } .mc-opt.mc-girox b { color: var(--p-text) !important; }
+body.no-menu-girox .mc-opt.mc-girox, body.no-menu-girox .bv-sw[onclick*="'girox'"] { display: none !important; }
+.casino-load .cl-btn.cl-wd { background: var(--p-green, #16a34a) !important; margin-top: 6px !important; }
+/* el casino embebido es un overlay con z-index 99999: el modal de retiro (y su toast) tienen que quedar por encima */
+#withdrawModal.modal { z-index: 100001 !important; }
+.toast-container, #toastContainer, .toast { z-index: 100002 !important; }
