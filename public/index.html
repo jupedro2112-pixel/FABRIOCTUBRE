@@ -1111,7 +1111,16 @@
             <!-- #637 (owner 2026-10-20): LÍNEA DE ESTADO arriba de todo del Inicio (completo): nivel VIP + fueguito en la misma fila, rectos.
                  Debajo va lo de instalar la app (negro) / bono. home.js (setHomeMode) mueve las píldoras acá en el Inicio y al lado de "Cambiar menú" en el básico. -->
             <!-- #641 (owner): CARGÁ AHORA grande y centrado, debajo de la barra superior y arriba del nivel VIP (sólo en el Inicio). Antes vivía en el carrusel. -->
-            <button type="button" class="ev-cta ev-cta-top" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">transferís, mandás la foto y se acredita solo</span></button>
+            <button type="button" class="ev-cta ev-cta-top" id="evCtaTop" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">transferís, mandás la foto y se acredita solo</span></button>
+            <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
+                 CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
+            <div class="fg-card" id="firstGuide" hidden>
+                <i class="fg-arrow" aria-hidden="true"></i>
+                <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
+                <b class="fg-t">👆 Acá arriba hacés tus cargas</b>
+                <p class="fg-p">Tocá <b>CARGÁ AHORA</b>: transferís, mandás la foto del comprobante y se acredita solo.</p>
+                <p class="fg-p fg-after">Después de jugar, mirá más abajo todo lo que te damos para sacarle el mejor provecho: <b>reembolsos, ruleta, fueguito, misiones y referidos</b>.</p>
+            </div>
             <div class="status-row" id="statusRow" hidden>
                 <!-- #627 (owner): en el BÁSICO, el nivel VIP resumido va al lado de "Cambiar menú" (home.js _fireMiniSync lo copia de la tarjeta grande) -->
                 <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" ><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
@@ -1244,8 +1253,15 @@
                 <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
                 <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
                 <div class="bv-plats" id="basicPlats"></div>
+                <!-- #675 (owner): guía corta de primera carga en el BÁSICO (sólo quien nunca cargó): flecha al botón CARGAR -->
+                <div class="fg-card fg-basic" id="firstGuideBasic" hidden>
+                    <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
+                    <b class="fg-t">¿Cómo cargo? 👇</b>
+                    <p class="fg-p">Tocá <b>CARGAR</b>, transferí a la cuenta que te mostramos y mandá la foto del comprobante. Se acredita solo.</p>
+                    <i class="fg-arrow fg-arrow-down" aria-hidden="true"></i>
+                </div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
-                <button type="button" class="bv-btn bv-load" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
+                <button type="button" class="bv-btn bv-load" id="bvLoadBtn" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
                     <ol class="bv-steps">
                         <li><b>Transferí</b> el monto que quieras (mínimo <b id="bvMinDep">$5.000</b>) a esta cuenta:
@@ -2544,7 +2560,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v482</div>
+                    <div class="pf-build" id="appBuildTag">app v483</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

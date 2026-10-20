@@ -316,6 +316,7 @@
         _fdPromoLoad().then((j) => {
             _fdJ = j || null;
             const show = !!(j && j.show && Number(j.pct) > 0); const extra = show && Number(j.extra) > 0 ? Number(j.extra) : 0;
+            try { firstGuidePaint(j); } catch (_) {} // #675
             document.querySelectorAll('.fd-note').forEach((el) => {
                 el.hidden = !show; if (!show) return;
                 el.querySelectorAll('.fd-pct').forEach((x) => { x.textContent = j.pct + '%'; });
@@ -324,6 +325,15 @@
             });
         }).catch(() => {});
     }
+    // #675 (owner): guía de PRIMERA CARGA en el Inicio del completo ("la gente se pierde"): cartel con flecha a CARGÁ AHORA + pulso.
+    function firstGuidePaint(j) {
+        const g = _el('firstGuide'), gb = _el('firstGuideBasic'), cta = _el('evCtaTop'), bl = _el('bvLoadBtn');
+        let off = false; try { off = localStorage.getItem('vip_fguide_off') === '1'; } catch (_) {}
+        const show = !!(j && (j.noDeposits === true || j.show)) && !off;
+        if (g) g.hidden = !show; if (gb) gb.hidden = !show; // el básico tiene su versión corta (CSS muestra cada una en su modo)
+        if (cta) cta.classList.toggle('fg-hi', show); if (bl) bl.classList.toggle('fg-hi', show);
+    }
+    function firstGuideClose() { try { localStorage.setItem('vip_fguide_off', '1'); } catch (_) {} ['firstGuide', 'firstGuideBasic'].forEach((id) => { const g = _el(id); if (g) g.hidden = true; }); ['evCtaTop', 'bvLoadBtn'].forEach((id) => { const b = _el(id); if (b) b.classList.remove('fg-hi'); }); }
     function _fdNoteHtml() {
         const j = _fdJ; if (!(j && j.show && Number(j.pct) > 0)) return '<p class="fd-note" hidden></p>';
         const extra = Number(j.extra) > 0 ? Number(j.extra) : 0;
@@ -2130,7 +2140,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

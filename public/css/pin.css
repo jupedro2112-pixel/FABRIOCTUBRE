@@ -2030,3 +2030,23 @@ body.no-menu-girox .mc-opt.mc-girox, body.no-menu-girox .bv-sw[onclick*="'girox'
 /* el casino embebido es un overlay con z-index 99999: el modal de retiro (y su toast) tienen que quedar por encima */
 #withdrawModal.modal { z-index: 100001 !important; }
 .toast-container, #toastContainer, .toast { z-index: 100002 !important; }
+
+/* ── #675 (owner): GUÍA DE PRIMERA CARGA en el Inicio del completo: cartel con flecha a CARGÁ AHORA y el botón con pulso ── */
+.fg-card { display: none; position: relative; margin: 14px 12px 4px; padding: 14px 40px 12px 14px; background: var(--p-card); border: 2px solid var(--p-red); border-radius: 18px; box-shadow: 0 8px 24px rgba(230, 0, 35, .12); }
+body.home-play .fg-card:not([hidden]) { display: block; }
+.fg-arrow { position: absolute; top: -13px; left: 50%; width: 22px; height: 22px; margin-left: -11px; background: var(--p-card); border-left: 2px solid var(--p-red); border-top: 2px solid var(--p-red); transform: rotate(45deg); }
+.fg-t { display: block; font: 900 15px var(--p-font); color: var(--p-red); margin-bottom: 4px; }
+.fg-p { margin: 0; font: 500 13px/1.45 var(--p-font); color: var(--p-text-2, var(--p-text)); }
+.fg-p b { color: var(--p-text); }
+.fg-after { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--p-border); }
+.fg-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--p-surface); color: var(--p-muted); font: 800 13px var(--p-font); cursor: pointer; }
+.ev-cta.ev-cta-top.fg-hi { animation: fgPulse 1.6s ease-in-out infinite; }
+@keyframes fgPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, .55); } 60% { box-shadow: 0 0 0 14px rgba(230, 0, 35, 0); } }
+@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi { animation: none; box-shadow: 0 0 0 4px rgba(230, 0, 35, .35); } }
+
+/* #675: versión corta en el BÁSICO (arriba del botón CARGAR, flecha hacia abajo) */
+.fg-card.fg-basic { margin: 6px 0 14px; padding: 12px 40px 12px 14px; }
+body.home-basic .fg-card.fg-basic:not([hidden]) { display: block; }
+body.home-play .fg-card.fg-basic { display: none !important; }
+.fg-arrow.fg-arrow-down { top: auto; bottom: -13px; border-left: 0; border-top: 0; border-right: 2px solid var(--p-red); border-bottom: 2px solid var(--p-red); }
+.bv-btn.bv-load.fg-hi { animation: fgPulse 1.6s ease-in-out infinite; }

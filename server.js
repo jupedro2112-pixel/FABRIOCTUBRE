@@ -13991,7 +13991,7 @@ app.get('/api/first-deposit-promo', authMiddleware, async (req, res) => {
     const extra = ig && ig.enabled ? (Number(ig.pct) || 0) : 0; const pctApp = pct + extra;
     const text = await renderSystemCommand('/sys_first_deposit_popup', 'Tu primera carga viene con {pct}% de regalo. Si la hacés desde la app instalada, {pctApp}%.', { pct, pctApp, extra });
     res.set('Cache-Control', 'no-store');
-    res.json({ show: n === 0 && pct > 0, pct, pctApp, extra, installGiftEnabled: extra > 0, text });
+    res.json({ show: n === 0 && pct > 0, noDeposits: n === 0, pct, pctApp, extra, installGiftEnabled: extra > 0, text }); // #675: noDeposits para la guía de primera carga
   } catch (e) { res.json({ show: false }); }
 });
 app.get('/api/install-gift/status', authMiddleware, async (req, res) => {

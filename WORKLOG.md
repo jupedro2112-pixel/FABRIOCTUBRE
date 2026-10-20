@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 675. 🧭 Guía de PRIMERA CARGA: cartel con flecha a CARGÁ AHORA en el Inicio del completo y versión corta en el básico — SW v483
+**Pedido (owner):** "para las primeras cargas, cuando entran al menú completo poné flechas grandes y prolijas marcando dónde cargás o
+un cartel explicativo mejor, que diga que en la parte superior del Inicio van a poder hacer sus cargas y esté remarcado dónde; está
+grande pero la gente se pierde; después de jugar fijate lo que brindamos para sacarle el mejor provecho a nuestros beneficios" · "y en
+el básico también, sólo para las primeras cargas, cartel explicativo de cómo cargar, sin tanta info". **App:** `#firstGuide` (Inicio
+del completo, debajo de CARGÁ AHORA, con flecha hacia arriba): "👆 Acá arriba hacés tus cargas · Tocá CARGÁ AHORA: transferís, mandás la
+foto del comprobante y se acredita solo · Después de jugar, mirá más abajo todo lo que te damos para sacarle el mejor provecho:
+reembolsos, ruleta, fueguito, misiones y referidos"; `#firstGuideBasic` (básico, arriba de CARGAR, flecha hacia abajo): "¿Cómo cargo? 👇
+Tocá CARGAR, transferí a la cuenta que te mostramos y mandá la foto del comprobante. Se acredita solo". El botón señalado (`#evCtaTop`
+/ `#bvLoadBtn`) late con un pulso rojo (`.fg-hi`). Se muestran sólo a quien NUNCA cargó (`/api/first-deposit-promo` ahora devuelve
+`noDeposits`, independiente del % de promo) y la ✕ los saca para siempre (`localStorage vip_fguide_off`); al hacer la primera carga
+desaparecen solos (`firstGuidePaint` corre con `_fdNotesPaint`).
+
 ### 674. 📲 Historia "Instalá la app" (segunda, después del SMS) con link a la guía de instalación — SW v482
 **Pedido (owner):** "agregá una historia que explique cómo instalar la app, lo importante de instalar, el sistema de notificaciones con
 regalos y mucho más". **Foto** `public/images/stories/st2-8.png` (gen_stories.py `s8`, mismo estilo: teléfono con el ícono de PICA ROJA
