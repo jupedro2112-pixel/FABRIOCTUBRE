@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 671. 🎰 Girox directo: al abrir la app entra a 1girox sin preguntar el menú — SW v479
+**Pedido (owner):** "al iniciar, el de la página entra a 1girox porque es la que tiene la API y aparece el chat rápido, ¿me seguís?".
+Con #670 el menú 'girox' seguía la regla de los demás (#367: si no está "fijo", al entrar y tras 10 min en segundo plano se vuelve a
+preguntar). **Ahora** `maybeShowMenuChooser` con `vip_menu_pref === 'girox'` entra directo (modo play + `_giroxDirect()`, casino con SSO
++ Carga rápida) sin abrir el selector, y `_menuReaskInit` tampoco re-pregunta. Para cambiar de menú: "‹ Volver" del casino → Inicio →
+"Cambiar menú".
+
 ### 670. 🎰 Menú "GIROX DIRECTO" (abre la plataforma al toque) + botón Retirar dentro de la Carga rápida del casino — SW v478 · admin-sw v136
 **Pedido (owner):** "agregame un menú directo de Girox en el inicio, que abra la página directo y tenga el chat de carga rápida; en ese
 chat agregale un botón de retiro como el de afuera para que la gente pueda jugar y retirar desde ahí". **App (home.js):** cuarto menú

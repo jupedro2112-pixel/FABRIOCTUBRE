@@ -360,6 +360,7 @@
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
         if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #559: preseleccionado → entra directo · #670
+        if (pref === 'girox') { setHomeMode('play'); _afterPref('girox'); return; } // #671 (owner): Girox directo = al abrir la app entra a 1girox sin preguntar el menú
         setTimeout(openMenuChooser, 350);
     }
     // #559 (owner): "Dejar preseleccionado para el ingreso" al lado de Cambiar menú. Guarda el menú actual como preferencia
@@ -386,7 +387,7 @@
             const away = _hiddenAt ? Date.now() - _hiddenAt : 0;
             _hiddenAt = 0;
             const logged = VIP.state && VIP.state.currentToken && !(_el('chatScreen') || {}).classList?.contains('hidden');
-            if (logged && away >= MENU_REASK_MS && !isMenuFixed()) openMenuChooser(); // #559
+            if (logged && away >= MENU_REASK_MS && !isMenuFixed() && getMenuPref() !== 'girox') openMenuChooser(); // #559 · #671: con Girox directo no se re-pregunta
         });
     }
     function easyLoad() { setHomeMode('full'); }
