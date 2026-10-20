@@ -1622,7 +1622,6 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .lg-form-reg .lg-quick-loading { background: #fff; }
 .lg-reg-trust { margin: 0; text-align: center; font: 700 11px var(--p-font); color: var(--p-muted); }
 .lg-reg-login { font-size: 12.5px; color: var(--p-text); }
-   difuminado; el pie (marca + botón) va DEBAJO de la foto, no encima; cierre más claro. ── */
 /* #559 botón "Dejar preseleccionado para el ingreso" (al lado de Cambiar menú) · #560 fueguito mini sólo "Racha" */
 .top-row { flex-wrap: wrap; }
 .menu-pin { display: inline-flex; align-items: center; gap: 5px; flex: 0 1 auto; min-width: 0; padding: 7px 10px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-muted); font: 700 11px var(--p-font); cursor: pointer; }
@@ -1700,12 +1699,9 @@ html[data-theme="dark"] #installGiftBar .ig-bar-k { background: #111; color: #ff
 html.access-pending #loginScreen { display: none !important; }
 html.access-pending .access-splash { display: flex; position: fixed; inset: 0; z-index: 4000; background: #fff; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 .access-splash img { width: 72px; height: 72px; border-radius: 20px; } .access-splash b { font: 900 16px var(--p-font); color: #111; } .access-splash .lg-bar { max-width: 220px; }
-   visible debajo en una tarjeta, sello de marca y botón en píldora; la de texto solo (Telegram) centrada y grande ── */
 /* #584: la fila de accesos del básico queda con 4 (sin Niveles VIP) */
 .bv-quick { grid-template-columns: repeat(4, 1fr) !important; }
-   PICA ROJA va ADENTRO de la foto (parte de la marca); debajo sólo el texto y el botón, sobre el mismo fondo. ── */
 /* #587 (owner): la foto abarca TODA la pantalla (sin marco) y el texto va abajo de todo */
-   el logo de la marca, el texto y el botón, todo centrado ── */
 /* #595 (owner): pantalla limpia al entrar: sin la card "Invitá a tus amigos" en el inicio (Referidos sigue en su botón) */
 #referralHomeCard { display: none !important; }
 /* #598: panel "Carga rápida" del casino, chico y simple */
@@ -1843,3 +1839,8 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .info-msg.im-compact .refund-promo { margin-top: 3px !important; font-size: 11px !important; }
 .info-msg.im-compact .info-badge { font-size: 9px !important; padding: 1px 6px !important; }
 #infoModal #closeInfoModal { padding: 9px 14px !important; font-size: 13px !important; }
+/* ===== #624 (owner 2026-10-20): los 4 accesos del menú básico (debajo de "Entrar a jugar") CENTRADOS. Además se sacaron 4 restos de
+   comentario que dejó #615 (líneas sueltas terminadas en "*/") y que anulaban la regla siguiente: .top-row (#559), .bv-quick 4 columnas
+   (#584) y #referralHomeCard oculto (#595). ===== */
+.bv-quick { grid-template-columns: repeat(4, 1fr) !important; justify-items: stretch; }
+.bv-quick button { text-align: center; justify-content: center; }

@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 624. 🧹 Accesos del menú básico centrados (4 columnas) + fix de pin.css roto por restos de comentario — SW v439
+**Pedido (owner):** "dejá centrado en el menú [básico] lo de abajo de Entrar a jugar ahora, son 4, los quiero centrados". **Causa real:** al
+borrar el visor viejo de historias (#615) quedaron 4 líneas sueltas de comentario (terminadas en `*/` sin apertura) en `pin.css`; en CSS un
+texto así se traga la regla siguiente hasta su `}` ⇒ se anulaban `.top-row {flex-wrap}` (#559), `.bv-quick {repeat(4,1fr)}` (#584) y
+`#referralHomeCard {display:none}` (#595). Por eso los 4 accesos iban en 5 columnas con hueco a la derecha. Se borraron las 4 líneas y se
+agregó bloque #624 (`.bv-quick` 4 columnas, texto centrado). Chequeo: script que recorre el CSS y acusa `*/` fuera de comentario → 0 en
+pin.css, chat.css y pin-admin.css. **Archivos:** `public/css/pin.css`, SW.
+
 ### 623. 🎰 "JUGÁ AQUÍ" en la barra superior: abre el selector de plataformas — SW v438
 **Pedido (owner):** "poné en Plataforma JUGÁ AQUÍ y cuando entre que pueda elegir la plataforma". El botón central (`#navPlat`) ahora dice
 **JUGÁ AQUÍ** (sigue mostrando el logo de la plataforma elegida) y `platTap()` abre SIEMPRE el selector `easyPlay()` (modal "Elegí dónde
