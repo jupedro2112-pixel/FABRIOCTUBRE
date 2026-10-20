@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 674. 📲 Historia "Instalá la app" (segunda, después del SMS) con link a la guía de instalación — SW v482
+**Pedido (owner):** "agregá una historia que explique cómo instalar la app, lo importante de instalar, el sistema de notificaciones con
+regalos y mucho más". **Foto** `public/images/stories/st2-8.png` (gen_stories.py `s8`, mismo estilo: teléfono con el ícono de PICA ROJA
+en la pantalla de inicio + tilde, campana roja con moneda "TE AVISAMOS · cargas · retiros · regalos", titular "Instalá la app", texto
+"Entrás con un toque, con tu sesión y Girox ya logueado. Con notificaciones te avisamos cargas, retiros y REGALOS: bonos, ruleta,
+misiones y mucho más", píldora "COMPARTIR › AGREGAR A INICIO › ABRÍ", nota rollover ×5). **Link** `app:instalar` (nuevo en el allowlist
+del server y en `APP_LINKS` de stories.js → `VIP.appTest.doInstall()`: en Android dispara el prompt nativo, en iPhone abre la guía paso a
+paso con el aviso de #673). **Orden publicado (de nuevo las 8, semanales):** SMS · Instalá la app · Cargá en segundos · Referidos ·
+Reembolsos · Ruleta · Misiones · Telegram. También quedó verificado en Render el canje del token de instalación de #673 (entra sin
+pedir cambio de clave) tras corregir `req.user.userId`.
+
 ### 673. 📲 iPhone: la app instalada desde Safari arranca con la sesión (app + Girox por SSO) y el mismo menú — SW v481
 **Pedido (owner):** "tema instalar la app en iPhone: cuando instalen del navegador que entre iniciado sesión en la app y en la plataforma
 de Girox". **Problema de iOS:** Safari y la app agregada a la pantalla de inicio NO comparten localStorage ni cookies ⇒ la app
