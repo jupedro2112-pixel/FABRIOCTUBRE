@@ -2491,7 +2491,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v432</div>
+                    <div class="pf-build" id="appBuildTag">app v433</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -4152,9 +4152,10 @@
                 console.log('[PWA] Ya en standalone, ignorando beforeinstallprompt');
                 return;
             }
-            // No llamar e.preventDefault(): dejar que Chrome muestre la mini-barra
-            // nativa de instalación (que crea un WebAPK real en Android).
-            // Guardamos el evento para que el botón personalizado también pueda usarlo.
+            // #618 (owner): la mini-barra NATIVA de Chrome tapaba el menú inferior. Se frena (preventDefault) y se muestra
+            // NUESTRA barra abajo de todo, igual de simple (logo · PICA ROJA oficial · Instalar · ✕); el menú inferior sube
+            // encima de ella (body.has-install-bar). "Instalar" llama a prompt(): instala el WebAPK real igual que la nativa.
+            e.preventDefault();
             window.deferredPrompt = e;
             // Mostrar botón de instalación
             showInstallButton();
@@ -4183,30 +4184,28 @@
             // Crear botón si no existe
             let installBtn = document.getElementById('pwaInstallButton');
             if (!installBtn) {
-                installBtn = document.createElement('button');
+                // #618: BARRA de instalación abajo de todo (reemplaza al botón verde flotante que tapaba contenido)
+                installBtn = document.createElement('div');
                 installBtn.id = 'pwaInstallButton';
-                installBtn.className = 'pwa-install-btn';
-                // El texto va en un span propio para que el modo iOS no pise la ✕.
-                installBtn.innerHTML = '<span id="pwaInstallLabel">📱 Instalar App</span><span id="pwaInstallClose" title="Ocultar">✕</span>';
+                installBtn.className = 'pwa-install-bar';
+                installBtn.setAttribute('role', 'dialog');
+                installBtn.innerHTML = '<img src="icons/icon-96x96.png" alt="">' +
+                    '<span class="pib-t"><b>PICA ROJA oficial</b><small>picaroja.com · cargas automáticas</small></span>' +
+                    '<button type="button" class="pib-go" id="pwaInstallLabel">Instalar</button>' +
+                    '<button type="button" class="pib-x" id="pwaInstallClose" title="Ocultar" aria-label="Ocultar">✕</button>';
                 document.body.appendChild(installBtn);
-
-                // Agregar evento click
-                installBtn.addEventListener('click', handleInstallClick);
-                const _closeEl = installBtn.querySelector('#pwaInstallClose');
-                if (_closeEl) _closeEl.addEventListener('click', function (ev) {
-                    ev.stopPropagation(); // que no dispare la instalación
+                installBtn.querySelector('#pwaInstallLabel').addEventListener('click', handleInstallClick);
+                installBtn.querySelector('#pwaInstallClose').addEventListener('click', function (ev) {
+                    ev.stopPropagation();
                     try { localStorage.setItem('pwaInstallDismissedAt', String(Date.now())); } catch (_) {}
                     hideInstallButton();
                 });
             }
-
-            // Mostrar el botón
             installBtn.style.display = 'flex';
-
-            // Si es iOS, mostrar instrucciones especiales
+            document.body.classList.add('has-install-bar'); // el menú inferior sube encima de la barra
             if (isIOS) {
                 const _lbl = installBtn.querySelector('#pwaInstallLabel');
-                if (_lbl) _lbl.textContent = '📱 Agregar a Inicio';
+                if (_lbl) _lbl.textContent = 'Agregar a Inicio';
             }
         }
         
@@ -4219,6 +4218,7 @@
             if (installBtn) {
                 installBtn.style.display = 'none';
             }
+            document.body.classList.remove('has-install-bar'); // #618
         }
         
         // ============================================

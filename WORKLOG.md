@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 618. 📱 Instalar app: fuera el botón verde flotante; barra propia abajo de todo y el menú inferior sube (nada se tapa) — SW v433
+**Pedido (owner, con captura):** "ese instalar app en verde no va, y el otro [la mini-barra nativa de Chrome] está tapando la barra
+inferior de inicio … dejalo abajo pero subime el menú inferior, que no se tape el instalar app". `beforeinstallprompt` ahora hace
+`preventDefault()` (la nativa no aparece) y `showInstallButton()` arma `#pwaInstallButton.pwa-install-bar` fija abajo (logo · PICA ROJA
+oficial · picaroja.com · Instalar · ✕; en iOS "Agregar a Inicio"). Con `body.has-install-bar` el menú inferior (menú 2), la pantalla
+(`#chatScreen`), la fila de acciones del completo y las burbujas suben 64 px. "Instalar" llama `prompt()` ⇒ instala el WebAPK real.
+La ✕ sigue respetando 3 días. **Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 617. 📲 OTP de prueba 000000 en el entorno de test sin SMS
 **Por qué:** probando el retiro de diego651917 contra el casino simulado (#616), el flujo pide el código SMS y en Render no hay AWS SNS
 (`AWS_REGION` ausente) ⇒ imposible recibirlo. Ahora, SOLO con `RENDER`/`TESTER_ADMIN_PROMOTE=1`
