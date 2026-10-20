@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 661. 👑 Niveles VIP: X arriba como Reembolsos y el modal termina arriba de la barra inferior — SW v470
+**Pedido (owner, con capturas):** "a este menú ponele así [el de Reembolsos, con la X] … porque se pierde" — en menú 2 el modal de
+Niveles VIP llegaba hasta abajo y la barra fija (Cambiar menú · Inicio · Perfil) tapaba los botones Ver menos / Cerrar.
+**Causa:** `#vipLevelsModal` (y Info, Perfil, etc.) viven ADENTRO de `#chatScreen`, que en menú 2 mide `100dvh − 60px − franja segura`
+(#575); `.modal-content` seguía con `max-height: 100dvh − 40px`, así que la tarjeta se centraba en toda la pantalla y el final quedaba
+debajo de la barra. El de Reembolsos (`#unifiedRefundModal`) está a nivel `body`, por eso se veía bien.
+**Fix (pin.css):** `body.menu2 #chatScreen .modal` lleva `padding-bottom` = alto de la barra (+64px con la barra de instalar la app) y
+`.modal-content` un `max-height` que descuenta eso −24px ⇒ la tarjeta se centra en el área libre y scrollea adentro; Cerrar siempre
+visible. Aplica a TODOS los modales de adentro de `#chatScreen` (mismo defecto). **VIP:** botón `✕` `.rs-close` arriba a la derecha
+(como Reembolsos), `max-width 420px`; quedan los dos recuadros Ver menos / Cerrar (#659).
+
 ### 660. 🔍 Revisión de punta a punta antes de subir a producción — admin-sw v134
 **Pedido (owner):** "revisá que esté todo ok de punta a punta que la voy a subir, todo todo todo".
 **Qué se revisó (todo OK salvo lo corregido abajo):** `node --check` de server.js, src/, scripts/, public/js y los dos SW (sólo falla

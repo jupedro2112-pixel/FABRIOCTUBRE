@@ -1964,3 +1964,14 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 /* #659: niveles VIP — Ver menos / Cerrar en dos recuadros */
 .vl-actions { display: flex; gap: 8px; } .vl-actions .btn { flex: 1 1 0; }
 #vipLevelsList.vl-less .vl-row:not(.on):not(.next) { display: none !important; }
+
+/* ── #661 (owner): los modales que viven adentro de #chatScreen (Niveles VIP, Info, Perfil…) en MENÚ 2 quedaban tapados por la barra
+   inferior fija (la pantalla termina 60px + franja segura arriba del borde): el fondo del modal se centra en el área que queda y la
+   tarjeta nunca pasa de ahí, así el Cerrar / Ver menos siempre se ve. Con barra de instalar la app son 64px más. */
+body.menu2 #chatScreen .modal { box-sizing: border-box !important; padding-bottom: calc(60px + var(--sab, 0px)) !important; }
+body.menu2 #chatScreen .modal .modal-content { max-height: calc(100dvh - 60px - var(--sab, 0px) - 24px) !important; }
+body.has-install-bar.menu2 #chatScreen .modal { padding-bottom: calc(124px + var(--sab, 0px)) !important; }
+body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(100dvh - 124px - var(--sab, 0px) - 24px) !important; }
+#vipLevelsModal .modal-content { max-width: 420px !important; }
+#vipLevelsModal .rs-close { position: absolute; top: 12px; right: 12px; background: none; border: 0; font-size: 22px; line-height: 1; cursor: pointer; z-index: 10; padding: 4px; }
+#vipLevelsModal .vl-actions { margin-top: 12px; }
