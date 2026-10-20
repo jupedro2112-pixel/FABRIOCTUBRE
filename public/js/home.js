@@ -222,16 +222,11 @@
         const img = _el('navPlatLogo'), ico = _el('navPlatIco'), lbl = _el('navPlatLbl');
         const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : ''))));
         if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
-        if (lbl) lbl.textContent = 'PLATAFORMA'; // #621: siempre dice PLATAFORMA; el logo dice cuál
-        b.title = p && p.name ? ('Abrí ' + p.name + ' para jugar con tu saldo') : 'Abrí tu plataforma para jugar con tu saldo';
+        if (lbl) lbl.textContent = 'JUGÁ AQUÍ'; // #623 (owner): dice JUGÁ AQUÍ; el logo muestra la elegida
+        b.title = 'Elegí dónde jugar con tu saldo';
     }
-    function platTap() {
-        const p = _platChosen();
-        const list = (_platforms && _platforms.platforms) || [];
-        const pref = _platforms && (_platforms.preferredPlatform || _platforms.lastPlatform);
-        if (!pref && list.filter((x) => x.connected !== false).length > 1) return easyPlay();
-        openPlatform((p && p.id) || 'girox');
-    }
+    // #623 (owner): al tocar JUGÁ AQUÍ siempre abre el selector de plataformas (Girox · Ganamos · Jugaygana) para que elija.
+    function platTap() { easyPlay(); }
     // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
     let _stAt = 0, _stData = null;
     const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');

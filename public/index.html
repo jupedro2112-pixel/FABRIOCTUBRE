@@ -619,8 +619,8 @@
                 <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/></svg></span><span class="tn-lbl">Carga<br>auto</span>
             </button>
             <!-- #620 (owner): PLATAFORMA — abre la plataforma elegida para jugar con el saldo que ya tiene (sin cargar). Con Girox elegida muestra su logo. -->
-            <button type="button" class="tn-btn tn-plat" id="navPlat" onclick="VIP.home.platTap()" title="Abrí tu plataforma para jugar con tu saldo">
-                <span class="tn-ico"><img id="navPlatLogo" src="" alt="" hidden><span id="navPlatIco" aria-hidden="true">🎰</span></span><span class="tn-lbl" id="navPlatLbl">Plataforma</span>
+            <button type="button" class="tn-btn tn-plat" id="navPlat" onclick="VIP.home.platTap()" title="Elegí dónde jugar con tu saldo">
+                <span class="tn-ico"><img id="navPlatLogo" src="" alt="" hidden><span id="navPlatIco" aria-hidden="true">🎰</span></span><span class="tn-lbl" id="navPlatLbl">JUGÁ AQUÍ</span>
             </button>
             <button type="button" class="tn-btn" id="navManual" onclick="VIP.home.setHomeMode('mini')" title="Soporte: hablá con una persona, responde en minutos">
                 <span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4 20l1.2-4.4A7.5 7.5 0 1 1 20 12.5z"/><path d="M8.5 11.5h7M8.5 14.5h4.5"/></svg><span id="navManualUnread" class="support-unread" style="display:none;">0</span></span><span class="tn-lbl">Soporte</span>
@@ -1555,7 +1555,7 @@
             <!-- #470 (owner): "Ver la plataforma" → elegir Girox / Ganamos (Pronto) / Jugaygana (Pronto) -->
             <div id="easyPlatModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('easyPlatModal')">
                 <div class="modal-content" style="max-width:380px;" onclick="event.stopPropagation()">
-                    <div class="modal-header"><h2>Elegí dónde jugar</h2><p>Mismo usuario y clave en todas</p></div>
+                    <div class="modal-header"><h2>Elegí dónde jugar</h2><p>Jugás con tu saldo · mismo usuario y clave en todas</p></div>
                     <div id="easyPlatList" class="ep-list"></div>
                     <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn btn-secondary" style="width:100%;" onclick="hideModal('easyPlatModal')">Cerrar</button></div>
                 </div>
@@ -2493,7 +2493,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v437</div>
+                    <div class="pf-build" id="appBuildTag">app v438</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

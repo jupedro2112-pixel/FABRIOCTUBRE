@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 623. 🎰 "JUGÁ AQUÍ" en la barra superior: abre el selector de plataformas — SW v438
+**Pedido (owner):** "poné en Plataforma JUGÁ AQUÍ y cuando entre que pueda elegir la plataforma". El botón central (`#navPlat`) ahora dice
+**JUGÁ AQUÍ** (sigue mostrando el logo de la plataforma elegida) y `platTap()` abre SIEMPRE el selector `easyPlay()` (modal "Elegí dónde
+jugar": Girox · Ganamos · Jugaygana, las sin API como "Pronto") en vez de abrir directo la elegida. Subtítulo del modal: "Jugás con tu saldo".
+**Archivos:** `public/js/home.js`, `public/index.html`, SW.
+
 ### 622. ℹ️ INFO MINIMIZADO: textos cortos para ver todo en una pantalla — SW v437
 **Pedido (owner):** "reducimos de Info todos los textos, como minimizados, para poder ver todo en una pantalla". Las 6 tarjetas del
 modal Info (`#infoMsg`, ahora `.im-compact`) quedaron en una o dos líneas cada una: Misiones (3 líneas), Por qué elegir, Reembolsos (los
