@@ -20180,7 +20180,7 @@ async function issueAccessLinkFor(userId, opts) {
 app.post('/api/auth/install-link', authMiddleware, authLimiter, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
-    const link = await issueAccessLinkFor(req.user.id, { purpose: 'install' });
+    const link = await issueAccessLinkFor(req.user.userId, { purpose: 'install' }); // req.user.userId = id uuid (req.user.id sería el _id virtual: no matchea)
     const token = new URL(link).searchParams.get('acceso');
     res.json({ success: true, token });
   } catch (e) { logger.warn(`[install-link] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
