@@ -2503,6 +2503,11 @@
             </div>
             <!-- #404 (owner): orden del Perfil — Canjear código arriba de todo · Menú intermedio/completo · Modo nocturno + Notificaciones
                  · usuario + datos + Capturar · Fueguito · el resto. Todo más compacto (.pf-compact). -->
+            <!-- #645/#646 (owner): VERIFICACIÓN DE TELÉFONO ARRIBA DE TODO del Perfil, como IMPORTANTE hasta que verifique: estado (Verificado ✓ / Sin verificar) + botón que abre el modal con la explicación paso a paso -->
+            <div class="pf-theme-row pf-phone" id="pfPhoneRow">
+                <span class="pf-theme-k"><b><i class="pi pi-sm">📱</i>Verificación de teléfono <em class="pf-imp" id="pfPhoneImp">Importante</em></b><small id="pfPhoneHint">Necesaria para retirar</small></span>
+                <button type="button" class="pf-theme-btn" id="pfPhoneBtn" onclick="VIP.home.openVerifyPhone()">Verificar</button>
+            </div>
             <div class="pf-actions pf-actions-top">
                 <button type="button" class="pf-act" onclick="hideModal('profileModal');if(window.openWelcomeCodeModal)openWelcomeCodeModal()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8"/><path d="M12 8v12"/><path d="M12 8c-2.5 0-4.5-1.3-4.5-3S9 2.5 10 3.5 12 8 12 8zm0 0c2.5 0 4.5-1.3 4.5-3S15 2.5 14 3.5 12 8 12 8z"/></svg></i><span>Canjear un código<small>Códigos de bienvenida y promos</small></span></button>
             </div>
@@ -2510,11 +2515,6 @@
             <div class="pf-theme-row">
                 <span class="pf-theme-k"><b><i class="pi pi-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg></i>Modo nocturno</b><small id="pfThemeHint">Desactivado</small></span>
                 <button type="button" class="pf-theme-btn" id="pfThemeBtn" onclick="vipToggleTheme()">Activar</button>
-            </div>
-            <!-- #645 (owner): VERIFICACIÓN DE TELÉFONO en el Perfil: estado (Verificado ✓ / Sin verificar) + botón que abre el modal con la explicación paso a paso -->
-            <div class="pf-theme-row" id="pfPhoneRow">
-                <span class="pf-theme-k"><b><i class="pi pi-sm">📱</i>Verificación de teléfono</b><small id="pfPhoneHint">Necesaria para retirar</small></span>
-                <button type="button" class="pf-theme-btn" id="pfPhoneBtn" onclick="VIP.home.openVerifyPhone()">Verificar</button>
             </div>
             <div class="pf-actions pf-actions-top">
                 <!-- #645 (owner): Notificaciones = estado + botón ACTIVAR siempre apretable (aunque figure activado, por las dudas). #notificationBtn conserva toda la lógica FCM. -->
@@ -2533,7 +2533,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v459</div>
+                    <div class="pf-build" id="appBuildTag">app v460</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

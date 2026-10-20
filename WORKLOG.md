@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 646. 📽️ Historias nuevas (7, con la pica de la marca) + verificación de teléfono ARRIBA del Perfil como Importante — SW v460
+**Pedidos (owner):** "en las historias borrá todas y poné primera una que explique la verificación por SMS (seguridad para vos y para
+todos, verificá tu teléfono para poder retirar) con un botón que lleve a la sección nueva del Perfil; sacá el logo de arriba, que se vea
+sólo PICA ROJA" · "[Soporte] esta historia ajustala bien que está descentrada, y a todas las fotos ponele la gota de la marca" · "unite a
+Telegram: en unos días publicamos un código exclusivo para reclamar plata, válido para los primeros 100; si no llegás, entrá igual que
+publicamos todas las semanas: armá una foto final resumida, bien explicada e interactiva" · "el verificar SMS ponelo en el Perfil arriba
+como importante". **Fotos:** generadas con PIL (script `gen_stories.py`, 1080×1920, contenido centrado en la zona segura, pica de
+`icon-512` con fondo transparente arriba + "PICA ROJA · oficial", tarjeta gris, titular negro + palabra roja, píldora negra, pie "Gracias
+por confiar"): ig-1 Verificá tu teléfono (link `app:verificar`) · ig-2 Cargá en minutos (`app:cargar`) · ig-3 Reembolsos (`app:reembolso`)
+· ig-4 Ruleta diaria (`app:ruleta`) · ig-5 Referidos (`app:referidos`) · ig-6 Hablá con Soporte (`app:soporte`) · ig-7 Unite a Telegram:
+código exclusivo, 3 pasos, primeros 100, uno por semana (`/go/comunidad`). Las 6 viejas se borraron por API y se publicaron las 7 nuevas
+(168 h, `repeatWeekly`, fondo blanco). **stories.js:** `APP_LINKS` suma `verificar` (abre el modal de verificación) y `soporte`.
+**Visor:** `.st-logo` oculto (sólo el texto PICA ROJA arriba). **Perfil:** `#pfPhoneRow` pasa arriba de todo, con etiqueta "Importante",
+borde y botón rojos hasta que verifique (`paintPfPhone` saca la marca al verificar). **Archivos:** `public/images/stories/ig-1..7.png`,
+`public/index.html`, `public/js/home.js`, `public/js/stories.js`, `public/css/pin.css`, SW.
+
 ### 645. 👤 Perfil: verificación de teléfono (estado + paso a paso), Notificaciones con botón ACTIVAR, sin "Cambiar menú" ni fueguito — SW v459
 **Pedidos (owner):** "sacá el cambio de menú del Perfil, ya no hace falta" · "el fueguito de Perfil también sacalo, y en Notificaciones
 poné un botón para activar; aunque figure que lo tiene, que pueda apretarlo igual por las dudas" · "necesito en el Perfil verificación de

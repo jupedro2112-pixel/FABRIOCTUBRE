@@ -1930,3 +1930,9 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 .vp-box ol { margin: 0; padding-left: 18px; font: 600 12px/1.45 var(--p-font); color: var(--p-text); }
 .vp-box ol li { margin: 0 0 4px; }
 .vp-box small { display: block; margin-top: 6px; font: 600 10.5px var(--p-font); color: var(--p-muted); }
+/* ===== #646 (owner 2026-10-20): verificación de teléfono arriba del Perfil como IMPORTANTE; historias sin el logo arriba (sólo PICA ROJA) ===== */
+.profile-modal .pf-theme-row.pf-important { border: 1.5px solid var(--p-red); background: var(--p-red-soft); }
+.profile-modal .pf-theme-row.pf-important .pf-theme-btn { background: var(--p-red); color: #fff; }
+.pf-imp { display: inline-block; margin-left: 6px; background: var(--p-red); color: #fff; font: 900 8.5px/1 var(--p-font); letter-spacing: .4px; text-transform: uppercase; padding: 3px 7px; border-radius: 999px; font-style: normal; vertical-align: middle; }
+.pf-imp[hidden] { display: none !important; }
+.story-viewer .st-head .st-logo { display: none !important; }

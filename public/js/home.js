@@ -492,7 +492,8 @@
             const u = (VIP.state && VIP.state.currentUser) || {}; const ok = u.phoneVerified === true;
             const h = _el('pfPhoneHint'), b = _el('pfPhoneBtn'); if (!h || !b) return;
             h.textContent = ok ? ('Verificado ✓ · ' + (u.phone || '')) : 'Sin verificar · necesaria para retirar';
-            b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok); b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
+            b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok);
+            const row = _el('pfPhoneRow'), imp = _el('pfPhoneImp'); if (row) row.classList.toggle('pf-important', !ok); if (imp) imp.hidden = ok; // #646 b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
         } catch (_) {}
     }
     function paintPfNotif() {
