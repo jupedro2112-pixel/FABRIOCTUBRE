@@ -4,9 +4,17 @@
 > commit por commit está en `git log --oneline`. Esto captura decisiones, umbrales de
 > negocio y pendientes que NO se ven leyendo el código.
 >
-> **Última actualización: 2026-10-17**
+> **Última actualización: 2026-10-20**
 
 ## Sesión 2026-10-18
+
+### 622. ℹ️ INFO MINIMIZADO: textos cortos para ver todo en una pantalla — SW v437
+**Pedido (owner):** "reducimos de Info todos los textos, como minimizados, para poder ver todo en una pantalla". Las 6 tarjetas del
+modal Info (`#infoMsg`, ahora `.im-compact`) quedaron en una o dos líneas cada una: Misiones (3 líneas), Por qué elegir, Reembolsos (los
+tres períodos en UNA línea), La plataforma que quieras (texto corto también en `home.js _paintPlatformTexts`), Ruleta, Referidos, Niveles VIP.
+Mismos ids (`infoMs*`, `infoDailyMax/WeeklyMax/MonthlyMax`, `infoCardWhyTitle`, `infoCardTwoPlatsDesc`, `.rl-min`, `.ref-pct`) así home.js
+sigue llenando los %. En `pin.css` bloque #622: padding/márgenes/tipografía apretados (11.5px), íconos 15px, botón Entendido más chico.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
 
 ### 621. 🎰 PLATAFORMA va en el CENTRO de la barra superior (no abajo) — SW v436
 **Pedido (owner):** "mejor dejalo arriba, en el medio, parte central del menú superior: PLATAFORMA y el logo de Girox, Ganamos o la que

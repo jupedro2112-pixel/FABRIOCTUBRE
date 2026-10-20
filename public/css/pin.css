@@ -1826,3 +1826,20 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .header .tn-plat .tn-ico img[hidden] { display: none; }
 .header .tn-btn:not(.tn-home).tn-plat .tn-lbl { font-weight: 900 !important; letter-spacing: .5px !important; color: var(--p-text) !important; }
 
+
+/* ===== #622 (owner 2026-10-20): INFO MINIMIZADO — textos cortos y tarjetas apretadas para que TODO entre en una pantalla ===== */
+#infoModal .modal-content { padding: 14px 14px 12px !important; }
+#infoModal .info-head-sm { margin: 0 0 6px !important; }
+#infoModal .info-head-sm h2 { font-size: 13px !important; }
+#infoModal .info-head-sm h2::after { margin-top: 4px !important; }
+#infoModal .info-reviews-head { padding: 7px 10px !important; font-size: 12px !important; }
+.info-msg.im-compact { margin: 6px 0 0 !important; }
+.info-msg.im-compact .im-sec { padding: 7px 10px 8px !important; margin: 0 0 6px !important; font-size: 11.5px !important; line-height: 1.35 !important; border-radius: 12px !important; border-left-width: 4px !important; }
+.info-msg.im-compact .im-sec > b:first-child { padding: 3px 8px !important; margin: 0 6px 3px 0 !important; font-size: 12px !important; border-radius: 8px !important; gap: 4px !important; }
+.info-msg.im-compact .im-ico, .info-msg.im-compact .im-ico svg { width: 15px !important; height: 15px !important; }
+.info-msg.im-compact .im-ico { margin-right: 3px !important; }
+.info-msg.im-compact .im-line { margin-top: 2px !important; }
+.info-msg.im-compact .im-link { font-size: 11.5px !important; padding: 0 !important; }
+.info-msg.im-compact .refund-promo { margin-top: 3px !important; font-size: 11px !important; }
+.info-msg.im-compact .info-badge { font-size: 9px !important; padding: 1px 6px !important; }
+#infoModal #closeInfoModal { padding: 9px 14px !important; font-size: 13px !important; }
