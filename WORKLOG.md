@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 633. 🎰 Adentro del casino no se cambia de plataforma: barra sólo con "‹ Volver" y "Estás en Girox" — SW v447
+**Pedidos (owner):** (1) "[captura con el cajón verde Quiero Depositar…] dejá sólo la Carga rápida; el chat con los comprobantes y todo lo
+otro no" → ya estaba hecho en #630 (v444); la captura era de una versión vieja en caché (Render sirve ui.js sin el cajón: verificado por
+curl). (2) "desde JUGÁ AQUÍ que entre iniciado también, con el ingreso automático" → ya entra por `enterCasino` → `POST /api/platform/session`
+(SSO) igual que tras la carga; en el ENTORNO DE PRUEBA el casino simulado (#616) devuelve `https://1girox.com/?sim_login=…`, que es la web
+pública y por eso se ve "Iniciar sesión": con la API real (producción) entra logueado. (3) "si elige Girox, que aparezca Girox y que no se
+pueda cambiar de ahí adentro; eso es saliendo" → `renderCasinoTabs` ya no pinta pestañas: barra con "‹ Volver" + "Estás en {plataforma} ·
+para cambiar, salí". `switchPlatform` queda sin uso (candidata a limpieza). **Archivos:** `public/js/home.js`, SW.
+
 ### 632. 🎰 "Jugar ahora" (tras cargar con comprobante) abre el casino ADENTRO con el panel Carga rápida — SW v446
 **Pedido (owner):** "también cuando la gente carga adjuntando comprobante y le aparece el botón para jugar". `playNow` ahora, con la app
 instalada (standalone), llama `openPlatform` (casino adentro + panel Carga rápida abierto solo, #631); en navegador sigue `openPlatformTab`

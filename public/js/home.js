@@ -1799,6 +1799,8 @@
     // El owner: "cuando entra, en una barra superior que diga 'elegí cuál plataforma jugar',
     // y una vez que cargan y entran con saldo, que aparezca ahí 'volver al menú de cargas'".
     // Se inyecta en el overlay del casino (VIP.ui._showCasinoFrame) sin tocar su HTML.
+    // #633 (owner 2026-10-20): ADENTRO del casino NO se cambia de plataforma ("si elige Girox, que aparezca Girox; para cambiar, saliendo").
+    // La barra de arriba queda con "‹ Volver" y el nombre de la plataforma en la que está; las pestañas (#222) se eliminaron.
     function renderCasinoTabs() {
         const overlay = _el('casinoOverlay');
         if (!overlay) return;
@@ -1807,21 +1809,17 @@
             overlay.insertAdjacentHTML('afterbegin',
                 '<div id="casinoTopBar" class="casino-topbar">' +
                   '<div class="casino-topbar-row">' +
-                    '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver al menú de cargas</button>' +
-                    '<span class="casino-topbar-title">Elegí en cuál plataforma jugar</span>' +
+                    '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver</button>' +
+                    '<span class="casino-topbar-title" id="casinoTopTitle"></span>' +
                   '</div>' +
-                  '<div id="casinoPlatTabs" class="casino-plat-tabs"></div>' +
                 '</div>');
             bar = _el('casinoTopBar');
         }
-        const tabs = _el('casinoPlatTabs');
-        if (!tabs) return;
         const list = (_platforms && _platforms.platforms) || [{ id: 'girox', name: 'Girox', connected: true }];
         const current = (VIP.ui && VIP.ui._casinoPlatform) || 'girox';
-        tabs.innerHTML = list.map(p =>
-            '<button type="button" class="casino-plat-tab' + (p.id === current ? ' active' : '') + '" onclick="VIP.home.switchPlatform(\'' + _esc(p.id) + '\')">' +
-            _esc(p.name) + (p.connected ? '' : ' <small>link</small>') + '</button>'
-        ).join('');
+        const p = list.find((x) => x.id === current) || { name: current };
+        const nm = /^jugaygana$/i.test(String(p.name || '')) ? 'Jugaygana' : String(p.name || '');
+        const t = _el('casinoTopTitle'); if (t) t.textContent = 'Estás en ' + nm + ' · para cambiar, salí';
     }
     function switchPlatform(platformId) {
         openPlatform(platformId);
