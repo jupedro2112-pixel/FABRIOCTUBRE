@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 638. 🔁 Menú 2 sin parpadeo al recargar · barra superior debajo del notch de los iPhone nuevos — SW v452
+**Pedidos (owner):** "cuando actualizo tengo seleccionado el menú 2 y aparece el 1 por 1 segundo" · "ajustá la parte superior, bajarla un
+poco si detectás iPhones nuevos o teléfonos con la parte de arriba que corta la imagen: se corta el menú de arriba y muchos no pueden
+usarlo". **(1)** `_setMenuLayout` guarda `vip_menu_layout` en localStorage; al arrancar home.js lo aplica del caché ANTES de pedir
+`/api/public/menu-layout`, y un script en `<head>` pone `html.menu2-pre` para que ni siquiera el primer pintado muestre arriba Carga
+auto · Inicio · Perfil (CSS los esconde hasta que se arma `#bottomNav`). También se corrigió la altura del `#chatScreen` con menú 2
+(quedaba calculada con 76 px tras bajar la barra a 60 en #637). **(2)** La barra superior ya tenía `env(safe-area-inset-top)` (chat.css),
+pero se refuerza con `!important` en pin.css (nada la pisa) y se agrega detección: iPhone con notch (pantalla ≥ 812 px) en modo app
+⇒ `html.ios-notch` ⇒ mínimo 44 px arriba aunque el sistema informe 0; lo mismo para la barra del casino. `viewport-fit=cover` y
+`display: standalone` ya estaban bien. **Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 637. 📏 Inicio (completo): línea recta arriba de todo con NIVEL + FUEGUITO; instalar/bono debajo; barra inferior más baja — SW v451
 **Pedido (owner):** "achicá el menú de abajo de altura para que entre arriba el fuego y nivel; el nivel en la parte superior de todo en
 forma recta y en la misma línea el fueguito al lado; si hay un bono disponible o lo de instalar la app negro ponelo abajo de eso".

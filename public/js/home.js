@@ -404,6 +404,7 @@
     // Se dejan comentarios-marcador para devolverlos a su lugar exacto si se vuelve a la opción 1.
     function _setMenuLayout(layout) {
         const on = Number(layout) === 2; document.body.classList.toggle('menu2', on);
+        try { localStorage.setItem('vip_menu_layout', on ? '2' : '1'); document.documentElement.classList.remove('menu2-pre'); } catch (_) {} // #638: se recuerda para aplicarlo al instante la próxima vez
         const top = document.querySelector('.header.header-toolbar.tb-circles.topnav'); const screen = _el('chatScreen'); if (!top || !screen) return;
         // #558 (owner): abajo van Carga auto · Inicio · PERFIL; Soporte queda arriba, en el lugar que tenía Perfil (antes de Historias).
         const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual'), perf = _el('navPerfil'), hist = _el('navHistorias'), plat = _el('navPlat'); // #620
@@ -505,6 +506,7 @@
         // recordaba el último modo dentro de la sesión: ya no.)
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
         _paintBsUser(); // #636
+        try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
