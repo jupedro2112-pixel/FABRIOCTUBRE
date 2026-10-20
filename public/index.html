@@ -1264,21 +1264,21 @@
                     <div class="mc-kicker">BIENVENIDO/A</div>
                     <h2 id="mcTitle">¿Cómo querés ver la app?</h2>
                     <p class="mc-sub">Elegí la que te resulte más cómoda. La cambiás cuando quieras con <b>Cambiar menú</b>.</p>
-                    <!-- #512: tercera opción, la más simple -->
+                    <!-- #636 (owner 2026-10-20): el COMPLETO va primero y es el recomendado (antes #580: básico) -->
+                    <button type="button" class="mc-opt mc-full" onclick="VIP.home.chooseMenu('full')">
+                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span>
+                        <span class="mc-txt"><b>MENÚ COMPLETO</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, soporte, historias…</small></span>
+                        <span class="mc-tag">Recomendado</span><!-- #636 (owner): el recomendado es el completo -->
+                    </button>
                     <button type="button" class="mc-opt mc-basic" onclick="VIP.home.chooseMenu('basic')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/></svg></span>
                         <span class="mc-txt"><b>MENÚ BÁSICO</b><small>Completo y sencillo: cargar, retirar, dónde jugás, tu nivel y el fueguito.</small></span>
-                        <span class="mc-tag">Recomendado</span><!-- #580 (owner): el recomendado es el básico -->
+                        <span class="mc-tag mc-tag-dim">El más simple</span>
                     </button>
                     <button type="button" class="mc-opt mc-easy" onclick="VIP.home.chooseMenu('easy')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span>
                         <span class="mc-txt"><b>MENÚ INTERMEDIO</b><small>Pocos botones y grandes: cargar, reembolso, misiones, referidos y ruleta.</small></span>
                         <span class="mc-tag mc-tag-dim">Más opciones</span>
-                    </button>
-                    <button type="button" class="mc-opt mc-full" onclick="VIP.home.chooseMenu('full')">
-                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span>
-                        <span class="mc-txt"><b>MENÚ COMPLETO</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, soporte, historias…</small></span>
-                        <span class="mc-tag mc-tag-dim">Si ya conocés la app</span>
                     </button>
                     <!-- #569 (owner): "Fijar" vive acá adentro (en la fila de arriba no entraba con Racha). Fija el menú ACTUAL para el ingreso. -->
                     <button type="button" class="mc-pin" id="menuPinBtn" onclick="VIP.home.toggleMenuPin()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 7l1-5h6l1 5M5 7h14l-2 7H7z"/></svg></i><span id="menuPinTxt">Dejar fijo el menú actual para el ingreso</span></button>
@@ -1287,6 +1287,7 @@
             <div id="homeFull">
             <!-- #258: el saldo va arriba, debajo de la fila de círculos (ui.js actualiza #userBalance) -->
             <div class="balance-strip">
+                <span class="bs-user" title="Tu usuario"><i>👤</i><b id="bsUserName">—</b></span><!-- #636 -->
                 <span class="bs-balance"><span class="dash-balance-label"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
                 <!-- #262: Instalar app al lado del saldo, con IMPORTANTE en rojo -->
                 <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
@@ -2494,7 +2495,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v449</div>
+                    <div class="pf-build" id="appBuildTag">app v450</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -1863,3 +1863,15 @@ body.no-menu-easy .ev-easy-link, body.no-menu-easy .bv-sw[onclick*="'easy'"], bo
 body.no-menu-easy.no-menu-full .bv-switch2 { display: none !important; }
 body.menus-one .change-menu, body.menus-one .menu-pin { display: none !important; }
 body.home-full .vip-mini:not([hidden]) { display: inline-flex; }
+/* ===== #636 (owner 2026-10-20): CARGA AUTOMÁTICA (completo) LIMPIA — sin nivel, fueguito ni misiones; sólo 👤 usuario · saldo y los pasos.
+   "Cambiar menú" sólo en el Inicio. El COMPLETO es el recomendado del selector. ===== */
+body.home-full .top-row { display: none !important; }
+body.home-full #fireHomeCard, body.home-full #missionsCard, body.home-full #vipCard, body.home-full .fire-mini, body.home-full #rouletteHomeCard { display: none !important; }
+.balance-strip #homeInstallAppBtn, .balance-strip #homeVipStrip { display: none !important; }
+.balance-strip { gap: 10px; }
+.balance-strip .bs-user { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; font: 800 13px var(--p-font); color: var(--p-text); }
+.balance-strip .bs-user i { font-style: normal; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--p-red-soft); color: var(--p-red); flex: 0 0 auto; }
+.balance-strip .bs-user b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.balance-strip .bs-balance { flex: 0 0 auto; margin-left: auto; }
+.mc-opt.mc-full { border-color: var(--p-red) !important; } .mc-opt.mc-full b { color: var(--p-red) !important; }
+.mc-opt.mc-basic, .mc-opt.mc-easy { border-color: transparent !important; } .mc-opt.mc-basic b { color: var(--p-text) !important; }

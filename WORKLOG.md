@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 636. 🧹 Carga automática (completo) limpia; "Cambiar menú" sólo en el Inicio; el COMPLETO es el recomendado — SW v450
+**Pedidos (owner):** "sacá de Auto cargas del completo el nivel y fueguito; que quede limpio: los pasos de carga, sacá misiones, fueguito;
+sólo el saldo y el usuario con su logo" · "el Cambiar menú que aparezca sólo del Inicio y no de cargas" · "dejá predeterminado como
+recomendado el completo". En `body.home-full` se esconden `#topRow` (Cambiar menú · fijar · píldoras), `#fireHomeCard`, `#missionsCard`,
+`#vipCard`, `#rouletteHomeCard` y el fueguito mini; la franja del saldo queda 👤 usuario (`#bsUserName`, lo pintan ui.js al entrar y
+home.js) · Tu saldo, sin "Instalar app" ni la tira VIP. `#vipClaimCard` (plata de nivel por cobrar) se deja: sólo aparece cuando hay
+algo que cobrar. Selector: el COMPLETO va primero con "Recomendado" (borde rojo); básico "El más simple"; `MENU_ORDER` arranca por `full`
+(fallback cuando el menú guardado se deshabilita desde el panel). El nivel VIP en píldora vuelve a ser sólo del básico (#635 lo había
+puesto en la completa y el owner lo sacó). **Archivos:** `public/index.html`, `public/js/home.js`, `public/js/ui.js`, `public/css/pin.css`, SW.
+
 ### 635. 🧭 Menús activos desde el panel (Básico · Intermedio · Completo); nivel VIP en la completa; Cierres al final de App — SW v449 · admin-sw v132
 **Pedidos (owner):** "poné fueguito y niveles en la completa" · "sacá por panel por lo menos para configurar cuál de las 3 activo para la
 gente: si las 3, o si quiero desactivar la intermedia que lo pueda deshabilitar desde el panel" · "Cierres en el panel ponelo dentro de App

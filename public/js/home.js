@@ -50,7 +50,7 @@
     const MENU_PREF_KEY = 'vip_menu_pref';
     // #635 (owner): qué menús puede elegir la gente (panel → Elegir menú → "Menús activos"); llega en /api/public/menu-layout
     // (Config['menusEnabled']) y se recuerda en localStorage para aplicarlo al instante al arrancar (sin "viejo y después nuevo").
-    const MENUS_ON_KEY = 'vip_menus_on'; const MENU_ORDER = ['basic', 'easy', 'full'];
+    const MENUS_ON_KEY = 'vip_menus_on'; const MENU_ORDER = ['full', 'basic', 'easy']; // #636: el completo es el predeterminado
     let _menusOn = { basic: true, easy: true, full: true };
     try { const c = JSON.parse(localStorage.getItem(MENUS_ON_KEY) || 'null'); if (c && typeof c === 'object') _menusOn = { basic: c.basic !== false, easy: c.easy !== false, full: c.full !== false }; } catch (_) {}
     function _menuOn(p) { return _menusOn[p] !== false; }
@@ -91,7 +91,7 @@
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         // #569: la etiqueta "· Completo" de Cambiar menú se sacó (no entraba con Racha)
-        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic' || mode === 'full'); /* #635: también en la completa */ _fireMiniSync(); } catch (_) {} // #528 · #627
+        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = true; /* #636: el fueguito ya no va en la completa */ const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic'); /* #636: sólo en el básico */ _fireMiniSync(); } catch (_) {} // #528 · #627
         try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
@@ -185,7 +185,10 @@
     }
     setInterval(_fireMiniSync, 5000);
     // #512: MENÚ BÁSICO — saludo + saldo, CARGAR, RETIRAR, chips de plataforma (fija la preferida) y "Entrar a jugar".
+    // #636: usuario con logo en la franja del saldo del completo
+    function _paintBsUser() { try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const b = _el('bsUserName'); if (b) b.textContent = u || '—'; } catch (_) {} }
     function _basicPaint() {
+        _paintBsUser();
         try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('basicHello'); if (h) h.textContent = u || 'Hola'; } catch (_) {} // #627: sólo el nombre, con el ícono 👤
         try { const b = _el('userBalance'), bb = _el('basicBalance'); if (b && bb && b.textContent) bb.textContent = b.textContent; } catch (_) {}
         const box = _el('basicPlats'); if (!box) return;
@@ -492,6 +495,7 @@
         // #307 (owner): al entrar SIEMPRE arranca en Inicio; desde ahí van a Carga auto / manual. (Antes se
         // recordaba el último modo dentro de la sesión: ya no.)
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
+        _paintBsUser(); // #636
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}

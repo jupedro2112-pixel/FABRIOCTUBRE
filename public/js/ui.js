@@ -98,6 +98,7 @@ VIP.ui = (function () {
         const _curUser = document.getElementById('currentUser');
         if (_curUser) _curUser.textContent = _username;
         const _dashUser = document.getElementById('dashUserName');
+        try { const bu = document.getElementById('bsUserName'); if (bu && VIP.state.currentUser) bu.textContent = VIP.state.currentUser.username || '—'; } catch (_) {} // #636
         if (_dashUser) _dashUser.textContent = _username;
 
         adjustLayout();
