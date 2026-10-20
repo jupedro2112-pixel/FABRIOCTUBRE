@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 631. 💳 El panel Carga rápida se abre SOLO al entrar a jugar (JUGÁ AQUÍ y al cargar el casino) — SW v445
+**Pedido (owner):** "el chat rápido lo quiero cuando la gente elige la plataforma desde JUGÁ AQUÍ y cuando carga". `openPlatform` (todas las
+entradas dentro de la app: selector JUGÁ AQUÍ, "Entrar a jugar" del básico, pestañas) abre `toggleCasinoLoad(true)` apenas se monta el
+casino (no en modo prueba); si el CBU todavía no llegó, el panel se repinta en 1,5 s. La ✕ lo cierra y la ✕ de la pastilla lo saca.
+"Jugar ahora" tras una carga sigue abriendo la plataforma aparte (#296, link SSO de un solo uso), ahí no aplica.
+**Archivos:** `public/js/home.js`, SW.
+
 ### 630. 🎰 Casino: se ELIMINÓ el cajón de chat; la pastilla abre sólo el panel Carga rápida (datos + adjuntar) — SW v444
 **Pedido (owner):** "[captura: panel Carga rápida con el chat atrás] eso está mal, sólo quiero que se abra y aparezcan los datos y adjuntar;
 todo el chat restante borrá todo; y si apretás la ✕ que se pueda sacar y volver a jugar". **Causa:** `_showCasinoFrame` (ui.js) todavía

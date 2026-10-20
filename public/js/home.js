@@ -1715,7 +1715,9 @@
         else if (p.connected) { try { VIP.ui.enterCasino(p.id); } catch (_) {} }
         else _embedExternal(p);
         _setCasinoTestMode(test);
-        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); }, 60);
+        // #631 (owner): al entrar a jugar (JUGÁ AQUÍ, Entrar a jugar, pestañas) el panel de Carga rápida (datos + adjuntar) se abre solo
+        // apenas carga el casino; la ✕ lo cierra. En modo prueba no.
+        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(true); } catch (_) {} } }, 60);
     }
     function playOn(platformId) { openPlatform(platformId); }
 
@@ -1772,10 +1774,12 @@
         p.innerHTML =
             '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
+            // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
             '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>';
         p.style.display = '';
         _fdNotesPaint();
+        if (!cbu) setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, 1500); // #631
     }
     function _playOnEmbedded(platformId) {
         const list = (_platforms && _platforms.platforms) || [];
