@@ -1849,3 +1849,11 @@ body.home-basic .vip-mini:not([hidden]) { display: inline-flex; }
 .vip-mini > b { font: 900 11.5px var(--p-font); color: var(--p-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .vip-mini .vm-bar { flex: 1 1 40px; min-width: 28px; max-width: 70px; height: 6px; border-radius: 999px; background: var(--p-surface-2); overflow: hidden; } .vip-mini .vm-bar i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; }
 .vip-mini > em { font: 800 10.5px var(--p-font); color: var(--p-muted); font-style: normal; white-space: nowrap; flex: 0 0 auto; }
+/* #628 (owner): saldo pegado al nombre (izquierda); fueguito a la derecha con etiqueta roja "Novedad" */
+.bv-top { justify-content: flex-start !important; }
+.bv-top .bv-user { flex: 0 1 auto; max-width: 48%; }
+.bv-top > b { margin-left: 2px; }
+.bv-fire { margin-left: auto; position: relative; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; padding: 5px 9px 4px; }
+.bv-fire b { font-weight: 900; font-size: 12.5px; }
+.bv-fire .bv-new { position: absolute; top: -7px; right: 6px; background: var(--p-red); color: #fff; font: 900 7.5px/1 var(--p-font); letter-spacing: .4px; text-transform: uppercase; padding: 2px 5px; border-radius: 999px; }
+.bv-top { margin-top: 4px; overflow: visible; }

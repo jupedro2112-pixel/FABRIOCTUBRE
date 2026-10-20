@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 628. 🔥 Básico: saldo pegado al nombre y píldora "🔥 Fueguito N d" con etiqueta roja "Novedad" — SW v442
+**Pedido (owner):** "poné el saldo más a la izquierda y en el fueguito poné Fueguito, en rojo chiquito Novedad". `.bv-top` alinea a la
+izquierda (nombre · saldo) y la píldora `.bv-fire` va a la derecha con `margin-left:auto`, texto "🔥 Fueguito **N d**" y badge `.bv-new`.
+**Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 627. 🧩 Menú BÁSICO más sencillo: 👤 nombre · saldo · 🔥 racha en una línea; nivel VIP junto a "Cambiar menú" — SW v441
 **Pedido (owner):** "en el básico poné el nivel al lado de Cambiar menú y la racha al lado del saldo; donde está el usuario poné el nombre
 con un ícono y el saldo unificado y al lado la racha, así queda todo más sencillo". La cabecera `.bv-top` ahora es UNA línea: `.bv-user`
