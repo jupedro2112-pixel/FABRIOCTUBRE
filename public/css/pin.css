@@ -1249,9 +1249,6 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .plat-btn[data-plat="jugaygana"] { background: linear-gradient(135deg, #000, #262626) !important; color: #fff !important; border-color: transparent !important; }
 html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-play-btn.plat-jugaygana, html[data-theme="dark"] .ep-item.ep-jugaygana { border: 1px solid rgba(255,255,255,.22) !important; }
 /* ── #504: estrategia — banner de segunda carga y misiones ── */
-.sd-banner { display: flex; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 16px; padding: 11px 14px; background: linear-gradient(90deg, #ff7a18, #ffb627); color: #1a1a1a; font: 700 13px var(--p-font); text-align: left; cursor: pointer; box-shadow: 0 6px 16px rgba(255,122,24,.28); }
-.sd-banner b { font-size: 15px; font-weight: 900; } .sd-banner small { color: rgba(0,0,0,.65); font-weight: 700; } .sd-banner span { margin-left: auto; font-weight: 900; }
-.sd-banner-full { margin: 0 0 10px; }
 .ez-btn.ez-missions { grid-column: 1 / -1; align-items: flex-start !important; text-align: left; padding-bottom: 12px !important; }
 .ez-btn.ez-missions .ez-ico { color: var(--p-red); }
 .ez-mis-bars { display: flex; gap: 6px; width: 100%; margin-top: 8px; }
@@ -1288,7 +1285,6 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ez-btn.ez-missions { min-height: 0 !important; padding: 10px 12px 12px !important; flex-direction: column; align-items: flex-start !important; }
 .ez-btn.ez-missions > b { margin-top: 4px; }
 .ez-chat, .ez-switch { flex: 0 0 auto !important; }
-.sd-banner { flex: 0 0 auto; }
 /* ── #510: Misiones como recuadro normal (media columna), al lado de Reembolso ── */
 .ez-btn.ez-missions { grid-column: auto !important; align-items: center !important; text-align: center !important; padding: 10px 8px 12px !important; }
 .ez-btn.ez-missions > b { margin-top: 0; }
@@ -1372,8 +1368,6 @@ html[data-theme="dark"] .ez-top::before { opacity: .05; }                       
 html[data-theme="dark"] .ez-chev { background: transparent; color: var(--p-muted); border-color: var(--p-border); }
 html[data-theme="dark"] .ez-hello-btn[aria-expanded="true"] .ez-chev { background: transparent; color: var(--p-text); border-color: var(--p-text); }
 html[data-theme="dark"] .ez-main { background: var(--p-red) !important; box-shadow: none !important; }
-html[data-theme="dark"] .sd-banner { background: #2b1d0a; color: #ffd48a; border: 1px solid #4a3312; box-shadow: none; }
-html[data-theme="dark"] .sd-banner b, html[data-theme="dark"] .sd-banner span { color: #ffc966; } html[data-theme="dark"] .sd-banner small { color: #c9a35a; }
 html[data-theme="dark"] .ez-btn .ez-ico { background: var(--p-surface-2) !important; }
 html[data-theme="dark"] .ez-badge { background: var(--p-red) !important; }
 html[data-theme="dark"] .ez-more-actions button { background: var(--p-surface-2) !important; border: 1px solid var(--p-border) !important; }
@@ -1519,8 +1513,6 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 /* ── #536 fueguito minimizado, banner recordatorio y REFERIDOS en estilo Pinterest ── */
 .fire-mini .fm-txt small { display: none !important; } .fire-mini .fm-txt b { white-space: nowrap; }
 .fire-mini .fm-more { font: 700 10.5px var(--p-font); color: var(--p-muted); font-style: normal; white-space: nowrap; }
-.sd-banner { flex-wrap: nowrap; } .sd-banner .sd-txt { flex: 1 1 auto; min-width: 0; font: 600 11.5px/1.3 var(--p-font); color: #1a1a1a; white-space: normal; }
-.sd-banner .sd-txt b { font-size: 13px; } .sd-banner .sd-txt small { display: block; margin-top: 2px; font-size: 10px; }
 .dash-ref { background: var(--p-card) !important; border: 1px solid var(--p-border) !important; color: var(--p-text) !important; box-shadow: var(--p-shadow) !important; border-radius: 16px !important; }
 .dash-ref-title { color: var(--p-text) !important; } .dash-ref-cta { background: var(--p-red) !important; color: #fff !important; }
 .dash-ref-bar { background: var(--p-surface-2) !important; } .dash-ref-fill { background: var(--p-red) !important; }
@@ -1647,14 +1639,12 @@ body.menu2 #homeFull, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #e
 .play-now-card .pn-sheet { border-radius: 18px !important; box-shadow: 0 14px 40px rgba(0,0,0,.28) !important; padding: 12px 14px !important; border: 1px solid var(--p-border) !important; }
 body.menu2 .play-now-card { padding-bottom: 0 !important; }
 /* #564: cartel de primera carga más chico */
-.sd-banner-full { padding: 8px 12px; } .sd-banner .sd-txt { font-size: 11px; } .sd-banner .sd-txt b { font-size: 12px; } .sd-banner .sd-txt small { display: inline; margin: 0 0 0 4px; font-size: 10px; }
 /* #565 (owner): MENÚ 2 — la barra inferior va FIJA y el contenido deja lugar: no tapa nada */
 body.menu2 #bottomNav.bottom-nav { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; order: 99; }
 /* (#575: los rellenos por contenedor se reemplazaron por acortar la pantalla entera; ver abajo) */
 /* #567 (owner): MENÚ 2 — el relleno va en los contenedores que SCROLLEAN (no en #chatScreen): nada queda debajo de la barra fija */
 /* (#575: ídem) */
 body.menu2 #bottomNav.bottom-nav { box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
-#sdBannerFull { display: none !important; }
 /* #568 (owner): en Carga auto la fila "Comprobante aquí · Retirar premio" va FIJA al tope de abajo, pegada arriba del menú (Inicio) */
 /* #571 (owner): la fila sólo tapa SU línea (sin fondo ni sombra), va pegada al menú, y el relleno va en #homePanel (el que scrollea
    en Carga auto): así los 3 pasos de "Cargá acá" se ven completos deslizando, nada queda tapado ni hay huecos blancos. */
@@ -1740,8 +1730,6 @@ body.home-mini.sp-sent #chatMessages { flex: 1 1 auto; }
 body.home-mini:not(.sp-sent) #chatMessages { display: flex !important; flex: 0 0 auto; max-height: 40vh; }
 body.home-mini:not(.sp-sent) #chatMessages:empty { display: none !important; }
 /* #608 (owner): el aviso de primera carga va debajo de la barra, en los 3 menús (no en Soporte) */
-#sdBanner { margin: 8px 12px 0 !important; }
-body.home-mini #sdBanner { display: none !important; }
 /* #610 (owner): la FRANJA BLANCA que tapaba el final del básico/intermedio: con el regalo de instalar pendiente (`body.ig-pending`)
    el home completo plegado (#homeFull, alto 0) seguía reservando 84 px de padding para una barra que ya no va abajo (desde #563 está
    arriba). Nada plegado reserva lugar. */
@@ -1844,3 +1832,12 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
    (#584) y #referralHomeCard oculto (#595). ===== */
 .bv-quick { grid-template-columns: repeat(4, 1fr) !important; justify-items: stretch; }
 .bv-quick button { text-align: center; justify-content: center; }
+/* ===== #626 (owner 2026-10-20): aviso de PRIMERA CARGA resumido junto a cada "Adjuntar comprobante" (la franja de arriba #608 se fue) ===== */
+.fd-note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 0 0 8px; padding: 8px 12px; border-radius: 12px; background: var(--p-red-soft); border: 1px solid rgba(230, 0, 35, .14); color: var(--p-text); font: 600 12px/1.35 var(--p-font); }
+.fd-note b { font-weight: 900; color: var(--p-red); } .fd-note .fd-pct-app { font-weight: 900; color: var(--p-red); }
+.fd-note small { flex: 1 0 100%; font: 600 10.5px var(--p-font); color: var(--p-muted); }
+.fd-note .fd-app[hidden], .fd-note[hidden] { display: none !important; }
+#bvLoadPanel .fd-note { margin: 6px 0 8px; }
+.casino-load .fd-note { margin: 6px 0 8px; font-size: 11.5px; }
+html[data-theme="dark"] .fd-note { background: #3a1218; border-color: #5a1a24; }
+.home-actions-row { flex-wrap: wrap !important; } .home-actions-row .fd-note { flex: 1 0 100% !important; margin: 0 0 2px !important; padding: 6px 10px; }

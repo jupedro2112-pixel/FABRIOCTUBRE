@@ -234,18 +234,7 @@
     function _stLeft(exp) { const ms = new Date(exp) - Date.now(); if (ms <= 0) return ''; const h = Math.floor(ms / 3600000), mn = Math.floor((ms % 3600000) / 60000); return h >= 1 ? '· vence en ' + h + ' h' : '· vence en ' + mn + ' min'; }
     function _stPaint() {
         const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
-        // #536 (owner): "Recordá que tenés {pct}% y {pct+extra}% instalando la app · podés elegir cuál querés una vez que hiciste la carga".
-        // #564/#567 (owner): el cartel "🎁 Primera carga: 50% · 100% con la app" se ve SÓLO en el INICIO (menú intermedio), no en
-        // Carga auto (ahí ya lo vieron), y sólo mientras no hizo la primera carga (`/api/first-deposit-promo.show`).
-        try { const f = _el('sdBannerFull'); if (f) f.hidden = true; } catch (_) {}
-        _fdPromoLoad().then((j) => {
-            const el = _el('sdBanner'); if (!el) return;
-            if (!(j && j.show && Number(j.pct) > 0)) { el.hidden = true; return; }
-            el.hidden = false;
-            const pe = _el('sdBannerPct'); if (pe) pe.textContent = j.pct + '%';
-            const extra = Number(j.extra) > 0 ? Number(j.extra) : 0; const w = _el('sdBannerAppWrap'), a = _el('sdBannerApp');
-            if (w) w.hidden = !extra; if (a && extra) a.textContent = (Number(j.pct) + extra) + '%';
-        }).catch(() => {});
+        _fdNotesPaint(); // #626: aviso de primera carga junto a cada 'Adjuntar comprobante'
         const btn = _el('ezMissions'), card = _el('missionsCard'); const nv = d.nivel || null;
         if (!ms.length) { if (btn) btn.hidden = true; if (card) card.hidden = true; return; }
         const done = ms.filter((m) => m.done).length;
@@ -276,6 +265,26 @@
     let _fdShown = false, _fdPromoP = null;
     // #490: la promo de primera carga se consulta una vez por sesión y la usan el cartel y la etiqueta "+X% en tu primera carga" del botón CARGAR AHORA
     function _fdPromoLoad() { if (_fdPromoP) return _fdPromoP; const tok = VIP.state && VIP.state.currentToken; if (!tok) return Promise.resolve(null); _fdPromoP = fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { Authorization: 'Bearer ' + tok } }).then((r) => r.json()).catch(() => null); return _fdPromoP; }
+    // #626 (owner): el aviso de PRIMERA CARGA (+pct% · +pctApp% con la app) va RESUMIDO adentro de cada lugar donde se adjunta el
+    // comprobante (básico, inicio completo, carga rápida del casino), sólo mientras no hizo la primera carga. Antes era una franja arriba (#608).
+    let _fdJ = null;
+    function _fdNotesPaint() {
+        _fdPromoLoad().then((j) => {
+            _fdJ = j || null;
+            const show = !!(j && j.show && Number(j.pct) > 0); const extra = show && Number(j.extra) > 0 ? Number(j.extra) : 0;
+            document.querySelectorAll('.fd-note').forEach((el) => {
+                el.hidden = !show; if (!show) return;
+                el.querySelectorAll('.fd-pct').forEach((x) => { x.textContent = j.pct + '%'; });
+                el.querySelectorAll('.fd-pct-app').forEach((x) => { x.textContent = (Number(j.pct) + extra) + '%'; });
+                el.querySelectorAll('.fd-app').forEach((x) => { x.hidden = !extra; });
+            });
+        }).catch(() => {});
+    }
+    function _fdNoteHtml() {
+        const j = _fdJ; if (!(j && j.show && Number(j.pct) > 0)) return '<p class="fd-note" hidden></p>';
+        const extra = Number(j.extra) > 0 ? Number(j.extra) : 0;
+        return '<p class="fd-note">🎁 <b>Primera carga: +<span class="fd-pct">' + j.pct + '%</span></b>' + (extra ? '<span class="fd-app"> · +<span class="fd-pct-app">' + (Number(j.pct) + extra) + '%</span> si instalás la app</span>' : '') + '<small>Elegís cuál al terminar la carga.</small></p>';
+    }
     async function _fdTagPaint() { const tag = _el('ezMainTag'); if (!tag) return; const j = await _fdPromoLoad(); if (j && j.show) { tag.textContent = '🎁 +' + j.pct + '% en tu primera carga' + (j.installGiftEnabled ? ' · +' + j.pctApp + '% con la app' : ''); tag.hidden = false; } else tag.hidden = true; }
     async function maybeFirstDepositPopup() {
         if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
@@ -1764,8 +1773,10 @@
         p.innerHTML =
             '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
+            _fdNoteHtml() + // #626
             '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>';
         p.style.display = '';
+        _fdNotesPaint();
     }
     function _playOnEmbedded(platformId) {
         const list = (_platforms && _platforms.platforms) || [];

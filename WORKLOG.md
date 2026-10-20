@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 626. 🎁 Aviso de PRIMERA CARGA resumido junto a "Adjuntar comprobante" (se fue la franja de arriba) — SW v440
+**Pedido (owner):** "el cartel de primera carga 50 y 100 dejalo adentro de cuando querés adjuntar el comprobante; en la primera carga dejalo
+aclarado ahí, resumido". Se eliminaron las franjas `#sdBanner` / `#sdBannerFull` (#536/#564/#567/#608) y su CSS. En su lugar, una línea
+`.fd-note` ("🎁 Primera carga: +50% · +100% si instalás la app · Elegís cuál al terminar la carga") en los TRES lugares donde se adjunta:
+panel CARGAR del básico (`#fdNoteBasic`), fila fija "Comprobante aquí / Retirar" del inicio completo (`#fdNoteFull`, la fila ahora hace wrap)
+y panel "Carga rápida" del casino (`_fdNoteHtml()`). Lo pinta `home.js _fdNotesPaint()` desde `/api/first-deposit-promo` (sólo `show:true`
+= sin cargas previas; % reales de `firstDepositBonusPct` + `installGift`). **Archivos:** `public/index.html`, `public/js/home.js`,
+`public/css/pin.css`, SW.
+
 ### 625. 🗂️ Menú del panel: Cargas pendientes, Reseñas e Historias arriba, cada una bajo su título — admin-sw v131
 **Pedido (owner):** "subí Cargas pendientes, Reseñas, Historias arriba de todo; armalos con buen orden y en su título correspondiente".
 Orden nuevo del menú: **Configuración** · **💬 Atención** (lo que hay que atender, con sus badges): Soporte · Cargas pendientes ·
