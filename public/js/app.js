@@ -440,6 +440,7 @@ function setupEventListeners() {
         const infoBtn = document.getElementById('infoBtn');
         if (infoBtn) infoBtn.addEventListener('click', () => {
             VIP.ui.showModal('infoModal');
+            try { if (VIP.home && VIP.home.infoFoldInit) setTimeout(VIP.home.infoFoldInit, 30); } catch (_) {} // #641
             if (VIP.appTest && typeof VIP.appTest.renderDiagnostics === 'function') VIP.appTest.renderDiagnostics();
             if (VIP.reviews && typeof VIP.reviews.renderInfoSection === 'function') VIP.reviews.renderInfoSection();
         });

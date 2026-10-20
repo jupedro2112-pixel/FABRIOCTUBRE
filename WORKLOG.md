@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 641. ⚡ "CARGÁ AHORA" grande arriba del Inicio · Info resumido con "Ver más" / "Minimizar" — SW v455
+**Pedidos (owner):** "[el botón rojo 'Para cargar ahora mismo' del carrusel] subilo, ponelo más en grande, debajo del menú superior y arriba
+del nivel VIP, centrado" · "todo lo de la Info ponelo resumido y que se pueda poner Ver más; que muestre lo primero y después Ver más, y
+después Minimizar". **(1)** El `.ev-cta` salió del carrusel y es `.ev-cta-top` arriba de `#statusRow` (sólo `body.home-play`): "⚡ CARGÁ
+AHORA" 18 px + subtítulo, abre la carga automática (`setHomeMode('full')`). **(2)** Cada `.im-sec` del Info queda plegada a 56 px
+(título + primera línea, con degradé) y tiene debajo un botón `.im-more` "Ver más ›" / "Minimizar ▴" (`VIP.home.infoMore`);
+`infoFoldInit` (al abrir el modal, app.js) pliega todo y esconde el botón en las tarjetas que ya entran enteras.
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/js/app.js`, `public/css/pin.css`, SW.
+
 ### 640. ℹ️ Info reordenado: Por qué elegirnos · Niveles VIP · Reembolsos · Ruleta diaria · Referidos · Fueguito (nuevo) · Misiones — SW v454
 **Pedido (owner):** "en la Info cambiá el orden: primero por qué elegirnos, segundo niveles VIP, tercero reembolsos, cuarto ruleta diaria,
 quinto referidos, y agregá fueguito". Se reordenaron los bloques `.im-sec` de `#infoMsg` (la tarjeta "La plataforma que quieras" sigue

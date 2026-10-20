@@ -1901,3 +1901,13 @@ html.ios-notch #casinoTopBar { padding-top: max(44px, env(safe-area-inset-top, 0
 body.home-play .top-row { justify-content: center; }
 body.home-easy #depPendingTop, body.home-full #depPendingTop, body.home-mini #depPendingTop { display: none !important; }
 #depPendingTop { margin: 8px 12px 0; }
+/* ===== #641 (owner 2026-10-20): CARGÁ AHORA grande arriba del Inicio · Info resumido con "Ver más" ===== */
+.ev-cta.ev-cta-top { display: none; position: static !important; transform: none !important; left: auto !important; bottom: auto !important; margin: 8px 12px 0 !important; padding: 13px 16px !important; border-radius: 16px !important; flex-direction: column !important; align-items: center !important; gap: 2px !important; width: auto; animation: none !important; }
+body.home-play .ev-cta.ev-cta-top { display: flex !important; }
+.ev-cta.ev-cta-top .ev-cta-b { font: 900 18px var(--p-font) !important; letter-spacing: 1.2px !important; text-shadow: none !important; }
+.ev-cta.ev-cta-top .ev-cta-t { font: 700 10.5px var(--p-font) !important; letter-spacing: 0 !important; text-transform: none !important; opacity: .9; }
+.info-msg .im-sec { position: relative; max-height: 56px; overflow: hidden; transition: max-height .2s; }
+.info-msg .im-sec.open { max-height: none; }
+.info-msg .im-sec:not(.open)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(180deg, transparent, var(--p-card)); pointer-events: none; }
+.im-more { display: block; margin: -4px 0 8px auto; background: none; border: 0; color: var(--p-red); font: 800 11.5px var(--p-font); padding: 2px 6px; cursor: pointer; }
+.info-msg .im-sec { margin-bottom: 2px !important; }
