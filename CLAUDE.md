@@ -265,6 +265,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
+- **ENTORNO DE PRUEBA = casino simulado + OTP de prueba (#616/#617, 2026-10-20):** en Render (`RENDER=true`) sin API real de
+  1girox, `src/services/giroxSimulator.js` responde la Partner API (alta, saldo, cargas, retiros, regalos, stats; estado en
+  `Config['giroxSimState']`; `GET/POST /api/admin/girox-sim`) y `giroxService.isSimulated()` es true (`source:'simulado'`). Sin
+  `AWS_REGION` el OTP acepta `000000`. Con API/SNS reales se apagan solos; en AWS/producción nunca aplican.
 - **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de

@@ -66,6 +66,12 @@ function buildOtpMessage(purpose, code) {
  * @param {string} purpose - 'register' o 'reset'
  * @returns {Promise<{success: boolean, error?: string, smsSent?: boolean}>}
  */
+// #617 (owner): ENTORNO DE PRUEBA sin SMS (Render sin AWS_REGION): el OTP no se puede recibir, así que se acepta el código de prueba
+// 000000 en cualquier verificación (registro, retiro, cambio de clave). En producción (AWS, con SNS) NO aplica nunca.
+const OTP_TEST_CODE = '000000';
+function _testOtpBypass() {
+  return !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && !(process.env.AWS_REGION || process.env.AWS_SNS_REGION) && process.env.OTP_TEST_BYPASS !== '0';
+}
 async function generateAndSendOTP(phone, purpose) {
   const now = new Date();
 
@@ -115,6 +121,10 @@ async function generateAndSendOTP(phone, purpose) {
 
   if (!smsResult.success) {
     if (smsResult.error === 'SMS service not configured') {
+      if (_testOtpBypass()) { // #617: entorno de prueba sin SMS ⇒ vale el código de prueba
+        console.log(`[otp-test] SMS no configurado: para ${phone} (${purpose}) vale el código de prueba ${OTP_TEST_CODE}`);
+        return { success: true, smsSent: false, testMode: true };
+      }
       return { success: false, error: 'El servicio de SMS no está configurado. Contacta al administrador.' };
     }
     // Error real de SMS
@@ -135,6 +145,10 @@ async function generateAndSendOTP(phone, purpose) {
  * @returns {Promise<{valid: boolean, error?: string}>}
  */
 async function verifyOTP(phone, code, purpose) {
+  if (_testOtpBypass() && String(code || '').trim() === OTP_TEST_CODE) { // #617
+    try { await OtpCode.deleteMany({ phone, purpose }); } catch (_) {}
+    return { valid: true, testMode: true };
+  }
   const otp = await OtpCode.findOne({ phone, purpose });
 
   if (!otp) {
