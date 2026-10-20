@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 639. 🧭 Inicio ordenado: nivel+fueguito · carga pendiente · "Cambiar menú" centrado · cartel de bono debajo; "Copiar" en rojo — SW v453
+**Pedidos (owner):** "[captura] esto está mal: la carga pendiente siempre parte superior sin tapar nada; reembolsos dejalo ahí y poné el
+resto al lado: ruleta diaria, misiones y referidos" · "en Carga auto, 'Copiar' diferencialo del resto del texto" · "Cambiar menú centrado en
+la parte superior; si hay un cartel de bono disponible o pendiente que vaya abajo y no tape nada". **Causa de la captura:** la edición de
+#637 dejó el fueguito, la barra negra y "Cambiar menú" ADENTRO de la grilla `.ev-services` (anidado roto) ⇒ Reembolso solo y los otros
+tres al lado de Cambiar menú. Se reconstruyó el bloque (verificado contra el HTML previo a #637: la zona `entryServices→easyView` quedó
+idéntica). **Orden nuevo arriba del Inicio:** `#statusRow` (nivel + fueguito) → `#depPendingTop` (carga pendiente; lo pinta
+`refreshPendingDeposits` como las otras `.dep-pending-strip`; oculta en intermedio/completo que ya tienen la suya) → `#topRow` con
+"Cambiar menú" centrado → `#installGiftBar` (pendiente/bono) debajo. **Copiar:** `.al-copy/.bv-copy/.cl-copy/.pf-copy` en rojo, píldora,
+mayúsculas y con ícono ⧉. **Archivos:** `public/index.html`, `public/css/pin.css`, SW.
+
 ### 638. 🔁 Menú 2 sin parpadeo al recargar · barra superior debajo del notch de los iPhone nuevos — SW v452
 **Pedidos (owner):** "cuando actualizo tengo seleccionado el menú 2 y aparece el 1 por 1 segundo" · "ajustá la parte superior, bajarla un
 poco si detectás iPhones nuevos o teléfonos con la parte de arriba que corta la imagen: se corta el menú de arriba y muchos no pueden

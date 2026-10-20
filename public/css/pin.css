@@ -1893,3 +1893,11 @@ html.menu2-pre:not(.menu2-done) .header.topnav:not(.bottom-nav) #navAuto, html.m
 html.ios-notch .header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
 html.ios-notch #casinoTopBar { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
 #casinoTopBar { padding-top: max(7px, env(safe-area-inset-top, 0px)) !important; }
+/* ===== #639 (owner 2026-10-20): "Copiar" bien diferenciado (botón rojo) en Carga auto / básico / carga rápida; Cambiar menú centrado arriba
+   del Inicio; carga pendiente arriba de todo; cartel de pendiente/bono debajo sin tapar ===== */
+.al-copy, .bv-copy, .cl-copy, .pf-copy { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; font: 900 10.5px var(--p-font) !important; letter-spacing: .3px; padding: 6px 12px !important; text-transform: uppercase; box-shadow: 0 3px 10px rgba(230, 0, 35, .25) !important; white-space: nowrap; flex: 0 0 auto; }
+.al-copy:active, .bv-copy:active, .cl-copy:active, .pf-copy:active { background: #b8001c !important; }
+.al-copy::before, .bv-copy::before, .cl-copy::before, .pf-copy::before { content: "⧉ "; font-weight: 900; }
+body.home-play .top-row { justify-content: center; }
+body.home-easy #depPendingTop, body.home-full #depPendingTop, body.home-mini #depPendingTop { display: none !important; }
+#depPendingTop { margin: 8px 12px 0; }
