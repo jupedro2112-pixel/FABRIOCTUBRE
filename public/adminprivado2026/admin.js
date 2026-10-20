@@ -11226,6 +11226,8 @@ async function loadDailyRouletteCfg() {
         if (mc) { mc.value = cfg.minCargas30d != null ? cfg.minCargas30d : 10; mc.disabled = !cfg.canEdit; }
         const rw = document.getElementById('drRequireWeek');
         if (rw) { rw.checked = cfg.requireActiveWeek === true; rw.disabled = !cfg.canEdit; }
+        const dm = document.getElementById('drMinDep'); // #669
+        if (dm) { dm.value = cfg.minDepositArs != null ? cfg.minDepositArs : 20000; dm.disabled = !cfg.canEdit; }
         const sb = document.getElementById('drSaveBtn');
         if (sb) sb.style.display = cfg.canEdit ? '' : 'none';
         const list = document.getElementById('drPrizesList');
@@ -11300,6 +11302,7 @@ async function saveDailyRoulette() {
                 requireAppInstalled: document.getElementById('drRequireApp').checked,
                 requireActiveWeek: !!(document.getElementById('drRequireWeek') && document.getElementById('drRequireWeek').checked),
                 minCargas30d: Number(document.getElementById('drMinCargas').value) || 0,
+                minDepositArs: Number((document.getElementById('drMinDep') || {}).value) || 0, // #669: 0 = carga mínima general
                 prizes
             })
         });

@@ -21558,7 +21558,15 @@ const ROULETTE_PRIZES = [
 ];
 // requireActiveWeek (#228, owner 2026-10-16): "solo si es cliente activo de la semana" → al menos
 // UNA carga real desde el lunes 00:00 (hora AR). Se combina con los otros gates.
-const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, requireActiveWeek: false, prizes: ROULETTE_PRIZES };
+// #669 (owner): la ruleta se desbloquea con una carga de $20.000 (propia de la ruleta, distinta de la carga mínima general de $5.000)
+// "para no generar tantos regalos". Config['dailyRoulette'].minDepositArs; 0 = usar la carga mínima general.
+const ROULETTE_MIN_DEPOSIT_DEFAULT = 20000;
+const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, requireActiveWeek: false, minDepositArs: ROULETTE_MIN_DEPOSIT_DEFAULT, prizes: ROULETTE_PRIZES };
+async function _rouletteMinDepositArs(cfg) {
+  const v = Number(cfg && cfg.minDepositArs);
+  if (v > 0) return Math.round(v);
+  try { return Number(await getMinDepositArs()) || 5000; } catch (_) { return 5000; }
+}
 // Premios pedidos por el owner (#228): $5.000 · 100% EXTRA · 50% EXTRA en la próxima carga.
 const ROULETTE_PRIZES_2026_10 = [
   { id: 'c5000',  type: 'cash',    value: 5000, weight: 10, emoji: '💰', label: '$5.000', rolloverX: 0 },
@@ -21586,11 +21594,12 @@ function _rouletteWeekStartART(now = new Date()) {
   const mondayART = Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate() - back, 0, 0, 0);
   return new Date(mondayART + 3 * 3600 * 1000); // de vuelta a UTC real
 }
-async function _rouletteIsActiveThisWeek(userId, username) {
+async function _rouletteIsActiveThisWeek(userId, username, minDepArg) {
   try {
     const since = _rouletteWeekStartART();
-    // #374: la carga que desbloquea tiene que ser de al menos la carga mínima configurada ($5.000).
-    let minDep = 0; try { minDep = Number(await getMinDepositArs()) || 0; } catch (_) { minDep = 0; }
+    // #374: la carga que desbloquea tiene que ser de al menos la carga mínima; #669: la propia de la ruleta ($20.000) si el caller la pasa.
+    let minDep = Number(minDepArg) || 0;
+    if (!(minDep > 0)) { try { minDep = Number(await getMinDepositArs()) || 0; } catch (_) { minDep = 0; } }
     const q = {
       $or: [{ userId: userId }, { username: username }],
       type: 'deposit',
@@ -21632,6 +21641,7 @@ async function getDailyRouletteConfig() {
           requireAppInstalled: raw.requireAppInstalled !== false,
           minCargas30d: Number.isFinite(min) ? Math.min(1000, Math.max(0, min)) : DAILY_ROULETTE_DEFAULT.minCargas30d,
           requireActiveWeek: raw.requireActiveWeek === true,
+          minDepositArs: raw.minDepositArs == null ? ROULETTE_MIN_DEPOSIT_DEFAULT : Math.max(0, Math.round(Number(raw.minDepositArs) || 0)), // #669
           prizes
         };
       }
@@ -21693,6 +21703,7 @@ app.post('/api/admin/daily-roulette', authMiddleware, adminMiddleware, async (re
       requireAppInstalled: body.requireAppInstalled !== false,
       minCargas30d: Number.isFinite(min) ? Math.min(1000, Math.max(0, min)) : DAILY_ROULETTE_DEFAULT.minCargas30d,
       requireActiveWeek: body.requireActiveWeek === true,
+      minDepositArs: body.minDepositArs == null ? ROULETTE_MIN_DEPOSIT_DEFAULT : Math.max(0, Math.round(Number(body.minDepositArs) || 0)), // #669
       prizes
     };
     await Config.set('dailyRoulette', cfgOut, req.user.username);
@@ -21783,7 +21794,8 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
     const u = await User.findOne({ id: userId }, { fcmTokenContext: 1, fcmTokens: 1, dailyRoulettePendingPct: 1, dailyRoulettePendingLabel: 1 }).lean();
     const appOk = cfg.requireAppInstalled ? _rouletteHasAppInstalled(u) : true;
     const act = await _rouletteIsActiveClient(userId, username, cfg.minCargas30d);
-    const week = cfg.requireActiveWeek ? await _rouletteIsActiveThisWeek(userId, username) : { active: true };
+    const _rlMin = await _rouletteMinDepositArs(cfg); // #669
+    const week = cfg.requireActiveWeek ? await _rouletteIsActiveThisWeek(userId, username, _rlMin) : { active: true };
     const eligible = cfg.enabled && appOk && act.active && week.active;
     const spin = _isRouletteTester(username) ? null : await DailyRouletteSpin.findOne({ userId, dateKey }).lean(); // #390 tester: siempre "sin girar"
     res.json({
@@ -21795,7 +21807,7 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
       needsActiveWeek: appOk && act.active && !week.active, // #228: sin carga esta semana
       requireActiveWeek: cfg.requireActiveWeek === true,
       minCargas: cfg.minCargas30d,
-      minDepositArs: await getMinDepositArs().catch(() => 5000), // #374: la carga que desbloquea la ruleta
+      minDepositArs: _rlMin, // #374/#669: la carga que desbloquea la ruleta ($20.000 propia de la ruleta)
       dateKey,
       // #390: premios SIN probabilidad (interno). Antes se listaban con el %.
       prizes: _prizesClient(cfg.prizes),
@@ -22156,9 +22168,9 @@ app.post('/api/roulette/spin', authMiddleware, async (req, res) => {
     }
     // Gate #228: cliente activo DE LA SEMANA (al menos una carga desde el lunes).
     if (cfg.requireActiveWeek) {
-      const week = await _rouletteIsActiveThisWeek(userId, username);
+      const minDep = await _rouletteMinDepositArs(cfg); // #669
+      const week = await _rouletteIsActiveThisWeek(userId, username, minDep);
       if (!week.active) {
-        const minDep = await getMinDepositArs().catch(() => 5000);
         return res.status(403).json({ error: 'La ruleta se desbloquea con una carga mínima de $' + Number(minDep).toLocaleString('es-AR') + '. Hacé tu carga y volvé a girar.', needsActiveWeek: true, minDepositArs: minDep });
       }
     }

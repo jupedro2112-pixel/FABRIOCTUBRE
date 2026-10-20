@@ -196,7 +196,7 @@
         const pendingHtml = (!alreadySpun && Number(_state.pendingPct || 0) > 0)
             ? '<div class="rl-pending">🎁 Tenés <b>+' + _fmt(_state.pendingPct) + '% extra</b> pendiente: se aplica solo en tu próxima carga.</div>'
             : '';
-        const minDep = Number(_state.minDepositArs) > 0 ? Number(_state.minDepositArs) : 5000;
+        const minDep = Number(_state.minDepositArs) > 0 ? Number(_state.minDepositArs) : 20000; // #669
         // #374: premio mayor destacado. #390: sin la chance ("1 cada N giros") — es interno.
         const topCash = (_state.prizes || []).filter((p) => p.type === 'cash' && Number(p.value) > 0).sort((a, b) => b.value - a.value)[0];
         const topHtml = topCash ? '<div class="rl-top"><span class="rl-top-k">🏆 Premio mayor</span><b>$' + _fmt(topCash.value) + '</b></div>' : '';

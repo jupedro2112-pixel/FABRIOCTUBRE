@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 669. 🎰 La ruleta se desbloquea con una carga de $20.000 (propia de la ruleta), no con la mínima general de $5.000 — SW v477 · admin-sw v135
+**Pedido (owner):** "hacé que la ruleta se desbloquee con una carga de 20.000, no de 5.000, para no generar tantos regalos; ¿podés
+hacer que detecte eso?". **Antes:** el gate "activo de la semana" (`_rouletteIsActiveThisWeek`, #228/#374) buscaba una carga real
+desde el lunes ≥ la carga mínima GENERAL (`Config['minDepositArs']`, $5.000, la misma del paso 1 de la carga). **Ahora:** la ruleta
+tiene su propio umbral `Config['dailyRoulette'].minDepositArs` (default `ROULETTE_MIN_DEPOSIT_DEFAULT` = 20000; 0 = usar la general),
+resuelto por `_rouletteMinDepositArs(cfg)`; lo usan el gate de la semana (busca una carga ≥ $20.000 desde el lunes), `/api/roulette/status`
+(`minDepositArs`, que pinta todos los `.rl-min` de la app: Inicio, menú fácil, Info, modal) y el 403 al girar sin carga. La carga
+mínima general sigue en $5.000 (no cambia la carga automática). **Panel:** Ruleta diaria → campo "Carga que desbloquea la ruleta: $"
+(`drMinDep`), lo guarda el POST `/api/admin/daily-roulette`. Las configs ya guardadas sin el campo toman 20.000 solas. Textos: fallback
+de la app y el Info pasan a $20.000.
+
 ### 668. 🎰 Ruleta: sólo la línea resumida de premios (sin lista desplegable), con "Sin premio" — SW v476
 **Pedido (owner, captura de la lista desplegada):** "sacá eso y poné arriba Sin premio también en el resumido, ya es suficiente".
 **App (roulette.js):** `prizesHtml` queda sólo con `.rl-prize-sum` ("🎉 +20% · 🎁 +50% · 🚀 +100% · 💰 $5.000 · 🏆 $100.000 · 😅 Sin
