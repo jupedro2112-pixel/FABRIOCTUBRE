@@ -29,6 +29,12 @@ ese día hasta el reinicio, porque las stats son por día); el cobro lee las sta
 unos minutos" (nunca se pierde el premio ni se cobra sin verificar). **Archivos:** `server.js`, `src/models/FireStreak.js`,
 `public/js/fire.js`, `public/js/home.js`, `public/adminprivado2026/{index.html,admin.js}`, SWs.
 
+### 657. 🔥 Todas las explicaciones del fueguito actualizadas al rollover — SW v467
+**Pedido (owner):** "cambiando esto de los fueguitos cambiá la explicación de todos los detalles". Regla estática del modal (`#fireRuleTop`),
+regla del home (`#fireHomeRule`), tarjeta Fueguito del Info y subtítulo en Perfil: ya no hablan de cargas ni de "vuelve a 0 si no cargás";
+dicen que cada premio se cobra apostando un monto (rollover) que va subiendo por hito y que vuelve a 0 con cada premio. Los textos
+dinámicos (fire.js / home.js) se habían cambiado en #654. **Archivos:** `public/index.html`, SW.
+
 ### 656. 📱 Explicación del SMS prolija: formato visual (+54 9 · código de área · número) y 3 pasos separados — SW v466
 **Pedido (owner):** "emprolijá lo del texto de SMS, quedó mucho texto negro; que quede prolijo, separado y entendible". `.vp-box` ahora
 tiene una tira de formato (pastilla roja +54 9 · código de área sin el 0 · número sin el 15) y 3 pasos con círculo numerado rojo.
