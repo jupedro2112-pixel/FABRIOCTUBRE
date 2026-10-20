@@ -222,7 +222,7 @@
         const img = _el('navPlatLogo'), ico = _el('navPlatIco'), lbl = _el('navPlatLbl');
         const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : ''))));
         if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
-        if (lbl) lbl.innerHTML = p && p.name ? (_esc(p.name) + '<br>jugar') : 'Plataforma';
+        if (lbl) lbl.textContent = 'PLATAFORMA'; // #621: siempre dice PLATAFORMA; el logo dice cuál
         b.title = p && p.name ? ('Abrí ' + p.name + ' para jugar con tu saldo') : 'Abrí tu plataforma para jugar con tu saldo';
     }
     function platTap() {
@@ -374,11 +374,12 @@
         if (on) {
             if (bar) return;
             const seps = Array.from(top.querySelectorAll('.tn-sep')).slice(0, 2);
-            const nodes = [auto, plat, seps[0], ini, seps[1], perf].filter(Boolean); // #620: Carga auto · Plataforma · Inicio · Perfil
+            const nodes = [auto, seps[0], ini, seps[1], perf].filter(Boolean);
             _navPh = nodes.concat(man ? [man] : []).map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
             bar = document.createElement('header'); bar.id = 'bottomNav'; bar.className = top.className + ' bottom-nav'; bar.setAttribute('aria-label', 'Menú inferior');
             nodes.forEach((n) => bar.appendChild(n)); screen.appendChild(bar);
             if (man && hist && hist.parentNode === top) top.insertBefore(man, hist);
+            if (plat && man && man.parentNode === top) top.insertBefore(plat, man); // #621 (owner): PLATAFORMA en el centro de la barra superior
         } else if (bar) {
             (_navPh || []).forEach(({ n, ph }) => { if (ph.parentNode) ph.parentNode.replaceChild(n, ph); }); _navPh = null; bar.remove();
         }

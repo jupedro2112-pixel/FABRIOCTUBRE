@@ -1819,8 +1819,10 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .ios-install-content .ios-notif-note u { text-decoration-color: var(--p-red); }
 .ios-install-content .btn, .ios-install-content .btn-primary { display: block; width: 100%; margin-top: 16px !important; background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; padding: 13px 16px !important; font: 900 14px var(--p-font) !important; box-shadow: none !important; cursor: pointer; }
 .ios-install-content a { color: var(--p-red); }
-/* #620 (owner): botón PLATAFORMA en la barra (logo de la plataforma elegida) */
+/* #620/#621 (owner): botón PLATAFORMA en el CENTRO de la barra superior, con el logo de la plataforma elegida */
+.header .tn-plat { flex: 1.3 1 0; }
 .header .tn-plat .tn-ico { display: inline-flex; align-items: center; justify-content: center; }
-.header .tn-plat .tn-ico img { width: 22px; height: 22px; border-radius: 7px; object-fit: cover; display: block; background: #000; }
+.header .tn-plat .tn-ico img { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; display: block; background: #000; border: 1.5px solid var(--p-red); box-shadow: 0 2px 8px rgba(230, 0, 35, .25); }
 .header .tn-plat .tn-ico img[hidden] { display: none; }
+.header .tn-btn:not(.tn-home).tn-plat .tn-lbl { font-weight: 900 !important; letter-spacing: .5px !important; color: var(--p-text) !important; }
 

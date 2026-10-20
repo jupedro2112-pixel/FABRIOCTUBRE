@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 621. 🎰 PLATAFORMA va en el CENTRO de la barra superior (no abajo) — SW v436
+**Pedido (owner):** "mejor dejalo arriba, en el medio, parte central del menú superior: PLATAFORMA y el logo de Girox, Ganamos o la que
+esté elegida" · "[cartel violeta ¡Saldo acreditado!] esto sacalo" (ya estaba anulado desde #597: `showCasinoInvite` retorna; si se ve es
+una versión vieja en caché). `#navPlat` queda en el header; con el menú 2, `_setMenuLayout` lo pone antes de Soporte ⇒ orden arriba:
+Telegram · Info · **PLATAFORMA** · Soporte · Historias. Etiqueta fija "PLATAFORMA" y logo de la elegida con borde rojo.
+**Archivos:** `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 620. 🎰 Botón PLATAFORMA en la barra inferior: abre la plataforma elegida para jugar con el saldo (sin cargar), con el logo de Girox — SW v435
 **Pedido (owner):** "un botón de la plataforma que elegiste para que se abra para jugar sin carga, por si tiene saldo; ponelo abajo como
 botón que diga Plataforma y si seleccioné Girox que aparezca el logo de Girox". `#navPlat` (`tn-btn tn-plat`) en el header; con el
