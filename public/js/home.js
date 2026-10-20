@@ -205,6 +205,33 @@
     }
     function basicCopy(k) { const c = _bvCbu || {}; const v = k === 'alias' ? c.alias : (c.number || c.cbu); if (!v) return; try { navigator.clipboard.writeText(String(v)); VIP.ui.showToast((k === 'alias' ? 'Alias' : 'CBU') + ' copiado ✓', 'success'); } catch (_) { try { VIP.ui.copyText(String(v)); } catch (__) {} } }
     function basicPlay() { const pref = (_platforms && _platforms.preferredPlatform) || (_platforms && _platforms.defaultPlatform) || 'girox'; openPlatform(pref); }
+    // #620 (owner): botón PLATAFORMA de la barra: abre la plataforma elegida para jugar con el saldo (sin cargar). Si hay varias
+    // conectadas y todavía no eligió, abre el selector. Con Girox elegida muestra el logo de Girox y su nombre.
+    function _platChosen() {
+        const list = (_platforms && _platforms.platforms) || [];
+        const pid = (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform)) || null;
+        if (pid) return list.find((p) => p.id === pid) || null;
+        const conn = list.filter((p) => p.connected !== false);
+        if (conn.length === 1) return conn[0];
+        const def = (_platforms && _platforms.defaultPlatform) || 'girox';
+        return list.find((p) => p.id === def) || null;
+    }
+    function _paintPlatNav() {
+        const b = _el('navPlat'); if (!b) return;
+        const p = _platChosen();
+        const img = _el('navPlatLogo'), ico = _el('navPlatIco'), lbl = _el('navPlatLbl');
+        const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : ''))));
+        if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
+        if (lbl) lbl.innerHTML = p && p.name ? (_esc(p.name) + '<br>jugar') : 'Plataforma';
+        b.title = p && p.name ? ('Abrí ' + p.name + ' para jugar con tu saldo') : 'Abrí tu plataforma para jugar con tu saldo';
+    }
+    function platTap() {
+        const p = _platChosen();
+        const list = (_platforms && _platforms.platforms) || [];
+        const pref = _platforms && (_platforms.preferredPlatform || _platforms.lastPlatform);
+        if (!pref && list.filter((x) => x.connected !== false).length > 1) return easyPlay();
+        openPlatform((p && p.id) || 'girox');
+    }
     // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
     let _stAt = 0, _stData = null;
     const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
@@ -342,12 +369,12 @@
         const on = Number(layout) === 2; document.body.classList.toggle('menu2', on);
         const top = document.querySelector('.header.header-toolbar.tb-circles.topnav'); const screen = _el('chatScreen'); if (!top || !screen) return;
         // #558 (owner): abajo van Carga auto · Inicio · PERFIL; Soporte queda arriba, en el lugar que tenía Perfil (antes de Historias).
-        const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual'), perf = _el('navPerfil'), hist = _el('navHistorias');
+        const auto = _el('navAuto'), ini = _el('navInicio'), man = _el('navManual'), perf = _el('navPerfil'), hist = _el('navHistorias'), plat = _el('navPlat'); // #620
         let bar = _el('bottomNav');
         if (on) {
             if (bar) return;
             const seps = Array.from(top.querySelectorAll('.tn-sep')).slice(0, 2);
-            const nodes = [auto, seps[0], ini, seps[1], perf].filter(Boolean);
+            const nodes = [auto, plat, seps[0], ini, seps[1], perf].filter(Boolean); // #620: Carga auto · Plataforma · Inicio · Perfil
             _navPh = nodes.concat(man ? [man] : []).map((n) => { const ph = document.createComment('nav-ph'); n.parentNode.insertBefore(ph, n); return { n, ph }; });
             bar = document.createElement('header'); bar.id = 'bottomNav'; bar.className = top.className + ' bottom-nav'; bar.setAttribute('aria-label', 'Menú inferior');
             nodes.forEach((n) => bar.appendChild(n)); screen.appendChild(bar);
@@ -1570,6 +1597,7 @@
             const r = await fetch(VIP.config.API_URL + '/api/platforms', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
             if (!r.ok) return _platforms;
             _platforms = await r.json();
+            try { _paintPlatNav(); } catch (_) {} // #620
             _platformsAt = Date.now();
         } catch (_) {}
         return _platforms;
@@ -1946,7 +1974,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

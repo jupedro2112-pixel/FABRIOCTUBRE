@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 620. 🎰 Botón PLATAFORMA en la barra inferior: abre la plataforma elegida para jugar con el saldo (sin cargar), con el logo de Girox — SW v435
+**Pedido (owner):** "un botón de la plataforma que elegiste para que se abra para jugar sin carga, por si tiene saldo; ponelo abajo como
+botón que diga Plataforma y si seleccioné Girox que aparezca el logo de Girox". `#navPlat` (`tn-btn tn-plat`) en el header; con el
+menú 2 `_setMenuLayout` lo baja a la barra: Carga auto · **Plataforma** · Inicio · Perfil. `_paintPlatNav()` (tras `/api/platforms`) pone
+el logo (`logoUrl` o el de /images) y el nombre ("Girox / jugar"); `platTap()` abre la elegida (`preferredPlatform`/última; si hay
+varias conectadas y no eligió, abre el selector) con `openPlatform` (sesión SSO; sin API, la web pública).
+**Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 619. 🔔 "Un paso más" y los carteles de instalar con el estilo de la app — SW v434
 **Pedido (owner, con captura):** "eso ponele el mismo estilo que tenemos" (el cartel violeta/dorado con la caja naranja de notificaciones).
 Los modales `.ios-install-modal/.ios-install-content` (ui.js `showInstallInstructions` + los dos inline de index.html) pasan a tarjeta
