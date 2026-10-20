@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 615. 📖 HISTORIAS tipo Instagram: visor de un solo bloque, foto completa sin recortes, botón abajo y nada tapa el texto; artes re-encuadradas (ig-1…ig-6) — SW v431
+**Pedido (owner):** "las historias quiero que se vean tipo Instagram, se ven mal así; armala mejor, borrá todo y subí, que no sea diferente a
+lo normal y que no se tape el texto". Se ELIMINARON todas las capas superpuestas del visor en `pin.css` (#452/#453/#454/#455/#556/#582/
+#585/#592/#594/#607) y quedó UN bloque: marco 9:16 centrado (`--st-l`; en el celular ocupa todo, en pantallas anchas fondo negro a los
+lados), foto `contain` sobre el color de la historia (blanco ⇒ de borde a borde), barras + logo/PICA ROJA/hora arriba sobre degradé, y
+abajo sólo el botón del link. Sin sello ni pie de texto (el texto vive en la imagen). Las artes se re-encuadraron con PIL dentro de una
+zona segura (260–1540 de alto, 110 px laterales) para que ni la cabecera ni el botón pisen nada: `public/images/stories/ig-1…5.png`
+(mismo contenido) + `ig-6.png` nueva para Telegram (antes era historia de texto). `pin-1…5.png` eliminadas. Republicadas en Render en el
+mismo orden (Telegram última), con `bgColor #ffffff`, 168 h y repetición semanal. **Archivos:** `public/css/pin.css`, `public/js/stories.js`, imágenes, SW.
+
 ### 614. 🧾 Comprobante sin IA entra igual a Cargas pendientes + acuse al cliente · prueba100 ve los tests — SW v430
 **Pedido (owner):** "adjunté la foto del comprobante y no la cargó, ¿qué pasó?" · "poneme el test en prueba100 para cargas o retiros".
 **Diagnóstico en Render:** la API de 1girox NO está cargada (`source:none`) ⇒ nada se puede acreditar; las credenciales de hgcash guardadas
