@@ -10,6 +10,9 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 :root {
+  /* #643 (owner): margen inferior seguro. Lo que informa el teléfono (barra de gestos iPhone / Android borde a borde); si Android ocupa
+     toda la pantalla y no informa nada (html.android-edge, lo detecta index.html), se reservan 24px para que sus botones no tapen la barra. */
+  --sab: env(safe-area-inset-bottom, 0px);
   --p-bg: #ffffff;
   --p-surface: #f1f1f1;
   --p-surface-2: #e9e9e9;
@@ -770,7 +773,7 @@ html[data-theme="dark"] .profile-modal .pf-theme-btn { background: var(--p-red);
 body.sp-sent .sp-intro, body.sp-sent #supportIntro { display: none !important; } /* #612: en home-mini se vuelve a mostrar arriba (ver abajo) */
 /* ── #402 (owner): con la barra fija "PENDIENTE · Instalá la app" (body.ig-pending) el contenido deja lugar abajo para que no
    tape "Comprobante aquí" / "Retirar premio" ── */
-body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+body.ig-pending #homeFull, body.ig-pending #easyView, body.ig-pending #entryView, body.ig-pending .chat-screen > .home-actions-row:last-child { padding-bottom: calc(84px + var(--sab, 0px)) !important; }
 body.ig-pending .home-actions-row { scroll-margin-bottom: 90px; }
 /* ── #403 (owner): "Telegram" e "Historias" se cortaban en la barra → etiquetas un poco más chicas y sin recorte ── */
 .header .tn-btn:not(.tn-home) { overflow: visible !important; min-width: 0; }
@@ -828,11 +831,11 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 /* ── #414: SOPORTE PARA VISITANTES (burbuja + panel) ── */
 .gs-av { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display: block; background: var(--p-red-soft); }
 .gs-av svg { width: 100%; height: 100%; display: block; }
-.gs-bubble { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 9500; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 999px; box-shadow: 0 8px 28px rgba(0, 0, 0, .18); cursor: pointer; font-family: var(--p-font); }
+.gs-bubble { position: fixed; right: 14px; bottom: calc(14px + var(--sab, 0px)); z-index: 9500; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); border-radius: 999px; box-shadow: 0 8px 28px rgba(0, 0, 0, .18); cursor: pointer; font-family: var(--p-font); }
 .gs-bubble.hide, html.has-session .gs-bubble { display: none !important; }
 .gs-bubble-t { display: flex; flex-direction: column; text-align: left; line-height: 1.15; }
 .gs-bubble-t b { font: 800 13.5px var(--p-font); } .gs-bubble-t small { font: 600 10.5px var(--p-font); color: var(--p-muted); }
-.gs-panel { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: 12px; margin-left: auto; width: min(380px, calc(100% - 24px)); max-height: min(78vh, 620px); z-index: 9600; display: none; flex-direction: column; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 22px; box-shadow: 0 14px 44px rgba(0, 0, 0, .24); overflow: hidden; font-family: var(--p-font); }
+.gs-panel { position: fixed; right: 12px; bottom: calc(12px + var(--sab, 0px)); left: 12px; margin-left: auto; width: min(380px, calc(100% - 24px)); max-height: min(78vh, 620px); z-index: 9600; display: none; flex-direction: column; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 22px; box-shadow: 0 14px 44px rgba(0, 0, 0, .24); overflow: hidden; font-family: var(--p-font); }
 .gs-panel.open { display: flex; }
 .gs-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 10px; border-bottom: 1px solid var(--p-border); }
 .gs-head-t { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
@@ -919,7 +922,7 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .lg-app #loginReviews .rv-text { color: var(--p-text) !important; font: 500 12px/1.4 var(--p-font) !important; -webkit-line-clamp: 3; min-height: 2.8em; }
 .lg-app .lg-foot { font-size: 9.5px; }
 /* Soporte: más abajo, en la punta derecha, compacto (sólo avatar + "Soporte") */
-.gs-bubble { right: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 5px 12px 5px 5px; gap: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
+.gs-bubble { right: 10px; bottom: calc(10px + var(--sab, 0px)); padding: 5px 12px 5px 5px; gap: 8px; box-shadow: 0 6px 20px rgba(0, 0, 0, .16); }
 .gs-bubble .gs-av { flex-basis: 36px; width: 36px; height: 36px; }
 .gs-bubble-t b { font-size: 12px; } .gs-bubble-t small { display: none; }
 @media (max-height: 700px) { .lg-app #loginReviews .rv-text { -webkit-line-clamp: 2; min-height: 0; } }
@@ -1000,7 +1003,7 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #430 (owner): el inicio ocupa EXACTAMENTE una pantalla de teléfono (sin scroll); las opiniones toman el alto que sobra.
    Sin burbuja de Soporte en el inicio. ── */
 .login-screen:has(.lg-app) { height: 100dvh; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; align-items: stretch !important; }
-.login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
+.login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + var(--sab, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
 .lg-app > * { flex: 0 0 auto; }
 .lg-quick input { padding: 8px 12px !important; font-size: 14px !important; } .lg-app .lg-quick-btn { padding: 9px !important; font-size: 14px !important; }
 .lg-play-box { padding: 6px 9px 7px; }
@@ -1022,7 +1025,7 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #433: "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" bajo el título ── */
 /* ── #434: fila prioritaria "Carga automática y atención personalizada" ── */
 /* ── #436 (owner): la parte superior baja un poco (misma separación arriba que abajo) ── */
-.login-box.lg-app { padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important; }
+.login-box.lg-app { padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important; padding-bottom: calc(12px + var(--sab, 0px)) !important; }
 .lg-app .lg-head { margin-top: 2px; }
 /* ── #438/#439 (owner): Info → el título recuadrado en su propia línea (separa "Girox"); sólo las plataformas en negrita ── */
 .info-msg #infoCardTwoPlats > b:first-child { display: inline-flex !important; margin-bottom: 8px !important; }
@@ -1293,7 +1296,7 @@ html[data-theme="dark"] .ev-tab.plat-jugaygana, html[data-theme="dark"] .plat-pl
 .ev-tab.soon .ev-soon, .ev-tab .ev-soon, .plat-soon-badge, .ep-item.soon em { background: transparent !important; color: var(--p-muted) !important; border: 1px solid var(--p-border) !important; font: 700 8px/1.2 var(--p-font) !important; letter-spacing: .4px !important; text-transform: uppercase !important; padding: 2px 7px !important; border-radius: 999px !important; box-shadow: none !important; opacity: .85; }
 .ev-tab.plat-ganamos .ev-soon, .ev-tab.plat-jugaygana .ev-soon, .plat-play-btn.plat-ganamos .plat-soon-badge, .plat-play-btn.plat-jugaygana .plat-soon-badge, .ep-item.ep-ganamos.soon em, .ep-item.ep-jugaygana.soon em { color: rgba(255,255,255,.85) !important; border-color: rgba(255,255,255,.35) !important; }
 /* ── #512: MENÚ BÁSICO ── */
-.basic-view { display: none; flex-direction: column; gap: 10px; margin: 8px 12px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
+.basic-view { display: none; flex-direction: column; gap: 10px; margin: 8px 12px 0; padding-bottom: calc(10px + var(--sab, 0px)); overflow-y: auto; }
 body.home-basic .basic-view { display: flex; }
 body.home-basic #easyView { display: none !important; }
 .bv-top { display: flex; align-items: center; justify-content: space-between; background: var(--p-surface); border-radius: 16px; padding: 10px 14px; font: 800 14px var(--p-font); color: var(--p-text); }
@@ -1573,7 +1576,7 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .lg-foot { font-size: 9px; margin: 0; }
 @media (max-height: 760px) { .lg-app .lg-sec-reviews { display: none !important; } }
 @media (max-height: 640px) { .lg-sys .lg-sy:nth-child(n+7) { display: none; } }
-.lg-regscreen { position: fixed; inset: 0; z-index: 2600; background: #fff; overflow-y: auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; --p-bg: #fff; --p-surface: #f3f3f3; --p-card: #fff; --p-text: #111; --p-muted: #6f6f6f; --p-border: #e2e2e2; }
+.lg-regscreen { position: fixed; inset: 0; z-index: 2600; background: #fff; overflow-y: auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(16px + var(--sab, 0px)); display: flex; flex-direction: column; gap: 10px; --p-bg: #fff; --p-surface: #f3f3f3; --p-card: #fff; --p-text: #111; --p-muted: #6f6f6f; --p-border: #e2e2e2; }
 .lg-regscreen[hidden] { display: none !important; }
 .lg-reg-head { display: flex; align-items: center; gap: 10px; max-width: 420px; width: 100%; margin: 0 auto; }
 .lg-reg-back { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--p-surface); color: var(--p-text); font: 900 24px/1 var(--p-font); cursor: pointer; flex: 0 0 auto; }
@@ -1622,7 +1625,7 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .menu-pin.on { background: var(--p-green-soft); border-color: var(--p-green-line); color: var(--p-green); } .menu-pin.on .li { color: var(--p-green); }
 .fire-mini { flex: 0 0 auto; gap: 6px; padding: 6px 9px; } .fire-mini .fm-txt b { font-size: 11.5px; } .fire-mini .fm-more { display: none; }
 /* #561 (owner): con el MENÚ 2 (barra abajo) la hoja "Jugar ahora" y demás hojas inferiores suben por encima de la barra: no se tapa el texto */
-body.menu2 .play-now-card { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 9700; }
+body.menu2 .play-now-card { padding-bottom: calc(84px + var(--sab, 0px)); z-index: 9700; }
 body.menu2 .play-now-card .pn-sheet { border-radius: 22px 22px 18px 18px; }
 body.menu2 #homeFull, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #entryView { padding-bottom: 12px; }
 /* ── #563 (owner): fila Cambiar menú · Fijar · Racha en UNA línea; "Elegí dónde jugar" primero; carga acreditada como burbuja
@@ -1648,11 +1651,11 @@ body.menu2 #bottomNav.bottom-nav { box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
 /* #568 (owner): en Carga auto la fila "Comprobante aquí · Retirar premio" va FIJA al tope de abajo, pegada arriba del menú (Inicio) */
 /* #571 (owner): la fila sólo tapa SU línea (sin fondo ni sombra), va pegada al menú, y el relleno va en #homePanel (el que scrollea
    en Carga auto): así los 3 pasos de "Cargá acá" se ven completos deslizando, nada queda tapado ni hay huecos blancos. */
-body.home-full .home-actions-row { position: fixed; left: 8px; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 58; margin: 0 !important; background: var(--p-card); padding: 5px; border-radius: 18px; box-shadow: 0 4px 18px rgba(0,0,0,.12); border: 1px solid var(--p-border); } /* #572: fondo SOLO en ese recuadro */
-body.home-full.menu2 .home-actions-row { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+body.home-full .home-actions-row { position: fixed; left: 8px; right: 8px; bottom: calc(6px + var(--sab, 0px)); z-index: 58; margin: 0 !important; background: var(--p-card); padding: 5px; border-radius: 18px; box-shadow: 0 4px 18px rgba(0,0,0,.12); border: 1px solid var(--p-border); } /* #572: fondo SOLO en ese recuadro */
+body.home-full.menu2 .home-actions-row { bottom: calc(66px + var(--sab, 0px)); }
 body.home-full .entry-view, body.home-full #homeFull { padding-bottom: 0 !important; }
-body.home-full #homePanel { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important; }
-body.home-full.menu2 #homePanel { padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important; }
+body.home-full #homePanel { padding-bottom: calc(78px + var(--sab, 0px)) !important; }
+body.home-full.menu2 #homePanel { padding-bottom: calc(78px + var(--sab, 0px)) !important; }
 body.home-full .test-mini-row { margin-bottom: 2px; }
 /* #569: "Fijar" adentro del selector de menú; la fila de arriba queda Cambiar menú · Racha */
 .mc-pin { width: 100%; margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 12px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-surface); color: var(--p-text); font: 800 12px var(--p-font); cursor: pointer; }
@@ -1664,8 +1667,8 @@ body.home-full .test-mini-row { margin-bottom: 2px; }
 .basic-view::-webkit-scrollbar, .easy-view::-webkit-scrollbar, .entry-view::-webkit-scrollbar, #homePanel::-webkit-scrollbar, #homeFull::-webkit-scrollbar { display: none; width: 0; height: 0; }
 /* ── #575 (owner): MENÚ 2 — la barra inferior es fija y la PANTALLA ENTERA termina arriba de ella (altura 100dvh − 76 px). Sin rellenos
    por contenedor: ningún bloque blanco tapa el contenido, en ningún menú. ── */
-body.menu2 .chat-screen, body.menu2 #chatScreen { height: calc(100dvh - 60px - env(safe-area-inset-bottom, 0px)) !important; max-height: calc(100dvh - 60px - env(safe-area-inset-bottom, 0px)) !important; min-height: 0 !important; overflow: hidden; }
-body.menu2 #bottomNav.bottom-nav { height: calc(60px + env(safe-area-inset-bottom, 0px)); /* #637: más baja (antes 76px) */ padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; background: var(--p-card); }
+body.menu2 .chat-screen, body.menu2 #chatScreen { height: calc(100dvh - 60px - var(--sab, 0px)) !important; max-height: calc(100dvh - 60px - var(--sab, 0px)) !important; min-height: 0 !important; overflow: hidden; }
+body.menu2 #bottomNav.bottom-nav { height: calc(60px + var(--sab, 0px)); /* #637: más baja (antes 76px) */ padding-bottom: var(--sab, 0px); box-sizing: border-box; background: var(--p-card); }
 /* #576 (owner): en el recuadro "Elegí dónde jugar" las etiquetas RECOMENDADO / PRONTO van ADENTRO de cada tile, centradas (se habían corrido) */
 .ev-play-first, .ev-play-first .ev-tabs { overflow: visible; }
 .ev-play-first .ev-tab, .ev-play-first .ev-tab.soon, .ev-play-first .ev-tab.active { position: relative !important; padding: 18px 6px 20px !important; min-height: 96px !important; }
@@ -1762,23 +1765,23 @@ body.home-mini:not(.sp-sent) #chatMessages { display: none !important; }
 .story-viewer .st-head #storyWhen { font: 600 11.5px var(--p-font); color: rgba(255,255,255,.8); text-shadow: 0 1px 6px rgba(0,0,0,.7); }
 .story-viewer .st-close { width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,.35) !important; color: #fff !important; border: 0 !important; font-size: 18px; line-height: 34px; text-align: center; padding: 0; cursor: pointer; backdrop-filter: blur(4px); flex: 0 0 auto; }
 .story-viewer .st-tap { position: absolute; inset: 0 !important; z-index: 4; }
-.story-viewer .st-foot { position: absolute !important; left: var(--st-l) !important; right: var(--st-l) !important; bottom: 0 !important; top: auto !important; height: auto !important; min-height: 0 !important; padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important; margin: 0; background: transparent !important; border: 0 !important; display: flex !important; flex-direction: column; align-items: center; gap: 8px; z-index: 5; pointer-events: none; }
+.story-viewer .st-foot { position: absolute !important; left: var(--st-l) !important; right: var(--st-l) !important; bottom: 0 !important; top: auto !important; height: auto !important; min-height: 0 !important; padding: 10px 16px calc(16px + var(--sab, 0px)) !important; margin: 0; background: transparent !important; border: 0 !important; display: flex !important; flex-direction: column; align-items: center; gap: 8px; z-index: 5; pointer-events: none; }
 .story-viewer .st-foot::before, .story-viewer .st-foot::after { display: none !important; }
 .story-viewer .st-foot .st-brand-foot, .story-viewer .st-foot .st-caption { display: none !important; }
 .story-viewer .st-link { pointer-events: auto; display: inline-block; width: calc(100% - 24px); max-width: 360px; text-align: center; background: var(--p-red) !important; color: #fff !important; border-radius: 999px !important; padding: 13px 18px !important; font: 900 14px var(--p-font) !important; letter-spacing: .2px; text-decoration: none !important; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
 /* ── #618 (owner): BARRA "Instalar app" abajo de todo (reemplaza al botón verde flotante y a la mini-barra nativa de Chrome, que
    tapaba el menú inferior). Con la barra visible (body.has-install-bar) el menú inferior y la pantalla SUBEN 64 px: nada se tapa. ── */
-.pwa-install-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9500; height: calc(64px + env(safe-area-inset-bottom, 0px)); padding: 0 12px env(safe-area-inset-bottom, 0px) 14px; box-sizing: border-box; display: none; align-items: center; gap: 12px; background: #1c1c1e; color: #fff; font-family: var(--p-font); box-shadow: 0 -6px 20px rgba(0,0,0,.25); }
+.pwa-install-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9500; height: calc(64px + var(--sab, 0px)); padding: 0 12px var(--sab, 0px) 14px; box-sizing: border-box; display: none; align-items: center; gap: 12px; background: #1c1c1e; color: #fff; font-family: var(--p-font); box-shadow: 0 -6px 20px rgba(0,0,0,.25); }
 .pwa-install-bar img { width: 36px; height: 36px; border-radius: 10px; flex: 0 0 auto; }
 .pwa-install-bar .pib-t { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; line-height: 1.2; }
 .pwa-install-bar .pib-t b { font: 800 14px var(--p-font); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pwa-install-bar .pib-t small { font: 600 11.5px var(--p-font); color: rgba(255,255,255,.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pwa-install-bar .pib-go { flex: 0 0 auto; border: 0; border-radius: 999px; padding: 10px 18px; background: var(--p-red); color: #fff; font: 900 13.5px var(--p-font); cursor: pointer; }
 .pwa-install-bar .pib-x { flex: 0 0 auto; width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; font-size: 15px; cursor: pointer; }
-body.has-install-bar.menu2 #bottomNav.bottom-nav { bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important; }
-body.has-install-bar.menu2 .chat-screen, body.has-install-bar.menu2 #chatScreen { height: calc(100dvh - 60px - 64px - env(safe-area-inset-bottom, 0px)) !important; max-height: calc(100dvh - 60px - 64px - env(safe-area-inset-bottom, 0px)) !important; }
-body.has-install-bar.home-full.menu2 .home-actions-row { bottom: calc(66px + 64px + env(safe-area-inset-bottom, 0px)); }
-body.has-install-bar:not(.menu2) .chat-screen, body.has-install-bar:not(.menu2) #chatScreen { height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important; max-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important; }
+body.has-install-bar.menu2 #bottomNav.bottom-nav { bottom: calc(64px + var(--sab, 0px)) !important; }
+body.has-install-bar.menu2 .chat-screen, body.has-install-bar.menu2 #chatScreen { height: calc(100dvh - 60px - 64px - var(--sab, 0px)) !important; max-height: calc(100dvh - 60px - 64px - var(--sab, 0px)) !important; }
+body.has-install-bar.home-full.menu2 .home-actions-row { bottom: calc(66px + 64px + var(--sab, 0px)); }
+body.has-install-bar:not(.menu2) .chat-screen, body.has-install-bar:not(.menu2) #chatScreen { height: calc(100dvh - 64px - var(--sab, 0px)) !important; max-height: calc(100dvh - 64px - var(--sab, 0px)) !important; }
 body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.has-install-bar #casinoSupportBubble { margin-bottom: 64px; }
 /* ── #619 (owner): los carteles de instalar / "Un paso más" (notificaciones) con el MISMO estilo de la app (antes violeta/dorado/naranja) ── */
 .ios-install-modal { background: rgba(0, 0, 0, .5) !important; padding: 16px !important; }
@@ -1911,3 +1914,4 @@ body.home-play .ev-cta.ev-cta-top { display: flex !important; }
 .info-msg .im-sec:not(.open)::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: linear-gradient(180deg, transparent, var(--p-card)); pointer-events: none; }
 .im-more { display: block; margin: -4px 0 8px auto; background: none; border: 0; color: var(--p-red); font: 800 11.5px var(--p-font); padding: 2px 6px; cursor: pointer; }
 .info-msg .im-sec { margin-bottom: 2px !important; }
+html.android-edge { --sab: max(24px, env(safe-area-inset-bottom, 0px)); }

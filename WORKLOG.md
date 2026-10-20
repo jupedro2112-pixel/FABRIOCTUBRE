@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 643. 📱 Margen inferior seguro: los botones del teléfono no tapan la barra de Inicio (respaldo Android) — SW v457
+**Pedido (owner):** "abajo detectá si el teléfono tiene botones y no tapar con sus botones nuestro Inicio". iPhone (barra de gestos) y
+Android borde a borde ya informan `env(safe-area-inset-bottom)` y la app lo usaba; ahora TODO pin.css usa `var(--sab)` (definida en `:root`
+como ese env) y un script en `<head>` detecta Android en modo app ocupando toda la pantalla (`screen.height == innerHeight`) sin informar
+margen (sonda con `env()` = 0) ⇒ `html.android-edge` ⇒ `--sab: max(24px, env)`. Afecta barra inferior, altura del chat, fila de acciones,
+barra "Instalar app" y vistas. La foto del iPhone del owner confirma que arriba (#638) quedó bien. **Archivos:** `public/css/pin.css`,
+`public/index.html`, SW.
+
 ### 642. ▭ Básico: "¿Dónde jugás?" y los chips de plataforma suben arriba de CARGAR — SW v456
 **Pedido (owner):** "cambiá Dónde jugás: subilo en el simple y poné las plataformas de elegir arriba de Cargar". Sólo se movió el bloque
 `.bv-plats-h` + `#basicPlats` (Entrar a jugar queda donde estaba, debajo de RETIRAR). **Archivos:** `public/index.html`, SW.
