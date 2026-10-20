@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 627. 🧩 Menú BÁSICO más sencillo: 👤 nombre · saldo · 🔥 racha en una línea; nivel VIP junto a "Cambiar menú" — SW v441
+**Pedido (owner):** "en el básico poné el nivel al lado de Cambiar menú y la racha al lado del saldo; donde está el usuario poné el nombre
+con un ícono y el saldo unificado y al lado la racha, así queda todo más sencillo". La cabecera `.bv-top` ahora es UNA línea: `.bv-user`
+(ícono 👤 + nombre, sin "Hola,") · saldo · píldora `.bv-fire` (🔥 N d, abre el fueguito). Se eliminaron las dos filas `.bv-line` (#578) y su CSS.
+El nivel VIP va en la píldora `#vipMiniBtn.vip-mini` dentro de `#topRow`, al lado de "Cambiar menú", sólo en `body.home-basic` (como el
+`#fireMiniBtn` del completo); `_fireMiniSync` copia nivel/%/barra de la tarjeta grande (`vipHeadLvl/vipHeadPct/vipBarFill`) y la racha de
+`fireHomeStreak`. **Archivos:** `public/index.html`, `public/js/home.js`, `public/css/pin.css`, SW.
+
 ### 626. 🎁 Aviso de PRIMERA CARGA resumido junto a "Adjuntar comprobante" (se fue la franja de arriba) — SW v440
 **Pedido (owner):** "el cartel de primera carga 50 y 100 dejalo adentro de cuando querés adjuntar el comprobante; en la primera carga dejalo
 aclarado ahí, resumido". Se eliminaron las franjas `#sdBanner` / `#sdBannerFull` (#536/#564/#567/#608) y su CSS. En su lugar, una línea

@@ -71,7 +71,7 @@
         document.body.classList.toggle('home-easy', mode === 'easy' || mode === 'basic'); // #366: MENÚ FÁCIL (#512: básico reusa el ocultado)
         document.body.classList.toggle('home-basic', mode === 'basic'); // #512
         // #569: la etiqueta "· Completo" de Cambiar menú se sacó (no entraba con Racha)
-        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); _fireMiniSync(); } catch (_) {} // #528
+        try { const fm = _el('fireMiniBtn'); if (fm) fm.hidden = !(mode === 'full'); const vm = _el('vipMiniBtn'); if (vm) vm.hidden = !(mode === 'basic'); _fireMiniSync(); } catch (_) {} // #528 · #627
         try { _paintMenuPin(); } catch (_) {} // #559
         clearInterval(_easyTimer); _easyTimer = null;
         document.body.classList.remove('support-open');
@@ -149,24 +149,23 @@
     function chooseMenu(pref) { setMenuPref(pref); }
     // #528: el fueguito resumido copia lo que dice la tarjeta grande (la pinta fire.js) — sin duplicar lógica
     function _fireMiniSync() {
-        // #578: líneas de nivel VIP y fueguito del menú básico (copian lo que pintan refunds.js / fire.js en el inicio completo)
+        // #578/#627: el básico copia lo que pintan refunds.js / fire.js en el inicio completo: nivel VIP → píldora #vipMiniBtn (al lado de
+        // "Cambiar menú"), racha → #bvFireN (en la línea del nombre y el saldo).
         try {
-            const lv = _el('vipHeadLvl'), nx = _el('vipHeadNext'), pc = _el('vipHeadPct'), bar = _el('vipBarFill');
-            const bl = _el('bvVipLvl'), bn = _el('bvVipNext'), bp = _el('bvVipPct'), bb = _el('bvVipBar');
+            const lv = _el('vipHeadLvl'), pc = _el('vipHeadPct'), bar = _el('vipBarFill');
+            const bl = _el('vipMiniLvl'), bp = _el('vipMiniPct'), bb = _el('vipMiniBar');
             if (lv && bl) bl.textContent = (lv.textContent || '').trim() || 'Nivel';
-            if (nx && bn) bn.textContent = (nx.textContent || '').trim();
             if (pc && bp) bp.textContent = (pc.textContent || '').trim();
             if (bar && bb) bb.style.width = bar.style.width || '0%';
-            const st = _el('fireHomeStreak'), su = _el('fireHomeSub'), fn = _el('bvFireN'), fs = _el('bvFireSub');
+            const st = _el('fireHomeStreak'), fn = _el('bvFireN');
             if (st && fn) fn.textContent = (st.textContent || '0').trim();
-            if (su && fs) fs.textContent = (su.textContent || '').trim() || 'Reclamá tu premio de hoy';
         } catch (_) {}
         try { const s = _el('fireHomeSub'), st = _el('fireHomeStreak'); const ms = _el('fireMiniSub'), mst = _el('fireMiniStreak'); if (s && ms) ms.textContent = (s.textContent || '').trim() || 'Reclamá tu premio de hoy'; if (st && mst) mst.textContent = (st.textContent || '0').trim() + ' d'; } catch (_) {}
     }
     setInterval(_fireMiniSync, 5000);
     // #512: MENÚ BÁSICO — saludo + saldo, CARGAR, RETIRAR, chips de plataforma (fija la preferida) y "Entrar a jugar".
     function _basicPaint() {
-        try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('basicHello'); if (h) h.textContent = u ? 'Hola, ' + u : 'Hola'; } catch (_) {}
+        try { const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username; const h = _el('basicHello'); if (h) h.textContent = u || 'Hola'; } catch (_) {} // #627: sólo el nombre, con el ícono 👤
         try { const b = _el('userBalance'), bb = _el('basicBalance'); if (b && bb && b.textContent) bb.textContent = b.textContent; } catch (_) {}
         const box = _el('basicPlats'); if (!box) return;
         const defId = (_platforms && _platforms.defaultPlatform) || 'girox'; const pref = (_platforms && _platforms.preferredPlatform) || null;

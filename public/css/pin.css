@@ -1672,13 +1672,6 @@ body.menu2 #bottomNav.bottom-nav { height: calc(76px + env(safe-area-inset-botto
 .ev-play-first .ev-tab .ev-reco { position: absolute !important; top: 5px !important; left: 50% !important; right: auto !important; bottom: auto !important; transform: translateX(-50%); white-space: nowrap; }
 .ev-play-first .ev-tab .ev-soon { position: absolute !important; bottom: 5px !important; top: auto !important; left: 50% !important; right: auto !important; transform: translateX(-50%); white-space: nowrap; }
 /* #578 menú básico: nivel VIP (con progreso) y fueguito, cada uno en una línea debajo del usuario */
-.bv-line { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--p-surface); border: 0; border-radius: 14px; padding: 8px 12px; color: var(--p-text); font-family: var(--p-font); cursor: pointer; text-align: left; }
-.bv-line > i { font-size: 16px; font-style: normal; flex: 0 0 auto; }
-.bv-line-t { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; line-height: 1.15; }
-.bv-line-t b { font: 800 12.5px var(--p-font); color: var(--p-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bv-line-t small { font: 600 10px var(--p-font); color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bv-bar { flex: 0 0 72px; height: 8px; border-radius: 999px; background: var(--p-surface-2); overflow: hidden; } .bv-bar i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; }
-.bv-line > em { font: 800 10.5px var(--p-font); color: var(--p-muted); font-style: normal; flex: 0 0 auto; white-space: nowrap; }
 /* #579 (owner): en modo nocturno el botón "Pendiente · Instalá la app y cargá tu extra" va en un color llamativo (en negro se perdía) */
 html[data-theme="dark"] #installGiftBar.ig-bar { background: linear-gradient(135deg, #ffb300, #ff6f00) !important; color: #111 !important; box-shadow: 0 8px 24px rgba(255,140,0,.35); }
 html[data-theme="dark"] #installGiftBar .ig-bar-k { background: #111; color: #ffd166; } html[data-theme="dark"] #installGiftBar .ig-bar-t { color: #111; } html[data-theme="dark"] #installGiftBar .ig-bar-amt { color: #111; }
@@ -1841,3 +1834,18 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .casino-load .fd-note { margin: 6px 0 8px; font-size: 11.5px; }
 html[data-theme="dark"] .fd-note { background: #3a1218; border-color: #5a1a24; }
 .home-actions-row { flex-wrap: wrap !important; } .home-actions-row .fd-note { flex: 1 0 100% !important; margin: 0 0 2px !important; padding: 6px 10px; }
+/* ===== #627 (owner 2026-10-20): BÁSICO más sencillo — una línea 👤 nombre · saldo · 🔥 racha; nivel VIP en píldora junto a "Cambiar menú" ===== */
+.bv-top { gap: 8px; padding: 8px 10px 8px 12px !important; }
+.bv-top .bv-user { display: inline-flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 auto; font: 800 13px var(--p-font); color: var(--p-text); }
+.bv-top .bv-user i { font-style: normal; font-size: 15px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--p-red-soft); color: var(--p-red); flex: 0 0 auto; }
+.bv-top .bv-user span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bv-top > b { flex: 0 0 auto; font-size: 16px !important; }
+.bv-fire { flex: 0 0 auto; border: 1px solid #f59e0b; background: rgba(245,158,11,.12); color: #d97706; border-radius: 999px; padding: 4px 9px; font: 900 11.5px var(--p-font); cursor: pointer; white-space: nowrap; }
+.bv-fire span { font-size: 12.5px; }
+html[data-theme="dark"] .bv-fire { background: rgba(245,158,11,.16); color: #fbbf24; }
+.vip-mini { display: none; flex: 1 1 auto; min-width: 0; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); cursor: pointer; font-family: var(--p-font); }
+body.home-basic .vip-mini:not([hidden]) { display: inline-flex; }
+.vip-mini .vm-ico { font-size: 15px; line-height: 1; flex: 0 0 auto; }
+.vip-mini > b { font: 900 11.5px var(--p-font); color: var(--p-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vip-mini .vm-bar { flex: 1 1 40px; min-width: 28px; max-width: 70px; height: 6px; border-radius: 999px; background: var(--p-surface-2); overflow: hidden; } .vip-mini .vm-bar i { display: block; height: 100%; background: var(--p-red); border-radius: 999px; transition: width .4s; }
+.vip-mini > em { font: 800 10.5px var(--p-font); color: var(--p-muted); font-style: normal; white-space: nowrap; flex: 0 0 auto; }

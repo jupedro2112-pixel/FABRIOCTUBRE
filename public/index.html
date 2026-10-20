@@ -1097,7 +1097,9 @@
             <div class="top-row" id="topRow">
                 <button type="button" class="change-menu" id="changeMenuBtn" onclick="VIP.home.openMenuChooser()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></i>Cambiar menú<em>▾</em></button><!-- #569: sin "· Completo" -->
                 <!-- #528 (owner): fueguito resumido al lado de "Cambiar menú" en el home completo (abre el fueguito; home.js lo rellena desde la tarjeta) -->
-                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button><!-- #536: minimizado, sin texto largo -->
+                <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button>
+                <!-- #627 (owner): en el BÁSICO, el nivel VIP resumido va al lado de "Cambiar menú" (home.js _fireMiniSync lo copia de la tarjeta grande) -->
+                <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" hidden><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
             </div>
             <div id="entryView" class="entry-view">
                 <!-- #563 (owner): "dónde querés jugar" es lo más importante: va PRIMERO -->
@@ -1213,10 +1215,8 @@
             <!-- ===== #512 (owner): MENÚ BÁSICO — "un extra básico con 2 botones, carga y retiro, y que pueda elegir la plataforma,
                  nada más; abajo elegir otro menú". Tercer modo del Inicio (body.home-basic, reusa el ocultado de home-easy). home.js: _basicPaint. ===== -->
             <div id="basicView" class="basic-view" aria-label="Menú básico">
-                <div class="bv-top"><span id="basicHello">Hola</span><b id="basicBalance">$0</b></div>
-                <!-- #578 (owner): abajo del usuario, en línea: el nivel VIP que va (con progreso) y el fueguito. home.js los copia de las tarjetas del inicio completo. -->
-                <button type="button" class="bv-line" id="bvVip" onclick="VIP.home.openVipLevels()"><i>🏆</i><span class="bv-line-t"><b id="bvVipLvl">Nivel</b><small id="bvVipNext"></small></span><span class="bv-bar"><i id="bvVipBar" style="width:0%"></i></span><em id="bvVipPct"></em></button>
-                <button type="button" class="bv-line" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();"><i>🔥</i><span class="bv-line-t"><b>Racha <span id="bvFireN">0</span> d</b><small id="bvFireSub">Reclamá tu premio de hoy</small></span><em>Ver ›</em></button>
+                <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
+                <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas">🔥 <span id="bvFireN">0</span> d</button></div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
                 <button type="button" class="bv-btn bv-load" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
@@ -2493,7 +2493,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v440</div>
+                    <div class="pf-build" id="appBuildTag">app v441</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
