@@ -1854,4 +1854,9 @@ body.home-mini.sp-sent #supportIntro { display: flex !important; margin: 8px 10p
 body.home-mini.sp-sent #supportIntro .sp-ask, body.home-mini.sp-sent #supportIntro .sp-topics, body.home-mini.sp-sent #supportIntro #spClosed, body.home-mini.sp-sent #supportIntro .sp-sla { display: none !important; }
 body.home-mini.sp-sent #supportIntro .sp-msg { font-size: 13px; line-height: 1.4; }
 body.home-mini.sp-sent #chatMessages { flex: 1 1 auto !important; min-height: 0; }
+/* #613 (owner): chat cerrado = selector + aviso FIJADO "Chat cerrado · fecha" debajo de las opciones (el historial no se ve hasta
+   abrir de nuevo; al abrir, vuelve completo con sus separadores de fecha). */
+body.home-mini:not(.sp-sent) #chatMessages { display: none !important; }
+.sp-closed { display: block; width: 100%; text-align: center; margin: 10px 0 0 !important; padding: 9px 12px !important; border-radius: 12px !important; font: 800 12.5px var(--p-font) !important; color: var(--p-muted); background: var(--p-card); border: 1px dashed var(--p-border); }
+.sp-closed[hidden] { display: none !important; }
 

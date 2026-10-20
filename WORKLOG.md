@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 613. 💬 Soporte: "Chat cerrado · fecha" fijado debajo de las opciones; el historial se conserva al reabrir — SW v429
+**Pedido (owner):** "cuando cierro chat está bien que se ve que cerró, pero dejalo visible abajo de las opciones como un mensaje fijado de
+chat cerrado; si se abre que quede el historial viejo y que tenga fecha". `GET /api/messages/:userId` para el cliente ya NO corta por
+`supportSessionSince` (sólo por `supportChannelSince` global): la charla vieja queda con sus separadores de fecha. Estado en chat.js:
+ABIERTA si el cliente escribió después del último `support_closed`; CERRADA ⇒ selector + `#spClosed` fijado "🔒 Chat cerrado · dd/mm/aaaa hh:mm"
+(fecha del aviso de cierre) y los mensajes ocultos hasta elegir un tema. El cierre automático (#401, 6 h) ahora también deja el aviso
+`support_closed` al cliente. **Archivos:** `server.js`, `public/js/chat.js`, `public/js/home.js`, `public/index.html`, `public/css/pin.css`, SW.
+
 ### 612. 💬 Soporte: presentación "Bienvenido al soporte, mi nombre es {nombre}…" prolija arriba del chat — SW v428
 **Pedido (owner, con captura):** "no está bien arriba el soporte: 'Bienvenidos al soporte, mi nombre es Martín (o el del turno), por favor
 envíenos su problema y en breve contestamos', armalo prolijo". `/sys_support_intro` (y `SUPPORT_INTRO_DEFAULT`) pasa a "👋 ¡Bienvenido

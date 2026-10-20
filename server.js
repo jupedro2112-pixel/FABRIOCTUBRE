@@ -7690,12 +7690,10 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
       ] }];
     }
     if (!isAdminRole) {
-      let since = await getSupportChannelSince();
-      // #401: si el chat de soporte se cerró (6 h sin respuesta del cliente), para él arranca de cero desde esa fecha.
-      try {
-        const me = await User.findOne({ id: userId }).select('supportSessionSince').lean();
-        if (me && me.supportSessionSince && (!since || me.supportSessionSince > since)) since = me.supportSessionSince;
-      } catch (_) {}
+      const since = await getSupportChannelSince();
+      // #613 (owner): el cierre (manual #602 o automático #401) YA NO corta el historial: el cliente conserva la charla vieja con
+      // fechas y ve el aviso "chat cerrado" (metadata.kind support_closed) fijado abajo de las opciones. `supportSessionSince`
+      // sigue marcando el último cierre para el panel / cron, pero no filtra acá.
       if (since) matchStage.timestamp = Object.assign({}, matchStage.timestamp || {}, { $gte: since });
     }
 
@@ -24648,6 +24646,8 @@ async function _supportAutoCloseTick() {
         { new: true, projection: { id: 1, username: 1 } }
       ).lean();
       if (!u) continue; // ya cerrado por otra instancia o no hubo actividad nueva desde el último cierre
+      // #613: el cliente ve el cierre como mensaje fijado con fecha (igual que el cierre manual #602)
+      try { await _sendUserSystemMessage(u, await renderSystemCommand('/sys_support_closed', '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.', {}), { metadata: { kind: 'support_closed', channel: 'support' } }); } catch (_) {}
       await _emitAdminOnlyChatNote(u.id, u.username, '🔒 Chat de Soporte cerrado automáticamente: ' + hours + ' h sin respuesta del cliente. Si vuelve a escribir, para él arranca de cero (acá queda todo el historial).');
       try { io.to('user_' + u.id).emit('support_session_reset', { since: now.toISOString() }); } catch (_) {}
     } catch (e) { logger.warn('[support-autoclose] ' + r._id + ': ' + e.message); }

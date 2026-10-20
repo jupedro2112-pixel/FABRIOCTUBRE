@@ -327,7 +327,22 @@ VIP.chat = (function () {
         container.appendChild(fragment);
         // #401: la presentación de Soporte (#supportIntro) desaparece cuando el cliente YA escribió en esta sesión del
         // chat; si el chat se cerró (6 h sin respuesta) no hay mensajes suyos visibles → vuelve a aparecer como al principio.
-        try { document.body.classList.toggle('sp-sent', messages.some((m) => m && m.senderRole === 'user')); } catch (_) {}
+        // #613 (owner): la charla está ABIERTA si el cliente escribió después del último cierre; cerrada ⇒ selector + aviso fijado
+        // "Chat cerrado · fecha" (el historial queda y se vuelve a ver, con fechas, al abrir de nuevo).
+        try {
+            let lastUser = -1, lastClosed = -1, closedAt = null;
+            messages.forEach((m, i) => { if (!m) return; if (m.senderRole === 'user') lastUser = i; if (m.metadata && m.metadata.kind === 'support_closed') { lastClosed = i; closedAt = m.timestamp; } });
+            const open = lastUser > lastClosed;
+            document.body.classList.toggle('sp-sent', open);
+            const pin = document.getElementById('spClosed');
+            if (pin) {
+                if (!open && lastClosed >= 0) {
+                    let when = '';
+                    try { const d = new Date(closedAt); when = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit' }); } catch (_) {}
+                    pin.textContent = '🔒 Chat cerrado' + (when ? ' · ' + when : ''); pin.hidden = false;
+                } else pin.hidden = true;
+            }
+        } catch (_) {}
 
         if (messages.length > 0) {
             const lastMsg = messages[messages.length - 1];

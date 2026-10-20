@@ -487,13 +487,12 @@
             const k = SUPPORT_QUICK_TEXT[kind] ? kind : 'otro';
             const i = _el('messageInput'); if (!i) return;
             i.value = SUPPORT_QUICK_TEXT[k];
-            try { const n = _el('spClosed'); if (n) n.hidden = true; } catch (_) {} // #603
             if (VIP.chat && VIP.chat.sendMessage) VIP.chat.sendMessage(null, k);
             if (k === 'otro') { setTimeout(() => { try { i.focus(); } catch (_) {} }, 300); }
         } catch (_) {}
     }
     // #603: aviso "Chat cerrado" en el selector cuando Soporte cierra la charla; se borra al abrir un tema nuevo
-    function supportClosedNotice() { try { const n = _el('spClosed'); if (n) n.hidden = false; VIP.ui.showToast('🔒 Chat cerrado por Soporte', 'info'); } catch (_) {} }
+    function supportClosedNotice() { try { VIP.ui.showToast('🔒 Chat cerrado por Soporte', 'info'); } catch (_) {} } // #613: el aviso fijado lo pinta chat.js con la fecha
     function supportIntroToggle(ev) {
         try { if (ev && ev.target && ev.target.closest && ev.target.closest('button')) return; } catch (_) {}
         const el = _el('supportIntro'); if (!el) return;
