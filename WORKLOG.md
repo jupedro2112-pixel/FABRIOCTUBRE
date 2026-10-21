@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 759. 🏠 Básico compacto: entra todo en la pantalla — SW v541
+**Pedido (owner, captura):** "achicá todo como para que entre todo, central". Menos relleno y tipografía en cabecera, título de
+servicios, accesos, plataformas (chips de 22 px), CARGAR/RETIRAR (50 px de alto), Entrar a jugar y el bloque de cambio de menú.
+
 ### 758. 🏠 Servicios del Inicio: dos por fila, horizontales y más bajos — SW v540
 **Pedido (owner, captura):** "hacelos más cuadrados así pierden altura, y si no entra dale más ancho con los sobrantes". Grilla de 2
 columnas; cada tarjeta con el ícono a la izquierda, nombre y detalle al lado (2 líneas máx.) y "Ver más ›" a la derecha. Mismo ancho
