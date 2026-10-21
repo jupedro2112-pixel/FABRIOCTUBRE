@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 678. 🎰 Girox directo NO queda predeterminado: al volver a entrar se elige el menú de nuevo — SW v485
+**Pedido (owner):** "si elige Girox para entrar que no sea predeterminado cuando entra; después, si vuelve a entrar, que vuelva a
+elegir dónde quiere". Deshace #671: `setMenuPref('girox')` abre la plataforma (modo play + `_giroxDirect`) pero NO guarda
+`vip_menu_pref`, y `maybeShowMenuChooser` / la re-pregunta tras 10 min vuelven a la regla general (#367). Excepción explícita: "Dejar
+fijo el menú Girox directo" sí lo guarda (es un toque a propósito) y entonces entra directo. Los otros menús se recuerdan como siempre.
+
 ### 677. 🎰 Ruleta por CARGA DEL DÍA: $10.000 cargados hoy (sumando cargas, ej. 2 de $5.000) = 1 giro gratis — SW v484 · admin-sw v137
 **Pedido (owner, 2026-10-21):** "cambió el sistema: mínimo de carga diaria 10.000; serían 2 cargas de 5.000 para tener un giro gratis;
 modificá la historia de la ruleta". **Server:** `_rouletteIsActiveThisWeek` (mismo nombre por los callers) ya no busca UNA carga ≥ X
