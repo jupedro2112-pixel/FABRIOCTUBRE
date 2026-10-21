@@ -921,11 +921,13 @@
     function _slideUrl(u) { const t = (_el('appBuildTag') || {}).textContent || ''; const m = /v(\d+)/.exec(t); return u + (m ? '?b=' + m[1] : ''); }
     // #489 (owner): el deslizante del Inicio son JUEGOS individuales, grandes, con "N jugando" (número inventado entre 50 y 200,
     // estable por sesión y con pequeños cambios cada 20 s para que se vea vivo). Las tarjetas salen de capturas de la plataforma.
-    const ENTRY_GAMES = [['fortune-garuda-1000', 'Fortune Garuda 1000'], ['jokers-jewel', "Joker's Jewel"], ['fortune-garuda-500', 'Fortune Garuda 500'], ['fortune-tiger', 'Fortune Tiger'], ['fortune-gems-2', 'Fortune Gems 2'], ['fortune-rabbit', 'Fortune Rabbit'], ['fortune-gems', 'Fortune Gems'], ['fortune-dragon', 'Fortune Dragon'], ['golden-joker', 'Golden Joker']];
+    // #786 (owner): los 10 MÁS JUGADOS de 1girox (por play_count de su catálogo público, 2026-10-21), con el Joker primero; fotos
+    // reales de la plataforma en /images/games/<id>.jpg (300 px) y TODOS con enlace directo al juego (GAME_PLAY).
+    const ENTRY_GAMES = [['jokers-jewels', "Joker's Jewels"], ['gates-of-olympus-1000', 'Gates of Olympus 1000'], ['sugar-rush-1000', 'Sugar Rush 1000'], ['sweet-bonanza-2500', 'Sweet Bonanza 2500'], ['jokers-jewels-hold-spin', "Joker's Jewels Hold & Spin"], ['mines', 'Mines'], ['zeus-rush-fever', 'Zeus Rush Fever Deluxe'], ['buffalo-king-untamed', 'Buffalo King Untamed'], ['big-bass-bonanza', 'Big Bass Bonanza'], ['starlight-princess-1000', 'Starlight Princess 1000']];
     // #782 (owner): "que cada foto lo lleve directo a ese juego". Ruta de juego en 1girox = /play/<aggregator_id>/<game_id>
     // (sacado de su catálogo público admin.1girox.com/api/games?search=…). Los que no están en el catálogo (Garuda, Gems) abren el
     // casino normal. Un juego nuevo: agregar acá el par. Se navega DESPUÉS del SSO (ui.js, `_casinoGamePath`).
-    const GAME_PLAY = { 'fortune-tiger': '/play/4/fortunetiger_hotdoggaming', 'jokers-jewel': '/play/2/vs5joker', 'fortune-rabbit': '/play/4/fortunerabbit_hotdoggaming', 'fortune-dragon': '/play/4/fortunedragon_hotdoggaming', 'golden-joker': '/play/1/GoldenJoker' };
+    const GAME_PLAY = { 'jokers-jewels': '/play/2/vs5joker', 'gates-of-olympus-1000': '/play/2/vs20olympx', 'sugar-rush-1000': '/play/2/vs20sugarrushx', 'sweet-bonanza-2500': '/play/2/vs20swbon2500', 'jokers-jewels-hold-spin': '/play/2/vs5jokjewhs', 'mines': '/play/4/mines_prod2_100hp', 'zeus-rush-fever': '/play/4/zeusrushfeverdeluxe96_rubyplay', 'buffalo-king-untamed': '/play/2/vswaysbkingasc', 'big-bass-bonanza': '/play/2/vs10bbbonanza', 'starlight-princess-1000': '/play/2/vs20starlightx' };
     function playGame(id) {
         try { VIP.ui._casinoGamePath = GAME_PLAY[id] || null; } catch (_) {}
         try { VIP.ui.showToast(GAME_PLAY[id] ? '🎰 Abriendo ' + ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1] || 'el juego') + '…' : '🎰 Abriendo el casino…', 'info'); } catch (_) {}
@@ -950,7 +952,7 @@
         if (!tr || _slBuilt) return;
         if (ENTRY_GAMES.length) {
             tr.classList.add('games'); const fw = tr.closest('.ev-frame-wrap'); if (fw) fw.classList.add('games');
-            if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos</span><small><i></i>gente jugando ahora</small>'; tr.parentNode.insertBefore(hd, tr); }
+            if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos · jugá desde acá</span><small><i></i>gente jugando ahora</small>'; /* #786 */ tr.parentNode.insertBefore(hd, tr); }
             tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span><span class="ev-play">👆 Jugar ahora</span></div>').join(''); // #785: manito + "Jugar ahora"
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };

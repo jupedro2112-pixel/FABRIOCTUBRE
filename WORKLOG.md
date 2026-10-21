@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 786. 🔥 Top juegos = los 10 más jugados de 1girox, fotos reales y enlace directo — SW v553
+**Pedido (owner):** "elegí 10 juegos de los populares, sacá las fotos que están y poné las de la página, que lleve directo a ese
+juego; los más populares y el Joker; deslizante; que diga Top juegos (jugá desde aquí)". Del catálogo público de 1girox
+(`admin.1girox.com/api/games?search=…`, campo `play_count`): Joker's Jewels (103k partidas), Gates of Olympus 1000, Sugar Rush 1000,
+Sweet Bonanza 2500, Joker's Jewels Hold & Spin, Mines, Zeus Rush Fever Deluxe, Buffalo King Untamed, Big Bass Bonanza, Starlight
+Princess 1000. Fotos de la plataforma convertidas a JPG 300 px en `public/images/games/` (las 9 viejas se borraron). `ENTRY_GAMES` +
+`GAME_PLAY` con los 10; el deslizante es el mismo (#489); título "🔥 Top juegos · jugá desde acá".
+
 ### 785. 👆 "Jugar ahora" con manito en las fotos de juegos — SW v552
 **Pedido (owner):** "que en los clicks de los juegos aparezca como una manito y diga Jugar ahora, bien sencillo". Pastilla roja
 "👆 Jugar ahora" abajo de cada foto, cursor de mano y un leve apretón al tocar.
