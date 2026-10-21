@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 753. 🗂️ Panel: los 5 títulos recuadrados del menú, más chicos y compactos — admin-sw v146
+**Pedido (owner):** "los 5 títulos, los recuadros, tratá de achicar y meter todo en uno en la parte superior así no ocupa tanto".
+Pastillas de grupo de 8 px con menos margen, ítems de 28 px de alto y 12 px, cabecera más baja: el menú completo entra en una pantalla
+sin scroll en la mayoría de los monitores.
+
 ### 752. 🏠 Sin la tarjeta de Telegram arriba; los servicios quedan los 4 de siempre — SW v535
 **Pedido (owner):** "pusiste en la parte superior como servicio el Telegram, eso no: poné referidos, reembolsos, ruleta, misiones como ya
 está en la parte superior, y eso de Telegram sacalo". Se quitan las tarjetas de Telegram del Inicio completo y del básico (#749/#751) y

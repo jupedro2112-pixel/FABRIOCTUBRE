@@ -300,3 +300,11 @@ tr.fin td { opacity: .92; }
 .at-ver { display: inline-block; padding: 6px 10px; border-radius: 10px; font: 800 12px var(--p-font); background: var(--p-surface); color: var(--p-text); }
 .at-ver.ok { background: var(--p-green-soft); color: var(--p-green); } .at-ver.bad { background: var(--p-amber-soft); color: var(--p-amber); }
 .at-list { margin-top: 8px; font-size: 12px; } .at-list summary { cursor: pointer; font-weight: 800; }
+/* #753 (owner): los 5 títulos recuadrados del menú, más chicos y pegados, para que todo entre arriba y no ocupe tanto */
+.sidebar-nav { padding: 4px 6px 8px !important; }
+.nav-group-title { margin: 6px 2px 2px !important; padding: 3px 7px !important; font-size: 8px !important; letter-spacing: 1px !important; border-radius: 6px !important; line-height: 1 !important; }
+.nav-item { padding: 5px 9px !important; margin: 0 !important; font-size: 12px !important; gap: 7px !important; min-height: 28px; }
+.nav-item > span:first-child { width: 18px; font-size: 13px; }
+.nav-item .icon { font-size: 13px; }
+.sidebar-header { padding: 9px 12px !important; }
+.sidebar-header .sb-logo { width: 28px; height: 28px; }
