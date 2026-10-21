@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 768. 🎰🎯 Ruleta y Misiones más compactas y centradas — SW v546
+**Pedido (owner, capturas):** "esto achicalo, centralo más y juntalo, así se ve mejor y no es tanto deslizante". Títulos, textos,
+tarjeta "Instalá la app para girar", botón y secciones de la ruleta con menos tamaño y margen; en Misiones, cabecera, nivel y las 3
+tarjetas más compactas. Sólo CSS.
+
 ### 767. 👤 Perfil: arriba de todo, usuario · logo · saldo y el estado de la verificación por SMS — SW v545
 **Pedido (owner, captura):** "esto en Perfil subilo y poné arriba una línea más que sea usuario, el logo que ya tiene y el saldo; y
 arriba de todo la verificación de SMS para los que no la tienen; cuando lo hayan hecho, que esté como OK verificado". `.pf-topline`
