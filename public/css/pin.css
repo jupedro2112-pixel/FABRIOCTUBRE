@@ -2226,3 +2226,18 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 body.has-install-bar.menu2 #chatScreen .modal { padding-bottom: calc(104px + var(--sab, 0px)) !important; }
 body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(100dvh - 104px - var(--sab, 0px) - 24px) !important; }
 body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important; }
+/* #737 (owner): panel de Carga rápida COMPACTO: no tapa toda la pantalla ni se corta; la burbuja queda visible abajo */
+.casino-load { padding: 8px 10px 10px !important; width: min(300px, calc(100vw - 20px)) !important; max-height: calc(100vh - 150px - env(safe-area-inset-bottom, 0px)); overflow-y: auto; border-radius: 14px !important; }
+.casino-load .cl-head { font-size: 10px !important; margin-bottom: 4px !important; }
+.casino-load .cl-close { width: 22px !important; height: 22px !important; font-size: 11px !important; }
+.casino-load .cl-row { padding: 4px 0 !important; gap: 6px !important; }
+.casino-load .cl-row small { font-size: 8.5px !important; }
+.casino-load .cl-row b { font-size: 11.5px !important; }
+.casino-load .cl-copy { padding: 4px 8px !important; font-size: 9.5px !important; }
+.casino-load .min-note { padding: 6px 8px !important; margin: 4px 0 2px !important; }
+.casino-load .min-note .mn-big { font-size: 13px !important; }
+.casino-load .min-note .mn-sub { font-size: 10px !important; }
+.casino-load .cl-btn { margin-top: 6px !important; padding: 9px !important; font-size: 12px !important; }
+.casino-load .cl-btn .min-tag { font-size: 9.5px !important; }
+.casino-load .cl-btn.cl-wd, .casino-load .cl-btn.cl-sup, .casino-load .cl-btn.cl-ig { margin-top: 5px !important; padding: 8px !important; font-size: 11.5px !important; }
+.casino-load .fd-note { font-size: 10px !important; }

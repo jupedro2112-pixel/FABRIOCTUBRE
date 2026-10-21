@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 737. 🎰 Panel de Carga rápida compacto + burbuja visible con el panel abierto + aviso de 5 s visible — SW v528
+**Pedido (owner, captura):** "que no tape toda la pantalla, achicá un poco todo sin que se corte; cuando está expandido que se vea el
+círculo de Carga rápida abajo normal; y el texto de 5 segundos al entrar que diga que el círculo es movible". CSS: panel de 300 px,
+tipografías y paddings más chicos, `max-height: calc(100vh − 150px)` con scroll interno (nunca se corta). `toggleCasinoLoad` ya no
+esconde la burbuja con el panel abierto (#717 revertido). **Bug del aviso:** `_cqTipShow` lo ubicaba DEBAJO de la burbuja, que está
+al pie de la pantalla → quedaba fuera de pantalla; ahora va arriba de la burbuja.
+
 ### 736. 📲 Barra de instalar más fina: "PICA ROJA oficial · Instalar app", sin subtítulo — SW v527
 **Pedido (owner, captura):** "que diga Instalar app, sacá lo de cargas (el subtítulo), hacela más fina para que no tape el juego". La
 barra `#pwaInstallButton` pasa de 64 a 44 px, logo 26 px, sin "picaroja.com · cargas automáticas"; el botón dice "Instalar app" también

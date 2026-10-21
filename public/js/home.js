@@ -2016,7 +2016,8 @@
     function _cqTipShow() {
         const ov = _el('casinoOverlay'), b = _el('casinoSupportBubble'); if (!ov || !b || b.style.display === 'none') return;
         let tip = _el('cqTip'); if (!tip) { ov.insertAdjacentHTML('beforeend', '<div id="cqTip" class="cq-tip">↔ Si te tapa el juego, movela donde quieras</div>'); tip = _el('cqTip'); }
-        const place = () => { try { const r = b.getBoundingClientRect(), o = ov.getBoundingClientRect(); tip.style.top = (r.bottom - o.top + 6) + 'px'; tip.style.left = Math.max(8, Math.min(r.left + r.width / 2 - tip.offsetWidth / 2 - o.left, o.width - tip.offsetWidth - 8)) + 'px'; } catch (_) {} };
+        // #737: la burbuja vive al pie de la pantalla, así que el aviso va ARRIBA de ella (abajo quedaba fuera de pantalla y no se veía).
+        const place = () => { try { const r = b.getBoundingClientRect(), o = ov.getBoundingClientRect(); const h = tip.offsetHeight || 26; tip.style.top = Math.max(4, r.top - o.top - h - 6) + 'px'; tip.style.left = Math.max(8, Math.min(r.left + r.width / 2 - tip.offsetWidth / 2 - o.left, o.width - tip.offsetWidth - 8)) + 'px'; } catch (_) {} };
         tip.classList.remove('out'); tip.style.display = ''; requestAnimationFrame(place); setTimeout(place, 250);
         clearTimeout(_cqTipT); _cqTipT = setTimeout(() => { try { tip.classList.add('out'); setTimeout(() => { try { tip.remove(); } catch (_) {} }, 300); } catch (_) {} }, 5000);
     }
@@ -2041,8 +2042,8 @@
             p = _el('casinoLoadPanel');
         }
         _quickOpen = typeof force === 'boolean' ? force : !_quickOpen;
-        // #717 (owner): con el panel abierto la burbuja se esconde (no tiene que tapar la Carga rápida); vuelve al cerrarlo.
-        try { const bb = _el('casinoSupportBubble'); if (bb) bb.style.display = (_quickOpen || _quickDismissed) ? 'none' : ''; } catch (_) {}
+        // #737 (owner): la burbuja CARGA RÁPIDA sigue visible abajo aunque el panel esté abierto (sólo se esconde si la sacó con la ✕ chica).
+        try { const bb = _el('casinoSupportBubble'); if (bb) bb.style.display = _quickDismissed ? 'none' : ''; } catch (_) {}
         if (!_quickOpen) { p.style.display = 'none'; return; }
         const cbu = (VIP.autoload && VIP.autoload.getCbu && VIP.autoload.getCbu()) || null;
         const list = (_platforms && _platforms.platforms) || [];
