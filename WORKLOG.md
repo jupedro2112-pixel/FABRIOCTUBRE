@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 734. ☰ Selector de menús: Completo primero ("El más completo"), Girox directo segundo como "Recomendado" — SW v525
+**Pedido (owner):** "el Recomendado ponelo en el de Girox ahora, cambialo y ponelo segundo, y el primero dejalo como el más completo".
+Orden del selector: MENÚ COMPLETO (etiqueta "El más completo") · GIROX DIRECTO ("Recomendado", rojo) · BÁSICO · INTERMEDIO.
+
 ### 733. 🚪 Al abrir la app, TODOS entran directo a Girox (carga rápida); el menú se cambia después desde Menú — SW v524
 **Pedido (owner):** "hacé que el menú seleccionado para todos, landing o común, cuando abran la app sea el de Girox y que después lo
 puedan cambiar desde Menú si quieren; la idea es que todos entren directo a cargar". `maybeShowMenuChooser`: si no hay un menú dejado

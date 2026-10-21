@@ -1317,7 +1317,13 @@
                     <button type="button" class="mc-opt mc-full" onclick="VIP.home.chooseMenu('full')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></span>
                         <span class="mc-txt"><b>MENÚ COMPLETO</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, soporte, historias…</small></span>
-                        <span class="mc-tag">Recomendado</span><!-- #636 (owner): el recomendado es el completo -->
+                        <span class="mc-tag mc-tag-dim">El más completo</span><!-- #734 (owner): el recomendado pasa a Girox directo -->
+                    </button>
+                    <!-- #670 (owner): GIROX DIRECTO — abre la plataforma al toque con carga rápida y retiro adentro -->
+                    <button type="button" class="mc-opt mc-girox" onclick="VIP.home.chooseMenu('girox')">
+                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M8 15h3"/></svg></span>
+                        <span class="mc-txt"><b>GIROX DIRECTO</b><small>Entrás a jugar al toque. Abre Girox porque es la plataforma seleccionada; cuando estén las otras, abre la que tengas elegida. Cargás y retirás desde adentro.</small></span><!-- #672 -->
+                        <span class="mc-tag">Recomendado</span><!-- #734 (owner) -->
                     </button>
                     <button type="button" class="mc-opt mc-basic" onclick="VIP.home.chooseMenu('basic')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/></svg></span>
@@ -1328,12 +1334,6 @@
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span>
                         <span class="mc-txt"><b>MENÚ INTERMEDIO</b><small>Pocos botones y grandes: cargar, reembolso, misiones, referidos y ruleta.</small></span>
                         <span class="mc-tag mc-tag-dim">Más opciones</span>
-                    </button>
-                    <!-- #670 (owner): GIROX DIRECTO — abre la plataforma al toque con carga rápida y retiro adentro -->
-                    <button type="button" class="mc-opt mc-girox" onclick="VIP.home.chooseMenu('girox')">
-                        <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M8 15h3"/></svg></span>
-                        <span class="mc-txt"><b>GIROX DIRECTO</b><small>Entrás a jugar al toque. Abre Girox porque es la plataforma seleccionada; cuando estén las otras, abre la que tengas elegida. Cargás y retirás desde adentro.</small></span><!-- #672 -->
-                        <span class="mc-tag mc-tag-dim">Directo</span>
                     </button>
                     <!-- #569 (owner): "Fijar" vive acá adentro (en la fila de arriba no entraba con Racha). Fija el menú ACTUAL para el ingreso. -->
                     <button type="button" class="mc-pin" id="menuPinBtn" onclick="VIP.home.toggleMenuPin()"><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 7l1-5h6l1 5M5 7h14l-2 7H7z"/></svg></i><span id="menuPinTxt">Dejar fijo el menú actual para el ingreso</span></button>
@@ -2582,7 +2582,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v524</div>
+                    <div class="pf-build" id="appBuildTag">app v525</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
