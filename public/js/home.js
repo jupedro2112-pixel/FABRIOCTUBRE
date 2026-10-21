@@ -96,10 +96,17 @@
         // va al lado de "Cambiar menú" (#627) y la racha ya está en la línea del saldo; en los demás modos no se muestran.
         try {
             const sr = _el('statusRow'), tr = _el('topRow'), vm = _el('vipMiniBtn'), fm = _el('fireMiniBtn');
-            if (mode === 'play') { if (sr) { if (vm) sr.appendChild(vm); if (fm) sr.appendChild(fm); } if (vm) vm.hidden = false; if (fm) fm.hidden = false; }
-            else if (mode === 'basic') { if (tr && vm) tr.appendChild(vm); if (vm) vm.hidden = false; if (fm) fm.hidden = true; }
+            // #765 (owner): en el BÁSICO la misma línea de estado del completo (🏆 Nivel · 🔥 Racha), arriba de todo, sin nombre ni saldo.
+            if (sr && !sr._srHome) { sr._srHome = sr.parentNode; sr._srNext = sr.nextSibling; }
+            if (mode === 'play' || mode === 'basic') {
+                if (sr) { if (vm) sr.appendChild(vm); if (fm) sr.appendChild(fm); }
+                if (vm) vm.hidden = false; if (fm) fm.hidden = false;
+                const bv = _el('basicView');
+                if (sr && mode === 'basic' && bv && sr.parentNode !== bv) bv.prepend(sr);
+                if (sr && mode === 'play' && sr._srHome && sr.parentNode !== sr._srHome) { try { sr._srHome.insertBefore(sr, sr._srNext); } catch (_) { sr._srHome.appendChild(sr); } }
+            }
             else { if (vm) vm.hidden = true; if (fm) fm.hidden = true; }
-            if (sr) sr.hidden = mode !== 'play';
+            if (sr) sr.hidden = !(mode === 'play' || mode === 'basic');
             _fireMiniSync();
         } catch (_) {}
         try { _paintMenuPin(); } catch (_) {} // #559

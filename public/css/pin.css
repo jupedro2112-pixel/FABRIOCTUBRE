@@ -2340,3 +2340,13 @@ body.home-basic .min-strip.ms-basic { display: none !important; }
 .ev-svc > small { font-size: 8.5px !important; line-height: 1.1 !important; -webkit-line-clamp: 1 !important; }
 .ev-svc::after { margin-top: 1px !important; font-size: 8px !important; }
 .ev-sec-t { margin: 4px 12px 0 !important; } .ev-sec-t b { font-size: 13px !important; } .ev-sec-t small { font-size: 9.5px !important; }
+/* #765 (owner): básico — línea de estado igual al completo (sin nombre ni saldo) y accesos con mejor recuadro e íconos de línea */
+body.home-basic .bv-top { display: none !important; }
+body.home-basic .status-row { margin: 4px 0 2px !important; }
+body.home-basic .fire-mini:not([hidden]) { display: inline-flex !important; }
+body.home-basic #topRow .vip-mini { display: none !important; }
+.bv-quick { grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; }
+.bv-quick button { border: 1px solid var(--p-border) !important; border-radius: 14px !important; padding: 8px 4px 7px !important; gap: 3px !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .06) !important; font: 800 10.5px var(--p-font) !important; }
+.bv-quick-ico { width: 30px; height: 30px; border-radius: 50%; background: var(--p-red-soft, #ffe9ec); color: var(--p-red); display: inline-flex; align-items: center; justify-content: center; }
+.bv-quick-ico svg { width: 17px; height: 17px; }
+.bv-quick button small { font: 800 8.5px var(--p-font); color: var(--p-red); }

@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 765. 🏠 Básico: nivel + racha como en el completo (sin nombre ni saldo) y accesos con recuadro e íconos de línea — SW v544
+**Pedido (owner, capturas):** "a esto dale un mejor recuadro y cambiá los íconos al estilo de la página, Pinterest moderno" · "este
+(nivel/racha) dejalo igual que el completo y sacá el monto del usuario, así ganamos espacio". `setHomeMode`: en el básico la línea
+de estado `#statusRow` (🏆 Nivel · 🔥 Racha) se mueve al tope de `#basicView` (vuelve a su lugar en el completo) y `.bv-top`
+(nombre · saldo · racha) se oculta. Accesos del básico con tarjetas recuadradas e íconos SVG de línea en círculo rojo suave (los
+mismos del Inicio completo) en una fila de 4.
+
 ### 764. 🏠 Tarjetas de servicios más chicas — SW v543
 **Pedido (owner, captura):** "achicalo más, están muy grandes los cuadrados, así todo entra mejor". Ícono de 22 px, nombre 11 px,
 detalle en una línea de 8,5 px, "Ver más" 8 px, relleno de 5 px; título de la sección más chico.
