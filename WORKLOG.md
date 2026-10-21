@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 741. 🎰 Barra del casino: logo pegado a Menú y "PICA ROJA" centrado, siempre visible — SW v531
+**Pedido (owner, captura en pantalla angosta):** "llevá el logo más para el lado del menú y poné el PICA ROJA de siempre ahí
+centrado". La marca ocupa todo el espacio entre Menú e Historias: el logo queda fijo a la izquierda (al lado de Menú) y el texto
+"PICA ROJA" (+ "OFICIAL" cuando entra) centrado en lo que queda; ya no se oculta en ≤360 px (sólo se achica), sin pastilla de fondo.
+
 ### 740. 🎁 El extra pendiente por instalar se acredita SOLO al abrir la app instalada — SW v530
 **Pedido (owner):** "de donde sea que instale la app, si tiene pendiente un 50% que sea automático siempre lo pendiente, es
 importante". `_igInit`: en modo instalado (`_isStandalone()`) con extra `offered`/`deferred` → `_igAutoClaim()` llama

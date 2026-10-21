@@ -2241,3 +2241,9 @@ body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-ar
 .casino-load .cl-btn .min-tag { font-size: 9.5px !important; }
 .casino-load .cl-btn.cl-wd, .casino-load .cl-btn.cl-sup, .casino-load .cl-btn.cl-ig { margin-top: 5px !important; padding: 8px !important; font-size: 11.5px !important; }
 .casino-load .fd-note { font-size: 10px !important; }
+/* #741 (owner): logo hacia el lado de Menú y "PICA ROJA" de siempre, centrado y siempre visible */
+.casino-brand .cb-box { width: 100% !important; max-width: none !important; position: relative; display: flex !important; align-items: center; justify-content: center !important; padding: 3px 8px 3px 30px !important; border: 0 !important; background: transparent !important; }
+.casino-brand img { position: absolute; left: 2px; top: 50%; transform: translateY(-50%); width: 24px !important; height: 24px !important; border-radius: 7px; }
+.casino-brand .cb-txt { display: flex !important; flex-direction: column; align-items: center; min-width: 0; }
+.casino-brand b { font-size: 11px !important; letter-spacing: .8px !important; overflow: visible; }
+@media (max-width: 360px) { .casino-brand .cb-txt { display: flex !important; } .casino-brand .cb-box { padding: 3px 4px 3px 28px !important; border-radius: 0 !important; } .casino-brand b { font-size: 10px !important; letter-spacing: .5px !important; } }
