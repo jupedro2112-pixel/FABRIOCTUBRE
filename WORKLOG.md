@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 752. 🏠 Sin la tarjeta de Telegram arriba; los servicios quedan los 4 de siempre — SW v535
+**Pedido (owner):** "pusiste en la parte superior como servicio el Telegram, eso no: poné referidos, reembolsos, ruleta, misiones como ya
+está en la parte superior, y eso de Telegram sacalo". Se quitan las tarjetas de Telegram del Inicio completo y del básico (#749/#751) y
+las tarjetas extra de Fueguito y Niveles VIP; quedan Reembolsos · Ruleta · Misiones · Referidos en una fila, con el título "Todo lo que
+ofrecemos 100% para vos" y "Ver más ›". El canal de Telegram sigue en el botón de la cabecera y en el menú ☰; el link de invitación
+(Configuración → Comunidad) queda guardado para usarlo donde se decida.
+
 ### 751. 🏠 Inicio completo y básico: "Todo lo que ofrecemos 100% para vos", carga mínima adentro del botón, Telegram bajo el nivel — SW v534
 **Pedido (owner):** "como ahora cargan desde Girox, en el completo y el básico dale predominancia al servicio: poné todo el servicio con
 el título 'Todo lo que ofrecemos 100% para vos' y que en cada uno se entienda que se puede expandir para ver más; la carga mínima de

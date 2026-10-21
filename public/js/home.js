@@ -2321,7 +2321,7 @@
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
         try { storyBonusRefresh(); } catch (_) {} // #742
-        try { paintTelegramCard(); } catch (_) {} // #749
+        // (#752: la tarjeta de Telegram del Inicio se sacó; paintTelegramCard queda sin tarjetas que pintar)
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
         try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();

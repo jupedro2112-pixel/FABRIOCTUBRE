@@ -2270,8 +2270,8 @@ body.home-play .min-strip.ms-play { display: none !important; }
 .ev-sec-t, .bv-sec-t { display: flex; flex-direction: column; align-items: center; text-align: center; margin: 10px 12px 4px; }
 .ev-sec-t b, .bv-sec-t b { font: 900 15px/1.2 var(--p-font); color: var(--p-text); }
 .ev-sec-t small, .bv-sec-t small { font: 700 10.5px var(--p-font); color: var(--p-red); margin-top: 2px; }
-.ev-services { flex-wrap: wrap !important; padding: 6px 8px 2px !important; gap: 6px !important; }
-.ev-svc { flex: 1 1 calc(33.33% - 6px) !important; min-width: 96px !important; padding: 9px 6px !important; border-radius: 14px !important; }
+.ev-services { padding: 6px 8px 2px !important; gap: 6px !important; } /* #752: los 4 de siempre en una fila */
+.ev-svc { padding: 9px 4px !important; border-radius: 14px !important; }
 .ev-svc::after { content: "Ver más ›"; display: block; margin-top: 3px; font: 800 9px var(--p-font); color: var(--p-red); }
 .ev-svc.svc-fire b, .ev-svc.svc-vip b { color: var(--p-text) !important; }
 .casino-load .cl-attach .min-tag.min-always { display: block !important; }
