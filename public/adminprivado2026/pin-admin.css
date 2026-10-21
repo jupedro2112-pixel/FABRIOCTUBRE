@@ -308,3 +308,11 @@ tr.fin td { opacity: .92; }
 .nav-item .icon { font-size: 13px; }
 .sidebar-header { padding: 9px 12px !important; }
 .sidebar-header .sb-logo { width: 28px; height: 28px; }
+/* #763: Cargas automáticas */
+.ca-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.ca-card { background: var(--p-card); border: 1px solid var(--p-border); border-radius: 14px; padding: 10px 12px; }
+.ca-t { font: 900 11px var(--p-font); letter-spacing: 1px; text-transform: uppercase; color: var(--p-muted); margin-bottom: 4px; }
+.ca-big { font: 900 24px/1 var(--p-font); color: var(--p-text); margin-bottom: 6px; } .ca-big small { font: 700 11px var(--p-font); color: var(--p-muted); }
+.ca-row { display: flex; justify-content: space-between; font: 600 12px var(--p-font); padding: 2px 0; border-top: 1px dashed var(--p-border); } .ca-row span { color: var(--p-muted); }
+.ca-ver { margin-top: 6px; padding: 5px 8px; border-radius: 8px; font: 800 11.5px var(--p-font); background: var(--p-surface); }
+.ca-ver.ok { background: var(--p-green-soft); color: var(--p-green); } .ca-ver.bad { background: var(--p-amber-soft); color: var(--p-amber); }

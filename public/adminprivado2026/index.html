@@ -139,6 +139,10 @@ document.addEventListener('change', function (ev) {
 <span>Retiros pendientes</span>
 <span id="payReviewBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
 </a>
+<a href="#" class="nav-item" data-section="cargasAuto">
+<span>⚡</span>
+<span>Cargas automáticas</span>
+</a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">📱 App</div>
 <a href="#" class="nav-item" data-section="roulette">
 <span>🎰</span>
@@ -702,6 +706,18 @@ document.addEventListener('change', function (ev) {
                                 <button class="btn-primary btn-small" onclick="saveDatosIaPin()"><span class="icon icon-save"></span> Guardar</button>
                                 <button class="btn-secondary btn-small" onclick="saveDatosIaPin(true)">Quitar clave</button>
                                 <span id="dpState" style="font-size:11.5px;color:#9ab;"></span>
+                            </div>
+                        </div>
+                        <!-- #762 (owner): limpiar datos de prueba antes de arrancar en serio -->
+                        <div class="cbu-form" id="cleanupForm" style="margin-bottom:14px;border:1px solid rgba(255,80,80,.35);">
+                            <h3 style="margin:0 0 6px;">🧹 Limpiar datos de prueba</h3>
+                            <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Borra lo que quedó de las pruebas para que <b>todo lo próximo sea lo que vale</b>. No se puede deshacer.</p>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;"><input type="checkbox" id="clnTx" checked style="width:auto;"> Cargas y retiros de PRUEBA (botones 🧪) de todos los usuarios</label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:4px 0;"><input type="checkbox" id="clnCloses" checked style="width:auto;"> Cierres: borrar los generados y empezar a contar <b>desde hoy</b></label>
+                            <label style="display:flex;flex-direction:column;gap:4px;margin:6px 0;">Usuarios de prueba a BORRAR del panel (con todo lo suyo), separados por coma:<input type="text" id="clnUsers" placeholder="ej. prueba100, pruebainv123" style="width:100%;"></label>
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <button class="btn-primary btn-small" onclick="cleanupTests()">🧹 Limpiar ahora</button>
+                                <span id="clnState" style="font-size:11.5px;color:#9ab;"></span>
                             </div>
                         </div>
                         <div class="cbu-form" id="registrationModeForm" style="margin-bottom:14px;">
@@ -2936,6 +2952,19 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 </div>
             </section>
             <!-- #376: CARGAS PENDIENTES — cola de revisión de comprobantes (red de seguridad de la carga automática) -->
+            <!-- #763 (owner): CARGAS AUTOMÁTICAS — cómo va la carga automática + detalle de cada cliente que va cargando -->
+            <section id="cargasAutoSection" class="section">
+                <div class="panel-header">
+                    <h2>⚡ Cargas automáticas</h2>
+                    <button class="refresh-btn" onclick="loadCargasAuto()" title="Refrescar">🔄</button>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>📈 Cómo va la carga automática</b><small>Cargas acreditadas solas por el banco vs a mano, cuántos clientes, bonos entregados y plata que entró al banco sin acreditarse (para verificar que esté todo OK).</small></div>
+                    <div id="caResumen" class="ca-grid"></div>
+                </div>
+                <div class="dia-card"><div class="dia-card-h"><b>👥 Detalle: cada cliente que va cargando</b><small>Últimas 150 cargas automáticas (más nuevas arriba).</small></div>
+                    <div id="caLista" style="overflow-x:auto;"></div>
+                </div>
+            </section>
             <section id="depositReviewsSection" class="section">
                 <div class="panel-header">
                     <h2>⏳ Cargas pendientes</h2>

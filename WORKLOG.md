@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 763. ⚡ Panel: sección "Cargas automáticas" (reporte + detalle de cada cliente que va cargando) — admin-sw v147
+**Pedido (owner):** "agregá una sección de cómo va la carga automática, abajo de Retiros pendientes: Cargas automáticas, para
+verificar que esté todo OK; ahí un reporte de cuántas cargas automáticas hay y abajo el detalle de cada cliente que va cargando".
+`GET /api/admin/cargas-auto`: Hoy / 7 d / 30 d con cargas automáticas (banco hgcash + autocarga), monto, clientes, bonos entregados, a
+mano, entradas del banco sin acreditar, devueltas y % automático (sin las de prueba); y las últimas 150 automáticas (cuándo, cliente,
+monto, bono, plataforma, fuente, nota). Panel → Atención → ⚡ Cargas automáticas: tres tarjetas con veredicto "✅ Todo automático" /
+"⚠ Revisar" y la tabla del detalle.
+
+### 762. 🧹 Limpiar datos de prueba (cargas/retiros 🧪, usuarios, cierres desde hoy) desde Configuración
+**Pedido (owner):** "retirá todas las pruebas de todos los usuarios y limpiá usuarios del panel; todo lo próximo es lo que vale a
+partir de ahora para los cierres y demás". `POST /api/admin/cleanup-tests` (sólo admin general): borra Transaction de depósito/bono
+con "PRUEBA" en la descripción y PendingPayout con titular "PRUEBA TEST" (+ sus Transaction de retiro), borra los usuarios indicados
+(rol user) con todo lo suyo (`_resetTestUser` + `deleteOne`), y si se pide borra todos los `DailyClose` y fija `Config['closeSince']` =
+hoy: `_closeTick` y el listado de Cierres ignoran días anteriores. Panel → Configuración → "🧹 Limpiar datos de prueba" (tildes + lista
+de usuarios + confirmación). Ejecutado en Render (entorno de prueba) tras el deploy; en producción lo corre el owner una vez antes de
+arrancar en serio.
+
 ### 761. 🏠 Servicios del Inicio: todo centrado — SW v542
 **Pedido (owner, captura):** "centrá los textos que corresponden". En las 4 tarjetas (2 por fila) quedan centrados ícono, nombre,
 detalle y "Ver más ›" (el detalle y el Ver más quedaban a izquierda/derecha).

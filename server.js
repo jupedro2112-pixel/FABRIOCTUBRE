@@ -19320,6 +19320,63 @@ app.post('/api/admin/users/:userId/reset-test', authMiddleware, adminMiddleware,
     res.json({ success: true, username: u.username, borrado: out });
   } catch (e) { logger.warn(`[reset-test] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #762 (owner): "retirá todas las pruebas de todos los usuarios y limpiá usuarios del panel; todo lo próximo es lo que vale a partir
+// de ahora para los cierres". Sólo admin general. Borra cargas/retiros DE PRUEBA (descripción "PRUEBA" / titular "PRUEBA TEST"),
+// opcionalmente usuarios (rol user) con todo lo suyo, y reinicia los cierres desde HOY (`Config['closeSince']`).
+app.post('/api/admin/cleanup-tests', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; const out = {};
+    if (b.transactions) {
+      const pays = await PendingPayout.find({ titular: 'PRUEBA TEST' }).select('id withdrawalTxId refundTxId').lean();
+      const txIds = pays.map((p) => p.withdrawalTxId).concat(pays.map((p) => p.refundTxId)).filter(Boolean);
+      out.retirosPrueba = (await PendingPayout.deleteMany({ titular: 'PRUEBA TEST' })).deletedCount;
+      out.txRetirosPrueba = txIds.length ? (await Transaction.deleteMany({ id: { $in: txIds } })).deletedCount : 0;
+      out.cargasPrueba = (await Transaction.deleteMany({ type: 'deposit', description: { $regex: /PRUEBA/i } })).deletedCount;
+      out.bonosPrueba = (await Transaction.deleteMany({ type: 'bonus', description: { $regex: /PRUEBA/i } })).deletedCount;
+    }
+    if (Array.isArray(b.usernames) && b.usernames.length) {
+      out.usuarios = [];
+      for (const un of b.usernames.slice(0, 50)) {
+        const u = await User.findOne({ username: String(un).trim(), role: 'user' }).select('id username').lean();
+        if (!u) { out.usuarios.push({ username: un, ok: false, motivo: 'no existe o no es cliente' }); continue; }
+        try { await _resetTestUser(u, 'limpieza ' + req.user.username); await User.deleteOne({ id: u.id }); out.usuarios.push({ username: u.username, ok: true }); } catch (e) { out.usuarios.push({ username: u.username, ok: false, motivo: e.message }); }
+      }
+    }
+    if (b.closes) {
+      out.cierresBorrados = (await DailyClose.deleteMany({})).deletedCount;
+      const today = datosIa.dateKeyART(new Date());
+      await Config.set('closeSince', today, req.user.username); out.cierresDesde = today;
+    }
+    logger.warn(`[cleanup-tests] por ${req.user.username}: ${JSON.stringify(out).slice(0, 600)}`);
+    res.json({ success: true, resultado: out });
+  } catch (e) { logger.error('[cleanup-tests] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #763 (owner): CARGAS AUTOMÁTICAS — "cómo va la carga automática en el sistema: reporte de cuántas hay y el detalle de cada cliente
+// que va cargando". Hoy / 7 días / 30 días: automáticas vs a mano, montos, % de éxito, entradas del banco sin acreditar; y las últimas 150.
+app.get('/api/admin/cargas-auto', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const okSt = { $nin: ['failed', 'cancelled'] }; const GIFT = ['install_bonus', 'welcome_gift', 'payout_refund'];
+    const now = Date.now(); const dayStart = new Date(datosIa.dateKeyART(new Date()) + 'T03:00:00.000Z');
+    const per = { hoy: dayStart, d7: new Date(now - 7 * 86400000), d30: new Date(now - 30 * 86400000) };
+    const isAuto = { 'metadata.source': { $in: ['auto_hgcash', 'self_service'] } };
+    const resumen = {};
+    for (const [k, from] of Object.entries(per)) {
+      const base = { type: 'deposit', status: okSt, 'metadata.source': { $nin: GIFT }, timestamp: { $gte: from }, description: { $not: /PRUEBA/i } };
+      const [auto, manual] = await Promise.all([
+        Transaction.aggregate([{ $match: { ...base, ...isAuto } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$amount' }, bonus: { $sum: { $ifNull: ['$bonus', 0] } }, users: { $addToSet: '$userId' } } }]),
+        Transaction.aggregate([{ $match: { ...base, 'metadata.source': { $nin: GIFT.concat(['auto_hgcash', 'self_service']) } } }, { $group: { _id: null, n: { $sum: 1 }, amt: { $sum: '$amount' } } }])
+      ]);
+      const a = auto[0] || { n: 0, amt: 0, bonus: 0, users: [] }, m = manual[0] || { n: 0, amt: 0 };
+      let sinAcreditar = 0, sinAcreditarN = 0, devueltas = 0;
+      try { const bm = await BankMovement.aggregate([{ $match: { createdAt: { $gte: from }, direction: { $regex: /^inbound$/i } } }, { $group: { _id: '$matchStatus', n: { $sum: 1 }, amt: { $sum: '$amount' } } }]); bm.forEach((x) => { const st = String(x._id || ''); if (['pending', 'claiming', 'no_match', 'needs_review', 'awaiting_platform', 'error', ''].includes(st)) { sinAcreditar += x.amt; sinAcreditarN += x.n; } if (st === 'refunded') devueltas += x.amt; }); } catch (_) {}
+      const tot = a.n + m.n;
+      resumen[k] = { auto: a.n, autoMonto: Math.round(a.amt), autoBonos: Math.round(a.bonus), clientes: (a.users || []).length, manual: m.n, manualMonto: Math.round(m.amt), pctAuto: tot ? Math.round(a.n * 100 / tot) : 100, bancoSinAcreditar: Math.round(sinAcreditar), bancoSinAcreditarN: sinAcreditarN, devueltas: Math.round(devueltas) };
+    }
+    const lista = await Transaction.find({ type: 'deposit', status: okSt, ...isAuto, description: { $not: /PRUEBA/i } }).sort({ timestamp: -1 }).limit(150).select('timestamp username amount bonus platform metadata description').lean();
+    res.json({ success: true, resumen, lista: lista.map((t) => ({ hora: t.timestamp, usuario: t.username, monto: Math.round(t.amount), bono: Math.round(t.bonus || 0), plataforma: t.platform || 'girox', fuente: (t.metadata && t.metadata.source) || '', bonoFuente: (t.metadata && (t.metadata.bonusSource || t.metadata.autoBonusSource)) || '', nota: String(t.description || '').slice(0, 90) })) });
+  } catch (e) { logger.error('[cargas-auto] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/girox-sim', authMiddleware, adminMiddleware, async (req, res) => {
   if (!girox.isSimulated()) return res.status(404).json({ error: 'El casino simulado no está activo (hay API real o no es entorno de prueba).' });
   const giroxSim = require('./src/services/giroxSimulator');
@@ -20082,23 +20139,26 @@ async function _closeEnsure(dayKey, recalc) {
 // Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).
 // #744 (owner): TODO AUTOMÁTICO — no espera confirmación: los últimos 3 días se recalculan en cada pasada (llegan pagos/cargas tarde) y
 // todo día ya terminado se FINALIZA solo (finalizedBy 'auto'; un cierre finalizado a mano no se toca). USDT es opcional.
+async function _closeSince() { try { const v = await getConfig('closeSince', null); return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null; } catch (_) { return null; } }
 async function _closeTick() {
+  const _since = await _closeSince(); // #762: los cierres valen desde esta fecha (limpieza de pruebas)
   try {
-    for (let i = 1; i <= 3; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status finalizedBy recalculatedAt').lean(); if (!ex || ex.status !== 'finalizado' || ex.finalizedBy === 'auto') { if (!ex || !ex.recalculatedAt || Date.now() - new Date(ex.recalculatedAt).getTime() > 55 * 60 * 1000) await _closeEnsure(dk, true); } }
+    for (let i = 1; i <= 3; i++) { if (_since && datosIa.dateKeyART(new Date(Date.now() - i * 86400000)) < _since) continue; const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status finalizedBy recalculatedAt').lean(); if (!ex || ex.status !== 'finalizado' || ex.finalizedBy === 'auto') { if (!ex || !ex.recalculatedAt || Date.now() - new Date(ex.recalculatedAt).getTime() > 55 * 60 * 1000) await _closeEnsure(dk, true); } }
     const today = datosIa.dateKeyART(new Date());
     const pend = await DailyClose.find({ status: 'pendiente', dateKey: { $lt: today } }).select('id dateKey').lean();
     for (const p of pend) { await DailyClose.updateOne({ id: p.id, status: 'pendiente' }, { $set: { status: 'finalizado', finalizedAt: new Date(), finalizedBy: 'auto', autoFinalizedAt: new Date() } }); }
     if (pend.length) logger.info('[cierres] finalizados solos: ' + pend.map((p) => p.dateKey).join(', '));
   } catch (e) { logger.warn('[cierres] auto: ' + e.message); }
-  try { for (let i = 1; i <= 7; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status recalculatedAt generatedAt').lean(); if (!ex) await _closeEnsure(dk, false); else if (ex.status !== 'finalizado' && i <= 2 && (Date.now() - new Date(ex.recalculatedAt || ex.generatedAt).getTime()) > 6 * 3600000) await _closeEnsure(dk, true); } } catch (e) { logger.warn('[cierres] tick: ' + e.message); }
+  try { for (let i = 1; i <= 7; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); if (_since && dk < _since) continue; const ex = await DailyClose.findOne({ dateKey: dk }).select('id status recalculatedAt generatedAt').lean(); if (!ex) await _closeEnsure(dk, false); else if (ex.status !== 'finalizado' && i <= 2 && (Date.now() - new Date(ex.recalculatedAt || ex.generatedAt).getTime()) > 6 * 3600000) await _closeEnsure(dk, true); } } catch (e) { logger.warn('[cierres] tick: ' + e.message); }
 }
 setTimeout(() => { _closeTick(); setInterval(_closeTick, 20 * 60 * 1000); }, 90 * 1000);
 app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 30));
-    for (let i = 1; i <= Math.min(days, 14); i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); if (!(await DailyClose.exists({ dateKey: dk }))) await _closeEnsure(dk, false); }
-    const since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000));
+    const _cs = await _closeSince(); // #762
+    for (let i = 1; i <= Math.min(days, 14); i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); if (_cs && dk < _cs) continue; if (!(await DailyClose.exists({ dateKey: dk }))) await _closeEnsure(dk, false); }
+    let since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000)); if (_cs && _cs > since) since = _cs;
     const items = await DailyClose.find({ dateKey: { $gte: since } }).sort({ dateKey: -1 }).lean();
     const cfg = await _closeConfig(); let usdt = null; try { usdt = (await getConfig('usdtRate', null)) || null; } catch (_) {}
     const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0), diferencia: a.diferencia + (c.arqueo && c.arqueo !== 'sin_datos' ? (c.diferencia || 0) : 0), faltantes: a.faltantes + (c.arqueo === 'faltante' ? 1 : 0), sobrantes: a.sobrantes + (c.arqueo === 'sobrante' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0, diferencia: 0, faltantes: 0, sobrantes: 0 });

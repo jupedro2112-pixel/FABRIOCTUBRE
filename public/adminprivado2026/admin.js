@@ -4974,6 +4974,7 @@ function switchSection(section) {
     if (section === 'depositReviews') loadDepositReviews(); // #376
     if (section === 'support') loadSupport(); // #377
     if (section === 'payReview') loadPayReview(); // #566
+    if (section === 'cargasAuto') loadCargasAuto(); // #763
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -6124,6 +6125,41 @@ async function stMakeArt() {
 window.stMakeArt = stMakeArt;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
+// #763: Cargas automáticas — reporte + detalle de cada cliente
+async function loadCargasAuto() {
+    const r1 = document.getElementById('caResumen'), l = document.getElementById('caLista'); if (!r1) return;
+    r1.innerHTML = '<div class="dia-note">Cargando…</div>';
+    try {
+        const r = await authFetch('/api/admin/cargas-auto'); const j = await r.json(); if (!r.ok) { r1.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
+        const m = function (n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); };
+        const card = function (t, x) { const ok = (x.manual === 0 && x.bancoSinAcreditarN === 0); return '<div class="ca-card"><div class="ca-t">' + t + '</div><div class="ca-big">' + x.auto + ' <small>cargas automáticas</small></div><div class="ca-row"><span>Monto</span><b>' + m(x.autoMonto) + '</b></div><div class="ca-row"><span>Clientes</span><b>' + x.clientes + '</b></div><div class="ca-row"><span>Bonos entregados</span><b>' + m(x.autoBonos) + '</b></div><div class="ca-row"><span>A mano</span><b class="' + (x.manual ? 'cl-warn' : '') + '">' + x.manual + ' · ' + m(x.manualMonto) + '</b></div><div class="ca-row"><span>Banco sin acreditar</span><b class="' + (x.bancoSinAcreditarN ? 'cl-warn' : '') + '">' + x.bancoSinAcreditarN + ' · ' + m(x.bancoSinAcreditar) + '</b></div>' + (x.devueltas ? '<div class="ca-row"><span>Devueltas</span><b>' + m(x.devueltas) + '</b></div>' : '') + '<div class="ca-ver ' + (ok ? 'ok' : 'bad') + '">' + (ok ? '✅ Todo automático' : '⚠ Revisar') + ' · ' + x.pctAuto + '% automático</div></div>'; };
+        const s = j.resumen || {};
+        r1.innerHTML = card('Hoy', s.hoy || {}) + card('Últimos 7 días', s.d7 || {}) + card('Últimos 30 días', s.d30 || {});
+        if (!l) return;
+        const lista = j.lista || [];
+        l.innerHTML = lista.length ? '<table class="data-table"><thead><tr><th>Cuándo</th><th>Cliente</th><th>Monto</th><th>Bono</th><th>Plataforma</th><th>Fuente</th><th>Nota</th></tr></thead><tbody>' + lista.map(function (x) { return '<tr><td>' + new Date(x.hora).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</td><td>@' + escapeHtml(x.usuario || '') + '</td><td><b>' + m(x.monto) + '</b></td><td>' + (x.bono ? m(x.bono) : '—') + '</td><td>' + escapeHtml(x.plataforma) + '</td><td><small>' + escapeHtml(x.fuente === 'auto_hgcash' ? 'banco (hgcash)' : (x.fuente === 'self_service' ? 'autocarga' : x.fuente)) + '</small></td><td><small>' + escapeHtml(x.nota || '') + '</small></td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center;">Todavía no hay cargas automáticas.</div>';
+    } catch (_) { r1.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
+}
+window.loadCargasAuto = loadCargasAuto;
+// #762: limpiar datos de prueba
+async function cleanupTests() {
+    const tx = !!(document.getElementById('clnTx') || {}).checked, closes = !!(document.getElementById('clnCloses') || {}).checked;
+    const usernames = ((document.getElementById('clnUsers') || {}).value || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!tx && !closes && !usernames.length) { showToast('Marcá qué limpiar', 'error'); return; }
+    if (!confirm('¿Limpiar datos de prueba?' + (tx ? '\n• cargas y retiros de PRUEBA' : '') + (closes ? '\n• cierres: se borran y se cuenta desde hoy' : '') + (usernames.length ? '\n• borrar usuarios: ' + usernames.join(', ') : '') + '\n\nNo se puede deshacer.')) return;
+    const st = document.getElementById('clnState'); if (st) st.textContent = 'Limpiando…';
+    try {
+        const r = await authFetch('/api/admin/cleanup-tests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transactions: tx, closes: closes, usernames: usernames }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); if (st) st.textContent = ''; return; }
+        const o = j.resultado || {}; const parts = [];
+        if (tx) parts.push('cargas de prueba: ' + (o.cargasPrueba || 0) + ' · retiros de prueba: ' + (o.retirosPrueba || 0));
+        if (closes) parts.push('cierres borrados: ' + (o.cierresBorrados || 0) + ' · cuentan desde ' + (o.cierresDesde || 'hoy'));
+        if (o.usuarios) parts.push('usuarios: ' + o.usuarios.map(function (u) { return u.username + (u.ok ? ' ✓' : ' ✗ (' + (u.motivo || '') + ')'); }).join(', '));
+        if (st) st.textContent = '✅ ' + parts.join(' · '); showToast('Datos de prueba limpiados', 'success');
+        try { const u = document.getElementById('clnUsers'); if (u) u.value = ''; } catch (_) {}
+    } catch (_) { showToast('Error de conexión', 'error'); if (st) st.textContent = ''; }
+}
+window.cleanupTests = cleanupTests;
 async function loadPayReview() {
     try { atencionAnalisis('pay'); } catch (_) {} // #750
     const box = document.getElementById('payReviewList'); if (!box) return;

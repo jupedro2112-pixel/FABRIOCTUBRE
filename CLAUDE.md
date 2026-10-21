@@ -243,6 +243,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   inicio en `Config['adSpendTotal']`, cotización en `Config['usdtRate']`. **#477:** TODO por agregaciones de Mongo (nunca bajar
   movimientos sueltos: 30 d son 30.000 cargas) y el "Panorama" (`project`) tiene la lógica explicada en el comentario del código:
   regalos futuros se CALCULAN con los % futuros, no se copian los de hoy.
+  **#762:** `Config['closeSince']` (YYYY-MM-DD) = desde qué día valen los cierres (lo fija "Limpiar datos de prueba"); `_closeTick` y
+  `GET /api/admin/cierres` ignoran días anteriores. Las cargas/retiros de PRUEBA se reconocen por "PRUEBA" en la descripción / titular
+  "PRUEBA TEST": un flujo de prueba nuevo tiene que mantener esa marca para que la limpieza y Cargas automáticas los excluyan.
   **#500/#744 CIERRES AUTOMÁTICOS:** `DailyClose` (uno por día ART, cron `_closeTick` cada 20 min, idempotente por `dateKey`). Desde #744 se
   FINALIZAN SOLOS (día anterior a hoy, `finalizedBy:'auto'`; los últimos 3 días se recalculan en cada pasada; USDT opcional) y
   `_closeReconcile` guarda en `detalle` la conciliación sistema vs banco con las posibles causas de la diferencia. Un flujo nuevo que
