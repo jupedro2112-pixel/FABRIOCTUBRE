@@ -5899,7 +5899,7 @@ async function platformSessionHandler(req, res) {
       }
       if (!_s.success) {
         logger.error(`[${_reqPlatform}-sso] falló para ${_u.username}: ${_s.error} (${_s.code})`);
-        return res.status(502).json({ error: `${_p.name} no está respondiendo. Reintentá en un momento.` });
+        return res.status(503).json({ error: `${_p.name} no está respondiendo. Reintentá en un momento.` });
       }
       return res.json({ success: true, platform: _reqPlatform, redirectUrl: _s.redirectUrl, platformUrl: (_ad.getPlayUrl && _ad.getPlayUrl()) || _p.externalUrl || null });
     }
@@ -5945,7 +5945,7 @@ async function platformSessionHandler(req, res) {
           await User.updateOne({ id: user.id }, { $set: { giroxSyncStatus: 'error', giroxSyncError: String(sync.error).slice(0, 500) } }).catch(() => {});
         }
         logger.error(`[girox-sso] no se pudo crear a ${user.username}: ${sync.error}`);
-        return res.status(502).json({ error: 'No pudimos abrir tu cuenta en el casino. Escribinos por chat y lo resolvemos.' });
+        return res.status(503).json({ error: 'No pudimos abrir tu cuenta en el casino. Escribinos por chat y lo resolvemos.' });
       }
       await User.updateOne({ id: user.id }, { $set: { giroxSyncStatus: sync.alreadyExists ? 'linked' : 'synced' } }).catch(() => {});
       session = await girox.createSession(user.username);
@@ -5954,7 +5954,7 @@ async function platformSessionHandler(req, res) {
     if (!session.success) {
       logger.error(`[girox-sso] falló para ${user.username}: ${session.error} (${session.code})`);
       try { _diagPush('girox-sso', new Error(`createSession ${user.username}: ${session.error} (${session.code}, http ${session.httpStatus || '-'})`)); } catch (_) {}
-      return res.status(502).json({ error: 'El casino no está respondiendo. Reintentá en un momento.' });
+      return res.status(503).json({ error: 'El casino no está respondiendo. Reintentá en un momento.' });
     }
 
     res.json({
@@ -9166,7 +9166,7 @@ app.post('/api/cashback/claim', authMiddleware, authLimiter, async (req, res) =>
     const username = req.user.username;
     const st = await _cashbackStateToday(userId, username, { fresh: true });
     if (!st.enabled) return res.status(400).json({ error: 'El reembolso acumulativo no está disponible.' });
-    if (st.error) return res.status(502).json({ error: 'No pudimos calcular tu pérdida ahora. Probá en unos minutos.' });
+    if (st.error) return res.status(503).json({ error: 'No pudimos calcular tu pérdida ahora. Probá en unos minutos.' });
     const amount = st.reclamable;
     if (!(amount > 0) || amount < st.minArs) {
       return res.status(400).json({
@@ -9220,7 +9220,7 @@ app.post('/api/cashback/claim', authMiddleware, authLimiter, async (req, res) =>
       // por lo tanto la MISMA reference).
       await CashbackClaim.deleteOne({ id: claimDoc.id }).catch(() => {});
       logger.error(`[cashback] credit FAIL ${username} $${amount}: ${(credit && credit.error) || 'unknown'}`);
-      return res.status(502).json({ error: 'No pudimos acreditar tu reembolso ahora. Probá de nuevo en un momento.' });
+      return res.status(503).json({ error: 'No pudimos acreditar tu reembolso ahora. Probá de nuevo en un momento.' });
     }
     if (credit.duplicate) logger.warn(`[cashback] ${username} ref ${ref} ya estaba acreditada (duplicate:true) — se da por pagada, no se paga dos veces`);
     const txId = credit.data?.transfer_id || credit.data?.transferId || null;
@@ -9288,7 +9288,7 @@ app.get('/api/admin/girox/stats-raw', authMiddleware, adminMiddleware, async (re
     const to = new Date();
     const from = new Date(Date.now() - days * 86400000);
     const r = await girox.getPlayerStats(username, from, to, 'stats-raw', { fresh: true, includeRaw: true });
-    if (!r.success) return res.status(502).json({ error: r.error || 'stats falló' });
+    if (!r.success) return res.status(503).json({ error: r.error || 'stats falló' });
     res.json({ parsed: { netwin: r.netwin, casinoNetwin: r.casinoNetwin, wagered: r.wagered, payout: r.payout,
       bonusGranted: r.bonusGranted, bonusStillLocked: r.bonusStillLocked }, raw: r.raw });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -9440,7 +9440,7 @@ app.post('/api/vip/level-bonus/claim', authMiddleware, authLimiter, async (req, 
     const r = await adapter.creditUserBalance(user.username, level.levelUpBonusArs, ref, { multiplier: await _giftRolloverX(), description: `Bono por alcanzar el nivel VIP ${level.name}` }); // #659: rollover global
     if (!r || !r.success) {
       logger.warn(`[vip] reclamo nivel ${level.name} de ${user.username} en ${pid} falló: ${(r && r.error) || 's/detalle'}`);
-      return res.status(502).json({ error: 'No pudimos acreditar el bono ahora. Probá en unos minutos.' });
+      return res.status(503).json({ error: 'No pudimos acreditar el bono ahora. Probá en unos minutos.' });
     }
     await User.updateOne({ id: user.id }, { $pull: { vipPendingLevelBonuses: idx }, $set: { lastPlatform: pid } });
     if (!r.duplicate) {
@@ -14416,7 +14416,7 @@ app.post('/api/community-code/claim', authMiddleware, authLimiter, async (req, r
           { $set: { welcomeCodeBonusStatus: 'none', welcomeCodeBonusType: null, welcomeCodeBonusAmount: 0, welcomeCodeClaimedAt: null } }
         ).catch(() => {});
         logger.warn(`[welcome-code] crédito cash falló para ${user.username}: ${credit.error || 's/detalle'}`);
-        return res.status(502).json({ error: 'No pudimos acreditar el bono en este momento. Probá de nuevo en unos minutos.' });
+        return res.status(503).json({ error: 'No pudimos acreditar el bono en este momento. Probá de nuevo en unos minutos.' });
       }
 
       // v1.7: liberar el bono YA (sin esto queda "a reclamar" en el casino).
@@ -20360,7 +20360,7 @@ app.get('/api/admin/hgcash/balance', authMiddleware, adminMiddleware, async (req
       return res.json({ enabled: true, accounts: _hgcashBalanceCache.accounts, cached: true });
     }
     const acc = await hgcashPay.getAccounts();
-    if (!acc.ok) return res.status(502).json({ error: 'No se pudo consultar el saldo: ' + (acc.error || 's/detalle') });
+    if (!acc.ok) return res.status(503).json({ error: 'No se pudo consultar el saldo: ' + (acc.error || 's/detalle') });
     const accounts = (Array.isArray(acc.data) ? acc.data : []).map(a => ({
       id: a.id, name: a.name || null, currency: a.currency || null,
       balance: a.balance, netBalance: a.netBalance, pendingFees: a.pendingFees, status: a.status || null
@@ -20996,7 +20996,7 @@ app.post('/api/admin/payouts/:id/sync', authMiddleware, withdrawerMiddleware, as
     if (!payout) return res.status(404).json({ error: 'Pago no encontrado.' });
     if (!payout.hgTransactionId) return res.status(400).json({ error: 'Este pago no tiene transacción hgcash para consultar.' });
     const st = await hgcashPay.getTransactionStatus(payout.hgTransactionId);
-    if (!st.ok || !st.status) return res.status(502).json({ error: 'No se pudo consultar el estado en hgcash: ' + (st.error || 's/estado') });
+    if (!st.ok || !st.status) return res.status(503).json({ error: 'No se pudo consultar el estado en hgcash: ' + (st.error || 's/estado') });
     // Reusa el mapeo del webhook (DONE→paid + aviso + comprobante; ERROR/CANCELLED→failed).
     await handlePayoutStatusWebhook({ externalID: payout.id, id: payout.hgTransactionId, status: st.status });
     const fresh = await PendingPayout.findOne({ id: payout.id }).select('status hgStatus').lean();

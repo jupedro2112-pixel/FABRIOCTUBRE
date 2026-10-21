@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 697. 🎰 CAUSA del "error 502" del casino en producción: la Partner API de 1girox falla y Cloudflare tapa nuestro mensaje
+**Reproducido desde acá** con un usuario de prueba de producción (credenciales sólo en el chat): `POST /api/platform/session`
+{platform:'girox'} → 502 en 2,5 s con cuerpo `error code: 502` (texto plano de Cloudflare); el mismo POST con {platform:'ganamos'}
+(no llama a la API) → 200; GET /api/platforms, /api/first-deposit-promo, POST /api/activity/ping → 200; **`GET /api/balance` →
+"No se pudo leer el saldo en la plataforma"**. Conclusión: TODA llamada real a la Partner API de 1girox falla en producción (key
+rechazada, Base URL equivocada o jugador inexistente sin poder crearse); nuestro handler responde 502 con el texto "El casino no está
+respondiendo" y **Cloudflare reemplaza cualquier 502/504 del origen por su propia página**, por eso la app veía un 502 vacío y decía
+"revisá tu internet". No es el iPhone, ni Android, ni el keepAlive (#696 queda igual como buena práctica).
+**Cambio:** los 10 `res.status(502)` de server.js pasan a **503** (Cloudflare deja pasar el 503 del origen con su JSON): SSO, alta al
+vuelo, reembolsos, bonos, hgcash. El front ya trata 5xx como reintentable y muestra `error` si viene.
+**Pendiente (owner):** abrir `https://picaroja.com/api/admin/girox/health` logueado en el panel y pegar el resultado
+(`pruebas.consultaJugador` dice si la key fue rechazada, si la Base URL está mal o si la API responde); si la key está vencida,
+cargar la nueva en COMANDOS → Banco automático → "🎰 API de 1girox". Después del deploy automático, `/api/admin/diag` muestra el
+motivo exacto de cada fallo del SSO (#696).
+
 ### 696. 🎰 SSO del casino en PRODUCCIÓN: 502 del servidor — diagnóstico, keepAlive para ALB/nginx y cupo que no castiga los fallos
 **Pedido (owner, capturas en picaroja.com):** "sigue pasando lo mismo, ¿qué está pasando y en qué falla?" El cartel nuevo (#695)
 ya dice el motivo: "El servidor está ocupado o reiniciando (error 502)" y, tras varios Reintentar, "Demasiados intentos de entrar
