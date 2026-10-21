@@ -2303,3 +2303,10 @@ body.home-basic .min-strip.ms-basic { display: none !important; }
 .bv-chip img { width: 26px !important; height: 26px !important; }
 .bv-chip b { font-size: 11px !important; } .bv-chip small { font-size: 8.5px !important; }
 .bv-plats-h { margin-bottom: 4px !important; } .bv-plats-h b { font-size: 12.5px !important; } .bv-plats-h small { font-size: 10px !important; }
+/* #758 (owner): tarjetas de servicios MÁS CUADRADAS: dos por fila, ícono a la izquierda y texto al lado → pierden altura y usan todo el ancho */
+.ev-services { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 6px !important; padding: 4px 10px 0 !important; }
+.ev-svc { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; text-align: left !important; gap: 8px !important; padding: 7px 9px !important; min-width: 0 !important; flex: none !important; border-radius: 12px !important; }
+.ev-svc > b { display: flex !important; align-items: center; gap: 7px; white-space: nowrap; font-size: 12px !important; flex: 0 0 auto; }
+.ev-svc .li, .ev-svc .li svg { width: 26px !important; height: 26px !important; flex: 0 0 auto; }
+.ev-svc > small { flex: 1 1 auto; min-width: 0; font-size: 9.5px !important; line-height: 1.15 !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: left !important; }
+.ev-svc::after { margin: 0 0 0 auto !important; padding-left: 4px; white-space: nowrap; font-size: 9px; align-self: center; }

@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 758. 🏠 Servicios del Inicio: dos por fila, horizontales y más bajos — SW v540
+**Pedido (owner, captura):** "hacelos más cuadrados así pierden altura, y si no entra dale más ancho con los sobrantes". Grilla de 2
+columnas; cada tarjeta con el ícono a la izquierda, nombre y detalle al lado (2 líneas máx.) y "Ver más ›" a la derecha. Mismo ancho
+total, la mitad de alto.
+
 ### 757. 🏠 Básico: mínimos bien marcados adentro de CARGAR y RETIRAR, sin la franja verde, plataformas más chicas — SW v539
 **Pedido (owner, captura):** "la carga mínima ponela bien aclarada dentro del botón de cargar, y el retiro también, que se remarque
 bien; sacá la carga mínima de arriba; los 3 botones de plataforma achicalos para que no tapen mucho; Girox seleccionado por defecto".
