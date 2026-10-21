@@ -2131,3 +2131,13 @@ html[data-theme="dark"] .bv-load { background: var(--p-load) !important; }
 @keyframes fgPulseG { 0%, 100% { box-shadow: 0 0 0 0 rgba(10, 122, 62, .55); } 60% { box-shadow: 0 0 0 14px rgba(10, 122, 62, 0); } }
 .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation-name: fgPulseG !important; }
 @media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation: none !important; box-shadow: 0 0 0 4px rgba(10, 122, 62, .35) !important; } }
+/* #706 (owner): nota de carga mínima RESUMIDA con el monto más grande + botón "Adjuntar comprobante" llamativo hasta la 5ª carga */
+.min-note .mn-big { display: block; font: 900 15px/1.2 var(--p-font) !important; color: var(--p-green, #0a7a3e) !important; margin-bottom: 3px; }
+.min-note .mn-sub { display: block; font: 600 11.5px/1.4 var(--p-font); color: var(--p-text); }
+.min-note .mn-sub b { color: var(--p-text) !important; }
+.min-tag { display: none; }
+body.fewdep .min-tag { display: block; margin-top: 3px; font: 800 10.5px/1.1 var(--p-font); letter-spacing: .2px; opacity: .95; text-transform: none; }
+body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd) { display: flex !important; flex-direction: column; align-items: center; animation: fgPulseG 1.6s ease-in-out infinite; }
+body.fewdep #loadHereBtn { animation: fgPulseG 1.6s ease-in-out infinite; }
+body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 !important; }
+@media (prefers-reduced-motion: reduce) { body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action, body.fewdep #loadHereBtn { animation: none !important; } }

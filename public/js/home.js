@@ -334,7 +334,7 @@
         const show = !!(j && (j.noDeposits === true || j.show)) && !off;
         if (g) g.hidden = !show; if (gb) gb.hidden = !show; // el básico tiene su versión corta (CSS muestra cada una en su modo)
         // #690 (owner): la franja grande de CARGA MÍNIMA se ve hasta la 3ª carga; después desaparece (la nota de adentro de las cargas queda)
-        try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); } } catch (_) {}
+        try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); const few = n < 5; document.body.classList.toggle('fewdep', few); localStorage.setItem('vip_fewdep', few ? '1' : '0'); } } catch (_) {} // #706: fewdep = hasta la 5ª carga (botón Adjuntar llamativo con la carga mínima)
         if (cta) cta.classList.toggle('fg-hi', show); if (bl) bl.classList.toggle('fg-hi', show);
     }
     function firstGuideClose() { try { localStorage.setItem('vip_fguide_off', '1'); } catch (_) {} ['firstGuide', 'firstGuideBasic'].forEach((id) => { const g = _el(id); if (g) g.hidden = true; }); ['evCtaTop', 'bvLoadBtn'].forEach((id) => { const b = _el(id); if (b) b.classList.remove('fg-hi'); }); }
@@ -578,6 +578,7 @@
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
         _paintBsUser(); // #636
         try { if (localStorage.getItem('vip_ms_off') === '1') document.body.classList.add('ms-off'); } catch (_) {} // #690: sin parpadeo
+        try { if (localStorage.getItem('vip_fewdep') !== '0') document.body.classList.add('fewdep'); } catch (_) {} // #706: por defecto llamativo hasta saber las cargas
         try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512
@@ -1945,8 +1946,9 @@
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
             // #684 (owner): carga mínima clara también acá
-            (function () { const md = Number(_platforms && _platforms.minDepositArs) || 5000; return '<p class="cl-meta min-note">✅ Con <b>$' + md.toLocaleString('es-AR') + '</b> o más se acredita sola. <b>Con una carga menor a $' + md.toLocaleString('es-AR') + ', tu carga NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.casinoSupport()">💬 escribinos a Soporte ›</button></p>'; })() +
-            '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>' +
+            // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<p class="cl-meta min-note"><b class="mn-big">Carga mínima ' + md + '</b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.casinoSupport()">💬 escribinos a Soporte ›</button></span></p>' +
+              '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante<small class="min-tag">Carga mínima ' + md + '</small></button>'; })() +
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino

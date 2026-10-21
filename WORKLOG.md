@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 706. 💳 Nota de carga mínima RESUMIDA (monto más grande) + "Adjuntar comprobante" llamativo hasta la 5ª carga — SW v502
+**Pedido (owner, captura):** "resumí esto, carga mínima $5.000 un poco más grande, y en la primera carga o próximas 5 poné en
+Adjuntar comprobante un botón más llamativo aclarando lo de la carga mínima 5000". La nota (`.min-note` en Cargá, básico y Carga
+rápida del casino) queda: **Carga mínima $5.000** (15 px, verde) + "Con menos, tu carga NO va a ser acreditada: escribinos a Soporte ›".
+`body.fewdep` (depositsCount < 5, cache `localStorage vip_fewdep`, por defecto activo) muestra la etiqueta `.min-tag` "Carga mínima
+$5.000" dentro de los botones Adjuntar (casino `.cl-attach`, básico `.bv-action`) y les pone el pulso verde (`fgPulseG`); el botón
+del completo `#loadHereBtn` pulsa y resalta su subtexto "carga mínima $5.000 · se acredita solo". A partir de la 5ª carga vuelve
+todo a lo normal.
+
 ### 705. 🎨 Colores invertidos: CARGAR / Adjuntar comprobante en VERDE, Retirar premio en ROJO (toda la app) — SW v501
 **Pedido (owner):** "cambiá también los colores de toda la página: cargar o adjuntar comprobante siempre en verde y retirar premio
 en rojo, hay que invertir los colores". Bloque final en pin.css con tokens `--p-load` (verde; en nocturno #1f7a4a) aplicado a
