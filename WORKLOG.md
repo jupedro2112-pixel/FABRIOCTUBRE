@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 756. 🏠 "Top juegos" en negro y el bloque de servicios más junto — SW v538
+**Pedido (owner, captura):** "el Top juegos ponelo en negro, y lo de arriba juntalo un poco más". `.ev-games-h` en color de texto (se
+leía blanco sobre fondo claro); título de servicios y tarjetas con menos margen, ícono de 30 px y textos de 11/9 px.
+
 ### 755. 🏠 Básico: "Todo lo que ofrecemos 100% para vos" y sus accesos pasan arriba de todo — SW v537
 **Pedido (owner, captura):** "y acá ponelo en la parte superior". El título y los accesos (Misiones · Reembolsos · Referidos · Ruleta)
 pasan debajo de nombre · saldo · racha, antes de "¿Dónde jugás?" y de los botones de cargar/retirar.
