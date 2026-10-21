@@ -2277,3 +2277,8 @@ body.home-play .min-strip.ms-play { display: none !important; }
 .casino-load .cl-attach .min-tag.min-always { display: block !important; }
 body:not(.fewdep) .casino-load .cl-attach { display: flex !important; flex-direction: column; align-items: center; }
 .tg-card.tg-basic { margin: 8px 12px 6px; }
+/* #754 (owner): CARGÁ AHORA todo centrado (texto que entra y no se corta) y sin la pastilla "NOVEDAD: aprovechá…" (se unifica con el título de servicios) */
+.ev-cta.ev-cta-top { flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; gap: 2px !important; }
+.ev-cta.ev-cta-top .ev-cta-b, .ev-cta.ev-cta-top .ev-cta-t { display: block !important; width: 100% !important; text-align: center !important; white-space: normal !important; overflow: visible !important; }
+.ev-cta.ev-cta-top .ev-cta-t { font-size: 11px !important; line-height: 1.25 !important; }
+body.home-play .ev-hero { display: none !important; }

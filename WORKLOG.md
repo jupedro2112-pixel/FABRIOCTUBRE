@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 754. 🏠 CARGÁ AHORA centrado y corto; sin la pastilla "NOVEDAD" — SW v536
+**Pedido (owner, captura):** "el Cargá ahora hacé que esté todo centrado; la novedad 'aprovechá…' sacala y unificalo". El subtítulo del
+botón queda "Carga mínima $5.000 · se acredita sola", en bloque centrado y con salto de línea permitido (antes se cortaba a los
+costados). La pastilla roja "NOVEDAD: aprovechá reembolso X% hasta diciembre" (`.ev-hero`) se oculta en el Inicio: el mensaje de
+servicio queda unificado en "Todo lo que ofrecemos 100% para vos".
+
 ### 753. 🗂️ Panel: los 5 títulos recuadrados del menú, más chicos y compactos — admin-sw v146
 **Pedido (owner):** "los 5 títulos, los recuadros, tratá de achicar y meter todo en uno en la parte superior así no ocupa tanto".
 Pastillas de grupo de 8 px con menos margen, ítems de 28 px de alto y 12 px, cabecera más baja: el menú completo entra en una pantalla
