@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 718. 🧹 Limpieza de punta a punta (código muerto, imágenes, repo) — SW v511
+**Pedido (owner):** "limpiá la página de punta a punta para que esté óptima para todos, que no se rompa nada pero que esté tope de gama
+y limpita". **Auditado y OK:** sin ids duplicados ni `console.log` en la PWA; los 141 `onclick` inline (HTML + strings de JS) resuelven
+a una función exportada; `<div>` balanceados (559/559); llaves de los 7 CSS; gzip (`compression`) activo con umbral 1 KB; helmet/
+sanitize/xss activos; todos los js/css del bundle referenciados; precache del SW al día; `/lib/firebase` y `/img` (fondos del chat)
+en uso; `user-sw.js` es el stub de migración que se auto-desregistra (se queda); el carrusel ya cargaba lazy salvo la primera foto.
+**Corregido (commits b3304c3 + este):** (1) `nuevo 2.zip` (5,4 MB) se había colado al repo en 3674ae8 por un `git add -A`: sale del
+repo (`git rm --cached`, queda en disco) y `.gitignore` ignora `*.zip`/`*.rar`. (2) Siete funciones sin ninguna referencia eliminadas:
+home.js `_stLeft`, `_fdTagPaint`, `_igPctTxt`, `_arsShort`, `_playOnEmbedded`; autoload.js `_platformsForCard`; ui.js `_casinoChip`.
+(3) Imágenes: `ganamos.png` y `ganamos-net.png` 164 KB → 21 KB (PNG cuantizado a 256 colores); fotos del carrusel `girox-slides/
+g1..g7.jpg` re-encodadas a JPEG progresivo q72 (126→103, 114→94, 122→101, 119→97, 118→97, 160→91, 80→45 KB). (4) `<meta
+name="description">` en la PWA; fotos del carrusel con `decoding="async"`. **Queda para otra pasada (sólo peso, no rompe nada):**
+~100 clases CSS sin uso en pin.css y chat.css (restos de markup eliminado) y minificación del bundle (sumar `terser` a package.json).
+⚠️ Nota de método: el commit b3304c3 se hizo con el bump y el WORKLOG a medias porque un `&&` no encadenó con el heredoc de Python;
+este commit lo completa. Regla: en un heredoc, encadenar el `&&` en la MISMA línea del `python3 - <<'EOF'`.
+
 ### 717. 🎰 La burbuja no tapa el panel de Carga rápida + dice "movela si te molesta" — SW v510
 **Pedido (owner, captura):** "cuando se abre la burbuja que no tape el Carga rápida, eso es importante; y te pedí que en esa burbuja
 diga también que se puede mover si molesta donde quiera". `toggleCasinoLoad`: con el panel abierto la burbuja `#casinoSupportBubble`
