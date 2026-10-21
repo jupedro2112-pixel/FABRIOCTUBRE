@@ -343,6 +343,7 @@
         try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); const few = n < 5; document.body.classList.toggle('fewdep', few); localStorage.setItem('vip_fewdep', few ? '1' : '0');
             // #731 (owner): sin cargas, la barra "Instalar" de la base queda FIJA (sin ✕ y aunque la haya cerrado antes)
             const nodep = n === 0; document.body.classList.toggle('nodep', nodep); localStorage.setItem('vip_nodep', nodep ? '1' : '0');
+            try { _paintFirstLoad(nodep); } catch (_) {} // #766
             if (nodep && !_isStandalone()) { try { if (typeof showInstallButton === 'function') showInstallButton(); } catch (_) {} } } } catch (_) {} // #706: fewdep = hasta la 5ª carga (botón Adjuntar llamativo con la carga mínima)
         if (cta) cta.classList.toggle('fg-hi', show); if (bl) bl.classList.toggle('fg-hi', show);
     }
@@ -532,6 +533,9 @@
             const u = (VIP.state && VIP.state.currentUser) || {}; const ok = u.phoneVerified === true;
             const h = _el('pfPhoneHint'), b = _el('pfPhoneBtn'); if (!h || !b) return;
             h.textContent = ok ? ('Verificado ✓ · ' + (u.phone || '')) : 'Sin verificar · necesaria para retirar';
+            // #767: franja arriba de todo del Perfil
+            try { const ts = _el('pfTopSms'), tt = _el('pfTopSmsT'), tsub = _el('pfTopSmsS'); if (ts && tt) { ts.classList.toggle('ok', ok); tt.textContent = ok ? '✅ Celular verificado por SMS' : '📱 Verificá tu celular por SMS ›'; if (tsub) tsub.textContent = ok ? (u.phone || 'OK') : 'Necesario para retirar'; } } catch (_) {}
+            try { const n = _el('pfTopName'), bal = _el('pfTopBal'), av = _el('pfTopAvatar'), ub = _el('userBalance'), pa = _el('pfAvatar'); if (n) n.textContent = u.username || '—'; if (bal && ub) bal.textContent = ub.textContent || '$0'; if (av && pa) av.innerHTML = pa.innerHTML; } catch (_) {}
             b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok);
             const row = _el('pfPhoneRow'), imp = _el('pfPhoneImp'); if (row) row.classList.toggle('pf-important', !ok); if (imp) imp.hidden = ok; // #646 b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
         } catch (_) {}
@@ -2102,7 +2106,7 @@
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
             // #751 (owner): la carga mínima va ADENTRO del botón (siempre), sin la nota verde que ocupaba lugar
-            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante' + _sbTagHtml() + '<small class="min-tag min-always">Carga mínima ' + md + ' · con menos no se acredita</small></button>'; })() + // #742: + bono de historia
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); const first = document.body.classList.contains('nodep'); return '<button type="button" class="cl-btn cl-attach' + (first ? ' cl-first' : '') + '" onclick="VIP.autoload.sendReceipt()">' + (first ? '⚡ PRIMERA CARGA · adjuntá tu comprobante' : '📎 Adjuntar comprobante') + _sbTagHtml() + '<small class="min-tag min-always">' + (first ? '⚠️ Aviso importante: carga mínima ' + md : 'Carga mínima ' + md + ' · con menos no se acredita') + '</small></button>'; })() + // #742: + bono de historia · #766: PRIMERA CARGA
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
@@ -2181,6 +2185,14 @@
             VIP.ui.showToast('🧪 Carga de prueba de $' + amt.toLocaleString('es-AR') + ' acreditada', 'success');
             setTimeout(() => { try { if (VIP.ui.syncBalance) VIP.ui.syncBalance(); } catch (_) {} try { loadFirstGuide(true); } catch (_) {} try { loadStrategy(true); } catch (_) {} }, 1200);
         } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); }
+    }
+    // #766 (owner): "en todos los Cargá ahora de las 3 secciones, un botón PRIMERA CARGA bien llamativo, que se agrande y achique, y que
+    // diga cuánto es el mínimo de carga como aviso importante" — sólo hasta que haga la primera carga (body.nodep).
+    function _paintFirstLoad(on) {
+        const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR');
+        try { const b = document.querySelector('#evCtaTop .ev-cta-b'), t = document.querySelector('#evCtaTop .ev-cta-t'); if (b && t) { if (on) { if (!b.dataset.o) { b.dataset.o = b.innerHTML; t.dataset.o = t.innerHTML; } b.textContent = '⚡ PRIMERA CARGA'; t.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (b.dataset.o) { b.innerHTML = b.dataset.o; t.innerHTML = t.dataset.o; delete b.dataset.o; delete t.dataset.o; } } } catch (_) {}
+        try { const bb = document.querySelector('#bvLoadBtn > span > b'), bt = document.querySelector('#bvLoadBtn .bv-min'); if (bb && bt) { if (on) { if (!bb.dataset.o) { bb.dataset.o = bb.innerHTML; bt.dataset.o = bt.innerHTML; } bb.textContent = 'PRIMERA CARGA'; bt.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (bb.dataset.o) { bb.innerHTML = bb.dataset.o; bt.innerHTML = bt.dataset.o; delete bb.dataset.o; delete bt.dataset.o; } } } catch (_) {}
+        try { if (_quickOpen) toggleCasinoLoad(true); } catch (_) {}
     }
     // #742 (owner): bono reclamado desde una HISTORIA → "Adjuntar comprobante · Bono +X%" en el casino, el completo y el básico hasta
     // que lo use o venza. Sólo lo ve quien tocó "Reclamar ahora" en la historia.

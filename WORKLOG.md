@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 767. 👤 Perfil: arriba de todo, usuario · logo · saldo y el estado de la verificación por SMS — SW v545
+**Pedido (owner, captura):** "esto en Perfil subilo y poné arriba una línea más que sea usuario, el logo que ya tiene y el saldo; y
+arriba de todo la verificación de SMS para los que no la tienen; cuando lo hayan hecho, que esté como OK verificado". `.pf-topline`
+(avatar · @usuario · saldo, copiado de `#userBalance`) y `.pf-topsms` ("📱 Verificá tu celular por SMS ›", ámbar y pulsando; con el
+celular verificado pasa a "✅ Celular verificado por SMS" verde) al principio del modal; `paintPfPhone` los pinta. Vale para el
+básico y el completo (el Perfil es el mismo).
+
+### 766. ⚡ PRIMERA CARGA llamativa en los 3 "cargar" (completo, básico y casino) — SW v545
+**Pedido (owner):** "en todos los Cargá ahora de las 3 secciones, un botón solamente PRIMERA CARGA bien llamativo, que se agrande y
+achique, que diga cuánto es el mínimo de carga como aviso importante". Hasta la primera carga (`body.nodep`): CARGÁ AHORA pasa a
+"⚡ PRIMERA CARGA · ⚠️ Aviso importante: carga mínima $5.000"; CARGAR del básico ídem; el Adjuntar de la Carga rápida dice "⚡ PRIMERA
+CARGA · adjuntá tu comprobante" con el mismo aviso; los tres con animación de escala (`fdScale`). Después de la primera carga vuelven a
+los textos normales (`_paintFirstLoad`).
+
 ### 765. 🏠 Básico: nivel + racha como en el completo (sin nombre ni saldo) y accesos con recuadro e íconos de línea — SW v544
 **Pedido (owner, capturas):** "a esto dale un mejor recuadro y cambiá los íconos al estilo de la página, Pinterest moderno" · "este
 (nivel/racha) dejalo igual que el completo y sacá el monto del usuario, así ganamos espacio". `setHomeMode`: en el básico la línea

@@ -2350,3 +2350,20 @@ body.home-basic #topRow .vip-mini { display: none !important; }
 .bv-quick-ico { width: 30px; height: 30px; border-radius: 50%; background: var(--p-red-soft, #ffe9ec); color: var(--p-red); display: inline-flex; align-items: center; justify-content: center; }
 .bv-quick-ico svg { width: 17px; height: 17px; }
 .bv-quick button small { font: 800 8.5px var(--p-font); color: var(--p-red); }
+/* #766 (owner): PRIMERA CARGA — el botón de cargar se agranda y achica (pulso) y avisa el mínimo, hasta la primera carga */
+@keyframes fdScale { 0%, 100% { transform: scale(1); box-shadow: 0 6px 18px rgba(10, 122, 62, .28); } 50% { transform: scale(1.035); box-shadow: 0 0 0 8px rgba(10, 122, 62, 0), 0 10px 26px rgba(10, 122, 62, .35); } }
+body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { animation: fdScale 1.5s ease-in-out infinite !important; }
+body.nodep .ev-cta.ev-cta-top .ev-cta-b { font-size: 20px !important; letter-spacing: 1.4px !important; }
+body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: #fff !important; font-weight: 800 !important; }
+.casino-load .cl-attach.cl-first { font-size: 12.5px !important; }
+@media (prefers-reduced-motion: reduce) { body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { animation: none !important; } }
+/* #767 (owner): Perfil — línea usuario · logo · saldo y verificación por SMS arriba de todo */
+.pf-topline { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; padding: 8px 12px; border-radius: 14px; background: var(--p-surface); border: 1px solid var(--p-border); }
+.pf-top-av { width: 34px; height: 34px; border-radius: 50%; background: var(--p-card); border: 1px solid var(--p-border); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
+.pf-top-av img { width: 100%; height: 100%; object-fit: cover; }
+.pf-top-name { flex: 1 1 auto; min-width: 0; font: 900 14px var(--p-font); color: var(--p-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-top-bal { font: 900 15px var(--p-font); color: var(--p-green); }
+.pf-topsms { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--p-amber-line); background: var(--p-amber-soft); color: var(--p-amber); font: 900 13px var(--p-font); cursor: pointer; animation: fgPulse 1.6s ease-in-out infinite; }
+.pf-topsms small { font: 600 10.5px var(--p-font); color: var(--p-amber); margin-top: 2px; }
+.pf-topsms.ok { border-color: var(--p-green-line); background: var(--p-green-soft); color: var(--p-green); animation: none; cursor: default; }
+.pf-topsms.ok small { color: var(--p-green); }

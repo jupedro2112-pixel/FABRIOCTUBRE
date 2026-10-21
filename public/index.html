@@ -2558,6 +2558,13 @@
             <!-- #404 (owner): orden del Perfil — Canjear código arriba de todo · Menú intermedio/completo · Modo nocturno + Notificaciones
                  · usuario + datos + Capturar · Fueguito · el resto. Todo más compacto (.pf-compact). -->
             <!-- #645/#646 (owner): VERIFICACIÓN DE TELÉFONO ARRIBA DE TODO del Perfil, como IMPORTANTE hasta que verifique: estado (Verificado ✓ / Sin verificar) + botón que abre el modal con la explicación paso a paso -->
+            <!-- #767 (owner): arriba de todo del Perfil: usuario · logo · saldo, y el estado de la verificación por SMS -->
+            <div class="pf-topline">
+                <span class="pf-top-av" id="pfTopAvatar">👤</span>
+                <span class="pf-top-name" id="pfTopName">—</span>
+                <span class="pf-top-bal" id="pfTopBal">$0</span>
+            </div>
+            <button type="button" class="pf-topsms" id="pfTopSms" onclick="VIP.home.openVerifyPhone()"><span id="pfTopSmsT">📱 Verificá tu celular por SMS ›</span><small id="pfTopSmsS">Necesario para retirar</small></button>
             <div class="pf-theme-row pf-phone" id="pfPhoneRow">
                 <span class="pf-theme-k"><b><i class="pi pi-sm">📱</i>Verificación de teléfono <em class="pf-imp" id="pfPhoneImp">Importante</em></b><small id="pfPhoneHint">Necesaria para retirar</small></span>
                 <button type="button" class="pf-theme-btn" id="pfPhoneBtn" onclick="VIP.home.openVerifyPhone()">Verificar</button>
@@ -2587,7 +2594,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v544</div>
+                    <div class="pf-build" id="appBuildTag">app v545</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
