@@ -21609,9 +21609,9 @@ const ROULETTE_PRIZES_2026_10 = [
 // tope de bonos), la plata al instante es poca y con rollover; costo esperado en plata ≈ $345 por giro
 // (49×$5.000 + 1×$100.000 cada 1.000 giros). Editable en el panel → Ruleta diaria (pesos = probabilidad).
 const ROULETTE_PRIZES_2026_10_18 = [
-  { id: 'p20',     type: 'percent', value: 20,     weight: 450, emoji: '🎉', label: '20% EXTRA',  rolloverX: 0 },
+  { id: 'p20',     type: 'percent', value: 20,     weight: 500, emoji: '🎉', label: '20% EXTRA',  rolloverX: 0 }, // #679: 50% (antes 45%)
   { id: 'p50',     type: 'percent', value: 50,     weight: 220, emoji: '🎁', label: '50% EXTRA',  rolloverX: 0 },
-  { id: 'p100',    type: 'percent', value: 100,    weight: 80,  emoji: '🚀', label: '100% EXTRA', rolloverX: 0 },
+  { id: 'p100',    type: 'percent', value: 100,    weight: 30,  emoji: '🚀', label: '100% EXTRA', rolloverX: 0 }, // #679 (owner): 3% (antes 8%)
   { id: 'c5000',   type: 'cash',    value: 5000,   weight: 49,  emoji: '💰', label: '$5.000',     rolloverX: 1 },
   { id: 'c100000', type: 'cash',    value: 100000, weight: 1,   emoji: '🏆', label: '$100.000',   rolloverX: 3 },
   { id: 'none',    type: 'none',    value: 0,      weight: 200, emoji: '😅', label: 'Casi… mañana de nuevo', rolloverX: 0 }

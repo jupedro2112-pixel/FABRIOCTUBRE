@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 679. 🎰 Ruleta: el +100% EXTRA baja al 3% (el +20% sube al 50%); reembolsos quedan como están hasta diciembre
+**Contexto:** revisión de toda la configuración de regalos pedida por el owner ("armar algo para que no me dé pérdidas"). Veredicto
+entregado en el chat: fueguito, niveles VIP, referidos, segunda carga y extra por instalar se pagan solos o están acotados con el
+rollover ×5; el reembolso diario 20% + 3% + 3% es el regalo más caro **y el owner decidió dejarlo así para retención hasta diciembre**;
+el agujero principal sigue siendo "cargar y retirar sin jugar" (misiones/ruleta se pueden farmear) → propuesta pendiente de aprobar:
+regla "la carga se juega ×1 antes de retirar" con tilde y monto en el panel (+ tope global de regalos por persona por día).
+**Aplicado (owner: "lo del 100% bajalo al 3%"):** pesos de la ruleta 500 · 220 · 30 · 49 · 1 · 200 ⇒ +20% 50% · +50% 22% · +100% 3% ·
+$5.000 4,9% · $100.000 0,1% · sin premio 20% (los 5 puntos del 100% pasan al 20%, el premio más barato). Guardado en la config de
+Render por `POST /api/admin/daily-roulette` y en los defaults del código (`ROULETTE_PRIZES_2026_10_18`) para que producción arranque igual.
+
 ### 678. 🎰 Girox directo NO queda predeterminado: al volver a entrar se elige el menú de nuevo — SW v485
 **Pedido (owner):** "si elige Girox para entrar que no sea predeterminado cuando entra; después, si vuelve a entrar, que vuelva a
 elegir dónde quiere". Deshace #671: `setMenuPref('girox')` abre la plataforma (modo play + `_giroxDirect`) pero NO guarda
