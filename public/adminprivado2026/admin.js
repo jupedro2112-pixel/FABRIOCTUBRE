@@ -4975,6 +4975,7 @@ function switchSection(section) {
     if (section === 'support') loadSupport(); // #377
     if (section === 'payReview') loadPayReview(); // #566
     if (section === 'cargasAuto') loadCargasAuto(); // #763
+    if (section === 'gastos') { datosIaGate('Gastos').then(function (ok) { if (ok) loadGastos(); }); } // #770 clave
     if (section === 'roulette') loadRouletteAdmin();
     if (section === 'automations') loadAutomations();
     if (section === 'bonusStrategy') loadBonusStrategy();
@@ -5860,7 +5861,7 @@ async function cierresLoad() {
         const arq = function (c) { const d = Number(c.diferencia) || 0; const num = (d > 0 ? '+' : '') + _clM(d).replace('$-', '-$'); if (c.arqueo === 'sin_datos') return '<span class="cl-st">— sin datos del banco</span>'; return c.arqueo === 'cuadra' ? '<span class="cl-st fin">✅ Da 0</span>' : ('<span class="cl-st bad">⚠ ' + (c.arqueo === 'faltante' ? 'Faltante' : 'Sobrante') + ' <b>' + num + '</b></span>'); };
         const det = function (c) { const d = c.detalle || {}; const s = d.sistema || {}, b = d.banco || {}; return '<small>auto ' + _clM(s.depositosAuto || 0) + (s.depositosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.depositosManual) + '</b>' : '') + (s.depositosPrueba ? ' · prueba ' + _clM(s.depositosPrueba) : '') + '</small>'; };
         const detR = function (c) { const d = c.detalle || {}; const s = d.sistema || {}; return '<small>banco ' + _clM(s.pagosBanco || 0) + (s.pagosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.pagosManual) + '</b>' : '') + '</small>'; };
-        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>Banco entró / salió</th><th>Regalos</th><th>NETO</th><th>Comisión</th><th>RESULTADO</th><th>Diferencia</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
+        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>Banco entró / salió</th><th>Regalos</th><th>NETO</th><th>Comisión</th><th>Gastos</th><th>RESULTADO</th><th>Diferencia</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
             const fin = c.status === 'finalizado';
             return '<tr class="' + (fin ? 'fin' : 'pend') + (c.arqueo === 'faltante' || c.arqueo === 'sobrante' ? ' dif' : '') + '" id="cl-' + c.dateKey + '"><td><b>' + c.dateKey + '</b><br><small>' + c.nuevos + ' nuevos · ' + c.retenidos + ' ret.</small></td>' +
                 '<td>' + (fin ? '<span class="cl-st fin">✅ Cerrado' + (c.finalizedBy === 'auto' ? ' (auto)' : '') + '</span>' : '<span class="cl-st">⏳ Hoy / en curso</span>') + '</td>' +
@@ -5869,10 +5870,11 @@ async function cierresLoad() {
                 '<td><small>' + (c.bankSource === 'api' ? 'API' : 'avisos') + '</small> ' + _clM(c.bankIn) + ' / ' + _clM(c.bankOut) + '</td>' +
                 '<td>' + _clM(c.regalos) + '</td><td>' + _clC(c.neto) + '</td>' +
                 '<td>' + _clM(c.bankCommissionArs || 0) + '<br><small>' + (c.bankCommissionPct != null ? c.bankCommissionPct + '%' : '—') + '</small></td>' +
+                '<td>' + (c.gastos ? '<b class="cl-warn">' + _clM(c.gastos) + '</b>' : '—') + '</td>' + // #770
                 '<td><b>' + _clC(c.resultado) + '</b>' + (c.resultadoUsd != null ? '<br><small>' + _clU(c.resultadoUsd) + '</small>' : '') + '</td>' +
                 '<td>' + arq(c) + '</td>' +
                 '<td style="white-space:nowrap;"><button class="btn-secondary btn-small" onclick="cierresDetalle(\'' + c.dateKey + '\')">🔍 Ver detalle</button> <button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {recalc:true})" title="Vuelve a calcular con los datos de ahora">↻</button></td></tr>' +
-                '<tr class="cl-det" id="cld-' + c.dateKey + '" style="display:none;"><td colspan="11"></td></tr>';
+                '<tr class="cl-det" id="cld-' + c.dateKey + '" style="display:none;"><td colspan="12"></td></tr>';
         }).join('') + '</tbody></table>';
     } catch (_) { if (list) list.textContent = 'Error de conexión'; }
 }
@@ -5907,6 +5909,7 @@ async function cierresDetalle(dk) {
         html += lst('Entradas del banco sin acreditar', it.entradasSinAcreditar, [['hora', 'Hora'], ['de', 'De'], ['monto', 'Monto'], ['estado', 'Estado']]);
         html += lst('Retiros pagados a mano', it.pagosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['via', 'Vía']]);
         html += lst('Cargas de prueba', it.depositosPrueba, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['nota', 'Nota']]);
+        html += lst('Gastos del día', it.gastos, [['hora', 'Hora'], ['usuario', 'Destino'], ['monto', 'Monto'], ['agente', 'Cargó'], ['nota', 'Concepto']]); // #770
         html += '<div class="cl-rec-adj"><details><summary>⚙️ Ajustes manuales del día (comisión, banco, USDT)</summary>' + _cierresAdjHtml(dk) + '</details></div></div>';
         cell.innerHTML = html;
     } catch (e) { cell.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
@@ -6125,6 +6128,37 @@ async function stMakeArt() {
 window.stMakeArt = stMakeArt;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
+// #770: Gastos
+async function loadGastos() {
+    const l = document.getElementById('gsList'), t = document.getElementById('gsTotals'); if (!l) return;
+    l.innerHTML = '<div class="dia-note">Cargando…</div>';
+    try {
+        const r = await authFetch('/api/admin/gastos?days=30'); const j = await r.json(); if (!r.ok) { l.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
+        const m = function (n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); };
+        if (t) t.innerHTML = _diaKpi('Gastos de hoy', m(j.totalHoy)) + _diaKpi('Gastos (30 d)', m(j.total)) + _diaKpi('API del banco', j.apiOk ? '✅ conectada' : '❌ sin token');
+        const items = j.items || [];
+        l.innerHTML = items.length ? '<table class="data-table"><thead><tr><th>Día</th><th>Concepto</th><th>Monto</th><th>Destino</th><th>Cómo</th><th>Estado</th><th>Por</th><th></th></tr></thead><tbody>' + items.map(function (g) { return '<tr><td>' + escapeHtml(g.dateKey) + '</td><td>' + escapeHtml(g.concept) + '</td><td><b>' + m(g.amount) + '</b></td><td><small>' + escapeHtml(g.toName || '') + (g.toCBU ? '<br>' + escapeHtml(g.toCBU) : '') + '</small></td><td>' + (g.paidVia === 'hgcash' ? '🏦 API' : '✍️ a mano') + '</td><td>' + (g.status === 'paid' ? '<span class="cl-st fin">✅ pagado</span>' : (g.status === 'failed' ? '<span class="cl-st bad" title="' + escapeHtml(g.hgError || '') + '">❌ falló</span>' : '⏳')) + '</td><td><small>' + escapeHtml(g.createdBy || '') + '</small></td><td>' + (g.paidVia === 'hgcash' && g.status === 'paid' ? '' : '<button class="btn-secondary btn-small" onclick="gastoBorrar(\'' + g.id + '\')">🗑</button>') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center;">Sin gastos cargados.</div>';
+    } catch (_) { l.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
+}
+async function gastoCrear() {
+    const v = function (id) { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
+    const body = { concept: v('gsConcept'), amount: Number(v('gsAmount')), toCBU: v('gsCbu'), toName: v('gsName'), toCUIT: v('gsCuit'), dateKey: v('gsDate') || undefined, payNow: !!(document.getElementById('gsPayNow') || {}).checked };
+    if (!body.concept || !(body.amount > 0)) { showToast('Concepto y monto', 'error'); return; }
+    if (body.payNow && !confirm('¿Pagar $' + body.amount.toLocaleString('es-AR') + ' por la API del banco a "' + (body.toCbu || body.toCBU) + '"?\n\nLa plata sale de la cuenta ahora y no se puede deshacer.')) return;
+    const msg = document.getElementById('gsMsg'); if (msg) msg.textContent = body.payNow ? 'Pagando…' : 'Guardando…';
+    try {
+        const r = await authFetch('/api/admin/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); if (msg) msg.textContent = '❌ ' + (j.error || ''); return; }
+        showToast(body.payNow ? '💸 Gasto pagado y registrado' : '💸 Gasto registrado', 'success'); if (msg) msg.textContent = '✅ listo';
+        ['gsConcept', 'gsAmount', 'gsCbu', 'gsName', 'gsCuit', 'gsDate'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
+        loadGastos();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function gastoBorrar(id) {
+    if (!confirm('¿Borrar este gasto?')) return;
+    try { const r = await authFetch('/api/admin/gastos/' + encodeURIComponent(id), { method: 'DELETE' }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Gasto borrado', 'success'); loadGastos(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadGastos = loadGastos; window.gastoCrear = gastoCrear; window.gastoBorrar = gastoBorrar;
 // #763: Cargas automáticas — reporte + detalle de cada cliente
 async function loadCargasAuto() {
     const r1 = document.getElementById('caResumen'), l = document.getElementById('caLista'); if (!r1) return;
@@ -11596,7 +11630,7 @@ async function retryRouletteCredit(spinId) {
 function authFetch(url, opts) {
     const o = opts || {};
     o.headers = Object.assign({}, o.headers || {}, { 'Authorization': 'Bearer ' + currentToken });
-    if (/^\/api\/admin\/(datos-ia\/|datos2?(\?|$)|central\/(ingresos|app-users)|campaigns|publisher-admins|publishers\/|influencer-|cierres)/.test(String(url))) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590 · #743: la misma clave para todo lo que es Datos
+    if (/^\/api\/admin\/(datos-ia\/|datos2?(\?|$)|central\/(ingresos|app-users)|campaigns|publisher-admins|publishers\/|influencer-|cierres|gastos)/.test(String(url))) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590 · #743: la misma clave para todo lo que es Datos
     if (o.body && !o.headers['Content-Type']) o.headers['Content-Type'] = 'application/json';
     return fetch(API_URL + url, o);
 }

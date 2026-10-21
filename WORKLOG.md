@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 770. 💸 GASTOS desde el panel (pago por la API del banco o registro) que el cierre descuenta y la conciliación explica — admin-sw v148
+**Pedido (owner):** "los gastos hacemos que se carguen directo desde el admin, abajo de Cargas automáticas, con la API completando
+CBU y poniendo datos, así en el cierre puede figurar bien el detalle; de forma manual pero es un dato que va a servir para el cierre".
+Modelo `Expense` (dateKey, monto, concepto, CBU/alias, titular, CUIT, `paidVia` hgcash|manual, estado, hgId, quién). Rutas (sólo admin
+general + clave de Datos): `GET /api/admin/gastos`, `POST /api/admin/gastos` (con `payNow` paga por `hgcashPay.createCashOut`,
+externalID `gasto-<id>` idempotente, reintento de accountId en 403; si falla queda `failed` con el motivo) y `DELETE` (no si ya se pagó
+por la API). Cada alta recalcula el cierre del día. **Cierre:** `DailyClose.gastos`, `RESULTADO = NETO − comisión − gastos`;
+`_closeReconcile` suma los gastos (por API y a mano), explica las salidas del banco con los pagados por API y lista "Gastos del día" en
+el detalle; columna "Gastos" en la tabla. **Panel:** Atención → 💸 Gastos 🔒 con formulario (concepto, monto, CBU/alias, titular, CUIT,
+fecha, tilde "Pagar ahora por la API") y lista de 30 días con estado.
+
 ### 769. 🧾 Cierres: el día en curso aparece como "Hoy / en curso"
 **Pedido (owner, captura):** "no me figuran los cierres automáticos". Tras la limpieza (#762) los cierres cuentan desde hoy y el
 primero se finaliza mañana, así que la tabla quedaba vacía. `GET /api/admin/cierres` ahora asegura y recalcula el cierre del DÍA EN

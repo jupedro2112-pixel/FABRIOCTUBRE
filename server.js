@@ -6753,7 +6753,7 @@ function _datosPinGate(req, res, next) {
 }
 ['/api/admin/datos', '/api/admin/datos2', '/api/admin/central/ingresos', '/api/admin/central/app-users',
  // #745 (owner): "todo lo que es publicista con clave, y cierres también: es todo privado"
- '/api/admin/campaigns', '/api/admin/publisher-admins', '/api/admin/publishers', '/api/admin/influencer-stories', '/api/admin/influencer-users', '/api/admin/cierres'].forEach((p) => app.use(p, authMiddleware, adminMiddleware, _datosPinGate));
+ '/api/admin/campaigns', '/api/admin/publisher-admins', '/api/admin/publishers', '/api/admin/influencer-stories', '/api/admin/influencer-users', '/api/admin/cierres', '/api/admin/gastos' /* #770 */].forEach((p) => app.use(p, authMiddleware, adminMiddleware, _datosPinGate));
 app.post('/api/admin/bulk-sms/preview', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -19352,6 +19352,56 @@ app.post('/api/admin/cleanup-tests', authMiddleware, adminMiddleware, async (req
     res.json({ success: true, resultado: out });
   } catch (e) { logger.error('[cleanup-tests] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #770 (owner): GASTOS — "que se cargue directo desde el admin, abajo de Cargas automáticas, con la API completando CBU y poniendo
+// datos, así en el cierre puede figurar bien en detalle". Sólo admin general + clave de Datos (está en la lista del gate).
+app.get('/api/admin/gastos', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 30));
+    const since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000));
+    const items = await Expense.find({ dateKey: { $gte: since } }).sort({ createdAt: -1 }).limit(300).lean();
+    const tot = items.filter((g) => g.status !== 'failed').reduce((s, g) => s + (Number(g.amount) || 0), 0);
+    const hoy = datosIa.dateKeyART(new Date()); const totHoy = items.filter((g) => g.dateKey === hoy && g.status !== 'failed').reduce((s, g) => s + (Number(g.amount) || 0), 0);
+    res.json({ success: true, items, total: Math.round(tot), totalHoy: Math.round(totHoy), apiOk: hgcashPay.isEnabled() });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/gastos', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {};
+    const amount = Math.round(Number(b.amount) || 0); if (!(amount >= 1 && amount <= 50000000)) return res.status(400).json({ error: 'Monto inválido' });
+    const concept = String(b.concept || '').trim().slice(0, 120); if (concept.length < 2) return res.status(400).json({ error: 'Poné el concepto del gasto' });
+    const toCBU = String(b.toCBU || '').trim().slice(0, 40) || null, toName = String(b.toName || '').trim().slice(0, 80) || null, toCUIT = String(b.toCUIT || '').replace(/\D/g, '').slice(0, 11) || null;
+    const payNow = b.payNow === true;
+    const dateKey = /^\d{4}-\d{2}-\d{2}$/.test(String(b.dateKey || '')) ? String(b.dateKey) : datosIa.dateKeyART(new Date());
+    const doc = await Expense.create({ id: uuidv4(), dateKey, amount, concept, toCBU, toName, toCUIT, paidVia: payNow ? 'hgcash' : 'manual', status: payNow ? 'paying' : 'paid', createdBy: req.user.username });
+    if (payNow) {
+      if (!hgcashPay.isEnabled()) { await Expense.deleteOne({ id: doc.id }); return res.status(503).json({ error: 'hgcash no está configurado (token de API).' }); }
+      if (!toCBU || !/^(\d{22}|[a-z0-9._-]{6,40})$/i.test(toCBU)) { await Expense.deleteOne({ id: doc.id }); return res.status(400).json({ error: 'Para pagar por la API hace falta el CBU/CVU (22 dígitos) o el alias.' }); }
+      let accountId = await resolveHgcashAccountId();
+      if (!accountId) { await Expense.deleteOne({ id: doc.id }); return res.status(400).json({ error: 'No se pudo determinar la cuenta hgcash a debitar.' }); }
+      const baseUrl = getPublicBaseUrl();
+      const build = (acct) => hgcashPay.createCashOut({ accountId: acct, amount, toCBU, toName: toName || undefined, toCUIT: toCUIT || undefined, concept: ('Gasto - ' + concept + ' - PICA ROJA').slice(0, 100), externalID: ('gasto-' + doc.id).slice(0, 100), webhookUrl: `${baseUrl}/api/hgcash/webhook` });
+      let result = await build(accountId);
+      if (!result.ok && result.httpStatus === 403) { const fresh = await resolveHgcashAccountId({ force: true }); if (fresh && String(fresh) !== String(accountId)) { accountId = fresh; result = await build(accountId); } }
+      if (!result.ok) { await Expense.updateOne({ id: doc.id }, { $set: { status: 'failed', hgError: String(result.error || 'error').slice(0, 300) } }); return res.status(502).json({ error: 'El banco rechazó el pago: ' + String(result.error || 'sin detalle').slice(0, 200), id: doc.id }); }
+      await Expense.updateOne({ id: doc.id }, { $set: { status: 'paid', hgId: (result.data && result.data.id) || null } });
+      try { _bankPayoutOk(); } catch (_) {}
+    }
+    try { await _closeEnsure(dateKey, true); } catch (_) {} // el cierre del día lo toma al instante
+    logger.info(`[gastos] ${req.user.username}: $${amount} "${concept}" ${payNow ? 'pagado por API' : 'registrado'} (${dateKey})`);
+    res.json({ success: true, item: await Expense.findOne({ id: doc.id }).lean() });
+  } catch (e) { logger.error('[gastos] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/gastos/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const g = await Expense.findOne({ id: String(req.params.id) }).lean(); if (!g) return res.status(404).json({ error: 'No existe' });
+    if (g.paidVia === 'hgcash' && g.status === 'paid') return res.status(400).json({ error: 'Ese gasto ya se pagó por la API: no se puede borrar (quedaría la salida del banco sin explicar).' });
+    await Expense.deleteOne({ id: g.id }); try { await _closeEnsure(g.dateKey, true); } catch (_) {}
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #763 (owner): CARGAS AUTOMÁTICAS — "cómo va la carga automática en el sistema: reporte de cuántas hay y el detalle de cada cliente
 // que va cargando". Hoy / 7 días / 30 días: automáticas vs a mano, montos, % de éxito, entradas del banco sin acreditar; y las últimas 150.
 app.get('/api/admin/cargas-auto', authMiddleware, adminMiddleware, async (req, res) => {
@@ -19983,6 +20033,7 @@ app.get('/api/admin/datos-ia/projection', authMiddleware, adminMiddleware, async
 // (o aplica el % por defecto) y la cotización USDT → 'finalizado'. Config['closeConfig'] = { bankCommissionPct, autoUsdt }.
 // ============================================================
 const DailyClose = require('./src/models/DailyClose');
+const Expense = require('./src/models/Expense'); // #770
 const BankBalanceSnapshot = require('./src/models/BankBalanceSnapshot');
 // #502: saldo del banco por API (hgcash GET /accounts). Busca el primer campo numérico que parezca saldo; guarda la cuenta cruda para ver qué informa.
 function _bankBalanceFromAccount(acc) {
@@ -20041,7 +20092,7 @@ function _closeApply(doc, cfg) {
   // comisión: monto a mano > % del día (a mano) > % por defecto sobre depósitos (#501: el % se puede cambiar en cada cierre)
   if (doc.bankCommissionSource === 'manual_pct') { doc.bankCommissionArs = Math.round(doc.depositos * (doc.bankCommissionPct || 0) / 100); }
   else if (doc.bankCommissionSource !== 'manual') { const pct = cfg.bankCommissionPct || 0; doc.bankCommissionPct = pct; doc.bankCommissionArs = Math.round(doc.depositos * pct / 100); doc.bankCommissionSource = pct ? 'default' : null; }
-  doc.resultado = Math.round((doc.neto || 0) - (doc.bankCommissionArs || 0));
+  doc.resultado = Math.round((doc.neto || 0) - (doc.bankCommissionArs || 0) - (doc.gastos || 0)); // #770: − gastos del día
   // #501 ARQUEO: banco (manual > automático) vs sistema
   doc.bankIn = doc.bankInManual != null ? doc.bankInManual : (doc.bankInAuto || 0);
   doc.bankOut = doc.bankOutManual != null ? doc.bankOutManual : (doc.bankOutAuto || 0);
@@ -20105,6 +20156,11 @@ async function _closeReconcile(dayKey) {
   out.banco.entradasDevueltas = sum(bIn.devueltas); out.banco.entradasDupIgn = sum(bIn.dupIgn);
   out.banco.salidas = sum(outs); out.banco.salidasN = outs.length;
   out.items.entradasSinAcreditar = bIn.sinAcreditar.slice(0, 50).map((m) => ({ hora: m.date || m.createdAt, de: m.fromName || null, monto: r0(m.amount), estado: ms(m) || 'pendiente' }));
+  // ---- GASTOS del día (#770): pagados por la API (salen del banco) o registrados a mano
+  const gastos = await Expense.find({ dateKey: dayKey, status: { $ne: 'failed' } }).select('amount concept toName paidVia createdBy createdAt hgId').lean();
+  const gBanco = gastos.filter((g) => g.paidVia === 'hgcash'), gMan = gastos.filter((g) => g.paidVia !== 'hgcash');
+  out.sistema.gastos = sum(gastos); out.sistema.gastosN = gastos.length; out.sistema.gastosBanco = sum(gBanco); out.sistema.gastosManual = sum(gMan);
+  out.items.gastos = gastos.slice(0, 50).map((g) => ({ hora: g.createdAt, usuario: g.toName || '—', monto: r0(g.amount), agente: g.createdBy || null, nota: (g.concept || '') + (g.paidVia === 'hgcash' ? ' · por API' : ' · a mano') }));
   // ---- DIFERENCIA y causas (signo: + = el banco tiene MÁS que el sistema = sobrante; − = faltante)
   const dif = r0((out.banco.entradas - out.banco.salidas) - (out.sistema.depositos - out.sistema.retiros));
   out.diferencia = dif; out.sinDatosBanco = inDay.length === 0;
@@ -20115,8 +20171,9 @@ async function _closeReconcile(dayKey) {
   add('in_devueltas', 'Entradas devueltas al origen (rebote por carga menor al mínimo)', out.banco.entradasDevueltas, +1, 'Entró y se devolvió: la entrada cuenta en el banco pero la salida de la devolución también. Neutro si la devolución salió el mismo día.', 'baja');
   add('in_dup', 'Entradas duplicadas o ignoradas por el sistema', out.banco.entradasDupIgn, +1, 'El banco las informó pero el sistema las descartó (duplicado o ignorado). Verificar que no sean cargas reales.', 'media');
   add('pago_manual', 'Retiros pagados A MANO (por fuera de la API del banco)', out.sistema.pagosManual, +1, 'El sistema los cuenta como retiro pero el banco no registra la salida por API. Si se pagaron desde otra cuenta, es normal; si no, verificar.', 'alta');
-  const salidasOtras = r0(out.banco.salidas - out.sistema.pagosBanco - out.banco.entradasDevueltas);
-  add('out_otras', 'Otras salidas del banco (comisiones, transferencias ajenas a retiros)', salidasOtras, -1, 'Salieron del banco sin ser un retiro de cliente ni una devolución: comisiones del banco u otros pagos.', 'media');
+  add('gastos_banco', 'Gastos pagados por la API del banco (registrados en Gastos)', out.sistema.gastosBanco, -1, 'Salieron del banco como gasto cargado en el panel: explican esa parte de las salidas; se descuentan del resultado del día.', 'baja');
+  const salidasOtras = r0(out.banco.salidas - out.sistema.pagosBanco - out.banco.entradasDevueltas - out.sistema.gastosBanco);
+  add('out_otras', 'Otras salidas del banco (comisiones, transferencias ajenas a retiros)', salidasOtras, -1, 'Salieron del banco sin ser un retiro de cliente, una devolución ni un gasto registrado: comisiones del banco u otros pagos. Si es un gasto, cargalo en Gastos para que quede explicado.', 'media');
   const explicado = r0(out.causas.reduce((s, c) => s + c.impacto, 0));
   out.explicado = explicado; out.sinExplicar = r0(dif - explicado);
   out.causas.sort((a, b) => Math.abs(b.impacto) - Math.abs(a.impacto));
@@ -20133,7 +20190,7 @@ async function _closeEnsure(dayKey, recalc) {
     try { doc = await DailyClose.create({ id: uuidv4(), ...t }); } catch (e) { if (e && e.code === 11000) doc = await DailyClose.findOne({ dateKey: dayKey }); else throw e; }
   } else if (doc.status !== 'finalizado' || recalc) { Object.assign(doc, t, { recalculatedAt: new Date() }); }
   await _closeAttachBalances(doc); _closeApply(doc, cfg);
-  try { doc.detalle = await _closeReconcile(dayKey); doc.markModified('detalle'); } catch (e) { logger.warn('[cierres] conciliación ' + dayKey + ': ' + e.message); }
+  try { doc.detalle = await _closeReconcile(dayKey); doc.markModified('detalle'); doc.gastos = Number(doc.detalle && doc.detalle.sistema && doc.detalle.sistema.gastos) || 0; _closeApply(doc, cfg); } catch (e) { logger.warn('[cierres] conciliación ' + dayKey + ': ' + e.message); } // #770: gastos → resultado
   await doc.save(); return doc;
 }
 // Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).

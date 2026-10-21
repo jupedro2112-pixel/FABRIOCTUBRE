@@ -316,3 +316,8 @@ tr.fin td { opacity: .92; }
 .ca-row { display: flex; justify-content: space-between; font: 600 12px var(--p-font); padding: 2px 0; border-top: 1px dashed var(--p-border); } .ca-row span { color: var(--p-muted); }
 .ca-ver { margin-top: 6px; padding: 5px 8px; border-radius: 8px; font: 800 11.5px var(--p-font); background: var(--p-surface); }
 .ca-ver.ok { background: var(--p-green-soft); color: var(--p-green); } .ca-ver.bad { background: var(--p-amber-soft); color: var(--p-amber); }
+/* #770: Gastos */
+.gs-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; align-items: end; }
+.gs-form label { display: flex; flex-direction: column; gap: 3px; font: 700 11px var(--p-font); color: var(--p-muted); } .gs-form input { width: 100%; }
+.gs-form .gs-chk { flex-direction: row; align-items: center; gap: 6px; font: 800 12px var(--p-font); color: var(--p-text); cursor: pointer; }
+.gs-form .gs-actions { display: flex; align-items: center; gap: 10px; grid-column: 1 / -1; }
