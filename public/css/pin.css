@@ -2083,3 +2083,7 @@ body.home-play .min-strip.ms-play { display: flex; }
 
 /* #690: la franja grande de carga mínima desaparece a partir de la 3ª carga (body.ms-off lo pone home.js) */
 body.ms-off .min-strip, body.ms-off .ms-easy { display: none !important; }
+
+/* #691: "escribinos a Soporte" como link directo dentro de las notas de carga mínima */
+.sup-link { display: inline-block; margin-top: 4px; border: 0; background: var(--p-text); color: var(--p-inv, #fff); font: 800 12px var(--p-font); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.casino-load .sup-link { background: var(--p-red) !important; color: #fff !important; }

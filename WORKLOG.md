@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 691. 💬 "Escribinos a Soporte" con link directo en las notas de carga mínima (cargas y dentro de Girox) — SW v494
+**Pedido (owner):** "en 'escribinos a Soporte' dentro de cargas o de 1girox que sea con el link para entrar directo desde ahí".
+Las notas `.min-note` del paso 1 de la Carga automática y del panel CARGAR del básico terminan con el botón `.sup-link`
+"💬 escribinos a Soporte ›" → `VIP.home.setHomeMode('mini')` (chat de Soporte); la de la Carga rápida del casino → `VIP.home.casinoSupport()`
+(cierra el casino y abre Soporte).
+
 ### 690. 💵 La franja grande de CARGA MÍNIMA se ve hasta la 3ª carga; después desaparece — SW v493
 **Pedido (owner):** "la carga mínima que aparezca hasta la 3ª carga; después, dentro de cargas está ok; que desaparezca, una vez que la
 gente sabe ya está". `/api/first-deposit-promo` devuelve `depositsCount`; `firstGuidePaint` pone `body.ms-off` cuando hay 3 o más cargas
