@@ -2070,3 +2070,6 @@ body.home-play .fg-card.fg-basic { display: none !important; }
 .min-strip.ms-play { display: none; }
 body.home-play .min-strip.ms-play { display: flex; }
 .min-strip.ms-basic { margin: 0 0 10px; }
+
+/* #687: Ir a Soporte dentro de la Carga rápida del casino */
+.casino-load .cl-btn.cl-sup { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; margin-top: 6px !important; }

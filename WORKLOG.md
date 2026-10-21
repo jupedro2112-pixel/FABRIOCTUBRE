@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 687. 💬 Botón "Ir a Soporte" dentro de la Carga rápida del casino — SW v490
+**Pedido (owner):** "el de soporte dentro de Girox que sea un botón para ir a Soporte directo". En el panel de Carga rápida del casino
+embebido (`toggleCasinoLoad`), debajo de Adjuntar comprobante y Retirar premio, botón `.cl-btn.cl-sup` "💬 Ir a Soporte" →
+`VIP.home.casinoSupport()`: cierra el casino (`VIP.ui.closeCasinoFrame`) y abre el chat de Soporte (`setHomeMode('mini')`).
+
 ### 686. 💵 CARGA MÍNIMA bien grande en los botones de cargar (Inicio, básico, intermedio) y en las dos landings al registrarse — SW v489
 **Pedido (owner):** "en /landing mostrá bien la carga mínima, es importante, ponelo una vez que se registran" · "en la app ponelo en el
 Inicio donde dice cargar, bien grande que se vea; así la gente carga porque es una página automática y no quiero trabas". **App:**
