@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 701. 🎰 Barra del casino en UNA línea, formato de la barra principal, sin "Estás en Girox" — SW v499
+**Pedido (owner, captura):** "usá el mismo formato de la página principal: Menú con las 3 líneas chiquito, Perfil e Info igual,
+mismo estilo que el menú principal; que todo entre en una línea, no quiero sacarle lugar a la página de juego; el texto 'estás en
+Girox · para cambiar, salí' sacalo". `renderCasinoTabs`: una sola fila ‹ Volver · (espacio) · Historias (anillo `st-ring` con
+contador) · Menú (☰) · Info · Perfil, con las mismas clases `tn-btn/tn-ico/tn-lbl` y los mismos SVG de la cabecera; sin título.
+CSS en pin.css replica las reglas de `.header .tn-btn` dentro de `.casino-topbar` (transparente, color nav, etiqueta 7,5 px, sin
+clip-path). Se fueron `.ct-btn/.ct-ring/.ct-badge` de #700.
+
 ### 700. 🎰 Barra del casino con Historias · Menú completo · Info · Perfil — SW v498
 **Pedido (owner):** "en Girox directo que estén en la parte superior las historias y el menú completo como botón, para que la gente
 pueda ver todo; agregá también la info del servicio y el perfil". Segunda fila en `#casinoTopBar` (home.js `renderCasinoTabs`), en

@@ -1979,27 +1979,21 @@
                 '<div id="casinoTopBar" class="casino-topbar">' +
                   '<div class="casino-topbar-row">' +
                     '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver</button>' +
-                    '<span class="casino-topbar-title" id="casinoTopTitle"></span>' +
-                  '</div>' +
-                  // #700 (owner): "en Girox directo que estén arriba las historias, el menú completo como botón, la info del servicio y el
-                  // perfil, para que la gente pueda ver todo". Fila de accesos en la barra del casino (en todos los casinos embebidos).
-                  '<div class="casino-topbar-row casino-topbar-row2">' +
-                    '<button type="button" class="ct-btn ct-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="ct-ring"><span class="ct-core">▶</span><span class="ct-badge" id="ctStoriesBadge" style="display:none">1</span></span>Historias</button>' +
-                    '<button type="button" class="ct-btn ct-full" onclick="VIP.home.casinoFullMenu()" title="Ver el menú completo de la app">☰ Menú completo</button>' +
-                    '<button type="button" class="ct-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio">ℹ️ Info</button>' +
-                    '<button type="button" class="ct-btn" onclick="VIP.home.openProfile()" title="Tu perfil">👤 Perfil</button>' +
+                    // #700/#701 (owner): accesos en UNA sola línea con el mismo formato de la barra principal (ícono + etiqueta chica):
+                    // Historias · Menú · Info · Perfil. Sin el texto "Estás en Girox · para cambiar, salí" (#701: le sacaba lugar al juego).
+                    '<span class="casino-topbar-sp"></span>' +
+                    '<button type="button" class="tn-btn tn-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" id="ctStoriesBadge" style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
+                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoFullMenu()" title="Ver el menú completo de la app"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tn-lbl">Menú</span></button>' +
+                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span></button>' +
+                    '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>' +
                   '</div>' +
                 '</div>');
             bar = _el('casinoTopBar');
         }
         // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
-        try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-new', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
+        try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-active', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
         document.body.classList.add('casino-open'); // #700: los modales (Info, Perfil, historias…) van por encima del casino
-        const list = (_platforms && _platforms.platforms) || [{ id: 'girox', name: 'Girox', connected: true }];
-        const current = (VIP.ui && VIP.ui._casinoPlatform) || 'girox';
-        const p = list.find((x) => x.id === current) || { name: current };
-        const nm = /^jugaygana$/i.test(String(p.name || '')) ? 'Jugaygana' : String(p.name || '');
-        const t = _el('casinoTopTitle'); if (t) t.textContent = 'Estás en ' + nm + ' · para cambiar, salí';
+        // (#701: ya no se pinta el título "Estás en <plataforma> · para cambiar, salí")
     }
     function switchPlatform(platformId) {
         openPlatform(platformId);
