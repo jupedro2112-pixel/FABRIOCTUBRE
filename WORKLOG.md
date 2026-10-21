@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 686. 💵 CARGA MÍNIMA bien grande en los botones de cargar (Inicio, básico, intermedio) y en las dos landings al registrarse — SW v489
+**Pedido (owner):** "en /landing mostrá bien la carga mínima, es importante, ponelo una vez que se registran" · "en la app ponelo en el
+Inicio donde dice cargar, bien grande que se vea; así la gente carga porque es una página automática y no quiero trabas". **App:**
+franja `.min-strip` ("💵 CARGA MÍNIMA · $5.000 (22px) · con ese monto o más se acredita sola · con menos, Soporte") debajo de CARGÁ
+AHORA en el Inicio del completo (`.ms-play`, sólo modo play), arriba del botón CARGAR del básico (`.ms-basic`) y "· mínimo $5.000" en
+el subtítulo de CARGAR AHORA del intermedio. Para TODOS (no sólo primera carga); el monto lo pinta `_paintMinDeposit` (`.md-amt`).
+**Landings:** `public/landing/index.html` (/l/:code, /ingreso): caja amarilla `.minbox` en la pantalla "¡Cuenta creada!" (entre las
+plataformas y Continuar) + "mínimo $5.000" en el paso 1 de "¿Cómo funciona?"; `landing/index.html` (Vercel, grupospicaroja.com): misma
+caja debajo de "Guardá tu usuario y clave". Ambas pintan el monto real de `/api/landing/info` (`.minAmt`). ⚠️ La de Vercel se
+despliega aparte (carpeta `landing/`): hay que redeployarla en Vercel para que se vea.
+**Aviso automático (owner: "cuando detecte una carga menor a 5.000 que le mande solo un mensaje para que se contacte con Soporte"):**
+en el match hgcash (server.js, bloque "MÍNIMO DE CARGA") el mínimo que manda ahora es `max(hgcash.minChargeARS, Config['minDepositArs'])`
+(antes sólo el de hgcash, $2.000) y, además de la nota al agente, se le manda al cliente un mensaje de sistema + push con
+`/sys_below_min` (nuevo en COMANDOS, variables `{monto}` y `{min}`; default: "Recibimos tu transferencia de $X, pero la CARGA MÍNIMA
+es de $5.000, así que no se acreditó sola. Escribinos por Soporte y vemos tu caso (podés completar la diferencia…)"). El movimiento
+sigue en `needs_review` para que el agente lo cargue a mano cuando se complete.
+
 ### 685. 📄 Bases y condiciones también al pie del Perfil — SW v488
 **Pedido (owner):** "pasame el archivo acá y subilo al Perfil, ponelo abajo de todo". Link `.pf-terms` ("📄 Bases y condiciones del
 servicio ›", abre `/terminos.html` en pestaña nueva) como último elemento del `#profileModal` (después de Cerrar sesión). El archivo se

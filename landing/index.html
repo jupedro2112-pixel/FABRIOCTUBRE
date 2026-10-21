@@ -274,6 +274,8 @@
         <div class="row"><span class="k">Clave</span><span class="v gold" id="outPass">—</span></div>
       </div>
       <div class="save-note">📌 Guardá tu usuario y clave para volver a entrar cuando quieras.</div>
+      <!-- #686 (owner): carga mínima IMPORTANTE apenas se registra -->
+      <div class="save-note" style="background:#fff7d6;border-left:5px solid #ffb300;color:#111;font-size:14px;line-height:1.4;"><b style="font-size:16px;">💵 Carga mínima: <span class="minAmt">$5.000</span></b><br>Con <span class="minAmt">$5.000</span> o más la carga se acredita <b>sola</b>. Si cargás menos, escribinos por <b>Soporte</b> en la app y vemos tu caso.</div>
       <button class="cta" id="enterBtn" type="button">ENTRAR A MI CUENTA →</button>
     </section>
   </main>
@@ -362,6 +364,7 @@
   try {
     fetch(API_BASE + '/api/landing/info').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) return;
+      try { var md = Number(d.minDepositArs); if (md > 0) { var t = '$' + md.toLocaleString('es-AR'); document.querySelectorAll('.minAmt').forEach(function (e) { e.textContent = t; }); } } catch (e) {} // #686
       if (Array.isArray(d.platforms) && d.platforms.length) paintPlats(d.platforms);
       // #555: títulos y detalles de los servicios desde el panel (los que están apagados no se muestran)
       if (Array.isArray(d.services)) {

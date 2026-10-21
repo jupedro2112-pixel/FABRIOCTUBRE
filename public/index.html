@@ -1112,6 +1112,8 @@
                  Debajo va lo de instalar la app (negro) / bono. home.js (setHomeMode) mueve las píldoras acá en el Inicio y al lado de "Cambiar menú" en el básico. -->
             <!-- #641 (owner): CARGÁ AHORA grande y centrado, debajo de la barra superior y arriba del nivel VIP (sólo en el Inicio). Antes vivía en el carrusel. -->
             <button type="button" class="ev-cta ev-cta-top" id="evCtaTop" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">transferís, mandás la foto y se acredita solo</span></button>
+            <!-- #686 (owner): carga mínima BIEN GRANDE debajo de CARGÁ AHORA (todos, no sólo primera carga): "la página es automática, no quiero trabas" -->
+            <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · con menos, Soporte</span></div>
             <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
                  CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
             <div class="fg-card" id="firstGuide" hidden>
@@ -1218,7 +1220,7 @@
                 <div class="dep-pending-strip" hidden></div>
                 <button type="button" class="ez-main" onclick="VIP.home.easyLoad()" title="Carga automática">
                     <span class="ez-main-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></span>
-                    <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo</small></span>
+                    <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo · <b>mínimo <span class="md-amt">$5.000</span></b></small></span>
                     <span class="ez-main-arrow">›</span>
                 </button>
                 <!-- #504: bono de SEGUNDA carga vigente (lo pinta home.js con /api/strategy/me) -->
@@ -1263,6 +1265,7 @@
                     <i class="fg-arrow fg-arrow-down" aria-hidden="true"></i>
                 </div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
+                <div class="min-strip ms-basic"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · con menos, Soporte</span></div><!-- #686 -->
                 <button type="button" class="bv-btn bv-load" id="bvLoadBtn" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
                     <ol class="bv-steps">
@@ -2567,7 +2570,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v488</div>
+                    <div class="pf-build" id="appBuildTag">app v489</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

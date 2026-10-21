@@ -61,6 +61,8 @@
   .btn.green { font-size: 17px; }
   .btn.ghost { background: var(--surface); color: var(--text); font-size: 14px; padding: 13px; font-weight: 800; }
   .hint { font-size: 11px; font-weight: 500; color: var(--muted); }
+  .minbox { margin: 12px 0 6px; padding: 12px 14px; border-radius: 14px; background: #fff7d6; border-left: 5px solid #ffb300; color: #111; font-size: 13px; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; }
+  .minbox > b { font-size: 16px; }
   .err { color: #c21a2c; font-size: 13px; font-weight: 700; display: none; }
   .trustrow { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 12px; font-weight: 600; color: var(--muted); }
   .trustrow span { display: inline-flex; align-items: center; gap: 5px; } .trustrow i { width: 5px; height: 5px; border-radius: 50%; background: #25d366; }
@@ -160,6 +162,8 @@
     <div class="row"><span class="k">Usuario</span><span class="v" id="outUser">—</span><button type="button" class="cp" data-copy="outUser">Copiar</button></div>
     <div class="row"><span class="k">Clave</span><span class="v" id="outPass">—</span><button type="button" class="cp" data-copy="outPass">Copiar</button></div>
     <div class="plats" id="outPlats"></div>
+    <!-- #686 (owner): carga mínima IMPORTANTE apenas se registra -->
+    <div class="minbox" id="minBox">💵 <b>Carga mínima: <span class="minAmt">$5.000</span></b><span>Con <span class="minAmt">$5.000</span> o más la carga se acredita <b>sola</b>. Si cargás menos, escribinos por <b>Soporte</b> en la app y vemos tu caso.</span></div>
     <div class="actions">
       <button type="button" class="btn green" id="continue">Continuar a mi cuenta</button>
       <button type="button" class="btn ghost" id="capture">📸 Guardar captura de mis datos</button>
@@ -176,7 +180,7 @@
     </div>
     <div class="blk">
       <h3>¿Cómo funciona?</h3>
-      <div class="step"><b class="n">1</b><p><b>Cargás solo:</b> en tu cuenta tenés el CBU vigente. Transferís, mandás la foto del comprobante y la carga entra automática.</p></div>
+      <div class="step"><b class="n">1</b><p><b>Cargás solo:</b> en tu cuenta tenés el CBU vigente. Transferís (mínimo <b class="minAmt">$5.000</b>), mandás la foto del comprobante y la carga entra automática.</p></div>
       <div class="step"><b class="n">2</b><p id="stepPlat"><b>Elegís dónde jugar:</b> cuando llega tu transferencia te preguntamos en qué plataforma querés el saldo.</p></div>
       <div class="step"><b class="n">3</b><p><b>Retirás cuando quieras:</b> desde el botón "Retirar mi premio", te lo pagamos a tu CBU.</p></div>
     </div>
@@ -250,6 +254,7 @@
   function esc(s) { var d = document.createElement('div'); d.textContent = String(s == null ? '' : s); return d.innerHTML; }
   function paintInfo() {
     if (!info) return;
+    try { var md = Number(info.minDepositArs); if (md > 0) { var t = '$' + md.toLocaleString('es-AR'); document.querySelectorAll('.minAmt').forEach(function (e) { e.textContent = t; }); } } catch (e) {} // #686
     var plats = info.platforms || [];
     var pl = $('platLogos');
     if (pl) {

@@ -2061,3 +2061,12 @@ body.home-play .fg-card.fg-basic { display: none !important; }
 
 /* #685: Bases y condiciones al pie del Perfil */
 .pf-terms { display: block; text-align: center; margin: 14px 0 4px; padding: 10px; border-radius: 12px; background: var(--p-surface); color: var(--p-text); font: 700 12.5px var(--p-font); text-decoration: none; }
+
+/* ── #686 (owner): CARGA MÍNIMA bien grande en los botones de cargar (Inicio, básico, intermedio) ── */
+.min-strip { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; margin: 8px 12px 0; padding: 10px 12px; border-radius: 14px; background: var(--p-green-soft, #e8f5ee); border: 1.5px solid var(--p-green, #0a7a3e); }
+.min-strip .ms-k { font: 900 13px var(--p-font); letter-spacing: .6px; color: var(--p-green, #0a7a3e); }
+.min-strip .md-amt { font: 900 22px var(--p-font); color: var(--p-text); letter-spacing: -.3px; }
+.min-strip .ms-t { flex: 1 0 100%; text-align: center; font: 700 12px var(--p-font); color: var(--p-text-2, var(--p-text)); }
+.min-strip.ms-play { display: none; }
+body.home-play .min-strip.ms-play { display: flex; }
+.min-strip.ms-basic { margin: 0 0 10px; }

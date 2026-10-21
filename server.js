@@ -2553,8 +2553,15 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
   // movimiento en needs_review (lo consume la carga manual; no se pierde plata).
   try {
     const _minCfg = await getHgcashConfig();
-    const minCharge = Number(_minCfg.minChargeARS) > 0 ? Number(_minCfg.minChargeARS) : 2000;
+    // #686 (owner): el mínimo que manda es la CARGA MÍNIMA de la app (Config['minDepositArs'], $5.000), nunca menos que el de hgcash
+    let _appMin = 0; try { _appMin = Number(await getMinDepositArs()) || 0; } catch (_) {}
+    const minCharge = Math.max(Number(_minCfg.minChargeARS) > 0 ? Number(_minCfg.minChargeARS) : 2000, _appMin);
     if (Number(amount) < minCharge) {
+      // #686 (owner): avisarle AL CLIENTE automáticamente que contacte a Soporte (texto editable en COMANDOS: /sys_below_min)
+      try {
+        const txt = await renderSystemCommand('/sys_below_min', BELOW_MIN_DEFAULT, { monto: Number(amount).toLocaleString('es-AR'), min: minCharge.toLocaleString('es-AR') });
+        if (txt) await _sendUserSystemMessage(user, txt, { metadata: { kind: 'below_min', movementId: movement.movementId, amount: Number(amount), min: minCharge }, push: { title: '⚠️ Tu carga es menor al mínimo', body: `Recibimos $${Number(amount).toLocaleString('es-AR')}; la carga mínima es $${minCharge.toLocaleString('es-AR')}. Escribinos por Soporte.`, data: { tag: 'below_min' } } });
+      } catch (e) { logger.warn(`[hgcash] aviso bajo mínimo al cliente falló: ${e.message}`); }
       await BankMovement.updateOne({ movementId: movement.movementId },
         { $set: { matchStatus: 'needs_review', matchedUserId: user.id, matchedUsername: user.username, matchedComprobanteId: comprobante.id, chargeError: `monto $${Number(amount)} menor al mínimo $${minCharge}` } });
       await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'needs_review', matchedMovementId: movement.movementId } });
@@ -12372,6 +12379,12 @@ async function initializeData() {
       type: 'message',
       response: LOAD_BTN_SUB_DEFAULT
     },
+    { // #686 (owner): llegó una transferencia MENOR a la carga mínima → aviso automático al cliente
+      name: '/sys_below_min',
+      description: 'Aviso automático al cliente cuando su transferencia es MENOR a la carga mínima (no se acredita sola). Variables: {monto}, {min}.',
+      type: 'message',
+      response: BELOW_MIN_DEFAULT
+    },
     {
       name: '/sys_withdraw_btn',
       description: 'Botón "Retirar premio" (carga automática): título. Variables: {min}, {retiro_min}.',
@@ -13375,6 +13388,8 @@ async function _bankPayoutOk() {
   } catch (_) {}
 }
 const LOAD_BTN_DEFAULT = 'Comprobante aquí'; // #391 (antes 'Adjuntar comprobante aquí')
+// #686: transferencia menor a la carga mínima → mensaje automático al cliente
+const BELOW_MIN_DEFAULT = '⚠️ Recibimos tu transferencia de ${monto}, pero la CARGA MÍNIMA es de ${min}, así que no se acreditó sola.\n\n👉 Escribinos por Soporte y vemos tu caso (podés completar la diferencia con otra transferencia y la cargamos juntas).';
 const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';
 const WITHDRAW_BTN_DEFAULT = 'Retirar premio';
 const WITHDRAW_BTN_SUB_DEFAULT = 'Mínimo {retiro_min} · pago automático'; // #391: corto y legible
