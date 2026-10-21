@@ -1324,3 +1324,25 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   y `warnings`. `POST /api/admin/payouts/review-config` (admin). Aprobar/rechazar reusan `/pay` y `/cancel`.
 - ⚠️ Un cambio en el flujo de pago va en `_payPendingPayout` (lo usan el botón y el automático).
 
+
+## Anexo 2026-10-21 — cambios #666 a #681 (ruleta, menús, iPhone, guías)
+
+- **Ruleta (#677):** el gate "activo" (`_rouletteIsActiveThisWeek`, nombre histórico) suma las cargas reales de HOY (día ART) y
+  exige `Config['dailyRoulette'].minDepositArs` (default `ROULETTE_MIN_DEPOSIT_DEFAULT` 10.000; 0 = carga mínima general); `status`
+  devuelve `todayLoaded`. Pesos default `ROULETTE_PRIZES_2026_10_18`: +20% 50 · +50% 22 · +100% 3 · $5.000 4,9 · $100.000 0,1 · nada 20
+  (#679). **Lista de ganadores (#666/#667):** `/api/roulette/recent-winners` mezcla ganadores reales del día (plata y % extra) con
+  entradas de ejemplo determinísticas por `dateKey` (`_rouletteSimWinners`, memo 60 s #681; turnos cada `Config['rouletteFeedSim'].slotMin`
+  min sorteados con los pesos reales; `{enabled:false}` las apaga); nombres "***cas12*". Premios resumidos en una línea (#668).
+- **Menús (#670/#678):** 4º menú `girox` ("Girox directo") en `MENU_ORDER`/`Config['menusEnabled']`: modo play + `_giroxDirect()` →
+  `openPlatform(pref|girox, { embed: true })` (casino embebido con SSO aunque no sea standalone) + Carga rápida con botón **Retirar**
+  (`VIP.home.casinoWithdraw` → `#withdrawModal` z-index 100001 sobre el overlay 99999). NO se guarda como `vip_menu_pref` salvo "Dejar fijo".
+- **iPhone con sesión (#673):** `GET /manifest.json?a=<token>&menu=…&fixed=1` (ruta ANTES de `express.static`) pone el `start_url`;
+  `POST /api/auth/install-link` emite un token de acceso de un solo uso con `User.accessLinkPurpose='install'` (el canje no fuerza
+  cambio de clave); home.js `installManifestSync` (sólo iOS no standalone; cache 7 d en `vip_install_tok`); auth.js `tryAccessLink`
+  guarda `menu`/`fixed` e ignora `?acceso=` si ya hay `userToken`.
+- **Guía de primera carga (#675):** `#firstGuide` (Inicio completo, flecha a `#evCtaTop`) y `#firstGuideBasic` (básico, flecha a
+  `#bvLoadBtn`), visibles con `noDeposits` de `/api/first-deposit-promo`, ✕ = `localStorage vip_fguide_off`.
+- **Historias (#674/#676/#680):** 8 fotos `st2-*.png` (orden: instalar · cargá · referidos · reembolsos · ruleta · misiones · Telegram ·
+  SMS), link `app:instalar` → `VIP.appTest.doInstall()`. Generador: `scratchpad/gen_stories.py` (no está en el repo; cada foto se
+  regenera con su argumento `install|sms|ruleta|telegram`).
+- **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.

@@ -21951,7 +21951,14 @@ app.post('/api/admin/roulette/reset-daily', authMiddleware, adminMiddleware, asy
 // #666: ganadores simulados de la ruleta (ver comentario en /api/roulette/recent-winners). Determinístico por `dateKey`:
 // turnos cada `slotMin` minutos desde las 00:00 ART; cada turno sortea con los pesos reales (incluido "sin premio"), así la
 // frecuencia y los montos respetan los márgenes configurados. Premios en plata y en % (#667).
+let _rlSimMemo = { key: null, at: 0, out: [] }; // #681: la app consulta cada 30 s por cliente → se memoriza 60 s (2 lecturas de Config menos por pedido)
 async function _rouletteSimWinners(dateKey, nowMs) {
+  if (_rlSimMemo.key === dateKey && nowMs - _rlSimMemo.at < 60000) return _rlSimMemo.out;
+  const out = await _rouletteSimWinnersBuild(dateKey, nowMs);
+  _rlSimMemo = { key: dateKey, at: nowMs, out };
+  return out;
+}
+async function _rouletteSimWinnersBuild(dateKey, nowMs) {
   let simCfg = null; try { simCfg = await getConfig('rouletteFeedSim', null); } catch (_) {}
   if (simCfg && simCfg.enabled === false) return [];
   const slotMin = Math.max(3, Math.min(120, Number(simCfg && simCfg.slotMin) || 10));

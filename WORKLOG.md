@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 681. 🔍 Segunda revisión de punta a punta (todo lo de #666 a #680) antes de subir + memo de ganadores de ejemplo
+**Pedido (owner):** "revisá que esté todo ok, seguridad y todo bien fino que quiero subir; si hay fallas de algo o está todo optimizado".
+**OK:** sintaxis de server/src/config/js/panel/SW; HTML de app y panel sin etiquetas desbalanceadas ni ids repetidos; CSS balanceado;
+139 handlers inline de la app y 341 del panel resuelven; versiones app v485 = SW v485, admin-sw v137, bundles con `immutable` en
+Render; secretos: ninguno. **Rutas nuevas probadas en Render:** `/api/roulette/recent-winners` 401 sin token; `/api/auth/install-link`
+401 sin token / 200 usuario / 403 admin; `daily-roulette` y `menus-enabled` 403 para usuario común; `/manifest.json` con basura en `a` y
+`menu` devuelve el `start_url` de siempre (regex estricta, JSON, no-store). Estado vivo: 8 historias en orden, ruleta $10.000/día con
+`todayLoaded`, menús con `girox`. **Optimización:** `_rouletteSimWinners` memoriza 60 s por día (la app lo pide cada 30 s por cliente:
+se ahorran 2 lecturas de Config por pedido). **Docs:** `docs/ARCHITECTURE.md` suma el anexo 2026-10-21 con #666–#681 (ruleta por día y
+lista de ganadores, menú Girox directo, iPhone con sesión, guía de primera carga, historias, gate de Datos IA).
+**Sin fallas encontradas.** Pendiente de decisión (no es bug): regla "la carga se juega ×1 antes de retirar" (#679).
+
 ### 680. 📖 Historia de Telegram rediseñada: canal oficial, plata por código todas las semanas, novedades y regalos exclusivos
 **Pedido (owner, captura):** "hacela mejor, con más estilo, no tan así; que dé predominancia a entrar a Telegram y a los beneficios de
 lo que publicamos: regalamos plata por código todas las semanas y nuestras novedades". **Foto** `st2-7.png` (gen_stories.py `s7`
