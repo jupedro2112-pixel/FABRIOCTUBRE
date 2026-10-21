@@ -15810,6 +15810,20 @@ async function saveGiroxCredentials() {
         loadGiroxCredentials(); try { loadPlatToggles(); } catch (_) {}
     } catch (_) { if (m) { m.style.color = '#ff8080'; m.textContent = '❌ Error de conexión'; } }
 }
+// #698: diagnóstico de la Partner API (health: ¿la key es válida? ¿responde?) + ring buffer de errores del servidor (/api/admin/diag),
+// pensado para pegar el resultado en el chat sin tener que tipear URLs con la cookie (las URLs tipeadas no llevan el token del panel).
+async function giroxDiag() {
+    const m = document.getElementById('giroxDiagMsg'), out = document.getElementById('giroxDiagOut');
+    if (m) { m.style.color = '#aaa'; m.textContent = 'Consultando…'; }
+    if (out) { out.style.display = 'none'; out.textContent = ''; }
+    const res = {};
+    try { const r = await authFetch('/api/admin/girox/health'); res.health = await r.json().catch(() => ({ httpStatus: r.status })); } catch (e) { res.health = { error: 'sin conexión: ' + e.message }; }
+    try { const r = await authFetch('/api/admin/diag'); res.servidor = await r.json().catch(() => ({ httpStatus: r.status })); } catch (e) { res.servidor = { error: 'sin conexión: ' + e.message }; }
+    const h = res.health || {}; const okKey = h.pruebas && /^OK/.test(String(h.pruebas.consultaJugador || ''));
+    if (m) { m.style.color = okKey ? '#66ff99' : '#ff8080'; m.textContent = okKey ? '✅ La API responde y la key es válida' : ('❌ ' + ((h.pruebas && h.pruebas.consultaJugador) || h.diagnostico || h.error || 'sin respuesta')); }
+    if (out) { out.textContent = JSON.stringify(res, null, 2); out.style.display = ''; }
+}
+window.giroxDiag = giroxDiag;
 async function clearGiroxCredentials() {
     if (!confirm('¿Borrar la API key cargada en el panel y volver a las variables del servidor?')) return;
     const m = document.getElementById('giroxCredMsg');

@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 698. 🩺 Panel: botón "Diagnóstico de 1girox y del servidor" — admin-sw v139
+**Motivo:** para cerrar #697 hacía falta el resultado de `GET /api/admin/girox/health`, pero tipear la URL en el navegador responde
+"Token no proporcionado" (el panel manda el token por header desde memoria; la cookie `Path=/api; SameSite=Strict` no acompaña una
+URL tipeada). Ahora en COMANDOS → Banco automático → "🎰 API de 1girox" hay un botón **🩺 Diagnóstico** (`giroxDiag()`, admin.js)
+que consulta el health (¿la key es válida? ¿responde la API?) y `/api/admin/diag` (uptime, memoria, últimos 20 errores, incl. los
+fallos del SSO de #696) y muestra el JSON en un recuadro para copiar y pegar.
+
 ### 697. 🎰 CAUSA del "error 502" del casino en producción: la Partner API de 1girox falla y Cloudflare tapa nuestro mensaje
 **Reproducido desde acá** con un usuario de prueba de producción (credenciales sólo en el chat): `POST /api/platform/session`
 {platform:'girox'} → 502 en 2,5 s con cuerpo `error code: 502` (texto plano de Cloudflare); el mismo POST con {platform:'ganamos'}
