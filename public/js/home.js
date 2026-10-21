@@ -1181,7 +1181,8 @@
         // #563 (owner): es una BURBUJA temporal (no tapa el inicio): se va sola a los 15 s. Si traía la oferta del extra por instalar,
         // queda el botón negro grande arriba de "Cambiar menú" ("lo instalo después").
         clearTimeout(_pnTimer);
-        _pnTimer = setTimeout(() => { try { if (card.dataset.gift === '1') playNowLater(); else hidePlayNow(); } catch (_) {} }, 15000);
+        // #727 (owner): con el extra por instalar, el cartel se QUEDA hasta que elija (instalar / jugar ahora / lo cargo después); sin regalo, 15 s.
+        if (card.dataset.gift !== '1') _pnTimer = setTimeout(() => { try { hidePlayNow(); } catch (_) {} }, 15000);
     }
     let _pnTimer = null;
     // #294: "Después" / "Seguir jugando": si el cartel trae la oferta del extra, queda PENDIENTE (barra de abajo).
@@ -1199,6 +1200,7 @@
     function playNow(pid) {
         hidePlayNow();
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
+        try { if (VIP.ui && VIP.ui._casinoOpen) return; } catch (_) {} // #727: ya está adentro del casino → sólo se cierra el cartel
         openPlatform(pid || 'girox'); // #695: siempre adentro (con Carga rápida)
     }
     // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.
@@ -1247,7 +1249,19 @@
     function _igExtraPct() { const e = _fdJ && Number(_fdJ.extra); return e > 0 ? Math.round(e) + '%' : (_igPct(_ig) || ''); }
     // #722 (owner): la barra fija de #719 se ELIMINÓ ("está mal"): el aviso de instalar funciona como en el menú completo (la oferta se
     // queda hasta que elijan instalar o después) y "después" vive como botón en la Carga rápida, abajo de Soporte.
-    function _igPaintCasinoBar() { try { const b = _el('casinoIgBar'); if (b) b.remove(); const ov = _el('casinoOverlay'); if (ov) ov.classList.remove('has-ig'); } catch (_) {} }
+    function _igPaintCasinoBar() {
+        // #727 (owner): si eligió "lo cargo después", recordatorio abajo del casino: tiene pendiente el 50% de su última carga.
+        try {
+            const ov = _el('casinoOverlay'); if (!ov) return;
+            let bar = _el('casinoIgBar');
+            const show = _igPending() && !_isStandalone() && !ov.classList.contains('casino-test');
+            if (!show) { if (bar) bar.remove(); ov.classList.remove('has-ig'); return; }
+            if (!bar) { ov.insertAdjacentHTML('beforeend', '<button type="button" id="casinoIgBar" class="casino-ig" onclick="VIP.home.installGiftOpen()"></button>'); bar = _el('casinoIgBar'); }
+            const pct = _igPct(_ig);
+            bar.innerHTML = '<span class="cig-k">Pendiente</span><span class="cig-t">Tenés <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ' de tu última carga)' : '') + ' por instalar la app</span><span class="cig-go">Instalar ›</span>';
+            ov.classList.add('has-ig');
+        } catch (_) {}
+    }
     function casinoInstall() { if (_igPending()) installGiftOpen(); else { try { VIP.appTest.doInstall(); } catch (_) {} } }
     // #722: botón de instalar dentro de la Carga rápida (abajo de "Ir a Soporte"), sólo sin app instalada: con extra pendiente muestra el
     // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
@@ -1945,7 +1959,20 @@
         // #722 (owner): con la carga acreditada, si el server ofreció el extra por instalar (primera carga sin la app), se muestra LA
         // MISMA hoja del menú completo (Instalar ahora / Ahora quiero jugar) y se queda hasta que elijan. Si elige "después", el botón
         // queda en la Carga rápida (bajo Soporte). Si no hay oferta, va el cartel "¡Buena suerte!" de 5 s.
-        try { const { ok, j } = await _igFetch('/api/install-gift/status'); if (ok && j) { _ig = j; _igPaintBar(); if (!_isStandalone() && j.status === 'offered' && Number(j.amount) > 0) { try { toggleCasinoLoad(false); } catch (_) {} showInstallGift(j); return; } } } catch (_) {}
+        try {
+            const { ok, j } = await _igFetch('/api/install-gift/status');
+            if (ok && j) {
+                _ig = j; _igPaintBar();
+                if (!_isStandalone() && j.status === 'offered' && Number(j.amount) > 0) {
+                    try { toggleCasinoLoad(false); } catch (_) {}
+                    // #727 (owner): el mismo cartel del menú completo ("¡Entró tu carga de $X!" + "+50% extra por instalar la app" + Jugar ahora /
+                    // Seguir jugando · lo cargo después), con el monto de ESTA carga; se queda hasta que elija.
+                    _lastDeposit = { platform: 'girox', amount: Number(d && d.amount) || 0, bonus: 0 };
+                    showPlayNow(Object.assign({}, _lastDeposit, { gift: j }));
+                    return;
+                }
+            }
+        } catch (_) {}
         try { toggleCasinoLoad(false); } catch (_) {} // #723 (owner): tras la carga se cierra el panel y listo
         let n = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}

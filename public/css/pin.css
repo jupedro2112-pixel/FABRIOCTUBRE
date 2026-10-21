@@ -2172,3 +2172,13 @@ body.casino-open .test-btns .test-dep-btn { padding: 5px 8px; font-size: 10px; }
 /* #726 (owner): la barra de instalar de la base ("PICA ROJA oficial · Instalar · ✕", #618) se ve TAMBIÉN dentro del casino, igual que en toda la app */
 body.casino-open .pwa-install-bar { z-index: 100000 !important; }
 body.has-install-bar.casino-open .casino-load { bottom: calc(152px + env(safe-area-inset-bottom, 0px)) !important; }
+/* #727 (owner): recordatorio "Pendiente · tenés +$X por instalar la app" abajo del casino cuando eligió "lo cargo después" */
+.casino-ig { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; display: flex; align-items: center; gap: 8px; padding: 9px 12px; padding-bottom: calc(9px + env(safe-area-inset-bottom, 0px)); border: 0; border-top: 1px solid var(--p-border); background: var(--p-text); color: var(--p-inv, #fff); font: 700 12px var(--p-font); text-align: left; cursor: pointer; }
+.casino-ig .cig-k { flex: 0 0 auto; background: var(--p-red); color: #fff; border-radius: 999px; padding: 3px 8px; font: 900 9.5px var(--p-font); letter-spacing: .6px; text-transform: uppercase; }
+.casino-ig .cig-t { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.casino-ig .cig-t b { color: #8be3ad; }
+.casino-ig .cig-go { flex: 0 0 auto; background: var(--p-red); color: #fff; border-radius: 999px; padding: 5px 10px; font: 900 11px var(--p-font); }
+#casinoOverlay.has-ig #casinoSupportBubble { margin-bottom: 52px; }
+#casinoOverlay.has-ig .casino-load { bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important; }
+body.has-install-bar #casinoOverlay.has-ig .casino-ig { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+body.has-install-bar #casinoOverlay.has-ig #casinoSupportBubble { margin-bottom: 116px; }

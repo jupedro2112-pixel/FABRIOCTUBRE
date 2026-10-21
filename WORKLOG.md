@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 727. 🎁 Primera carga sin la app dentro del casino: el MISMO cartel del menú completo, se queda hasta elegir; "lo cargo después" = recordatorio abajo — SW v519
+**Pedido (owner, captura del cartel del completo):** "en las primeras cargas así aparece en el menú completo; en vez de Buena suerte
+ponemos este cartel; si es primera carga y no tiene app que aparezca así también en el menú Girox sin que se vaya, que la gente pueda
+elegir; si elige 'lo cargo después' que figure el recordatorio en la parte inferior avisando que tiene pendiente un 50% de su última
+carga". App: `onDepositCredited` → con la oferta del server (`status:'offered'`) muestra `showPlayNow({amount, gift})` = el cartel
+"¡Entró tu carga de $X!" + "+50% EXTRA POR INSTALAR LA APP · +$Y extra" + "Instalar ahora y cargar el 50% extra" / "Jugar ahora en
+Girox" / "Seguir jugando · lo cargo después" (z 100001 sobre el casino). El cartel con regalo YA NO se va solo (antes a los 15 s pasaba
+a "después"); sin regalo sigue 15 s. "Jugar ahora" con el casino abierto sólo cierra el cartel. "Lo cargo después" (`installGiftLater`)
+→ `_igPaintCasinoBar` pinta `#casinoIgBar` al pie del casino: "Pendiente · Tenés +$Y (50% de tu última carga) por instalar la app ·
+Instalar ›" (abre la oferta); se apila sobre la barra de instalar de la base si está. Sin regalo, tras la carga va "¡Buena suerte!".
+
 ### 726. 📲 Instalar la app = la barra de la base (PICA ROJA oficial · Instalar · ✕), también dentro del casino — SW v518
 **Pedido (owner, captura):** "el instalar app lo quiero en la base como en el completo, de línea recta, que diga Instalar; sacalo de
 adentro de la burbuja; así lo quiero en toda la app, que no cambie dentro de la app". La barra `#pwaInstallButton.pwa-install-bar`
