@@ -1314,6 +1314,7 @@ app.get('/casino-sim', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, 'public', 'casino-sim.html'));
 });
+const giroxSimulator = require('./src/services/giroxSimulator'); // #775 (ojo: #771 fue por un identificador que no existía)
 app.get('/api/casino-sim/state', async (req, res) => {
   try {
     if (!_isTestEnv() || !giroxSimulator.active()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
