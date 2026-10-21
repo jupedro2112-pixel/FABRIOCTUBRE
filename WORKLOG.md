@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 730. 🐛 El cartel "¡Entró tu carga!" + extra por instalar no se veía en Girox (sí en el completo) — SW v521
+**Pedido (owner, capturas):** "sigue apareciendo Buena suerte; quiero que aparezca el cartel de la primera carga para que instalen la
+app" · "aparece en el menú completo pero no en Girox, ¿puede ser?". **Causa:** `#playNowCard` está dentro de `#homeFull`, y en modo
+Girox/play `body.home-play #homeFull { max-height:0; opacity:0; pointer-events:none }`: `showPlayNow` lo marcaba visible pero quedaba
+invisible. **Fix:** `showPlayNow` cuelga el cartel del `<body>` (es `position:fixed`) la primera vez que se muestra; con
+`body.casino-open .play-now-card { z-index:100001 }` (#722) queda por encima del casino. También corrige el mismo cartel sin regalo en
+cualquier modo que no sea el completo.
+
 ### 729. 🎰 Al entrar a Girox el panel de Carga rápida arranca cerrado + aviso de 5 s bajo la burbuja — SW v520
 **Pedido (owner):** "cada vez que la gente entra a Girox que entre con la burbuja minimizada para que pueda ver la página" · "el aviso
 de que la podés mover dejalo abajo de la Carga rápida por 5 segundos como aviso y que se vaya". `openPlatform`: el panel arranca

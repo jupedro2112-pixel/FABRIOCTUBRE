@@ -1149,6 +1149,9 @@
         const pid = o.platform || (_platforms && (_platforms.preferredPlatform || _platforms.lastPlatform || _platforms.defaultPlatform)) || 'girox';
         let card = _el('playNowCard');
         if (!card) return;
+        // #730 (owner): "aparece en el menú completo pero no en Girox". El cartel vivía adentro de #homeFull, que en modo Girox/play está
+        // colapsado (max-height:0, opacity:0): se mostraba invisible. Es position:fixed, así que se cuelga del <body> y se ve en todos lados.
+        try { if (card.parentNode !== document.body) document.body.appendChild(card); } catch (_) {}
         const amt = Number(o.amount) > 0 ? '$' + Math.round(Number(o.amount)).toLocaleString('es-AR') : '';
         const bon = Number(o.bonus) > 0 ? ' + $' + Math.round(Number(o.bonus)).toLocaleString('es-AR') + ' de bono' : '';
         const t = _el('playNowTitle'), s = _el('playNowSub'), b = _el('playNowBtn'), tag = _el('playNowTest');
