@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 709. 🎰 Nota de carga mínima del casino sin "escribinos a Soporte" — SW v504
+**Pedido (owner, captura):** "sacá el escribinos a Soporte de ahí". En la Carga rápida del casino la nota queda "Carga mínima $5.000 ·
+Con menos, tu carga NO va a ser acreditada." (el botón "Ir a Soporte" del panel sigue). En Cargá y en el básico la nota conserva el link.
+
+### 708. 🧪 Carga de PRUEBA desde cualquier lado + reinicio de usuario de prueba (sólo entorno de prueba)
+**Pedido (owner):** "reiniciá las cargas y todo en diego651917 para testear como primer cliente, y poneme el test en las cargas desde
+cualquier lado para probar sólo en ese usuario". Server (sólo con `RENDER` o `TESTER_ADMIN_PROMOTE=1`; en producción 404):
+`POST /api/test/deposit {amount}` (rol user y username en `TEST_USERNAMES` = la lista `TESTER_USERNAMES` de home.js) → llama
+`_agentDepositHandler` con el tester como agente (mismo camino que una carga manual: bonos automáticos, primera carga, fueguito,
+misiones, webhooks, mensajes). `POST /api/admin/users/:userId/reset-test` (admin) borra Transaction, Comprobante, BankMovement
+(matchedUserId), FireStreak, MissionClaim, DailyRouletteSpin, RefundClaim, CashbackClaim, HgcashCharge, StrategyEnrollment,
+VipWagerMonth, AppSession, PendingPayout y Message del usuario; pone a cero saldo, lifetimeWagered, vipLevel, ruleta pendiente,
+installGift, secondDepositOffer y código de bienvenida; y deja el jugador simulado en 0. App: botón flotante violeta "🧪 Carga de
+prueba" (`body.is-tester`, `VIP.home.testDeposit`, z 100000: también sobre el casino) que pide el monto y refresca saldo/guía.
+diego651917 reiniciado en Render tras el deploy.
+
 ### 707. 🎰 Barra del casino: Info al lado de Historias (marca bien centrada) + recuadro mínimo a PICA ROJA OFICIAL — SW v503
 **Pedido (owner):** "mové Info al lado de Historias así queda PICA ROJA bien centrado y ponele un recuadro mínimo a PICA ROJA
 oficial". Orden: Volver · Menú · [marca] · Historias · Info · Perfil. La marca va dentro de `.cb-box` (pastilla con borde fino y

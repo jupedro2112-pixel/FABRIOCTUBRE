@@ -19141,6 +19141,57 @@ app.delete('/api/admin/hgcash/credentials', authMiddleware, adminMiddleware, asy
 // #310 API de 1girox desde el panel (Base URL + API key) — solo admin general.
 // #616: CASINO SIMULADO (sólo entorno de prueba sin API real): ver / ajustar jugadores simulados (netwin para reembolsos y referidos,
 // saldo) y reiniciar. En producción con API real responde 404.
+// #708 (owner 2026-10-21): "reiniciá las cargas y todo en diego651917 para testear como primer cliente, y poneme el test en las
+// cargas desde cualquier lado para probar sólo en ese usuario". SOLO en el entorno de prueba (RENDER=true o TESTER_ADMIN_PROMOTE=1,
+// igual que #355/#413): en producción las dos rutas responden 404.
+const TEST_USERNAMES = ['lalodj', 'lalodj499910', 'diego576413', 'prueba100', 'diego651917']; // = TESTER_USERNAMES de home.js
+const _isTestEnv = () => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1');
+// Carga de PRUEBA del propio tester: pasa por el MISMO camino que una carga manual del panel (_agentDepositHandler: bonos
+// automáticos, primera carga, fueguito, misiones, webhooks, mensajes) con el tester como "agente".
+app.post('/api/test/deposit', authMiddleware, async (req, res) => {
+  if (!_isTestEnv() || !req.user || req.user.role !== 'user' || !TEST_USERNAMES.includes(String(req.user.username || ''))) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  const amount = Math.round(Number(req.body && req.body.amount) || 5000);
+  if (!(amount >= 500 && amount <= 500000)) return res.status(400).json({ error: 'Monto de prueba entre $500 y $500.000' });
+  const fakeReq = { user: { userId: req.user.userId, username: req.user.username + ' (test)', role: 'admin' }, body: {} };
+  return _agentDepositHandler(fakeReq, res, { userId: req.user.userId, amount, description: 'Carga de PRUEBA (botón test, #708)' });
+});
+// Reinicio TOTAL de un usuario de prueba: borra cargas, retiros, comprobantes, movimientos, fueguito, misiones, ruleta, reembolsos,
+// cashback, sesiones, pagos pendientes y mensajes, y vuelve a cero saldo/nivel/regalos; el jugador simulado también vuelve a 0.
+app.post('/api/admin/users/:userId/reset-test', authMiddleware, adminMiddleware, async (req, res) => {
+  if (!_isTestEnv()) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  try {
+    const u = await User.findOne({ id: req.params.userId }).select('id username role').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!TEST_USERNAMES.includes(String(u.username))) return res.status(403).json({ error: 'Sólo usuarios de prueba: ' + TEST_USERNAMES.join(', ') });
+    const q = { userId: u.id };
+    const out = {};
+    const del = async (name, Model, filter) => { try { const r = await Model.deleteMany(filter); out[name] = r.deletedCount; } catch (e) { out[name] = 'error: ' + e.message; } };
+    await del('transactions', Transaction, q);
+    await del('comprobantes', Comprobante, q);
+    await del('bankMovements', BankMovement, { matchedUserId: u.id });
+    await del('fireStreak', FireStreak, q);
+    await del('missionClaims', MissionClaim, q);
+    await del('rouletteSpins', DailyRouletteSpin, q);
+    await del('refundClaims', RefundClaim, q);
+    await del('cashbackClaims', CashbackClaim, q);
+    await del('hgcashCharges', HgcashCharge, q);
+    await del('strategyEnrollments', StrategyEnrollment, q);
+    await del('vipWagerMonths', VipWagerMonth, q);
+    await del('appSessions', AppSession, q);
+    await del('pendingPayouts', PendingPayout, q);
+    await del('messages', Message, { $or: [{ receiverId: u.id }, { senderId: u.id }] });
+    await User.updateOne({ id: u.id }, { $set: {
+      balance: 0, lifetimeWagered: 0, vipLevel: 0, vipLevelUpdatedAt: null, dailyRoulettePendingPct: 0, supportSessionSince: null,
+      'installGift.status': 'none', 'installGift.amount': 0, 'installGift.baseAmount': 0,
+      'secondDepositOffer.status': 'none', 'secondDepositOffer.pct': null, 'secondDepositOffer.offeredAt': null,
+      welcomeCodeBonusStatus: 'none', welcomeCodeBonusType: null, welcomeCodeBonusAmount: null, welcomeCodeClaimedAt: null, welcomeCodeBonusUsedAt: null, welcomeCodeBonusUsedBy: null
+    } });
+    try { if (girox.isSimulated()) { const giroxSim = require('./src/services/giroxSimulator'); await giroxSim.adjustPlayer(String(u.username), { netwin: 0, wagered: 0, balance: 0 }); out.simulador = 'jugador a 0'; } } catch (e) { out.simulador = 'error: ' + e.message; }
+    try { _giroxKeyCache.delete(u.username); } catch (_) {}
+    logger.warn(`[reset-test] ${u.username} reiniciado por ${req.user.username}: ${JSON.stringify(out)}`);
+    res.json({ success: true, username: u.username, borrado: out });
+  } catch (e) { logger.warn(`[reset-test] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/girox-sim', authMiddleware, adminMiddleware, async (req, res) => {
   if (!girox.isSimulated()) return res.status(404).json({ error: 'El casino simulado no está activo (hay API real o no es entorno de prueba).' });
   const giroxSim = require('./src/services/giroxSimulator');

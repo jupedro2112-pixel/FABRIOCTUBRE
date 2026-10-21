@@ -828,6 +828,8 @@
         const tester = TESTER_USERNAMES.includes(u);
         if (!tester) _installedTest = false;
         document.body.classList.toggle('is-tester', tester);
+        // #708 (owner): botón flotante "🧪 Carga de prueba" para los testers, visible desde cualquier lado (también sobre el casino).
+        try { let tb = _el('testDepositBtn'); if (tester && !tb) { document.body.insertAdjacentHTML('beforeend', '<button type="button" id="testDepositBtn" class="test-dep-btn" onclick="VIP.home.testDeposit()" title="Simula una carga acreditada (sólo usuario de prueba)">🧪 Carga de prueba</button>'); } else if (!tester && tb) tb.remove(); } catch (_) {}
     }
     // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
     function _paintMinDeposit(n) {
@@ -1947,7 +1949,7 @@
             _fdNoteHtml() + // #626
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
-            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<p class="cl-meta min-note"><b class="mn-big">Carga mínima ' + md + '</b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.casinoSupport()">💬 escribinos a Soporte ›</button></span></p>' +
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<p class="cl-meta min-note"><b class="mn-big">Carga mínima ' + md + '</b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>.</span></p>' + // #709 (owner): sin "escribinos a Soporte" acá (ya está el botón Ir a Soporte)
               '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante<small class="min-tag">Carga mínima ' + md + '</small></button>'; })() +
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
@@ -2025,6 +2027,18 @@
     // si la persona entró por Girox directo: #678 sigue valiendo, se guarda 'full' como cualquier otra elección del selector).
     // #704 (owner): "que de ahí pueda elegir desde Menú el menú correspondiente" → cierra el casino y abre el SELECTOR de menús.
     function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { openMenuChooser(); } catch (_) {} }, 120); }
+    // #708 (owner): carga de PRUEBA (sólo testers, sólo entorno de prueba): POST /api/test/deposit → mismo camino que una carga manual.
+    async function testDeposit() {
+        let amt = prompt('Monto de la carga de prueba (pesos):', '5000'); if (amt == null) return;
+        amt = Math.round(Number(String(amt).replace(/[^0-9]/g, '')) || 0); if (!amt) return;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/test/deposit', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ amount: amt }) });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) { VIP.ui.showToast('❌ ' + (j.error || 'No se pudo'), 'error'); return; }
+            VIP.ui.showToast('🧪 Carga de prueba de $' + amt.toLocaleString('es-AR') + ' acreditada', 'success');
+            setTimeout(() => { try { if (VIP.ui.syncBalance) VIP.ui.syncBalance(); } catch (_) {} try { loadFirstGuide(true); } catch (_) {} try { loadStrategy(true); } catch (_) {} }, 1200);
+        } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); }
+    }
     // #702 (owner): Bases y condiciones DENTRO de la app (modal con /terminos.html embebido; en una pestaña aparte la PWA instalada
     // se iba a Safari). Lo usan el botón de los mensajes de Soporte y los links de Info y Perfil.
     function openTerms(ev) {
@@ -2185,7 +2199,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

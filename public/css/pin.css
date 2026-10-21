@@ -2144,3 +2144,5 @@ body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd) { displ
 body.fewdep #loadHereBtn { animation: fgPulseG 1.6s ease-in-out infinite; }
 body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 !important; }
 @media (prefers-reduced-motion: reduce) { body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action, body.fewdep #loadHereBtn { animation: none !important; } }
+/* #708: botón flotante de carga de prueba (sólo body.is-tester; por encima del casino) */
+.test-dep-btn { position: fixed; left: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 100000; border: 0; border-radius: 999px; padding: 8px 12px; background: #7c3aed; color: #fff; font: 900 11px var(--p-font); box-shadow: 0 6px 18px rgba(124, 58, 237, .35); cursor: pointer; }
