@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 796. 🐛 Panel: Publicidad, Dashboard de publicistas y otras secciones con clave fallaban — admin-sw v150
+**Reporte (owner, captura "Error cargando campañas: Failed to load"):** las rutas protegidas con la clave de Datos (#743/#745/#770)
+responden 423 si falta `x-datos-pin`; `authFetch` lo agrega por regex, pero `loadCampaigns`, el dashboard y las cuentas de publicistas,
+influencers, etc. usan `fetch` crudo ⇒ 423 ⇒ "Failed to load" / secciones vacías. Fix: envoltorio global de `window.fetch` en admin.js
+que agrega la clave de la sesión a TODO pedido a `/api/admin/` (sin clave guardada no cambia nada). Vale para cualquier cargador futuro.
+
 ### 795. 🔘 El selector "¿Cómo querés ver la app?" marca el menú ACTUAL — SW v559
 **Pedido (owner, captura):** "cuando cambiás a básico no se selecciona, ni en Girox; necesito que se cambie el seleccionado dentro
 del menú". El CSS marcaba fijo "Menú completo". Ahora `openMenuChooser` pone `is-cur` en la opción del menú actual (por la clase

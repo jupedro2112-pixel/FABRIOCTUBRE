@@ -9,6 +9,23 @@
 // CONFIGURATION
 // ============================================
 const API_URL = '';
+// #796 (owner: "no aparece nada en Publicidad y Dashboard… Error cargando campañas: Failed to load"): las secciones con clave de
+// Datos (#743/#745/#770) responden 423 si el pedido no trae `x-datos-pin`, y varios cargadores (campañas, dashboard de publicistas,
+// cuentas publicistas, influencers…) usan fetch crudo en vez de authFetch. En lugar de perseguir cada uno: TODO pedido a /api/admin/
+// lleva la clave guardada en la sesión (la pone datosIaGate al validarla). Sin clave guardada no agrega nada.
+(function () {
+    const _fetch = window.fetch;
+    window.fetch = function (url, opts) {
+        try {
+            const u = typeof url === 'string' ? url : (url && url.url) || '';
+            if (u.indexOf('/api/admin/') !== -1) {
+                const pin = sessionStorage.getItem('datos_pin');
+                if (pin) { opts = Object.assign({}, opts || {}); const h = new Headers(opts.headers || {}); if (!h.has('x-datos-pin')) h.set('x-datos-pin', pin); opts.headers = h; }
+            }
+        } catch (_) {}
+        return _fetch.call(this, url, opts);
+    };
+})();
 const SOCKET_OPTIONS = {
     // Allow both WebSocket and HTTP long-polling so the connection works even when
     // WebSocket is blocked (e.g. Cloudflare without WebSocket enabled) when
