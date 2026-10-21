@@ -12531,6 +12531,12 @@ async function initializeData() {
       response: SUPPORT_TOPIC_REEMBOLSO_DEFAULT
     },
     {
+      name: '/sys_support_topic_bono',
+      description: 'Soporte: respuesta automática cuando el tema es EL BONO (explica el rollover ×{rollover}: qué es, apostar no es cargar, cómo se desbloquea para retirar). Variables: {rollover}, {min}, {retiro_min}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_TOPIC_BONO_DEFAULT
+    },
+    {
       name: '/sys_support_topic_otro',
       description: 'Soporte: respuesta automática cuando el tema es OTRA COSA ("detallanos tu problema"; lleva el botón Bases y condiciones). Vacío = no se manda.',
       type: 'message',
@@ -13073,7 +13079,8 @@ app.post('/api/admin/bank-outage', authMiddleware, adminMiddleware, async (req, 
     res.json({ success: true, changed: r.changed, state: await getBankOutage(), settings: await getBankSettings() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
-app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
+// #714: handler nombrado para que la ruta de prueba (/api/test/withdraw) pueda reusarlo con req._testBypass (sin teléfono ni SMS).
+async function _withdrawalRequestHandler(req, res) {
   let withdrawLockAcquired = false;
   try {
     const { titular, cbu, alias, amount, saveData } = req.body || {};
@@ -13111,14 +13118,14 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
 
     // Para retirar, la cuenta debe tener el teléfono verificado por SMS.
     // El registro es sin SMS, pero el retiro siempre exige verificación.
-    if (user.phoneVerified !== true) {
+    if (user.phoneVerified !== true && !req._testBypass) { // #714: la prueba del tester no exige teléfono
       return res.status(400).json({
         error: 'Para retirar tu premio necesitás verificar tu teléfono por SMS.',
         code: 'PHONE_VERIFICATION_REQUIRED'
       });
     }
     // #382: código SMS de ESTE retiro (anti-estafa). Se valida antes del lock y del saldo.
-    if (await getWithdrawOtpRequired()) {
+    if (await getWithdrawOtpRequired() && !req._testBypass) { // #714: ni SMS
       const otpCode = String((req.body && req.body.otpCode) || '').trim();
       if (!/^\d{6}$/.test(otpCode)) return res.status(400).json({ error: 'Ingresá el código SMS de 6 dígitos para confirmar el retiro.', code: 'WITHDRAW_OTP_REQUIRED' });
       const v = await verifyOTP(user.phone, otpCode, 'withdraw');
@@ -13315,7 +13322,8 @@ app.post('/api/withdrawal/request', authMiddleware, async (req, res) => {
   } finally {
     if (withdrawLockAcquired) releaseRefundLock(req.user.userId, 'withdraw');
   }
-});
+}
+app.post('/api/withdrawal/request', authMiddleware, _withdrawalRequestHandler);
 
 // ============================================
 // BONO POR INSTALAR LA APP (one-time)
@@ -13550,7 +13558,7 @@ const SUPPORT_AUTOREPLY_DEFAULT = '🙌 Contame qué necesitás, ya estamos con 
 // con un botón que lleva al sector. Texto editable ({min} = carga mínima, {retiro_min} = retiro mínimo).
 const SUPPORT_QUICK_CARGAR_DEFAULT = '⚡ Las cargas son 100% automáticas: transferís al CBU, mandás la foto del comprobante y se acredita sola en minutos (carga mínima {min}). Tocá el botón y te llevo a la carga automática. Si ya la hiciste y algo falló, contame acá y lo reviso.';
 const SUPPORT_QUICK_RETIRAR_DEFAULT = '💸 Los retiros también son automáticos: en "Retirar premio" completás tus datos, confirmás con el código SMS y se paga solo a tu CBU (retiro mínimo {retiro_min}). Tocá el botón para ir. Si ya lo pediste y tenés dudas, contame acá.';
-const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro', 'carga', 'retiro', 'reembolso']; // #602: temas del soporte de problemas
+const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro', 'carga', 'retiro', 'reembolso', 'bono']; // #602: temas del soporte de problemas · #715: + bono
 // #702 (owner 2026-10-21): respuestas automáticas POR TEMA en Soporte. "Con una carga": avisar de antemano la carga mínima y pedir
 // captura si cargó menos (para ver el reintegro). "Con un retiro": el retiro mínimo. "Con un reembolso": botón a la info del
 // reembolso. "Otra cosa": "si tenés un problema, detallanos tu problema" + Bases y condiciones (se abren dentro de la app).
@@ -13563,10 +13571,13 @@ const SUPPORT_TOPIC_RETIRO_DEFAULT = '💸 Antes que nada: el retiro mínimo es 
 const SUPPORT_TOPIC_REEMBOLSO_DEFAULT = '🎁 Toda la info del reembolso (cuánto, cuándo y cómo se cobra) está en el botón de abajo. Si ya la viste y algo no cierra, contanos acá.';
 const SUPPORT_TOPIC_OTRO_DEFAULT = '❓ Si tenés un problema, por favor detallanos tu problema acá (qué pasó, cuándo y con qué monto) y te respondemos. Todo sobre el servicio está en las Bases y condiciones:';
 const SUPPORT_DETAIL_DEFAULT = '📝 Si necesitás otra consulta o tenés un problema, por favor detallanos tu problema en un mensaje y te respondemos. Todo sobre el servicio está en las Bases y condiciones:';
+// #715 (owner): "Problema con el bono" → explicar bien el rollover ×{rollover}: qué es, cómo se desbloquea para retirar.
+const SUPPORT_TOPIC_BONO_DEFAULT = '🎁 Así funciona el BONO y el ROLLOVER ×{rollover}:\n\n1️⃣ Qué es: todo regalo (bono de carga, fueguito, ruleta, misiones, reembolsos, código de bienvenida, nivel VIP) entra a tu cuenta como BONO. Para poder retirarlo tiene un rollover ×{rollover}: hay que APOSTAR (jugar) {rollover} veces el monto del bono. Ejemplo: un bono de $2.000 se desbloquea apostando $10.000 en total en la plataforma.\n\n2️⃣ Apostar NO es cargar: cuenta lo que jugás (cada apuesta suma, ganes o pierdas), no lo que transferís.\n\n3️⃣ Mientras tanto: tu plata cargada se puede retirar siempre; lo que queda bloqueado es sólo la parte del bono hasta cumplir el rollover. En la plataforma ves el progreso en tu perfil (saldo retirable / bono pendiente).\n\n4️⃣ Cuando completás las apuestas, el bono y lo que ganaste con él pasan a saldo retirable y lo sacás desde "Retirar premio".\n\nÚnica excepción: las comisiones de REFERIDOS se retiran sin apostar. Si pediste un retiro y te dice que hay un objetivo de apuestas pendiente, es esto: te falta completar el rollover. Contanos acá el monto del bono y cuánto jugaste y lo revisamos.';
 const SUPPORT_TERMS_BTN = { kind: 'go_section', target: 'terms', label: '📄 Bases y condiciones', channel: 'support' };
 function _supportTopicFromText(text) {
   const t = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   if (!t || t.length < 4) return null;
+  if (/\bbono|rollover|apost|desbloq|bloquead|objetivo de apuestas/.test(t)) return 'bono'; // #715
   if (/reembols|devoluc|cashback|rakeback/.test(t)) return 'reembolso';
   if (/retir|cobr|me pag|no me pag|pago pendiente|premio/.test(t)) return 'retiro';
   if (/carg|transfer|deposit|comprobante|acredit|cbu|alias/.test(t)) return 'carga';
@@ -13589,13 +13600,13 @@ async function _supportQuickReply(userId, username, quick, text) {
       return;
     }
     // #702: tema por chip (carga / retiro / reembolso / otro) o por palabras clave del texto libre
-    let topic = ['carga', 'retiro', 'reembolso', 'otro'].includes(quick) ? quick : _supportTopicFromText(text);
+    let topic = ['carga', 'retiro', 'reembolso', 'otro', 'bono'].includes(quick) ? quick : _supportTopicFromText(text);
     if (!topic) return _supportAutoReply(userId, username);
     const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: SUPPORT_ROLES }, channel: 'support', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
     if (agentRecent) return;
     const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.topic': topic, timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
     if (recent) return;
-    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
+    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), rollover: String(await _giftRolloverX()) };
     if (topic === 'otro') {
       const t = await renderSystemCommand('/sys_support_topic_otro', SUPPORT_TOPIC_OTRO_DEFAULT, vars);
       if (t) await _sendUserSystemMessage(u, t, { metadata: Object.assign({}, SUPPORT_TERMS_BTN, { topic }) });
@@ -13603,6 +13614,7 @@ async function _supportQuickReply(userId, username, quick, text) {
     }
     const first = topic === 'carga' ? await renderSystemCommand('/sys_support_topic_carga', SUPPORT_TOPIC_CARGA_DEFAULT, vars)
       : topic === 'retiro' ? await renderSystemCommand('/sys_support_topic_retiro', SUPPORT_TOPIC_RETIRO_DEFAULT, vars)
+      : topic === 'bono' ? await renderSystemCommand('/sys_support_topic_bono', SUPPORT_TOPIC_BONO_DEFAULT, vars) // #715
       : await renderSystemCommand('/sys_support_topic_reembolso', SUPPORT_TOPIC_REEMBOLSO_DEFAULT, vars);
     if (first) {
       const meta = topic === 'reembolso' ? { kind: 'go_section', target: 'refund', label: '🎁 Ver info de reembolso', channel: 'support', topic } : { channel: 'support', topic };
@@ -19157,6 +19169,15 @@ app.post('/api/test/deposit', authMiddleware, async (req, res) => {
   if (!(amount >= 500 && amount <= 500000)) return res.status(400).json({ error: 'Monto de prueba entre $500 y $500.000' });
   const fakeReq = { user: { userId: req.user.userId, username: req.user.username + ' (test)', role: 'admin' }, body: {} };
   return _agentDepositHandler(fakeReq, res, { userId: req.user.userId, amount, description: 'Carga de PRUEBA (botón test, #708)' });
+});
+// #714: RETIRO de prueba del tester: mismo handler que el retiro real (lock, saldo, PendingPayout, mensajes, confirmación de pagos)
+// con datos bancarios ficticios y sin teléfono/SMS. En producción no existe (404).
+app.post('/api/test/withdraw', authMiddleware, async (req, res) => {
+  if (!_isTestEnv() || !req.user || req.user.role !== 'user' || !TEST_USERNAMES.includes(String(req.user.username || ''))) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  const amount = Math.round(Number(req.body && req.body.amount) || 10000);
+  req.body = { titular: 'PRUEBA TEST', cbu: '0000000000000000000000', alias: 'prueba.test.pica', amount, saveData: false, platform: 'girox' };
+  req._testBypass = true;
+  return _withdrawalRequestHandler(req, res);
 });
 // Reinicio TOTAL de un usuario de prueba: borra cargas, retiros, comprobantes, movimientos, fueguito, misiones, ruleta, reembolsos,
 // cashback, sesiones, pagos pendientes y mensajes, y vuelve a cero saldo/nivel/regalos; el jugador simulado también vuelve a 0.

@@ -2164,3 +2164,9 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 .luck-btn { margin-top: 8px; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--p-red); color: #fff; font: 900 12px var(--p-font); cursor: pointer; }
 .luck-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--p-surface); color: var(--p-text); font: 900 12px/1 var(--p-font); cursor: pointer; }
 @keyframes luckIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+/* #714: cartel ¡Felicitaciones! (retiro) y par de botones de prueba */
+.luck-card.luck-wd { border-left-color: var(--p-red); }
+.luck-card.luck-wd .luck-t { color: var(--p-red); }
+.test-btns { position: fixed; left: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 100000; display: flex; flex-direction: column; gap: 6px; }
+.test-btns .test-dep-btn { position: static; }
+.test-wd-btn { background: #b45309 !important; box-shadow: 0 6px 18px rgba(180, 83, 9, .35) !important; }

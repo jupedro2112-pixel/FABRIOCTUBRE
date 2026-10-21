@@ -337,9 +337,11 @@ VIP.withdraw = (function () {
                         currency: 'ARS'
                     });
                 }
+                const _wdAmt = _pendingWithdraw && _pendingWithdraw.amount; // #714
                 _pendingWithdraw = null;
                 VIP.ui.hideModal('withdrawModal');
                 VIP.ui.showToast('✅ ' + (data.message || 'Retiro solicitado correctamente'), 'success');
+                try { if (VIP.home && VIP.home.onWithdrawRequested) VIP.home.onWithdrawRequested(_wdAmt); } catch (_) {} // #714: cartel ¡Felicitaciones!
                 setTimeout(() => VIP.chat.loadMessages(), 500);
                 setTimeout(() => VIP.ui.syncBalance(), 1500);
                 return;

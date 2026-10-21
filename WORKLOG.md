@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 715. 💬 Soporte: chip "Con el bono" → explicación completa del rollover ×5 (qué es y cómo se desbloquea para retirar)
+**Pedido (owner):** "agregá un botón en Soporte 'problema con el bono' y cuando lo aprieten que se les explique cómo funciona el bono
+rollover ×5, qué es y cómo lo desbloquea para retirar, bien detallado". Chip 🎰 "Con el bono" en el selector de temas y en la barra
+rápida (`supportQuick('bono')`), tema `bono` en `SUPPORT_QUICK_KINDS`, palabras clave (bono, rollover, apost, desbloq, bloquead,
+"objetivo de apuestas"). Mensaje `/sys_support_topic_bono` (editable, `{rollover}` = `Config['bonusRolloverX']`): qué es el bono y el
+rollover ×N con ejemplo, apostar no es cargar, qué queda bloqueado y qué no, cómo pasa a retirable, excepción referidos, y qué
+mandar si el retiro dice "objetivo de apuestas pendiente". Después va el segundo mensaje con Bases y condiciones (#702).
+
+### 714. 🎉 Cartel "¡Felicitaciones! En breve ya sale tu pago" al pedir un retiro + botón Retiro de prueba — SW v508
+**Pedido (owner):** "sobre el retiro también poneme un botón de retiro de prueba, y quiero darle unas felicitaciones a la gente y lo
+mismo: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos en el menú completo; siempre con el mismo estilo
+Pinterest". App: withdraw.js, al confirmar el retiro → `VIP.home.onWithdrawRequested(monto)` → `#luckCard.luck-wd` (mismo cartel que
+#712, acento rojo, 5 s o ✕, botón "Ver el menú completo ›"); se muestra desde cualquier pantalla. Server: `app.post('/api/withdrawal/
+request')` pasa a usar el handler nombrado `_withdrawalRequestHandler(req, res)` (misma lógica; `req._testBypass` saltea teléfono
+verificado y SMS) y `POST /api/test/withdraw {amount}` (sólo entorno de prueba + `TEST_USERNAMES`) lo llama con datos bancarios
+ficticios (titular "PRUEBA TEST", CBU de ceros). Botón flotante "🧪 Retiro de prueba" (naranja) debajo del de carga.
+
 ### 713. 🎰 Burbuja de Carga rápida: minimizada si entra a jugar desde otro menú; siempre abierta en Girox directo y desde la landing
 **Pedido (owner):** "cuando la carga es de otro menú que no sea el de Girox, cuando entre que la burbuja esté minimizada para que no
 moleste; cuando entre desde la app directo a Girox o desde la landing, que siempre esté abierta". `openPlatform`: con `opts.embed`
