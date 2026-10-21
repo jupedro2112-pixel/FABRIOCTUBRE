@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 777. 📄 Bases y condiciones rota dentro de la app + texto del chat que se seleccionaba al tocar — SW v549
+**Pedido (owner, capturas):** (1) el modal "Bases y condiciones" mostraba el ícono de página rota: `securityHeaders` manda
+`X-Frame-Options: DENY` y `frame-ancestors 'none'` a todo, también a `/terminos.html`, y el navegador bloqueaba nuestro propio iframe.
+Ruta `GET /terminos.html` (antes del static) con `SAMEORIGIN` / `frame-ancestors 'self'`. (2) En Soporte, un toque leve sobre un
+mensaje seleccionaba el texto ("Copiar"): las burbujas y la presentación quedan sin selección (`user-select: none`); los datos para
+copiar tienen su botón.
+
 ### 776. 🐛🔥 CARGA RÁPIDA en el casino congelaba TODA la app (bucle infinito) — SW v548
 **Reporte (usuario real por WhatsApp, 11:37):** "al presionar Carga rápida dentro del casino se queda colgado absolutamente todo, tenés
 que cerrar todo y volver a abrirlo". Causa: #766 (10:52) agregó en `_paintFirstLoad` un `toggleCasinoLoad(true)` para repintar el

@@ -1305,6 +1305,15 @@ app.get('/:code', async (req, res, next) => {
 // /manifest.json?a=<token de acceso de un solo uso>&menu=<pref>&fixed=1 (home.js installManifestSync) y acá se devuelve el manifest
 // con ese start_url. La app instalada abre /?source=pwa&acceso=… → auth.js lo canjea UNA vez → entra logueada; Girox abre con SSO.
 let _manifestBase = null;
+// #777 (owner, captura "Bases y condiciones" con el ícono de página rota): el modal de la app embebe /terminos.html en un iframe, pero
+// securityHeaders manda X-Frame-Options DENY + frame-ancestors 'none' a TODO (hasta a nuestra propia página) y el navegador lo bloquea.
+// Esta ruta va ANTES del static y permite embeberla sólo desde nuestro propio origen.
+app.get('/terminos.html', (req, res) => {
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  try { const csp = String(res.getHeader('Content-Security-Policy') || ''); if (csp) res.setHeader('Content-Security-Policy', csp.replace("frame-ancestors 'none'", "frame-ancestors 'self'")); } catch (_) {}
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'public', 'terminos.html'));
+});
 // #775: CASINO SIMULADO del entorno de prueba (Render). Es la única página propia que se puede embeber (frame-ancestors 'self'):
 // la abre el iframe de Girox directo cuando el SSO viene del simulador. En producción (API real) no se usa y responde 404.
 app.get('/casino-sim', (req, res) => {

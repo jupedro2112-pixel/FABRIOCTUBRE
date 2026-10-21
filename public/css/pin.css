@@ -2396,3 +2396,7 @@ body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: 
 .pf-topsms { box-shadow: 0 0 0 3px rgba(230, 0, 35, .14); }
 body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { box-shadow: 0 0 0 5px rgba(10, 122, 62, .18), 0 8px 22px rgba(10, 122, 62, .32) !important; }
 @media (prefers-reduced-motion: reduce) { .lg-ring.has-new .lg-ring-av, .lg-bar i, .pf-topsms, .story-viewer #storyLink.st-bonus, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn { animation: none !important; } }
+/* #777 (owner): en el chat de Soporte, tocar un mensaje seleccionaba el texto (aparecía "Copiar"). Las burbujas no se seleccionan;
+   lo que hay que copiar (alias/CBU) tiene su botón Copiar. El campo de escribir sigue normal. */
+#chatMessages .message-wrapper, #chatMessages .message-wrapper *, #supportIntro, #supportIntro * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#chatMessages input, #chatMessages textarea { -webkit-user-select: text; user-select: text; }
