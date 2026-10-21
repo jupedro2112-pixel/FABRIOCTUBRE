@@ -1245,19 +1245,19 @@
     // #719 (owner): INSTALAR LA APP dentro del casino, sin fricción: barra fija abajo mientras NO esté instalada (con el extra pendiente
     // si lo hay, o el % extra de la primera carga), y una línea en el cartel de carga acreditada. Tocarla abre la oferta / instala.
     function _igExtraPct() { const e = _fdJ && Number(_fdJ.extra); return e > 0 ? Math.round(e) + '%' : (_igPct(_ig) || ''); }
-    function _igPaintCasinoBar() {
-        const ov = _el('casinoOverlay'); if (!ov) return;
-        let bar = _el('casinoIgBar');
-        const show = !_isStandalone() && !ov.classList.contains('casino-test');
-        if (!show) { if (bar) bar.style.display = 'none'; ov.classList.remove('has-ig'); return; }
-        if (!bar) { ov.insertAdjacentHTML('beforeend', '<button type="button" id="casinoIgBar" class="casino-ig" onclick="VIP.home.casinoInstall()"></button>'); bar = _el('casinoIgBar'); }
-        const pend = _igPending(); const pct = _igExtraPct();
-        bar.innerHTML = pend
-            ? '<span class="cig-k">Pendiente</span><span class="cig-t">📲 Instalá la app y cargá tu extra</span><b class="cig-amt">+' + _igFmt(_ig.amount) + '</b>'
-            : '<span class="cig-k">App</span><span class="cig-t">📲 Instalá la app' + (pct ? ' · <b>+' + pct + ' extra</b> de tu carga' : '') + '</span><span class="cig-go">Instalar ›</span>';
-        bar.style.display = ''; ov.classList.add('has-ig');
-    }
+    // #722 (owner): la barra fija de #719 se ELIMINÓ ("está mal"): el aviso de instalar funciona como en el menú completo (la oferta se
+    // queda hasta que elijan instalar o después) y "después" vive como botón en la Carga rápida, abajo de Soporte.
+    function _igPaintCasinoBar() { try { const b = _el('casinoIgBar'); if (b) b.remove(); const ov = _el('casinoOverlay'); if (ov) ov.classList.remove('has-ig'); } catch (_) {} }
     function casinoInstall() { if (_igPending()) installGiftOpen(); else { try { VIP.appTest.doInstall(); } catch (_) {} } }
+    // #722: botón de instalar dentro de la Carga rápida (abajo de "Ir a Soporte"), sólo sin app instalada: con extra pendiente muestra el
+    // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
+    function _igQuickBtnHtml() {
+        if (_isStandalone()) return '';
+        if (_igPending()) return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.installGiftOpen()">🎁 Tenés <b>+' + _igFmt(_ig.amount) + ' extra</b> por tu primera carga instalando la app · <u>Instalar acá</u></button>';
+        const pct = _igExtraPct(); const noDep = !_fdJ || _fdJ.noDeposits !== false;
+        if (pct && noDep) return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.casinoInstall()">🎁 Recordá: <b>+' + pct + ' extra</b> por tu primera carga instalando la app · <u>Instalar acá</u></button>';
+        return '';
+    }
     function _igPaintBar() {
         try { _igPaintCasinoBar(); } catch (_) {} // #719
         const bar = _el('installGiftBar'); if (!bar) return;
@@ -1934,6 +1934,10 @@
     async function onDepositCredited(d) {
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }
+        // #722 (owner): con la carga acreditada, si el server ofreció el extra por instalar (primera carga sin la app), se muestra LA
+        // MISMA hoja del menú completo (Instalar ahora / Ahora quiero jugar) y se queda hasta que elijan. Si elige "después", el botón
+        // queda en la Carga rápida (bajo Soporte). Si no hay oferta, va el cartel "¡Buena suerte!" de 5 s.
+        try { const { ok, j } = await _igFetch('/api/install-gift/status'); if (ok && j) { _ig = j; _igPaintBar(); if (!_isStandalone() && j.status === 'offered' && Number(j.amount) > 0) { try { toggleCasinoLoad(false); _applyQuickMini(false); _applyQuickTop(true); _bubbleToBrand(); } catch (_) {} showInstallGift(j); return; } } } catch (_) {}
         try { toggleCasinoLoad(false); _applyQuickMini(false); _applyQuickTop(true); _bubbleToBrand(); } catch (_) {} // #716/#720/#721: tras la carga, arriba sobre PICA ROJA, logo + CARGA RÁPIDA
         let n = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}
@@ -1945,15 +1949,9 @@
               '<button type="button" class="luck-x" onclick="VIP.home.luckClose()" aria-label="Cerrar">✕</button>' +
               '<div class="luck-t">🍀 ¡Buena suerte!' + (amt ? ' <small>Carga de $' + amt.toLocaleString('es-AR') + ' acreditada</small>' : '') + '</div>' +
               '<div class="luck-p">Recordá que tenemos <b>muchos beneficios para vos</b> dentro de nuestro <b>menú completo</b>, ¡no te lo pierdas!</div>' +
-              // #719 (owner): después de jugar tiene el extra por instalar la app; si no quiere ahora, lo hace después desde Menú ☰ (arriba).
-              (!_isStandalone() ? '<div class="luck-p luck-ig">📲 Después de jugar, <b>instalá la app</b> y sumás <b>+' + (_igExtraPct() || 'un extra') + ' de tu carga</b>, en dos toques. Si no querés ahora, lo hacés después desde <b>Menú ☰</b> arriba.</div>' : '') +
-              '<div class="luck-row">' +
-                (!_isStandalone() ? '<button type="button" class="luck-btn luck-btn-ig" onclick="VIP.home.luckClose(); VIP.home.casinoInstall()">📲 Instalar la app</button>' : '') +
-                '<button type="button" class="luck-btn' + (!_isStandalone() ? ' luck-btn-sec' : '') + '" onclick="VIP.home.luckClose(); VIP.home.casinoFullMenu()">☰ Ver el menú completo ›</button>' +
-              '</div>' +
+              '<button type="button" class="luck-btn" onclick="VIP.home.luckClose(); VIP.home.casinoFullMenu()">☰ Ver el menú completo ›</button>' +
             '</div>');
-        try { _igInit(); } catch (_) {} // #719: refresca la oferta/extra pendiente tras la carga
-        clearTimeout(_luckT); _luckT = setTimeout(luckClose, _isStandalone() ? 5000 : 8000);
+        clearTimeout(_luckT); _luckT = setTimeout(luckClose, 5000);
     }
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.
@@ -2033,7 +2031,8 @@
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
-            '<button type="button" class="cl-btn cl-sup" onclick="VIP.home.casinoSupport()">💬 Ir a Soporte</button>';
+            '<button type="button" class="cl-btn cl-sup" onclick="VIP.home.casinoSupport()">💬 Ir a Soporte</button>' +
+            _igQuickBtnHtml(); // #722 (owner): "instalar después" vive acá, abajo de Soporte
         p.style.display = '';
         _fdNotesPaint();
         if (!cbu) setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, 1500); // #631

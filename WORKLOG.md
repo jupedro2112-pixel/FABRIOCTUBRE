@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 722. 📲 Instalar la app en el casino COMO EN EL MENÚ COMPLETO: la oferta se queda hasta que elijan; "después" = botón en la Carga rápida — SW v515
+**Pedido (owner):** "está mal: lo de instalar app que funcione como está configurado el mensaje de aviso en el menú completo, que no
+se vaya y que la gente elija si instalar la app o instalar después; si pone instalar después que lo vea donde está la carga/retiro,
+dentro de la burbuja como un botón más abajo de Soporte: 'recordá que tenés un 50% extra por tu primera carga instalando la app,
+instalar acá'". Se ELIMINA la barra fija de #719 y la línea de instalar del cartel de 5 s. Ahora, al acreditarse la carga dentro del
+casino, se consulta `/api/install-gift/status`: si el server ofreció el extra (primera carga sin la app, `status:'offered'`) se abre
+LA MISMA hoja del menú completo (`showInstallGift`: "📲 Instalar ahora y cargar el extra" / "Ahora quiero jugar") por encima del
+casino y se queda hasta que elijan. "Ahora quiero jugar" la deja pendiente (`deferred`) y el botón aparece en la Carga rápida, abajo
+de "Ir a Soporte": "🎁 Tenés +$X extra por tu primera carga instalando la app · Instalar acá" (abre la oferta); si todavía no cargó:
+"🎁 Recordá: +50% extra por tu primera carga instalando la app · Instalar acá" (instala). Con la app instalada no se muestra nada.
+Sin oferta, tras la carga va el cartel "¡Buena suerte!" (#712) como antes.
+
 ### 721. 🎰 Tras la carga, la burbuja arriba dice sólo "CARGA RÁPIDA" con el logo (sin "movela si te molesta") — SW v514
 **Pedido (owner):** "cuando carguen que directamente figure arriba y diga solamente Carga rápida con el logo, sin el movela si te
 molesta, para que no sea mucho texto". Estado `.cq-top` (`_applyQuickTop`, recordado en `localStorage vip_cq_top`): logo 22 px +

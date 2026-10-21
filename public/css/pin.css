@@ -2176,20 +2176,9 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 #casinoSupportBubble .cq-hint { font: 600 8px var(--p-font); letter-spacing: 0; text-transform: none; opacity: .92; }
 body.casino-open .test-btns { bottom: auto; top: calc(70px + env(safe-area-inset-top, 0px)); }
 body.casino-open .test-btns .test-dep-btn { padding: 5px 8px; font-size: 10px; }
-/* #719 (owner): barra fija "Instalá la app" abajo del casino (sólo sin app instalada) + línea/botón de instalar en el cartel de carga */
-.casino-ig { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; display: flex; align-items: center; gap: 8px; padding: 9px 12px; padding-bottom: calc(9px + env(safe-area-inset-bottom, 0px)); border: 0; border-top: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); font: 700 12px var(--p-font); text-align: left; cursor: pointer; }
-.casino-ig .cig-k { flex: 0 0 auto; background: var(--p-red); color: #fff; border-radius: 999px; padding: 3px 8px; font: 900 9.5px var(--p-font); letter-spacing: .6px; text-transform: uppercase; }
-.casino-ig .cig-t { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.casino-ig .cig-amt { flex: 0 0 auto; color: var(--p-green, #0a7a3e); font: 900 14px var(--p-font); }
-.casino-ig .cig-go { flex: 0 0 auto; background: var(--p-text); color: var(--p-inv, #fff); border-radius: 999px; padding: 5px 10px; font: 900 11px var(--p-font); }
-#casinoOverlay.has-ig #casinoSupportBubble { bottom: calc(66px + env(safe-area-inset-bottom, 0px)) !important; }
-#casinoOverlay.has-ig .casino-load { bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important; }
-#casinoOverlay.has-ig #casinoFrame { padding-bottom: 0; }
-.luck-ig { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--p-border); }
-.luck-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.luck-row .luck-btn { margin-top: 0; }
-.luck-btn-ig { background: var(--p-green, #0a7a3e) !important; }
-.luck-btn-sec { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; }
+/* #719→#722: la barra fija de instalar se eliminó; queda el botón dentro de la Carga rápida y la hoja de la oferta sobre el casino */
+.casino-load .cl-btn.cl-ig { background: var(--p-green-soft, #e8f5ee) !important; color: var(--p-green, #0a7a3e) !important; border: 1px solid var(--p-green, #0a7a3e) !important; box-shadow: none !important; margin-top: 6px !important; font: 800 11.5px/1.3 var(--p-font) !important; white-space: normal; text-align: center; }
+.casino-load .cl-btn.cl-ig b { color: var(--p-green, #0a7a3e); }
 body.casino-open .play-now-card { z-index: 100001 !important; }
 /* #721 (owner): burbuja "arriba" tras la carga: logo + CARGA RÁPIDA, sin el aviso de mover, más compacta */
 #casinoSupportBubble.cq-top .cq-hint { display: none !important; }
