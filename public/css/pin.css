@@ -2210,3 +2210,5 @@ body.nodep .pwa-install-bar .pib-x { display: none !important; }
 .casino-brand small { font-size: 6.5px !important; letter-spacing: 1px !important; }
 @media (max-width: 420px) { .casino-brand small { display: none !important; } .casino-topbar .casino-back { padding: 6px 7px !important; } }
 @media (max-width: 360px) { .casino-brand .cb-txt { display: none !important; } .casino-brand .cb-box { padding: 3px !important; border-radius: 50% !important; } }
+/* #735 (owner): cartel de carga "plain" (cargas siguientes): sin botones, 3 s */
+.play-now-card.pn-plain #pnGift, .play-now-card.pn-plain #playNowBtn, .play-now-card.pn-plain #playNowLater, .play-now-card.pn-plain .pn-later { display: none !important; }

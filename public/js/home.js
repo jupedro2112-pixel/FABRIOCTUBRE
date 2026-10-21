@@ -1120,7 +1120,7 @@
             try {
                 const ts = new Date(message.timestamp || 0).getTime();
                 const fresh = !ts || (Date.now() - ts) < 3 * 60000;
-                if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); _lastDeposit = { platform: md.platform, amount: md.amount, bonus: md.bonus }; showPlayNow(Object.assign({}, _lastDeposit, (_ig && _ig.status === 'offered' && Number(_ig.amount) > 0) ? { gift: _ig } : {})); }
+                if (fresh && !_playNowShown.has(message.id)) { _playNowShown.add(message.id); _lastDeposit = { platform: md.platform, amount: md.amount, bonus: md.bonus }; showPlayNow(Object.assign({}, _lastDeposit, (_ig && _ig.status === 'offered' && Number(_ig.amount) > 0) ? { gift: _ig } : { plain: true })); } // #735: sin regalo → sin botones, 3 s
             } catch (_) {}
         }
         // #283: oferta de carga GRATIS por instalar la app (primera carga) → hoja al instante si es reciente.
@@ -1185,14 +1185,17 @@
                 }
             } else { gb.style.display = 'none'; card.dataset.gift = ''; if (later) later.textContent = 'Después'; }
         }
-        if (b) b.style.display = o.giftOnly ? 'none' : '';
+        if (b) b.style.display = (o.giftOnly || o.plain) ? 'none' : '';
+        // #735 (owner): en las cargas siguientes (sin extra por instalar) el MISMO cartel, sin ningún botón, y se va a los 3 s.
+        if (later) later.style.display = o.plain ? 'none' : '';
+        card.classList.toggle('pn-plain', !!o.plain);
         card.classList.add('show');
         card.setAttribute('aria-hidden', 'false');
         // #563 (owner): es una BURBUJA temporal (no tapa el inicio): se va sola a los 15 s. Si traía la oferta del extra por instalar,
         // queda el botón negro grande arriba de "Cambiar menú" ("lo instalo después").
         clearTimeout(_pnTimer);
         // #727 (owner): con el extra por instalar, el cartel se QUEDA hasta que elija (instalar / jugar ahora / lo cargo después); sin regalo, 15 s.
-        if (card.dataset.gift !== '1') _pnTimer = setTimeout(() => { try { hidePlayNow(); } catch (_) {} }, 15000);
+        if (card.dataset.gift !== '1') _pnTimer = setTimeout(() => { try { hidePlayNow(); } catch (_) {} }, o.plain ? 3000 : 15000);
     }
     let _pnTimer = null;
     // #294: "Después" / "Seguir jugando": si el cartel trae la oferta del extra, queda PENDIENTE (barra de abajo).
@@ -1980,19 +1983,9 @@
             }
         } catch (_) {}
         try { toggleCasinoLoad(false); } catch (_) {} // #723 (owner): tras la carga se cierra el panel y listo
-        let n = null;
-        try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}
-        if (n != null && n > 5) return;
-        const old = _el('luckCard'); if (old) old.remove();
-        const amt = Number(d && d.amount) || 0;
-        document.body.insertAdjacentHTML('beforeend',
-            '<div id="luckCard" class="luck-card" role="status">' +
-              '<button type="button" class="luck-x" onclick="VIP.home.luckClose()" aria-label="Cerrar">✕</button>' +
-              '<div class="luck-t">🍀 ¡Buena suerte!' + (amt ? ' <small>Carga de $' + amt.toLocaleString('es-AR') + ' acreditada</small>' : '') + '</div>' +
-              '<div class="luck-p">Recordá que tenemos <b>muchos beneficios para vos</b> dentro de nuestro <b>menú completo</b>, ¡no te lo pierdas!</div>' +
-              '<button type="button" class="luck-btn" onclick="VIP.home.luckClose(); VIP.home.casinoFullMenu()">☰ Ver el menú completo ›</button>' +
-            '</div>');
-        clearTimeout(_luckT); _luckT = setTimeout(luckClose, 5000);
+        // #735 (owner): sin extra por instalar (ya tiene la app o no es la primera carga) → el mismo cartel "¡Entró tu carga de $X!",
+        // sin botones, 3 segundos. (Reemplaza al cartel "¡Buena suerte!" de #712.)
+        try { _lastDeposit = { platform: 'girox', amount: Number(d && d.amount) || 0, bonus: 0 }; showPlayNow(Object.assign({}, _lastDeposit, { plain: true })); } catch (_) {}
     }
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.

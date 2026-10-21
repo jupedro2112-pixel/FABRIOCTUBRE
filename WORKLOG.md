@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 735. 🎉 Cargas siguientes: el mismo cartel "¡Entró tu carga!" sin botones, 3 segundos — SW v526
+**Pedido (owner, captura):** "después de la primera carga aparece así (con instalar la app); en las demás cargas, si instaló la app,
+dejá lo mismo pero que se vaya a los 3 segundos sin ningún botón". `showPlayNow({plain:true})`: oculta el bloque del extra, "Jugar
+ahora" y "Seguir jugando / Después" (`.pn-plain`), y se cierra a los 3 s. Se usa cuando NO hay extra ofrecido: en el casino
+(`onDepositCredited`, reemplaza al cartel "¡Buena suerte!" de #712) y en el completo/básico (mensaje `deposit_credited`). Con extra
+ofrecido (primera carga sin la app) el cartel completo sigue igual y se queda hasta elegir (#727).
+
 ### 734. ☰ Selector de menús: Completo primero ("El más completo"), Girox directo segundo como "Recomendado" — SW v525
 **Pedido (owner):** "el Recomendado ponelo en el de Girox ahora, cambialo y ponelo segundo, y el primero dejalo como el más completo".
 Orden del selector: MENÚ COMPLETO (etiqueta "El más completo") · GIROX DIRECTO ("Recomendado", rojo) · BÁSICO · INTERMEDIO.
