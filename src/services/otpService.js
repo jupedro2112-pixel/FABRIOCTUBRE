@@ -71,7 +71,9 @@ function buildOtpMessage(purpose, code) {
 // celular. `OTP_TEST_BYPASS=0` lo apaga. En producción (AWS, sin esas variables) NO aplica nunca.
 const OTP_TEST_CODE = '000000';
 function _testOtpBypass() {
-  return !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && process.env.OTP_TEST_BYPASS !== '0';
+  // #779 (SEGURIDAD): Render comparte la BASE DE DATOS con producción ⇒ el 000000 valdría para verificar el celular, retirar o
+  // cambiar la clave de CUALQUIER cliente real desde la URL de Render. Sólo con el flag EXPLÍCITO, nunca por RENDER=true.
+  return process.env.OTP_TEST_BYPASS === '1';
 }
 async function generateAndSendOTP(phone, purpose) {
   const now = new Date();

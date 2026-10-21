@@ -295,6 +295,11 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **FUEGUITO por ROLLOVER (#654, 2026-10-20):** el premio de cada hito se cobra habiendo APOSTADO `milestone.rollover` (stats de la
   plataforma) desde `FireStreak.rolloverSince`; ese campo vuelve a "ahora" al cobrar, al pasar al hito siguiente sin cobrar (el premio
   pendiente se limpia) o al reiniciar la racha. Ya no hay requisito de cargas (`requireDeposits`/`fireMinDeposits` sin efecto).
+- **🚨 RENDER COMPARTE LA BASE DE DATOS CON PRODUCCIÓN (#779, 2026-10-21).** Todo lo que se haga en `fabrioctubre.onrender.com`
+  (panel, limpiezas, historias con push, resets, cargas de prueba) toca datos REALES. Nunca cargar la key de 1girox/hgcash desde el
+  panel de Render (pisa el registro cifrado con el secreto de producción); Render usa la API real sólo por env (`GIROX_API_URL/KEY`).
+  Las comodidades de prueba (OTP 000000, admin de prueba, altas sin API, testers de ruleta) sólo con flags explícitos
+  (`OTP_TEST_BYPASS=1`, `TESTER_ADMIN_PROMOTE=1` + `TESTER_PASSWORD`), nunca por `RENDER=true`.
 - **ENTORNO DE PRUEBA = casino simulado + OTP de prueba (#616/#617, 2026-10-20):** en Render (`RENDER=true`) sin API real de
   1girox, `src/services/giroxSimulator.js` responde la Partner API (alta, saldo, cargas, retiros, regalos, stats; estado en
   `Config['giroxSimState']`; `GET/POST /api/admin/girox-sim`) y `giroxService.isSimulated()` es true (`source:'simulado'`). El OTP acepta `000000`

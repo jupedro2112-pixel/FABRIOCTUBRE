@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 779. 🚨 SEGURIDAD: Render comparte la BASE DE DATOS con producción
+**Hallazgo (al investigar por qué Render no veía la API de 1girox):** `fabrioctubre.onrender.com` usa la MISMA MongoDB que
+`picaroja.com` (mismas historias, usuarios, cierres…). La key de 1girox guardada desde el panel de producción no se puede descifrar en
+Render (`decryptError`, otro `JWT_SECRET`) ⇒ Render caía al simulador. Consecuencias que había que cerrar YA:
+(1) el arranque de Render CREÓ el 2026-10-19 al usuario `lalodj` con rol ADMIN y clave por defecto en la base REAL (#551) ⇒ se le
+quita el admin a mano y la creación/promoción sólo corre con `TESTER_ADMIN_PROMOTE=1` + `TESTER_PASSWORD` explícitos (nunca por
+`RENDER=true`); (2) el OTP de prueba `000000` valía para cualquier cliente real desde la URL de Render ⇒ sólo con `OTP_TEST_BYPASS=1`
+explícito; (3) altas sin API (`_allowNoApi`) y testers de ruleta ídem. Quedan por `RENDER`: endpoints 🧪 (sólo `TEST_USERNAMES`, y
+sólo con casino simulado), reset de diego651917 y el simulador de 1girox cuando no hay credenciales.
+**Regla nueva:** NUNCA cargar la key de 1girox ni hgcash desde el panel de Render: pisaría el registro compartido cifrado con el
+secreto de producción y producción perdería la key (volvería al SSM viejo = el fallo de esta mañana). Para que Render use la API real:
+variables `GIROX_API_URL` / `GIROX_API_KEY` en el dashboard de Render (el env es el fallback cuando el panel no descifra).
+**Datos de prueba de hoy en la base real:** 2 cargas 🧪 de $5.000 a diego651917 (marcadas PRUEBA, excluidas de cierres y Cargas
+automáticas; "reset-test" las borra).
+
 ### 778. 🛡️ Carga/Retiro de prueba sólo con el casino SIMULADO
 **Pedido (owner):** "salí del modo prueba, quiero la original para testear todo y subir a Amazon". El casino real en Render se
 consigue cargando la API de 1girox en el panel de Render (COMANDOS → Banco automático → 🎰 API de 1girox): el simulador se apaga solo

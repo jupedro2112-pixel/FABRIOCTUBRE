@@ -4845,7 +4845,7 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     const smsRequired = !isAdLink && (await getConfig('quickEntrySms', true)) === true;
     if (smsRequired && !verifiedPhone) return res.status(400).json({ code: 'SMS_REQUIRED', error: 'Verificá tu celular por SMS para crear la cuenta.' });
     if (mode !== 'quick' && !isAdLink && !verifiedPhone) return res.status(410).json({ error: 'La entrada rápida no está activa. Registrate con tu teléfono.' });
-    req._allowNoApi = !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1'); // #426: sólo entorno de prueba
+    req._allowNoApi = process.env.TESTER_ADMIN_PROMOTE === '1'; // #426: sólo entorno de prueba · #779: nunca por RENDER (base compartida)
     req.body = { name, referralCode: (req.body && req.body.referralCode) || null, campaignCode: code || 'INGRESO', landingUrl: (req.body && req.body.landingUrl) || (getPublicBaseUrl() + '/'), utm: (req.body && req.body.utm) || null, fbc: (req.body && req.body.fbc) || null, fbp: (req.body && req.body.fbp) || null };
     const out = await new Promise((resolve) => {
       const fake = { _c: 200, status(c) { this._c = c; return this; }, json(b) { resolve({ code: this._c, body: b }); }, set() { return this; }, setHeader() { return this; }, cookie() { return this; }, end() { resolve({ code: this._c, body: {} }); } };
@@ -12295,12 +12295,11 @@ async function initializeData() {
   // #355 (seguridad): SOLO en el entorno de prueba (Render pone RENDER=true) o con TESTER_ADMIN_PROMOTE=1. En producción
   // (AWS) no se toca: una cuenta de prueba con clave simple NO puede quedar como admin del panel.
   try {
-    if (!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1')) throw Object.assign(new Error('skip'), { skip: true });
-    // #551 (owner, base limpia): en Render, si "lalodj" no existe se CREA con la clave inicial de las cuentas nuevas
-    // (`LANDING_DEFAULT_PASSWORD`, la misma que reciben los registros rápidos; `TESTER_PASSWORD` la pisa). Sólo RENDER: en
-    // producción nunca se crea una cuenta con clave conocida.
-    if (process.env.RENDER && !(await User.findOne({ username: 'lalodj' }).select('_id').lean())) {
-      await User.create({ id: uuidv4(), username: 'lalodj', password: String(process.env.TESTER_PASSWORD || process.env.LANDING_DEFAULT_PASSWORD || 'asd123'), role: 'admin', accountNumber: generateAccountNumber(), balance: 0, isActive: true, isBlocked: false, phoneVerified: false, phoneVerificationPending: false, referralCode: generateReferralCode(), acquisitionSource: 'manual', createdAt: new Date() });
+    // #779 (SEGURIDAD): Render comparte la BASE con producción ⇒ esto creó "lalodj" ADMIN con clave por defecto en la base REAL
+    // (2026-10-19). Ahora SÓLO con TESTER_ADMIN_PROMOTE=1 explícito (nunca por RENDER=true) y la creación exige TESTER_PASSWORD.
+    if (process.env.TESTER_ADMIN_PROMOTE !== '1') throw Object.assign(new Error('skip'), { skip: true });
+    if (process.env.TESTER_PASSWORD && !(await User.findOne({ username: 'lalodj' }).select('_id').lean())) {
+      await User.create({ id: uuidv4(), username: 'lalodj', password: String(process.env.TESTER_PASSWORD), role: 'admin', accountNumber: generateAccountNumber(), balance: 0, isActive: true, isBlocked: false, phoneVerified: false, phoneVerificationPending: false, referralCode: generateReferralCode(), acquisitionSource: 'manual', createdAt: new Date() });
       console.log('✅ Usuario de prueba lalodj creado (#551, sólo Render)');
     }
     await _loadPublicBaseUrlOverride(); // #589: página de la app desde el panel
@@ -22297,7 +22296,7 @@ function _prizesClient(prizes) {
 // #390 (owner): a los usuarios de PRUEBA se les reinicia la ruleta en cada apertura/giro para testear sin esperar al otro día.
 const ROULETTE_TESTERS = ['lalodj', 'lalodj499910', 'diego576413']; // #476 · #506
 // #413 (seguridad): sólo en el entorno de prueba (Render) o con TESTER_ADMIN_PROMOTE=1, igual que #355. En producción NO.
-const _isRouletteTester = (username) => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMOTE === '1') && ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
+const _isRouletteTester = (username) => process.env.TESTER_ADMIN_PROMOTE === '1' && ROULETTE_TESTERS.includes(String(username || '').toLowerCase());
 function _pickWeightedPrize(prizes) {
   const total = prizes.reduce((s, p) => s + (Number(p.weight) || 0), 0);
   if (!(total > 0)) return prizes[prizes.length - 1];
