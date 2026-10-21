@@ -11586,7 +11586,15 @@ app.get('/', async (req, res) => {
 
 async function initializeData() {
   // Conectar a MongoDB
-  const dbConnected = await connectDB();
+  // #760: si la conexión inicial a MongoDB falla (Atlas/DNS con un hipo justo al arrancar), ANTES el servidor quedaba vivo pero sin base
+  // para siempre (/api/health "degraded", login "Servicio temporalmente no disponible", todos los tokens "inválidos") hasta el próximo
+  // deploy. Ahora reintenta cada 10 s hasta 30 min; recién si no hay caso se rinde.
+  let dbConnected = await connectDB();
+  for (let intento = 1; !dbConnected && intento <= 180; intento++) {
+    console.error(`❌ MongoDB no conectó (intento ${intento}); reintento en 10 s`);
+    await new Promise((r) => setTimeout(r, 10000));
+    dbConnected = await connectDB();
+  }
   if (!dbConnected) {
     console.error('❌ No se pudo conectar a MongoDB');
     return;

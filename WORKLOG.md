@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 760. 🐛 Sesiones "cerradas" en Render: el servidor había quedado sin base de datos — ahora reintenta al arrancar
+**Síntoma (owner, capturas):** panel y app con "Servicio temporalmente no disponible" / "La conexión tardó demasiado"; todos los tokens
+daban "Token inválido" y `/api/health` respondía `degraded` (Mongo desconectado). **Causa:** la conexión inicial a MongoDB falló en el
+arranque del último deploy (hipo transitorio de Atlas/DNS) y `initializeData` salía sin reintentar: el proceso quedaba vivo sin base
+hasta el próximo deploy. **Fix:** reintento cada 10 s (hasta 30 min) antes de rendirse; mongoose ya reconecta solo si la caída es
+posterior. Este push además redeploya Render y recupera el entorno de prueba.
+
 ### 759. 🏠 Básico compacto: entra todo en la pantalla — SW v541
 **Pedido (owner, captura):** "achicá todo como para que entre todo, central". Menos relleno y tipografía en cabecera, título de
 servicios, accesos, plataformas (chips de 22 px), CARGAR/RETIRAR (50 px de alto), Entrar a jugar y el bloque de cambio de menú.
