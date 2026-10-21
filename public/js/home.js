@@ -534,8 +534,8 @@
             const h = _el('pfPhoneHint'), b = _el('pfPhoneBtn'); if (!h || !b) return;
             h.textContent = ok ? ('Verificado ✓ · ' + (u.phone || '')) : 'Sin verificar · necesaria para retirar';
             // #767: franja arriba de todo del Perfil
-            try { const ts = _el('pfTopSms'), tt = _el('pfTopSmsT'), tsub = _el('pfTopSmsS'); if (ts && tt) { ts.classList.toggle('ok', ok); tt.textContent = ok ? '✅ Celular verificado por SMS' : '📱 Verificá tu celular por SMS ›'; if (tsub) tsub.textContent = ok ? (u.phone || 'OK') : 'Necesario para retirar'; } } catch (_) {}
-            try { const n = _el('pfTopName'), bal = _el('pfTopBal'), av = _el('pfTopAvatar'), ub = _el('userBalance'), pa = _el('pfAvatar'); if (n) n.textContent = u.username || '—'; if (bal && ub) bal.textContent = ub.textContent || '$0'; if (av && pa) av.innerHTML = pa.innerHTML; } catch (_) {}
+            // #783 (owner): saldo al lado del nombre en el recuadro de usuario (la franja de arriba y el cartel de SMS de #767 se sacaron)
+            try { const bal = _el('pfUserBal'), ub = _el('userBalance'); if (bal && ub) bal.textContent = ub.textContent || '$0'; } catch (_) {}
             b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok);
             const row = _el('pfPhoneRow'), imp = _el('pfPhoneImp'); if (row) row.classList.toggle('pf-important', !ok); if (imp) imp.hidden = ok; // #646 b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
         } catch (_) {}

@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 783. 👤 Perfil: recuadro de usuario arriba de todo con el SALDO al lado del nombre — SW v551
+**Pedido (owner, capturas):** "esto (avatar · nombre · nivel) va arriba de todo; agregale el saldo al lado del usuario; la línea
+(usuario · logo · saldo) y el cartel de SMS de arriba sacalos, el de abajo está OK". Se mueve `#pfUserBox` al principio del modal, con
+`#pfUserBal` (copia de `#userBalance`) junto al nombre; se eliminan `.pf-topline` y `.pf-topsms` (#767). La verificación de teléfono
+sigue en su fila de siempre.
+
 ### 782. 🎮 Las fotos de "Top juegos" abren el casino DIRECTO en ese juego — SW v550
 **Pedido (owner):** "que cada foto de inicio lo lleve a la página directo a ese juego específico, detectando cuál es". 1girox abre un
 juego en `/play/<aggregator_id>/<game_id>`; los IDs salen de su catálogo público (`admin.1girox.com/api/games?search=…`). `GAME_PLAY`

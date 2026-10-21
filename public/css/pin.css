@@ -2357,16 +2357,6 @@ body.nodep .ev-cta.ev-cta-top .ev-cta-b { font-size: 20px !important; letter-spa
 body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: #fff !important; font-weight: 800 !important; }
 .casino-load .cl-attach.cl-first { font-size: 12.5px !important; }
 @media (prefers-reduced-motion: reduce) { body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { animation: none !important; } }
-/* #767 (owner): Perfil — línea usuario · logo · saldo y verificación por SMS arriba de todo */
-.pf-topline { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; padding: 8px 12px; border-radius: 14px; background: var(--p-surface); border: 1px solid var(--p-border); }
-.pf-top-av { width: 34px; height: 34px; border-radius: 50%; background: var(--p-card); border: 1px solid var(--p-border); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
-.pf-top-av img { width: 100%; height: 100%; object-fit: cover; }
-.pf-top-name { flex: 1 1 auto; min-width: 0; font: 900 14px var(--p-font); color: var(--p-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pf-top-bal { font: 900 15px var(--p-font); color: var(--p-green); }
-.pf-topsms { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 0 0 10px; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--p-amber-line); background: var(--p-amber-soft); color: var(--p-amber); font: 900 13px var(--p-font); cursor: pointer; animation: fgPulse 1.6s ease-in-out infinite; }
-.pf-topsms small { font: 600 10.5px var(--p-font); color: var(--p-amber); margin-top: 2px; }
-.pf-topsms.ok { border-color: var(--p-green-line); background: var(--p-green-soft); color: var(--p-green); animation: none; cursor: default; }
-.pf-topsms.ok small { color: var(--p-green); }
 /* #768 (owner): RULETA y MISIONES más compactas, centradas y juntas (menos scroll) */
 #rouletteModal .rl-title { font-size: 20px !important; margin: 2px 0 2px !important; }
 #rouletteModal .rl-sub { font-size: 11.5px !important; line-height: 1.3 !important; margin: 0 auto 6px !important; max-width: 320px; }
@@ -2400,3 +2390,7 @@ body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .c
    lo que hay que copiar (alias/CBU) tiene su botón Copiar. El campo de escribir sigue normal. */
 #chatMessages .message-wrapper, #chatMessages .message-wrapper *, #supportIntro, #supportIntro * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 #chatMessages input, #chatMessages textarea { -webkit-user-select: text; user-select: text; }
+/* #783 (owner): Perfil — recuadro de usuario arriba de todo, con el saldo al lado del nombre */
+.pf-userline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pf-userbal { font: 900 15px var(--p-font); color: var(--p-green); }
+#profileModal .pf-userbox { margin-top: 2px; }
