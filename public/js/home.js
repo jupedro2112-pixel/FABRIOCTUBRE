@@ -1982,6 +1982,8 @@
             p = _el('casinoLoadPanel');
         }
         _quickOpen = typeof force === 'boolean' ? force : !_quickOpen;
+        // #717 (owner): con el panel abierto la burbuja se esconde (no tiene que tapar la Carga rápida); vuelve al cerrarlo.
+        try { const bb = _el('casinoSupportBubble'); if (bb) bb.style.display = (_quickOpen || _quickDismissed) ? 'none' : ''; } catch (_) {}
         if (!_quickOpen) { p.style.display = 'none'; return; }
         const cbu = (VIP.autoload && VIP.autoload.getCbu && VIP.autoload.getCbu()) || null;
         const list = (_platforms && _platforms.platforms) || [];

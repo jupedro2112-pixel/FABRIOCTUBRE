@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 717. 🎰 La burbuja no tapa el panel de Carga rápida + dice "movela si te molesta" — SW v510
+**Pedido (owner, captura):** "cuando se abre la burbuja que no tape el Carga rápida, eso es importante; y te pedí que en esa burbuja
+diga también que se puede mover si molesta donde quiera". `toggleCasinoLoad`: con el panel abierto la burbuja `#casinoSupportBubble`
+se oculta y reaparece al cerrarlo (– o ✕). Burbuja: "CARGA RÁPIDA" + línea chica "↔ movela si te molesta" (`.cq-hint`; oculta en modo
+mini). Los botones de prueba (testers) dentro del casino van arriba a la izquierda, más chicos, para no tapar el panel.
+
 ### 716. 🎰 Tras una carga o un retiro dentro del casino, la burbuja de Carga rápida se minimiza — SW v509
 **Pedido (owner):** "cuando se hace la carga o retiro que la burbuja se minimice así no molesta". `onDepositCredited` y
 `onWithdrawRequested` (con el casino abierto) cierran el panel y dejan la burbuja `.cq-mini` (sólo el logo) antes de mostrar el cartel.
