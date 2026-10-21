@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-18
 
+### 719. 📲 Instalar la app DENTRO del casino: barra fija abajo + aviso en el cartel de carga (sin fricción) — SW v512
+**Pedido (owner):** "la parte de instalar app dentro de Girox, cuando realizan la carga, que ahí mismo figure lo mismo de instalar la
+app; si no quiere instalar en el momento puede hacerlo después desde el menú completo eligiendo en la parte superior; no generar
+fricción pero que sepan que después de jugar tienen el extra de 50% de su carga instalando la app de forma sencilla; y que quede fijo
+el instalar app en la parte inferior si no está". **App:** `_igPaintCasinoBar()` pinta `#casinoIgBar` al pie del overlay del casino
+(sólo si NO está instalada y no es modo prueba): con extra pendiente → "Pendiente · 📲 Instalá la app y cargá tu extra · +$X"
+(abre la oferta `installGiftOpen`); sin pendiente → "📲 Instalá la app · +{extra}% extra de tu carga · Instalar ›" (`VIP.appTest.
+doInstall`). `{extra}` = `extra` de `/api/first-deposit-promo` (50%). La burbuja y el panel de Carga rápida suben para no taparla
+(`#casinoOverlay.has-ig`). El cartel "¡Buena suerte!" (#712) suma la línea "Después de jugar, instalá la app y sumás +50% de tu carga,
+en dos toques. Si no querés ahora, lo hacés después desde Menú ☰ arriba" + botón verde "Instalar la app" (8 s en vez de 5 cuando
+lleva esa línea). La hoja de la oferta (`.play-now-card`) va por encima del casino.
+
 ### 718. 🧹 Limpieza de punta a punta (código muerto, imágenes, repo) — SW v511
 **Pedido (owner):** "limpiá la página de punta a punta para que esté óptima para todos, que no se rompa nada pero que esté tope de gama
 y limpita". **Auditado y OK:** sin ids duplicados ni `console.log` en la PWA; los 141 `onclick` inline (HTML + strings de JS) resuelven

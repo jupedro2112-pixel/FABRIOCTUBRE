@@ -1242,7 +1242,24 @@
         } catch (_) {}
     }
     function _igPending() { return !!(_ig && (_ig.status === 'deferred' || _ig.status === 'offered') && Number(_ig.amount) > 0); }
+    // #719 (owner): INSTALAR LA APP dentro del casino, sin fricción: barra fija abajo mientras NO esté instalada (con el extra pendiente
+    // si lo hay, o el % extra de la primera carga), y una línea en el cartel de carga acreditada. Tocarla abre la oferta / instala.
+    function _igExtraPct() { const e = _fdJ && Number(_fdJ.extra); return e > 0 ? Math.round(e) + '%' : (_igPct(_ig) || ''); }
+    function _igPaintCasinoBar() {
+        const ov = _el('casinoOverlay'); if (!ov) return;
+        let bar = _el('casinoIgBar');
+        const show = !_isStandalone() && !ov.classList.contains('casino-test');
+        if (!show) { if (bar) bar.style.display = 'none'; ov.classList.remove('has-ig'); return; }
+        if (!bar) { ov.insertAdjacentHTML('beforeend', '<button type="button" id="casinoIgBar" class="casino-ig" onclick="VIP.home.casinoInstall()"></button>'); bar = _el('casinoIgBar'); }
+        const pend = _igPending(); const pct = _igExtraPct();
+        bar.innerHTML = pend
+            ? '<span class="cig-k">Pendiente</span><span class="cig-t">📲 Instalá la app y cargá tu extra</span><b class="cig-amt">+' + _igFmt(_ig.amount) + '</b>'
+            : '<span class="cig-k">App</span><span class="cig-t">📲 Instalá la app' + (pct ? ' · <b>+' + pct + ' extra</b> de tu carga' : '') + '</span><span class="cig-go">Instalar ›</span>';
+        bar.style.display = ''; ov.classList.add('has-ig');
+    }
+    function casinoInstall() { if (_igPending()) installGiftOpen(); else { try { VIP.appTest.doInstall(); } catch (_) {} } }
     function _igPaintBar() {
+        try { _igPaintCasinoBar(); } catch (_) {} // #719
         const bar = _el('installGiftBar'); if (!bar) return;
         const pending = _igPending();
         bar.style.display = pending ? '' : 'none';
@@ -1928,9 +1945,15 @@
               '<button type="button" class="luck-x" onclick="VIP.home.luckClose()" aria-label="Cerrar">✕</button>' +
               '<div class="luck-t">🍀 ¡Buena suerte!' + (amt ? ' <small>Carga de $' + amt.toLocaleString('es-AR') + ' acreditada</small>' : '') + '</div>' +
               '<div class="luck-p">Recordá que tenemos <b>muchos beneficios para vos</b> dentro de nuestro <b>menú completo</b>, ¡no te lo pierdas!</div>' +
-              '<button type="button" class="luck-btn" onclick="VIP.home.luckClose(); VIP.home.casinoFullMenu()">☰ Ver el menú completo ›</button>' +
+              // #719 (owner): después de jugar tiene el extra por instalar la app; si no quiere ahora, lo hace después desde Menú ☰ (arriba).
+              (!_isStandalone() ? '<div class="luck-p luck-ig">📲 Después de jugar, <b>instalá la app</b> y sumás <b>+' + (_igExtraPct() || 'un extra') + ' de tu carga</b>, en dos toques. Si no querés ahora, lo hacés después desde <b>Menú ☰</b> arriba.</div>' : '') +
+              '<div class="luck-row">' +
+                (!_isStandalone() ? '<button type="button" class="luck-btn luck-btn-ig" onclick="VIP.home.luckClose(); VIP.home.casinoInstall()">📲 Instalar la app</button>' : '') +
+                '<button type="button" class="luck-btn' + (!_isStandalone() ? ' luck-btn-sec' : '') + '" onclick="VIP.home.luckClose(); VIP.home.casinoFullMenu()">☰ Ver el menú completo ›</button>' +
+              '</div>' +
             '</div>');
-        clearTimeout(_luckT); _luckT = setTimeout(luckClose, 5000);
+        try { _igInit(); } catch (_) {} // #719: refresca la oferta/extra pendiente tras la carga
+        clearTimeout(_luckT); _luckT = setTimeout(luckClose, _isStandalone() ? 5000 : 8000);
     }
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.
@@ -2029,6 +2052,7 @@
         // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
         try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-active', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
         document.body.classList.add('casino-open'); // #700: los modales (Info, Perfil, historias…) van por encima del casino
+        try { _igPaintCasinoBar(); } catch (_) {} // #719: barra "Instalá la app" abajo del casino (si no está instalada)
         // (#701: ya no se pinta el título "Estás en <plataforma> · para cambiar, salí")
     }
     function switchPlatform(platformId) {
@@ -2241,7 +2265,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
