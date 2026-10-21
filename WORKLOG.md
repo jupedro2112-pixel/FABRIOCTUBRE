@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 799. 📖 Botones de las historias desde ADENTRO del casino: salen al menú completo y abren esa sección — SW v560
+**Pedido (owner):** "cuando estoy adentro de Girox pongo las historias; si aprieto el botón tiene que salir de la app, ir al menú y
+ver el botón que apreté". Los links `app:<sección>` de una historia abrían la sección detrás del casino. Ahora, si el casino está
+abierto: se cierra, se pasa al menú completo y 350 ms después se abre lo pedido (reembolso, ruleta, misiones, referidos, verificar…;
+`cargar`/`soporte` van a su propio modo). "Reclamar ahora" (bono) ya iba a Girox directo y no cambia.
+
+### 798. 💳 Tras el registro, Girox directo abre con la Carga rápida DESPLEGADA — SW v560
+**Pedido (owner):** "cuando abren la app después del registro quiero que aparezca Girox para jugar y abierta la carga rápida". Girox
+directo ya era el menú por defecto (#781/#?); ahora, mientras no haya ninguna carga (`body.nodep`), el panel de Carga rápida entra
+abierto (con PRIMERA CARGA + mínimo); después de la primera carga vuelve a entrar cerrado con la burbuja, como antes (#723).
+
 ### 797. 📣 Píxel de Meta de la landing por publicista (réplica del #198 de CARGASGIROX)
 **Pedido (owner):** en grupospicaroja.com/picarojaok el asistente de Meta decía "No se han encontrado píxeles" aunque en SSM
 (`/picaroja/prod/`) estaban `META_PIXEL_ID_2`, `META_PIXEL_PUBLISHER_2` y `META_CAPI_ACCESS_TOKEN_2`: #553 había quitado de la

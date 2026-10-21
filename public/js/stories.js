@@ -118,7 +118,13 @@
                 link.href = '#'; link.style.display = ''; link.classList.add('st-bonus');
                 link.textContent = '🎁 Reclamar ahora +' + s.bonusPct + '% en tu próxima carga ›';
                 link.onclick = (ev) => { ev.preventDefault(); claimBonus(s.id, s.bonusPct); };
-            } else if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()]; try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }; }
+            } else if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()];
+                // #799 (owner): si la historia se tocó ADENTRO del casino, primero se sale del casino al menú completo y recién ahí se abre
+                // lo que pidió el botón (antes se abría detrás del casino y parecía que no hacía nada).
+                let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
+                const k = appKey[1].toLowerCase();
+                try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
+                setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
             else if (s.linkUrl) { link.href = s.linkUrl; link.onclick = null; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }
             else link.style.display = 'none';
             if (!(s.bonusActive && Number(s.bonusPct) > 0)) link.classList.remove('st-bonus');
