@@ -379,6 +379,9 @@
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
         if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #559: preseleccionado → entra directo · #670
+        // #733 (owner): "el menú seleccionado para todos (landing o común) cuando abran la app sea el de Girox, y después lo pueden cambiar
+        // desde Menú; la idea es que todos entren directo a cargar". Sin menú fijo → Girox directo, sin selector (si ese menú está activo).
+        if (_menuOn('girox')) { setMenuPref('girox', { quiet: true }); return; }
         setTimeout(openMenuChooser, 350);
     }
     // #559 (owner): "Dejar preseleccionado para el ingreso" al lado de Cambiar menú. Guarda el menú actual como preferencia

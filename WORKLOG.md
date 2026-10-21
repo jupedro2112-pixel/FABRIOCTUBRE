@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 733. 🚪 Al abrir la app, TODOS entran directo a Girox (carga rápida); el menú se cambia después desde Menú — SW v524
+**Pedido (owner):** "hacé que el menú seleccionado para todos, landing o común, cuando abran la app sea el de Girox y que después lo
+puedan cambiar desde Menú si quieren; la idea es que todos entren directo a cargar". `maybeShowMenuChooser`: si no hay un menú dejado
+FIJO (#559) y el menú Girox está activo en el panel, en vez del selector se entra con `setMenuPref('girox', {quiet:true})` (Girox
+directo: casino embebido + burbuja de Carga rápida). "Dejar fijo" otro menú sigue respetándose; el botón Menú de la barra abre el
+selector; sin el menú Girox activo vuelve el selector de siempre. Aplica también al volver tras 10 min en segundo plano (#367).
+
 ### 732. 🎰 Barra del casino centrada y sin superposiciones — SW v523
 **Pedido (owner, captura):** "corregilo que quede todo centrado y no se tape PICA ROJA" (la pastilla de la marca pisaba Menú e
 Historias y los íconos quedaban a distintas alturas). CSS: fila de 44 px con todo centrado verticalmente; botones de 38×40 px con
