@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 776. 🐛🔥 CARGA RÁPIDA en el casino congelaba TODA la app (bucle infinito) — SW v548
+**Reporte (usuario real por WhatsApp, 11:37):** "al presionar Carga rápida dentro del casino se queda colgado absolutamente todo, tenés
+que cerrar todo y volver a abrirlo". Causa: #766 (10:52) agregó en `_paintFirstLoad` un `toggleCasinoLoad(true)` para repintar el
+panel abierto; pero `toggleCasinoLoad` llama `_fdNotesPaint` → `firstGuidePaint` → `_paintFirstLoad` → `toggleCasinoLoad`… y como la
+promesa de la promo ya estaba resuelta, el bucle corría por microtareas sin parar y la pestaña se congelaba (en cualquier menú que
+abriera el casino y tocara la burbuja). Fix: el panel se repinta SÓLO cuando cambia el estado con/sin primera carga (`_pflLast`).
+Lección: ninguna función de pintado debe llamar a otra que la vuelva a disparar; si hace falta, repintar en el lugar (DOM) y no re-render.
+
 ### 775. 🎰 Casino SIMULADO propio en Girox directo (entorno de prueba)
 **Pedido (owner, captura "Entrando al casino…" en Girox directo, también desde 4G y otros teléfonos):** en Render el simulador mandaba el
 iframe a `https://1girox.com/?sim_login=…` (la web real, sin sesión, con cookies de terceros bloqueadas en el celular) y se quedaba

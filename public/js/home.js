@@ -2192,8 +2192,13 @@
         const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR');
         try { const b = document.querySelector('#evCtaTop .ev-cta-b'), t = document.querySelector('#evCtaTop .ev-cta-t'); if (b && t) { if (on) { if (!b.dataset.o) { b.dataset.o = b.innerHTML; t.dataset.o = t.innerHTML; } b.textContent = '⚡ PRIMERA CARGA'; t.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (b.dataset.o) { b.innerHTML = b.dataset.o; t.innerHTML = t.dataset.o; delete b.dataset.o; delete t.dataset.o; } } } catch (_) {}
         try { const bb = document.querySelector('#bvLoadBtn > span > b'), bt = document.querySelector('#bvLoadBtn .bv-min'); if (bb && bt) { if (on) { if (!bb.dataset.o) { bb.dataset.o = bb.innerHTML; bt.dataset.o = bt.innerHTML; } bb.textContent = 'PRIMERA CARGA'; bt.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (bb.dataset.o) { bb.innerHTML = bb.dataset.o; bt.innerHTML = bt.dataset.o; delete bb.dataset.o; delete bt.dataset.o; } } } catch (_) {}
-        try { if (_quickOpen) toggleCasinoLoad(true); } catch (_) {}
+        // #776 (BUG GRAVE, usuario real "al presionar Carga rápida se cuelga absolutamente todo"): acá se llamaba toggleCasinoLoad(true)
+        // SIEMPRE; ese panel llama _fdNotesPaint → firstGuidePaint → _paintFirstLoad → toggleCasinoLoad… en bucle infinito por microtareas
+        // (la promesa de la promo ya estaba resuelta) y la pestaña quedaba congelada. Ahora el panel abierto se repinta SÓLO si el estado
+        // (con/sin primera carga) realmente cambió.
+        if (_pflLast !== on) { _pflLast = on; try { if (_quickOpen) toggleCasinoLoad(true); } catch (_) {} }
     }
+    let _pflLast = null; // #776
     // #742 (owner): bono reclamado desde una HISTORIA → "Adjuntar comprobante · Bono +X%" en el casino, el completo y el básico hasta
     // que lo use o venza. Sólo lo ve quien tocó "Reclamar ahora" en la historia.
     let _sb = { pct: 0, expiresAt: null };
