@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 716. 🎰 Tras una carga o un retiro dentro del casino, la burbuja de Carga rápida se minimiza — SW v509
+**Pedido (owner):** "cuando se hace la carga o retiro que la burbuja se minimice así no molesta". `onDepositCredited` y
+`onWithdrawRequested` (con el casino abierto) cierran el panel y dejan la burbuja `.cq-mini` (sólo el logo) antes de mostrar el cartel.
+Verificado en Render v508 con diego651917: carga de prueba OK (bonos automáticos aplicados), retiro de prueba OK ("Retiro de $10.000
+solicitado"), chip "Con el bono" responde la explicación del rollover ×5 + el mensaje con Bases y condiciones; usuario reiniciado.
+
 ### 715. 💬 Soporte: chip "Con el bono" → explicación completa del rollover ×5 (qué es y cómo se desbloquea para retirar)
 **Pedido (owner):** "agregá un botón en Soporte 'problema con el bono' y cuando lo aprieten que se les explique cómo funciona el bono
 rollover ×5, qué es y cómo lo desbloquea para retirar, bien detallado". Chip 🎰 "Con el bono" en el selector de temas y en la barra

@@ -1926,6 +1926,7 @@
     async function onDepositCredited(d) {
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }
+        try { toggleCasinoLoad(false); _applyQuickMini(true); } catch (_) {} // #716 (owner): tras la carga la burbuja se minimiza así no molesta
         let n = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}
         if (n != null && n > 5) return;
@@ -1943,6 +1944,7 @@
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.
     function onWithdrawRequested(amount) {
+        try { if (VIP.ui && VIP.ui._casinoOpen) { toggleCasinoLoad(false); _applyQuickMini(true); } } catch (_) {} // #716: tras el retiro, burbuja minimizada
         const old = _el('luckCard'); if (old) old.remove();
         const amt = Number(amount) || 0;
         document.body.insertAdjacentHTML('beforeend',
