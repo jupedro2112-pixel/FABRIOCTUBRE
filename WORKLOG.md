@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 794. ↩️ Menú completo como estaba: se quita el rediseño de "Cargá acá" (#792) — SW v558
+**Pedido (owner, capturas):** "volvé el menú completo a como estaba, te dije que necesitaba cambiar solamente esto (el bloque de
+servicios)". Se elimina el CSS de #792 (burbujas de la tarjeta de carga); queda sólo #791 (servicios en una línea como el básico).
+
 ### 793. 🧪 El reinicio de prueba también borra la marca de "app instalada"
 **Pedido (owner):** "reiniciame lo de la app en el usuario para ver cómo aparece sin instalar la app". `_rouletteHasAppInstalled` mira
 `fcmTokenContext` Y los tokens con `context:'standalone'`; el reset sólo limpiaba el primero ⇒ seguía "instalada". Ahora vacía `fcmTokens`.

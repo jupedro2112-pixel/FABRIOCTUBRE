@@ -2416,18 +2416,3 @@ body.home-full .ev-svc > b { font: 800 10.5px var(--p-font) !important; gap: 4px
 body.home-full .ev-svc .li { width: 30px !important; height: 30px !important; border-radius: 50%; background: var(--p-red-soft); color: var(--p-red); display: inline-flex !important; align-items: center; justify-content: center; }
 body.home-full .ev-svc .li svg { width: 17px !important; height: 17px !important; }
 body.home-full .ev-svc::after { content: "Ver más ›"; display: block; margin: 2px 0 0 !important; font: 800 8.5px var(--p-font) !important; color: var(--p-red); }
-/* #792 (owner): tarjeta "Cargá acá" mejor distribuida: cada paso en su burbuja, CBU y alias como filas prolijas, sin textos repetidos */
-#autoLoadCard .al-step-c { padding: 10px 12px 11px !important; margin: 0 0 8px !important; }
-#autoLoadCard .al-step-h { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-#autoLoadCard .al-step-t { font: 900 14px var(--p-font) !important; }
-#autoLoadCard .al-step-t .al-min { font: 700 11px var(--p-font) !important; }
-#autoLoadCard .al-cbu { display: flex !important; align-items: center; gap: 8px; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 12px; padding: 7px 10px; margin: 6px 0 !important; }
-#autoLoadCard .al-cbu .mono { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: 14px !important; letter-spacing: .3px; }
-#autoLoadCard .al-alias-row .al-alias-k { font: 800 9.5px var(--p-font) !important; text-transform: uppercase; letter-spacing: .4px; flex: 0 0 auto; }
-#autoLoadCard .al-meta-2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px; font-size: 11px !important; margin: 4px 0 0 !important; }
-#autoLoadCard #alMinLine { display: none !important; } /* ya está en el título del paso y en la nota */
-#autoLoadCard .min-note { display: flex !important; flex-wrap: wrap; align-items: center; justify-content: center; gap: 3px 8px; padding: 7px 10px !important; margin: 8px 0 0 !important; border-radius: 12px; }
-#autoLoadCard .min-note .mn-big { display: inline !important; font-size: 13px !important; margin: 0 !important; }
-#autoLoadCard .min-note .mn-sub { display: inline !important; font-size: 11px !important; }
-#autoLoadCard .min-note .sup-link { margin: 0 !important; padding: 4px 9px !important; font-size: 11px !important; }
-#autoLoadCard .al-step-sub { font: 600 12px/1.45 var(--p-font) !important; }
