@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 746. 🔐 Ingreso del panel con el logo y "PICA ROJA oficial" + dependencias con parches de seguridad — admin-sw v144
+**Pedido (owner, captura):** "acá también sacá Panel administrativo y poné PICA ROJA oficial". Pantalla de ingreso: logo + "PICA ROJA
+oficial / Panel" (antes gamepad + "Panel de Administración / Sala de Juegos"). El "Servicio temporalmente no disponible" de la
+captura fue el redeploy de Render en ese momento (el login respondía 401 con clave mala un minuto después). **Dependencias:** `npm audit`
+mostraba 24 avisos (2 críticos, 11 altos) en paquetes transitivos (axios, compression, engine.io, form-data, follow-redirects, grpc,
+firebase-admin…); `npm audit fix --package-lock-only` actualizó el lock a versiones compatibles (sin saltos de major en package.json);
+se instalan en el deploy. Verificación de las claves en Render (#743/#745): 423 sin clave en Cierres y Publicidad, 200 con clave,
+SMS acepta la clave, cierres de los últimos días finalizados solos con conciliación y 0 errores en `/api/admin/diag`.
+
 ### 745. 🎨 Panel estilo Pinterest: menú compacto, títulos recuadrados, "PICA ROJA Panel" con logo, Referidos en App, clave en Publicidad y Cierres — admin-sw v142
 **Pedido (owner):** "Referidos dentro de App también; achicá todo el menú y hacelo más estilo Pinterest, moderno y prolijo con los
 títulos bien recuadrados; en vez de Admin Panel poné PICA ROJA Panel con el logo; todo lo que es publicista con clave y Cierres

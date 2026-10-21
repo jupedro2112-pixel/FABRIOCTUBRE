@@ -285,3 +285,5 @@ tr.fin td { opacity: .92; }
 .cl-rec-adj { margin-top: 10px; } .cl-rec-adj summary { cursor: pointer; font-weight: 700; font-size: 12px; color: var(--p-muted); }
 .cl-adj-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin-top: 6px; }
 .cl-adj-grid label { display: flex; flex-direction: column; gap: 2px; font-size: 10.5px; color: var(--p-muted); } .cl-adj-grid input { width: 100%; }
+/* #746 (owner): ingreso del panel con el logo y "PICA ROJA oficial" */
+.login-logo-img { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; display: block; margin: 0 auto 10px; box-shadow: var(--shadow-lg); }
