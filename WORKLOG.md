@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 726. 📲 Instalar la app = la barra de la base (PICA ROJA oficial · Instalar · ✕), también dentro del casino — SW v518
+**Pedido (owner, captura):** "el instalar app lo quiero en la base como en el completo, de línea recta, que diga Instalar; sacalo de
+adentro de la burbuja; así lo quiero en toda la app, que no cambie dentro de la app". La barra `#pwaInstallButton.pwa-install-bar`
+(#618) ahora pasa por encima del casino (`body.casino-open` → z 100000); la burbuja ya subía 64 px con `body.has-install-bar` y el
+panel de Carga rápida sube también. Se quita el botón "📲 Instalar la app" de la Carga rápida (`_igQuickBtnHtml` → vacío). La hoja
+del extra por instalar en la primera carga (#722) sigue igual (es la misma del menú completo).
+
 ### 725. 🧪 Reinicio de usuario de prueba: también borra la marca "app instalada" y la oferta vieja de instalar
 **Pedido (owner):** "¿dejaste después de la primera carga la parte de incentivar a instalar la app? reiniciá siempre las cargas en este
 usuario que quiero testear cómo figura después de la primera carga". Probado en Render: tras el reinicio, la carga de prueba NO

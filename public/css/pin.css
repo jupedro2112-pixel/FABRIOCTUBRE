@@ -2169,3 +2169,6 @@ body.casino-open .test-btns { bottom: auto; top: calc(70px + env(safe-area-inset
 body.casino-open .test-btns .test-dep-btn { padding: 5px 8px; font-size: 10px; }
 /* #724: la burbuja nunca se estira: alto automático, sin top/bottom simultáneos */
 #casinoSupportBubble { height: auto !important; max-height: 48px; }
+/* #726 (owner): la barra de instalar de la base ("PICA ROJA oficial · Instalar · ✕", #618) se ve TAMBIÉN dentro del casino, igual que en toda la app */
+body.casino-open .pwa-install-bar { z-index: 100000 !important; }
+body.has-install-bar.casino-open .casino-load { bottom: calc(152px + env(safe-area-inset-bottom, 0px)) !important; }

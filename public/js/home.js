@@ -1253,8 +1253,8 @@
     // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
     function _igQuickBtnHtml() {
         if (_isStandalone()) return '';
-        // #723 (owner): sin hablar del extra: "si lo quieren instalar que lo instalen". Con extra pendiente abre la oferta; si no, instala.
-        return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.casinoInstall()">📲 Instalar la app</button>';
+        // #726 (owner): "sacalo de adentro de la burbuja": el instalar vive en la barra de la base (la misma de toda la app), también en el casino.
+        return '';
     }
     function _igPaintBar() {
         try { _igPaintCasinoBar(); } catch (_) {} // #719
