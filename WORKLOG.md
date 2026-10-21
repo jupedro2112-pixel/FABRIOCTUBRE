@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 789. 👤 Perfil: teléfono arriba de todo y recuadro de usuario bien armado — SW v555
+**Pedido (owner, captura con el nombre en vertical y la fila de teléfono flotando al costado):** "arreglalo: lo del teléfono en la
+parte superior y el perfil bien recuadrado con los datos". El recuadro de usuario vuelve DEBAJO de la verificación de teléfono (como en
+#645/#646), con el saldo al lado del nombre (#783); CSS explícito: flex a todo el ancho, info flexible y el nombre sin partir por letra.
+
 ### 788. 🎨 Rojos y verdes más sobrios, estilo Pinterest — SW v554
 **Pedido (owner):** "los colores rojos y verdes hacelos más sobrios tipo Pinterest, que no queden tan marcados". Sólo tokens:
 `--p-red` #e60023 → #d23a4e (hover #b12a3c, suave #fbecee), `--p-green`/`--p-load` #0a7a3e → #2f7d57, líneas/suaves acordes; modo

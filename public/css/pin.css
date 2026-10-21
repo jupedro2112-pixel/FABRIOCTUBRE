@@ -2393,7 +2393,9 @@ body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .c
 /* #783 (owner): Perfil — recuadro de usuario arriba de todo, con el saldo al lado del nombre */
 .pf-userline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pf-userbal { font: 900 15px var(--p-font); color: var(--p-green); }
-#profileModal .pf-userbox { margin-top: 2px; }
+#profileModal .pf-userbox { display: flex !important; width: 100% !important; box-sizing: border-box; margin: 0 0 8px !important; }
+#profileModal .pf-userinfo { flex: 1 1 auto; min-width: 0; }
+#profileModal .pf-username { word-break: normal !important; overflow-wrap: anywhere; }
 /* #785 (owner): en las fotos de juegos, manito y "Jugar ahora" bien sencillo */
 .ev-game { cursor: pointer; position: relative; }
 .ev-game .ev-play { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: var(--p-red); color: #fff; font: 900 11px var(--p-font); padding: 5px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); pointer-events: none; }
