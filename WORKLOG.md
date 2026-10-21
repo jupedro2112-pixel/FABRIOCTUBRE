@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 801. 🖼️ Banner "¡Bienvenidos a 1girox · todo en un mismo lugar"
+**Pedido (owner, captura del banner "Actualizamos la página" de 1girox):** "hacé una foto tipo así de bienvenidos de 1girox, todo en
+un mismo lugar, y pasame el link". Generado con PIL (1200×420, verde con rombos, ruleta, fichas, texto dorado, pastilla PICA ROJA) en
+`public/images/banners/bienvenidos-1girox.jpg` ⇒ `https://picaroja.com/images/banners/bienvenidos-1girox.jpg` (y en Render).
+
 ### 800. 🟢 Landing: botón CREAR MI CUENTA más grande
 **Pedido (owner):** "agregá el crear usuario más grande en /landing". En las dos landings (la del backend `public/landing/index.html`
 servida en `/l/:code` e `/ingreso`, y la de Vercel `landing/index.html`): botón más alto, letra 18-19 px, sombra y pulso suave sólo con
