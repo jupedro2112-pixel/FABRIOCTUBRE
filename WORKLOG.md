@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 739. ⚡ Bump SW v529 (bundle minificado para todos)
+El bundle cambia de contenido con #738 pero la URL es `?v=<CACHE_VERSION>` con caché inmutable: sin bump, quien ya lo tenía
+seguía con el viejo (funciona igual, pero más pesado). Con v529 todos bajan el minificado una vez y listo.
+
 ### 738. ⚡ Velocidad al máximo: bundle minificado (terser + csso), HTML sin comentarios ni sangrías, preload del JS
 **Pedido (owner):** "¿podemos ajustar más la rapidez viendo todo al máximo?". Medido antes: en la red, HTML 88 KB + JS 184 KB + CSS
 94 KB comprimidos en la primera carga (después todo queda en caché). **Cambios (server.js):** `_minifyBundles()` al arrancar
