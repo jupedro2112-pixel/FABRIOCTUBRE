@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 710. ℹ️ Info: "La plataforma que quieras" siempre visible (Girox, Ganamos y Jugaygana, todas originales) + niveles sin "1win" — SW v505
+**Pedido (owner):** "agregá en Info la plataforma que quieras: Girox, Ganamos y Jugaygana, todas originales (estamos trabajando en
+las automatizaciones para Jugaygana y Ganamos); lo del modelo de niveles que dice 1win sacalo, que no se vea otra marca, que sea
+PICA ROJA". `#infoCardTwoPlats` ya no se oculta con una sola plataforma y su texto es fijo en el HTML (home.js no lo pisa). En las
+condiciones del programa VIP: "Es la escalera del programa de lealtad PICA ROJA, en pesos."
+
 ### 709. 🎰 Nota de carga mínima del casino sin "escribinos a Soporte" — SW v504
 **Pedido (owner, captura):** "sacá el escribinos a Soporte de ahí". En la Carga rápida del casino la nota queda "Carga mínima $5.000 ·
 Con menos, tu carga NO va a ser acreditada." (el botón "Ir a Soporte" del panel sigue). En Cargá y en el básico la nota conserva el link.

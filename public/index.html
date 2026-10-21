@@ -1655,13 +1655,13 @@
                     <div class="modal-header"><h2>👑 Niveles VIP</h2></div>
                     <p class="vl-intro">Cuanto más jugás, más subís. Cada nivel te <b>desbloquea plata</b> (la reclamás desde la app) y un <b>rakeback semanal</b> (te devolvemos un % de lo que apostaste) sobre lo que apostás. Nunca bajás de nivel. Bonos y rakeback se juegan <b>×5</b> antes de retirarlos.</p>
                     <div id="vipLevelsMine" class="vl-mine"></div>
-                    <!-- #465 (owner): condiciones del programa VIP (estilo 1win) + soporte personalizado para Black -->
+                    <!-- #465 (owner): condiciones del programa VIP + soporte personalizado para Black (#710: sin mencionar otras marcas) -->
                     <div class="cond-wrap">
                         <button type="button" class="cond-head" onclick="var b=this.nextElementSibling;var o=b.style.display==='none';b.style.display=o?'':'none';this.querySelector('.cond-chev').textContent=o?'▲':'▼';"><span>📄 Condiciones y beneficios del programa VIP</span><span class="cond-chev">▼</span></button>
                         <div class="cond-body" style="display:none;">
                             <div class="cond-sec"><b>Cómo subís</b><p>Por tu <b>apostado acumulado de por vida</b> en el casino: cada apuesta suma, ganes o pierdas. No depende de lo que perdés ni de lo que cargás. <b>El nivel nunca baja.</b></p></div>
                             <div class="cond-sec"><b>Qué ganás en cada nivel</b><p><b>Bono al subir:</b> plata que se desbloquea al llegar al nivel; la reclamás desde la app eligiendo la plataforma. <b>Rakeback semanal:</b> un % de todo lo que apostaste la semana anterior, ganes o pierdas, acreditado solo cada semana. El % sube con cada nivel (ver la lista).</p></div>
-                            <div class="cond-sec"><b>Escalera</b><p>Bronce → Plata → Oro → Platino → Diamante → Black (I a V). Es la misma escalera del programa de lealtad de 1win, convertida a pesos.</p></div>
+                            <div class="cond-sec"><b>Escalera</b><p>Bronce → Plata → Oro → Platino → Diamante → Black (I a V). Es la escalera del programa de lealtad PICA ROJA, en pesos.</p></div>
                             <div class="cond-sec cond-black"><b>🖤 Niveles Black: soporte personalizado</b><p>Desde <b>Black I</b> tenés un <b>asesor personal por Telegram</b> para cualquier situación: cargas, retiros, bonos o lo que necesites, con prioridad y a toda hora.</p></div>
                             <div class="cond-note">Los montos y porcentajes pueden actualizarse; siempre ves los vigentes en esta lista.</div>
                         </div>
@@ -2429,7 +2429,7 @@
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Cargás solo en minutos, retirás a tu CBU y soporte en vivo 24 hs. <b>Carga mínima <span class="md-amt">$5.000</span>:</b> con ese monto o más se acredita sola; <b>con una carga menor, tu carga NO va a ser acreditada</b> (escribinos por Soporte). <b>La plataforma mejor paga de internet.</b> Los bonos de bienvenida y regalos se juegan <b>×5</b> (rollover) antes de retirarlos; las comisiones de referidos, sin apostar.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
-                <p class="im-sec" id="infoCardTwoPlats" style="display:none;"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b> con el mismo usuario: elegí en cada carga.</span></p>
+                <p class="im-sec" id="infoCardTwoPlats"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b>, todas originales, con el mismo usuario. <i>(Estamos trabajando en las automatizaciones para Jugaygana y Ganamos.)</i></span><!-- #710 (owner) --></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</b>Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal (rakeback = te devolvemos un % de lo que apostaste). Los bonos se juegan <b>×5</b> antes de retirarlos.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
@@ -2579,7 +2579,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v504</div>
+                    <div class="pf-build" id="appBuildTag">app v505</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

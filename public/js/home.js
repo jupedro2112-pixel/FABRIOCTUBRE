@@ -863,12 +863,12 @@
         const names = list.map((p) => p.name);
         const why = _el('infoCardWhyTitle');
         if (why) why.textContent = one ? ('¿Por qué elegir ' + one.name + '?') : ('¿Por qué elegir ' + names.join(' o ') + '?');
-        const two = _el('infoCardTwoPlats'); if (two) two.style.display = one ? 'none' : '';
+        // #710 (owner): la tarjeta "La plataforma que quieras" (Girox, Ganamos y Jugaygana, todas originales) se ve SIEMPRE en Info; texto fijo en el HTML.
         // #407 (owner): título "La plataforma que quieras"; jugaygana en minúscula ACÁ (sólo en Info); lista "A, B y C".
         const _infoName = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || '')); // #431: J mayúscula
         // #439 (owner): sólo los nombres de las plataformas en negrita; el resto del texto normal.
         const _list = names.map((n) => '<b>' + _esc(_infoName(n)) + '</b>'); const _joined = _list.length > 1 ? (_list.slice(0, -1).join(', ') + ' y ' + _list[_list.length - 1]) : (_list[0] || '');
-        const twoDesc = _el('infoCardTwoPlatsDesc'); if (twoDesc && !one) twoDesc.innerHTML = _joined + ' con el mismo usuario: elegí en cada carga.'; // #622 texto corto
+        // (#710: el texto de infoCardTwoPlatsDesc ya no se pisa desde acá) // #622 texto corto
         const sub = _el('platformsSub');
         if (sub && one) sub.textContent = 'Tus cargas van a ' + one.name + '. Para verla, andá a Inicio.';
         const pt = _el('platformsCardTitleTxt') || document.querySelector('#platformsCard .home-card-title'); if (pt) pt.textContent = one ? 'Tu plataforma' : '¿Dónde querés jugar?';
