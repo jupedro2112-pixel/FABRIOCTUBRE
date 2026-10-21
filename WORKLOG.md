@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 738. ⚡ Velocidad al máximo: bundle minificado (terser + csso), HTML sin comentarios ni sangrías, preload del JS
+**Pedido (owner):** "¿podemos ajustar más la rapidez viendo todo al máximo?". Medido antes: en la red, HTML 88 KB + JS 184 KB + CSS
+94 KB comprimidos en la primera carga (después todo queda en caché). **Cambios (server.js):** `_minifyBundles()` al arrancar
+(1,5 s después) minifica en memoria el JS con `terser` (`mangle` de locales, `keep_fnames`, sin comentarios; se valida con
+`vm.Script`) y el CSS con `csso` (`restructure:false` para respetar la cascada de `!important`); las rutas `/js/bundle.js` y
+`/css/bundle.css` sirven la versión minificada si existe, si no la cruda (fallback: nunca se rompe). `_slimHtml()` saca comentarios
+HTML y sangrías SÓLO fuera de `<script>/<style>/<textarea>`. `<link rel="preload" as="script">` del bundle en el `<head>`.
+`package.json` + lock: `terser@5.36`, `csso@5.0.5` (sin node_modules local: se instalan en el deploy). Sin cambios de versión de la
+app (el bundle cambia de contenido pero la URL ya es `?v=v528`… ⚠️ por eso se bumpea abajo en #739).
+
 ### 737. 🎰 Panel de Carga rápida compacto + burbuja visible con el panel abierto + aviso de 5 s visible — SW v528
 **Pedido (owner, captura):** "que no tape toda la pantalla, achicá un poco todo sin que se corte; cuando está expandido que se vea el
 círculo de Carga rápida abajo normal; y el texto de 5 segundos al entrar que diga que el círculo es movible". CSS: panel de 300 px,

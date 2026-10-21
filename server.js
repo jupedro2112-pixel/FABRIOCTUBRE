@@ -11475,15 +11475,46 @@ function _buildBundles() {
   _bundleState = st;
   return st;
 }
+// #738 (owner): VELOCIDAD AL MÁXIMO — el bundle se minifica en memoria al arrancar (terser para JS, csso para CSS). Si las
+// dependencias no están o algo falla, se sirve el bundle sin minificar: nunca se rompe. `keep_fnames` conserva los nombres de
+// función (los onclick inline y VIP.* usan nombres exportados, no locales); csso sin `restructure` respeta el orden de la cascada.
+async function _minifyBundles() {
+  const b = _buildBundles(); if (!b || !b.ok) return;
+  try {
+    const terser = require('terser');
+    const r = await terser.minify(b.js, { compress: { passes: 1, drop_debugger: true }, mangle: true, keep_fnames: true, keep_classnames: true, format: { comments: false } });
+    if (r && r.code) { new (require('vm').Script)(r.code, { filename: 'bundle.min.js' }); b.jsMin = r.code; }
+  } catch (e) { logger.warn('[bundle] terser no disponible o falló (' + e.message + '): JS sin minificar'); }
+  try {
+    const csso = require('csso');
+    const r = csso.minify(b.css, { restructure: false, comments: false });
+    if (r && r.css && r.css.length > 1000) b.cssMin = r.css;
+  } catch (e) { logger.warn('[bundle] csso no disponible o falló (' + e.message + '): CSS sin minificar'); }
+  logger.info(`[bundle] minificado: js ${Math.round(b.js.length / 1024)}→${Math.round((b.jsMin || b.js).length / 1024)} KB · css ${Math.round(b.css.length / 1024)}→${Math.round((b.cssMin || b.css).length / 1024)} KB`);
+}
+setTimeout(() => { _minifyBundles().catch(() => {}); }, 1500);
 function _assetHeaders(req, res, type) {
   res.setHeader('Content-Type', type);
   if (req.query && req.query.v) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   else { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate'); res.setHeader('Pragma', 'no-cache'); }
 }
-app.get('/js/bundle.js', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('// sin bundle'); _assetHeaders(req, res, 'application/javascript; charset=utf-8'); res.send(b.js); });
-app.get('/css/bundle.css', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('/* sin bundle */'); _assetHeaders(req, res, 'text/css; charset=utf-8'); res.send(b.css); });
+app.get('/js/bundle.js', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('// sin bundle'); _assetHeaders(req, res, 'application/javascript; charset=utf-8'); res.send(b.jsMin || b.js); }); // #738: minificado si está
+app.get('/css/bundle.css', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('/* sin bundle */'); _assetHeaders(req, res, 'text/css; charset=utf-8'); res.send(b.cssMin || b.css); });
+// #738: HTML más liviano — se sacan los comentarios y las sangrías de las líneas, pero SÓLO fuera de <script>/<style>/<textarea>
+// (adentro podrían ser parte de un string). Y se precarga el bundle JS desde el <head> (va al final del body: así empieza a bajar antes).
+function _slimHtml(html) {
+  try {
+    const parts = html.split(/(<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>|<textarea\b[\s\S]*?<\/textarea>)/i);
+    for (let i = 0; i < parts.length; i += 2) {
+      parts[i] = parts[i].replace(/<!--[\s\S]*?-->/g, '').replace(/^[ \t]+/gm, '').replace(/\n{3,}/g, '\n\n');
+    }
+    return parts.join('');
+  } catch (_) { return html; }
+}
 function _injectAssets(html) {
   const b = _buildBundles(); const v = encodeURIComponent(_ASSET_VER);
+  html = _slimHtml(html);
+  if (b.ok) html = html.replace('<meta name="theme-color" content="#00ff88">', () => '<meta name="theme-color" content="#00ff88">\n<link rel="preload" href="/js/bundle.js?v=' + v + '" as="script">');
   const jsFiles = b.jsFiles.length ? b.jsFiles : Array.from(html.matchAll(/<script src="\/js\/([\w-]+)\.js"><\/script>/g)).map((m) => m[1]);
   const cssFiles = b.cssFiles.length ? b.cssFiles : Array.from(html.matchAll(/<link rel="stylesheet" href="\/css\/([\w-]+)\.css">/g)).map((m) => m[1]);
   jsFiles.forEach((f, i) => {
