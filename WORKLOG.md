@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 684. 💵 Carga mínima $5.000 bien clara en todos lados: con $5.000 o más se acredita sola; con menos, Soporte revisa el caso — SW v487
+**Pedido (owner):** "aclará bien cuál es la carga mínima, la de 5.000, porque la gente se pierde; si carga menos va a tener que mandar
+mensaje a Soporte para ver su caso; si carga 5.000 o más es de forma automática". **Nota `.min-note`** (verde, "✅ Con $5.000 o más se
+acredita sola. Si cargás menos, escribinos por Soporte y vemos tu caso") en: paso 1 de la Carga automática (debajo de "Carga mínima"),
+panel CARGAR del básico, Carga rápida del casino (`toggleCasinoLoad`, monto de `_platforms.minDepositArs`), las dos guías de primera
+carga (#675) y el Info ("Por qué elegirnos"). El monto se pinta con el real (`_paintMinDeposit` actualiza `.md-amt`; si el mínimo es 0
+las notas se ocultan). **Bases y condiciones** (sección 3) reescrita con la regla exacta: $5.000 o más = automática; menos = no se
+acredita sola, Soporte con el comprobante (acreditar, completar o devolver; puede demorar).
+
 ### 683. 📄 Bases y condiciones públicas del servicio (`public/terminos.html`) + link en Info — SW v486
 **Pedido (owner):** "armame unas bases y condiciones de todo el servicio, fino de punta a punta, reembolsos y ajustes de márgenes etc.;
 aclará que sí puede hacerse sin problemas, que siempre tenemos que avisar con 7 días de anticipación". **Página** estática

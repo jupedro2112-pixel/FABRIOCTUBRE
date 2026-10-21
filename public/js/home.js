@@ -833,6 +833,8 @@
         const b = _el('alMinDep'); if (b) { b.textContent = txt ? ('· mínimo ' + txt) : ''; b.style.display = txt ? '' : 'none'; }
         const c = _el('alMinLine'); if (c) { const bb = c.querySelector('b'); if (bb) bb.textContent = txt; c.style.display = txt ? '' : 'none'; }
         const d = _el('serviceBannerMin'); if (d) { const bb = d.querySelector('b'); if (bb) bb.textContent = txt; d.style.display = txt ? '' : 'none'; }
+        document.querySelectorAll('.md-amt').forEach((x) => { x.textContent = txt || '$5.000'; }); // #684: notas "con $X o más se acredita sola"
+        document.querySelectorAll('.min-note').forEach((x) => { x.style.display = txt ? '' : 'none'; });
     }
     // #385: textos de los botones "Adjuntar comprobante aquí" y "Retirar premio" desde COMANDOS (/sys_load_btn*, /sys_withdraw_btn*).
     function _paintActionBtns(ab) {
@@ -1933,6 +1935,8 @@
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
+            // #684 (owner): carga mínima clara también acá
+            (function () { const md = Number(_platforms && _platforms.minDepositArs) || 5000; return '<p class="cl-meta min-note">✅ Con <b>$' + md.toLocaleString('es-AR') + '</b> o más se acredita sola. Si cargás menos, escribinos por <b>Soporte</b> y vemos tu caso.</p>'; })() +
             '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>' +
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>';
