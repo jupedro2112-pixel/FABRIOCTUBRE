@@ -1317,7 +1317,7 @@ app.get('/casino-sim', (req, res) => {
 const giroxSimulator = require('./src/services/giroxSimulator'); // #775 (ojo: #771 fue por un identificador que no existía)
 app.get('/api/casino-sim/state', async (req, res) => {
   try {
-    if (!_isTestEnv() || !giroxSimulator.active()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
+    if (!_isTestEnv() || !girox.isSimulated()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
     const s = await giroxSimulator.simState(String(req.query.u || '').trim().toLowerCase());
     if (!s) return res.status(404).json({ error: 'Jugador no encontrado en el simulador' });
     res.json(Object.assign({ success: true }, s));
@@ -1325,7 +1325,7 @@ app.get('/api/casino-sim/state', async (req, res) => {
 });
 app.post('/api/casino-sim/bet', async (req, res) => {
   try {
-    if (!_isTestEnv() || !giroxSimulator.active()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
+    if (!_isTestEnv() || !girox.isSimulated()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
     const r = await giroxSimulator.simBet(String((req.body || {}).u || '').trim().toLowerCase(), (req.body || {}).amount);
     if (r.error) return res.status(400).json({ error: r.error });
     res.json(Object.assign({ success: true }, r));
