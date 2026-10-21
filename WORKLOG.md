@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 689. 🏠 Inicio: racha y nivel ARRIBA de CARGÁ AHORA; franja de carga mínima más chica y con "no será acreditada" — SW v492
+**Pedido (owner):** "achicá un poco el carga mínima; en el Inicio lo de la carga menor a 5.000 decir que no será acreditada; en el
+Inicio la racha y nivel ponelo arriba de Cargar ahora". **App:** el bloque `#statusRow` (nivel VIP + fueguito) se movió en el HTML
+arriba del botón `#evCtaTop` (setHomeMode sigue mudando las píldoras ahí en modo play); la franja `.min-strip` baja a 18px el monto y
+11px los textos (padding 7/10) y dice "con ese monto o más se acredita sola · con menos de $5.000 tu carga no será acreditada"
+(también en la del básico).
+
 ### 688. 💵 Texto firme en todos lados: "con una carga menor a $5.000, tu carga NO va a ser acreditada" — SW v491
 **Pedido (owner):** "con una carga menor a 5.000 su carga no va a ser acreditada, ponemos". Reemplaza el "si cargás menos, escribinos y
 vemos tu caso" por la frase firme en: notas `.min-note` (carga automática, básico, carga rápida del casino), franjas `.min-strip`
