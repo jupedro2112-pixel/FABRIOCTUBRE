@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 699. ✅ CIERRE del "error 502" del casino en producción: el link de registro apuntaba a otro publicista
+**Resolución (owner):** "era que estaba mal el link donde se registraban los usuarios, ya funciona". Los usuarios de prueba se
+registraban por el link de un publicista (en 1girox figuraban "Creado por: martinpulse"), así que el servidor los operaba con la
+API key de ESE publicista (`User.giroxOwnerCampaign` → `Campaign.giroxApiKey`, resolver en server.js `girox.setKeyResolver`), no con
+la principal de picaroja; con esa key inválida/ajena fallaban entrada al casino, saldo y cargas con nuestro 502 (que Cloudflare
+tapaba, #697). Corregido el link de registro, los usuarios se crean bajo picaroja y el casino abre.
+**Queda cargada en el panel** una key principal nueva de 1girox (agente picaroja, creada hoy; panel > variables de AWS). La key
+"general" vieja y las "consultas 1/2/3" siguen en 1girox sin tocar.
+**Regla para el futuro:** si a un cliente le falla el casino/saldo y a otros no, mirar en 1girox "Creado por" y en el panel →
+Publicistas la key de ese publicista. Pendiente de decisión: respaldo automático a la key principal cuando la del publicista es
+rechazada (requiere subir a AWS). Lo de #696/#697/#698 (503 en vez de 502, keepAlive, diagnóstico en el panel) sigue pendiente de
+subir a AWS.
+
 ### 698. 🩺 Panel: botón "Diagnóstico de 1girox y del servidor" — admin-sw v139
 **Motivo:** para cerrar #697 hacía falta el resultado de `GET /api/admin/girox/health`, pero tipear la URL en el navegador responde
 "Token no proporcionado" (el panel manda el token por header desde memoria; la cookie `Path=/api; SameSite=Strict` no acompaña una

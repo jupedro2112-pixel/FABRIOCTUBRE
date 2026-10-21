@@ -269,6 +269,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
+- **KEY POR PUBLICISTA (#699, 2026-10-21):** un usuario que se registró por el link de un publicista (`User.giroxOwnerCampaign`) se opera
+  en 1girox con la API key de ESE publicista (`Campaign.giroxApiKey`, resolver `girox.setKeyResolver` en server.js), no con la principal.
+  Si a unos clientes les falla el casino/saldo y a otros no: mirar "Creado por" en 1girox y la key del publicista en el panel. Nunca
+  responder 502/504 desde la app: Cloudflare los reemplaza por su página y el front no ve el mensaje (usar 503, #697).
 - **iPHONE instalada CON SESIÓN (#673, 2026-10-20):** iOS no comparte storage entre Safari y la PWA instalada; la sesión viaja por el
   `start_url` del manifest: `GET /manifest.json?a=<token>&menu=…` (ruta dinámica ANTES de `express.static`) + `POST /api/auth/install-link`
   (token de acceso de un solo uso con `accessLinkPurpose:'install'`, no fuerza cambio de clave) + home.js `installManifestSync` + auth.js
