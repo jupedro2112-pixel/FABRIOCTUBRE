@@ -952,7 +952,7 @@
         if (!tr || _slBuilt) return;
         if (ENTRY_GAMES.length) {
             tr.classList.add('games'); const fw = tr.closest('.ev-frame-wrap'); if (fw) fw.classList.add('games');
-            if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos · jugá desde acá</span><small><i></i>gente jugando ahora</small>'; /* #786 */ tr.parentNode.insertBefore(hd, tr); }
+            if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos · jugá desde acá</span><small><i></i>jugando ahora</small>'; /* #786 · #787 */ tr.parentNode.insertBefore(hd, tr); }
             tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span><span class="ev-play">👆 Jugar ahora</span></div>').join(''); // #785: manito + "Jugar ahora"
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };

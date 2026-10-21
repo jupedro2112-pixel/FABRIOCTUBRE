@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    #370 (owner 2026-10-17): TEMA "PINTEREST" — "más aesthetic y profesional, no tanto color, que no te
-   pierdas". Fondo blanco, grises neutros, UN acento rojo (#e60023), tipografía sans limpia, botones
+   pierdas". Fondo blanco, grises neutros, UN acento rojo (var(--p-red)), tipografía sans limpia, botones
    píldora, tarjetas de bordes redondeados y sin brillos/neón/degradés. Se carga ÚLTIMA y re-pinta
    todo (login, barra, Inicio, Menú fácil, carga automática, Info, Perfil, cambio de clave, modales).
    ⚠️ NO toca la CARGA MANUAL (#supportPanel: .chat-container, .message, .wa-head, .chat-input-container,
@@ -19,16 +19,16 @@
   --p-text: #111111;
   --p-muted: #767676;
   --p-border: #e2e2e2;
-  --p-red: #e60023;
-  --p-red-dark: #ad081b;
-  --p-red-soft: #ffe9ec;
-  --p-green: #0a7a3e;
-  --p-green-soft: #e8f5ee;
+  --p-red: #d23a4e; /* #788 (owner): rojo más sobrio, estilo Pinterest */
+  --p-red-dark: #b12a3c;
+  --p-red-soft: #fbecee;
+  --p-green: #2f7d57; /* #788: verde más sobrio */
+  --p-green-soft: #ebf4ef;
   --p-shadow: 0 2px 18px rgba(0, 0, 0, .08);
   --p-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   /* #392: tokens que antes eran colores fijos (hacen posible el modo nocturno) */
   --p-card: #fff; --p-hover: #fafafa; --p-nav: #5f5f5f; --p-border-hi: #cfcfcf; --p-placeholder: #9a9a9a; --p-text-2: #333;
-  --p-inv: #fff; --p-green-line: #bfe3cf;
+  --p-inv: #fff; --p-green-line: #c9ddd1;
   /* re-mapeo de las variables del tema anterior: todo lo que las lee queda neutro */
   --dx-font: var(--p-font);
   --dx-bg: var(--p-bg);
@@ -133,7 +133,7 @@ body { font-family: var(--p-font); }
 .ev-slides { background: var(--p-surface) !important; }
 .ev-slide::before { display: none !important; }
 .ev-slide img { border: 0 !important; box-shadow: none !important; }
-.ev-cta { background: var(--p-red) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px rgba(230, 0, 35, .28) !important; animation: none !important; border-radius: 999px !important; }
+.ev-cta { background: var(--p-red) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px rgba(210, 58, 78, .28) !important; animation: none !important; border-radius: 999px !important; }
 .ev-cta-b, .ev-cta-t { text-shadow: none !important; color: #fff !important; text-transform: none !important; letter-spacing: 0 !important; font-family: var(--p-font) !important; }
 .ev-status { background: var(--p-surface) !important; color: var(--p-text) !important; }
 .ev-st-open { background: var(--p-red) !important; color: #fff !important; text-transform: none !important; letter-spacing: 0 !important; }
@@ -167,7 +167,7 @@ body { font-family: var(--p-font); }
 .ez-hello span { color: var(--p-text) !important; }
 .ez-hello small, .ez-bal small { color: var(--p-muted) !important; }
 .ez-bal b { color: var(--p-green) !important; }
-.ez-main { background: var(--p-red) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px rgba(230, 0, 35, .25) !important; animation: none !important; border-radius: 22px !important; }
+.ez-main { background: var(--p-red) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px rgba(210, 58, 78, .25) !important; animation: none !important; border-radius: 22px !important; }
 .ez-main-txt b { color: #fff !important; text-shadow: none !important; letter-spacing: .4px !important; }
 .ez-main-txt small, .ez-main-arrow { color: #fff !important; opacity: .9 !important; }
 .ez-btn { background: var(--p-surface) !important; border: 0 !important; color: var(--p-text) !important; box-shadow: none !important; border-radius: 20px !important; }
@@ -535,7 +535,7 @@ body { font-family: var(--p-font); }
 .rl-res-note { margin-top: 6px; background: var(--p-card); border-radius: 14px; padding: 9px 12px; font: 600 12.5px/1.4 var(--p-font); color: var(--p-text); }
 .rl-tx { font: 500 10px ui-monospace, Menlo, monospace; color: var(--p-placeholder); margin-top: 4px; }
 .rl-err { color: var(--p-red); font-weight: 700; padding: 16px; }
-.rl-spin { margin-top: 10px; min-width: 200px; background: var(--p-red); color: #fff; border: 0; border-radius: 999px; padding: 15px 36px; font: 800 17px var(--p-font); letter-spacing: .3px; cursor: pointer; box-shadow: 0 6px 18px rgba(230, 0, 35, .28); -webkit-tap-highlight-color: transparent; }
+.rl-spin { margin-top: 10px; min-width: 200px; background: var(--p-red); color: #fff; border: 0; border-radius: 999px; padding: 15px 36px; font: 800 17px var(--p-font); letter-spacing: .3px; cursor: pointer; box-shadow: 0 6px 18px rgba(210, 58, 78, .28); -webkit-tap-highlight-color: transparent; }
 .rl-spin:active { transform: scale(.98); }
 .rl-spin.rl-cta { width: 100%; min-width: 0; font-size: 15px; }
 .rl-close { width: 100%; background: var(--p-surface); color: var(--p-text); border: 0; border-radius: 999px; padding: 13px; font: 700 14px var(--p-font); cursor: pointer; }
@@ -719,7 +719,7 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
    la ruleta y las historias no dependen de pin.css y siguen igual. ── */
 html[data-theme="dark"] {
   --p-bg: #121212; --p-surface: #1e1e1e; --p-surface-2: #2a2a2a; --p-text: #f2f2f2; --p-muted: #a3a3a3; --p-border: #2e2e2e;
-  --p-red: #ff3b4e; --p-red-dark: #d1192d; --p-red-soft: #3a1218; --p-green: #5fd38d; --p-green-soft: #10291a; --p-green-line: #1e4a30;
+  --p-red: #e0566a; --p-red-dark: #c23f52; --p-red-soft: #3a1a1f; --p-green: #6fbf93; --p-green-soft: #122a1c; --p-green-line: #214a33;
   --p-shadow: 0 2px 18px rgba(0, 0, 0, .5);
   --p-card: #181818; --p-hover: #232323; --p-nav: #bdbdbd; --p-border-hi: #3a3a3a; --p-placeholder: #7a7a7a; --p-text-2: #d6d6d6; --p-inv: #111;
   color-scheme: dark;
@@ -740,7 +740,7 @@ html[data-theme="dark"] .toast { box-shadow: 0 6px 24px rgba(0, 0, 0, .6); }
 .info-msg .im-sec { display: block; background: var(--p-card) !important; border: 1px solid var(--p-border) !important; border-left: 5px solid var(--im-acc, var(--p-red)) !important; border-radius: 14px !important; padding: 12px 14px !important; margin: 0 0 10px !important; color: var(--p-text-2) !important; font-size: 12.5px; line-height: 1.5; }
 .info-msg .im-sec:last-child { margin-bottom: 0 !important; }
 .info-msg .im-sec > b:first-child { display: inline-flex !important; align-items: center; gap: 6px; background: var(--p-surface) !important; border: 1px solid var(--p-border) !important; border-radius: 10px; padding: 5px 10px; margin: 0 0 8px !important; font: 800 13px var(--p-font) !important; color: var(--p-text) !important; letter-spacing: 0 !important; }
-.info-msg .im-sec:nth-of-type(1) { --im-acc: #e60023; } .info-msg .im-sec:nth-of-type(2) { --im-acc: #16a34a; } .info-msg .im-sec:nth-of-type(3) { --im-acc: #0ea5e9; }
+.info-msg .im-sec:nth-of-type(1) { --im-acc: var(--p-red); } .info-msg .im-sec:nth-of-type(2) { --im-acc: var(--p-green); } .info-msg .im-sec:nth-of-type(3) { --im-acc: #0ea5e9; }
 .info-msg .im-sec:nth-of-type(4) { --im-acc: #9333ea; } .info-msg .im-sec:nth-of-type(5) { --im-acc: #f97316; } .info-msg .im-sec:nth-of-type(6) { --im-acc: #d4af37; }
 
 /* ── #399: en NOCTURNO, todo lo que tiene fondo --p-text (blanco ahí) lleva texto --p-inv (y sus hijos) ── */
@@ -1064,7 +1064,7 @@ html[data-theme="dark"] .ez-btn .ez-ico, html[data-theme="dark"] .ez-chat .ez-ic
 .li svg, .im-ico svg, .pi svg, .ez-ico svg, .ez-main-ico svg, .mc-ico svg, .lg-done-ico svg { stroke-width: 2.4; }
 .li svg path, .li svg circle, .li svg rect, .im-ico svg path, .im-ico svg circle, .im-ico svg rect, .pi svg path, .pi svg circle, .pi svg rect, .ez-ico svg path, .ez-ico svg circle, .ez-ico svg rect, .mc-ico svg path, .mc-ico svg circle, .mc-ico svg rect { fill: currentColor; fill-opacity: .14; }
 .ez-main-ico svg path { fill: #fff; fill-opacity: .22; }
-.pi, .ez-btn .ez-ico, .ez-chat .ez-ico, .mc-ico { background: var(--p-red-soft) !important; color: var(--p-red); box-shadow: inset 0 0 0 1px rgba(230, 0, 35, .10); }
+.pi, .ez-btn .ez-ico, .ez-chat .ez-ico, .mc-ico { background: var(--p-red-soft) !important; color: var(--p-red); box-shadow: inset 0 0 0 1px rgba(210, 58, 78, .10); }
 .im-ico { width: 20px; height: 20px; } .im-ico svg { width: 20px; height: 20px; }
 .li { width: 16px; height: 16px; }
 .pi svg { width: 18px; height: 18px; }
@@ -1193,7 +1193,7 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 .ev-frame-wrap.games .ev-cta { bottom: 12px; }
 .ev-games-h { display: flex; align-items: center; justify-content: space-between; color: #fff; font: 900 15px var(--p-font); padding: 10px 12px 2px; }
 .ev-games-h small { font: 700 11px var(--p-font); color: #9aa0b2; display: inline-flex; align-items: center; gap: 6px; }
-.ev-games-h i, .ev-game .gp i { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.22); display: inline-block; }
+.ev-games-h i, .ev-game .gp i { width: 7px; height: 7px; border-radius: 50%; background: #3cb371; box-shadow: 0 0 0 3px rgba(34,197,94,.22); display: inline-block; }
 .ev-slides-track.games { position: static; flex: 0 0 auto; flex-direction: row; gap: 10px; padding: 8px 10px 56px; scroll-snap-type: x mandatory; overflow-x: auto; }
 .ev-game { flex: 0 0 36%; max-width: 160px; /* #494: un poco más chicas */ scroll-snap-align: start; border-radius: 16px; overflow: hidden; background: #161622; display: flex; flex-direction: column; box-shadow: 0 8px 22px rgba(0,0,0,.45); }
 /* #491: la foto COMPLETA (contain) en una caja de proporción fija: ninguna tarjeta se corta aunque las fotos tengan alturas distintas */
@@ -1204,7 +1204,7 @@ html[data-theme="dark"] .ez-top::before { opacity: .14; }
 @media (min-width: 480px) { .ev-game { flex-basis: 24%; } }
 /* #493 (owner): se revirtieron #490 y #492 (negro por defecto, pastilla +X% y íconos emoji): el menú fácil queda como antes. */
 /* ── #495: parpadeo del número de "jugando" cuando cambia ── */
-@keyframes gpTick { 0% { color: #22c55e; transform: scale(1.25); } 100% { color: #fff; transform: scale(1); } }
+@keyframes gpTick { 0% { color: #3cb371; transform: scale(1.25); } 100% { color: #fff; transform: scale(1); } }
 .ev-game .gp b { display: inline-block; } .ev-game .gp b.tick { animation: gpTick .6s ease-out; }
 /* ── #496 (owner): GANAMOS con fondo VIOLETA en el Inicio y donde aparezca (pestaña, tarjeta del home completo, selector del menú fácil, botones del chat) ── */
 :root { --p-purple: #6d28d9; --p-purple-2: #8b5cf6; }
@@ -1473,7 +1473,7 @@ body.home-full #fireHomeCard { display: none !important; }
 .ref-modal-tile { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 3px; } .ref-modal-tile .v { font-size: 18px; font-weight: 900; } .ref-modal-tile .l { font-size: 10.5px; color: #bbb; line-height: 1.3; }
 body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: none !important; }
 /* ── #530 PANTALLA DE REGISTRO (idea de la landing del owner): fondo BLANCO siempre (tokens claros forzados aunque el tema sea nocturno). ── */
-#loginScreen { --p-bg: #ffffff; --p-surface: #f3f3f3; --p-surface-2: #e9e9e9; --p-text: #111111; --p-muted: #6f6f6f; --p-border: #e2e2e2; --p-card: #fff; --p-placeholder: #9a9a9a; --p-text-2: #333; --p-red: #e60023; --p-red-soft: #ffe9ec; background: #fff !important; color: #111; }
+#loginScreen { --p-bg: #ffffff; --p-surface: #f3f3f3; --p-surface-2: #e9e9e9; --p-text: #111111; --p-muted: #6f6f6f; --p-border: #e2e2e2; --p-card: #fff; --p-placeholder: #9a9a9a; --p-text-2: #333; --p-red: var(--p-red); --p-red-soft: #ffe9ec; background: #fff !important; color: #111; }
 #loginScreen .login-box.lg { background: #fff; }
 .lg-quick-l { text-align: center; font-size: 14px !important; }
 .lg-quick input { text-align: center; font-size: 17px !important; }
@@ -1795,7 +1795,7 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 /* #620/#621 (owner): botón PLATAFORMA en el CENTRO de la barra superior, con el logo de la plataforma elegida */
 .header .tn-plat { flex: 1.3 1 0; }
 .header .tn-plat .tn-ico { display: inline-flex; align-items: center; justify-content: center; }
-.header .tn-plat .tn-ico img { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; display: block; background: #000; border: 1.5px solid var(--p-red); box-shadow: 0 2px 8px rgba(230, 0, 35, .25); }
+.header .tn-plat .tn-ico img { width: 24px; height: 24px; border-radius: 8px; object-fit: cover; display: block; background: #000; border: 1.5px solid var(--p-red); box-shadow: 0 2px 8px rgba(210, 58, 78, .25); }
 .header .tn-plat .tn-ico img[hidden] { display: none; }
 .header .tn-btn:not(.tn-home).tn-plat .tn-lbl { font-weight: 900 !important; letter-spacing: .5px !important; color: var(--p-text) !important; }
 
@@ -1822,7 +1822,7 @@ body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.
 .bv-quick { grid-template-columns: repeat(4, 1fr) !important; justify-items: stretch; }
 .bv-quick button { text-align: center; justify-content: center; }
 /* ===== #626 (owner 2026-10-20): aviso de PRIMERA CARGA resumido junto a cada "Adjuntar comprobante" (la franja de arriba #608 se fue) ===== */
-.fd-note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 0 0 8px; padding: 8px 12px; border-radius: 12px; background: var(--p-red-soft); border: 1px solid rgba(230, 0, 35, .14); color: var(--p-text); font: 600 12px/1.35 var(--p-font); }
+.fd-note { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 0 0 8px; padding: 8px 12px; border-radius: 12px; background: var(--p-red-soft); border: 1px solid rgba(210, 58, 78, .14); color: var(--p-text); font: 600 12px/1.35 var(--p-font); }
 .fd-note b { font-weight: 900; color: var(--p-red); } .fd-note .fd-pct-app { font-weight: 900; color: var(--p-red); }
 .fd-note small { flex: 1 0 100%; font: 600 10.5px var(--p-font); color: var(--p-muted); }
 .fd-note .fd-app[hidden], .fd-note[hidden] { display: none !important; }
@@ -1891,7 +1891,7 @@ html.ios-notch #casinoTopBar { padding-top: max(44px, env(safe-area-inset-top, 0
 #casinoTopBar { padding-top: max(7px, env(safe-area-inset-top, 0px)) !important; }
 /* ===== #639 (owner 2026-10-20): "Copiar" bien diferenciado (botón rojo) en Carga auto / básico / carga rápida; Cambiar menú centrado arriba
    del Inicio; carga pendiente arriba de todo; cartel de pendiente/bono debajo sin tapar ===== */
-.al-copy, .bv-copy, .cl-copy, .pf-copy { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; font: 900 10.5px var(--p-font) !important; letter-spacing: .3px; padding: 6px 12px !important; text-transform: uppercase; box-shadow: 0 3px 10px rgba(230, 0, 35, .25) !important; white-space: nowrap; flex: 0 0 auto; }
+.al-copy, .bv-copy, .cl-copy, .pf-copy { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; font: 900 10.5px var(--p-font) !important; letter-spacing: .3px; padding: 6px 12px !important; text-transform: uppercase; box-shadow: 0 3px 10px rgba(210, 58, 78, .25) !important; white-space: nowrap; flex: 0 0 auto; }
 .al-copy:active, .bv-copy:active, .cl-copy:active, .pf-copy:active { background: #b8001c !important; }
 .al-copy::before, .bv-copy::before, .cl-copy::before, .pf-copy::before { content: "⧉ "; font-weight: 900; }
 body.home-play .top-row { justify-content: center; }
@@ -1945,7 +1945,7 @@ html[data-theme="dark"] .withdraw-row-btn .lr-text b { color: #8be3ad !important
 #vpArea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--p-border); background: var(--p-card); color: var(--p-text); font: 700 13px var(--p-font); }
 .vp-help-hint { margin-top: 8px; font: 600 12px/1.4 var(--p-font); color: var(--p-text); } .vp-help-hint:empty { display: none; }
 /* ===== #651 (owner 2026-10-20): Referidos — botón de lo acumulado (se desbloquea solo el 1°); el cartel de compartir ya va con los tokens ===== */
-.ref-acc-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--p-red); color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(230, 0, 35, .25); font-family: var(--p-font); }
+.ref-acc-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 0; border-radius: 16px; background: var(--p-red); color: #fff; cursor: pointer; box-shadow: 0 6px 18px rgba(210, 58, 78, .25); font-family: var(--p-font); }
 .ref-acc-btn .ra-k { font: 800 12px var(--p-font); opacity: .92; }
 .ref-acc-btn .ra-v { font: 900 30px/1.1 var(--p-font); letter-spacing: -.5px; }
 .ref-acc-btn .ra-s { font: 700 10.5px var(--p-font); opacity: .9; text-align: center; }
@@ -2012,7 +2012,7 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 .info-msg.im-compact .im-link { font: 800 13px var(--p-font) !important; color: var(--p-red) !important; text-decoration: none !important; }
 .info-msg.im-compact .im-sec.im-missions { border-color: var(--p-border) !important; }
 .info-msg.im-compact .im-sec.im-missions > b { color: var(--p-text) !important; }
-.info-msg.im-compact .im-sec:nth-of-type(7) { --im-acc: #e60023; } .info-msg.im-compact .im-sec:nth-of-type(8) { --im-acc: #0ea5e9; }
+.info-msg.im-compact .im-sec:nth-of-type(7) { --im-acc: var(--p-red); } .info-msg.im-compact .im-sec:nth-of-type(8) { --im-acc: #0ea5e9; }
 .info-msg.im-compact .im-more { position: relative; z-index: 2; margin: -32px 12px 12px auto !important; padding: 6px 12px !important; background: var(--p-card) !important; border: 1px solid var(--p-border) !important; border-radius: 999px; color: var(--p-red) !important; font: 800 12px var(--p-font) !important; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 
 /* ── #666 (owner): ruleta — premios resumidos en una línea y ganadores plegados, con "Ver más ›" recuadrado ── */
@@ -2026,13 +2026,13 @@ body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(
 /* ── #670 (owner): menú GIROX DIRECTO + Retirar dentro de la Carga rápida del casino ── */
 .mc-opt.mc-girox { border-color: transparent !important; } .mc-opt.mc-girox b { color: var(--p-text) !important; }
 body.no-menu-girox .mc-opt.mc-girox, body.no-menu-girox .bv-sw[onclick*="'girox'"] { display: none !important; }
-.casino-load .cl-btn.cl-wd { background: var(--p-green, #16a34a) !important; margin-top: 6px !important; }
+.casino-load .cl-btn.cl-wd { background: var(--p-green, var(--p-green)) !important; margin-top: 6px !important; }
 /* el casino embebido es un overlay con z-index 99999: el modal de retiro (y su toast) tienen que quedar por encima */
 #withdrawModal.modal { z-index: 100001 !important; }
 .toast-container, #toastContainer, .toast { z-index: 100002 !important; }
 
 /* ── #675 (owner): GUÍA DE PRIMERA CARGA en el Inicio del completo: cartel con flecha a CARGÁ AHORA y el botón con pulso ── */
-.fg-card { display: none; position: relative; margin: 14px 12px 4px; padding: 14px 40px 12px 14px; background: var(--p-card); border: 2px solid var(--p-red); border-radius: 18px; box-shadow: 0 8px 24px rgba(230, 0, 35, .12); }
+.fg-card { display: none; position: relative; margin: 14px 12px 4px; padding: 14px 40px 12px 14px; background: var(--p-card); border: 2px solid var(--p-red); border-radius: 18px; box-shadow: 0 8px 24px rgba(210, 58, 78, .12); }
 body.home-play .fg-card:not([hidden]) { display: block; }
 .fg-arrow { position: absolute; top: -13px; left: 50%; width: 22px; height: 22px; margin-left: -11px; background: var(--p-card); border-left: 2px solid var(--p-red); border-top: 2px solid var(--p-red); transform: rotate(45deg); }
 .fg-t { display: block; font: 900 15px var(--p-font); color: var(--p-red); margin-bottom: 4px; }
@@ -2042,7 +2042,7 @@ body.home-play .fg-card:not([hidden]) { display: block; }
 .fg-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--p-surface); color: var(--p-muted); font: 800 13px var(--p-font); cursor: pointer; }
 .ev-cta.ev-cta-top.fg-hi { animation: fgPulse 1.6s ease-in-out infinite; }
 @keyframes fgPulse { 0%, 100% { transform: scale(1); } 60% { transform: scale(1.035); } } /* #774: sólo transform */
-@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi { animation: none; box-shadow: 0 0 0 4px rgba(230, 0, 35, .35); } }
+@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi { animation: none; box-shadow: 0 0 0 4px rgba(210, 58, 78, .35); } }
 
 /* #675: versión corta en el BÁSICO (arriba del botón CARGAR, flecha hacia abajo) */
 .fg-card.fg-basic { margin: 6px 0 14px; padding: 12px 40px 12px 14px; }
@@ -2056,15 +2056,15 @@ body.home-play .fg-card.fg-basic { display: none !important; }
 
 /* #684: nota de carga mínima (en todos los lugares donde se carga) */
 .min-note { display: block; margin: 6px 0 2px; padding: 8px 10px; border-radius: 10px; background: var(--p-green-soft, #e8f5ee); color: var(--p-text); font: 600 12px/1.4 var(--p-font); }
-.min-note b { color: var(--p-green, #0a7a3e); }
+.min-note b { color: var(--p-green, var(--p-green)); }
 .casino-load .min-note { margin-top: 8px; }
 
 /* #685: Bases y condiciones al pie del Perfil */
 .pf-terms { display: block; text-align: center; margin: 14px 0 4px; padding: 10px; border-radius: 12px; background: var(--p-surface); color: var(--p-text); font: 700 12.5px var(--p-font); text-decoration: none; }
 
 /* ── #686 (owner): CARGA MÍNIMA bien grande en los botones de cargar (Inicio, básico, intermedio) ── */
-.min-strip { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; margin: 8px 12px 0; padding: 10px 12px; border-radius: 14px; background: var(--p-green-soft, #e8f5ee); border: 1.5px solid var(--p-green, #0a7a3e); }
-.min-strip .ms-k { font: 900 13px var(--p-font); letter-spacing: .6px; color: var(--p-green, #0a7a3e); }
+.min-strip { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px 10px; margin: 8px 12px 0; padding: 10px 12px; border-radius: 14px; background: var(--p-green-soft, #e8f5ee); border: 1.5px solid var(--p-green, var(--p-green)); }
+.min-strip .ms-k { font: 900 13px var(--p-font); letter-spacing: .6px; color: var(--p-green, var(--p-green)); }
 .min-strip .md-amt { font: 900 22px var(--p-font); color: var(--p-text); letter-spacing: -.3px; }
 .min-strip .ms-t { flex: 1 0 100%; text-align: center; font: 700 12px var(--p-font); color: var(--p-text-2, var(--p-text)); }
 .min-strip.ms-play { display: none; }
@@ -2123,19 +2123,19 @@ body.casino-open .modal, body.casino-open .story-viewer { z-index: 100001 !impor
 .casino-brand small { font: 800 7px var(--p-font); letter-spacing: 1.4px; color: var(--p-red); white-space: nowrap; }
 @media (max-width: 360px) { .casino-brand small { display: none; } }
 /* #705 (owner): INVERTIR LOS COLORES — cargar / adjuntar comprobante SIEMPRE en VERDE, retirar premio en ROJO (toda la página) */
-:root { --p-load: #0a7a3e; --p-load-sh: rgba(10, 122, 62, .28); }
-html[data-theme="dark"] { --p-load: #1f7a4a; --p-load-sh: rgba(31, 122, 74, .35); }
+:root { --p-load: #2f7d57; --p-load-sh: rgba(47, 125, 87, .22); } /* #788 */
+html[data-theme="dark"] { --p-load: #2f7d57; --p-load-sh: rgba(47, 125, 87, .3); }
 .ev-cta, .ev-cta.ev-cta-top, .al-btn.receipt, .load-row-btn, .cl-btn, .casino-load .cl-btn, .bv-load, .bv-action, .ez-main, .support-load-btn, .btn-primary.btn-load, .plat-play-now.btn-load { background: var(--p-load) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px var(--p-load-sh) !important; }
 html[data-theme="dark"] .bv-load { background: var(--p-load) !important; }
 .support-load-btn { color: #fff !important; }
-.casino-load .cl-btn.cl-wd, .bv-wd, .bv-action-wd, .withdraw-row-btn, html[data-theme="dark"] .withdraw-row-btn, html[data-theme="dark"] .bv-wd { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-color: transparent !important; box-shadow: 0 6px 18px rgba(230, 0, 35, .25) !important; }
+.casino-load .cl-btn.cl-wd, .bv-wd, .bv-action-wd, .withdraw-row-btn, html[data-theme="dark"] .withdraw-row-btn, html[data-theme="dark"] .bv-wd { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-color: transparent !important; box-shadow: 0 6px 18px rgba(210, 58, 78, .25) !important; }
 .withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-text small, html[data-theme="dark"] .withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-auto { color: #fff !important; opacity: 1 !important; }
 .casino-load .cl-btn.cl-sup { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; box-shadow: none !important; }
 @keyframes fgPulseG { 0%, 100% { transform: scale(1); } 60% { transform: scale(1.035); } } /* #774: sólo transform */
 .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation-name: fgPulseG !important; }
-@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation: none !important; box-shadow: 0 0 0 4px rgba(10, 122, 62, .35) !important; } }
+@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation: none !important; box-shadow: 0 0 0 4px rgba(47, 125, 87, .35) !important; } }
 /* #706 (owner): nota de carga mínima RESUMIDA con el monto más grande + botón "Adjuntar comprobante" llamativo hasta la 5ª carga */
-.min-note .mn-big { display: block; font: 900 15px/1.2 var(--p-font) !important; color: var(--p-green, #0a7a3e) !important; margin-bottom: 3px; }
+.min-note .mn-big { display: block; font: 900 15px/1.2 var(--p-font) !important; color: var(--p-green, var(--p-green)) !important; margin-bottom: 3px; }
 .min-note .mn-sub { display: block; font: 600 11.5px/1.4 var(--p-font); color: var(--p-text); }
 .min-note .mn-sub b { color: var(--p-text) !important; }
 .min-tag { display: none; }
@@ -2147,9 +2147,9 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 /* #708: botón flotante de carga de prueba (sólo body.is-tester; por encima del casino) */
 .test-dep-btn { position: fixed; left: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 100000; border: 0; border-radius: 999px; padding: 8px 12px; background: #7c3aed; color: #fff; font: 900 11px var(--p-font); box-shadow: 0 6px 18px rgba(124, 58, 237, .35); cursor: pointer; }
 /* #712 (owner): cartel "¡Buena suerte!" al acreditarse una carga dentro del casino (5 s o ✕) */
-.luck-card { position: fixed; left: 12px; right: 12px; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 100002; background: var(--p-card); color: var(--p-text); border: 1px solid var(--p-border); border-left: 5px solid var(--p-green, #0a7a3e); border-radius: 14px; padding: 12px 36px 12px 14px; box-shadow: 0 14px 44px rgba(0, 0, 0, .25); animation: luckIn .25s ease-out; max-width: 520px; margin: 0 auto; }
+.luck-card { position: fixed; left: 12px; right: 12px; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 100002; background: var(--p-card); color: var(--p-text); border: 1px solid var(--p-border); border-left: 5px solid var(--p-green, var(--p-green)); border-radius: 14px; padding: 12px 36px 12px 14px; box-shadow: 0 14px 44px rgba(0, 0, 0, .25); animation: luckIn .25s ease-out; max-width: 520px; margin: 0 auto; }
 .luck-card.out { opacity: 0; transform: translateY(-8px); transition: opacity .25s, transform .25s; }
-.luck-t { font: 900 16px/1.2 var(--p-font); color: var(--p-green, #0a7a3e); }
+.luck-t { font: 900 16px/1.2 var(--p-font); color: var(--p-green, var(--p-green)); }
 .luck-t small { display: block; font: 700 11px var(--p-font); color: var(--p-muted); margin-top: 2px; }
 .luck-p { font: 600 12.5px/1.4 var(--p-font); margin-top: 6px; }
 .luck-btn { margin-top: 8px; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--p-red); color: #fff; font: 900 12px var(--p-font); cursor: pointer; }
@@ -2188,8 +2188,8 @@ body.has-install-bar #casinoOverlay.has-ig #casinoSupportBubble { margin-bottom:
 /* #731 (owner): el cartel "¡Entró tu carga!" (con el extra por instalar) va POR ENCIMA del casino (la regla se había perdido en #723) */
 body.casino-open .play-now-card { z-index: 100001 !important; }
 /* #731: recordatorio del extra pendiente dentro de la Carga rápida */
-.casino-load .cl-btn.cl-ig { background: var(--p-green-soft, #e8f5ee) !important; color: var(--p-green, #0a7a3e) !important; border: 1px solid var(--p-green, #0a7a3e) !important; box-shadow: none !important; margin-top: 6px !important; font: 800 11.5px/1.3 var(--p-font) !important; white-space: normal; text-align: center; }
-.casino-load .cl-btn.cl-ig b { color: var(--p-green, #0a7a3e); }
+.casino-load .cl-btn.cl-ig { background: var(--p-green-soft, #e8f5ee) !important; color: var(--p-green, var(--p-green)) !important; border: 1px solid var(--p-green, var(--p-green)) !important; box-shadow: none !important; margin-top: 6px !important; font: 800 11.5px/1.3 var(--p-font) !important; white-space: normal; text-align: center; }
+.casino-load .cl-btn.cl-ig b { color: var(--p-green, var(--p-green)); }
 /* #731: sin cargas, la barra "Instalar" de la base no tiene ✕ */
 body.nodep .pwa-install-bar .pib-x { display: none !important; }
 /* #731: el botón "Pendiente · instalá la app" arriba también en el básico */
@@ -2248,7 +2248,7 @@ body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-ar
 .casino-brand b { font-size: 11px !important; letter-spacing: .8px !important; overflow: visible; }
 @media (max-width: 360px) { .casino-brand .cb-txt { display: flex !important; } .casino-brand .cb-box { padding: 3px 4px 3px 28px !important; border-radius: 0 !important; } .casino-brand b { font-size: 10px !important; letter-spacing: .5px !important; } }
 /* #742 (owner): historia con bono: botón Reclamar y etiqueta "Bono +X%" en Adjuntar comprobante */
-.story-viewer #storyLink.st-bonus { background: var(--p-green, #0a7a3e) !important; color: #fff !important; font-weight: 900 !important; animation: fgPulseG 1.6s ease-in-out infinite; }
+.story-viewer #storyLink.st-bonus { background: var(--p-green, var(--p-green)) !important; color: #fff !important; font-weight: 900 !important; animation: fgPulseG 1.6s ease-in-out infinite; }
 .sb-tag { display: block; margin-top: 3px; font: 800 10.5px/1.1 var(--p-font); letter-spacing: .2px; color: #ffe08a; text-transform: none; }
 body.story-bonus .cl-btn.cl-attach, body.story-bonus .bv-action:not(.bv-action-wd) { display: flex !important; flex-direction: column; align-items: center; }
 body.story-bonus #loadHereBtn #loadHereMin { color: #ffe08a !important; font-weight: 800 !important; opacity: 1 !important; }
@@ -2382,9 +2382,9 @@ body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: 
    Antes animaban box-shadow/margin y en celulares flojos o navegadores sin aceleración (Tor) trababan toda la página.
    Las sombras quedan fijas acá. */
 .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi, .pf-topsms, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn, .story-viewer #storyLink.st-bonus, body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first, .lg-ring.has-new .lg-ring-av, .lg-bar i { will-change: transform; }
-.ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn, .story-viewer #storyLink.st-bonus { box-shadow: 0 0 0 4px rgba(10, 122, 62, .22), 0 6px 16px rgba(10, 122, 62, .25); }
-.pf-topsms { box-shadow: 0 0 0 3px rgba(230, 0, 35, .14); }
-body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { box-shadow: 0 0 0 5px rgba(10, 122, 62, .18), 0 8px 22px rgba(10, 122, 62, .32) !important; }
+.ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn, .story-viewer #storyLink.st-bonus { box-shadow: 0 0 0 4px rgba(47, 125, 87, .22), 0 6px 16px rgba(47, 125, 87, .25); }
+.pf-topsms { box-shadow: 0 0 0 3px rgba(210, 58, 78, .14); }
+body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { box-shadow: 0 0 0 5px rgba(47, 125, 87, .18), 0 8px 22px rgba(47, 125, 87, .32) !important; }
 @media (prefers-reduced-motion: reduce) { .lg-ring.has-new .lg-ring-av, .lg-bar i, .pf-topsms, .story-viewer #storyLink.st-bonus, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn { animation: none !important; } }
 /* #777 (owner): en el chat de Soporte, tocar un mensaje seleccionaba el texto (aparecía "Copiar"). Las burbujas no se seleccionan;
    lo que hay que copiar (alias/CBU) tiene su botón Copiar. El campo de escribir sigue normal. */
@@ -2398,3 +2398,7 @@ body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .c
 .ev-game { cursor: pointer; position: relative; }
 .ev-game .ev-play { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: var(--p-red); color: #fff; font: 900 11px var(--p-font); padding: 5px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); pointer-events: none; }
 .ev-game:active { transform: scale(.98); }
+/* #787 (owner): título de Top juegos en UNA línea */
+.ev-games-h { font-size: 13px !important; white-space: nowrap; gap: 8px; }
+.ev-games-h > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.ev-games-h small { font-size: 10px !important; flex: 0 0 auto; }

@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 788. 🎨 Rojos y verdes más sobrios, estilo Pinterest — SW v554
+**Pedido (owner):** "los colores rojos y verdes hacelos más sobrios tipo Pinterest, que no queden tan marcados". Sólo tokens:
+`--p-red` #e60023 → #d23a4e (hover #b12a3c, suave #fbecee), `--p-green`/`--p-load` #0a7a3e → #2f7d57, líneas/suaves acordes; modo
+oscuro #ff3b4e → #e0566a y #5fd38d → #6fbf93. Los pocos hex fijos que quedaban pasaron a los tokens y las sombras rgba a los tonos nuevos.
+
+### 787. 🔥 Título de Top juegos en una sola línea — SW v554
+**Pedido (owner):** "el 'jugá desde acá' del Inicio achicalo que entre todo en una línea". 13 px, sin salto, "jugando ahora" más corto.
+
 ### 786. 🔥 Top juegos = los 10 más jugados de 1girox, fotos reales y enlace directo — SW v553
 **Pedido (owner):** "elegí 10 juegos de los populares, sacá las fotos que están y poné las de la página, que lleve directo a ese
 juego; los más populares y el Joker; deslizante; que diga Top juegos (jugá desde aquí)". Del catálogo público de 1girox
