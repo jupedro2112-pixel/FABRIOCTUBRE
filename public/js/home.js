@@ -1888,7 +1888,9 @@
         // abre solo; entrando a jugar desde OTRO menú (completo/básico/intermedio) la burbuja arranca MINIMIZADA (sólo el logo) y el
         // panel cerrado, para no molestar.
         const direct = !!(opts && opts.embed);
-        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(!!direct); } catch (_) {} } }, 60); // #723: directo → panel abierto; otro menú → cerrado
+        // #729 (owner): "cada vez que la gente entra a Girox, siempre con la burbuja minimizada para que pueda ver la página": el panel
+        // arranca CERRADO en todos los casos (queda la burbuja logo + CARGA RÁPIDA) y un aviso de 5 s debajo dice que se puede mover.
+        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(false); } catch (_) {} try { _cqTipShow(); } catch (_) {} } }, 60);
     }
     function playOn(platformId) { openPlatform(platformId); }
     // #673 (owner): INSTALAR EN iPHONE CON LA SESIÓN. iOS no comparte el localStorage de Safari con la app instalada: el manifest
@@ -2012,6 +2014,15 @@
     function _applyQuickTop() {}
     function _bubbleToBrand() {}
     function casinoQuickMini() { toggleCasinoLoad(false); }
+    // #729 (owner): aviso "si te tapa, la podés mover" DEBAJO de la burbuja, 5 segundos, y se va solo.
+    let _cqTipT = null;
+    function _cqTipShow() {
+        const ov = _el('casinoOverlay'), b = _el('casinoSupportBubble'); if (!ov || !b || b.style.display === 'none') return;
+        let tip = _el('cqTip'); if (!tip) { ov.insertAdjacentHTML('beforeend', '<div id="cqTip" class="cq-tip">↔ Si te tapa el juego, movela donde quieras</div>'); tip = _el('cqTip'); }
+        const place = () => { try { const r = b.getBoundingClientRect(), o = ov.getBoundingClientRect(); tip.style.top = (r.bottom - o.top + 6) + 'px'; tip.style.left = Math.max(8, Math.min(r.left + r.width / 2 - tip.offsetWidth / 2 - o.left, o.width - tip.offsetWidth - 8)) + 'px'; } catch (_) {} };
+        tip.classList.remove('out'); tip.style.display = ''; requestAnimationFrame(place); setTimeout(place, 250);
+        clearTimeout(_cqTipT); _cqTipT = setTimeout(() => { try { tip.classList.add('out'); setTimeout(() => { try { tip.remove(); } catch (_) {} }, 300); } catch (_) {} }, 5000);
+    }
     function casinoQuickClose() { toggleCasinoLoad(false); }
     function dismissCasinoQuick() {
         _quickDismissed = true; _quickOpen = false;

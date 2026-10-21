@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 729. 🎰 Al entrar a Girox el panel de Carga rápida arranca cerrado + aviso de 5 s bajo la burbuja — SW v520
+**Pedido (owner):** "cada vez que la gente entra a Girox que entre con la burbuja minimizada para que pueda ver la página" · "el aviso
+de que la podés mover dejalo abajo de la Carga rápida por 5 segundos como aviso y que se vaya". `openPlatform`: el panel arranca
+cerrado siempre (también en Girox directo y desde la landing); queda la burbuja logo + CARGA RÁPIDA. `_cqTipShow()`: pastilla
+"↔ Si te tapa el juego, movela donde quieras" debajo de la burbuja, 5 s, se desvanece.
+
 ### 728. 🧪 diego651917 se reinicia solo como primer cliente después de cada pedido de retiro (sólo entorno de prueba)
 **Pedido (owner):** "reiniciá siempre todo una vez que pongo retirar; quiero que vuelva a aparecer todo como primera carga en este
 usuario solamente, en el resto normal". La lógica de `reset-test` pasa a `_resetTestUser(u, by)` (misma limpieza de #708/#725 + emite

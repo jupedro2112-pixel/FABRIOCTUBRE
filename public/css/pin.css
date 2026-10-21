@@ -2182,3 +2182,6 @@ body.has-install-bar.casino-open .casino-load { bottom: calc(152px + env(safe-ar
 #casinoOverlay.has-ig .casino-load { bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important; }
 body.has-install-bar #casinoOverlay.has-ig .casino-ig { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 body.has-install-bar #casinoOverlay.has-ig #casinoSupportBubble { margin-bottom: 116px; }
+/* #729 (owner): aviso de 5 s debajo de la burbuja de Carga rápida */
+.cq-tip { position: absolute; z-index: 6; background: var(--p-text); color: var(--p-inv, #fff); font: 700 10.5px/1.2 var(--p-font); padding: 6px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); pointer-events: none; animation: luckIn .25s ease-out; }
+.cq-tip.out { opacity: 0; transition: opacity .3s; }
