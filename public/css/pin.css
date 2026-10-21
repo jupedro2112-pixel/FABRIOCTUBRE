@@ -2146,3 +2146,12 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 @media (prefers-reduced-motion: reduce) { body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action, body.fewdep #loadHereBtn { animation: none !important; } }
 /* #708: botón flotante de carga de prueba (sólo body.is-tester; por encima del casino) */
 .test-dep-btn { position: fixed; left: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 100000; border: 0; border-radius: 999px; padding: 8px 12px; background: #7c3aed; color: #fff; font: 900 11px var(--p-font); box-shadow: 0 6px 18px rgba(124, 58, 237, .35); cursor: pointer; }
+/* #711 (owner): burbuja de Carga rápida un poco más chica; minimizada = sólo el logo de PICA ROJA (movible); botones – y ✕ en el panel */
+#casinoSupportBubble { padding: 6px 11px 6px 6px !important; gap: 6px !important; border-radius: 24px !important; }
+#casinoSupportBubble > img { width: 26px !important; height: 26px !important; padding: 2px !important; }
+#casinoSupportBubble > span:not(#casinoChatBadge) { font-size: 10.5px !important; letter-spacing: .3px !important; }
+#casinoSupportBubble.cq-mini { padding: 3px !important; border-radius: 50% !important; gap: 0 !important; }
+#casinoSupportBubble.cq-mini > span:not(#casinoChatBadge) { display: none !important; }
+#casinoSupportBubble.cq-mini > img { width: 36px !important; height: 36px !important; }
+.cl-hbtns { display: inline-flex; gap: 6px; }
+.cl-close.cl-min { font: 900 16px/1 var(--p-font) !important; }

@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 711. 🎰 Carga rápida: minimizar a sólo el logo (burbuja movible) + burbuja más chica — SW v506
+**Pedido (owner):** "adentro de la Carga rápida poné una forma de minimizar que se vea sólo el logo de PICA ROJA; maximizado como
+está; achicá un poco el círculo y el texto CARGA RÁPIDA y abajo burbuja movible". Cabecera del panel con **–** (`casinoQuickMini`:
+cierra el panel y deja la burbuja `#casinoSupportBubble.cq-mini` = sólo el logo, 36 px, arrastrable como siempre; recordado en
+`localStorage vip_cq_mini`) y **✕** (`casinoQuickClose`: cierra y la burbuja vuelve a logo + "CARGA RÁPIDA"). Burbuja normal más
+chica (logo 26 px, texto 10,5 px). `_setupCasinoQuick` aplica el estado recordado al abrir el casino.
+
 ### 710. ℹ️ Info: "La plataforma que quieras" siempre visible (Girox, Ganamos y Jugaygana, todas originales) + niveles sin "1win" — SW v505
 **Pedido (owner):** "agregá en Info la plataforma que quieras: Girox, Ganamos y Jugaygana, todas originales (estamos trabajando en
 las automatizaciones para Jugaygana y Ganamos); lo del modelo de niveles que dice 1win sacalo, que no se vea otra marca, que sea

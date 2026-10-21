@@ -1914,8 +1914,13 @@
             if (row) row.insertAdjacentHTML('beforeend', '<button type="button" id="casinoQuickBtn" class="casino-quick-btn" style="display:none" onclick="VIP.home.restoreCasinoQuick()">💳 Carga rápida</button>');
         }
         if (bubble) bubble.style.display = _quickDismissed ? 'none' : '';
+        try { if (bubble) bubble.classList.toggle('cq-mini', localStorage.getItem('vip_cq_mini') === '1'); } catch (_) {} // #711
         const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = _quickDismissed ? '' : 'none';
     }
+    // #711: minimizar = panel cerrado + burbuja sólo con el logo (recordado); cerrar = panel cerrado + burbuja normal.
+    function _applyQuickMini(on) { const b = _el('casinoSupportBubble'); if (b) b.classList.toggle('cq-mini', !!on); try { localStorage.setItem('vip_cq_mini', on ? '1' : '0'); } catch (_) {} }
+    function casinoQuickMini() { toggleCasinoLoad(false); _applyQuickMini(true); }
+    function casinoQuickClose() { toggleCasinoLoad(false); _applyQuickMini(false); }
     function dismissCasinoQuick() {
         _quickDismissed = true; _quickOpen = false;
         const b = _el('casinoSupportBubble'); if (b) b.style.display = 'none';
@@ -1943,7 +1948,8 @@
         // #598 (owner): panel CHICO y simple: los datos para copiar (alias · CBU · titular) y UN botón para adjuntar el comprobante.
         const row = (k, v) => v ? '<div class="cl-row"><small>' + k + '</small><b>' + _esc(v) + '</b><button type="button" class="cl-copy" onclick="VIP.ui.copyText(\'' + _esc(v) + '\')">Copiar</button></div>' : '';
         p.innerHTML =
-            '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.toggleCasinoLoad(false)">✕</button></div>' +
+            // #711 (owner): "–" minimiza (queda sólo el logo de PICA ROJA como burbuja movible); "✕" cierra y la burbuja vuelve a logo + texto.
+            '<div class="cl-head"><span>💳 Carga rápida</span><span class="cl-hbtns"><button type="button" class="cl-close cl-min" onclick="VIP.home.casinoQuickMini()" title="Minimizar: queda sólo el logo">–</button><button type="button" class="cl-close" onclick="VIP.home.casinoQuickClose()" title="Cerrar">✕</button></span></div>' +
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
@@ -2199,7 +2205,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
