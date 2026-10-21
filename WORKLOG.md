@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 682. 📣 Foto de bienvenida para el canal de Telegram (`public/images/telegram/bienvenida.png`, 1080×1440)
+**Pedido (owner):** "armá una última foto para poner en Telegram oficial: bienvenido a PICA ROJA, sin tanto llamativo, que diga el
+servicio que brindamos (ruleta, misiones, etc.) y pasame un texto para pegar abajo". Imagen sobria (fondo blanco, pica, "Bienvenido a
+PICA ROJA", 8 tarjetas: cargas automáticas · reembolsos · ruleta diaria · misiones · fueguito · referidos · niveles VIP · soporte; nota
+rollover ×5 / referidos sin apostar; picaroja.com). Generador: `scratchpad/gen_tg_welcome.py` (no está en el repo). Se sirve en
+`/images/telegram/bienvenida.png` para descargarla desde Render/producción. El texto para el pie se entregó en el chat.
+
 ### 681. 🔍 Segunda revisión de punta a punta (todo lo de #666 a #680) antes de subir + memo de ganadores de ejemplo
 **Pedido (owner):** "revisá que esté todo ok, seguridad y todo bien fino que quiero subir; si hay fallas de algo o está todo optimizado".
 **OK:** sintaxis de server/src/config/js/panel/SW; HTML de app y panel sin etiquetas desbalanceadas ni ids repetidos; CSS balanceado;
