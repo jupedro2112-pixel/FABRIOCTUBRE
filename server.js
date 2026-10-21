@@ -19298,6 +19298,7 @@ const _isTestEnv = () => !!(process.env.RENDER || process.env.TESTER_ADMIN_PROMO
 // automáticos, primera carga, fueguito, misiones, webhooks, mensajes) con el tester como "agente".
 app.post('/api/test/deposit', authMiddleware, async (req, res) => {
   if (!_isTestEnv() || !req.user || req.user.role !== 'user' || !TEST_USERNAMES.includes(String(req.user.username || ''))) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  if (!girox.isSimulated()) return res.status(400).json({ error: 'Con la API real de 1girox conectada no hay cargas ni retiros de prueba (moverían fichas reales). Probá con una carga real chica.' }); // #778
   const amount = Math.round(Number(req.body && req.body.amount) || 5000);
   if (!(amount >= 500 && amount <= 500000)) return res.status(400).json({ error: 'Monto de prueba entre $500 y $500.000' });
   const fakeReq = { user: { userId: req.user.userId, username: req.user.username + ' (test)', role: 'admin' }, body: {} };
@@ -19307,6 +19308,7 @@ app.post('/api/test/deposit', authMiddleware, async (req, res) => {
 // con datos bancarios ficticios y sin teléfono/SMS. En producción no existe (404).
 app.post('/api/test/withdraw', authMiddleware, async (req, res) => {
   if (!_isTestEnv() || !req.user || req.user.role !== 'user' || !TEST_USERNAMES.includes(String(req.user.username || ''))) return res.status(404).json({ error: 'Endpoint no encontrado' });
+  if (!girox.isSimulated()) return res.status(400).json({ error: 'Con la API real de 1girox conectada no hay cargas ni retiros de prueba (moverían fichas reales). Probá con una carga real chica.' }); // #778
   const amount = Math.round(Number(req.body && req.body.amount) || 10000);
   req.body = { titular: 'PRUEBA TEST', cbu: '0000000000000000000000', alias: 'prueba.test.pica', amount, saveData: false, platform: 'girox' };
   req._testBypass = true;

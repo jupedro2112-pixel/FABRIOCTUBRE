@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 778. 🛡️ Carga/Retiro de prueba sólo con el casino SIMULADO
+**Pedido (owner):** "salí del modo prueba, quiero la original para testear todo y subir a Amazon". El casino real en Render se
+consigue cargando la API de 1girox en el panel de Render (COMANDOS → Banco automático → 🎰 API de 1girox): el simulador se apaga solo
+(`active()` = entorno de prueba SIN credenciales reales). Para que en ese modo los botones 🧪 no acrediten fichas REALES, `POST
+/api/test/deposit` y `/api/test/withdraw` responden 400 con aviso si `girox.isSimulated()` es false. Render sin key sigue simulado.
+
 ### 777. 📄 Bases y condiciones rota dentro de la app + texto del chat que se seleccionaba al tocar — SW v549
 **Pedido (owner, capturas):** (1) el modal "Bases y condiciones" mostraba el ícono de página rota: `securityHeaders` manda
 `X-Frame-Options: DENY` y `frame-ancestors 'none'` a todo, también a `/terminos.html`, y el navegador bloqueaba nuestro propio iframe.
