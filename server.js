@@ -24018,10 +24018,14 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     if (notifyAll) {
       const pTitle = String(b.pushTitle || '').trim().slice(0, 80) || (bonusPct > 0 ? `🎁 +${bonusPct}% extra en tu próxima carga` : (title || '📣 Novedad en PICA ROJA'));
       const pBody = String(b.pushBody || '').trim().slice(0, 160) || (bonusPct > 0 ? `Tocá la historia y reclamalo: vale por ${bonusHours} h.` : (text.slice(0, 120) || 'Mirá la historia nueva en la app.'));
+      // #771: antes decía `notificationService.…` (objeto que no existe acá) ⇒ ReferenceError dentro del setTimeout ⇒ uncaughtException ⇒
+      // el servidor se reiniciaba 1,5 s después de publicar la historia (y la push nunca salía).
       setTimeout(() => {
-        notificationService.sendNotificationToAllUsers(User, pTitle, pBody, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' })
-          .then((r) => logger.info(`[stories] push a todos: ${JSON.stringify(r || {}).slice(0, 200)}`))
-          .catch((e) => logger.warn(`[stories] push a todos falló: ${e.message}`));
+        try {
+          Promise.resolve(sendNotificationToAllUsers(User, pTitle, pBody, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' }))
+            .then((r) => logger.info(`[stories] push a todos: ${JSON.stringify(r || {}).slice(0, 200)}`))
+            .catch((e) => logger.warn(`[stories] push a todos falló: ${e.message}`));
+        } catch (e) { logger.warn(`[stories] push a todos falló: ${e.message}`); }
       }, 50);
     }
     res.json({ success: true, story: _storyPublic(doc.toObject(), req) });

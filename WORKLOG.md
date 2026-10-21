@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 771. 🐛 La push "a todos" de una historia con bono REINICIABA el servidor
+**Pedido (owner):** "borrá la historia y subí una del 50% para reclamar directo desde ahí, que está fallada". Al publicar una historia
+con "avisar a todos" el servidor se reiniciaba ~1,5 s después: el envío usaba `notificationService.sendNotificationToAllUsers` y ese
+objeto no existe en server.js (sólo se importan las funciones sueltas) ⇒ ReferenceError dentro de un `setTimeout` ⇒ `uncaughtException`
+⇒ `process.exit(1)`. La push nunca salía y, en Render, la app quedaba 1-2 min caída. Corregido (función importada + try/catch).
+Se borró la historia vieja "BONO ACTIVO" y se publicó "BONO +50%" (imagen generada, bono 50% por 6 h, push a todos).
+
 ### 770. 💸 GASTOS desde el panel (pago por la API del banco o registro) que el cierre descuenta y la conciliación explica — admin-sw v148
 **Pedido (owner):** "los gastos hacemos que se carguen directo desde el admin, abajo de Cargas automáticas, con la API completando
 CBU y poniendo datos, así en el cierre puede figurar bien el detalle; de forma manual pero es un dato que va a servir para el cierre".
