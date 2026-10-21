@@ -6047,6 +6047,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       lastPlatform = (u && u.lastPlatform) || null;
       preferredPlatform = (u && platforms.normalizeId(u.preferredPlatform)) || null;
       if (preferredPlatform && !list.some((p) => p.id === preferredPlatform)) preferredPlatform = null; // fijó una que ya no está habilitada
+      if (!preferredPlatform && list.some((p) => p.id === s.defaultPlatform)) preferredPlatform = s.defaultPlatform; // #781: Girox con el tilde por defecto
     } catch (_) {}
     // #773 (velocidad): antes eran ~20 consultas a Mongo UNA DETRÁS DE OTRA (cada await esperaba al anterior) ⇒ 1,5-2 s por
     // pedido. Ahora van en 2 tandas en paralelo y los textos de COMANDOS salen de la caché de renderSystemCommand.

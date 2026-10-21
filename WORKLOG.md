@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 781. 🎰 Girox preseleccionada (fija, con el tilde) en todos lados
+**Pedido (owner):** "acordate que quiero que quede preseleccionada la plataforma Girox en todos lados para cuando cargan, con el
+tilde". (1) `User.preferredPlatform` nace en `'girox'` para todo usuario nuevo (app, landing, entrada rápida, panel, publicistas);
+(2) `GET /api/platforms` devuelve la default (Girox) como preferida cuando el cliente nunca eligió ⇒ la tarjeta aparece con el ✓ y
+"Fija · tus cargas van acá"; (3) `decideForDeposit` trata la default como fija ⇒ hgcash no pregunta dónde cargar (ni con 2+ plataformas)
+salvo que el cliente haya tocado otra tarjeta. El selector del panel ya preselecciona la default.
+
 ### 780. ↩️ Girox directo en Render vuelve a abrir 1girox.com (como antes de #775)
 **Pedido (owner):** "¿por qué ahora no puedo jugar o ver Girox si podía hace 2 h?". Lo que veía era la web pública de 1girox dentro
 del recuadro (simulador sin key); #775 lo cambió por `/casino-sim`. Se vuelve al destino anterior por defecto; la página propia queda

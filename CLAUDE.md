@@ -180,7 +180,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **Landing de pauta en el repo (#224):** `public/landing/index.html` servida en `GET /l/:code` (y `/ingreso` = campaña
   orgánica `INGRESO` que crea el boot, #306; `/l/demo` = vista previa sin cuentas); el alta
   crea el usuario en TODAS las plataformas con API conectada. **Plataforma fija (#225):**
-  `User.preferredPlatform` evita la pregunta al cargar. ⚠️ En scripts de edición usar
+  `User.preferredPlatform` evita la pregunta al cargar. **#781:** nace en `'girox'` y, si está vacía, la app y `decideForDeposit`
+  usan la default (Girox con el tilde): nunca se pregunta salvo que el cliente fije otra. ⚠️ En scripts de edición usar
   `s.replace(from, () => to)`: un `$'` en el texto nuevo rompe el archivo (pasó con server.js).
 - **Bono por instalar la app APAGADO por flag (#221, 2026-10-16):** `Config['installBonusEnabled']`
   (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El

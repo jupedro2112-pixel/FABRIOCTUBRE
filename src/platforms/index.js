@@ -216,7 +216,8 @@ async function decideForDeposit(user) {
     return { ask: false, platform: pid, reason: offer.length < 2 ? 'single' : 'never' };
   }
   // Plataforma FIJA del cliente (#225): la eligió en la app → no se pregunta.
-  const pref = normalizeId(user && user.preferredPlatform);
+  // #781 (owner): quien nunca eligió tiene la DEFAULT (Girox) como fija: no se pregunta; sólo cambia si toca otra tarjeta en la app.
+  const pref = normalizeId(user && user.preferredPlatform) || s.defaultPlatform;
   if (pref && isOffered(pref)) return { ask: false, platform: pref, reason: 'preferred' };
   const last = normalizeId(user && user.lastPlatform);
   if (s.askMode === 'first_time' && last && isOffered(last)) {

@@ -248,7 +248,7 @@ const userSchema = new mongoose.Schema({
   // (según askMode de Config['platforms']).
   preferredPlatform: {
     type: String,
-    default: null
+    default: 'girox' // #781 (owner): Girox preseleccionada (fija, con el tilde) para todo usuario nuevo
   },
   // Estado de la cuenta del jugador en CADA plataforma distinta de girox (la de girox
   // sigue en giroxSyncStatus/giroxUserId para no tocar los ~110 call sites):
