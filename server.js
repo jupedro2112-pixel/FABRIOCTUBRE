@@ -13716,12 +13716,21 @@ async function _supportQuickReply(userId, username, quick, text) {
       return;
     }
     // #702: tema por chip (carga / retiro / reembolso / otro) o por palabras clave del texto libre
-    let topic = ['carga', 'retiro', 'reembolso', 'otro', 'bono'].includes(quick) ? quick : _supportTopicFromText(text);
+    const explicit = ['carga', 'retiro', 'reembolso', 'otro', 'bono'].includes(quick);
+    let topic = explicit ? quick : _supportTopicFromText(text);
     if (!topic) return _supportAutoReply(userId, username);
-    const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: SUPPORT_ROLES }, channel: 'support', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
-    if (agentRecent) return;
-    const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.topic': topic, timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
-    if (recent) return;
+    // #784 (owner: "se rompió, no contesta automático; cada botón tiene que tener su respuesta"): el botón de TEMA tocado por el
+    // cliente responde SIEMPRE. Antes se callaba si un agente había respondido hace < 10 min (aunque ya hubiera cerrado el chat) o si
+    // ese tema ya se había contestado en las últimas 2 h. Esos frenos quedan SÓLO para la detección por palabras del texto libre, y el
+    // de "agente reciente" no cuenta si después el agente cerró el chat.
+    if (!explicit) {
+      const closed = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'support_closed' }).sort({ timestamp: -1 }).select('timestamp').lean();
+      const since = new Date(Math.max(Date.now() - 10 * 60 * 1000, closed ? new Date(closed.timestamp).getTime() : 0));
+      const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: SUPPORT_ROLES }, channel: 'support', timestamp: { $gte: since } }).select('_id').lean();
+      if (agentRecent) return;
+      const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.topic': topic, timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
+      if (recent) return;
+    }
     const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), rollover: String(await _giftRolloverX()) };
     if (topic === 'otro') {
       const t = await renderSystemCommand('/sys_support_topic_otro', SUPPORT_TOPIC_OTRO_DEFAULT, vars);

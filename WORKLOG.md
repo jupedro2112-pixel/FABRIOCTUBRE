@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 785. 👆 "Jugar ahora" con manito en las fotos de juegos — SW v552
+**Pedido (owner):** "que en los clicks de los juegos aparezca como una manito y diga Jugar ahora, bien sencillo". Pastilla roja
+"👆 Jugar ahora" abajo de cada foto, cursor de mano y un leve apretón al tocar.
+
+### 784. 💬 Soporte: cada botón de tema responde SIEMPRE
+**Pedido (owner):** "se rompió lo de Soporte, no contesta automático; necesito que cada uno tenga su respuesta". No estaba roto: el
+diseño (#702) callaba la respuesta automática si un agente había respondido hace < 10 min (aunque hubiera cerrado el chat) o si ese
+tema ya se contestó en 2 h; probando seguido parecía muerto. Ahora el botón tocado responde siempre; los frenos quedan sólo para la
+detección por palabras en texto libre, y el de "agente reciente" no cuenta después de un "cerró el chat".
+
 ### 783. 👤 Perfil: recuadro de usuario arriba de todo con el SALDO al lado del nombre — SW v551
 **Pedido (owner, capturas):** "esto (avatar · nombre · nivel) va arriba de todo; agregale el saldo al lado del usuario; la línea
 (usuario · logo · saldo) y el cartel de SMS de arriba sacalos, el de abajo está OK". Se mueve `#pfUserBox` al principio del modal, con

@@ -2394,3 +2394,7 @@ body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .c
 .pf-userline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pf-userbal { font: 900 15px var(--p-font); color: var(--p-green); }
 #profileModal .pf-userbox { margin-top: 2px; }
+/* #785 (owner): en las fotos de juegos, manito y "Jugar ahora" bien sencillo */
+.ev-game { cursor: pointer; position: relative; }
+.ev-game .ev-play { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); background: var(--p-red); color: #fff; font: 900 11px var(--p-font); padding: 5px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); pointer-events: none; }
+.ev-game:active { transform: scale(.98); }
