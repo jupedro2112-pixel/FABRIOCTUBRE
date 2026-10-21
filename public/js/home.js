@@ -536,6 +536,7 @@
             // #767: franja arriba de todo del Perfil
             // #783 (owner): saldo al lado del nombre en el recuadro de usuario (la franja de arriba y el cartel de SMS de #767 se sacaron)
             try { const bal = _el('pfUserBal'), ub = _el('userBalance'); if (bal && ub) bal.textContent = ub.textContent || '$0'; } catch (_) {}
+            try { const bm = _el('pfBuildMini'), bt = _el('appBuildTag'); if (bm && bt) bm.textContent = bt.textContent; } catch (_) {} // #790
             b.textContent = ok ? '✓ Verificado' : 'Verificar'; b.classList.toggle('ok', ok);
             const row = _el('pfPhoneRow'), imp = _el('pfPhoneImp'); if (row) row.classList.toggle('pf-important', !ok); if (imp) imp.hidden = ok; // #646 b.title = ok ? 'Tu número ya está verificado. Tocá para cambiarlo.' : 'Verificar mi número';
         } catch (_) {}

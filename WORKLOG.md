@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 790. 🐛 Perfil roto (recuadro sin cerrar) + el recuadro de usuario se OCULTA por pedido del owner — SW v556
+**Capturas del owner (nombre en vertical, "Canjear un código" y "Modo nocturno" al costado) y luego "ese recuadro no va, hay que dejar
+el de abajo; arriba el verificador de SMS, el código y el modo nocturno".** Causa del desarmado: al mover `#pfUserBox` (#783/#789) su
+`</div>` quedó al final del bloque de Notificaciones ⇒ Canjear, Modo nocturno y Notificaciones quedaban ADENTRO del recuadro (flex en
+fila) y el nombre se partía por letra; el conteo global de `<div>` daba parejo y no saltó. Fix: cierre en su lugar + chequeo de anidado
+del modal. Por pedido, el recuadro con avatar queda oculto (`display:none`; sus ids los sigue usando el JS: avatar, código, nivel,
+versión) y la versión se ve chiquita al pie del recuadro de datos (`#pfBuildMini`, espejo de `#appBuildTag`; el bump sigue siendo
+sobre `#appBuildTag`). Orden final: teléfono · Canjear código · Modo nocturno · Notificaciones · datos (usuario · contraseña · link ·
+Capturar).
+
 ### 789. 👤 Perfil: teléfono arriba de todo y recuadro de usuario bien armado — SW v555
 **Pedido (owner, captura con el nombre en vertical y la fila de teléfono flotando al costado):** "arreglalo: lo del teléfono en la
 parte superior y el perfil bien recuadrado con los datos". El recuadro de usuario vuelve DEBAJO de la verificación de teléfono (como en

@@ -2404,3 +2404,7 @@ body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .c
 .ev-games-h { font-size: 13px !important; white-space: nowrap; gap: 8px; }
 .ev-games-h > span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .ev-games-h small { font-size: 10px !important; flex: 0 0 auto; }
+/* #790 (owner): "ese recuadro no va, dejá el de abajo" — el recuadro de usuario con avatar queda OCULTO (sus ids los sigue usando el JS);
+   la versión de la app se ve chiquita al pie del recuadro de datos. */
+#profileModal #pfUserBox { display: none !important; }
+#profileModal .pf-build-min { font: 600 10px var(--p-font); color: var(--p-muted); text-align: right; margin-top: 4px; }
