@@ -209,6 +209,11 @@ VIP.socket = (function () {
             }
         });
 
+        // #712: carga acreditada → cartel "¡Buena suerte!" si está dentro del casino (primeras 5 cargas).
+        VIP.state.socket.on('deposit_credited', function (data) {
+            try { if (VIP.home && VIP.home.onDepositCredited) VIP.home.onDepositCredited(data || {}); } catch (e) { /* nunca romper el socket */ }
+        });
+
         // #376: cambió el estado de una carga pendiente (acreditada / rechazada / escalada) → refrescar la franja.
         VIP.state.socket.on('deposit_review_update', function () {
             try { if (VIP.home && VIP.home.refreshPendingDeposits) VIP.home.refreshPendingDeposits(); } catch (e) { /* nunca romper el socket */ }

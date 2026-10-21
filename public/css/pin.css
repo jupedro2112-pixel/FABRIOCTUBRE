@@ -2155,3 +2155,12 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 #casinoSupportBubble.cq-mini > img { width: 36px !important; height: 36px !important; }
 .cl-hbtns { display: inline-flex; gap: 6px; }
 .cl-close.cl-min { font: 900 16px/1 var(--p-font) !important; }
+/* #712 (owner): cartel "¡Buena suerte!" al acreditarse una carga dentro del casino (5 s o ✕) */
+.luck-card { position: fixed; left: 12px; right: 12px; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 100002; background: var(--p-card); color: var(--p-text); border: 1px solid var(--p-border); border-left: 5px solid var(--p-green, #0a7a3e); border-radius: 14px; padding: 12px 36px 12px 14px; box-shadow: 0 14px 44px rgba(0, 0, 0, .25); animation: luckIn .25s ease-out; max-width: 520px; margin: 0 auto; }
+.luck-card.out { opacity: 0; transform: translateY(-8px); transition: opacity .25s, transform .25s; }
+.luck-t { font: 900 16px/1.2 var(--p-font); color: var(--p-green, #0a7a3e); }
+.luck-t small { display: block; font: 700 11px var(--p-font); color: var(--p-muted); margin-top: 2px; }
+.luck-p { font: 600 12.5px/1.4 var(--p-font); margin-top: 6px; }
+.luck-btn { margin-top: 8px; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--p-red); color: #fff; font: 900 12px var(--p-font); cursor: pointer; }
+.luck-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--p-surface); color: var(--p-text); font: 900 12px/1 var(--p-font); cursor: pointer; }
+@keyframes luckIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }

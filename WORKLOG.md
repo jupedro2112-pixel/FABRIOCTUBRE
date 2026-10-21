@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 713. 🎰 Burbuja de Carga rápida: minimizada si entra a jugar desde otro menú; siempre abierta en Girox directo y desde la landing
+**Pedido (owner):** "cuando la carga es de otro menú que no sea el de Girox, cuando entre que la burbuja esté minimizada para que no
+moleste; cuando entre desde la app directo a Girox o desde la landing, que siempre esté abierta". `openPlatform`: con `opts.embed`
+(Girox directo = `_giroxDirect`, también la entrada por landing `ir=girox`) → burbuja completa + panel abierto; sin `embed` (JUGÁ AQUÍ,
+Entrar a jugar, pestañas, selector del intermedio) → burbuja `.cq-mini` (sólo el logo) y panel cerrado.
+
+### 712. 🍀 Cartel "¡Buena suerte!" al acreditarse una carga dentro del casino (primeras 5 cargas) — SW v507
+**Pedido (owner):** "cuando la gente carga dentro de la app rápida de Girox que le salte un cartel diciendo ¡Buena suerte! Recordá que
+tenemos muchos beneficios para vos dentro de nuestro menú completo, ¡no te lo pierdas!, que dure 5 segundos o se pueda sacar, en las
+primeras 5 cargas para generar retención". Server: evento socket `deposit_credited {amount, firstDeposit}` en los tres puntos donde se
+acredita una carga (hgcash automática, carga manual/panel/test, autocarga). App: socket.js → `VIP.home.onDepositCredited` → si el
+casino está abierto y `depositsCount ≤ 5` (`/api/first-deposit-promo`) pinta `#luckCard` (z 100002, encima del casino) con ✕, botón
+"Ver el menú completo ›" (cierra el casino y abre el selector) y auto-cierre a los 5 s. Fuera del casino no se muestra.
+
 ### 711. 🎰 Carga rápida: minimizar a sólo el logo (burbuja movible) + burbuja más chica — SW v506
 **Pedido (owner):** "adentro de la Carga rápida poné una forma de minimizar que se vea sólo el logo de PICA ROJA; maximizado como
 está; achicá un poco el círculo y el texto CARGA RÁPIDA y abajo burbuja movible". Cabecera del panel con **–** (`casinoQuickMini`:

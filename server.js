@@ -2950,6 +2950,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     try {
       const _hgFTD = await _isFirstDeposit(user.id);
       outboundWebhook.notify('carga', user, { amount: Number(amount), firstDeposit: _hgFTD, transactionId: txId });
+      try { io.to(`user_${user.id}`).emit('deposit_credited', { amount: Number(amount), firstDeposit: !!_hgFTD }); } catch (_) {} // #712: cartel "Buena suerte" en el casino
     } catch (_) {}
     _emitHgcashUpdate('cargado');
     logger.info(`[hgcash] auto-carga OK user=${user.username} amount=$${amount} movement=${movement.movementId} platform=${pid} by=${by}`);
@@ -10416,6 +10417,7 @@ async function _agentDepositHandler(req, res, body) {
       try {
         const _isFTD = await _isFirstDeposit(user.id);
         outboundWebhook.notify('carga', user, { amount: parseFloat(amount), firstDeposit: _isFTD, transactionId: _depTxId });
+        try { io.to(`user_${user.id}`).emit('deposit_credited', { amount: parseFloat(amount), firstDeposit: !!_isFTD }); } catch (_) {} // #712
       } catch (_) {}
 
       logger.info(
@@ -12873,6 +12875,7 @@ app.post('/api/movements/deposit', authMiddleware, depositorMiddleware, async (r
         try {
           const _isFTD = await _isFirstDeposit(req.user.userId, { unrecorded: true });
           outboundWebhook.notify('carga', u, { amount: parseFloat(amount), firstDeposit: _isFTD, transactionId: _selfDepTxId });
+          try { io.to(`user_${u.id}`).emit('deposit_credited', { amount: parseFloat(amount), firstDeposit: !!_isFTD }); } catch (_) {} // #712
         } catch (_) {}
       } catch (e) { /* tracking nunca bloquea */ }
 
