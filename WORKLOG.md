@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-18
 
+### 702. 💬 Soporte: respuestas automáticas POR TEMA (carga mínima, retiro mínimo, info de reembolso, "detallanos tu problema") + Bases y condiciones dentro de la app — SW v500
+**Pedido (owner):** "si la gente responde sobre una carga, avisamos de antemano que la carga mínima es de 5000; si cargaste menos
+danos captura de tu carga para ver el reintegro; con un retiro lo mismo: el retiro mínimo es de 10000; con el reembolso un botón de
+la info de reembolso; si necesita otra consulta siempre le respondemos en otro mensaje 'si tenés un problema por favor detallanos tu
+problema'; cuando dice otra cosa le pasamos las bases y condiciones, link para abrir dentro de la app; en todos los mensajes del
+resto también el de bases y condiciones".
+**Server:** `_supportQuickReply(userId, username, quick, text)` (los dos call sites le pasan `content`). Tema = chip `quick`
+(carga / retiro / reembolso / otro) o, si escribió libre, `_supportTopicFromText` (reembols|devoluc → reembolso; retir|cobr|pag →
+retiro; carg|transfer|deposit|comprobante|acredit|cbu|alias → carga). Mensajes: `/sys_support_topic_carga` ({min}; pide captura si
+cargó menos), `/sys_support_topic_retiro` ({retiro_min}), `/sys_support_topic_reembolso` (+ botón `go_section target:'refund'` →
+`VIP.home.svcRefund()`), `/sys_support_topic_otro` (+ botón Bases y condiciones); tras carga/retiro/reembolso SIEMPRE
+`/sys_support_detail` ("si necesitás otra consulta, detallanos tu problema" + botón Bases). La genérica `/sys_support_autoreply`
+también lleva el botón. Throttle: un envío por tema (`metadata.topic`) cada 2 h por cliente y nunca si un agente respondió hace
+< 10 min. Los chips viejos "Cargar/Retirar" siguen igual. Comandos nuevos registrados en `initializeData()` (COMANDOS).
+**App:** chat.js `go_section` acepta `target:'refund'|'terms'`; `VIP.home.openTerms()` abre `#termsModal` con `/terminos.html`
+embebido (la PWA instalada ya no se va a Safari); los links de Info y Perfil usan lo mismo. CSS `.terms-frame`, `.plat-terms`.
+
 ### 701. 🎰 Barra del casino en UNA línea, formato de la barra principal, sin "Estás en Girox" — SW v499
 **Pedido (owner, captura):** "usá el mismo formato de la página principal: Menú con las 3 líneas chiquito, Perfil e Info igual,
 mismo estilo que el menú principal; que todo entre en una línea, no quiero sacarle lugar a la página de juego; el texto 'estás en

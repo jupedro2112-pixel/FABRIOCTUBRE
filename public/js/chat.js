@@ -94,11 +94,14 @@ VIP.chat = (function () {
         }
         if (md.kind === 'receipt_duplicate') return '<div class="dep-pill dep-dup">⚠️ Comprobante ya usado · no se acredita</div>';
         // #384: respuesta automática de Soporte con botón al sector (carga automática / retirar premio).
-        if (md.kind === 'go_section') {
+        if (md.kind === 'go_section' || (md.target === 'terms' && md.label)) { // #702: + refund (info de reembolso) y terms (Bases y condiciones, dentro de la app)
             const t = String(md.target || 'full');
-            const act = t === 'withdraw' ? "VIP.withdraw.openWithdrawModal()" : "VIP.home.setHomeMode('full')";
+            const act = t === 'withdraw' ? "VIP.withdraw.openWithdrawModal()"
+                : t === 'refund' ? "VIP.home.svcRefund()"
+                : t === 'terms' ? "VIP.home.openTerms()"
+                : "VIP.home.setHomeMode('full')";
             const label = escapeHtml(String(md.label || (t === 'withdraw' ? '💸 Ir a Retirar premio' : '⚡ Ir a Carga automática')));
-            return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now" onclick="${act}">${label}</button></div>`;
+            return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now${t === 'terms' ? ' plat-terms' : ''}" onclick="${act}">${label}</button></div>`;
         }
         if (md.kind === 'deposit_rejected') return '<div class="dep-pill dep-rej">❌ Carga no acreditada</div>';
         if (md.kind === 'platform_link' && md.url) {

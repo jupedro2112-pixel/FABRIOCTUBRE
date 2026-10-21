@@ -2108,3 +2108,7 @@ body.home-play .ev-play-first { display: none !important; }
 .casino-topbar .tn-stories .st-core { color: var(--p-text) !important; font-size: 8px; }
 .casino-topbar .tn-stories .st-badge { background: var(--p-red) !important; color: #fff !important; box-shadow: none !important; border-color: var(--p-card) !important; }
 body.casino-open .modal, body.casino-open .story-viewer { z-index: 100001 !important; }
+/* #702 (owner): Bases y condiciones dentro de la app + botón en los mensajes de Soporte */
+#termsModal .terms-content { max-width: 560px; width: calc(100% - 24px); padding: 14px 12px 12px !important; }
+.terms-frame { display: block; width: 100%; height: min(70vh, 640px); border: 1px solid var(--p-border); border-radius: 12px; background: #fff; }
+.plat-btn.plat-terms { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; }

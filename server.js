@@ -8207,7 +8207,7 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
       io.to(`user_${req.user.userId}`).emit('message_sent', message);
       // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
       maybeNotifyComunidadActivity(req.user.userId, req.user.username).catch(() => {});
-      setTimeout(() => { _supportQuickReply(req.user.userId, req.user.username, _spQuick); }, 1200); // #383/#384
+      setTimeout(() => { _supportQuickReply(req.user.userId, req.user.username, _spQuick, content); }, 1200); // #383/#384 · #702: + texto
     } else {
       // Admin enviando mensaje - notificar al usuario
       // SLA: respuesta de texto del agente — resolver el reloj de demora (fire-and-forget).
@@ -11141,7 +11141,7 @@ io.on('connection', (socket) => {
 
         // Comunidad: si el chat está en esa sección, re-avisar al agente de Comunidad.
         maybeNotifyComunidadActivity(socket.userId, socket.username).catch(() => {});
-        setTimeout(() => { _supportQuickReply(socket.userId, socket.username, _spQuick); }, 1200); // #383/#384
+        setTimeout(() => { _supportQuickReply(socket.userId, socket.username, _spQuick, content); }, 1200); // #383/#384 · #702: + texto
       } else {
         // Admin/depositor/withdrawer enviando mensaje - notificar al usuario específico
         logger.debug(`[SEND_MESSAGE] Looking up socket for user ${receiverId}`);
@@ -12510,6 +12510,37 @@ async function initializeData() {
       response: SUPPORT_QUICK_RETIRAR_DEFAULT
     },
     {
+      // #702: respuestas automáticas POR TEMA de Soporte (chips "Con una carga / retiro / reembolso / Otra cosa" y palabras clave).
+      name: '/sys_support_topic_carga',
+      description: 'Soporte: respuesta automática cuando el tema es UNA CARGA (avisa la carga mínima y pide captura si cargó menos). Variables: {min}, {retiro_min}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_TOPIC_CARGA_DEFAULT
+    },
+    {
+      name: '/sys_support_topic_retiro',
+      description: 'Soporte: respuesta automática cuando el tema es UN RETIRO (avisa el retiro mínimo). Variables: {retiro_min}, {min}. Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_TOPIC_RETIRO_DEFAULT
+    },
+    {
+      name: '/sys_support_topic_reembolso',
+      description: 'Soporte: respuesta automática cuando el tema es UN REEMBOLSO (lleva el botón "Ver info de reembolso"). Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_TOPIC_REEMBOLSO_DEFAULT
+    },
+    {
+      name: '/sys_support_topic_otro',
+      description: 'Soporte: respuesta automática cuando el tema es OTRA COSA ("detallanos tu problema"; lleva el botón Bases y condiciones). Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_TOPIC_OTRO_DEFAULT
+    },
+    {
+      name: '/sys_support_detail',
+      description: 'Soporte: segundo mensaje que sigue a la respuesta de carga/retiro/reembolso ("si necesitás otra consulta, detallanos tu problema"; lleva el botón Bases y condiciones). Vacío = no se manda.',
+      type: 'message',
+      response: SUPPORT_DETAIL_DEFAULT
+    },
+    {
       // #383: primera respuesta automática cuando el cliente escribe en Soporte. Variable: {nombre} (persona de turno).
       name: '/sys_support_autoreply',
       description: 'Soporte: respuesta automática apenas escribe el cliente (una cada 2 h; no se manda si un agente respondió hace menos de 10 min). Variable: {nombre}. Vacío = no se manda.',
@@ -13517,19 +13548,65 @@ const SUPPORT_AUTOREPLY_DEFAULT = '🙌 Contame qué necesitás, ya estamos con 
 const SUPPORT_QUICK_CARGAR_DEFAULT = '⚡ Las cargas son 100% automáticas: transferís al CBU, mandás la foto del comprobante y se acredita sola en minutos (carga mínima {min}). Tocá el botón y te llevo a la carga automática. Si ya la hiciste y algo falló, contame acá y lo reviso.';
 const SUPPORT_QUICK_RETIRAR_DEFAULT = '💸 Los retiros también son automáticos: en "Retirar premio" completás tus datos, confirmás con el código SMS y se paga solo a tu CBU (retiro mínimo {retiro_min}). Tocá el botón para ir. Si ya lo pediste y tenés dudas, contame acá.';
 const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro', 'carga', 'retiro', 'reembolso']; // #602: temas del soporte de problemas
-async function _supportQuickReply(userId, username, quick) {
+// #702 (owner 2026-10-21): respuestas automáticas POR TEMA en Soporte. "Con una carga": avisar de antemano la carga mínima y pedir
+// captura si cargó menos (para ver el reintegro). "Con un retiro": el retiro mínimo. "Con un reembolso": botón a la info del
+// reembolso. "Otra cosa": "si tenés un problema, detallanos tu problema" + Bases y condiciones (se abren dentro de la app).
+// Después de carga/retiro/reembolso va SIEMPRE un segundo mensaje "si necesitás otra consulta, detallanos tu problema" con el
+// botón de Bases y condiciones. También se detecta el tema por palabras clave cuando escriben libre (sin tocar un chip).
+// Textos editables en COMANDOS (/sys_support_topic_* y /sys_support_detail). Una vez por tema cada 2 h por cliente; nunca si un
+// agente respondió hace < 10 min.
+const SUPPORT_TOPIC_CARGA_DEFAULT = '💳 Antes que nada: la carga mínima es {min}. Con {min} o más se acredita sola en minutos. Si cargaste MENOS de {min}, mandanos acá la captura de tu transferencia para revisar el reintegro.';
+const SUPPORT_TOPIC_RETIRO_DEFAULT = '💸 Antes que nada: el retiro mínimo es {retiro_min}. Se pide desde "Retirar premio", se confirma con el código SMS y se paga solo a tu CBU. Si ya lo pediste y no llegó, contanos acá la fecha y el monto.';
+const SUPPORT_TOPIC_REEMBOLSO_DEFAULT = '🎁 Toda la info del reembolso (cuánto, cuándo y cómo se cobra) está en el botón de abajo. Si ya la viste y algo no cierra, contanos acá.';
+const SUPPORT_TOPIC_OTRO_DEFAULT = '❓ Si tenés un problema, por favor detallanos tu problema acá (qué pasó, cuándo y con qué monto) y te respondemos. Todo sobre el servicio está en las Bases y condiciones:';
+const SUPPORT_DETAIL_DEFAULT = '📝 Si necesitás otra consulta o tenés un problema, por favor detallanos tu problema en un mensaje y te respondemos. Todo sobre el servicio está en las Bases y condiciones:';
+const SUPPORT_TERMS_BTN = { kind: 'go_section', target: 'terms', label: '📄 Bases y condiciones', channel: 'support' };
+function _supportTopicFromText(text) {
+  const t = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (!t || t.length < 4) return null;
+  if (/reembols|devoluc|cashback|rakeback/.test(t)) return 'reembolso';
+  if (/retir|cobr|me pag|no me pag|pago pendiente|premio/.test(t)) return 'retiro';
+  if (/carg|transfer|deposit|comprobante|acredit|cbu|alias/.test(t)) return 'carga';
+  return null;
+}
+async function _supportQuickReply(userId, username, quick, text) {
   try {
-    if (quick !== 'cargar' && quick !== 'retirar') return _supportAutoReply(userId, username);
     const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    const u = { id: userId, username };
+    if (quick === 'cargar' || quick === 'retirar') {
+      const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
+      const txt = quick === 'cargar'
+        ? await renderSystemCommand('/sys_support_quick_cargar', SUPPORT_QUICK_CARGAR_DEFAULT, vars)
+        : await renderSystemCommand('/sys_support_quick_retirar', SUPPORT_QUICK_RETIRAR_DEFAULT, vars);
+      if (!txt) return;
+      const meta = quick === 'cargar'
+        ? { kind: 'go_section', target: 'full', label: '⚡ Ir a Carga automática', channel: 'support' }
+        : { kind: 'go_section', target: 'withdraw', label: '💸 Ir a Retirar premio', channel: 'support' };
+      await _sendUserSystemMessage(u, txt, { metadata: meta });
+      return;
+    }
+    // #702: tema por chip (carga / retiro / reembolso / otro) o por palabras clave del texto libre
+    let topic = ['carga', 'retiro', 'reembolso', 'otro'].includes(quick) ? quick : _supportTopicFromText(text);
+    if (!topic) return _supportAutoReply(userId, username);
+    const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: SUPPORT_ROLES }, channel: 'support', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
+    if (agentRecent) return;
+    const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.topic': topic, timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
+    if (recent) return;
     const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
-    const txt = quick === 'cargar'
-      ? await renderSystemCommand('/sys_support_quick_cargar', SUPPORT_QUICK_CARGAR_DEFAULT, vars)
-      : await renderSystemCommand('/sys_support_quick_retirar', SUPPORT_QUICK_RETIRAR_DEFAULT, vars);
-    if (!txt) return;
-    const meta = quick === 'cargar'
-      ? { kind: 'go_section', target: 'full', label: '⚡ Ir a Carga automática', channel: 'support' }
-      : { kind: 'go_section', target: 'withdraw', label: '💸 Ir a Retirar premio', channel: 'support' };
-    await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: meta });
+    if (topic === 'otro') {
+      const t = await renderSystemCommand('/sys_support_topic_otro', SUPPORT_TOPIC_OTRO_DEFAULT, vars);
+      if (t) await _sendUserSystemMessage(u, t, { metadata: Object.assign({}, SUPPORT_TERMS_BTN, { topic }) });
+      return;
+    }
+    const first = topic === 'carga' ? await renderSystemCommand('/sys_support_topic_carga', SUPPORT_TOPIC_CARGA_DEFAULT, vars)
+      : topic === 'retiro' ? await renderSystemCommand('/sys_support_topic_retiro', SUPPORT_TOPIC_RETIRO_DEFAULT, vars)
+      : await renderSystemCommand('/sys_support_topic_reembolso', SUPPORT_TOPIC_REEMBOLSO_DEFAULT, vars);
+    if (first) {
+      const meta = topic === 'reembolso' ? { kind: 'go_section', target: 'refund', label: '🎁 Ver info de reembolso', channel: 'support', topic } : { channel: 'support', topic };
+      await _sendUserSystemMessage(u, first, { metadata: meta });
+    }
+    const second = await renderSystemCommand('/sys_support_detail', SUPPORT_DETAIL_DEFAULT, vars);
+    if (second) await _sendUserSystemMessage(u, second, { metadata: Object.assign({}, SUPPORT_TERMS_BTN, { topic: 'detail', of: topic }) });
   } catch (e) { logger.warn(`[support] quick-reply: ${e.message}`); }
 }
 async function _supportAutoReply(userId, username) {
@@ -13540,7 +13617,7 @@ async function _supportAutoReply(userId, username) {
     if (recent) return;
     const agentRecent = await Message.findOne({ receiverId: userId, senderRole: { $in: ['admin', 'depositor', 'withdrawer', 'comunidad'] }, channel: 'support', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
     if (agentRecent) return;
-    await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'support_ack', channel: 'support' } });
+    await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'support_ack', channel: 'support', target: 'terms', label: '📄 Bases y condiciones' } }); // #702: + botón
   } catch (e) { logger.warn(`[support] auto-respuesta: ${e.message}`); }
 }
 // El cliente sólo ve el chat desde esta fecha (el chat viejo de cargas queda oculto para él; el panel lo ve entero).

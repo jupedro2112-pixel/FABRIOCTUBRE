@@ -1611,6 +1611,14 @@
             </div>
             <!-- ===== #294: escalera de niveles VIP (se abre desde el nivel junto al saldo; en el test también, con datos de ejemplo) ===== -->
             <!-- #470 (owner): "Ver la plataforma" → elegir Girox / Ganamos (Pronto) / Jugaygana (Pronto) -->
+            <!-- #702 (owner): Bases y condiciones dentro de la app (VIP.home.openTerms) -->
+            <div id="termsModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('termsModal')">
+                <div class="modal-content terms-content" onclick="event.stopPropagation()">
+                    <div class="modal-header"><h2>Bases y condiciones</h2><p>Todo sobre el servicio, cargas, retiros, reembolsos y regalos</p></div>
+                    <iframe id="termsFrame" class="terms-frame" title="Bases y condiciones" loading="lazy"></iframe>
+                    <div class="modal-actions" style="margin-top:10px;"><button type="button" class="btn btn-secondary" style="width:100%;" onclick="hideModal('termsModal')">Cerrar</button></div>
+                </div>
+            </div>
             <div id="easyPlatModal" class="modal hidden refund-simple profile-modal" onclick="if(event.target === this) hideModal('easyPlatModal')">
                 <div class="modal-content" style="max-width:380px;" onclick="event.stopPropagation()">
                     <div class="modal-header"><h2>Elegí dónde jugar</h2><p>Jugás con tu saldo · mismo usuario y clave en todas</p></div>
@@ -2446,7 +2454,7 @@
             </div>
             <div class="modal-actions" style="margin-top: 10px;">
                 <!-- #683 (owner): bases y condiciones públicas (public/terminos.html) -->
-                <a class="im-terms" href="/terminos.html" target="_blank" rel="noopener">📄 Bases y condiciones del servicio ›</a>
+                <a class="im-terms" href="/terminos.html" onclick="VIP.home.openTerms(event)">📄 Bases y condiciones del servicio ›</a>
                 <button id="closeInfoModal" class="btn btn-primary" style="width: 100%;">Entendido</button>
             </div>
         </div>
@@ -2571,7 +2579,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v499</div>
+                    <div class="pf-build" id="appBuildTag">app v500</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -2599,7 +2607,7 @@
                 <button type="button" class="pf-act pf-logout" id="pfLogoutBtn" onclick="hideModal('profileModal');VIP.auth.handleLogout()"><i class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5v16h-5"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg></i><span>Cerrar sesión<small>Salís de la app en este teléfono</small></span></button>
             </div>
             <!-- #685 (owner): Bases y condiciones abajo de todo del Perfil -->
-            <a class="pf-terms" href="/terminos.html" target="_blank" rel="noopener">📄 Bases y condiciones del servicio ›</a>
+            <a class="pf-terms" href="/terminos.html" onclick="VIP.home.openTerms(event)">📄 Bases y condiciones del servicio ›</a>
         </div>
     </div>
 

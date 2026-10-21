@@ -2019,6 +2019,13 @@
     // #700 (owner): accesos desde la barra del casino. "Menú completo" cierra el casino y pasa al menú completo (sin quedar fijo
     // si la persona entró por Girox directo: #678 sigue valiendo, se guarda 'full' como cualquier otra elección del selector).
     function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { setMenuPref('full', { quiet: true }); } catch (_) {} }, 80); }
+    // #702 (owner): Bases y condiciones DENTRO de la app (modal con /terminos.html embebido; en una pestaña aparte la PWA instalada
+    // se iba a Safari). Lo usan el botón de los mensajes de Soporte y los links de Info y Perfil.
+    function openTerms(ev) {
+        try { if (ev && ev.preventDefault) ev.preventDefault(); } catch (_) {}
+        const f = _el('termsFrame'); if (f && !f.getAttribute('src')) f.setAttribute('src', '/terminos.html?v=' + Date.now());
+        try { VIP.ui.showModal('termsModal'); } catch (_) { const m = _el('termsModal'); if (m) m.classList.remove('hidden'); }
+    }
     // Info del servicio: mismo handler que el botón de la cabecera (app.js lo cuelga en #infoBtn).
     function casinoInfo() { try { const b = _el('infoBtn'); if (b) { b.click(); return; } } catch (_) {} try { VIP.ui.showModal('infoModal'); } catch (_) {} }
 
@@ -2172,7 +2179,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();
