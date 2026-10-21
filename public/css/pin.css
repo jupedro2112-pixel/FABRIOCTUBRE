@@ -2112,3 +2112,22 @@ body.casino-open .modal, body.casino-open .story-viewer { z-index: 100001 !impor
 #termsModal .terms-content { max-width: 560px; width: calc(100% - 24px); padding: 14px 12px 12px !important; }
 .terms-frame { display: block; width: 100%; height: min(70vh, 640px); border: 1px solid var(--p-border); border-radius: 12px; background: #fff; }
 .plat-btn.plat-terms { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; }
+/* #703 (owner): PICA ROJA OFICIAL con el logo en el medio de la barra del casino */
+.casino-brand { flex: 1 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
+.casino-brand img { width: 24px; height: 24px; border-radius: 7px; object-fit: cover; flex: 0 0 auto; }
+.casino-brand .cb-txt { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
+.casino-brand b { font: 900 11px var(--p-font); letter-spacing: .8px; color: var(--p-text); white-space: nowrap; }
+.casino-brand small { font: 800 7px var(--p-font); letter-spacing: 1.4px; color: var(--p-red); white-space: nowrap; }
+@media (max-width: 360px) { .casino-brand small { display: none; } }
+/* #705 (owner): INVERTIR LOS COLORES — cargar / adjuntar comprobante SIEMPRE en VERDE, retirar premio en ROJO (toda la página) */
+:root { --p-load: #0a7a3e; --p-load-sh: rgba(10, 122, 62, .28); }
+html[data-theme="dark"] { --p-load: #1f7a4a; --p-load-sh: rgba(31, 122, 74, .35); }
+.ev-cta, .ev-cta.ev-cta-top, .al-btn.receipt, .load-row-btn, .cl-btn, .casino-load .cl-btn, .bv-load, .bv-action, .ez-main, .support-load-btn, .btn-primary.btn-load, .plat-play-now.btn-load { background: var(--p-load) !important; color: #fff !important; border: 0 !important; box-shadow: 0 6px 18px var(--p-load-sh) !important; }
+html[data-theme="dark"] .bv-load { background: var(--p-load) !important; }
+.support-load-btn { color: #fff !important; }
+.casino-load .cl-btn.cl-wd, .bv-wd, .bv-action-wd, .withdraw-row-btn, html[data-theme="dark"] .withdraw-row-btn, html[data-theme="dark"] .bv-wd { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-color: transparent !important; box-shadow: 0 6px 18px rgba(230, 0, 35, .25) !important; }
+.withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-text small, html[data-theme="dark"] .withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-auto { color: #fff !important; opacity: 1 !important; }
+.casino-load .cl-btn.cl-sup { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; box-shadow: none !important; }
+@keyframes fgPulseG { 0%, 100% { box-shadow: 0 0 0 0 rgba(10, 122, 62, .55); } 60% { box-shadow: 0 0 0 14px rgba(10, 122, 62, 0); } }
+.ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation-name: fgPulseG !important; }
+@media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation: none !important; box-shadow: 0 0 0 4px rgba(10, 122, 62, .35) !important; } }

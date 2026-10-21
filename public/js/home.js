@@ -372,6 +372,8 @@
     const MENU_REASK_MS = 10 * 60 * 1000;
     let _hiddenAt = 0;
     function maybeShowMenuChooser() {
+        // #704 (owner): entrada desde la landing (`ir=girox`) → directo a la pantalla de Girox; el menú lo elige después desde "Menú".
+        if (VIP.state && VIP.state._openGiroxAfterLogin) { VIP.state._openGiroxAfterLogin = false; setMenuPref('girox', { quiet: true }); return; }
         const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true }); return; } // #635: un solo menú activo → directo
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
@@ -1981,10 +1983,11 @@
                     '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver</button>' +
                     // #700/#701 (owner): accesos en UNA sola línea con el mismo formato de la barra principal (ícono + etiqueta chica):
                     // Historias · Menú · Info · Perfil. Sin el texto "Estás en Girox · para cambiar, salí" (#701: le sacaba lugar al juego).
-                    '<span class="casino-topbar-sp"></span>' +
-                    '<button type="button" class="tn-btn tn-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" id="ctStoriesBadge" style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
-                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoFullMenu()" title="Ver el menú completo de la app"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tn-lbl">Menú</span></button>' +
+                    // #703 (owner): orden Volver · Menú · Info · [PICA ROJA OFICIAL con el logo, en el medio] · Historias · Perfil
+                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoFullMenu()" title="Elegir menú"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tn-lbl">Menú</span></button>' +
                     '<button type="button" class="tn-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span></button>' +
+                    '<span class="casino-brand" aria-label="PICA ROJA oficial"><img src="/icons/icon-192x192.png" alt=""><span class="cb-txt"><b>PICA ROJA</b><small>OFICIAL</small></span></span>' +
+                    '<button type="button" class="tn-btn tn-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" id="ctStoriesBadge" style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
                     '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>' +
                   '</div>' +
                 '</div>');
@@ -2018,7 +2021,8 @@
     } catch (_) {}
     // #700 (owner): accesos desde la barra del casino. "Menú completo" cierra el casino y pasa al menú completo (sin quedar fijo
     // si la persona entró por Girox directo: #678 sigue valiendo, se guarda 'full' como cualquier otra elección del selector).
-    function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { setMenuPref('full', { quiet: true }); } catch (_) {} }, 80); }
+    // #704 (owner): "que de ahí pueda elegir desde Menú el menú correspondiente" → cierra el casino y abre el SELECTOR de menús.
+    function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { openMenuChooser(); } catch (_) {} }, 120); }
     // #702 (owner): Bases y condiciones DENTRO de la app (modal con /terminos.html embebido; en una pestaña aparte la PWA instalada
     // se iba a Safari). Lo usan el botón de los mensajes de Soporte y los links de Info y Perfil.
     function openTerms(ev) {

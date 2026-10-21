@@ -649,6 +649,7 @@ VIP.auth = (function () {
             const _ir = new URLSearchParams(window.location.search).get('ir');
             if (_ir === 'casino') VIP.state._openCasinoAfterLogin = true;
             if (_ir === 'cargar') VIP.state._openLoadAfterLogin = true; // #581: alta por landing → directo a Cargá acá
+            if (_ir === 'girox') VIP.state._openGiroxAfterLogin = true; // #704: alta por landing → directo a la pantalla de Girox (Girox directo)
         } catch (e) {}
 
         // Sacar el token de la URL YA MISMO: es de un solo uso y no tiene que

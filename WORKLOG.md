@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-18
 
+### 705. 🎨 Colores invertidos: CARGAR / Adjuntar comprobante en VERDE, Retirar premio en ROJO (toda la app) — SW v501
+**Pedido (owner):** "cambiá también los colores de toda la página: cargar o adjuntar comprobante siempre en verde y retirar premio
+en rojo, hay que invertir los colores". Bloque final en pin.css con tokens `--p-load` (verde; en nocturno #1f7a4a) aplicado a
+`.ev-cta` (CARGÁ AHORA), `.al-btn.receipt`, `.load-row-btn`, `.cl-btn` (casino), `.bv-load`, `.bv-action`, `.ez-main`,
+`.support-load-btn`; y `--p-red` a `.withdraw-row-btn`, `.bv-wd`, `.bv-action-wd`, `.cl-wd` (texto blanco, también en nocturno).
+El pulso de la guía de primera carga (`fg-hi`) pasa a verde (`fgPulseG`). "Ir a Soporte" sigue neutro.
+
+### 704. 🚪 Landing → directo a la pantalla de Girox; "Menú" de la barra abre el selector
+**Pedido (owner):** "cuando la gente entra desde /landing que entre directo en la pantalla de Girox y que de ahí pueda elegir después
+desde Menú el menú correspondiente". Server: el access link del alta por landing lleva `&ir=girox` (antes `ir=cargar`, #581).
+auth.js: `ir=girox` → `VIP.state._openGiroxAfterLogin`; home.js `maybeShowMenuChooser` lo consume y hace `setMenuPref('girox',
+{quiet:true})` (casino embebido con Carga rápida, sin selector; no queda fijo, #678). `casinoFullMenu` (botón Menú de la barra)
+ahora cierra el casino y abre el SELECTOR de menús (`openMenuChooser`) en vez de ir directo al completo.
+
+### 703. 🎰 Barra del casino: Volver · Menú · Info · PICA ROJA OFICIAL (logo) · Historias · Perfil
+**Pedido (owner):** "ordenemos: el menú al lado de Volver, Info al lado, Historias al lado de Perfil a la derecha, y en el medio
+PICA ROJA OFICIAL con la pica roja de logo, dándole visibilidad a la marca". `renderCasinoTabs`: `.casino-brand` (icono
+`/icons/icon-192x192.png` 24 px + "PICA ROJA" / "OFICIAL" en rojo) ocupa el centro; CSS en pin.css (en pantallas ≤360 px se oculta
+"OFICIAL").
+
 ### 702. 💬 Soporte: respuestas automáticas POR TEMA (carga mínima, retiro mínimo, info de reembolso, "detallanos tu problema") + Bases y condiciones dentro de la app — SW v500
 **Pedido (owner):** "si la gente responde sobre una carga, avisamos de antemano que la carga mínima es de 5000; si cargaste menos
 danos captura de tu carga para ver el reintegro; con un retiro lo mismo: el retiro mínimo es de 10000; con el reembolso un botón de
