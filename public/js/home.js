@@ -1248,6 +1248,10 @@
             if (!ok || !j) return;
             _ig = j;
             _igPaintBar();
+            // #740 (owner): "de donde sea que instale la app, si tiene pendiente un 50% que sea AUTOMÁTICO siempre". En la app instalada,
+            // con extra pendiente (ofrecido o 'lo cargo después'), se reclama solo al abrir; si el server todavía no registró la
+            // instalación (token de notificaciones), se reintenta varias veces.
+            if (_isStandalone() && _igPending() && !j.test) { _igAutoClaim(); return; }
             // Oferta sin responder → la hoja se muestra una vez por apertura de la app.
             if (j.status === 'offered' && Number(j.amount) > 0) {
                 let shown = false;
@@ -1257,6 +1261,29 @@
         } catch (_) {}
     }
     function _igPending() { return !!(_ig && (_ig.status === 'deferred' || _ig.status === 'offered') && Number(_ig.amount) > 0); }
+    // #740: reclamo AUTOMÁTICO del extra pendiente en la app instalada (reintenta si el server aún no ve la instalación).
+    let _igAutoTries = 0, _igAutoT = null;
+    async function _igAutoClaim() {
+        if (!_isStandalone() || !_igPending() || (_ig && _ig.test)) return;
+        if (_igAutoTries >= 6) return;
+        _igAutoTries++;
+        try {
+            const { ok, j } = await _igFetch('/api/install-gift/claim', 'POST');
+            if (ok && j && j.success) {
+                _ig = Object.assign({}, _ig || {}, { status: 'claimed' });
+                hideInstallGift(); _igPaintBar();
+                try { VIP.ui.showToast(j.message || ('🎁 ¡Listo! Te cargamos ' + _igFmt(j.amount) + ' extra por instalar la app.'), 'success'); } catch (_) {}
+                setTimeout(() => { try { VIP.ui.syncBalance(); } catch (_) {} }, 1000);
+                try { showPlayNow({ platform: j.platform || 'girox', amount: j.amount, bonus: 0, plain: true }); } catch (_) {}
+                return;
+            }
+            const code = j && j.code;
+            if (code === 'NOT_STANDALONE') { try { VIP.notifications.requestNotificationPermission(); } catch (_) {} }
+            else if (code === 'ALREADY_CLAIMED' || code === 'EXPIRED' || code === 'NOT_OFFERED') { _ig = Object.assign({}, _ig || {}, { status: code === 'ALREADY_CLAIMED' ? 'claimed' : (code === 'EXPIRED' ? 'expired' : 'none') }); _igPaintBar(); return; }
+        } catch (_) {}
+        clearTimeout(_igAutoT); _igAutoT = setTimeout(_igAutoClaim, [4000, 10000, 20000, 45000, 90000, 180000][_igAutoTries - 1] || 180000);
+    }
+    try { document.addEventListener('visibilitychange', () => { if (!document.hidden && _isStandalone() && _igPending()) { _igAutoTries = Math.min(_igAutoTries, 3); _igAutoClaim(); } }); } catch (_) {}
     // #719 (owner): INSTALAR LA APP dentro del casino, sin fricción: barra fija abajo mientras NO esté instalada (con el extra pendiente
     // si lo hay, o el % extra de la primera carga), y una línea en el cartel de carga acreditada. Tocarla abre la oferta / instala.
     function _igExtraPct() { const e = _fdJ && Number(_fdJ.extra); return e > 0 ? Math.round(e) + '%' : (_igPct(_ig) || ''); }

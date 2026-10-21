@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 740. 🎁 El extra pendiente por instalar se acredita SOLO al abrir la app instalada — SW v530
+**Pedido (owner):** "de donde sea que instale la app, si tiene pendiente un 50% que sea automático siempre lo pendiente, es
+importante". `_igInit`: en modo instalado (`_isStandalone()`) con extra `offered`/`deferred` → `_igAutoClaim()` llama
+`POST /api/install-gift/claim` sin tocar nada; si responde `NOT_STANDALONE` (el server todavía no recibió el token de notificaciones
+de la app instalada) pide el permiso y reintenta a los 4 s, 10 s, 20 s, 45 s, 90 s y 3 min, y también al volver a primer plano.
+Al acreditarse: toast "¡Listo! Te cargamos +$X extra", saldo actualizado y el cartel "¡Entró tu carga!" de 3 s. `ALREADY_CLAIMED`/
+`EXPIRED`/`NOT_OFFERED` cierran el pendiente. La hoja y el botón manual siguen existiendo por si el automático no pudo.
+
 ### 739. ⚡ Bump SW v529 (bundle minificado para todos)
 El bundle cambia de contenido con #738 pero la URL es `?v=<CACHE_VERSION>` con caché inmutable: sin bump, quien ya lo tenía
 seguía con el viejo (funciona igual, pero más pesado). Con v529 todos bajan el minificado una vez y listo.
