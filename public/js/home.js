@@ -333,6 +333,8 @@
         let off = false; try { off = localStorage.getItem('vip_fguide_off') === '1'; } catch (_) {}
         const show = !!(j && (j.noDeposits === true || j.show)) && !off;
         if (g) g.hidden = !show; if (gb) gb.hidden = !show; // el básico tiene su versión corta (CSS muestra cada una en su modo)
+        // #690 (owner): la franja grande de CARGA MÍNIMA se ve hasta la 3ª carga; después desaparece (la nota de adentro de las cargas queda)
+        try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); } } catch (_) {}
         if (cta) cta.classList.toggle('fg-hi', show); if (bl) bl.classList.toggle('fg-hi', show);
     }
     function firstGuideClose() { try { localStorage.setItem('vip_fguide_off', '1'); } catch (_) {} ['firstGuide', 'firstGuideBasic'].forEach((id) => { const g = _el(id); if (g) g.hidden = true; }); ['evCtaTop', 'bvLoadBtn'].forEach((id) => { const b = _el(id); if (b) b.classList.remove('fg-hi'); }); }
@@ -573,6 +575,7 @@
         // recordaba el último modo dentro de la sesión: ya no.)
         // #366: salvo que haya elegido el MENÚ FÁCIL (localStorage vip_menu_pref): entonces arranca ahí.
         _paintBsUser(); // #636
+        try { if (localStorage.getItem('vip_ms_off') === '1') document.body.classList.add('ms-off'); } catch (_) {} // #690: sin parpadeo
         try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512

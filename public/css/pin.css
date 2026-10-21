@@ -2080,3 +2080,6 @@ body.home-play .min-strip.ms-play { display: flex; }
 .min-strip .md-amt { font-size: 18px !important; }
 .min-strip .ms-t { font-size: 11px !important; }
 .min-strip .ms-t .md-amt { font-size: 11px !important; font-weight: 900; }
+
+/* #690: la franja grande de carga mínima desaparece a partir de la 3ª carga (body.ms-off lo pone home.js) */
+body.ms-off .min-strip, body.ms-off .ms-easy { display: none !important; }

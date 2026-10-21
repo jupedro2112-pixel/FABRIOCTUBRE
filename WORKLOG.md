@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 690. 💵 La franja grande de CARGA MÍNIMA se ve hasta la 3ª carga; después desaparece — SW v493
+**Pedido (owner):** "la carga mínima que aparezca hasta la 3ª carga; después, dentro de cargas está ok; que desaparezca, una vez que la
+gente sabe ya está". `/api/first-deposit-promo` devuelve `depositsCount`; `firstGuidePaint` pone `body.ms-off` cuando hay 3 o más cargas
+(y lo cachea en `localStorage vip_ms_off` para aplicarlo al arrancar sin parpadeo). `body.ms-off` oculta `.min-strip` (Inicio y básico)
+y `.ms-easy` (el "· mínimo $5.000" del intermedio). Las notas `.min-note` de adentro de las cargas (paso 1, panel del básico, carga rápida)
+quedan siempre.
+
 ### 689. 🏠 Inicio: racha y nivel ARRIBA de CARGÁ AHORA; franja de carga mínima más chica y con "no será acreditada" — SW v492
 **Pedido (owner):** "achicá un poco el carga mínima; en el Inicio lo de la carga menor a 5.000 decir que no será acreditada; en el
 Inicio la racha y nivel ponelo arriba de Cargar ahora". **App:** el bloque `#statusRow` (nivel VIP + fueguito) se movió en el HTML
