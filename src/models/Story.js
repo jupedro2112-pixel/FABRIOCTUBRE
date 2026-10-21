@@ -38,6 +38,13 @@ const storySchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true, index: true },
   // #591 (owner): programación SEMANAL: cada 7 días desde publishedAt se vuelve a publicar sola (mientras esté activa).
   repeatWeekly: { type: Boolean, default: false, index: true },
+  // #742 (owner): HISTORIA CON BONO — % extra en la próxima carga de quien toque "Reclamar ahora", vigente `bonusHours` desde la
+  // publicación (`bonusUntil`). `notifyAll` = al publicar se mandó push a todos. `bonusClaims` = cuántos lo reclamaron.
+  bonusPct: { type: Number, default: 0, min: 0, max: 200 },
+  bonusHours: { type: Number, default: 1, min: 1, max: 72 },
+  bonusUntil: { type: Date, default: null },
+  notifyAll: { type: Boolean, default: false },
+  bonusClaims: { type: Number, default: 0 },
   views: { type: Number, default: 0 },
   createdBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }

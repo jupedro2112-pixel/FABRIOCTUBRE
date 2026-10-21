@@ -1991,6 +1991,7 @@
     // muchos beneficios para vos dentro de nuestro menú completo, ¡no te lo pierdas! — 5 segundos o se puede sacar, en las primeras 5 cargas".
     async function onDepositCredited(d) {
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
+        try { setTimeout(storyBonusRefresh, 1500); } catch (_) {} // #742: el bono de la historia se consumió con esta carga
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }
         // #722 (owner): con la carga acreditada, si el server ofreció el extra por instalar (primera carga sin la app), se muestra LA
         // MISMA hoja del menú completo (Instalar ahora / Ahora quiero jugar) y se queda hasta que elijan. Si elige "después", el botón
@@ -2086,7 +2087,7 @@
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
             (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<p class="cl-meta min-note"><b class="mn-big">Carga mínima ' + md + '</b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>.</span></p>' + // #709 (owner): sin "escribinos a Soporte" acá (ya está el botón Ir a Soporte)
-              '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante<small class="min-tag">Carga mínima ' + md + '</small></button>'; })() +
+              '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante' + _sbTagHtml() + '<small class="min-tag">Carga mínima ' + md + '</small></button>'; })() + // #742: + bono de historia
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
@@ -2166,6 +2167,24 @@
             setTimeout(() => { try { if (VIP.ui.syncBalance) VIP.ui.syncBalance(); } catch (_) {} try { loadFirstGuide(true); } catch (_) {} try { loadStrategy(true); } catch (_) {} }, 1200);
         } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); }
     }
+    // #742 (owner): bono reclamado desde una HISTORIA → "Adjuntar comprobante · Bono +X%" en el casino, el completo y el básico hasta
+    // que lo use o venza. Sólo lo ve quien tocó "Reclamar ahora" en la historia.
+    let _sb = { pct: 0, expiresAt: null };
+    function _sbActive() { return !!(_sb && Number(_sb.pct) > 0 && _sb.expiresAt && new Date(_sb.expiresAt).getTime() > Date.now()); }
+    function _sbTagHtml() { if (!_sbActive()) return ''; return '<small class="sb-tag">🎁 Bono +' + Math.round(_sb.pct) + '% en esta carga · vence ' + new Date(_sb.expiresAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</small>'; }
+    function _sbPaint() {
+        const on = _sbActive();
+        document.body.classList.toggle('story-bonus', on);
+        document.querySelectorAll('.sb-tag-slot').forEach((el) => { el.innerHTML = _sbTagHtml(); });
+        try { const m = _el('loadHereMin'); if (m) { if (on) { if (!m.dataset.orig) m.dataset.orig = m.textContent; m.textContent = '🎁 Bono +' + Math.round(_sb.pct) + '% en esta carga · vence ' + new Date(_sb.expiresAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }); } else if (m.dataset.orig) { m.textContent = m.dataset.orig; delete m.dataset.orig; } } } catch (_) {}
+        try { if (_quickOpen) toggleCasinoLoad(true); } catch (_) {}
+    }
+    async function storyBonusRefresh() {
+        try { const r = await fetch(VIP.config.API_URL + '/api/stories/bonus', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); _sb = j || { pct: 0 }; } catch (_) {}
+        _sbPaint();
+    }
+    setInterval(() => { try { if (_sbActive() || document.body.classList.contains('story-bonus')) _sbPaint(); } catch (_) {} }, 60000);
+    function goGiroxDirect() { try { setMenuPref('girox', { quiet: true }); } catch (_) {} }
     // #714: retiro de PRUEBA (sólo testers, sólo entorno de prueba): POST /api/test/withdraw → mismo handler que el retiro real.
     async function testWithdraw() {
         let amt = prompt('Monto del retiro de prueba (pesos):', '10000'); if (amt == null) return;
@@ -2293,6 +2312,7 @@
         try { refreshPendingDeposits(); } catch (_) {} // #376
         _paintWaHeadName();
         try { _igInit(); } catch (_) {} // #283: oferta / botón pendiente de la carga gratis por instalar la app
+        try { storyBonusRefresh(); } catch (_) {} // #742
         try { renderEntryTabs(); _entryLoad(); } catch (_) {} // #267: lista real de plataformas en la entrada
         try { if (VIP.reviews && VIP.reviews.renderEntrySlider) VIP.reviews.renderEntrySlider(); } catch (_) {} // #270: reseñas al pie del Inicio
         renderHowItWorks();
@@ -2339,7 +2359,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

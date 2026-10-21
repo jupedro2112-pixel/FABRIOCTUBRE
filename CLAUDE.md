@@ -269,6 +269,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
+- **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca
+  "Reclamar ahora" queda con `User.storyBonus` (pct, expiresAt) y `claimStoryBonusPercent` lo consume PRIMERO en `resolveAutoBonus` en su
+  próxima carga. Un bono nuevo que deba aplicarse a la carga va a esa cadena (no a `creditUserBalance`); el cliente que no reclamó no ve nada.
 - **KEY POR PUBLICISTA (#699, 2026-10-21):** un usuario que se registró por el link de un publicista (`User.giroxOwnerCampaign`) se opera
   en 1girox con la API key de ESE publicista (`Campaign.giroxApiKey`, resolver `girox.setKeyResolver` en server.js), no con la principal.
   Si a unos clientes les falla el casino/saldo y a otros no: mirar "Creado por" en 1girox y la key del publicista en el panel. Nunca

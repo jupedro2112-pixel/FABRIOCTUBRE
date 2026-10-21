@@ -641,6 +641,14 @@ const userSchema = new mongoose.Schema({
   fraudNotes: { type: [{ at: Date, note: String }], default: [] },
   dailyRoulettePendingPct: { type: Number, default: 0 },
   dailyRoulettePendingLabel: { type: String, default: null },
+  // #742: bono reclamado desde una HISTORIA (se consume en la próxima carga antes que cualquier otro bono; vence con la historia)
+  storyBonus: {
+    storyId: { type: String, default: null },
+    pct: { type: Number, default: 0 },
+    label: { type: String, default: null },
+    claimedAt: { type: Date, default: null },
+    expiresAt: { type: Date, default: null }
+  },
   dailyRouletteWonAt: { type: Date, default: null },
 
   // ============================================

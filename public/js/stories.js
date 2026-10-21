@@ -30,6 +30,8 @@
             if (!r.ok) throw new Error('HTTP ' + r.status);
             const j = await r.json();
             _items = Array.isArray(j.items) ? j.items : [];
+            // #742: llegó por la notificación (/?story=<id>) → abrir esa historia
+            try { const m = /[?&]story=([\w-]+)/.exec(location.search); if (m && !_deepLinked) { _deepLinked = true; history.replaceState(null, '', location.pathname); setTimeout(() => openById(m[1]), 400); } } catch (_) {}
         } catch (_) { _items = []; }
         _paintButton();
         clearInterval(_refreshTimer);
@@ -111,15 +113,37 @@
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
             const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
-            if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()]; try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }; }
+            // #742 (owner): historia con BONO → botón "Reclamar ahora +X%": reclama, cierra y va directo a Girox (carga rápida).
+            if (s.bonusActive && Number(s.bonusPct) > 0) {
+                link.href = '#'; link.style.display = ''; link.classList.add('st-bonus');
+                link.textContent = '🎁 Reclamar ahora +' + s.bonusPct + '% en tu próxima carga ›';
+                link.onclick = (ev) => { ev.preventDefault(); claimBonus(s.id, s.bonusPct); };
+            } else if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()]; try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }; }
             else if (s.linkUrl) { link.href = s.linkUrl; link.onclick = null; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }
             else link.style.display = 'none';
+            if (!(s.bonusActive && Number(s.bonusPct) > 0)) link.classList.remove('st-bonus');
         }
         _markSeen(s.id);
         try { if (VIP.state && VIP.state.currentToken) fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(s.id) + '/view', { method: 'POST', headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }).catch(() => {}); } catch (_) {}
         _arm(dur);
     }
 
+    // #742: reclamar el bono de la historia → pendiente para la próxima carga; cierra y abre Girox directo con la Carga rápida.
+    async function claimBonus(id, pct) {
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(id) + '/claim-bonus', { method: 'POST', headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) { try { VIP.ui.showToast('❌ ' + (j.error || 'No se pudo reclamar'), 'error'); } catch (_) {} return; }
+            close();
+            try { VIP.ui.showToast('🎁 ¡Listo! +' + (j.pct || pct) + '% en tu próxima carga. Cargá ahora.', 'success'); } catch (_) {}
+            try { VIP.home.storyBonusRefresh(); } catch (_) {}
+            try { VIP.home.goGiroxDirect(); } catch (_) {}
+        } catch (_) { try { VIP.ui.showToast('Error de conexión', 'error'); } catch (e) {} }
+    }
+    function openById(id) {
+        const go = () => { const i = _items.findIndex((s) => s.id === id); if (i >= 0) open(i); else open(); };
+        if (_items.length) go(); else load().then(go);
+    }
     function _arm(dur) {
         clearTimeout(_timer);
         _remaining = dur; _startedAt = Date.now();
@@ -156,7 +180,10 @@
         return 'hace ' + Math.round(h / 24) + ' d';
     }
 
+    let _deepLinked = false;
     function init() {
+        // #742: con la app abierta, el service worker avisa el toque en la notificación de una historia
+        try { if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', (e) => { const d = e && e.data; if (d && d.type === 'vip-open' && d.url) { const m = /[?&]story=([\w-]+)/.exec(d.url); if (m) openById(m[1]); } }); } catch (_) {}
         const v = _el('storyViewer'); if (!v) return;
         let holdT = null, held = false, downX = 0;
         const zone = _el('storyTap');
@@ -193,5 +220,5 @@
         ring.title = _items.length + ' historia' + (_items.length === 1 ? '' : 's');
         ring.style.display = '';
     }
-    VIP.stories = { init, load, loadPublic, open, close, next, prev, pause, resume };
+    VIP.stories = { init, load, loadPublic, open, openById, claimBonus, close, next, prev, pause, resume };
 })();

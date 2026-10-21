@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-18
 
+### 742. 📣 HISTORIAS CON BONO: +X% en la próxima carga, push a todos, "Reclamar ahora" → Girox, "Adjuntar comprobante · Bono +X%" — SW v532 · admin-sw v140
+**Pedido (owner):** "en Historias, desde el admin, que se puedan tirar historias y activar notificación con bono (ej. 50% o 100%
+por 1 h), que a todos les llegue como notificación y que directamente desde la historia se pueda reclamar; si pone Reclamar ahora
+va a la parte de Girox automática y en el botón de Adjuntar comprobante aparece 'bono 50%' (o el vigente); si no aprietan el botón de
+la historia, que no le aparezca a nadie". **Panel (Historias):** bloque "🎁 Bono de la historia": % extra (0 = sin bono), vigencia en
+horas (default 1), tilde "Enviar push a TODOS al publicar" y título/texto del push opcionales; la lista muestra "Bono +X% · vigente
+hasta HH:MM · N reclamos · push". **Server:** `Story.{bonusPct,bonusHours,bonusUntil,notifyAll,bonusClaims}`; al publicar con
+`notifyAll` → `notificationService.sendNotificationToAllUsers(User, título, texto, {url:'/?story=<id>', storyId, tag, type:'story'})`
+(asíncrono); `_storyPublic` agrega `bonusActive`. `POST /api/stories/:id/claim-bonus` (cliente; cuenta sin marca de fraude; una vez por
+historia) → `User.storyBonus = {storyId, pct, label, claimedAt, expiresAt = bonusUntil}` + `bonusClaims++` + nota interna al agente.
+`GET /api/stories/bonus` = pendiente vigente del cliente. `claimStoryBonusPercent` va PRIMERO en `resolveAutoBonus` (lo consume la
+próxima carga, manual o hgcash, con el tope y el rollover global como cualquier bono; revert si la carga falla). **SW:** el click en la
+notificación abre `data.url` (o avisa a la app abierta por `postMessage {type:'vip-open'}`). **App:** la historia con bono vigente
+muestra "🎁 Reclamar ahora +X% en tu próxima carga ›" (verde, pulsa): reclama, cierra, `VIP.home.goGiroxDirect()` (Girox directo con
+Carga rápida); `?story=<id>` y el mensaje del SW abren esa historia (`openById`). `storyBonusRefresh` pinta `body.story-bonus` y la
+etiqueta "🎁 Bono +X% en esta carga · vence HH:MM" en Adjuntar comprobante (casino `cl-attach`, básico `.bv-action`, completo
+`#loadHereMin`); se refresca al acreditarse una carga y cada 60 s. El cliente que no reclamó no ve nada.
+
 ### 741. 🎰 Barra del casino: logo pegado a Menú y "PICA ROJA" centrado, siempre visible — SW v531
 **Pedido (owner, captura en pantalla angosta):** "llevá el logo más para el lado del menú y poné el PICA ROJA de siempre ahí
 centrado". La marca ocupa todo el espacio entre Menú e Historias: el logo queda fijo a la izquierda (al lado de Menú) y el texto

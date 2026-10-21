@@ -2247,3 +2247,8 @@ body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-ar
 .casino-brand .cb-txt { display: flex !important; flex-direction: column; align-items: center; min-width: 0; }
 .casino-brand b { font-size: 11px !important; letter-spacing: .8px !important; overflow: visible; }
 @media (max-width: 360px) { .casino-brand .cb-txt { display: flex !important; } .casino-brand .cb-box { padding: 3px 4px 3px 28px !important; border-radius: 0 !important; } .casino-brand b { font-size: 10px !important; letter-spacing: .5px !important; } }
+/* #742 (owner): historia con bono: botón Reclamar y etiqueta "Bono +X%" en Adjuntar comprobante */
+.story-viewer #storyLink.st-bonus { background: var(--p-green, #0a7a3e) !important; color: #fff !important; font-weight: 900 !important; animation: fgPulseG 1.6s ease-in-out infinite; }
+.sb-tag { display: block; margin-top: 3px; font: 800 10.5px/1.1 var(--p-font); letter-spacing: .2px; color: #ffe08a; text-transform: none; }
+body.story-bonus .cl-btn.cl-attach, body.story-bonus .bv-action:not(.bv-action-wd) { display: flex !important; flex-direction: column; align-items: center; }
+body.story-bonus #loadHereBtn #loadHereMin { color: #ffe08a !important; font-weight: 800 !important; opacity: 1 !important; }

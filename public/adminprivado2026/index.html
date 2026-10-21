@@ -2998,6 +2998,20 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                         <div class="form-group" style="margin:0;"><label>Segundos por historia (imagen/texto)</label><input type="number" id="stDuration" min="2" max="60" step="1" placeholder="6" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>Link (botón abajo, opcional)</label><input type="text" id="stLink" maxlength="500" placeholder="https://… o / o app:referidos · app:cargar · app:ruleta · app:reembolso" style="width:100%;"></div>
                         <div class="form-group" style="margin:0;"><label>Texto del botón</label><input type="text" id="stLinkLabel" maxlength="40" placeholder="Cargar ahora ›" style="width:100%;"></div>
+                        <!-- #742 (owner): HISTORIA CON BONO + push a todos -->
+                        <div class="form-group" style="margin:0;grid-column:1 / -1;padding:10px;border:1px solid rgba(255,215,0,.35);border-radius:10px;background:rgba(255,215,0,.05);">
+                            <label style="font-weight:800;">🎁 Bono de la historia (opcional)</label>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                                <div><label>% extra en la próxima carga</label><input type="number" id="stBonusPct" min="0" max="200" step="5" placeholder="0 = sin bono (ej. 50 o 100)" style="width:100%;"></div>
+                                <div><label>Vigencia del bono (horas)</label><input type="number" id="stBonusHours" min="1" max="72" step="1" placeholder="1" style="width:100%;"></div>
+                            </div>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0 0;"><input type="checkbox" id="stNotifyAll" style="width:auto;"> 🔔 Enviar notificación push a TODOS los clientes al publicar</label>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
+                                <div><label>Título del push (opcional)</label><input type="text" id="stPushTitle" maxlength="80" placeholder="🎁 +50% extra en tu próxima carga" style="width:100%;"></div>
+                                <div><label>Texto del push (opcional)</label><input type="text" id="stPushBody" maxlength="160" placeholder="Tocá la historia y reclamalo: vale por 1 h." style="width:100%;"></div>
+                            </div>
+                            <small style="color:#aaa;display:block;margin-top:6px;">Quien toca <b>"Reclamar ahora"</b> en la historia va directo a Girox y ve <b>"Adjuntar comprobante · Bono +X%"</b> hasta que cargue o venza. El que no lo toca no ve nada. El bono respeta el tope de bonos y el rollover global.</small>
+                        </div>
                         <div class="form-group" style="margin:0;"><label>Color de fondo (solo texto)</label><input type="color" id="stBg" value="#06070d" style="width:60px;height:34px;padding:0;border:0;background:none;"></div>
                     </div>
                     <div id="stPreview" style="margin-top:10px;display:none;"><img id="stPreviewImg" alt="" style="max-height:160px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);"></div>

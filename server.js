@@ -13868,6 +13868,22 @@ async function claimSecondDepositPercent(user, usedBy) {
       revert: () => User.updateOne({ id: user.id, 'secondDepositOffer.status': 'used' }, { $set: { 'secondDepositOffer.status': 'offered', 'secondDepositOffer.usedAt': null } }).catch(() => {}) };
   } catch (e) { logger.warn(`[auto-bonus] claim segunda carga falló: ${e.message}`); return { pct: 0, claimed: false }; }
 }
+// #742: bono reclamado desde una HISTORIA — se consume en la próxima carga (antes que cualquier otro bono) si no venció.
+async function claimStoryBonusPercent(user, usedBy) {
+  try {
+    const now = new Date();
+    const prev = await User.findOneAndUpdate(
+      { id: user.id, 'storyBonus.pct': { $gt: 0 }, 'storyBonus.expiresAt': { $gt: now } },
+      { $set: { 'storyBonus.pct': 0 } },
+      { new: false }
+    ).select('storyBonus').lean();
+    const sb = prev && prev.storyBonus;
+    if (!sb || !(sb.pct > 0)) return { pct: 0, claimed: false };
+    const pct = Number(sb.pct) || 0;
+    return { pct, claimed: true, source: 'story_bonus', label: sb.label || `historia: +${pct}%`,
+      revert: () => User.updateOne({ id: user.id, 'storyBonus.pct': 0 }, { $set: { 'storyBonus.pct': pct } }).catch(() => {}) };
+  } catch (e) { logger.warn(`[auto-bonus] claim bono de historia falló: ${e.message}`); return { pct: 0, claimed: false }; }
+}
 async function claimDailyRoulettePercent(user, usedBy) {
   try {
     const prev = await User.findOneAndUpdate(
@@ -13943,7 +13959,8 @@ async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
   if (!user || !(Number(amount) > 0)) return none;
   // #509: cuenta marcada por multicuenta → sin bonos de bienvenida ni 2ª carga (sí ruleta/lotes, que ya ganó)
   const blockWelcome = opts.noWelcome || _isFlagged(user);
-  let c = blockWelcome ? { pct: 0, claimed: false } : await claimInstallBonusPercent(user, usedBy);
+  let c = await claimStoryBonusPercent(user, usedBy); // #742: el bono de la historia manda (vence en horas)
+  if (!c.claimed && !blockWelcome) c = await claimInstallBonusPercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimWelcomeCodePercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimSecondDepositPercent(user, usedBy); // #504
   if (!c.claimed) c = await claimDailyRoulettePercent(user, usedBy);
@@ -23607,6 +23624,9 @@ function _storyPublic(s, req) {
     linkUrl: s.linkUrl || '', linkLabel: s.linkLabel || '', durationSec: s.durationSec || 6, hours: s.hours,
     publishedAt: s.publishedAt, expiresAt: s.expiresAt, isActive: !!s.isActive, views: s.views || 0, createdBy: s.createdBy || null,
     repeatWeekly: !!s.repeatWeekly, // #660: el panel lo muestra ("semanal") y nunca llegaba
+    // #742: historia con bono
+    bonusPct: Number(s.bonusPct) || 0, bonusHours: Number(s.bonusHours) || 1, bonusUntil: s.bonusUntil || null, notifyAll: !!s.notifyAll, bonusClaims: Number(s.bonusClaims) || 0,
+    bonusActive: !!(Number(s.bonusPct) > 0 && s.bonusUntil && new Date(s.bonusUntil).getTime() > Date.now() && s.isActive && new Date(s.expiresAt).getTime() > Date.now()),
     hoursLeft: Math.max(0, Math.round((new Date(s.expiresAt).getTime() - Date.now()) / 36e5 * 10) / 10),
     expired: new Date(s.expiresAt).getTime() <= Date.now()
   };
@@ -23647,6 +23667,35 @@ function _storiesAdminOnly(req, res) {
   if (req.user.role !== 'admin') { res.status(403).json({ error: 'Solo el admin general puede manejar las historias.' }); return false; }
   return true;
 }
+// #742: el cliente toca "Reclamar ahora" en la historia → bono pendiente para su PRÓXIMA carga (vence con el bono de la historia).
+app.post('/api/stories/:id/claim-bonus', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo clientes' });
+    const s = await Story.findOne({ id: String(req.params.id) }).lean();
+    const pub = s ? _storyPublic(s, req) : null;
+    if (!pub || !pub.bonusActive) return res.status(400).json({ error: 'Este bono ya no está vigente.', code: 'NOT_ACTIVE' });
+    const user = await User.findOne({ id: req.user.userId }).select('id username storyBonus fraudFlags').lean();
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (_isFlagged(user)) return res.status(403).json({ error: 'Tu cuenta no puede usar este bono. Escribinos a Soporte.' });
+    const cur = user.storyBonus || {};
+    if (cur.storyId === s.id && Number(cur.pct) > 0 && cur.expiresAt && new Date(cur.expiresAt).getTime() > Date.now()) {
+      return res.json({ success: true, already: true, pct: cur.pct, expiresAt: cur.expiresAt });
+    }
+    const label = `historia: +${pub.bonusPct}% en tu próxima carga`;
+    await User.updateOne({ id: user.id }, { $set: { storyBonus: { storyId: s.id, pct: pub.bonusPct, label, claimedAt: new Date(), expiresAt: s.bonusUntil } } });
+    await Story.updateOne({ id: s.id }, { $inc: { bonusClaims: 1 } }).catch(() => {});
+    try { _emitAdminOnlyChatNote(user.id, user.username, `🎁 Reclamó desde la historia "${s.title || s.text.slice(0, 30)}": +${pub.bonusPct}% en su próxima carga (vence ${new Date(s.bonusUntil).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })})`); } catch (_) {}
+    res.json({ success: true, pct: pub.bonusPct, expiresAt: s.bonusUntil });
+  } catch (e) { logger.warn(`[stories] claim-bonus: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/stories/bonus', authMiddleware, async (req, res) => {
+  try {
+    const u = await User.findOne({ id: req.user.userId }).select('storyBonus').lean();
+    const sb = (u && u.storyBonus) || {};
+    const active = Number(sb.pct) > 0 && sb.expiresAt && new Date(sb.expiresAt).getTime() > Date.now();
+    res.json({ pct: active ? Number(sb.pct) : 0, expiresAt: active ? sb.expiresAt : null, storyId: active ? sb.storyId : null });
+  } catch (_) { res.json({ pct: 0, expiresAt: null, storyId: null }); }
+});
 app.get('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!_storiesAdminOnly(req, res)) return;
@@ -23692,13 +23741,27 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     if (linkUrl && !/^(https?:\/\/|\/|app:(referidos|cargar|ruleta|reembolso|verificar|soporte|misiones|instalar)$)/i.test(linkUrl)) return res.status(400).json({ error: 'El link tiene que empezar con https:// o /, o ser app:referidos / app:cargar / app:ruleta / app:reembolso / app:verificar / app:soporte / app:misiones.' });
     const bgColor = /^#[0-9a-f]{3,8}$/i.test(String(b.bgColor || '')) ? String(b.bgColor) : '#06070d';
     const now = new Date();
+    // #742 (owner): HISTORIA CON BONO (+pct% en la próxima carga de quien toque "Reclamar ahora", por bonusHours) + push a TODOS.
+    const bonusPct = Math.max(0, Math.min(200, Math.round(Number(b.bonusPct) || 0)));
+    const bonusHours = Math.max(1, Math.min(72, Math.round(Number(b.bonusHours) || 1)));
+    const notifyAll = b.notifyAll === true;
     const doc = await Story.create({
       id: uuidv4(), title, text, mediaType, mediaUrl, mediaData, mediaMime, bgColor,
       linkUrl, linkLabel: String(b.linkLabel || '').trim().slice(0, 40), durationSec, hours,
       publishedAt: now, expiresAt: new Date(now.getTime() + hours * 36e5), isActive: true, createdBy: req.user.username,
-      repeatWeekly: b.repeatWeekly === true // #591
+      repeatWeekly: b.repeatWeekly === true, // #591
+      bonusPct, bonusHours, bonusUntil: bonusPct > 0 ? new Date(now.getTime() + bonusHours * 36e5) : null, notifyAll
     });
-    logger.info(`[stories] publicada por ${req.user.username}: "${title || text.slice(0, 40)}" (${mediaType}, ${hours} h)`);
+    logger.info(`[stories] publicada por ${req.user.username}: "${title || text.slice(0, 40)}" (${mediaType}, ${hours} h${bonusPct ? `, bono ${bonusPct}% por ${bonusHours} h` : ''}${notifyAll ? ', push a todos' : ''})`);
+    if (notifyAll) {
+      const pTitle = String(b.pushTitle || '').trim().slice(0, 80) || (bonusPct > 0 ? `🎁 +${bonusPct}% extra en tu próxima carga` : (title || '📣 Novedad en PICA ROJA'));
+      const pBody = String(b.pushBody || '').trim().slice(0, 160) || (bonusPct > 0 ? `Tocá la historia y reclamalo: vale por ${bonusHours} h.` : (text.slice(0, 120) || 'Mirá la historia nueva en la app.'));
+      setTimeout(() => {
+        notificationService.sendNotificationToAllUsers(User, pTitle, pBody, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' })
+          .then((r) => logger.info(`[stories] push a todos: ${JSON.stringify(r || {}).slice(0, 200)}`))
+          .catch((e) => logger.warn(`[stories] push a todos falló: ${e.message}`));
+      }, 50);
+    }
     res.json({ success: true, story: _storyPublic(doc.toObject(), req) });
   } catch (e) { logger.warn(`[stories] crear: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });

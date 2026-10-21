@@ -15883,6 +15883,7 @@ async function loadStories() {
                 + '<div style="flex:1;min-width:0;font-size:12px;line-height:1.5;">'
                 + '<div><b>' + escapeHtml(s.title || 'CARGAS AUTOMATIC') + '</b> · ' + st + '</div>'
                 + '<div style="color:#ddd;">' + escapeHtml(s.text || '(sin texto)') + '</div>'
+                + (s.bonusPct ? '<div style="color:#ffd54f;font-weight:800;">🎁 Bono +' + s.bonusPct + '% · ' + (s.bonusActive ? 'vigente hasta ' + new Date(s.bonusUntil).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'bono vencido') + ' · ' + (s.bonusClaims || 0) + ' reclamos' + (s.notifyAll ? ' · 🔔 push a todos' : '') + '</div>' : '')
                 + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas' + (s.repeatWeekly ? ' · <span style="color:#00c853;font-weight:800;">🔁 semanal</span>' : '') + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
                 + '</div>'
                 + '<div style="display:flex;flex-direction:column;gap:6px;">'
@@ -15896,16 +15897,17 @@ async function loadStories() {
 async function publishStory() {
     const msg = document.getElementById('stMsg'), btn = document.getElementById('stPublishBtn');
     const v = function (id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-    const body = { repeatWeekly: !!(document.getElementById('stRepeat') || {}).checked, title: v('stTitle'), text: v('stText'), mediaDataUrl: _stFileDataUrl || '', mediaUrl: v('stMediaUrl'), hours: v('stHours') ? Number(v('stHours')) : undefined, durationSec: v('stDuration') ? Number(v('stDuration')) : undefined, linkUrl: v('stLink'), linkLabel: v('stLinkLabel'), bgColor: v('stBg') || '#06070d' };
+    const body = { bonusPct: Number(v('stBonusPct')) || 0, bonusHours: Number(v('stBonusHours')) || 1, notifyAll: !!(document.getElementById('stNotifyAll') || {}).checked, pushTitle: v('stPushTitle'), pushBody: v('stPushBody'), /* #742 */ repeatWeekly: !!(document.getElementById('stRepeat') || {}).checked, title: v('stTitle'), text: v('stText'), mediaDataUrl: _stFileDataUrl || '', mediaUrl: v('stMediaUrl'), hours: v('stHours') ? Number(v('stHours')) : undefined, durationSec: v('stDuration') ? Number(v('stDuration')) : undefined, linkUrl: v('stLink'), linkLabel: v('stLinkLabel'), bgColor: v('stBg') || '#06070d' };
     if (!body.text && !body.mediaDataUrl && !body.mediaUrl) { showToast('Poné un texto o una imagen/video', 'error'); return; }
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Publicando…'; }
     try {
         const r = await authFetch('/api/admin/stories', { method: 'POST', body: JSON.stringify(body) });
         const j = await r.json();
         if (!r.ok) { if (msg) { msg.style.color = '#ff8080'; msg.textContent = j.error || 'No se pudo publicar'; } showToast(j.error || 'No se pudo publicar', 'error'); return; }
-        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Publicada · visible ' + j.story.hours + ' h'; }
+        if (msg) { msg.style.color = '#00c853'; msg.textContent = '✅ Publicada · visible ' + j.story.hours + ' h' + (j.story.bonusPct ? ' · 🎁 bono +' + j.story.bonusPct + '% por ' + j.story.bonusHours + ' h' : '') + (j.story.notifyAll ? ' · 🔔 push enviado a todos' : ''); }
         showToast('Historia publicada', 'success');
-        ['stTitle', 'stText', 'stMediaUrl', 'stHours', 'stLink', 'stLinkLabel'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
+        ['stTitle', 'stText', 'stMediaUrl', 'stHours', 'stLink', 'stLinkLabel', 'stBonusPct', 'stBonusHours', 'stPushTitle', 'stPushBody'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
+        try { const na = document.getElementById('stNotifyAll'); if (na) na.checked = false; } catch (_) {}
         const f = document.getElementById('stFile'); if (f) f.value = ''; _stFileDataUrl = '';
         const pv = document.getElementById('stPreview'); if (pv) pv.style.display = 'none';
         loadStories();
