@@ -287,3 +287,16 @@ tr.fin td { opacity: .92; }
 .cl-adj-grid label { display: flex; flex-direction: column; gap: 2px; font-size: 10.5px; color: var(--p-muted); } .cl-adj-grid input { width: 100%; }
 /* #746 (owner): ingreso del panel con el logo y "PICA ROJA oficial" */
 .login-logo-img { width: 64px; height: 64px; border-radius: 16px; object-fit: cover; display: block; margin: 0 auto 10px; box-shadow: var(--shadow-lg); }
+/* #747: Soporte — pendientes / cerrados */
+.sp-closed summary { list-style: none; cursor: pointer; } .sp-closed summary::-webkit-details-marker { display: none; }
+.sp-closed > summary.sp-col-t { margin-top: 8px; }
+/* #750: análisis del día en Cargas / Retiros pendientes */
+.at-day { margin-bottom: 12px; padding: 10px 12px; border-radius: 14px; background: var(--p-card); border: 1px solid var(--p-border); box-shadow: var(--shadow); }
+.at-tabs { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.at-tabs button { border: 1px solid var(--p-border); background: var(--p-surface); color: var(--p-text); border-radius: 999px; padding: 4px 11px; font: 800 11px var(--p-font); cursor: pointer; }
+.at-tabs button.on { background: var(--p-text); color: var(--p-inv); border-color: var(--p-text); }
+.at-tabs .at-dk { margin-left: auto; font: 700 11px var(--p-font); color: var(--p-muted); }
+.at-kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.at-ver { display: inline-block; padding: 6px 10px; border-radius: 10px; font: 800 12px var(--p-font); background: var(--p-surface); color: var(--p-text); }
+.at-ver.ok { background: var(--p-green-soft); color: var(--p-green); } .at-ver.bad { background: var(--p-amber-soft); color: var(--p-amber); }
+.at-list { margin-top: 8px; font-size: 12px; } .at-list summary { cursor: pointer; font-weight: 800; }

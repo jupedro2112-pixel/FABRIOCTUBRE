@@ -40,6 +40,10 @@
             // Un link de publicidad o de referido SIEMPRE muestra el registro (si no, el cliente nuevo no sabría qué hacer).
             const viaRef = !!(window._vipRefLocked && new URLSearchParams(location.search).get('ref'));
             document.body.classList.toggle('entry-login', !!info.entryLogin && !viaAd && !viaRef);
+            // #748 (owner): SÓLO CON INVITACIÓN — sin link de publicidad ni de referido, la pantalla es Iniciar sesión + aviso (sin registro).
+            const invite = info.registrationMode === 'invite' && !viaAd && !viaRef;
+            document.body.classList.toggle('reg-invite', invite);
+            if (invite) { document.body.classList.add('entry-login'); document.body.classList.remove('reg-quick'); try { const n = _el('lgInviteNote'); if (n) { n.textContent = info.registerInviteText || '🔒 El registro es sólo con invitación.'; n.style.display = ''; } } catch (_) {} }
             // #541: SMS obligatorio para registrarse desde el inicio (no por link de publicidad)
             VIP.loginHero.quickSms = !!info.quickEntrySms && !viaAd;
             if (document.body.classList.contains('reg-quick') && !(VIP.state && VIP.state.currentToken)) showRegister(); // #542

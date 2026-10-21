@@ -2252,3 +2252,15 @@ body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-ar
 .sb-tag { display: block; margin-top: 3px; font: 800 10.5px/1.1 var(--p-font); letter-spacing: .2px; color: #ffe08a; text-transform: none; }
 body.story-bonus .cl-btn.cl-attach, body.story-bonus .bv-action:not(.bv-action-wd) { display: flex !important; flex-direction: column; align-items: center; }
 body.story-bonus #loadHereBtn #loadHereMin { color: #ffe08a !important; font-weight: 800 !important; opacity: 1 !important; }
+/* #748 (owner): registro sólo con invitación — sin botones de registro y con el aviso */
+body.reg-invite .lg-register-btn, body.reg-invite #registerBtn, body.reg-invite .lg-alt-q, body.reg-invite .lg-register { display: none !important; }
+.lg-invite { margin: 10px 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--p-surface); border: 1px solid var(--p-border); color: var(--p-text); font: 600 12px/1.45 var(--p-font); text-align: center; }
+/* #749 (owner): tarjeta del canal de Telegram en el Inicio */
+.tg-card { display: flex; align-items: center; gap: 10px; margin: 8px 12px 0; padding: 10px 12px; border-radius: 14px; background: var(--p-card); border: 1px solid var(--p-border); box-shadow: 0 1px 3px rgba(0, 0, 0, .06); }
+.tg-card[hidden] { display: none; }
+.tg-ico { flex: 0 0 auto; display: inline-flex; }
+.tg-txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; } .tg-txt b { font: 800 13px var(--p-font); color: var(--p-text); } .tg-txt small { font: 600 11px/1.3 var(--p-font); color: var(--p-muted); }
+.tg-btns { flex: 0 0 auto; display: flex; flex-direction: column; gap: 4px; }
+.tg-go { border: 0; border-radius: 999px; padding: 7px 11px; background: #229ed9; color: #fff; font: 900 11px var(--p-font); cursor: pointer; white-space: nowrap; }
+.tg-inv { border: 1px solid var(--p-border); border-radius: 999px; padding: 6px 10px; background: var(--p-surface); color: var(--p-text); font: 800 10.5px var(--p-font); cursor: pointer; white-space: nowrap; }
+.tg-inv[hidden] { display: none; }

@@ -483,6 +483,7 @@
                 <button type="button" class="btn btn-primary lg-register-btn" onclick="VIP.loginHero.showRegister()">📝 Registrarse</button><!-- #541: nombre + SMS → entra -->
                 <button type="button" class="lg-link" onclick="showModal('resetPassModal')">🔑 Olvidé mi contraseña</button>
             </div>
+            <p id="lgInviteNote" class="lg-invite" style="display:none;"></p><!-- #748: registro sólo con invitación -->
             </div>
             <div class="lg-trustrow"><span><i></i>Acreditación al instante</span><span><i></i>Retiros rápidos</span><span><i></i>Soporte 24/7</span></div>
             <!-- #428/#530: las 3 plataformas con su ícono (loginhero.js las pinta desde /api/landing/info) -->
@@ -1123,6 +1124,12 @@
             <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · <b>con menos de <span class="md-amt">$5.000</span> tu carga no será acreditada</b></span></div>
             <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
                  CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
+            <!-- #749 (owner): canal de Telegram en el Inicio: ver lo que publicamos + invitación a la comunidad -->
+            <div class="tg-card" id="tgCard" hidden>
+                <div class="tg-ico"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#229ed9"/><path d="M5.5 11.6l11.3-4.4c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.8-2.1-1.3 1.3c-.2.2-.3.3-.6.3l.2-2.8 5.1-4.6c.2-.2 0-.3-.3-.1l-6.3 4-2.7-.9c-.6-.2-.6-.6.1-.9z" fill="#fff"/></svg></div>
+                <div class="tg-txt"><b>Canal oficial de Telegram</b><small>Mirá lo que publicamos: novedades y plata por código todas las semanas.</small></div>
+                <div class="tg-btns"><button type="button" class="tg-go" onclick="VIP.home.openTelegram()">Entrar al canal ›</button><button type="button" class="tg-inv" id="tgInviteBtn" hidden onclick="VIP.home.openTelegramInvite()">Unirme a la comunidad</button></div>
+            </div>
             <div class="fg-card" id="firstGuide" hidden>
                 <i class="fg-arrow" aria-hidden="true"></i>
                 <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
@@ -2582,7 +2589,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v532</div>
+                    <div class="pf-build" id="appBuildTag">app v533</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

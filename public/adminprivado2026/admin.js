@@ -5974,21 +5974,22 @@ async function loadRegistrationMode() {
     try {
         const r = await authFetch('/api/admin/registration-mode'); if (!r.ok) return; const j = await r.json();
         const chk = document.getElementById('regSmsChk'); const st = document.getElementById('regModeState'); const btn = document.getElementById('regModeSaveBtn');
-        if (chk) { chk.checked = j.mode !== 'quick'; chk.disabled = !j.canEdit; }
+        if (chk) { chk.checked = j.mode === 'sms'; chk.disabled = !j.canEdit; }
+        const ichk = document.getElementById('regInviteChk'); if (ichk) { ichk.checked = j.mode === 'invite'; ichk.disabled = !j.canEdit; } // #748
         const lchk = document.getElementById('regLoginChk'); if (lchk) { lchk.checked = j.entryLogin === true; lchk.disabled = !j.canEdit; } // #538
         const schk = document.getElementById('regQuickSmsChk'); if (schk) { schk.checked = j.quickEntrySms !== false; schk.disabled = !j.canEdit; } // #541
         if (btn) btn.style.display = j.canEdit ? '' : 'none';
-        if (st) st.textContent = (j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (sólo nombre, sin SMS)' : 'Ahora: registro con SMS') + (j.entryLogin ? ' · pantalla de ingreso: INICIAR SESIÓN' : '');
+        if (st) st.textContent = (j.mode === 'invite' ? 'Ahora: 🔒 SÓLO CON INVITACIÓN (landing + referidos; login abierto)' : (j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (sólo nombre, sin SMS)' : 'Ahora: registro con SMS')) + (j.entryLogin ? ' · pantalla de ingreso: INICIAR SESIÓN' : '');
     } catch (_) {}
 }
 async function saveRegistrationMode() {
-    const chk = document.getElementById('regSmsChk'); const mode = chk && !chk.checked ? 'quick' : 'sms';
+    const chk = document.getElementById('regSmsChk'); const ichk = document.getElementById('regInviteChk'); const mode = (ichk && ichk.checked) ? 'invite' : (chk && !chk.checked ? 'quick' : 'sms'); // #748
     const lchk = document.getElementById('regLoginChk'); const entryLogin = !!(lchk && lchk.checked); // #538
     const schk = document.getElementById('regQuickSmsChk'); const quickEntrySms = !!(schk && schk.checked); // #541
     try {
         const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode, entryLogin, quickEntrySms }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
-        showToast(mode === 'quick' ? 'Registro DESACTIVADO: la app pide sólo el nombre y entra directo' : 'Registro con SMS activado', 'success');
+        showToast(mode === 'invite' ? '🔒 Registro SÓLO CON INVITACIÓN activado (landing y referidos)' : (mode === 'quick' ? 'Registro DESACTIVADO: la app pide sólo el nombre y entra directo' : 'Registro con SMS activado'), 'success');
         loadRegistrationMode();
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
@@ -6124,6 +6125,7 @@ window.stMakeArt = stMakeArt;
 // ====== #566 CONFIRMACIÓN DE PAGOS (owner): retiros ≥ umbral se revisan (estafa o no) antes de pagar; menores salen solos ======
 let _prItems = [];
 async function loadPayReview() {
+    try { atencionAnalisis('pay'); } catch (_) {} // #750
     const box = document.getElementById('payReviewList'); if (!box) return;
     try {
         const r = await authFetch('/api/admin/payouts/review'); const j = await r.json();
@@ -7533,6 +7535,7 @@ async function loadCommunityConfig() {
             const logoInput = document.getElementById('communityChatLogoUrl');
             if (channelInput) channelInput.value = data.channelUrl || '';
             if (supportInput) supportInput.value = data.supportUrl || '';
+            try { const inv = document.getElementById('communityInviteUrl'); if (inv) inv.value = data.inviteUrl || ''; } catch (_) {} // #749
             const logo = data.chatLogoUrl || '';
             _communityLogoSaved = logo;
             _communityLogoPending = undefined;
@@ -7569,7 +7572,7 @@ async function saveCommunityConfig() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${currentToken}`
             },
-            body: JSON.stringify({ channelUrl, supportUrl, chatLogoUrl })
+            body: JSON.stringify({ channelUrl, supportUrl, chatLogoUrl, inviteUrl: (document.getElementById('communityInviteUrl') || {}).value || '' }) // #749
         });
         const data = await response.json();
         if (response.ok) {
@@ -16018,7 +16021,33 @@ function _drvAgo(d) {
     const h = Math.round(m / 60); if (h < 24) return 'hace ' + h + ' h';
     return 'hace ' + Math.round(h / 24) + ' d';
 }
+// #750 (owner): "en Cargas pendientes quiero un análisis del día como cierre para ver qué tanto falló la app y fue manual o fue todo
+// correcto; lo mismo en Retiros pendientes". Caja arriba de cada sección: Hoy / Ayer / Anteayer, automático vs a mano, y veredicto.
+const _atDay = { dep: 0, pay: 0 };
+async function atencionAnalisis(kind, offset) {
+    const box = document.getElementById(kind === 'dep' ? 'drDayBox' : 'prDayBox'); if (!box) return;
+    if (typeof offset === 'number') _atDay[kind] = offset;
+    const off = _atDay[kind] || 0; const d = new Date(Date.now() - 3 * 3600000 - off * 86400000); const dk = d.toISOString().slice(0, 10);
+    box.innerHTML = '<div class="dia-note">Analizando el día…</div>';
+    try {
+        const r = await authFetch('/api/admin/atencion/analisis?date=' + dk); const j = await r.json(); if (!r.ok) { box.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
+        const s = j.sistema || {}, b = j.banco || {}; const m = function (n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); };
+        const tabs = '<div class="at-tabs"><button class="' + (off === 0 ? 'on' : '') + '" onclick="atencionAnalisis(\'' + kind + '\',0)">Hoy</button><button class="' + (off === 1 ? 'on' : '') + '" onclick="atencionAnalisis(\'' + kind + '\',1)">Ayer</button><button class="' + (off === 2 ? 'on' : '') + '" onclick="atencionAnalisis(\'' + kind + '\',2)">Anteayer</button><span class="at-dk">' + dk + '</span></div>';
+        const lst = function (titulo, arr, extra) { if (!arr || !arr.length) return ''; return '<details class="at-list"><summary>' + titulo + ' (' + arr.length + ')</summary>' + arr.map(function (x) { return '<div>' + (x.hora ? new Date(x.hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '') + ' · @' + escapeHtml(x.usuario || '') + ' · ' + m(x.monto) + ' · ' + escapeHtml(x.agente || '') + (x[extra] ? ' · ' + escapeHtml(x[extra]) : '') + '</div>'; }).join('') + '</details>'; };
+        if (kind === 'dep') {
+            const tot = (s.depositosAutoN || 0) + (s.depositosManualN || 0); const pctAuto = tot ? Math.round((s.depositosAutoN || 0) * 100 / tot) : 100;
+            const ver = !tot ? '<span class="at-ver">Sin cargas ese día</span>' : (s.depositosManualN ? '<span class="at-ver bad">⚠ ' + s.depositosManualN + ' carga(s) a mano · la app resolvió sola el ' + pctAuto + '%</span>' : '<span class="at-ver ok">✅ Todo automático: ' + tot + ' carga(s) sin intervención</span>');
+            box.innerHTML = tabs + '<div class="at-kpis">' + _diaKpi('Cargas automáticas', m(s.depositosAuto) + ' · ' + (s.depositosAutoN || 0)) + _diaKpi('A mano (agente)', m(s.depositosManual) + ' · ' + (s.depositosManualN || 0)) + (s.depositosPruebaN ? _diaKpi('De prueba', m(s.depositosPrueba) + ' · ' + s.depositosPruebaN) : '') + _diaKpi('Banco: entradas sin acreditar', m(b.entradasSinAcreditar) + ' · ' + (b.entradasSinAcreditarN || 0)) + (b.entradasDevueltas ? _diaKpi('Devueltas (rebote)', m(b.entradasDevueltas)) : '') + '</div>' + ver + lst('Ver las cargas a mano', j.items && j.items.depositosManual, 'nota');
+        } else {
+            const tot = (s.pagosBancoN || 0) + (s.pagosManualN || 0); const pctAuto = tot ? Math.round((s.pagosBancoN || 0) * 100 / tot) : 100;
+            const ver = !tot ? '<span class="at-ver">Sin retiros pagados ese día</span>' : (s.pagosManualN ? '<span class="at-ver bad">⚠ ' + s.pagosManualN + ' retiro(s) pagado(s) a mano · el banco pagó solo el ' + pctAuto + '%</span>' : '<span class="at-ver ok">✅ Todos pagados por el banco: ' + tot + ' retiro(s)</span>');
+            box.innerHTML = tabs + '<div class="at-kpis">' + _diaKpi('Retiros pedidos', m(s.retiros) + ' · ' + (s.retirosN || 0)) + _diaKpi('Pagados por el banco (API)', m(s.pagosBanco) + ' · ' + (s.pagosBancoN || 0)) + _diaKpi('Pagados a mano', m(s.pagosManual) + ' · ' + (s.pagosManualN || 0)) + _diaKpi('Banco: salidas', m(b.salidas) + ' · ' + (b.salidasN || 0)) + '</div>' + ver + lst('Ver los retiros pagados a mano', j.items && j.items.pagosManual, 'via');
+        }
+    } catch (_) { box.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
+}
+window.atencionAnalisis = atencionAnalisis;
 async function loadDepositReviews(tab) {
+    try { atencionAnalisis('dep'); } catch (_) {} // #750
     if (tab) _drvTab = tab;
     const list = document.getElementById('depositReviewsList');
     if (!list) return;
@@ -16142,17 +16171,23 @@ async function loadSupport() {
         if (!r.ok) { showToast(j.error || 'Error', 'error'); return; }
         _spConvs = j.conversations || [];
         _spSetBadge(j.unreadTotal || 0);
-        const t = document.getElementById('spUnreadTotal'); if (t) t.textContent = _spConvs.length + ' conversación(es) · ' + (j.unreadTotal || 0) + ' sin leer';
+        const t = document.getElementById('spUnreadTotal'); if (t) t.textContent = (j.pending || 0) + ' pendiente(s) · ' + (j.closed || 0) + ' cerrada(s) · ' + (j.unreadTotal || 0) + ' sin leer';
         _spRenderList();
         if (_spSelected && !_spSelected.guest && _spConvs.some(function (c) { return c.userId === _spSelected.userId; })) spLoadMessages(_spSelected.userId, true);
     } catch (e) { showToast('Error de conexión', 'error'); }
-    try { gsLoad(); } catch (_) {} // #414
+    // #747 (owner): la columna de visitantes sin cuenta se sacó del panel (gsLoad queda sin uso).
 }
 function _spAgo(d) { const m = Math.max(0, Math.round((Date.now() - new Date(d).getTime()) / 60000)); return m < 1 ? 'ahora' : m < 60 ? m + ' min' : m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d'; }
 function _spRenderList() {
     const el = document.getElementById('spList'); if (!el) return;
     if (!_spConvs.length) { el.innerHTML = '<div style="color:#888;padding:14px;text-align:center;">Sin conversaciones de soporte en las últimas 72 h.</div>'; return; }
-    el.innerHTML = _spConvs.map(function (c) {
+    // #747 (owner): dos grupos — ⏳ Clientes pendientes (abiertas) y 🔒 Cerrados (el agente cerró la charla).
+    const pend = _spConvs.filter(function (c) { return !c.closed; }), cerr = _spConvs.filter(function (c) { return c.closed; });
+    el.innerHTML = '<div class="sp-col-t">⏳ Clientes pendientes <span style="color:#9ab;font-weight:600;">' + pend.length + '</span></div>' + (pend.length ? _spRows(pend) : '<div style="color:#888;padding:8px;text-align:center;font-size:12px;">Nada pendiente 🎉</div>') +
+        '<details class="sp-closed"' + (pend.length ? '' : ' open') + '><summary class="sp-col-t">🔒 Cerrados <span style="color:#9ab;font-weight:600;">' + cerr.length + '</span></summary>' + (cerr.length ? _spRows(cerr) : '<div style="color:#888;padding:8px;text-align:center;font-size:12px;">Sin charlas cerradas</div>') + '</details>';
+}
+function _spRows(list) {
+    return list.map(function (c) {
         const sel = _spSelected && _spSelected.userId === c.userId;
         return '<div onclick="spSelect(\'' + escapeHtml(c.userId) + '\',\'' + escapeHtml(c.username) + '\')" style="cursor:pointer;background:' + (sel ? 'rgba(37,211,102,0.14)' : 'rgba(255,255,255,0.04)') + ';border:1px solid ' + (sel ? 'rgba(37,211,102,0.5)' : 'rgba(255,255,255,0.1)') + ';border-radius:10px;padding:9px 11px;">' +
             '<div style="display:flex;align-items:center;gap:6px;"><b style="color:#fff;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">' + (c.online ? '🟢 ' : '') + '@' + escapeHtml(c.username) + '</b>' + (c.unread > 0 ? '<span style="background:#ff5050;color:#fff;border-radius:9px;padding:1px 7px;font-size:10px;font-weight:900;">' + c.unread + '</span>' : '') + '<span style="color:#777;font-size:10.5px;">' + _spAgo(c.lastAt) + '</span></div>' +

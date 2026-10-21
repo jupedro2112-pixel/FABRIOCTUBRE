@@ -8,6 +8,40 @@
 
 ## Sesión 2026-10-18
 
+### 750. 📊 Análisis del día en Cargas pendientes y Retiros pendientes (automático vs a mano) — admin-sw v145
+**Pedido (owner):** "en Cargas pendientes quiero un análisis del día como cierre para ver qué tanto falló la app y fue manual o fue todo
+correcto; lo mismo en Retiros pendientes; y en el cierre automático, si hay diferencia, ver si fue por alguna manual de carga o retiro".
+`GET /api/admin/atencion/analisis?date=` (admin/depositor/withdrawer; sin clave) devuelve el mismo desglose de `_closeReconcile`
+(#744). Caja arriba de cada sección (`#drDayBox` / `#prDayBox`, Hoy / Ayer / Anteayer): cargas automáticas vs a mano (y de prueba),
+entradas del banco sin acreditar, devueltas; retiros pagados por el banco vs a mano; veredicto "✅ Todo automático" o "⚠ N a mano · la
+app resolvió sola el X%", con la lista de las operaciones a mano (hora, usuario, monto, agente). La sección pasa a llamarse "Retiros
+pendientes". En el cierre, la conciliación (#744) ya marca esas mismas causas.
+
+### 749. 📣 Canal de Telegram en el Inicio + link de invitación a la comunidad — SW v533
+**Pedido (owner):** "poné el canal de Telegram en el Inicio, que la gente pueda entrar a ver lo que publicamos, y si hay un link de
+invitación para los que entran a la comunidad". Tarjeta `#tgCard` en el Inicio completo (arriba de la guía de primera carga): "Canal
+oficial de Telegram · Mirá lo que publicamos: novedades y plata por código todas las semanas" + "Entrar al canal ›" (`openTelegram`) y
+"Unirme a la comunidad" (`openTelegramInvite`, sólo si el panel cargó el link). Panel → Configuración → Comunidad: campo nuevo "Link
+de invitación a la comunidad" (`communityConfig.inviteUrl`; `GET /api/config/community` lo devuelve).
+
+### 748. 🔒 REGISTRO SÓLO CON INVITACIÓN (landing + referidos); iniciar sesión sigue abierto
+**Pedido (owner):** "sacar todo el registro de la app: sólo se puede llegar desde /landing y desde referidos; si quiere registrarse que
+sea con invitación de referido de gente ya cliente; que se entienda que es por registro; cerrar desde el panel desactiva el registro y
+configura ese aviso para todos". Decisión (con el owner): el LOGIN de quien ya es cliente queda abierto (si no, perdería acceso a su
+saldo). `Config['registrationMode']` acepta `'invite'`: tilde "🔒 Registro SÓLO CON INVITACIÓN (recomendado)" en Configuración → Registro
+de clientes. Server: `_inviteOnlyBlocks(referralCode, campaignCode)` en `POST /api/auth/register` y `POST /api/auth/quick-entry` → 403
+`INVITE_ONLY` con el texto de `/sys_register_invite` (editable) salvo que venga un `referralCode` de un cliente real o un `campaignCode`
+de campaña activa (la orgánica INGRESO no cuenta); la landing ya exige campaña. App: `/api/landing/info` manda `registrationMode` y
+`registerInviteText`; en modo invite sin link de publicidad ni de referido la pantalla es Iniciar sesión (sin "Registrarse" ni "Crear mi
+cuenta", `body.reg-invite`) con el aviso `#lgInviteNote`.
+
+### 747. 💬 Soporte: Clientes pendientes / Cerrados; se saca la columna de visitantes sin cuenta
+**Pedido (owner):** "si se cierra el chat de un cliente que aparezca en Cerrados; abiertos son los pendientes: 'Clientes pendientes' y
+'Cerrados'; sacá el de visitantes sin cuenta". `/api/admin/support/conversations` agrega `closed` (= `User.supportSessionSince` posterior
+al último mensaje; si el cliente vuelve a escribir, pasa sola a pendiente) y `pending`/`closed` en el resumen; el panel pinta dos
+grupos (los cerrados plegados). La columna "Visitantes (sin cuenta)" ya no se muestra ni se carga (el soporte de visitantes de la
+pantalla de ingreso sigue existiendo del lado del cliente, #414).
+
 ### 746. 🔐 Ingreso del panel con el logo y "PICA ROJA oficial" + dependencias con parches de seguridad — admin-sw v144
 **Pedido (owner, captura):** "acá también sacá Panel administrativo y poné PICA ROJA oficial". Pantalla de ingreso: logo + "PICA ROJA
 oficial / Panel" (antes gamepad + "Panel de Administración / Sala de Juegos"). El "Servicio temporalmente no disponible" de la

@@ -1242,7 +1242,7 @@ app.get('/api/landing/info', async (req, res) => {
     let welcome = null;
     try { const fd = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig(); welcome = { pct: fd, withApp: fd + (ig && ig.enabled ? ig.pct : 0) }; } catch (_) {}
     let services = []; try { services = await _landingServices(); } catch (_) {} // #555
-    res.json({ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true, services }); // #421/#424/#530/#538/#541/#555
+    res.json({ registerInviteText: await renderSystemCommand('/sys_register_invite', REGISTER_INVITE_DEFAULT, {}), /* #748 */ baseUrl: getPublicBaseUrl(), platforms: plats, refunds, minDepositArs, withdrawMinArs, refundPromo, registrationMode: await getRegistrationMode(), referralPct, welcome, entryLogin: await getConfig('entryLogin', false) === true, quickEntrySms: (await getConfig('quickEntrySms', true)) === true, services }); // #421/#424/#530/#538/#541/#555
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -4066,6 +4066,7 @@ app.post('/api/auth/register', authLimiter, registerIpLimiter, async (req, res) 
     if (!username || !password) {
       return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
     }
+    { const _inv = await _inviteOnlyBlocks(referralCode, campaignCode); if (_inv) return res.status(403).json({ error: _inv, code: 'INVITE_ONLY' }); } // #748
 
     // Validar el formato del username: evita XSS almacenado (un username con
     // HTML/JS se ejecutaría en el panel admin al listar usuarios o abrir el chat).
@@ -4752,7 +4753,19 @@ app.post('/api/landing/signup', landingIpLimiter, _landingSignupHandler);
 // canjea sola = autologin). Tilde en Configuración → "Registro de clientes".
 async function getRegistrationMode() {
   // #425 (owner): default 'quick' — la entrada con el nombre ES la forma de registro; 'sms' queda como opción del tilde.
-  try { const v = await getConfig('registrationMode', 'quick'); return v === 'sms' ? 'sms' : 'quick'; } catch (_) { return 'quick'; }
+  // #748 (owner): 'invite' = SÓLO CON INVITACIÓN: nadie se registra desde la app; sólo entra quien llega por la landing (campaña
+  // activa) o por un link de referido de un cliente. Iniciar sesión sigue abierto para los que ya son clientes.
+  try { const v = await getConfig('registrationMode', 'quick'); return v === 'sms' ? 'sms' : (v === 'invite' ? 'invite' : 'quick'); } catch (_) { return 'quick'; }
+}
+const REGISTER_INVITE_DEFAULT = '🔒 El registro es sólo con invitación, por seguridad. Pedile el link a quien te recomendó o entrá por nuestra publicidad oficial. Si ya sos cliente, iniciá sesión con tu usuario y clave.';
+async function _inviteOnlyBlocks(referralCode, campaignCode) {
+  try {
+    if ((await getRegistrationMode()) !== 'invite') return null;
+    const ref = String(referralCode || '').toUpperCase().trim(); const camp = String(campaignCode || '').toUpperCase().trim();
+    if (ref && await User.exists({ referralCode: ref })) return null;
+    if (camp && camp !== 'INGRESO' && await Campaign.exists({ code: camp, isActive: { $ne: false } })) return null;
+    return await renderSystemCommand('/sys_register_invite', REGISTER_INVITE_DEFAULT, {});
+  } catch (_) { return null; }
 }
 app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res) => {
   try {
@@ -4764,6 +4777,7 @@ app.post('/api/auth/quick-entry', authLimiter, landingIpLimiter, async (req, res
     const mode = await getRegistrationMode();
     const name = String((req.body && req.body.name) || '').trim();
     if (name.length < 2) return res.status(400).json({ error: 'Decinos tu nombre.' });
+    { const _inv = await _inviteOnlyBlocks(req.body && req.body.referralCode, code); if (_inv) return res.status(403).json({ error: _inv, code: 'INVITE_ONLY' }); } // #748
     // #541 (owner): el registro desde el INICIO de la app (sin link de publicidad) exige verificar el celular por SMS antes de
     // crear la cuenta (Config['quickEntrySms'], default ON; tilde en Configuración → Registro). Los links de publicidad no.
     // Con el celular verificado la entrada con el nombre vale en CUALQUIER modo de registro (también con "Registro con SMS").
@@ -4860,7 +4874,7 @@ app.get('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (
 app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo el administrador general.' });
-    const mode = req.body && req.body.mode === 'quick' ? 'quick' : 'sms';
+    const mode = req.body && req.body.mode === 'invite' ? 'invite' : (req.body && req.body.mode === 'quick' ? 'quick' : 'sms'); // #748: + invite
     await Config.set('registrationMode', mode, req.user.username);
     // #538: pantalla de ingreso = Iniciar sesión (usuario + clave + olvidé mi contraseña, sin bono de bienvenida)
     let entryLogin = (await getConfig('entryLogin', false)) === true;
@@ -12460,6 +12474,13 @@ async function initializeData() {
       description: 'Mensaje que se comparte al invitar amigos (WhatsApp, Telegram, otras apps). Variables: {link} (link de invitación del cliente), {codigo}, {pct} (% máximo de comisión), {username}. Vacío = texto por defecto.',
       type: 'message',
       response: '🎰 Sumate a PICA ROJA con mi link: cargas automáticas en segundos y reembolsos todos los días 👉 {link}'
+    },
+    {
+      // #748: aviso de "registro sólo con invitación" (pantalla de ingreso y respuesta del server)
+      name: '/sys_register_invite',
+      description: 'Registro SÓLO CON INVITACIÓN: aviso que ve quien quiere registrarse sin link de referido ni de publicidad (Configuración → Registro de clientes).',
+      type: 'message',
+      response: REGISTER_INVITE_DEFAULT
     },
     {
       // #602: aviso al cliente cuando Soporte cierra la charla
@@ -20090,6 +20111,15 @@ app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (re
     res.json({ success: true, config: cfg });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
+// #750 (owner): análisis del día para Atención (Cargas pendientes / Retiros pendientes): cuánto fue automático y cuánto a mano.
+// Sin clave (lo ven depositor/withdrawer); es el mismo desglose que usa el cierre.
+app.get('/api/admin/atencion/analisis', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const dk = String(req.query.date || datosIa.dateKeyART(new Date())); if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return res.status(400).json({ error: 'Día inválido' });
+    const d = await _closeReconcile(dk);
+    res.json({ success: true, dateKey: dk, sistema: d.sistema, banco: d.banco, items: d.items, diferencia: d.diferencia, resumen: d.resumen });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #744: detalle de conciliación del día (fresco) — qué es automático, qué manual, qué hay en el banco y de dónde puede venir la diferencia
 app.get('/api/admin/cierres/:dateKey/detalle', authMiddleware, adminMiddleware, async (req, res) => {
   try {
@@ -20506,10 +20536,13 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
         _id: 0, userId: '$_id', username: { $ifNull: ['$user.username', '?'] }, unread: 1, lastAt: 1, lastRole: 1,
         lastMessage: { $cond: [{ $eq: ['$lastType', 'image'] }, '📸 Imagen', { $substrCP: [{ $ifNull: ['$lastMessage', ''] }, 0, 90] }] },
         online: { $gt: [{ $ifNull: ['$user.lastLogin', new Date(0)] }, { $subtract: [new Date(), 300000] }] },
-        status: { $ifNull: [{ $arrayElemAt: ['$cs.status', 0] }, 'open'] }
+        status: { $ifNull: [{ $arrayElemAt: ['$cs.status', 0] }, 'open'] },
+        // #747 (owner): CERRADA = el agente cerró la charla (User.supportSessionSince) después del último mensaje; si el cliente
+        // vuelve a escribir, pasa sola a PENDIENTE.
+        closed: { $gt: [{ $ifNull: ['$user.supportSessionSince', new Date(0)] }, '$lastAt'] }
       } }
     ]);
-    res.json({ conversations: rows, unreadTotal: rows.reduce((s, r) => s + (r.unread || 0), 0) });
+    res.json({ conversations: rows, unreadTotal: rows.filter((r) => !r.closed).reduce((s, r) => s + (r.unread || 0), 0), pending: rows.filter((r) => !r.closed).length, closed: rows.filter((r) => r.closed).length });
   } catch (e) { logger.error(`/api/admin/support/conversations: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 
@@ -25990,6 +26023,7 @@ app.get('/api/config/community', authMiddleware, async (req, res) => {
     const legacyCanal = await getConfig('canalInformativoUrl', '');
     res.json({
       channelUrl: c.channelUrl || c.url || legacyCanal || '',
+      inviteUrl: c.inviteUrl || '', // #749
       supportUrl: c.supportUrl || '',
       // Logo del chat de soporte de la PWA (cabecera del chat). Vacío = el
       // ícono default de VIPCARGAS que ya trae el HTML.
@@ -26059,9 +26093,10 @@ app.post('/api/admin/community', authMiddleware, adminMiddleware, async (req, re
     } else {
       chatLogoUrl = _normUrl(rawLogo);
     }
-    await setConfig('communityConfig', { channelUrl, supportUrl, chatLogoUrl });
+    const inviteUrl = _normUrl(req.body && req.body.inviteUrl); // #749: link de invitación a la comunidad (grupo)
+    await setConfig('communityConfig', { channelUrl, supportUrl, chatLogoUrl, inviteUrl });
     logger.info(`[community] config guardada por ${(req.user && req.user.username) || '?'}`);
-    res.json({ success: true, channelUrl, supportUrl, chatLogoUrl });
+    res.json({ success: true, channelUrl, supportUrl, chatLogoUrl, inviteUrl });
   } catch (err) {
     logger.error(`POST /api/admin/community: ${err.message}`);
     res.status(500).json({ error: 'Error del servidor' });

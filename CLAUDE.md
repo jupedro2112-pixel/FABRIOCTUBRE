@@ -263,7 +263,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   `referralLiveLimiter` (comparten los 60 req/min de 1girox con cargas y retiros).
   **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
-  **#421:** `Config['registrationMode']` ('sms' | 'quick', tilde en Configuración → Registro de clientes). En 'quick' la pantalla
+  **#421/#748:** `Config['registrationMode']` ('sms' | 'quick' | 'invite', Configuración → Registro de clientes). `'invite'` = SÓLO CON
+  INVITACIÓN: `_inviteOnlyBlocks()` rechaza registros sin `referralCode` real ni `campaignCode` activo (texto `/sys_register_invite`); el
+  login sigue abierto. Un flujo nuevo de alta tiene que pasar por ese chequeo. En 'quick' la pantalla
   de ingreso pide sólo el nombre y `POST /api/auth/quick-entry` reutiliza `_landingSignupHandler` (campaña INGRESO) + link de
   acceso = autologin. Cambios en el alta de la landing afectan también a la entrada rápida.
   **#414:** hay un SOPORTE PARA VISITANTES sin cuenta (pantalla de ingreso → `GuestThread`, rutas `/api/public/support/*`

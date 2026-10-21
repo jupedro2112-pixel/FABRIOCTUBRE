@@ -710,6 +710,7 @@ document.addEventListener('change', function (ev) {
                                 <b>Desactivado</b> = la pantalla de ingreso muestra <b>"Tu nombre → Entrar"</b> para TODOS: se crea la cuenta sola en las plataformas (misma lógica de la landing, campaña INGRESO, clave inicial) y la persona entra directo (autologin). "Ya tengo cuenta" sigue disponible.<br>
                                 <b>Links de publicidad (#422):</b> quien entra por un link de publicista ve SIEMPRE "Tu nombre → Entrar" (cuenta atribuida a esa campaña), sin importar el tilde. El inicio normal (sin link) respeta el tilde.</p>
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <label style="margin:0;display:flex;align-items:center;gap:8px;cursor:pointer;flex:1 0 100%;padding:8px 10px;border:1px solid rgba(230,0,35,.35);border-radius:10px;background:rgba(230,0,35,.05);"><input type="checkbox" id="regInviteChk" style="width:auto;"> <b>🔒 Registro SÓLO CON INVITACIÓN (recomendado)</b> — nadie se registra desde la app: sólo entra quien llega por /landing (publicidad) o por el link de referido de un cliente. Iniciar sesión sigue abierto. El aviso se edita en COMANDOS → <code>/sys_register_invite</code>.</label><!-- #748 -->
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="regSmsChk" style="width:auto;"> Registro con SMS (usuario + clave + teléfono) en vez de la entrada con el nombre</label>
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;flex:1 0 100%;"><input type="checkbox" id="regLoginChk" style="width:auto;"> Pantalla de ingreso = <b>Iniciar sesión</b> (usuario, clave y "Olvidé mi contraseña"), sin el bono de bienvenida. Los links de publicidad y de referidos siguen mostrando el registro.</label>
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;flex:1 0 100%;"><input type="checkbox" id="regQuickSmsChk" style="width:auto;"> El registro desde el inicio de la app (sólo el nombre) exige <b>verificar el celular por SMS</b> antes de crear la cuenta. Los links de publicidad no lo piden.</label>
@@ -943,6 +944,11 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                                 <label>Canal Oficial Telegram:</label>
                                 <input type="url" id="communityChannelUrl" placeholder="https://t.me/tu_canal" style="width:100%;">
                                 <small style="color:#aaa;font-size:11px;">Es el botón celeste "📣 Unite a la Comunidad de Telegram" que el cliente ve arriba en la app y en su menú ☰. El botón aparece SIEMPRE: si esto está vacío, lleva a una página inexistente (404) hasta que cargues la URL real.</small>
+                            </div>
+                            <div class="form-group"><!-- #749 (owner) -->
+                                <label>Link de invitación a la comunidad (grupo):</label>
+                                <input type="url" id="communityInviteUrl" placeholder="https://t.me/+xxxxxxxx" style="width:100%;">
+                                <small style="color:#aaa;font-size:11px;">Es el botón "Unirme a la comunidad" de la tarjeta de Telegram del Inicio de la app. Vacío = sólo se muestra "Entrar al canal".</small>
                             </div>
                             <div class="form-group">
                                 <label>Soporte VIP Telegram:</label>
@@ -2874,9 +2880,10 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
             <!-- #566: CONFIRMACIÓN DE PAGOS -->
             <section id="payReviewSection" class="section">
                 <div class="panel-header">
-                    <h2>💸 Confirmación de pagos</h2>
+                    <h2>💸 Retiros pendientes</h2>
                     <button class="refresh-btn" onclick="loadPayReview()" title="Refrescar">🔄</button>
                 </div>
+                <div id="prDayBox" class="at-day"></div><!-- #750: análisis del día (banco vs a mano) -->
                 <div class="cbu-form" id="payReviewCfg" style="margin-bottom:14px;">
                     <h3 style="margin:0 0 6px;">⚙️ Regla</h3>
                     <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Los retiros <b>desde el umbral</b> quedan acá para que una persona revise el caso (estafa o no) y los confirme. Los <b>menores</b> salen solos por el banco al pedirlos. Si el banco no está configurado, todo queda en revisión.</p>
@@ -2913,14 +2920,10 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <span id="spUnreadTotal" style="margin-left:auto;font-size:12px;color:#aaa;"></span>
                 </div>
                 <div style="display:flex;gap:12px;min-height:520px;">
-                    <div style="flex:0 0 300px;max-width:300px;display:flex;flex-direction:column;gap:6px;">
-                        <div class="sp-col-t">👤 Clientes</div>
+                    <div style="flex:0 0 320px;max-width:320px;display:flex;flex-direction:column;gap:6px;">
+                        <!-- #747 (owner): Clientes pendientes + Cerrados (la columna de visitantes sin cuenta se sacó) -->
                         <div id="spList" style="overflow-y:auto;max-height:70vh;display:flex;flex-direction:column;gap:6px;"></div>
-                    </div>
-                    <!-- #414: SOPORTE PARA VISITANTES (sin cuenta) — otra columna al lado de la de clientes -->
-                    <div style="flex:0 0 260px;max-width:260px;display:flex;flex-direction:column;gap:6px;">
-                        <div class="sp-col-t">🌐 Visitantes (sin cuenta) <span id="gsCount" style="color:#9ab;font-weight:600;"></span></div>
-                        <div id="gsList" style="overflow-y:auto;max-height:70vh;display:flex;flex-direction:column;gap:6px;"></div>
+                        <div id="gsList" style="display:none;"></div><span id="gsCount" style="display:none;"></span>
                     </div>
                     <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
                         <div id="spHead" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.1);font-weight:800;color:#fff;display:flex;gap:10px;align-items:center;">Elegí una conversación</div>
@@ -2938,6 +2941,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <h2>⏳ Cargas pendientes</h2>
                     <button class="refresh-btn" onclick="loadDepositReviews()" title="Refrescar">🔄</button>
                 </div>
+                <div id="drDayBox" class="at-day"></div><!-- #750: análisis del día (automático vs a mano) -->
                 <div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.30);border-radius:10px;padding:12px;margin-bottom:12px;">
                     <p style="margin:0;color:#bbb;font-size:11.5px;line-height:1.6;">Cada comprobante que manda un cliente entra acá hasta que se acredita. Si el <b style="color:#fff;">banco automático</b> lo matchea, se cierra solo. Si pasan los minutos sin acreditarse (o el banco automático está apagado), el cliente ve <b style="color:#fff;">"carga pendiente, un agente la está revisando"</b> y vos la resolvés desde acá:
                     <b style="color:#26e07f;">Confirmar</b> = la carga de siempre (bonos automáticos incluidos; el cliente la ve como automática) · <b style="color:#ff6b6b;">Rechazar</b> = le llega el motivo al chat. Los <b style="color:#fff;">comprobantes duplicados</b> no entran: el cliente ya recibe "ese comprobante ya fue usado". Textos en COMANDOS (<code>/sys_receipt_received</code>, <code>/sys_deposit_pending_review</code>, <code>/sys_deposit_rejected</code>, <code>/sys_receipt_duplicate</code>).</p>
