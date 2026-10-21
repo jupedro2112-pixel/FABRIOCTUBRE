@@ -243,8 +243,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   inicio en `Config['adSpendTotal']`, cotización en `Config['usdtRate']`. **#477:** TODO por agregaciones de Mongo (nunca bajar
   movimientos sueltos: 30 d son 30.000 cargas) y el "Panorama" (`project`) tiene la lógica explicada en el comentario del código:
   regalos futuros se CALCULAN con los % futuros, no se copian los de hoy.
-  **#500 CIERRES AUTOMÁTICOS:** `DailyClose` (uno por día ART, cron `_closeTick` cada 20 min, idempotente por `dateKey`); el admin
-  sólo completa comisión del banco (% default en `Config['closeConfig']`) y USDT → `finalizado`. Panel → 🧾 Cierres.
+  **#500/#744 CIERRES AUTOMÁTICOS:** `DailyClose` (uno por día ART, cron `_closeTick` cada 20 min, idempotente por `dateKey`). Desde #744 se
+  FINALIZAN SOLOS (día anterior a hoy, `finalizedBy:'auto'`; los últimos 3 días se recalculan en cada pasada; USDT opcional) y
+  `_closeReconcile` guarda en `detalle` la conciliación sistema vs banco con las posibles causas de la diferencia. Un flujo nuevo que
+  acredite cargas o pague retiros por fuera del banco tiene que dejar rastro (`adminUsername` / `paidBy`) para que la conciliación lo marque.
   **#504 ESTRATEGIA:** `Config['strategyClientes']` (segunda carga + misiones). Bono de 2ª carga = `User.secondDepositOffer`, lo consume
   `resolveAutoBonus` (orden: instalar → código → **segunda carga** → ruleta → lote → 1ª carga → auto). Misiones: Transaction tipo `mission`
   (está en `CASHBACK_GIFT_TX_TYPES`), `MissionClaim` único por usuario/misión/semana. Un tipo de regalo nuevo va a esa lista SIEMPRE.

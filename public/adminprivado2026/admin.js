@@ -4964,7 +4964,7 @@ function switchSection(section) {
     if (section === 'datos') { datosIaGate('Datos').then(function (ok) { if (ok) loadDatos(); }); } // #743 clave
     if (section === 'datosIa') { datosIaGate('Datos IA').then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
     if (section === 'menuLayout') { loadMenuLayout(); loadMenusEnabled(); } // #480 · #635
-    if (section === 'cierres') cierresLoad(); // #500
+    if (section === 'cierres') { datosIaGate('Cierres').then(function (ok) { if (ok) cierresLoad(); }); } // #500 · #745 clave
     if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
     if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
     if (section === 'notifications') loadNotificationsPanel();
@@ -4986,7 +4986,7 @@ function switchSection(section) {
     if (section === 'reembolsos') loadReembolsos();
     if (section === 'chatDelays') loadChatDelays();
     if (section === 'reviews') loadReviews();
-    if (section === 'campaigns') loadCampaigns();
+    if (section === 'campaigns') { datosIaGate('Publicidad').then(function (ok) { if (ok) loadCampaigns(); }); } // #745 clave
     if (section === 'publisherAdmins') {
         if (currentAdmin?.role !== 'admin') {
             showToast('No tienes permiso para acceder a esta sección', 'error');
@@ -5850,30 +5850,82 @@ async function cierresLoad() {
         const r = await authFetch('/api/admin/cierres?days=30'); const j = await r.json(); if (!r.ok) { if (list) list.textContent = j.error || 'Error'; return; }
         _clItems = j.items || []; _clUsdt = j.usdtRate || null;
         const p = document.getElementById('clPct'); if (p && document.activeElement !== p) p.value = j.config.bankCommissionPct || 0;
-        const ci = document.getElementById('clCfgInfo'); if (ci) ci.textContent = j.config.bankCommissionPct ? 'Hoy: ' + j.config.bankCommissionPct + '% sobre depósitos' : 'Sin % por defecto: la comisión se carga a mano en cada cierre';
-        const ui = document.getElementById('clUsdtInfo'); if (ui) ui.textContent = 'USDT guardado: ' + (_clUsdt ? '$' + _clUsdt.toLocaleString('es-AR') : '—');
-        const pend = _clItems.filter(function (x) { return x.status !== 'finalizado'; }).length; const bd = document.getElementById('cierresBadge'); if (bd) { bd.textContent = pend; bd.style.display = pend ? '' : 'none'; }
+        const ci = document.getElementById('clCfgInfo'); if (ci) ci.textContent = j.config.bankCommissionPct ? 'Hoy: ' + j.config.bankCommissionPct + '% sobre depósitos' : 'Sin % por defecto';
+        const ui = document.getElementById('clUsdtInfo'); if (ui) ui.textContent = 'USDT (opcional): ' + (_clUsdt ? '$' + _clUsdt.toLocaleString('es-AR') : '—');
+        const malos = _clItems.filter(function (x) { return x.arqueo === 'faltante' || x.arqueo === 'sobrante'; }).length; const bd = document.getElementById('cierresBadge'); if (bd) { bd.textContent = malos; bd.style.display = malos ? '' : 'none'; }
         const t = j.totals || {};
-        document.getElementById('cierresTotals').innerHTML = _diaKpi('Depósitos (30 d)', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('VENTA (netwin)', _clC(t.venta)) + _diaKpi('Regalos', _clM(t.regalos)) + _diaKpi('NETO', _clC(t.neto)) + _diaKpi('Comisión banco', _clM(t.comision)) + _diaKpi('RESULTADO', _clC(t.resultado), (t.finalizados || 0) + ' de ' + _clItems.length + ' finalizados') + _diaKpi('Resultado US$', _clU(t.resultadoUsd), 'suma de los finalizados/cotizados') + _diaKpi('Arqueo (30 d)', '<span style="color:' + (Math.abs(t.diferencia || 0) <= 1000 ? 'var(--p-green)' : 'var(--p-red)') + '">' + _clM(t.diferencia || 0) + '</span>', (t.faltantes || 0) + ' días con faltante · ' + (t.sobrantes || 0) + ' con sobrante');
+        document.getElementById('cierresTotals').innerHTML = _diaKpi('Depósitos (30 d)', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('VENTA (netwin)', _clC(t.venta)) + _diaKpi('Regalos', _clM(t.regalos)) + _diaKpi('NETO', _clC(t.neto)) + _diaKpi('Días con diferencia', String(malos));
         if (!list) return;
-        // #502: la DIFERENCIA siempre visible: 0 = cuadra; negativa = faltante; positiva = sobrante
-        const arq = (c) => { const d = Number(c.diferencia) || 0; const num = '<b>' + (d > 0 ? '+' : '') + _clM(d).replace('$-', '-$') + '</b>'; return c.arqueo === 'faltante' ? '<span class="cl-st bad">⚠ Faltante ' + num + '</span>' : (c.arqueo === 'sobrante' ? '<span class="cl-st warn">⚠ Sobrante ' + num + '</span>' : (c.arqueo === 'cuadra' ? '<span class="cl-st fin">✔ Diferencia ' + num + '</span>' : '<span class="cl-st none">Diferencia $0 · sin datos del banco</span>')); };
-        const bal = (c) => { const s = c.bankBalanceStartManual != null ? c.bankBalanceStartManual : c.bankBalanceStart, e = c.bankBalanceEndManual != null ? c.bankBalanceEndManual : c.bankBalanceEnd; return '<small>00:00 ' + (s != null ? _clM(s) : '—') + ' → 24:00 ' + (e != null ? _clM(e) : '—') + (c.bankBalanceDelta != null ? ' · Δ ' + _clM(c.bankBalanceDelta) : '') + (c.bankBalanceSource === 'manual' ? ' (a mano)' : '') + '</small>'; };
-        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>VENTA</th><th>Regalos</th><th>NETO</th><th>Comisión banco<br><small>% del día · monto</small></th><th>RESULTADO</th><th>USDT</th><th>Resultado US$</th><th>Banco entró<br><small>auto → a mano</small></th><th>Banco salió<br><small>auto → a mano</small></th><th>Saldo banco<br><small>00:00 → 24:00 (a mano si falta)</small></th><th>Arqueo</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
-            const fin = c.status === 'finalizado'; const dis = fin ? 'disabled' : '';
-            return '<tr class="' + (fin ? 'fin' : 'pend') + '" id="cl-' + c.dateKey + '"><td><b>' + c.dateKey + '</b><br><small>' + c.nuevos + ' nuevos · ' + c.retenidos + ' ret.</small></td><td>' + (fin ? '<span class="cl-st fin">✅ Finalizado</span>' : '<span class="cl-st pend">⏳ Pendiente</span>') + '</td><td>' + _clM(c.depositos) + '<br><small>' + c.cargas + ' cargas</small></td><td>' + _clM(c.retiros) + '</td><td>' + _clC(c.venta) + '</td><td>' + _clM(c.regalos) + '</td><td>' + _clC(c.neto) + '</td>' +
-                '<td><input type="number" class="cl-in cl-pct" id="clPctD-' + c.dateKey + '" value="' + (c.bankCommissionPct != null ? c.bankCommissionPct : '') + '" min="0" max="50" step="0.01" placeholder="%" ' + dis + ' oninput="document.getElementById(\'clCom-' + c.dateKey + '\').dataset.touched=\'\'" title="% de comisión de ESE día"> %<br><input type="number" class="cl-in" id="clCom-' + c.dateKey + '" value="' + (c.bankCommissionArs || 0) + '" min="0" step="1" ' + dis + ' oninput="this.dataset.touched=1" title="o el monto exacto en pesos"><br><small>' + (c.bankCommissionSource === 'manual' ? 'monto a mano' : (c.bankCommissionSource === 'manual_pct' ? '% del día' : (c.bankCommissionPct ? '% por defecto' : 'sin comisión'))) + '</small></td>' +
-                '<td>' + _clC(c.resultado) + '</td>' +
-                '<td><input type="number" class="cl-in" id="clUsd-' + c.dateKey + '" value="' + (c.usdtRate || '') + '" placeholder="' + (_clUsdt || 'cotización') + '" min="1" step="1" ' + dis + '></td>' +
-                '<td>' + (c.resultadoUsd != null ? '<b>' + _clU(c.resultadoUsd) + '</b>' : '—') + '</td>' +
-                '<td><small>' + (c.bankSource === 'api' ? 'API banco ' : 'avisos ') + _clM(c.bankInAuto) + '</small><br><input type="number" class="cl-in" id="clBin-' + c.dateKey + '" value="' + (c.bankInManual != null ? c.bankInManual : '') + '" placeholder="según banco" min="0" step="1" ' + dis + '><br><small>dif. ' + _clM(c.difIn) + '</small></td>' +
-                '<td><small>' + (c.bankSource === 'api' ? 'API banco ' : 'avisos ') + _clM(c.bankOutAuto) + '</small><br><input type="number" class="cl-in" id="clBout-' + c.dateKey + '" value="' + (c.bankOutManual != null ? c.bankOutManual : '') + '" placeholder="según banco" min="0" step="1" ' + dis + '><br><small>dif. ' + _clM(c.difOut) + '</small></td>' +
-                '<td>' + bal(c) + '<br><input type="number" class="cl-in cl-bal" id="clBs-' + c.dateKey + '" value="' + (c.bankBalanceStartManual != null ? c.bankBalanceStartManual : '') + '" placeholder="saldo 00:00" step="1" ' + dis + '> <input type="number" class="cl-in cl-bal" id="clBe-' + c.dateKey + '" value="' + (c.bankBalanceEndManual != null ? c.bankBalanceEndManual : '') + '" placeholder="saldo 24:00" step="1" ' + dis + '></td>' +
+        // #744 (owner): cierres día a día, automáticos. Diferencia SIEMPRE visible (0 = cuadra) y "Ver detalle" con la conciliación.
+        const arq = function (c) { const d = Number(c.diferencia) || 0; const num = (d > 0 ? '+' : '') + _clM(d).replace('$-', '-$'); if (c.arqueo === 'sin_datos') return '<span class="cl-st">— sin datos del banco</span>'; return c.arqueo === 'cuadra' ? '<span class="cl-st fin">✅ Da 0</span>' : ('<span class="cl-st bad">⚠ ' + (c.arqueo === 'faltante' ? 'Faltante' : 'Sobrante') + ' <b>' + num + '</b></span>'); };
+        const det = function (c) { const d = c.detalle || {}; const s = d.sistema || {}, b = d.banco || {}; return '<small>auto ' + _clM(s.depositosAuto || 0) + (s.depositosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.depositosManual) + '</b>' : '') + (s.depositosPrueba ? ' · prueba ' + _clM(s.depositosPrueba) : '') + '</small>'; };
+        const detR = function (c) { const d = c.detalle || {}; const s = d.sistema || {}; return '<small>banco ' + _clM(s.pagosBanco || 0) + (s.pagosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.pagosManual) + '</b>' : '') + '</small>'; };
+        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>Banco entró / salió</th><th>Regalos</th><th>NETO</th><th>Comisión</th><th>RESULTADO</th><th>Diferencia</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
+            const fin = c.status === 'finalizado';
+            return '<tr class="' + (fin ? 'fin' : 'pend') + (c.arqueo === 'faltante' || c.arqueo === 'sobrante' ? ' dif' : '') + '" id="cl-' + c.dateKey + '"><td><b>' + c.dateKey + '</b><br><small>' + c.nuevos + ' nuevos · ' + c.retenidos + ' ret.</small></td>' +
+                '<td>' + (fin ? '<span class="cl-st fin">✅ Cerrado' + (c.finalizedBy === 'auto' ? ' (auto)' : '') + '</span>' : '<span class="cl-st">⏳ Hoy / en curso</span>') + '</td>' +
+                '<td><b>' + _clM(c.depositos) + '</b><br>' + det(c) + '</td>' +
+                '<td><b>' + _clM(c.retiros) + '</b><br>' + detR(c) + '</td>' +
+                '<td><small>' + (c.bankSource === 'api' ? 'API' : 'avisos') + '</small> ' + _clM(c.bankIn) + ' / ' + _clM(c.bankOut) + '</td>' +
+                '<td>' + _clM(c.regalos) + '</td><td>' + _clC(c.neto) + '</td>' +
+                '<td>' + _clM(c.bankCommissionArs || 0) + '<br><small>' + (c.bankCommissionPct != null ? c.bankCommissionPct + '%' : '—') + '</small></td>' +
+                '<td><b>' + _clC(c.resultado) + '</b>' + (c.resultadoUsd != null ? '<br><small>' + _clU(c.resultadoUsd) + '</small>' : '') + '</td>' +
                 '<td>' + arq(c) + '</td>' +
-                '<td style="white-space:nowrap;">' + (fin ? '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {reopen:true})">Reabrir</button>' : '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {})">Guardar</button> <button class="btn-primary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {finalize:true})">Finalizar</button> <button class="btn-secondary btn-small" title="Vuelve a calcular los números del día (sistema y banco)" onclick="cierresSave(\'' + c.dateKey + '\', {recalc:true})">↻</button>') + '</td></tr>';
+                '<td style="white-space:nowrap;"><button class="btn-secondary btn-small" onclick="cierresDetalle(\'' + c.dateKey + '\')">🔍 Ver detalle</button> <button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {recalc:true})" title="Vuelve a calcular con los datos de ahora">↻</button></td></tr>' +
+                '<tr class="cl-det" id="cld-' + c.dateKey + '" style="display:none;"><td colspan="11"></td></tr>';
         }).join('') + '</tbody></table>';
     } catch (_) { if (list) list.textContent = 'Error de conexión'; }
 }
+// #744: conciliación del día — qué explica la diferencia y qué queda sin explicar
+async function cierresDetalle(dk) {
+    const row = document.getElementById('cld-' + dk); if (!row) return;
+    const cell = row.querySelector('td'); if (row.style.display !== 'none') { row.style.display = 'none'; return; }
+    row.style.display = ''; cell.innerHTML = '<div class="dia-note">Conciliando…</div>';
+    try {
+        const r = await authFetch('/api/admin/cierres/' + dk + '/detalle'); const j = await r.json(); if (!r.ok) { cell.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
+        const d = j.detalle || {}, s = d.sistema || {}, b = d.banco || {}, it = d.items || {};
+        const money = function (n) { return _clM(n).replace('$-', '-$'); };
+        const signed = function (n) { return (n > 0 ? '+' : '') + money(n); };
+        const sev = { alta: 'cl-sev-alta', media: 'cl-sev-media', baja: 'cl-sev-baja' };
+        let html = '<div class="cl-rec">';
+        html += '<div class="cl-rec-cols"><div class="cl-rec-box"><b>🖥️ Sistema</b>' +
+            '<div>Depósitos automáticos (banco): <b>' + money(s.depositosAuto || 0) + '</b> · ' + (s.depositosAutoN || 0) + '</div>' +
+            '<div>Depósitos a mano (agente): <b class="' + (s.depositosManual ? 'cl-warn' : '') + '">' + money(s.depositosManual || 0) + '</b> · ' + (s.depositosManualN || 0) + '</div>' +
+            (s.depositosPrueba ? '<div>Depósitos de prueba: <b>' + money(s.depositosPrueba) + '</b> · ' + (s.depositosPruebaN || 0) + '</div>' : '') +
+            '<div>Retiros: <b>' + money(s.retiros || 0) + '</b> · ' + (s.retirosN || 0) + ' (pagados por banco ' + money(s.pagosBanco || 0) + ' · a mano <b class="' + (s.pagosManual ? 'cl-warn' : '') + '">' + money(s.pagosManual || 0) + '</b>)</div></div>' +
+            '<div class="cl-rec-box"><b>🏦 Banco</b>' +
+            '<div>Entró: <b>' + money(b.entradas || 0) + '</b> · ' + (b.entradasN || 0) + ' (acreditadas ' + money(b.entradasAcreditadas || 0) + ')</div>' +
+            '<div>Sin acreditar a nadie: <b class="' + (b.entradasSinAcreditar ? 'cl-warn' : '') + '">' + money(b.entradasSinAcreditar || 0) + '</b> · ' + (b.entradasSinAcreditarN || 0) + '</div>' +
+            (b.entradasDevueltas ? '<div>Devueltas (rebote): <b>' + money(b.entradasDevueltas) + '</b></div>' : '') + (b.entradasDupIgn ? '<div>Duplicadas / ignoradas: <b>' + money(b.entradasDupIgn) + '</b></div>' : '') +
+            '<div>Salió: <b>' + money(b.salidas || 0) + '</b> · ' + (b.salidasN || 0) + '</div></div></div>';
+        html += '<div class="cl-rec-dif ' + (d.diferencia === 0 ? 'ok' : 'bad') + '"><b>Diferencia banco − sistema: ' + signed(d.diferencia || 0) + '</b> · explicado ' + signed(d.explicado || 0) + ' · <b>sin explicar ' + signed(d.sinExplicar || 0) + '</b><div class="cl-rec-sum">' + escapeHtml(d.resumen || '') + '</div></div>';
+        if ((d.causas || []).length) {
+            html += '<table class="data-table cl-causas"><thead><tr><th>Posible causa</th><th>Monto</th><th>Impacto</th><th>Qué revisar</th></tr></thead><tbody>' + d.causas.map(function (c) { return '<tr class="' + (sev[c.severidad] || '') + '"><td><b>' + escapeHtml(c.titulo) + '</b></td><td>' + money(c.monto) + '</td><td><b>' + signed(c.impacto) + '</b></td><td><small>' + escapeHtml(c.explica) + '</small></td></tr>'; }).join('') + '</tbody></table>';
+        }
+        const lst = function (titulo, arr, cols) { if (!arr || !arr.length) return ''; return '<details class="cl-list"><summary>' + titulo + ' (' + arr.length + ')</summary><table class="data-table"><thead><tr>' + cols.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') + '</tr></thead><tbody>' + arr.map(function (x) { return '<tr>' + cols.map(function (c) { const v = x[c[0]]; return '<td>' + (c[0] === 'hora' && v ? new Date(v).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : (c[0] === 'monto' ? money(v) : escapeHtml(String(v == null ? '—' : v)))) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></details>'; };
+        html += lst('Cargas acreditadas a mano', it.depositosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['nota', 'Nota']]);
+        html += lst('Entradas del banco sin acreditar', it.entradasSinAcreditar, [['hora', 'Hora'], ['de', 'De'], ['monto', 'Monto'], ['estado', 'Estado']]);
+        html += lst('Retiros pagados a mano', it.pagosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['via', 'Vía']]);
+        html += lst('Cargas de prueba', it.depositosPrueba, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['nota', 'Nota']]);
+        html += '<div class="cl-rec-adj"><details><summary>⚙️ Ajustes manuales del día (comisión, banco, USDT)</summary>' + _cierresAdjHtml(dk) + '</details></div></div>';
+        cell.innerHTML = html;
+    } catch (e) { cell.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
+}
+function _cierresAdjHtml(dk) {
+    const c = _clItems.find(function (x) { return x.dateKey === dk; }) || {}; const fin = c.status === 'finalizado'; const dis = fin && c.finalizedBy !== 'auto' ? 'disabled' : '';
+    return '<div class="cl-adj-grid">' +
+        '<label>Comisión % del día<input type="number" class="cl-in cl-pct" id="clPctD-' + dk + '" value="' + (c.bankCommissionPct != null ? c.bankCommissionPct : '') + '" min="0" max="50" step="0.01" ' + dis + '></label>' +
+        '<label>Comisión monto<input type="number" class="cl-in" id="clCom-' + dk + '" value="' + (c.bankCommissionArs || '') + '" step="1" ' + dis + ' oninput="this.dataset.touched=\'1\'"></label>' +
+        '<label>Banco entró (manual)<input type="number" class="cl-in" id="clBin-' + dk + '" value="' + (c.bankInManual != null ? c.bankInManual : '') + '" step="1" ' + dis + '></label>' +
+        '<label>Banco salió (manual)<input type="number" class="cl-in" id="clBout-' + dk + '" value="' + (c.bankOutManual != null ? c.bankOutManual : '') + '" step="1" ' + dis + '></label>' +
+        '<label>Saldo 00:00<input type="number" class="cl-in" id="clBs-' + dk + '" value="' + (c.bankBalanceStartManual != null ? c.bankBalanceStartManual : '') + '" step="1" ' + dis + '></label>' +
+        '<label>Saldo 24:00<input type="number" class="cl-in" id="clBe-' + dk + '" value="' + (c.bankBalanceEndManual != null ? c.bankBalanceEndManual : '') + '" step="1" ' + dis + '></label>' +
+        '<label>USDT (opcional)<input type="number" class="cl-in" id="clUsd-' + dk + '" value="' + (c.usdtRate || '') + '" placeholder="' + (_clUsdt || '') + '" min="1" step="1" ' + dis + '></label>' +
+        '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' +
+        (fin && c.finalizedBy !== 'auto' ? '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + dk + '\', {reopen:true})">Reabrir</button>' : '<button class="btn-primary btn-small" onclick="cierresSave(\'' + dk + '\', {})">Guardar ajustes</button> <button class="btn-secondary btn-small" onclick="cierresSave(\'' + dk + '\', {finalize:true})">Cerrar a mano</button>') +
+        '</div>';
+}
+window.cierresDetalle = cierresDetalle;
 async function cierresSave(dk, extra) {
     const body = Object.assign({}, extra || {});
     const com = document.getElementById('clCom-' + dk), usd = document.getElementById('clUsd-' + dk), pct = document.getElementById('clPctD-' + dk), bin = document.getElementById('clBin-' + dk), bout = document.getElementById('clBout-' + dk);
@@ -5883,7 +5935,7 @@ async function cierresSave(dk, extra) {
     if (bin && !bin.disabled) body.bankInManual = bin.value; if (bout && !bout.disabled) body.bankOutManual = bout.value;
     const bs = document.getElementById('clBs-' + dk), be = document.getElementById('clBe-' + dk); if (bs && !bs.disabled) body.bankBalanceStartManual = bs.value; if (be && !be.disabled) body.bankBalanceEndManual = be.value;
     if (usd && !usd.disabled && usd.value) body.usdtRate = usd.value;
-    if (extra && extra.finalize && !(body.usdtRate > 0)) { if (_clUsdt && confirm('No cargaste la cotización de ese día. ¿Uso la guardada ($' + _clUsdt.toLocaleString('es-AR') + ')?')) body.usdtRate = _clUsdt; else { showToast('Completá la cotización USDT para finalizar', 'error'); return; } }
+    // #744: la cotización USDT es opcional (el cierre no la necesita)
     try { const r = await authFetch('/api/admin/cierres/' + dk, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast(extra && extra.finalize ? 'Cierre ' + dk + ' FINALIZADO' : (extra && extra.reopen ? 'Cierre reabierto' : 'Cierre guardado'), 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function cierresSaveConfig() {
@@ -11506,7 +11558,7 @@ async function retryRouletteCredit(spinId) {
 function authFetch(url, opts) {
     const o = opts || {};
     o.headers = Object.assign({}, o.headers || {}, { 'Authorization': 'Bearer ' + currentToken });
-    if (/^\/api\/admin\/(datos-ia\/|datos2?(\?|$)|central\/(ingresos|app-users))/.test(String(url))) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590 · #743: la misma clave para todo lo que es Datos
+    if (/^\/api\/admin\/(datos-ia\/|datos2?(\?|$)|central\/(ingresos|app-users)|campaigns|publisher-admins|publishers\/|influencer-|cierres)/.test(String(url))) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590 · #743: la misma clave para todo lo que es Datos
     if (o.body && !o.headers['Content-Type']) o.headers['Content-Type'] = 'application/json';
     return fetch(API_URL + url, o);
 }

@@ -6730,13 +6730,16 @@ function buildBulkSmsQuery(filters, onlyVerified = false) {
 // Va ANTES de esas rutas (Express evalúa en orden). Sin clave configurada no se exige.
 function _datosPinGate(req, res, next) {
   Promise.resolve().then(async () => {
+    if (req.user && req.user.role === 'publisher_admin') return next(); // #745: las cuentas de publicista usan su propio lockdown
     const h = await _datosPinHash(); if (!h) return next();
     const pin = String(req.get('x-datos-pin') || '');
     if (pin && _sha(pin) === h) return next();
     return res.status(423).json({ error: 'Esta sección está protegida con clave.', code: 'PIN_REQUIRED' });
   }).catch(() => res.status(500).json({ error: 'Error del servidor' }));
 }
-['/api/admin/datos', '/api/admin/datos2', '/api/admin/central/ingresos', '/api/admin/central/app-users'].forEach((p) => app.use(p, authMiddleware, adminMiddleware, _datosPinGate));
+['/api/admin/datos', '/api/admin/datos2', '/api/admin/central/ingresos', '/api/admin/central/app-users',
+ // #745 (owner): "todo lo que es publicista con clave, y cierres también: es todo privado"
+ '/api/admin/campaigns', '/api/admin/publisher-admins', '/api/admin/publishers', '/api/admin/influencer-stories', '/api/admin/influencer-users', '/api/admin/cierres'].forEach((p) => app.use(p, authMiddleware, adminMiddleware, _datosPinGate));
 app.post('/api/admin/bulk-sms/preview', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -19971,6 +19974,70 @@ function _closeApply(doc, cfg) {
   doc.resultadoUsd = doc.usdtRate > 0 ? Math.round((doc.resultado / doc.usdtRate) * 100) / 100 : null;
   return doc;
 }
+// #744 (owner): CONCILIACIÓN DEL DÍA — "al ser automático tiene que dar 0; pero hay gente confirmando pagos o cargas y ahí quiero ver
+// si hay errores: que se pueda ver el detalle y me marques la diferencia de dónde puede ser". Desglosa el día en:
+//   SISTEMA: depósitos automáticos (banco → acreditó solo), manuales (un agente acreditó a mano), de prueba; retiros pagados por el banco
+//            (API) vs pagados a mano / por fuera.
+//   BANCO:   entradas acreditadas, entradas SIN acreditar (plata en el banco que no llegó a nadie), devueltas (rebote), duplicadas/ignoradas;
+//            salidas ligadas a retiros vs otras salidas (comisiones, devoluciones).
+//   DIFERENCIA = (banco entró − banco salió) − (depósitos − retiros). Cada causa dice cuánto explica y con qué signo; lo que no se
+//   explica queda como "sin explicar" para revisar a mano.
+async function _closeReconcile(dayKey) {
+  const d0 = new Date(dayKey + 'T03:00:00.000Z'), d1 = new Date(d0.getTime() + 86400000 - 1);
+  const okSt = { $nin: ['failed', 'cancelled'] };
+  const GIFT = ['install_bonus', 'welcome_gift', 'payout_refund'];
+  const out = { dateKey: dayKey, sistema: {}, banco: {}, causas: [], items: {} };
+  const r0 = (n) => Math.round(Number(n) || 0);
+  // ---- SISTEMA: depósitos
+  const deps = await Transaction.find({ type: 'deposit', status: okSt, 'metadata.source': { $nin: GIFT }, timestamp: { $gte: d0, $lte: d1 } }).select('amount username adminUsername description metadata timestamp').lean();
+  const cls = (t) => { const src = (t.metadata && t.metadata.source) || ''; if (/PRUEBA|test/i.test(String(t.description || ''))) return 'prueba'; if (src === 'auto_hgcash' || src === 'self_service') return 'auto'; return 'manual'; };
+  const g = { auto: [], manual: [], prueba: [] }; deps.forEach((t) => g[cls(t)].push(t));
+  const sum = (arr) => r0(arr.reduce((s, t) => s + (Number(t.amount) || 0), 0));
+  out.sistema.depositosAuto = sum(g.auto); out.sistema.depositosAutoN = g.auto.length;
+  out.sistema.depositosManual = sum(g.manual); out.sistema.depositosManualN = g.manual.length;
+  out.sistema.depositosPrueba = sum(g.prueba); out.sistema.depositosPruebaN = g.prueba.length;
+  out.sistema.depositos = out.sistema.depositosAuto + out.sistema.depositosManual + out.sistema.depositosPrueba;
+  out.items.depositosManual = g.manual.slice(0, 50).map((t) => ({ hora: t.timestamp, usuario: t.username, monto: r0(t.amount), agente: t.adminUsername || null, nota: String(t.description || '').slice(0, 80) }));
+  out.items.depositosPrueba = g.prueba.slice(0, 20).map((t) => ({ hora: t.timestamp, usuario: t.username, monto: r0(t.amount), nota: String(t.description || '').slice(0, 80) }));
+  // ---- SISTEMA: retiros
+  const wds = await Transaction.find({ type: 'withdrawal', status: okSt, timestamp: { $gte: d0, $lte: d1 } }).select('amount username timestamp').lean();
+  out.sistema.retiros = sum(wds); out.sistema.retirosN = wds.length;
+  const pays = await PendingPayout.find({ status: 'paid', paidAt: { $gte: d0, $lte: d1 } }).select('amount username paidBy paidVia hgTransactionId paidAt').lean();
+  const payAuto = pays.filter((p) => p.hgTransactionId), payMan = pays.filter((p) => !p.hgTransactionId);
+  out.sistema.pagosBanco = sum(payAuto); out.sistema.pagosBancoN = payAuto.length;
+  out.sistema.pagosManual = sum(payMan); out.sistema.pagosManualN = payMan.length;
+  out.items.pagosManual = payMan.slice(0, 50).map((p) => ({ hora: p.paidAt, usuario: p.username, monto: r0(p.amount), agente: p.paidBy || null, via: p.paidVia || null }));
+  // ---- BANCO: movimientos del día (fecha del banco o de alta)
+  const movs = await BankMovement.find({ createdAt: { $gte: new Date(d0.getTime() - 86400000), $lte: new Date(d1.getTime() + 86400000) } }).select('amount direction status matchStatus date createdAt fromName toName username').lean();
+  const inDay = movs.filter((m) => { const dd = m.date || m.createdAt; return dd >= d0 && dd <= d1 && !/reject|fail|cancel|error/i.test(String(m.status || '')); });
+  const isIn = (m) => String(m.direction || '').toLowerCase() === 'inbound', isOut = (m) => String(m.direction || '').toLowerCase() === 'outbound';
+  const ins = inDay.filter(isIn), outs = inDay.filter(isOut);
+  const ms = (m) => String(m.matchStatus || '');
+  const bIn = { acreditadas: ins.filter((m) => ['auto_charged', 'manual_charged', 'shadow_matched', 'redirected'].includes(ms(m))), sinAcreditar: ins.filter((m) => ['pending', 'claiming', 'no_match', 'needs_review', 'awaiting_platform', 'error', null, ''].includes(ms(m) || '')), devueltas: ins.filter((m) => ms(m) === 'refunded'), dupIgn: ins.filter((m) => ['duplicate', 'ignored'].includes(ms(m))) };
+  out.banco.entradas = sum(ins); out.banco.entradasN = ins.length;
+  out.banco.entradasAcreditadas = sum(bIn.acreditadas); out.banco.entradasSinAcreditar = sum(bIn.sinAcreditar); out.banco.entradasSinAcreditarN = bIn.sinAcreditar.length;
+  out.banco.entradasDevueltas = sum(bIn.devueltas); out.banco.entradasDupIgn = sum(bIn.dupIgn);
+  out.banco.salidas = sum(outs); out.banco.salidasN = outs.length;
+  out.items.entradasSinAcreditar = bIn.sinAcreditar.slice(0, 50).map((m) => ({ hora: m.date || m.createdAt, de: m.fromName || null, monto: r0(m.amount), estado: ms(m) || 'pendiente' }));
+  // ---- DIFERENCIA y causas (signo: + = el banco tiene MÁS que el sistema = sobrante; − = faltante)
+  const dif = r0((out.banco.entradas - out.banco.salidas) - (out.sistema.depositos - out.sistema.retiros));
+  out.diferencia = dif; out.sinDatosBanco = inDay.length === 0;
+  const add = (clave, titulo, monto, signo, explica, severidad) => { if (!(Math.abs(monto) > 0)) return; out.causas.push({ clave, titulo, monto: r0(monto), impacto: r0(monto) * signo, explica, severidad }); };
+  add('dep_manual', 'Cargas acreditadas A MANO por un agente (sin pasar por el banco)', out.sistema.depositosManual, -1, 'El sistema las cuenta como depósito pero el banco no tiene esa entrada. Si el cliente transfirió, tiene que verse como entrada del banco; si no, revisar con quién y por qué se acreditó.', 'alta');
+  add('dep_prueba', 'Cargas de PRUEBA (usuario tester)', out.sistema.depositosPrueba, -1, 'Sólo en el entorno de prueba. En producción tiene que ser $0.', 'media');
+  add('in_sin_acreditar', 'Entradas del banco SIN acreditar a ningún cliente', out.banco.entradasSinAcreditar, +1, 'Plata que entró al banco y no se cargó a nadie (sin match, pendiente o en revisión). Revisar en Cargas pendientes / Movimientos.', 'alta');
+  add('in_devueltas', 'Entradas devueltas al origen (rebote por carga menor al mínimo)', out.banco.entradasDevueltas, +1, 'Entró y se devolvió: la entrada cuenta en el banco pero la salida de la devolución también. Neutro si la devolución salió el mismo día.', 'baja');
+  add('in_dup', 'Entradas duplicadas o ignoradas por el sistema', out.banco.entradasDupIgn, +1, 'El banco las informó pero el sistema las descartó (duplicado o ignorado). Verificar que no sean cargas reales.', 'media');
+  add('pago_manual', 'Retiros pagados A MANO (por fuera de la API del banco)', out.sistema.pagosManual, +1, 'El sistema los cuenta como retiro pero el banco no registra la salida por API. Si se pagaron desde otra cuenta, es normal; si no, verificar.', 'alta');
+  const salidasOtras = r0(out.banco.salidas - out.sistema.pagosBanco - out.banco.entradasDevueltas);
+  add('out_otras', 'Otras salidas del banco (comisiones, transferencias ajenas a retiros)', salidasOtras, -1, 'Salieron del banco sin ser un retiro de cliente ni una devolución: comisiones del banco u otros pagos.', 'media');
+  const explicado = r0(out.causas.reduce((s, c) => s + c.impacto, 0));
+  out.explicado = explicado; out.sinExplicar = r0(dif - explicado);
+  out.causas.sort((a, b) => Math.abs(b.impacto) - Math.abs(a.impacto));
+  out.resumen = out.sinDatosBanco ? 'Sin movimientos del banco ese día: no hay nada que conciliar.' : (dif === 0 ? 'Cuadra: el banco y el sistema coinciden.' : (Math.abs(out.sinExplicar) <= Math.max(1000, Math.round(out.sistema.depositos * 0.001)) ? 'La diferencia queda explicada por las causas de abajo.' : 'Queda una parte SIN explicar: revisar a mano los ítems marcados.'));
+  out.calculadoEn = new Date();
+  return out;
+}
 async function _closeEnsure(dayKey, recalc) {
   let doc = await DailyClose.findOne({ dateKey: dayKey });
   if (doc && doc.status === 'finalizado' && !recalc) return doc;
@@ -19979,10 +20046,21 @@ async function _closeEnsure(dayKey, recalc) {
   if (!doc) {
     try { doc = await DailyClose.create({ id: uuidv4(), ...t }); } catch (e) { if (e && e.code === 11000) doc = await DailyClose.findOne({ dateKey: dayKey }); else throw e; }
   } else if (doc.status !== 'finalizado' || recalc) { Object.assign(doc, t, { recalculatedAt: new Date() }); }
-  await _closeAttachBalances(doc); _closeApply(doc, cfg); await doc.save(); return doc;
+  await _closeAttachBalances(doc); _closeApply(doc, cfg);
+  try { doc.detalle = await _closeReconcile(dayKey); doc.markModified('detalle'); } catch (e) { logger.warn('[cierres] conciliación ' + dayKey + ': ' + e.message); }
+  await doc.save(); return doc;
 }
 // Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).
+// #744 (owner): TODO AUTOMÁTICO — no espera confirmación: los últimos 3 días se recalculan en cada pasada (llegan pagos/cargas tarde) y
+// todo día ya terminado se FINALIZA solo (finalizedBy 'auto'; un cierre finalizado a mano no se toca). USDT es opcional.
 async function _closeTick() {
+  try {
+    for (let i = 1; i <= 3; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status finalizedBy recalculatedAt').lean(); if (!ex || ex.status !== 'finalizado' || ex.finalizedBy === 'auto') { if (!ex || !ex.recalculatedAt || Date.now() - new Date(ex.recalculatedAt).getTime() > 55 * 60 * 1000) await _closeEnsure(dk, true); } }
+    const today = datosIa.dateKeyART(new Date());
+    const pend = await DailyClose.find({ status: 'pendiente', dateKey: { $lt: today } }).select('id dateKey').lean();
+    for (const p of pend) { await DailyClose.updateOne({ id: p.id, status: 'pendiente' }, { $set: { status: 'finalizado', finalizedAt: new Date(), finalizedBy: 'auto', autoFinalizedAt: new Date() } }); }
+    if (pend.length) logger.info('[cierres] finalizados solos: ' + pend.map((p) => p.dateKey).join(', '));
+  } catch (e) { logger.warn('[cierres] auto: ' + e.message); }
   try { for (let i = 1; i <= 7; i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status recalculatedAt generatedAt').lean(); if (!ex) await _closeEnsure(dk, false); else if (ex.status !== 'finalizado' && i <= 2 && (Date.now() - new Date(ex.recalculatedAt || ex.generatedAt).getTime()) > 6 * 3600000) await _closeEnsure(dk, true); } } catch (e) { logger.warn('[cierres] tick: ' + e.message); }
 }
 setTimeout(() => { _closeTick(); setInterval(_closeTick, 20 * 60 * 1000); }, 90 * 1000);
@@ -20012,6 +20090,16 @@ app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (re
     res.json({ success: true, config: cfg });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
+// #744: detalle de conciliación del día (fresco) — qué es automático, qué manual, qué hay en el banco y de dónde puede venir la diferencia
+app.get('/api/admin/cierres/:dateKey/detalle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const dk = String(req.params.dateKey || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return res.status(400).json({ error: 'Día inválido' });
+    const det = await _closeReconcile(dk);
+    try { await DailyClose.updateOne({ dateKey: dk }, { $set: { detalle: det } }); } catch (_) {}
+    res.json({ success: true, detalle: det });
+  } catch (e) { logger.error('[cierres] detalle ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
@@ -20031,7 +20119,7 @@ app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (
     if (b.usdtRate != null && b.usdtRate !== '') { const r = Number(b.usdtRate); if (!(r > 0)) return res.status(400).json({ error: 'Cotización inválida' }); doc.usdtRate = Math.round(r); }
     if (b.notes != null) doc.notes = String(b.notes).slice(0, 500);
     _closeApply(doc, cfg);
-    if (b.finalize) { if (!(doc.usdtRate > 0)) return res.status(400).json({ error: 'Para finalizar hay que completar la cotización USDT' }); doc.status = 'finalizado'; doc.finalizedAt = new Date(); doc.finalizedBy = req.user.username; }
+    if (b.finalize) { doc.status = 'finalizado'; doc.finalizedAt = new Date(); doc.finalizedBy = req.user.username; } // #744: USDT opcional
     if (b.reopen) { doc.status = 'pendiente'; doc.finalizedAt = null; doc.finalizedBy = null; }
     doc.updatedBy = req.user.username; await doc.save();
     logger.info('[cierres] ' + dk + ' ' + (b.finalize ? 'FINALIZADO' : 'actualizado') + ' por ' + req.user.username + ' comisión $' + doc.bankCommissionArs + ' usdt ' + doc.usdtRate);

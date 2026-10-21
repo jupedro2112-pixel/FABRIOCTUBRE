@@ -34,6 +34,9 @@ const schema = new mongoose.Schema({
   usdtRate: { type: Number, default: null },
   resultadoUsd: { type: Number, default: null },
   notes: { type: String, default: '' },
+  // #744 (owner): CONCILIACIÓN automática: desglose del día (auto/manual/banco) y posibles causas de la diferencia. Se recalcula solo.
+  detalle: { type: mongoose.Schema.Types.Mixed, default: null },
+  autoFinalizedAt: { type: Date, default: null },
   generatedAt: { type: Date, default: Date.now },
   recalculatedAt: { type: Date, default: null },
   finalizedAt: { type: Date, default: null },

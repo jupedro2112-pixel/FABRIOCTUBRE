@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ADMIN VIPCARGAS</title>
+    <title>PICA ROJA · Panel</title>
     
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -112,9 +112,9 @@ document.addEventListener('change', function (ev) {
     <div id="app" class="app hidden">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="sidebar-header">
-                <span class="icon icon-gamepad"></span>
-                <span>Admin Panel</span>
+            <div class="sidebar-header"><!-- #745 (owner): "PICA ROJA Panel" con el logo -->
+                <img src="/icons/icon-96x96.png" alt="" class="sb-logo">
+                <span class="sb-brand"><b>PICA ROJA</b><small>Panel</small></span>
             </div>
             <nav class="sidebar-nav">
                 <!-- #743 (owner 2026-10-21): MENÚ REORGANIZADO — Configuración · Atención · App · Administrativo · Publicidad (+ Interno abajo). Todo lo que es DATOS (Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app) y SMS masivo piden la clave (Configuración → Clave de Datos). -->
@@ -157,6 +157,10 @@ document.addEventListener('change', function (ev) {
 <span>Reseñas</span>
 <span id="reviewsBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:4px;">0</span>
 </a>
+<a href="#" class="nav-item" data-section="referrals">
+<span class="icon icon-chart"></span>
+<span>Referidos</span>
+</a>
 <a href="#" class="nav-item" data-section="menuLayout">
 <span>🧭</span>
 <span>Elegir menú</span>
@@ -184,7 +188,7 @@ document.addEventListener('change', function (ev) {
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🗂️ Administrativo</div>
 <a href="#" class="nav-item" data-section="cierres">
 <span>🧾</span>
-<span>Cierres</span>
+<span>Cierres 🔒</span>
 <span id="cierresBadge" style="display:none;background:#ffb347;color:#111;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:auto;">0</span>
 </a>
 <a href="#" class="nav-item" data-section="users">
@@ -223,10 +227,6 @@ document.addEventListener('change', function (ev) {
 <span>💸</span>
 <span>Reembolsos reclamados</span>
 </a>
-<a href="#" class="nav-item" data-section="referrals">
-<span class="icon icon-chart"></span>
-<span>Referidos</span>
-</a>
 <a href="#" class="nav-item" data-section="suspiciousAccounts">
 <span>🕵️</span>
 <span>Cuentas sospechosas</span>
@@ -239,15 +239,15 @@ document.addEventListener('change', function (ev) {
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">📣 Publicidad</div>
 <a href="#" class="nav-item" data-section="campaigns">
 <span>🎯</span>
-<span>Publicidad</span>
+<span>Publicidad 🔒</span>
 </a>
 <a href="#" class="nav-item nav-item-publishers-dashboard" data-section="publishersDashboard" style="display:none">
 <span>📊</span>
-<span>Dashboard Publicistas</span>
+<span>Dashboard Publicistas 🔒</span>
 </a>
 <a href="#" class="nav-item nav-item-publisher-admins" data-section="publisherAdmins" style="display:none">
 <span>🧑‍💼</span>
-<span>Cuentas Publicistas</span>
+<span>Cuentas Publicistas 🔒</span>
 </a>
 <!-- #408 (owner): se eliminaron del menú "Automatización" y "Estrategia de bonos" (grupo "No se usa"); sus secciones se quitaron del HTML. -->
                 <!-- #383/#387 (owner): el chat viejo (tipo WhatsApp) queda INTERNO y abajo de todo; Soporte pasó arriba (#387). -->
@@ -1361,7 +1361,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
             <section id="cierresSection" class="section dia">
                 <div class="panel-header cfg-head">
-                    <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Cada día se genera solo con los números reales. Vos completás la comisión del banco (o se aplica el % por defecto) y la cotización USDT → cierre finalizado.</div></div>
+                    <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Se cierran solos cada día con los datos del sistema y del banco (sin esperar confirmación; USDT es opcional). Si un día no da 0, tocá <b>Ver detalle</b>: te marca qué fue automático, qué se confirmó a mano y de dónde puede venir la diferencia.</div></div>
                     <button class="refresh-btn" onclick="cierresLoad()" title="Actualizar">🔄</button>
                 </div>
                 <div class="dia-card"><div class="dia-card-h"><b>⚙️ Comisión del banco por defecto</b><small>% sobre los depósitos del día. Es el punto de partida: en cada cierre lo podés cambiar (% de ese día o monto exacto) porque puede variar.</small></div>

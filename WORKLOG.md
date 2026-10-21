@@ -8,6 +8,32 @@
 
 ## Sesión 2026-10-18
 
+### 745. 🎨 Panel estilo Pinterest: menú compacto, títulos recuadrados, "PICA ROJA Panel" con logo, Referidos en App, clave en Publicidad y Cierres — admin-sw v142
+**Pedido (owner):** "Referidos dentro de App también; achicá todo el menú y hacelo más estilo Pinterest, moderno y prolijo con los
+títulos bien recuadrados; en vez de Admin Panel poné PICA ROJA Panel con el logo; todo lo que es publicista con clave y Cierres
+también, es todo privado". `pin-admin.css`: sidebar de 224 px, ítems de 12,5 px, títulos de grupo como pastillas recuadradas, marca
+con logo + "PICA ROJA / PANEL", tarjetas y botones redondeados. `<title>` "PICA ROJA · Panel". Referidos pasa al grupo App.
+Clave (la misma de Datos): server `_datosPinGate` también en `/api/admin/campaigns`, `/publisher-admins`, `/publishers`,
+`/influencer-stories`, `/influencer-users` y `/cierres` (las cuentas `publisher_admin` no pasan por el gate: tienen su lockdown);
+panel: `datosIaGate` en Cierres y Publicidad + `authFetch` manda el header; etiquetas con 🔒.
+
+### 744. 🧾 CIERRES AUTOMÁTICOS de verdad: se cierran solos, sin USDT, con conciliación que marca de dónde viene la diferencia
+**Pedido (owner):** "quiero cierres diarios automáticos con lo que ya tenemos; detectá el banco siempre; no esperes confirmación de
+nada; el USDT es extra; dejá el cierre día a día y que dé 0; al ser automático tiene que dar 0 pero hay gente confirmando pagos o
+cargas y ahí quiero ver si hay errores: si hay, que se pueda ver el detalle y me marques la diferencia de dónde puede ser (prolijo y
+fino, no puede fallar)". **Server:** `_closeReconcile(dayKey)` desglosa SISTEMA (depósitos automáticos `auto_hgcash`/`self_service`,
+a mano con agente, de prueba; retiros pagados por la API del banco vs a mano) y BANCO (entradas acreditadas / sin acreditar /
+devueltas / duplicadas-ignoradas, salidas), calcula `diferencia = (entró − salió) − (depósitos − retiros)` y arma `causas` con monto,
+impacto (+ sobrante / − faltante), severidad y qué revisar: cargas a mano sin banco, entradas sin acreditar, devoluciones, duplicadas,
+retiros pagados a mano, otras salidas (comisiones); `explicado` y `sinExplicar`; listas de ítems (hora, usuario, monto, agente). Se
+guarda en `DailyClose.detalle` en cada `_closeEnsure` y hay `GET /api/admin/cierres/:dateKey/detalle` (fresco). `_closeTick` (20 min):
+recalcula los últimos 3 días (llegan pagos/cargas tarde) salvo los cerrados a mano, y FINALIZA solo todo día anterior a hoy
+(`finalizedBy:'auto'`, `autoFinalizedAt`); finalizar ya no exige USDT. **Panel:** tabla día a día con Depósitos (auto / a mano /
+prueba), Retiros (banco / a mano), Banco entró/salió, Regalos, NETO, Comisión, RESULTADO y Diferencia ("✅ Da 0" / "⚠ Faltante" /
+"⚠ Sobrante" / sin datos); "🔍 Ver detalle" abre la conciliación (sistema vs banco, diferencia explicada / sin explicar, tabla de
+posibles causas con severidad y listas desplegables) y, plegados, los ajustes manuales (comisión, banco, saldos, USDT opcional,
+cerrar a mano / reabrir). Badge del menú = días con diferencia.
+
 ### 743. 🗂️ Panel: menú reorganizado (Configuración · Atención · App · Administrativo · Publicidad) + clave para todo lo que es Datos y SMS — admin-sw v141
 **Pedido (owner):** "en el admin: Configuración como título; Atención con Soporte, Cargas pendientes y Retiros pendientes; App con
 Historias, Notificaciones, Reseñas, Elegir menú (y Ruleta diaria arriba); Administrativo con Cierres, Usuarios, Datos IA, Datos,
