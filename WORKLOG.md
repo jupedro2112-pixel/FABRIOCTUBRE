@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 764. 🏠 Tarjetas de servicios más chicas — SW v543
+**Pedido (owner, captura):** "achicalo más, están muy grandes los cuadrados, así todo entra mejor". Ícono de 22 px, nombre 11 px,
+detalle en una línea de 8,5 px, "Ver más" 8 px, relleno de 5 px; título de la sección más chico.
+
 ### 763. ⚡ Panel: sección "Cargas automáticas" (reporte + detalle de cada cliente que va cargando) — admin-sw v147
 **Pedido (owner):** "agregá una sección de cómo va la carga automática, abajo de Retiros pendientes: Cargas automáticas, para
 verificar que esté todo OK; ahí un reporte de cuántas cargas automáticas hay y abajo el detalle de cada cliente que va cargando".
