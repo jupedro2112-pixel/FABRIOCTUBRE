@@ -2212,3 +2212,17 @@ body.nodep .pwa-install-bar .pib-x { display: none !important; }
 @media (max-width: 360px) { .casino-brand .cb-txt { display: none !important; } .casino-brand .cb-box { padding: 3px !important; border-radius: 50% !important; } }
 /* #735 (owner): cartel de carga "plain" (cargas siguientes): sin botones, 3 s */
 .play-now-card.pn-plain #pnGift, .play-now-card.pn-plain #playNowBtn, .play-now-card.pn-plain #playNowLater, .play-now-card.pn-plain .pn-later { display: none !important; }
+/* #736 (owner): barra de instalar FINA (44 px) con "PICA ROJA oficial · Instalar app", para no tapar el juego; los espacios reservados pasan de 64 a 44 px */
+.pwa-install-bar { height: calc(44px + var(--sab, 0px)) !important; padding: 0 10px var(--sab, 0px) 10px !important; gap: 8px !important; }
+.pwa-install-bar img { width: 26px !important; height: 26px !important; border-radius: 7px !important; }
+.pwa-install-bar .pib-t b { font-size: 12.5px !important; }
+.pwa-install-bar .pib-go { padding: 7px 13px !important; font-size: 12px !important; }
+.pwa-install-bar .pib-x { width: 26px !important; height: 26px !important; font-size: 13px !important; }
+body.has-install-bar.menu2 #bottomNav.bottom-nav { bottom: calc(44px + var(--sab, 0px)) !important; }
+body.has-install-bar.menu2 .chat-screen, body.has-install-bar.menu2 #chatScreen { height: calc(100dvh - 60px - 44px - var(--sab, 0px)) !important; max-height: calc(100dvh - 60px - 44px - var(--sab, 0px)) !important; }
+body.has-install-bar.home-full.menu2 .home-actions-row { bottom: calc(66px + 44px + var(--sab, 0px)); }
+body.has-install-bar:not(.menu2) .chat-screen, body.has-install-bar:not(.menu2) #chatScreen { height: calc(100dvh - 44px - var(--sab, 0px)) !important; max-height: calc(100dvh - 44px - var(--sab, 0px)) !important; }
+body.has-install-bar .play-now-card, body.has-install-bar .support-bubble, body.has-install-bar #casinoSupportBubble { margin-bottom: 44px; }
+body.has-install-bar.menu2 #chatScreen .modal { padding-bottom: calc(104px + var(--sab, 0px)) !important; }
+body.has-install-bar.menu2 #chatScreen .modal .modal-content { max-height: calc(100dvh - 104px - var(--sab, 0px) - 24px) !important; }
+body.has-install-bar.casino-open .casino-load { bottom: calc(132px + env(safe-area-inset-bottom, 0px)) !important; }

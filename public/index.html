@@ -2582,7 +2582,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v526</div>
+                    <div class="pf-build" id="appBuildTag">app v527</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
@@ -4272,8 +4272,8 @@
                 installBtn.className = 'pwa-install-bar';
                 installBtn.setAttribute('role', 'dialog');
                 installBtn.innerHTML = '<img src="icons/icon-96x96.png" alt="">' +
-                    '<span class="pib-t"><b>PICA ROJA oficial</b><small>picaroja.com · cargas automáticas</small></span>' +
-                    '<button type="button" class="pib-go" id="pwaInstallLabel">Instalar</button>' +
+                    '<span class="pib-t"><b>PICA ROJA oficial</b></span>' + // #736 (owner): sin subtítulo, barra fina
+                    '<button type="button" class="pib-go" id="pwaInstallLabel">Instalar app</button>' +
                     '<button type="button" class="pib-x" id="pwaInstallClose" title="Ocultar" aria-label="Ocultar">✕</button>';
                 document.body.appendChild(installBtn);
                 installBtn.querySelector('#pwaInstallLabel').addEventListener('click', handleInstallClick);
@@ -4285,10 +4285,7 @@
             }
             installBtn.style.display = 'flex';
             document.body.classList.add('has-install-bar'); // el menú inferior sube encima de la barra
-            if (isIOS) {
-                const _lbl = installBtn.querySelector('#pwaInstallLabel');
-                if (_lbl) _lbl.textContent = 'Agregar a Inicio';
-            }
+            // #736 (owner): dice "Instalar app" también en iPhone (antes "Agregar a Inicio")
         }
         
         window.showInstallButton = showInstallButton; // #541: auth.js lo llama al entrar

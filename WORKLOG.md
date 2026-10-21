@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 736. 📲 Barra de instalar más fina: "PICA ROJA oficial · Instalar app", sin subtítulo — SW v527
+**Pedido (owner, captura):** "que diga Instalar app, sacá lo de cargas (el subtítulo), hacela más fina para que no tape el juego". La
+barra `#pwaInstallButton` pasa de 64 a 44 px, logo 26 px, sin "picaroja.com · cargas automáticas"; el botón dice "Instalar app" también
+en iPhone (antes "Agregar a Inicio"). Los espacios reservados con `body.has-install-bar` (menú inferior, chat, burbuja, panel del
+casino, modales) pasan de 64 a 44 px.
+
 ### 735. 🎉 Cargas siguientes: el mismo cartel "¡Entró tu carga!" sin botones, 3 segundos — SW v526
 **Pedido (owner, captura):** "después de la primera carga aparece así (con instalar la app); en las demás cargas, si instaló la app,
 dejá lo mismo pero que se vaya a los 3 segundos sin ningún botón". `showPlayNow({plain:true})`: oculta el bloque del extra, "Jugar
