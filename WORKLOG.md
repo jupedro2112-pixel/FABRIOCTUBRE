@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 721. 🎰 Tras la carga, la burbuja arriba dice sólo "CARGA RÁPIDA" con el logo (sin "movela si te molesta") — SW v514
+**Pedido (owner):** "cuando carguen que directamente figure arriba y diga solamente Carga rápida con el logo, sin el movela si te
+molesta, para que no sea mucho texto". Estado `.cq-top` (`_applyQuickTop`, recordado en `localStorage vip_cq_top`): logo 22 px +
+"CARGA RÁPIDA", sin la línea de ayuda, compacta; en `onDepositCredited`/`onWithdrawRequested` reemplaza al modo mini de #716 y se
+centra sobre la marca (#720). Antes de la carga la burbuja sigue como en #717 (con el aviso de mover).
+
 ### 720. 🎰 Tras la carga (o retiro), la burbuja mini se ubica centrada sobre PICA ROJA en la barra — SW v513
 **Pedido (owner):** "una vez que cargan que la Carga rápida pase a estar en la parte central, en el medio, que no tape Historias ni
 Menú, achicala justo que quede encima de PICA ROJA". `_bubbleToBrand()`: con la burbuja ya en modo mini (#716) la centra sobre la

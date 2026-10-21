@@ -2191,3 +2191,8 @@ body.casino-open .test-btns .test-dep-btn { padding: 5px 8px; font-size: 10px; }
 .luck-btn-ig { background: var(--p-green, #0a7a3e) !important; }
 .luck-btn-sec { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; }
 body.casino-open .play-now-card { z-index: 100001 !important; }
+/* #721 (owner): burbuja "arriba" tras la carga: logo + CARGA RÁPIDA, sin el aviso de mover, más compacta */
+#casinoSupportBubble.cq-top .cq-hint { display: none !important; }
+#casinoSupportBubble.cq-top { padding: 4px 9px 4px 4px !important; gap: 5px !important; }
+#casinoSupportBubble.cq-top > img { width: 22px !important; height: 22px !important; }
+#casinoSupportBubble.cq-top .cq-txt b { font-size: 9.5px; }
