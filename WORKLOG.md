@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 775. 🎰 Casino SIMULADO propio en Girox directo (entorno de prueba)
+**Pedido (owner, captura "Entrando al casino…" en Girox directo, también desde 4G y otros teléfonos):** en Render el simulador mandaba el
+iframe a `https://1girox.com/?sim_login=…` (la web real, sin sesión, con cookies de terceros bloqueadas en el celular) y se quedaba
+cargando. Ahora el SSO simulado abre `/casino-sim?u=<usuario>`, una página NUESTRA embebible (única con `frame-ancestors 'self'`; en
+producción responde 404) que muestra el saldo del simulador y deja "simular una apuesta" (`/api/casino-sim/state|bet`, sólo con
+`_isTestEnv()` y simulador activo). Producción no cambia: con la API real el SSO sigue siendo el link de 1girox.
+
 ### 774. ⚡ Velocidad en el celular: los pulsos ya no repintan la página cada frame — SW v547
 **Pedido (owner, captura de Tor Browser "…está ralentizando el navegador" y "se traba todo").** Había 6 animaciones infinitas
 (PRIMERA CARGA, botones de cargar, aviso de SMS del Perfil, botón de la historia, anillo de historias, barra de carga) que animaban

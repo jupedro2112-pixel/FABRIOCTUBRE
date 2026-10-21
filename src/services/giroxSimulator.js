@@ -175,7 +175,9 @@ async function handle({ method, path, body, playUrl }) {
   if (!action && m === 'get') return _ok({ player: _publicPlayer(p) });
   if (action === 'password' && m === 'put') { p.password = String(body.password || ''); _scheduleSave(); return _ok({ success: true }); }
   if (action === 'session' && m === 'post') {
-    return _ok({ redirect_url: (playUrl || 'https://1girox.com') + '/?sim_login=' + encodeURIComponent(p.username), token: 'sim-' + Date.now().toString(36) });
+    // #775: antes mandaba a 1girox.com (la web real, sin sesión) y en el celular el iframe quedaba en "Entrando al casino…".
+    // Ahora el casino de prueba es una página NUESTRA (/casino-sim, embebible) con el saldo del simulador y apuesta simulada.
+    return _ok({ redirect_url: '/casino-sim?u=' + encodeURIComponent(p.username), token: 'sim-' + Date.now().toString(36) });
   }
   if (action === 'deposit' && m === 'post') return _money(st, p, 'deposit', body);
   if (action === 'withdraw' && m === 'post') return _money(st, p, 'withdraw', body);
@@ -197,6 +199,22 @@ async function adjustPlayer(username, { netwin, wagered, balance } = {}) {
   return _publicPlayer(Object.assign({}, p));
 }
 
+// #775: estado y apuesta simulada para la página /casino-sim (sólo entorno de prueba).
+async function simState(username) {
+  const st = await _load(); const p = _getPlayer(st, username);
+  if (!p) return null;
+  return { balance: _num(p.balance), rolloverPending: 0, netwin: _num(p.netwin), wagered: _num(p.wagered) };
+}
+async function simBet(username, amount) {
+  const st = await _load(); const p = _getPlayer(st, username);
+  if (!p) return { error: 'Jugador no encontrado' };
+  const amt = Math.max(1, Math.min(1000000, Math.round(_num(amount) || 1000)));
+  if (amt > _num(p.balance)) return { error: 'Saldo insuficiente para apostar' };
+  const won = Math.random() < 0.45; const delta = won ? Math.round(amt * 0.9) : -amt;
+  p.balance = _num(p.balance) + delta; p.wagered = _num(p.wagered) + amt; p.netwin = _num(p.netwin) - delta; // netwin + = el jugador perdió
+  _scheduleSave();
+  return { won, delta, balance: _num(p.balance) };
+}
 async function listPlayers() {
   const st = await _load();
   return Object.values(st.players).map((p) => ({ id: p.id, username: p.username, balance: _num(p.balance), netwin: _num(p.netwin), wagered: _num(p.wagered), ops: Object.keys(p.ops || {}).length, created_at: p.created_at }));
@@ -204,4 +222,4 @@ async function listPlayers() {
 
 async function reset() { _state = { players: {}, seq: 1000 }; _loading = Promise.resolve(_state); _scheduleSave(); }
 
-module.exports = { active, isTestEnv, handle, adjustPlayer, listPlayers, reset, STATE_KEY };
+module.exports = { active, isTestEnv, handle, adjustPlayer, listPlayers, reset, STATE_KEY, simState, simBet };

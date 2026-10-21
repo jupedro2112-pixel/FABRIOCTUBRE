@@ -299,6 +299,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   1girox, `src/services/giroxSimulator.js` responde la Partner API (alta, saldo, cargas, retiros, regalos, stats; estado en
   `Config['giroxSimState']`; `GET/POST /api/admin/girox-sim`) y `giroxService.isSimulated()` es true (`source:'simulado'`). El OTP acepta `000000`
   además del real (`OTP_TEST_BYPASS=0` lo apaga). Con API/SNS reales se apagan solos; en AWS/producción nunca aplican.
+  **#775:** el SSO simulado abre `/casino-sim?u=…` (página propia embebible, saldo + apuesta simulada), no 1girox.com.
 - **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de

@@ -1305,6 +1305,31 @@ app.get('/:code', async (req, res, next) => {
 // /manifest.json?a=<token de acceso de un solo uso>&menu=<pref>&fixed=1 (home.js installManifestSync) y acá se devuelve el manifest
 // con ese start_url. La app instalada abre /?source=pwa&acceso=… → auth.js lo canjea UNA vez → entra logueada; Girox abre con SSO.
 let _manifestBase = null;
+// #775: CASINO SIMULADO del entorno de prueba (Render). Es la única página propia que se puede embeber (frame-ancestors 'self'):
+// la abre el iframe de Girox directo cuando el SSO viene del simulador. En producción (API real) no se usa y responde 404.
+app.get('/casino-sim', (req, res) => {
+  if (!_isTestEnv()) return res.status(404).send('Not found');
+  res.removeHeader('X-Frame-Options');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'");
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'public', 'casino-sim.html'));
+});
+app.get('/api/casino-sim/state', async (req, res) => {
+  try {
+    if (!_isTestEnv() || !giroxSimulator.active()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
+    const s = await giroxSimulator.simState(String(req.query.u || '').trim().toLowerCase());
+    if (!s) return res.status(404).json({ error: 'Jugador no encontrado en el simulador' });
+    res.json(Object.assign({ success: true }, s));
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/casino-sim/bet', async (req, res) => {
+  try {
+    if (!_isTestEnv() || !giroxSimulator.active()) return res.status(404).json({ error: 'Sólo en el entorno de prueba' });
+    const r = await giroxSimulator.simBet(String((req.body || {}).u || '').trim().toLowerCase(), (req.body || {}).amount);
+    if (r.error) return res.status(400).json({ error: r.error });
+    res.json(Object.assign({ success: true }, r));
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/manifest.json', (req, res) => {
   try {
     if (!_manifestBase) _manifestBase = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'public', 'manifest.json'), 'utf8'));
