@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 685. 📄 Bases y condiciones también al pie del Perfil — SW v488
+**Pedido (owner):** "pasame el archivo acá y subilo al Perfil, ponelo abajo de todo". Link `.pf-terms` ("📄 Bases y condiciones del
+servicio ›", abre `/terminos.html` en pestaña nueva) como último elemento del `#profileModal` (después de Cerrar sesión). El archivo se
+compartió además como página aparte (artifact privado) para tenerlo a mano fuera de la app.
+
 ### 684. 💵 Carga mínima $5.000 bien clara en todos lados: con $5.000 o más se acredita sola; con menos, Soporte revisa el caso — SW v487
 **Pedido (owner):** "aclará bien cuál es la carga mínima, la de 5.000, porque la gente se pierde; si carga menos va a tener que mandar
 mensaje a Soporte para ver su caso; si carga 5.000 o más es de forma automática". **Nota `.min-note`** (verde, "✅ Con $5.000 o más se
