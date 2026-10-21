@@ -673,6 +673,11 @@ function corsOriginFn(origin, callback) {
 }
 
 const server = http.createServer(app);
+// #696: detrás de ALB (idle 60 s) + nginx de EB con keepalive al upstream, el keepAliveTimeout default de Node (5 s) hace que
+// nginx reuse una conexión que Node ya cerró → 502 "upstream prematurely closed" esporádicos (los POST no se reintentan).
+// Regla: keepAliveTimeout > idle del balanceador, headersTimeout > keepAliveTimeout.
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 const io = socketIo(server, {
   cors: {
     origin: corsOriginFn,
@@ -5854,10 +5859,14 @@ const platformSessionLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => (req.user && req.user.userId) ? ('u:' + req.user.userId) : req.ip,
   validate: { keyGeneratorIpFallback: false },
+  skipFailedRequests: true, // #696: los intentos que fallan (5xx, plataforma caída) no gastan el cupo: sólo cuentan los links emitidos
   message: { error: 'Demasiados intentos de entrar al casino. Esperá un momento.' }
 });
 
 async function platformSessionHandler(req, res) {
+  const _t0 = Date.now(); // #696
+  res.on('finish', () => { const ms = Date.now() - _t0; if (res.statusCode >= 400 || ms > 15000) { try { _diagPush('girox-sso', new Error(`HTTP ${res.statusCode} en ${ms} ms (${req.user && req.user.username})`)); } catch (_) {} } });
+  res.on('close', () => { if (!res.writableFinished) { try { _diagPush('girox-sso', new Error(`conexión cerrada sin respuesta a los ${Date.now() - _t0} ms (${req.user && req.user.username})`)); } catch (_) {} } });
   try {
     // MULTI-PLATAFORMA (2026-10-16): `body.platform` elige a qué casino entrar. Sin
     // el campo (PWA vieja) → girox, como siempre. Una plataforma habilitada SIN API
@@ -5944,6 +5953,7 @@ async function platformSessionHandler(req, res) {
 
     if (!session.success) {
       logger.error(`[girox-sso] falló para ${user.username}: ${session.error} (${session.code})`);
+      try { _diagPush('girox-sso', new Error(`createSession ${user.username}: ${session.error} (${session.code}, http ${session.httpStatus || '-'})`)); } catch (_) {}
       return res.status(502).json({ error: 'El casino no está respondiendo. Reintentá en un momento.' });
     }
 

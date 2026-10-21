@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 696. 🎰 SSO del casino en PRODUCCIÓN: 502 del servidor — diagnóstico, keepAlive para ALB/nginx y cupo que no castiga los fallos
+**Pedido (owner, capturas en picaroja.com):** "sigue pasando lo mismo, ¿qué está pasando y en qué falla?" El cartel nuevo (#695)
+ya dice el motivo: "El servidor está ocupado o reiniciando (error 502)" y, tras varios Reintentar, "Demasiados intentos de entrar
+al casino" (cupo de 20 pedidos / 5 min por usuario).
+**Qué se sabe:** picaroja.com = AWS (cookie AWSALB) detrás de Cloudflare, con app v497. `POST /api/platform/session` responde 401 en
+2 s con token inválido (la ruta llega a Node); con token válido devuelve 502 SIN JSON (si fuera nuestro 502 "El casino no está
+respondiendo" el cartel mostraría ese texto). Un 502 del ALB = el target cerró la conexión con el pedido en vuelo (proceso de Node
+caído/reiniciado, o nginx reusando una conexión keep-alive que Node ya cerró). No pasa en Render (simulador, 200 en 2 s).
+**Cambios:** (1) `server.keepAliveTimeout = 65000` / `headersTimeout = 66000` (default 5 s de Node < idle 60 s del ALB: causa
+clásica de 502 esporádicos en POST detrás de EB). (2) `platformSessionLimiter` con `skipFailedRequests: true`: los intentos que
+fallan no gastan el cupo (antes 5 toques de Reintentar × 4 reintentos = bloqueo). (3) `platformSessionHandler` registra en el ring
+buffer de `GET /api/admin/diag` cada respuesta ≥400 o >15 s, cada conexión cerrada sin respuesta y cada `createSession` fallido
+(motivo + código HTTP de 1girox). **Pendiente:** abrir `https://picaroja.com/api/admin/diag` logueado en el panel (muestra uptime,
+memoria y los últimos 20 errores) después de reproducir el fallo, y un usuario de prueba de producción para reproducirlo desde acá.
+
 ### 695. 🎰 Casino siempre ADENTRO (con Carga rápida) + conexión al casino más paciente y con motivo claro — SW v497
 **Pedidos (owner, capturas):** "NO FUNCIONA cuando están ahí en la página" / "te paso foto de cómo falla la app adentro"
 (overlay con "Reintentando… (3/3)" y después "No pudimos abrirte el casino. Revisá tu internet") y "en Entrar a la página no
