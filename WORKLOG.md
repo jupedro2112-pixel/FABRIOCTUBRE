@@ -15,7 +15,7 @@ también, es todo privado". `pin-admin.css`: sidebar de 224 px, ítems de 12,5 p
 con logo + "PICA ROJA / PANEL", tarjetas y botones redondeados. `<title>` "PICA ROJA · Panel". Referidos pasa al grupo App.
 Clave (la misma de Datos): server `_datosPinGate` también en `/api/admin/campaigns`, `/publisher-admins`, `/publishers`,
 `/influencer-stories`, `/influencer-users` y `/cierres` (las cuentas `publisher_admin` no pasan por el gate: tienen su lockdown);
-panel: `datosIaGate` en Cierres y Publicidad + `authFetch` manda el header; etiquetas con 🔒.
+panel: `datosIaGate` en Cierres, Publicidad, Cuentas y Dashboard de publicistas + `authFetch` manda el header; etiquetas con 🔒 (admin-sw v143).
 
 ### 744. 🧾 CIERRES AUTOMÁTICOS de verdad: se cierran solos, sin USDT, con conciliación que marca de dónde viene la diferencia
 **Pedido (owner):** "quiero cierres diarios automáticos con lo que ya tenemos; detectá el banco siempre; no esperes confirmación de

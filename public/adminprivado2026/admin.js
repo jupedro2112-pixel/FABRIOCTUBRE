@@ -4992,15 +4992,14 @@ function switchSection(section) {
             showToast('No tienes permiso para acceder a esta sección', 'error');
             return;
         }
-        loadPublisherAdmins();
+        datosIaGate('Cuentas publicistas').then(function (ok) { if (ok) loadPublisherAdmins(); }); // #745 clave
     }
     if (section === 'publishersDashboard') {
         if (currentAdmin?.role !== 'admin') {
             showToast('No tienes permiso para acceder a esta sección', 'error');
             return;
         }
-        loadPublishersRanking();
-        loadPublishersDashboard();
+        datosIaGate('Dashboard publicistas').then(function (ok) { if (ok) { loadPublishersRanking(); loadPublishersDashboard(); } }); // #745 clave
     }
     if (section === 'sms') {
         if (currentAdmin?.role !== 'admin') {
