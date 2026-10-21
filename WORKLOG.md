@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 773. ⚡ Velocidad: `/api/platforms` en paralelo + caché de los textos de COMANDOS
+**Pedido (owner):** "revisá la velocidad de la página, la veo algo lenta de punta a punta". Medido en Render: cualquier pedido chico
+tarda lo mismo (~latencia de red) salvo `GET /api/platforms` (lo primero que pide la app al entrar), que tardaba 2 s MÁS que el resto:
+hacía ~20 consultas a Mongo una detrás de otra (config + 9 textos de COMANDOS). Ahora: (1) `renderSystemCommand` cachea cada
+comando 15 s en memoria (`_cmdLookup`; se vacía al guardar/borrar desde COMANDOS; en otra instancia de EB el cambio tarda ≤15 s);
+(2) la ruta calcula todo en 2 tandas con `Promise.all` (misma respuesta, mismos textos y fallbacks). El resto de las rutas del
+arranque ya respondían al tiempo base. Ojo: la clear se hace ANTES de guardar, así que en la misma instancia el texto nuevo se ve al
+instante.
+
 ### 772. ⚡ Historia de BONO en 1 toque (sólo % y horas, imagen generada, botón directo a Girox) — admin-sw v149
 **Pedido (owner):** "que se pueda subir historias así directo sin completar nada más que el %, las horas disponibles y con botón
 directo a Girox, sin tener que armar la foto". Panel → Historias: recuadro "⚡ Historia de bono en 1 toque" (% · horas · avisar a

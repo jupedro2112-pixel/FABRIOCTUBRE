@@ -1571,10 +1571,21 @@ async function changePasswordByPhone(phone, newPassword) {
 // "desactivado a propósito" → devuelve null para que el caller NO envíe el mensaje.
 // Si el comando NO existe (instalación nueva, antes del seed) usa el fallback.
 // Nunca lanza: ante error de DB devuelve el fallback ya renderizado.
+// #773 (velocidad): los textos de COMANDOS se piden decenas de veces por minuto y cambian casi nunca ⇒ caché en memoria de 15 s
+// (se vacía al guardar/borrar un comando desde el panel; en otra instancia de EB el cambio tarda hasta 15 s en verse).
+const _cmdCache = new Map(); const CMD_CACHE_MS = 15000;
+function _cmdCacheClear() { _cmdCache.clear(); }
+async function _cmdLookup(name) {
+  const hit = _cmdCache.get(name);
+  if (hit && (Date.now() - hit.at) < CMD_CACHE_MS) return hit.cmd;
+  const cmd = await Command.findOne({ name, isActive: true }).lean();
+  _cmdCache.set(name, { cmd, at: Date.now() });
+  return cmd;
+}
 async function renderSystemCommand(name, fallback, vars = {}) {
   let template = fallback;
   try {
-    const cmd = await Command.findOne({ name, isActive: true }).lean();
+    const cmd = await _cmdLookup(name);
     if (cmd) {
       // El comando existe: si lo vaciaron desde el panel, no se envía nada.
       if (!cmd.response || !String(cmd.response).trim()) return null;
@@ -6002,43 +6013,35 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
       preferredPlatform = (u && platforms.normalizeId(u.preferredPlatform)) || null;
       if (preferredPlatform && !list.some((p) => p.id === preferredPlatform)) preferredPlatform = null; // fijó una que ya no está habilitada
     } catch (_) {}
+    // #773 (velocidad): antes eran ~20 consultas a Mongo UNA DETRÁS DE OTRA (cada await esperaba al anterior) ⇒ 1,5-2 s por
+    // pedido. Ahora van en 2 tandas en paralelo y los textos de COMANDOS salen de la caché de renderSystemCommand.
+    const [choiceEnabled, minDep, wdMin, withdrawOtp, autoPct, dailyPct, supportName] = await Promise.all([
+      platforms.isChoiceEnabled().catch(() => false), getMinDepositArs(), getWithdrawMinArs(), getWithdrawOtpRequired().catch(() => false),
+      getAutoLoadBonusPct().catch(() => 0), getDailyRefundPct(), getSupportAgentName().catch(() => SUPPORT_NAME_DEFAULT)
+    ]);
+    const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    const btnVars = { min: money(minDep), retiro_min: money(wdMin) };
+    const rc = (name, def, vars) => renderSystemCommand(name, def, vars).catch(() => def);
+    const [load, loadSub, withdraw, withdrawSub, homeText, newsText, refundPromo, supText, supSla] = await Promise.all([
+      rc('/sys_load_btn', LOAD_BTN_DEFAULT, btnVars), rc('/sys_load_btn_sub', LOAD_BTN_SUB_DEFAULT, btnVars),
+      rc('/sys_withdraw_btn', WITHDRAW_BTN_DEFAULT, btnVars), rc('/sys_withdraw_btn_sub', WITHDRAW_BTN_SUB_DEFAULT, btnVars),
+      rc('/sys_home_banner', HOME_BANNER_DEFAULT, { pct: autoPct }),
+      dailyPct > 0 ? rc('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct: dailyPct }) : Promise.resolve(null),
+      rc('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct: dailyPct }),
+      rc('/sys_support_intro', SUPPORT_INTRO_DEFAULT, { nombre: supportName }), rc('/sys_support_sla', SUPPORT_SLA_DEFAULT, {})
+    ]);
     res.json({
       platforms: list.map((p) => { const ad = platforms.getAdapter(p.id); const play = (ad && typeof ad.getPlayUrl === 'function' && ad.getPlayUrl()) || p.externalUrl || null;
         return { id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, playUrl: play, logoUrl: p.logoUrl || '', isDefault: p.isDefault }; }),
       askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform, preferredPlatform,
-      choiceEnabled: await platforms.isChoiceEnabled(),
-      // #266: cartel "SERVICIO COMPLETO" del chat principal (texto editable en /sys_home_banner, {pct} de
-      // Config['autoLoadBonusPct']). text === null ⇒ el comando se vació en COMANDOS → la app muestra sólo el título.
-      minDeposit: await getMinDepositArs(), // #299
-      withdrawMinArs: await getWithdrawMinArs(), // #379: retiro mínimo (modal de retiro de la app)
-      withdrawOtp: await getWithdrawOtpRequired(), // #382: la app pide el código SMS antes de crear el retiro
-      // #385: textos de los botones de abajo de la carga automática (COMANDOS). Vacío = la app deja su texto por defecto.
-      actionBtns: await (async () => {
-        try {
-          const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
-          const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()) };
-          return {
-            load: await renderSystemCommand('/sys_load_btn', LOAD_BTN_DEFAULT, vars),
-            loadSub: await renderSystemCommand('/sys_load_btn_sub', LOAD_BTN_SUB_DEFAULT, vars),
-            withdraw: await renderSystemCommand('/sys_withdraw_btn', WITHDRAW_BTN_DEFAULT, vars),
-            withdrawSub: await renderSystemCommand('/sys_withdraw_btn_sub', WITHDRAW_BTN_SUB_DEFAULT, vars)
-          };
-        } catch (_) { return null; }
-      })(),
-      homeBanner: await (async () => { const pct = await getAutoLoadBonusPct(); return { pct, text: await renderSystemCommand('/sys_home_banner', HOME_BANNER_DEFAULT, { pct }) }; })(),
-      // #349: cartel NOVEDAD del Inicio (debajo de "La única app que paga…"); text === null ⇒ vaciado en COMANDOS → no se muestra.
-      entryNews: await (async () => { const pct = await getDailyRefundPct(); return { pct, text: pct > 0 ? await renderSystemCommand('/sys_entry_news', ENTRY_NEWS_DEFAULT, { pct }) : null }; })(),
-      // #372: aviso "promoción hasta diciembre" de los reembolsos (/sys_refund_promo); null ⇒ vaciado en COMANDOS → no se muestra.
-      refundPromo: await (async () => { try { const pct = await getDailyRefundPct(); return await renderSystemCommand('/sys_refund_promo', REFUND_PROMO_DEFAULT, { pct }); } catch (_) { return REFUND_PROMO_DEFAULT; } })(),
-      // #373: SOPORTE — quién se presenta al entrar al chat (nombre / texto / plazo), editable en COMANDOS.
-      supportIntro: await (async () => {
-        try {
-          const name = await getSupportAgentName(); // #377: rota cada 8 h
-          const text = await renderSystemCommand('/sys_support_intro', SUPPORT_INTRO_DEFAULT, { nombre: name });
-          const sla = await renderSystemCommand('/sys_support_sla', SUPPORT_SLA_DEFAULT, {});
-          return { name, text: text || '', sla: sla || '' };
-        } catch (_) { return { name: SUPPORT_NAME_DEFAULT, text: SUPPORT_INTRO_DEFAULT.replace('{nombre}', SUPPORT_NAME_DEFAULT), sla: SUPPORT_SLA_DEFAULT }; }
-      })()
+      choiceEnabled, minDeposit: minDep, withdrawMinArs: wdMin, withdrawOtp, // #299 / #379 / #382
+      // #385: textos de los botones de abajo de la carga automática (COMANDOS). #266 homeBanner · #349 entryNews · #372 refundPromo ·
+      // #373 supportIntro (nombre de turno #377). text === null ⇒ el comando se vació en COMANDOS → la app no lo muestra.
+      actionBtns: { load, loadSub, withdraw, withdrawSub },
+      homeBanner: { pct: autoPct, text: homeText },
+      entryNews: { pct: dailyPct, text: dailyPct > 0 ? newsText : null },
+      refundPromo,
+      supportIntro: { name: supportName, text: supText || '', sla: supSla || '' }
     });
   } catch (e) {
     logger.warn(`[platforms] GET /api/platforms: ${e.message}`);
@@ -21798,6 +21801,7 @@ app.get('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res)
 
 // Crear comando
 app.post('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res) => {
+  _cmdCacheClear(); // #773
   try {
     const { name, description, response } = req.body;
 
@@ -21849,6 +21853,7 @@ app.post('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res
 // cada arranque. Vaciarlo es el único "borrado" que de verdad lo apaga para
 // siempre (y queda en la lista por si el owner quiere reactivarlo con texto).
 app.delete('/api/admin/commands/:name', authMiddleware, adminMiddleware, async (req, res) => {
+  _cmdCacheClear(); // #773
   try {
     const cmd = await Command.findOne({ name: req.params.name });
     if (!cmd) return res.status(404).json({ error: 'Comando no encontrado' });
