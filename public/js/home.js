@@ -922,6 +922,15 @@
     // #489 (owner): el deslizante del Inicio son JUEGOS individuales, grandes, con "N jugando" (número inventado entre 50 y 200,
     // estable por sesión y con pequeños cambios cada 20 s para que se vea vivo). Las tarjetas salen de capturas de la plataforma.
     const ENTRY_GAMES = [['fortune-garuda-1000', 'Fortune Garuda 1000'], ['jokers-jewel', "Joker's Jewel"], ['fortune-garuda-500', 'Fortune Garuda 500'], ['fortune-tiger', 'Fortune Tiger'], ['fortune-gems-2', 'Fortune Gems 2'], ['fortune-rabbit', 'Fortune Rabbit'], ['fortune-gems', 'Fortune Gems'], ['fortune-dragon', 'Fortune Dragon'], ['golden-joker', 'Golden Joker']];
+    // #782 (owner): "que cada foto lo lleve directo a ese juego". Ruta de juego en 1girox = /play/<aggregator_id>/<game_id>
+    // (sacado de su catálogo público admin.1girox.com/api/games?search=…). Los que no están en el catálogo (Garuda, Gems) abren el
+    // casino normal. Un juego nuevo: agregar acá el par. Se navega DESPUÉS del SSO (ui.js, `_casinoGamePath`).
+    const GAME_PLAY = { 'fortune-tiger': '/play/4/fortunetiger_hotdoggaming', 'jokers-jewel': '/play/2/vs5joker', 'fortune-rabbit': '/play/4/fortunerabbit_hotdoggaming', 'fortune-dragon': '/play/4/fortunedragon_hotdoggaming', 'golden-joker': '/play/1/GoldenJoker' };
+    function playGame(id) {
+        try { VIP.ui._casinoGamePath = GAME_PLAY[id] || null; } catch (_) {}
+        try { VIP.ui.showToast(GAME_PLAY[id] ? '🎰 Abriendo ' + ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1] || 'el juego') + '…' : '🎰 Abriendo el casino…', 'info'); } catch (_) {}
+        openPlatform('girox', { embed: true });
+    }
     const _gamePlayers = {}; let _gameTick = null;
     function _gameN(id) { if (!_gamePlayers[id]) _gamePlayers[id] = 50 + Math.floor(Math.random() * 151); return _gamePlayers[id]; }
     // #495 (owner): los "jugando" van variando rato a rato: cada juego cambia solo, en momentos distintos (cada 6–20 s), de a 1 a 9
@@ -942,7 +951,7 @@
         if (ENTRY_GAMES.length) {
             tr.classList.add('games'); const fw = tr.closest('.ev-frame-wrap'); if (fw) fw.classList.add('games');
             if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos</span><small><i></i>gente jugando ahora</small>'; tr.parentNode.insertBefore(hd, tr); }
-            tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span></div>').join('');
+            tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span></div>').join('');
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };
             ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
@@ -2393,6 +2402,7 @@
     } catch (_) {}
 
     VIP.home = { openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+        playGame, // #782
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

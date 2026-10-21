@@ -1360,6 +1360,12 @@ VIP.ui._showCasinoFrame = function() {
       // owner 2026-08-15). Para el caso raro de app colgada por cookies
       // bloqueadas, el escape "↗ Abrir aparte" sigue SIEMPRE en la barra.
       clearTimeout(VIP.ui._casinoWatchdog);
+      // #782: si se tocó la foto de un juego, después de que el SSO dejó la sesión iniciada se navega el recuadro DIRECTO a ese
+      // juego (misma web, misma sesión). 1,5 s de margen para que el intercambio del código de un solo uso termine.
+      const gp = VIP.ui._casinoGamePath; if (gp && /^\/play\//.test(gp)) {
+        VIP.ui._casinoGamePath = null;
+        try { const origin = new URL(src, location.href).origin; setTimeout(function() { if (VIP.ui._casinoOpen) frame.src = origin + gp; }, 1500); } catch (_) {}
+      }
     });
 
     // BURBUJA ARRASTRABLE (owner 2026-08-25): la burbuja fija tapaba controles
@@ -1523,6 +1529,7 @@ VIP.ui._casinoChatUnmount = function() {
 /** Cierra el recuadro y vuelve a VIPCARGAS. */
 VIP.ui.closeCasinoFrame = function() {
   clearTimeout(VIP.ui._casinoWatchdog);
+  VIP.ui._casinoGamePath = null; // #782
   // Si el chat estaba mudado al panel del casino, SIEMPRE devolverlo a la
   // página antes de cerrar (si no, la pantalla principal queda sin chat).
   VIP.ui._casinoChatUnmount();

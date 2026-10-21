@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 782. 🎮 Las fotos de "Top juegos" abren el casino DIRECTO en ese juego — SW v550
+**Pedido (owner):** "que cada foto de inicio lo lleve a la página directo a ese juego específico, detectando cuál es". 1girox abre un
+juego en `/play/<aggregator_id>/<game_id>`; los IDs salen de su catálogo público (`admin.1girox.com/api/games?search=…`). `GAME_PLAY`
+en home.js: Fortune Tiger, Joker's Jewels, Fortune Rabbit, Fortune Dragon y Golden Joker. Tocar la foto → `playGame(id)` → casino
+embebido; tras el `load` del SSO (sesión iniciada) ui.js navega el recuadro a ese juego (1,5 s de margen). Fortune Garuda 1000/500 y
+Fortune Gems (2) NO existen en el catálogo de 1girox ⇒ abren el casino normal. Juego nuevo = un par más en `GAME_PLAY`.
+
 ### 781. 🎰 Girox preseleccionada (fija, con el tilde) en todos lados
 **Pedido (owner):** "acordate que quiero que quede preseleccionada la plataforma Girox en todos lados para cuando cargan, con el
 tilde". (1) `User.preferredPlatform` nace en `'girox'` para todo usuario nuevo (app, landing, entrada rápida, panel, publicistas);
