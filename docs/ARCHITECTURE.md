@@ -899,7 +899,8 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   es plegable). El modal Info ya no muestra opiniones ni ruleta (ocultos por CSS).
   **#304:** Perfil con avatar (`#pfUserBox`, `openAvatarPicker`/`pickAvatar`; `User.avatar` vía `GET/POST /api/me/avatar`);
   los íconos de nivel se desbloquean por `vipStatus.levelIndex`.
-  **#296:** `playNow` abre SIEMPRE afuera (`openPlatformTab` → `/jugar.html` con SSO, barra finita "‹ Volver a cargas");
+  **#296 → #695:** `playNow` y todo "jugar" con sesión abren SIEMPRE ADENTRO (`openPlatform` → overlay `#casinoOverlay` con Carga rápida,
+  Retirar e Ir a Soporte, también en navegador); `/jugar.html` (pestaña aparte, barra "‹ Volver a cargas") queda sólo para el modo prueba sin app instalada;
   `body.is-tester` (username en `TESTER_USERNAMES`, home.js) es lo único que muestra los botones test; `_paintPlatformTexts`
   adapta Info/tarjeta de plataformas a la cantidad de plataformas habilitadas (tilde en COMANDOS → "Plataformas
   ofrecidas"). **#298:** una plataforma habilitada SIN API es "Próximamente": visible (pestaña del Inicio y tarjeta
@@ -1346,3 +1347,5 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   SMS), link `app:instalar` → `VIP.appTest.doInstall()`. Generador: `scratchpad/gen_stories.py` (no está en el repo; cada foto se
   regenera con su argumento `install|sms|ruleta|telegram`).
 - **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.
+- **Casino (#695):** `ui.js enterCasino` espera 4×30 s y el error dice el motivo (`_fetchCasinoSession` devuelve `status`/`timedOut`);
+  en Render el arranque en frío (~50 s) y los redeploys son la causa típica del "No pudimos abrirte el casino".

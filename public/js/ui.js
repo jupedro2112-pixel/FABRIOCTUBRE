@@ -1069,9 +1069,12 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
     if (response.ok && data.success && data.redirectUrl) return { ok: true, url: data.redirectUrl };
     // 5xx = plataforma demorada/saturada → vale reintentar. 4xx (bloqueado,
     // límite de intentos) no: reintentar no lo va a cambiar.
-    return { ok: false, error: data.error || null, retryable: response.status >= 500 };
+    // #695: `status` para que el error diga QUÉ pasó (un 502/503 del hosting mientras el servidor arranca o se
+    // redeploya no trae JSON y antes quedaba como "revisá tu internet").
+    return { ok: false, error: data.error || null, retryable: response.status >= 500, status: response.status };
   } catch (e) {
-    return { ok: false, error: null, retryable: true }; // timeout o red caída → reintentable
+    const timedOut = !!(e && (e.name === 'AbortError' || /abort/i.test(String(e && e.message || ''))));
+    return { ok: false, error: null, retryable: true, timedOut: timedOut, status: 0 }; // timeout o red caída → reintentable
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -1091,17 +1094,21 @@ VIP.ui.enterCasino = async function(platformId) {
     // REINTENTO AUTOMÁTICO (owner 2026-08-19): a veces el primer pedido del link
     // SSO falla (saturación momentánea, red móvil) y el jugador tenía que tocar
     // el botón de nuevo. Ahora se reintenta solo antes de mostrar el error.
-    const MAX_TRIES = 3;
+    // #695 (owner, captura "Reintentando (3/3)" → "revisá tu internet"): el servidor puede tardar más de 20 s en
+    // contestar (arranque en frío del hosting de prueba, redeploy, plataforma lenta) y la app se rendía antes de
+    // tiempo. Ahora espera hasta 30 s por intento, 4 intentos, y avisa que puede demorar.
+    const MAX_TRIES = 4;
+    const WAITS = [0, 1500, 3000, 5000];
     let last = null;
     for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
       if (!VIP.ui._casinoOpen) return; // salió del casino mientras cargaba
       if (attempt > 1) {
         const status = document.getElementById('casinoFrameStatus');
-        if (status) status.textContent = '🔄 Reintentando… (' + attempt + '/' + MAX_TRIES + ')';
-        await new Promise(function(r) { setTimeout(r, attempt === 2 ? 1500 : 3000); });
+        if (status) status.textContent = '🔄 Conectando con el casino… puede tardar unos segundos (' + attempt + '/' + MAX_TRIES + ')';
+        await new Promise(function(r) { setTimeout(r, WAITS[attempt - 1] || 3000); });
         if (!VIP.ui._casinoOpen) return;
       }
-      last = await VIP.ui._fetchCasinoSession(20000);
+      last = await VIP.ui._fetchCasinoSession(30000);
       if (last.ok || !last.retryable) break;
     }
 
@@ -1126,8 +1133,15 @@ VIP.ui.enterCasino = async function(platformId) {
       return;
     }
 
-    VIP.ui._casinoFrameError((last && last.error) ||
-      'No pudimos abrirte el casino. Revisá tu internet y tocá Reintentar.');
+    // #695: motivo claro según lo que pasó (sin inventar "tu internet" cuando el servidor es el que no contestó).
+    let why = last && last.error;
+    if (!why) {
+      if (last && last.timedOut) why = 'El servidor tardó demasiado en responder. Esperá unos segundos y tocá Reintentar.';
+      else if (last && last.status >= 500) why = 'El servidor está ocupado o reiniciando (error ' + last.status + '). Esperá unos segundos y tocá Reintentar.';
+      else if (last && last.status === 0) why = 'No hay conexión con el servidor. Revisá tu internet y tocá Reintentar.';
+      else why = 'No pudimos abrirte el casino. Tocá Reintentar.';
+    }
+    VIP.ui._casinoFrameError(why);
   } finally {
     VIP.ui._casinoOpening = false;
   }
@@ -1554,9 +1568,14 @@ VIP.ui._casinoFrameError = function(msg) {
       'style="background:linear-gradient(135deg,#6a0dad,#9b30ff);color:#fff;border:none;' +
       'padding:12px 26px;border-radius:24px;font-weight:800;font-size:15px;cursor:pointer;">' +
       '🔄 Reintentar</button>' +
+    // #695: salida alternativa (pestaña aparte, pide un link nuevo) y "Volver a la app" (antes decía "Volver a 1GIROX", confundía)
+    '<button type="button" onclick="VIP.ui.openCasinoInTab()" ' +
+      'style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);' +
+      'padding:10px 22px;border-radius:24px;font-weight:700;font-size:14px;cursor:pointer;">' +
+      '↗ Abrir el casino aparte</button>' +
     '<button type="button" onclick="VIP.ui.closeCasinoFrame()" ' +
       'style="background:none;color:#aaa;border:none;font-size:14px;cursor:pointer;">' +
-      'Volver a 1GIROX</button>';
+      '‹ Volver a la app</button>';
 };
 
 // El botón "atrás" del celular cierra el recuadro en vez de salir de la app.

@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 695. 🎰 Casino siempre ADENTRO (con Carga rápida) + conexión al casino más paciente y con motivo claro — SW v497
+**Pedidos (owner, capturas):** "NO FUNCIONA cuando están ahí en la página" / "te paso foto de cómo falla la app adentro"
+(overlay con "Reintentando… (3/3)" y después "No pudimos abrirte el casino. Revisá tu internet") y "en Entrar a la página no
+figura el chat de carga rápida".
+**Diagnóstico:** `POST /api/platform/session` responde bien (2 s en Render, simulador). El cartel aparece cuando los 3 intentos
+del front (20 s cada uno) vencen o reciben un 5xx sin JSON: pasa con el arranque en frío del hosting de prueba (Render duerme
+el servicio y tarda ~50 s en despertar: la app abre instantánea desde la caché pero la API todavía no contesta) y durante los
+~2 min de cada redeploy. En producción (AWS) sólo aplica la ventana del deploy o una demora de la plataforma.
+**Cambios:** `ui.js enterCasino`: 4 intentos de 30 s (antes 3 de 20 s), estado "Conectando con el casino… puede tardar unos
+segundos (n/4)", y el error dice el motivo real (`timedOut` → "el servidor tardó demasiado", 5xx → "ocupado o reiniciando
+(error NNN)", sin red → "revisá tu internet"); `_fetchCasinoSession` devuelve `status`/`timedOut`. Pantalla de error con
+Reintentar · ↗ Abrir el casino aparte · ‹ Volver a la app (antes decía "Volver a 1GIROX").
+`home.js openPlatform`: el casino con sesión se abre SIEMPRE ADENTRO (overlay con Carga rápida, Retirar e Ir a Soporte), también en
+navegador; `/jugar.html` (pestaña aparte, que tampoco tenía Carga rápida) queda sólo para el modo prueba sin app instalada.
+`playNow` (botón "Jugar ahora" tras adjuntar comprobante) ídem.
+
 ### 694. 🏠 Inicio del completo sin la tarjeta "Elegí dónde jugar" (queda en Carga automática y básico) — SW v496
 **Pedido (owner, captura):** "esto del Inicio completo dejalo sólo para cuando van a cargar, sacalo así entra bien el resto; en el
 básico sí dejá como está". CSS: `body.home-play .ev-play-first { display:none }` (las pestañas Girox/Ganamos/Jugaygana del Inicio).

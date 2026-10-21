@@ -1196,8 +1196,7 @@
     function playNow(pid) {
         hidePlayNow();
         try { VIP.ui.hideModal('profileModal'); } catch (_) {}
-        if (_isStandalone()) return openPlatform(pid || 'girox');
-        openPlatformTab(pid || 'girox');
+        openPlatform(pid || 'girox'); // #695: siempre adentro (con Carga rápida)
     }
     // Botón chiquito "test" (manual y automática): muestra el cartel como quedaría con una carga de ejemplo.
     function playNowTest() {
@@ -1848,7 +1847,10 @@
     }
     function openPlatform(platformId, opts) {
         const test = !!(opts && opts.test);
-        if (!_isStandalone() && !(opts && opts.embed)) return openPlatformTab(platformId, { test }); // #670: embed = siempre adentro (Girox directo)
+        // #695 (owner): "en Entrar a la página no figura el chat de carga rápida" → el casino con sesión se abre SIEMPRE ADENTRO
+        // (overlay con Carga rápida, Retirar e Ir a Soporte), también en navegador. La pestaña aparte (/jugar.html) queda sólo
+        // para el modo prueba (sitio público, sin sesión) fuera de la app instalada. Antes (#261) en navegador iba aparte.
+        if (test && !_isStandalone()) return openPlatformTab(platformId, { test });
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find(x => x.id === platformId) || { id: platformId, name: platformId, connected: platformId === 'girox' };
         if (test) _embedExternal({ id: p.id, name: p.name, playUrl: p.playUrl || p.externalUrl, externalUrl: p.externalUrl });
