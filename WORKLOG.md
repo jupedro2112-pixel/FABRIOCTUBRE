@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-18
 
+### 683. 📄 Bases y condiciones públicas del servicio (`public/terminos.html`) + link en Info — SW v486
+**Pedido (owner):** "armame unas bases y condiciones de todo el servicio, fino de punta a punta, reembolsos y ajustes de márgenes etc.;
+aclará que sí puede hacerse sin problemas, que siempre tenemos que avisar con 7 días de anticipación". **Página** estática
+`/terminos.html` (autónoma, clara/oscura, índice, 18 secciones): generalidades (18+, una cuenta, datos propios), cuenta y seguridad
+(SMS obligatorio para retirar), cargas (a nombre propio, comprobante, mínimo de la app), retiros (saldo disponible vs rollover, mínimo,
+revisión manual de montos altos, banco con fallas), bonos y regalos (regla general rollover ×5, excepción referidos, apostar ≠ cargar,
+tope $20.000 + 20%, un bono por carga), reembolsos (diario/semanal/mensual sobre pérdida neta real, vencen si no se reclaman,
+promocionales), ruleta (carga del día, 1 giro, lista orientativa), fueguito (rollover por hito, se pierde al hito siguiente), misiones
+(lunes–domingo, niveles), referidos (pago día 1, sin rollover, prohibido auto-referirse), niveles VIP, código de Telegram, **cambios de
+condiciones y márgenes: cualquier % / monto / premio / requisito puede cambiar, SIEMPRE con 7 días de aviso por app y Telegram; lo ya
+acreditado se respeta; períodos en curso se liquidan con las condiciones de su inicio; excepciones inmediatas sólo por fraude, error
+evidente, fallas de banco/plataforma o ley**, conductas prohibidas (multicuentas, bots, cargar y retirar sin jugar para cobrar beneficios,
+contracargos), errores y correcciones, juego responsable, privacidad, contacto. Los valores vigentes se citan como "hoy" y remiten a la
+app. **Link:** al pie del modal Info ("📄 Bases y condiciones del servicio ›", `.im-terms`, abre en pestaña nueva). La ruta `/:code`
+(vanity) deja pasar `.html` al static. Pendiente opcional: linkearla también en la landing y en el pie del registro.
+
 ### 682. 📣 Foto de bienvenida para el canal de Telegram (`public/images/telegram/bienvenida.png`, 1080×1440)
 **Pedido (owner):** "armá una última foto para poner en Telegram oficial: bienvenido a PICA ROJA, sin tanto llamativo, que diga el
 servicio que brindamos (ruleta, misiones, etc.) y pasame un texto para pegar abajo". Imagen sobria (fondo blanco, pica, "Bienvenido a

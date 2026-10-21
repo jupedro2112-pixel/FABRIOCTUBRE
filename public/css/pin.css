@@ -2050,3 +2050,6 @@ body.home-basic .fg-card.fg-basic:not([hidden]) { display: block; }
 body.home-play .fg-card.fg-basic { display: none !important; }
 .fg-arrow.fg-arrow-down { top: auto; bottom: -13px; border-left: 0; border-top: 0; border-right: 2px solid var(--p-red); border-bottom: 2px solid var(--p-red); }
 .bv-btn.bv-load.fg-hi { animation: fgPulse 1.6s ease-in-out infinite; }
+
+/* #683: link a Bases y condiciones al pie del Info */
+.im-terms { display: block; text-align: center; margin: 10px 0 4px; font: 700 12.5px var(--p-font); color: var(--p-muted); text-decoration: none; }
