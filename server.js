@@ -21801,7 +21801,7 @@ app.get('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res)
 
 // Crear comando
 app.post('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res) => {
-  _cmdCacheClear(); // #773
+  _cmdCacheClear(); res.on('finish', _cmdCacheClear); // #773: antes y después de guardar
   try {
     const { name, description, response } = req.body;
 
@@ -21853,7 +21853,7 @@ app.post('/api/admin/commands', authMiddleware, adminMiddleware, async (req, res
 // cada arranque. Vaciarlo es el único "borrado" que de verdad lo apaga para
 // siempre (y queda en la lista por si el owner quiere reactivarlo con texto).
 app.delete('/api/admin/commands/:name', authMiddleware, adminMiddleware, async (req, res) => {
-  _cmdCacheClear(); // #773
+  _cmdCacheClear(); res.on('finish', _cmdCacheClear); // #773
   try {
     const cmd = await Command.findOne({ name: req.params.name });
     if (!cmd) return res.status(404).json({ error: 'Comando no encontrado' });
