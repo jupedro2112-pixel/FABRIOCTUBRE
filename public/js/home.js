@@ -241,7 +241,7 @@
         const lp = _el('bvLoadPanel'), wp = _el('bvWdPanel'); const lb = document.querySelector('#basicView .bv-load'), wb = document.querySelector('#basicView .bv-wd');
         const openLoad = which === 'load' ? lp.hidden : false, openWd = which === 'wd' ? wp.hidden : false;
         if (lp) lp.hidden = !openLoad; if (wp) wp.hidden = !openWd; if (lb) lb.setAttribute('aria-expanded', openLoad ? 'true' : 'false'); if (wb) wb.setAttribute('aria-expanded', openWd ? 'true' : 'false');
-        try { const md = _platforms && _platforms.minDepositArs; if (md > 0) { const e = _el('bvMinDep'); if (e) e.textContent = _m$(md); } const mw = _platforms && _platforms.withdrawMinArs; if (mw > 0) { const e2 = _el('bvMinWd'); if (e2) e2.textContent = _m$(mw); } } catch (_) {}
+        try { const md = _platforms && _platforms.minDepositArs; if (md > 0) { const e = _el('bvMinDep'); if (e) e.textContent = _m$(md); } const mw = _platforms && _platforms.withdrawMinArs; if (mw > 0) { const e2 = _el('bvMinWd'); if (e2) e2.textContent = _m$(mw); document.querySelectorAll('.wd-amt').forEach((x) => { x.textContent = _m$(mw); }); } } catch (_) {} // #757: + retiro mínimo en el botón RETIRAR
         if (openLoad && !_bvCbu) {
             try { const r = await fetch(VIP.config.API_URL + '/api/config/cbu', { headers: { Authorization: 'Bearer ' + VIP.state.currentToken } }); if (r.ok) _bvCbu = await r.json(); } catch (_) {}
             const c = _bvCbu || {}; const set = (id, v) => { const e = _el(id); if (e) e.textContent = v || 'no disponible'; };

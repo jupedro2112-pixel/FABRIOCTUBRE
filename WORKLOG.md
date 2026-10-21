@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 757. 🏠 Básico: mínimos bien marcados adentro de CARGAR y RETIRAR, sin la franja verde, plataformas más chicas — SW v539
+**Pedido (owner, captura):** "la carga mínima ponela bien aclarada dentro del botón de cargar, y el retiro también, que se remarque
+bien; sacá la carga mínima de arriba; los 3 botones de plataforma achicalos para que no tapen mucho; Girox seleccionado por defecto".
+CARGAR: "Carga mínima $5.000 · se acredita sola"; RETIRAR: "Retiro mínimo $10.000 · a tu CBU" (montos del server, `.md-amt` /
+`.wd-amt`, en amarillo sobre el botón). La franja `.min-strip.ms-basic` se oculta. Chips de plataforma de 26 px y menos padding. Girox
+ya quedaba marcada por defecto cuando no hay preferida (`_basicPaint`, `defaultPlatform`); se mantiene.
+
 ### 756. 🏠 "Top juegos" en negro y el bloque de servicios más junto — SW v538
 **Pedido (owner, captura):** "el Top juegos ponelo en negro, y lo de arriba juntalo un poco más". `.ev-games-h` en color de texto (se
 leía blanco sobre fondo claro); título de servicios y tarjetas con menos margen, ícono de 30 px y textos de 11/9 px.

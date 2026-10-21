@@ -2294,3 +2294,12 @@ body.home-play .ev-hero { display: none !important; }
 .ev-svc .li svg, .ev-svc .li { width: 30px !important; height: 30px !important; }
 .ev-svc b { font-size: 11px !important; } .ev-svc small { font-size: 9px !important; line-height: 1.15 !important; }
 .ev-svc::after { margin-top: 2px; font-size: 8.5px; }
+/* #757 (owner): básico — carga mínima y retiro mínimo BIEN marcados adentro de CARGAR/RETIRAR, sin la franja verde, plataformas más chicas */
+body.home-basic .min-strip.ms-basic { display: none !important; }
+.bv-btn .bv-min { display: block !important; font: 800 12px/1.25 var(--p-font) !important; color: #fff !important; text-transform: none !important; opacity: 1 !important; margin-top: 2px; }
+.bv-btn .bv-min b { color: #ffe08a !important; font-size: 13.5px !important; }
+.bv-plats { gap: 6px !important; }
+.bv-chip { padding: 6px 4px !important; gap: 3px !important; border-radius: 12px !important; border-width: 1.5px !important; }
+.bv-chip img { width: 26px !important; height: 26px !important; }
+.bv-chip b { font-size: 11px !important; } .bv-chip small { font-size: 8.5px !important; }
+.bv-plats-h { margin-bottom: 4px !important; } .bv-plats-h b { font-size: 12.5px !important; } .bv-plats-h small { font-size: 10px !important; }
