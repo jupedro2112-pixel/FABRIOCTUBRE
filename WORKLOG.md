@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 769. 🧾 Cierres: el día en curso aparece como "Hoy / en curso"
+**Pedido (owner, captura):** "no me figuran los cierres automáticos". Tras la limpieza (#762) los cierres cuentan desde hoy y el
+primero se finaliza mañana, así que la tabla quedaba vacía. `GET /api/admin/cierres` ahora asegura y recalcula el cierre del DÍA EN
+CURSO (estado pendiente, etiqueta "⏳ Hoy / en curso") cada vez que se abre la sección; `_closeTick` lo finaliza solo al día siguiente.
+
 ### 768. 🎰🎯 Ruleta y Misiones más compactas y centradas — SW v546
 **Pedido (owner, capturas):** "esto achicalo, centralo más y juntalo, así se ve mejor y no es tanto deslizante". Títulos, textos,
 tarjeta "Instalá la app para girar", botón y secciones de la ruleta con menos tamaño y margen; en Misiones, cabecera, nivel y las 3

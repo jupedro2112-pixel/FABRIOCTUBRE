@@ -20157,6 +20157,9 @@ app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) 
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 30));
     const _cs = await _closeSince(); // #762
+    // #769 (owner): "no me figuran los cierres": tras la limpieza se cuenta desde hoy y el primer cierre sale mañana. Para no dejar la
+    // tabla vacía, el DÍA EN CURSO se muestra como fila "Hoy / en curso" (se recalcula cada vez que se abre; se finaliza solo mañana).
+    try { const todayKey = datosIa.dateKeyART(new Date()); if (!_cs || todayKey >= _cs) await _closeEnsure(todayKey, true); } catch (_) {}
     for (let i = 1; i <= Math.min(days, 14); i++) { const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); if (_cs && dk < _cs) continue; if (!(await DailyClose.exists({ dateKey: dk }))) await _closeEnsure(dk, false); }
     let since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000)); if (_cs && _cs > since) since = _cs;
     const items = await DailyClose.find({ dateKey: { $gte: since } }).sort({ dateKey: -1 }).lean();
