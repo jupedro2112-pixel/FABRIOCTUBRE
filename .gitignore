@@ -19,3 +19,7 @@ npm-debug.log*
 .vscode/
 .idea/
 tmp/
+
+# Archivos sueltos del owner (nunca al repo)
+*.zip
+*.rar

@@ -1230,17 +1230,6 @@ VIP.ui._casinoFrameStuck = function() {
   if (frame) frame.style.display = 'block';
 };
 
-/** Chip del menú de acciones rápidas del pop-up del casino. Declaración de
- *  función (hoisted) para poder usarla dentro del innerHTML de _showCasinoFrame. */
-function _casinoChip(label, onclick, primary) {
-  const base = primary
-    ? 'background:linear-gradient(135deg,#128c4a,#25d366);color:#fff;border:none;'
-    : 'background:rgba(212,175,55,0.12);color:#e3bd48;border:1px solid rgba(212,175,55,0.35);';
-  return '<button type="button" onclick="' + onclick + '" style="' + base +
-    'flex:0 0 auto;white-space:nowrap;border-radius:16px;padding:7px 12px;font-size:12.5px;' +
-    'font-weight:700;cursor:pointer;">' + label + '</button>';
-}
-
 /** Envía un mensaje al cajero desde el pop-up (mismo camino que escribir a mano
  *  → cae en el panel adminprivado2026). */
 VIP.ui._casinoSendQuick = function(text) {

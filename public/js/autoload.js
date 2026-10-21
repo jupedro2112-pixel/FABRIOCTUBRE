@@ -153,12 +153,6 @@
         return y + lineH;
     }
 
-    function _platformsForCard() {
-        const d = (VIP.home && VIP.home.platformsData) || null;
-        const list = (d && d.platforms) || [];
-        return { list, choice: !!(d && d.choiceEnabled && list.length >= 2) };
-    }
-
     // La captura lleva SOLO lo que el cliente tiene que guardar (owner #228): link de la
     // app, su usuario y su contraseña. Nada de CBU ni pasos (eso cambia y vive en la app).
     // #478 (owner): título = logo de la marca; la clave se ve SIEMPRE (la guardada o la predeterminada de acceso).

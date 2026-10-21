@@ -277,7 +277,6 @@
     let _stAt = 0, _stData = null;
     const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
     function _msBar(m) { const pct = Math.min(100, Math.round((m.value / m.target) * 100)); const val = m.type === 'deposit_total' ? _m$(m.value) + ' / ' + _m$(m.target) : m.value + ' / ' + m.target; return '<div class="ms-item' + (m.done ? ' done' : '') + '"><div class="ms-row"><b>' + _esc(m.title) + '</b><span class="ms-prize">' + (m.credited ? '✓ ' + _m$(m.rewardArs) + ' acreditado' : (m.done ? '✓ cumplida' : '+' + _m$(m.rewardArs))) + '</span></div><div class="ms-track"><i style="width:' + pct + '%"></i></div><small>' + val + (m.minAmount ? ' · cargas de ' + _m$(m.minAmount) + ' o más' : '') + '</small></div>'; }
-    function _stLeft(exp) { const ms = new Date(exp) - Date.now(); if (ms <= 0) return ''; const h = Math.floor(ms / 3600000), mn = Math.floor((ms % 3600000) / 60000); return h >= 1 ? '· vence en ' + h + ' h' : '· vence en ' + mn + ' min'; }
     function _stPaint() {
         const d = _stData || {}; const sd = d.secondDeposit, ms = d.missions || [];
         _fdNotesPaint(); // #626: aviso de primera carga junto a cada 'Adjuntar comprobante'
@@ -343,7 +342,6 @@
         const extra = Number(j.extra) > 0 ? Number(j.extra) : 0;
         return '<p class="fd-note">🎁 <b>Primera carga: +<span class="fd-pct">' + j.pct + '%</span></b>' + (extra ? '<span class="fd-app"> · +<span class="fd-pct-app">' + (Number(j.pct) + extra) + '%</span> si instalás la app</span>' : '') + '<small>Elegís cuál al terminar la carga.</small></p>';
     }
-    async function _fdTagPaint() { const tag = _el('ezMainTag'); if (!tag) return; const j = await _fdPromoLoad(); if (j && j.show) { tag.textContent = '🎁 +' + j.pct + '% en tu primera carga' + (j.installGiftEnabled ? ' · +' + j.pctApp + '% con la app' : ''); tag.hidden = false; } else tag.hidden = true; }
     async function maybeFirstDepositPopup() {
         if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
         const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
@@ -1219,7 +1217,6 @@
     const _igSeen = new Set();   // ids de mensajes de oferta ya mostrados
     function _igFmt(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
     function _igPct(o) { const p = (o && o.pct != null ? o.pct : (_ig && _ig.pct)); return p != null && p !== '' ? Math.round(Number(p)) + '%' : ''; }
-    function _igPctTxt(o, withSpace) { const p = _igPct(o); return p ? (withSpace ? p + ' ' : p) : ''; }
     async function _igFetch(path, method) {
         const r = await fetch(VIP.config.API_URL + path, {
             method: method || 'GET',
@@ -1469,12 +1466,6 @@
         if (ch) ch.textContent = open ? '▲' : '▼';
     }
     function _ars(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
-    function _arsShort(n) {
-        n = Number(n) || 0;
-        if (n >= 1e9) return '$' + (n / 1e9).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' mil M';
-        if (n >= 1e6) return '$' + (n / 1e6).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' M';
-        return _ars(n);
-    }
     function renderVipDetail() {
         const box = _el('infoVipDetail');
         if (!box) return;
@@ -2008,17 +1999,6 @@
         _fdNotesPaint();
         if (!cbu) setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, 1500); // #631
     }
-    function _playOnEmbedded(platformId) {
-        const list = (_platforms && _platforms.platforms) || [];
-        const p = list.find(x => x.id === platformId) || { id: platformId, connected: platformId === 'girox', externalUrl: null, name: platformId };
-        if (p.connected) {
-            try { VIP.ui.enterCasino(p.id); } catch (e) { VIP.ui.showToast('No se pudo abrir el casino', 'error'); }
-            return;
-        }
-        // #236: sin API también se abre DENTRO de la app (recuadro embebido), nunca afuera.
-        _embedExternal(p);
-    }
-
     // ---------------- CASINO: barra superior con las plataformas (#222) ----------------
     // El owner: "cuando entra, en una barra superior que diga 'elegí cuál plataforma jugar',
     // y una vez que cargan y entran con saldo, que aparezca ahí 'volver al menú de cargas'".
