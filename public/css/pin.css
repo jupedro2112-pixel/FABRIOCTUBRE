@@ -2327,3 +2327,8 @@ body.home-basic .min-strip.ms-basic { display: none !important; }
 .bv-btn b { font-size: 15px !important; } .bv-btn .bv-min { font-size: 10.5px !important; } .bv-btn .bv-min b { font-size: 11.5px !important; } .bv-btn em { font-size: 14px !important; }
 .bv-play { padding: 8px !important; font-size: 12px !important; margin-top: 4px !important; }
 .bv-switch2 { margin-top: 6px !important; } .bv-switch2-h { font-size: 11px !important; } .bv-sw { padding: 7px 10px !important; } .bv-sw b { font-size: 11.5px !important; } .bv-sw small { font-size: 9.5px !important; }
+/* #761 (owner): tarjetas de servicios con TODO centrado (ícono, nombre, detalle y Ver más) */
+.ev-svc { flex-direction: column !important; align-items: center !important; justify-content: center !important; text-align: center !important; gap: 2px !important; padding: 8px 6px !important; }
+.ev-svc > b { flex-direction: column !important; gap: 3px !important; white-space: normal !important; }
+.ev-svc > small { text-align: center !important; width: 100%; flex: 0 0 auto !important; }
+.ev-svc::after { margin: 3px auto 0 !important; padding: 0 !important; align-self: center !important; }

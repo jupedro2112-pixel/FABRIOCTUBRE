@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 761. 🏠 Servicios del Inicio: todo centrado — SW v542
+**Pedido (owner, captura):** "centrá los textos que corresponden". En las 4 tarjetas (2 por fila) quedan centrados ícono, nombre,
+detalle y "Ver más ›" (el detalle y el Ver más quedaban a izquierda/derecha).
+
 ### 760. 🐛 Sesiones "cerradas" en Render: el servidor había quedado sin base de datos — ahora reintenta al arrancar
 **Síntoma (owner, capturas):** panel y app con "Servicio temporalmente no disponible" / "La conexión tardó demasiado"; todos los tokens
 daban "Token inválido" y `/api/health` respondía `degraded` (Mongo desconectado). **Causa:** la conexión inicial a MongoDB falló en el
