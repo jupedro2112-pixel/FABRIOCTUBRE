@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 772. ⚡ Historia de BONO en 1 toque (sólo % y horas, imagen generada, botón directo a Girox) — admin-sw v149
+**Pedido (owner):** "que se pueda subir historias así directo sin completar nada más que el %, las horas disponibles y con botón
+directo a Girox, sin tener que armar la foto". Panel → Historias: recuadro "⚡ Historia de bono en 1 toque" (% · horas · avisar a
+todos · Publicar ya). `POST /api/admin/stories` con `autoImage:true` genera la imagen en el servidor (SVG con +X%, "Tocá RECLAMAR
+AHORA", vigencia y carga mínima; se sirve con CSP sin scripts) y arma título, texto y push por defecto. El botón "Reclamar ahora" de
+la historia ya llevaba a Girox directo tras reclamar (`claimBonus` → `goGiroxDirect`).
+
 ### 771. 🐛 La push "a todos" de una historia con bono REINICIABA el servidor
 **Pedido (owner):** "borrá la historia y subí una del 50% para reclamar directo desde ahí, que está fallada". Al publicar una historia
 con "avisar a todos" el servidor se reiniciaba ~1,5 s después: el envío usaba `notificationService.sendNotificationToAllUsers` y ese

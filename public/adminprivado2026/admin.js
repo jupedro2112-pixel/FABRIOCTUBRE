@@ -16019,6 +16019,21 @@ async function loadStories() {
         }).join('');
     } catch (e) { box.innerHTML = '<div style="color:#ff8080;padding:14px;">Error: ' + escapeHtml(e.message) + '</div>'; }
 }
+// #772: historia de bono en 1 toque
+async function publishQuickBonusStory() {
+    const pct = Math.round(Number((document.getElementById('qsPct') || {}).value) || 0), hours = Math.round(Number((document.getElementById('qsHours') || {}).value) || 0);
+    const msg = document.getElementById('qsMsg'), btn = document.getElementById('qsBtn');
+    if (!(pct >= 5 && pct <= 200) || !(hours >= 1 && hours <= 72)) { showToast('% entre 5 y 200 y horas entre 1 y 72', 'error'); return; }
+    if (!confirm('¿Publicar la historia "+' + pct + '% en tu próxima carga" por ' + hours + ' h' + ((document.getElementById('qsNotify') || {}).checked ? ' y avisar a TODOS por notificación' : '') + '?')) return;
+    if (btn) btn.disabled = true; if (msg) msg.textContent = 'Publicando…';
+    try {
+        const body = { autoImage: true, bonusPct: pct, bonusHours: hours, hours: hours, durationSec: 8, title: 'BONO +' + pct + '%', text: 'Reclamá ahora y tu próxima carga tiene +' + pct + '% extra. Vale por ' + hours + ' h.', notifyAll: !!(document.getElementById('qsNotify') || {}).checked, pushTitle: '🎁 +' + pct + '% extra en tu próxima carga', pushBody: 'Tocá la historia y reclamalo: vale por ' + hours + ' h.' };
+        const r = await authFetch('/api/admin/stories', { method: 'POST', body: JSON.stringify(body) }); const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo publicar', 'error'); if (msg) msg.textContent = '❌ ' + (j.error || ''); return; }
+        showToast('⚡ Historia de bono publicada', 'success'); if (msg) msg.textContent = '✅ publicada'; loadStories();
+    } catch (_) { showToast('Error de conexión', 'error'); } finally { if (btn) btn.disabled = false; }
+}
+window.publishQuickBonusStory = publishQuickBonusStory;
 async function publishStory() {
     const msg = document.getElementById('stMsg'), btn = document.getElementById('stPublishBtn');
     const v = function (id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; };

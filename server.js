@@ -23921,6 +23921,7 @@ app.get('/api/stories/:id/media', async (req, res) => {
     const m = /^data:([\w/+.-]+);base64,(.+)$/s.exec(s.mediaData);
     if (!m) return res.status(404).end();
     res.set('Content-Type', s.mediaMime || m[1]);
+    if (/svg/i.test(s.mediaMime || m[1])) res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'"); // #772: imagen generada, sin scripts
     res.set('Cache-Control', 'public, max-age=86400, immutable');
     res.send(Buffer.from(m[2], 'base64'));
   } catch (e) { res.status(500).end(); }
@@ -23986,14 +23987,38 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     const title = String(b.title || '').trim().slice(0, 60);
     let mediaType = 'none', mediaUrl = '', mediaData = '', mediaMime = '';
     const dataUrl = typeof b.mediaDataUrl === 'string' ? b.mediaDataUrl : '';
-    if (dataUrl) {
+    // #772 (owner): "que se pueda subir la historia directo sin completar nada más que el % y las horas, con botón directo a Girox,
+    // sin tener que armar la foto" ⇒ `autoImage:true` genera acá la imagen (SVG, sólo números) con el % y la vigencia.
+    const _autoPct = Math.max(1, Math.min(200, Math.round(Number(b.bonusPct) || 0)));
+    if (b.autoImage === true && _autoPct > 0) {
+      const hrs = Math.max(1, Math.min(72, Math.round(Number(b.bonusHours) || 1)));
+      const minDep = (await getConfig('platformsConfig', {}) || {}).minDepositArs || 5000;
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">' +
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e60023"/><stop offset="1" stop-color="#fff0f0"/></linearGradient></defs>' +
+        '<rect width="1080" height="1920" fill="url(#g)"/>' +
+        '<text x="540" y="150" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="44" fill="#fff" letter-spacing="6">PICA ROJA · OFICIAL</text>' +
+        '<text x="540" y="250" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="76" fill="#fff">BONO ACTIVO</text>' +
+        '<rect x="70" y="330" width="940" height="1170" rx="60" fill="#fff"/>' +
+        '<text x="540" y="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="300" fill="#e60023">+' + _autoPct + '%</text>' +
+        '<text x="540" y="840" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80" fill="#111">EXTRA EN TU</text>' +
+        '<text x="540" y="940" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80" fill="#111">PRÓXIMA CARGA</text>' +
+        '<rect x="170" y="1000" width="740" height="110" rx="55" fill="#0a7a3e"/>' +
+        '<text x="540" y="1073" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="48" fill="#fff">Tocá RECLAMAR AHORA</text>' +
+        '<text x="540" y="1190" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="40" fill="#5a5a5a">y cargá por Girox: el ' + _autoPct + '% se suma solo</text>' +
+        '<text x="540" y="1260" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="36" fill="#787878">Vale por ' + hrs + ' hora' + (hrs === 1 ? '' : 's') + ' · con el tope y rollover</text>' +
+        '<text x="540" y="1370" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="46" fill="#e60023">Carga mínima $' + Number(minDep).toLocaleString('es-AR') + '</text>' +
+        '<text x="540" y="1640" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="52" fill="#fff">Cuantas más cargas, más extra.</text>' +
+        '<text x="540" y="1740" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="40" fill="#fff">picaroja.com</text></svg>';
+      mediaType = 'image'; mediaMime = 'image/svg+xml'; mediaData = 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+    }
+    if (dataUrl && mediaType === 'none') {
       const m = /^data:(image\/(png|jpeg|jpg|webp|gif)|video\/mp4);base64,/.exec(dataUrl);
       if (!m) return res.status(400).json({ error: 'Archivo no soportado: imagen (png/jpg/webp/gif) o video mp4.' });
       const bytes = Math.floor((dataUrl.length - dataUrl.indexOf(',') - 1) * 3 / 4);
       const isVideo = m[1] === 'video/mp4';
       if (bytes > (isVideo ? 8 : 4) * 1024 * 1024) return res.status(400).json({ error: isVideo ? 'El video pesa más de 8 MB.' : 'La imagen pesa más de 4 MB.' });
       mediaType = isVideo ? 'video' : 'image'; mediaData = dataUrl; mediaMime = m[1];
-    } else if (typeof b.mediaUrl === 'string' && b.mediaUrl.trim()) {
+    } else if (mediaType === 'none' && typeof b.mediaUrl === 'string' && b.mediaUrl.trim()) {
       const u = b.mediaUrl.trim().slice(0, 500);
       if (!/^(\/[\w\-./]+|https:\/\/[^\s"'<>]+)$/i.test(u)) return res.status(400).json({ error: 'URL de la imagen inválida (ruta /images/… o https).' });
       mediaUrl = u; mediaType = /\.mp4(\?|$)/i.test(u) ? 'video' : 'image';

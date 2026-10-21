@@ -3018,6 +3018,18 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 <div style="background:rgba(255,23,68,0.06);border:1px solid rgba(255,23,68,0.30);border-radius:10px;padding:12px;margin-bottom:14px;">
                     <p style="margin:0;color:#bbb;font-size:11.5px;line-height:1.6;">Lo que publiques acá lo ve el cliente <strong style="color:#fff;">arriba a la derecha de la app</strong> (al lado de Perfil), como historias: pantalla completa, pasan solas. Cada historia <strong style="color:#fff;">vence sola</strong> a las horas que indiques; después queda acá por si querés extenderla o borrarla.</p>
                 </div>
+                <!-- #772 (owner): historia de BONO en 1 toque — sólo % y horas; la imagen la genera el servidor; botón "Reclamar ahora" → Girox; push a todos -->
+                <div class="cbu-form" style="margin-bottom:14px;border:2px solid var(--p-red);">
+                    <h3 style="margin:0 0 4px;">⚡ Historia de bono en 1 toque</h3>
+                    <p style="margin:0 0 8px;font-size:11.5px;color:#9ab;">Poné el % y las horas y listo: la imagen se arma sola (+X% · "Tocá RECLAMAR AHORA" · carga mínima), la historia dura esas horas, el botón lleva directo a Girox y se avisa a todos con una notificación.</p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;">
+                        <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;">% extra<input type="number" id="qsPct" min="5" max="200" step="5" value="50" style="width:110px;"></label>
+                        <label style="display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;">Horas<input type="number" id="qsHours" min="1" max="72" step="1" value="6" style="width:90px;"></label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;cursor:pointer;"><input type="checkbox" id="qsNotify" checked style="width:auto;"> 🔔 Avisar a todos</label>
+                        <button class="btn-primary" onclick="publishQuickBonusStory()" id="qsBtn">⚡ Publicar ya</button>
+                        <span id="qsMsg" style="font-size:11.5px;color:#9ab;"></span>
+                    </div>
+                </div>
                 <div class="cbu-form" style="margin-bottom:14px;">
                     <h3 style="margin:0 0 8px;">➕ Publicar historia</h3>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;">
