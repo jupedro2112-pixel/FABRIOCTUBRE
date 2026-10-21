@@ -1981,9 +1981,20 @@
                     '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver</button>' +
                     '<span class="casino-topbar-title" id="casinoTopTitle"></span>' +
                   '</div>' +
+                  // #700 (owner): "en Girox directo que estén arriba las historias, el menú completo como botón, la info del servicio y el
+                  // perfil, para que la gente pueda ver todo". Fila de accesos en la barra del casino (en todos los casinos embebidos).
+                  '<div class="casino-topbar-row casino-topbar-row2">' +
+                    '<button type="button" class="ct-btn ct-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="ct-ring"><span class="ct-core">▶</span><span class="ct-badge" id="ctStoriesBadge" style="display:none">1</span></span>Historias</button>' +
+                    '<button type="button" class="ct-btn ct-full" onclick="VIP.home.casinoFullMenu()" title="Ver el menú completo de la app">☰ Menú completo</button>' +
+                    '<button type="button" class="ct-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio">ℹ️ Info</button>' +
+                    '<button type="button" class="ct-btn" onclick="VIP.home.openProfile()" title="Tu perfil">👤 Perfil</button>' +
+                  '</div>' +
                 '</div>');
             bar = _el('casinoTopBar');
         }
+        // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
+        try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-new', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
+        document.body.classList.add('casino-open'); // #700: los modales (Info, Perfil, historias…) van por encima del casino
         const list = (_platforms && _platforms.platforms) || [{ id: 'girox', name: 'Girox', connected: true }];
         const current = (VIP.ui && VIP.ui._casinoPlatform) || 'girox';
         const p = list.find((x) => x.id === current) || { name: current };
@@ -2002,7 +2013,20 @@
                 return r;
             };
         }
+        // #700: al cerrar el casino se saca la clase que sube los modales
+        const _origCloseFrame = VIP.ui && VIP.ui.closeCasinoFrame;
+        if (typeof _origCloseFrame === 'function') {
+            VIP.ui.closeCasinoFrame = function () {
+                try { document.body.classList.remove('casino-open'); } catch (_) {}
+                return _origCloseFrame.apply(this, arguments);
+            };
+        }
     } catch (_) {}
+    // #700 (owner): accesos desde la barra del casino. "Menú completo" cierra el casino y pasa al menú completo (sin quedar fijo
+    // si la persona entró por Girox directo: #678 sigue valiendo, se guarda 'full' como cualquier otra elección del selector).
+    function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { setMenuPref('full', { quiet: true }); } catch (_) {} }, 80); }
+    // Info del servicio: mismo handler que el botón de la cabecera (app.js lo cuelga en #infoBtn).
+    function casinoInfo() { try { const b = _el('infoBtn'); if (b) { b.click(); return; } } catch (_) {} try { VIP.ui.showModal('infoModal'); } catch (_) {} }
 
     // Botón "llave" de la cabecera (#222): cambiar la contraseña.
     function openChangePassword() {
@@ -2154,7 +2178,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

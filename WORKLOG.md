@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 700. 🎰 Barra del casino con Historias · Menú completo · Info · Perfil — SW v498
+**Pedido (owner):** "en Girox directo que estén en la parte superior las historias y el menú completo como botón, para que la gente
+pueda ver todo; agregá también la info del servicio y el perfil". Segunda fila en `#casinoTopBar` (home.js `renderCasinoTabs`), en
+todos los casinos embebidos: ▶ Historias (abre el visor; copia el contador de nuevas de la barra principal), ☰ Menú completo
+(`casinoFullMenu`: cierra el casino y pasa al completo con `setMenuPref('full')`), ℹ️ Info (`casinoInfo`: mismo handler que
+`#infoBtn`) y 👤 Perfil (`openProfile`). `body.casino-open` mientras el casino está abierto (se saca en `closeCasinoFrame`) y CSS
+`body.casino-open .modal, .story-viewer { z-index:100001 }` para que Info, Perfil, historias y cualquier modal queden por encima del
+overlay (z 99999). Estilos `.ct-btn/.ct-ring/.ct-badge` en pin.css.
+
 ### 699. ✅ CIERRE del "error 502" del casino en producción: el link de registro apuntaba a otro publicista
 **Resolución (owner):** "era que estaba mal el link donde se registraban los usuarios, ya funciona". Los usuarios de prueba se
 registraban por el link de un publicista (en 1girox figuraban "Creado por: martinpulse"), así que el servidor los operaba con la
