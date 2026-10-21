@@ -333,7 +333,10 @@
         const show = !!(j && (j.noDeposits === true || j.show)) && !off;
         if (g) g.hidden = !show; if (gb) gb.hidden = !show; // el básico tiene su versión corta (CSS muestra cada una en su modo)
         // #690 (owner): la franja grande de CARGA MÍNIMA se ve hasta la 3ª carga; después desaparece (la nota de adentro de las cargas queda)
-        try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); const few = n < 5; document.body.classList.toggle('fewdep', few); localStorage.setItem('vip_fewdep', few ? '1' : '0'); } } catch (_) {} // #706: fewdep = hasta la 5ª carga (botón Adjuntar llamativo con la carga mínima)
+        try { const n = j && j.depositsCount != null ? Number(j.depositsCount) : null; if (n != null) { const off = n >= 3; document.body.classList.toggle('ms-off', off); localStorage.setItem('vip_ms_off', off ? '1' : '0'); const few = n < 5; document.body.classList.toggle('fewdep', few); localStorage.setItem('vip_fewdep', few ? '1' : '0');
+            // #731 (owner): sin cargas, la barra "Instalar" de la base queda FIJA (sin ✕ y aunque la haya cerrado antes)
+            const nodep = n === 0; document.body.classList.toggle('nodep', nodep); localStorage.setItem('vip_nodep', nodep ? '1' : '0');
+            if (nodep && !_isStandalone()) { try { if (typeof showInstallButton === 'function') showInstallButton(); } catch (_) {} } } } catch (_) {} // #706: fewdep = hasta la 5ª carga (botón Adjuntar llamativo con la carga mínima)
         if (cta) cta.classList.toggle('fg-hi', show); if (bl) bl.classList.toggle('fg-hi', show);
     }
     function firstGuideClose() { try { localStorage.setItem('vip_fguide_off', '1'); } catch (_) {} ['firstGuide', 'firstGuideBasic'].forEach((id) => { const g = _el(id); if (g) g.hidden = true; }); ['evCtaTop', 'bvLoadBtn'].forEach((id) => { const b = _el(id); if (b) b.classList.remove('fg-hi'); }); }
@@ -577,6 +580,7 @@
         _paintBsUser(); // #636
         try { if (localStorage.getItem('vip_ms_off') === '1') document.body.classList.add('ms-off'); } catch (_) {} // #690: sin parpadeo
         try { if (localStorage.getItem('vip_fewdep') !== '0') document.body.classList.add('fewdep'); } catch (_) {} // #706: por defecto llamativo hasta saber las cargas
+        try { if (localStorage.getItem('vip_nodep') === '1') document.body.classList.add('nodep'); } catch (_) {} // #731
         try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
         const m = _modeFor(getMenuPref()); // #512
@@ -1252,31 +1256,25 @@
     function _igExtraPct() { const e = _fdJ && Number(_fdJ.extra); return e > 0 ? Math.round(e) + '%' : (_igPct(_ig) || ''); }
     // #722 (owner): la barra fija de #719 se ELIMINÓ ("está mal"): el aviso de instalar funciona como en el menú completo (la oferta se
     // queda hasta que elijan instalar o después) y "después" vive como botón en la Carga rápida, abajo de Soporte.
-    function _igPaintCasinoBar() {
-        // #727 (owner): si eligió "lo cargo después", recordatorio abajo del casino: tiene pendiente el 50% de su última carga.
-        try {
-            const ov = _el('casinoOverlay'); if (!ov) return;
-            let bar = _el('casinoIgBar');
-            const show = _igPending() && !_isStandalone() && !ov.classList.contains('casino-test');
-            if (!show) { if (bar) bar.remove(); ov.classList.remove('has-ig'); return; }
-            if (!bar) { ov.insertAdjacentHTML('beforeend', '<button type="button" id="casinoIgBar" class="casino-ig" onclick="VIP.home.installGiftOpen()"></button>'); bar = _el('casinoIgBar'); }
-            const pct = _igPct(_ig);
-            bar.innerHTML = '<span class="cig-k">Pendiente</span><span class="cig-t">Tenés <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ' de tu última carga)' : '') + ' por instalar la app</span><span class="cig-go">Instalar ›</span>';
-            ov.classList.add('has-ig');
-        } catch (_) {}
-    }
+    // #731 (owner): sin barra al pie del casino; el pendiente va DENTRO de la Carga rápida (`_igQuickBtnHtml`). Sólo limpia restos.
+    function _igPaintCasinoBar() { try { const b = _el('casinoIgBar'); if (b) b.remove(); const ov = _el('casinoOverlay'); if (ov) ov.classList.remove('has-ig'); const p = _el('casinoLoadPanel'); if (p && _quickOpen) toggleCasinoLoad(true); } catch (_) {} }
     function casinoInstall() { if (_igPending()) installGiftOpen(); else { try { VIP.appTest.doInstall(); } catch (_) {} } }
     // #722: botón de instalar dentro de la Carga rápida (abajo de "Ir a Soporte"), sólo sin app instalada: con extra pendiente muestra el
     // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
     function _igQuickBtnHtml() {
         if (_isStandalone()) return '';
-        // #726 (owner): "sacalo de adentro de la burbuja": el instalar vive en la barra de la base (la misma de toda la app), también en el casino.
-        return '';
+        // #726/#731 (owner): instalar vive en la barra de la base; acá SÓLO el recordatorio del extra PENDIENTE (eligió "lo cargo después").
+        if (!_igPending()) return '';
+        const pct = _igPct(_ig);
+        return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.installGiftOpen()">🎁 Pendiente: <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ' de tu última carga)' : '') + ' por instalar la app · <u>Instalar</u></button>';
     }
     function _igPaintBar() {
         try { _igPaintCasinoBar(); } catch (_) {} // #719
         const bar = _el('installGiftBar'); if (!bar) return;
         const pending = _igPending();
+        // #731 (owner): "en el completo y básico en la parte superior": en el básico el botón se mueve al tope de #basicView; en el resto
+        // queda arriba del Inicio (antes de #entryView).
+        try { const bv = _el('basicView'), ev = _el('entryView'); if (_homeMode === 'basic' && bv && bar.parentNode !== bv) bv.prepend(bar); else if (_homeMode !== 'basic' && ev && bar.nextElementSibling !== ev) ev.parentNode.insertBefore(bar, ev); } catch (_) {}
         bar.style.display = pending ? '' : 'none';
         document.body.classList.toggle('ig-pending', pending);
         if (!pending) return;

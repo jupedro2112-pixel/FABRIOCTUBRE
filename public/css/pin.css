@@ -2185,3 +2185,12 @@ body.has-install-bar #casinoOverlay.has-ig #casinoSupportBubble { margin-bottom:
 /* #729 (owner): aviso de 5 s debajo de la burbuja de Carga rápida */
 .cq-tip { position: absolute; z-index: 6; background: var(--p-text); color: var(--p-inv, #fff); font: 700 10.5px/1.2 var(--p-font); padding: 6px 10px; border-radius: 999px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); pointer-events: none; animation: luckIn .25s ease-out; }
 .cq-tip.out { opacity: 0; transition: opacity .3s; }
+/* #731 (owner): el cartel "¡Entró tu carga!" (con el extra por instalar) va POR ENCIMA del casino (la regla se había perdido en #723) */
+body.casino-open .play-now-card { z-index: 100001 !important; }
+/* #731: recordatorio del extra pendiente dentro de la Carga rápida */
+.casino-load .cl-btn.cl-ig { background: var(--p-green-soft, #e8f5ee) !important; color: var(--p-green, #0a7a3e) !important; border: 1px solid var(--p-green, #0a7a3e) !important; box-shadow: none !important; margin-top: 6px !important; font: 800 11.5px/1.3 var(--p-font) !important; white-space: normal; text-align: center; }
+.casino-load .cl-btn.cl-ig b { color: var(--p-green, #0a7a3e); }
+/* #731: sin cargas, la barra "Instalar" de la base no tiene ✕ */
+body.nodep .pwa-install-bar .pib-x { display: none !important; }
+/* #731: el botón "Pendiente · instalá la app" arriba también en el básico */
+#basicView > #installGiftBar.ig-bar { margin: 8px 12px 0 !important; }

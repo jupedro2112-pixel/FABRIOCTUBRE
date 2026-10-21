@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 731. 🐛 El cartel con el extra seguía sin verse en Girox (regla z-index perdida) + barra Instalar fija sin cargas + pendiente del 50% en la Carga rápida y arriba en completo/básico — SW v522
+**Pedido (owner, capturas):** "sigue pasando lo mismo: aparece en el menú completo, no adentro de Girox" · "el Instalar app de la base
+dejalo fijo si no hay cargas" · "después de instalar sí avisar lo del 50% pero en otro lado; ese cartel no lo cambies; metelo en Girox
+dentro de la burbuja lo del pendiente 50%, y en el completo y básico en la parte superior". **Causa real del cartel:** la regla
+`body.casino-open .play-now-card { z-index:100001 }` (#722) se perdió en la limpieza de CSS de #723, y el cartel (z 9700) quedaba
+DEBAJO del overlay del casino (z 99999); #730 (colgarlo del body) era necesario pero no suficiente. Re-agregada. **Barra Instalar de la
+base:** con 0 cargas (`body.nodep`, `localStorage vip_nodep`) se muestra siempre (ignora el cierre de 3 días) y sin ✕; `firstGuidePaint`
+la vuelve a pedir. **Pendiente del 50%:** sin barra al pie del casino (#727 eliminada): va como botón en la Carga rápida, bajo Soporte
+("🎁 Pendiente: +$X (50% de tu última carga) por instalar la app · Instalar" → abre la oferta); en el completo queda el botón negro
+arriba del Inicio y en el básico se mueve al tope de `#basicView` (`_igPaintBar`).
+
 ### 730. 🐛 El cartel "¡Entró tu carga!" + extra por instalar no se veía en Girox (sí en el completo) — SW v521
 **Pedido (owner, capturas):** "sigue apareciendo Buena suerte; quiero que aparezca el cartel de la primera carga para que instalen la
 app" · "aparece en el menú completo pero no en Girox, ¿puede ser?". **Causa:** `#playNowCard` está dentro de `#homeFull`, y en modo
