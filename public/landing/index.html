@@ -112,6 +112,10 @@
   .pop .box { width: 100%; max-width: 340px; background: #fff; border: 1px solid #f3d6a4; border-radius: 20px; padding: 22px 18px; text-align: center; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 24px 70px rgba(0,0,0,.35); }
   .pop h3 { margin: 0; font-size: 19px; font-weight: 900; } .pop p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
   .pop .later { border: 0; background: none; font: 700 12.5px var(--font); color: var(--muted); text-decoration: underline; cursor: pointer; padding: 6px; }
+  /* #800 (owner): "crear usuario más grande" */
+  .btn#go { padding: 20px 16px !important; font-size: 19px !important; letter-spacing: .6px !important; border-radius: 16px !important; box-shadow: 0 8px 24px rgba(15, 154, 75, .35); animation: goPulse 1.6s ease-in-out infinite; }
+  @keyframes goPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  @media (prefers-reduced-motion: reduce) { .btn#go { animation: none; } }
 </style>
 </head>
 <body>

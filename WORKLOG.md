@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 800. 🟢 Landing: botón CREAR MI CUENTA más grande
+**Pedido (owner):** "agregá el crear usuario más grande en /landing". En las dos landings (la del backend `public/landing/index.html`
+servida en `/l/:code` e `/ingreso`, y la de Vercel `landing/index.html`): botón más alto, letra 18-19 px, sombra y pulso suave sólo con
+transform. La de Vercel requiere redeploy allá.
+
 ### 799. 📖 Botones de las historias desde ADENTRO del casino: salen al menú completo y abren esa sección — SW v560
 **Pedido (owner):** "cuando estoy adentro de Girox pongo las historias; si aprieto el botón tiene que salir de la app, ir al menú y
 ver el botón que apreté". Los links `app:<sección>` de una historia abrían la sección detrás del casino. Ahora, si el casino está

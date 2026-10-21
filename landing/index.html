@@ -200,6 +200,10 @@
   .prog small { display: block; margin-top: 8px; font-size: 11.5px; color: #8fa090; }
   .refhint { display: none; margin: 0 0 10px; text-align: center; font-size: 12px; font-weight: 800; color: #e3bd48; background: rgba(227,189,72,0.10); border: 1px solid rgba(227,189,72,0.35); border-radius: 999px; padding: 6px 10px; }
   .refhint.on { display: block; }
+  /* #800 (owner): "crear usuario más grande" */
+  .cta#cta { padding: 17px 16px !important; font-size: 18px !important; letter-spacing: .6px !important; border-radius: 16px !important; box-shadow: 0 8px 24px rgba(15, 154, 75, .35); animation: ctaPulse 1.6s ease-in-out infinite; }
+  @keyframes ctaPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  @media (prefers-reduced-motion: reduce) { .cta#cta { animation: none; } }
 </style>
 </head>
 <body>
