@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 732. 🎰 Barra del casino centrada y sin superposiciones — SW v523
+**Pedido (owner, captura):** "corregilo que quede todo centrado y no se tape PICA ROJA" (la pastilla de la marca pisaba Menú e
+Historias y los íconos quedaban a distintas alturas). CSS: fila de 44 px con todo centrado verticalmente; botones de 38×40 px con
+ícono (20 px) + etiqueta de 7 px; la marca es el único elemento flexible (`flex:1 1 0; min-width:0; overflow:hidden`) con el texto
+recortable; en ≤420 px se oculta "OFICIAL" y en ≤360 px queda sólo el logo redondo.
+
 ### 731. 🐛 El cartel con el extra seguía sin verse en Girox (regla z-index perdida) + barra Instalar fija sin cargas + pendiente del 50% en la Carga rápida y arriba en completo/básico — SW v522
 **Pedido (owner, capturas):** "sigue pasando lo mismo: aparece en el menú completo, no adentro de Girox" · "el Instalar app de la base
 dejalo fijo si no hay cargas" · "después de instalar sí avisar lo del 50% pero en otro lado; ese cartel no lo cambies; metelo en Girox
