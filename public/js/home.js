@@ -1925,7 +1925,16 @@
         }
         if (bubble) bubble.style.display = _quickDismissed ? 'none' : '';
         // #723: limpieza única de los estados viejos (posición arriba, mini) para que la burbuja vuelva a su lugar de siempre
-        try { if (!localStorage.getItem('vip_cq_reset723')) { ['vip_cq_pos', 'vip_cq_mini', 'vip_cq_top'].forEach((k) => localStorage.removeItem(k)); localStorage.setItem('vip_cq_reset723', '1'); if (bubble) { bubble.style.left = ''; bubble.style.top = ''; bubble.style.right = ''; bubble.style.bottom = ''; } } if (bubble) bubble.classList.remove('cq-mini', 'cq-top'); } catch (_) {}
+        // #724: la burbuja vuelve a su lugar de siempre (abajo a la derecha). Un `top` guardado junto con un `bottom` fijo la estiraba como columna.
+        try {
+            if (!localStorage.getItem('vip_cq_reset724')) { ['vip_cq_pos', 'vip_cq_mini', 'vip_cq_top', 'vip_cq_reset723'].forEach((k) => localStorage.removeItem(k)); localStorage.setItem('vip_cq_reset724', '1'); }
+            if (bubble) {
+                bubble.classList.remove('cq-mini', 'cq-top');
+                let pos = null; try { pos = JSON.parse(localStorage.getItem('vip_cq_pos') || 'null'); } catch (_) {}
+                if (!(pos && pos.left >= 0 && pos.top >= 0)) { bubble.style.left = 'auto'; bubble.style.top = 'auto'; bubble.style.right = '16px'; bubble.style.bottom = 'calc(18px + env(safe-area-inset-bottom,0px))'; }
+                bubble.style.height = ''; bubble.style.width = '';
+            }
+        } catch (_) {}
         const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = _quickDismissed ? '' : 'none';
     }
     // #712 (owner): "cuando la gente carga dentro de la app rápida de Girox que le salte un cartel: ¡Buena suerte! Recordá que tenemos

@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 724. 🎰 Burbuja de Carga rápida: vuelve a su lugar fijo y no puede estirarse — SW v517
+**Pedido (owner, capturas):** "no ves, está muy mal" (la burbuja estirada como una columna verde de arriba a abajo) · "revertí lo último,
+está todo mal". **Causa:** en v512–v514 convivían un `top` inline (posición "sobre la marca", #720) con un `bottom` fijo (`#casinoOverlay.
+has-ig #casinoSupportBubble { bottom … !important }`, #719): con `top` y `bottom` a la vez el botón absoluto se estira. **Fix:** al abrir
+el casino, si no hay posición arrastrada válida, la burbuja vuelve explícitamente a `right:16px; bottom:18px` (y `top/left:auto`); se
+borran una vez los estados viejos (`vip_cq_reset724`); CSS sin reglas de `top/bottom` para la burbuja y `height:auto; max-height:48px`.
+Con v516 (#723) ya era simple (logo + CARGA RÁPIDA); v517 la deja en su lugar de siempre.
+
 ### 723. 🎰 Burbuja de Carga rápida SIMPLE otra vez + "Instalar la app" sin hablar del extra — SW v516
 **Pedido (owner):** "no te vayas mucho: la burbuja dejala como estaba, que diga Carga rápida nomás y si se carga que se cierre la
 ventana y listo, sencillo, porque se desconfiguró todo" · "el botón de instalar no hable del 50% extra; si lo quieren instalar que lo
