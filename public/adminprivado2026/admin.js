@@ -4961,12 +4961,12 @@ function switchSection(section) {
         }
     }
     if (section === 'commands') { loadCommands(); try { initCommandsAccordion(); } catch (_) {} } // #383: sectores plegables
-    if (section === 'datos') loadDatos();
-    if (section === 'datosIa') { datosIaGate().then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
+    if (section === 'datos') { datosIaGate('Datos').then(function (ok) { if (ok) loadDatos(); }); } // #743 clave
+    if (section === 'datosIa') { datosIaGate('Datos IA').then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
     if (section === 'menuLayout') { loadMenuLayout(); loadMenusEnabled(); } // #480 · #635
     if (section === 'cierres') cierresLoad(); // #500
     if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
-    if (section === 'datos2') loadDatos2();
+    if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
     if (section === 'referrals') loadAdminReferralSummary();
@@ -4979,8 +4979,8 @@ function switchSection(section) {
     if (section === 'bonusStrategy') loadBonusStrategy();
     if (section === 'encuesta') loadEncuesta();
     if (section === 'inactivos') loadInactivos();
-    if (section === 'centralIngresos') loadCentralIngresos();
-    if (section === 'centralAppUsers') loadCentralAppUsers();
+    if (section === 'centralIngresos') { datosIaGate('Ingresos diarios').then(function (ok) { if (ok) loadCentralIngresos(); }); } // #743 clave
+    if (section === 'centralAppUsers') { datosIaGate('Usuarios con app').then(function (ok) { if (ok) loadCentralAppUsers(); }); } // #743 clave
     if (section === 'centralWelcomeBonus') loadCentralWelcomeBonus();
     if (section === 'suspiciousAccounts') loadSuspiciousAccounts();
     if (section === 'reembolsos') loadReembolsos();
@@ -5961,12 +5961,13 @@ async function savePublicBaseUrl() {
 }
 window.loadPublicBaseUrl = loadPublicBaseUrl; window.savePublicBaseUrl = savePublicBaseUrl;
 // #590: clave de Datos IA
-async function datosIaGate() {
+// #743 (owner): la MISMA clave protege todo lo que es Datos (Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app) y SMS masivo.
+async function datosIaGate(label) {
     try {
         const r = await authFetch('/api/admin/datos-ia-pin'); const j = r.ok ? await r.json() : { enabled: false };
         if (!j.enabled) return true;
         let pin = sessionStorage.getItem('datos_pin');
-        if (!pin) { pin = prompt('🔒 Datos IA está protegido. Ingresá la clave:'); if (!pin) { showSection('commands'); return false; } sessionStorage.setItem('datos_pin', pin.trim()); }
+        if (!pin) { pin = prompt('🔒 ' + (label || 'Datos') + ' está protegido. Ingresá la clave:'); if (!pin) { showSection('commands'); return false; } sessionStorage.setItem('datos_pin', pin.trim()); }
         const t = await authFetch('/api/admin/datos-ia/usdt');
         if (t.status === 423) { sessionStorage.removeItem('datos_pin'); showToast('Clave incorrecta', 'error'); showSection('commands'); return false; }
         return true;
@@ -11505,7 +11506,7 @@ async function retryRouletteCredit(spinId) {
 function authFetch(url, opts) {
     const o = opts || {};
     o.headers = Object.assign({}, o.headers || {}, { 'Authorization': 'Bearer ' + currentToken });
-    if (String(url).indexOf('/api/admin/datos-ia/') === 0) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590
+    if (/^\/api\/admin\/(datos-ia\/|datos2?(\?|$)|central\/(ingresos|app-users))/.test(String(url))) { try { const pin = sessionStorage.getItem('datos_pin'); if (pin) o.headers['x-datos-pin'] = pin; } catch (_) {} } // #590 · #743: la misma clave para todo lo que es Datos
     if (o.body && !o.headers['Content-Type']) o.headers['Content-Type'] = 'application/json';
     return fetch(API_URL + url, o);
 }

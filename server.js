@@ -6726,6 +6726,17 @@ function buildBulkSmsQuery(filters, onlyVerified = false) {
 }
 
 // Preview: devuelve la lista de destinatarios con validación de números SIN enviar SMS
+// #743 (owner): la MISMA clave de Datos IA protege Datos, Datos 2.0, Ingresos diarios y Usuarios con app (header x-datos-pin, como #590/#665).
+// Va ANTES de esas rutas (Express evalúa en orden). Sin clave configurada no se exige.
+function _datosPinGate(req, res, next) {
+  Promise.resolve().then(async () => {
+    const h = await _datosPinHash(); if (!h) return next();
+    const pin = String(req.get('x-datos-pin') || '');
+    if (pin && _sha(pin) === h) return next();
+    return res.status(423).json({ error: 'Esta sección está protegida con clave.', code: 'PIN_REQUIRED' });
+  }).catch(() => res.status(500).json({ error: 'Error del servidor' }));
+}
+['/api/admin/datos', '/api/admin/datos2', '/api/admin/central/ingresos', '/api/admin/central/app-users'].forEach((p) => app.use(p, authMiddleware, adminMiddleware, _datosPinGate));
 app.post('/api/admin/bulk-sms/preview', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -6841,10 +6852,12 @@ app.post('/api/admin/verify-sms-password', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Contraseña requerida.' });
     }
 
+    // #743 (owner): la clave de Datos (panel → Configuración → Clave de Datos) también abre SMS masivo; la env sigue valiendo.
+    try { const h = await _datosPinHash(); if (h && _sha(password) === h) return res.json({ success: true }); } catch (_) {}
     const SMS_MASIVO_PASSWORD = process.env.SMS_MASIVO_PASSWORD;
     if (!SMS_MASIVO_PASSWORD) {
-      logger.error('⛔ SMS_MASIVO_PASSWORD no configurado en el entorno.');
-      return res.status(500).json({ success: false, error: 'Configuración del servidor incompleta.' });
+      logger.error('⛔ SMS_MASIVO_PASSWORD no configurado en el entorno (y sin clave de Datos en el panel).');
+      return res.status(500).json({ success: false, error: 'Cargá la clave de Datos en Configuración (o SMS_MASIVO_PASSWORD en el servidor).' });
     }
 
     if (!safeCompare(password, SMS_MASIVO_PASSWORD)) {

@@ -269,6 +269,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
+- **CLAVE DE DATOS (#590/#743):** `Config['datosIaPinHash']` protege Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app (header
+  `x-datos-pin`, gates `app.use` ANTES de esas rutas) y abre SMS masivo. Una sección nueva "de datos" se suma a `_datosPinGate` (server) y a
+  `datosIaGate(label)` + la regex de `authFetch` (panel). La clave vive sólo en la DB (se carga en Configuración), nunca en código ni docs.
 - **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca
   "Reclamar ahora" queda con `User.storyBonus` (pct, expiresAt) y `claimStoryBonusPercent` lo consume PRIMERO en `resolveAutoBonus` en su
   próxima carga. Un bono nuevo que deba aplicarse a la carga va a esa cadena (no a `creditUserBalance`); el cliente que no reclamó no ve nada.

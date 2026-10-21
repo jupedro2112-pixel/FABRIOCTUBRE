@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-18
 
+### 743. 🗂️ Panel: menú reorganizado (Configuración · Atención · App · Administrativo · Publicidad) + clave para todo lo que es Datos y SMS — admin-sw v141
+**Pedido (owner):** "en el admin: Configuración como título; Atención con Soporte, Cargas pendientes y Retiros pendientes; App con
+Historias, Notificaciones, Reseñas, Elegir menú (y Ruleta diaria arriba); Administrativo con Cierres, Usuarios, Datos IA, Datos,
+Datos 2.0, y adentro Ingresos diarios e Ingresos con app, todo lo que es Datos con clave; Publicidad con Publicidad, Dashboard
+publicistas y Cuentas publicistas; SMS masivo con clave también, en App". **Menú:** ⚙️ Configuración · 💬 Atención (Soporte, Cargas
+pendientes, Retiros pendientes = ex "Confirmación de pagos") · 📱 App (Ruleta diaria, Historias, Notificaciones, Reseñas, Elegir menú,
+Estrategia, Cronograma, Encuesta, Inactivos, SMS Masivo 🔒) · 🗂️ Administrativo (Cierres, Usuarios, Transacciones, Datos IA 🔒,
+Datos 🔒, Datos 2.0 🔒, Ingresos diarios 🔒, Usuarios con app 🔒, Bono $5.000, Reembolsos reclamados, Referidos, Cuentas sospechosas,
+Demoras) · 📣 Publicidad (Publicidad, Dashboard Publicistas, Cuentas Publicistas) · Interno (chat viejo). Mismos ids, badges y
+secciones: sólo cambia el orden/etiquetas. **Clave:** la de Datos IA (#590, `Config['datosIaPinHash']`, Configuración → Clave de
+Datos IA) ahora protege también Datos, Datos 2.0, Ingresos diarios y Usuarios con app: server `_datosPinGate` (`app.use` antes de
+esas rutas, header `x-datos-pin`, 423 sin clave; sin clave configurada no se exige) + `datosIaGate(label)` en el panel para esas
+secciones y `authFetch` manda el header. SMS masivo: `verify-sms-password` acepta la clave de Datos además de `SMS_MASIVO_PASSWORD`.
+La clave se cargó en Render desde el panel/API ("[clave]", nunca en el repo); en producción hay que cargarla en Configuración.
+
 ### 742. 📣 HISTORIAS CON BONO: +X% en la próxima carga, push a todos, "Reclamar ahora" → Girox, "Adjuntar comprobante · Bono +X%" — SW v532 · admin-sw v140
 **Pedido (owner):** "en Historias, desde el admin, que se puedan tirar historias y activar notificación con bono (ej. 50% o 100%
 por 1 h), que a todos les llegue como notificación y que directamente desde la historia se pueda reclamar; si pone Reclamar ahora
