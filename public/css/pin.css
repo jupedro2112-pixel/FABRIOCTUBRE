@@ -890,7 +890,7 @@ body.is-tester .profile-modal .pf-logout small, body.can-logout .profile-modal .
 .lg-ring.has-new .lg-ring-av { animation: lgRingPulse 2.2s ease-in-out infinite; }
 .lg-ring-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--p-card); background: var(--p-card); }
 .lg-ring-n { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; border-radius: 999px; background: var(--p-red); color: #fff; font: 800 10px/17px var(--p-font); text-align: center; padding: 0 4px; border: 2px solid var(--p-card); }
-@keyframes lgRingPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(238, 42, 123, .35); } 50% { box-shadow: 0 0 0 6px rgba(238, 42, 123, 0); } }
+@keyframes lgRingPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } } /* #774: sólo transform */
 .lg-app .lg-sec-reviews { display: block !important; margin-top: 2px; }
 .lg-app .lg-sec-reviews .ev-reviews { margin: 0 !important; }
 .lg-app .lg-alt { margin-top: 2px; }
@@ -1505,7 +1505,7 @@ body.home-easy #referralHomeCard, body.home-basic #referralHomeCard { display: n
 .lg-bar { width: 100%; max-width: 280px; height: 10px; border-radius: 999px; background: var(--p-card); overflow: hidden; }
 .lg-bar i { display: block; height: 100%; width: 35%; border-radius: 999px; background: linear-gradient(135deg, #2ce06e, #0f9a4b); animation: lgBar 1.6s ease-in-out infinite; }
 .lg-quick-loading.is-in .lg-bar i { width: 92%; animation: none; transition: width .8s ease; }
-@keyframes lgBar { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+@keyframes lgBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } } /* #774: sólo transform */
 /* ── #536 fueguito minimizado, banner recordatorio y REFERIDOS en estilo Pinterest ── */
 .fire-mini .fm-txt small { display: none !important; } .fire-mini .fm-txt b { white-space: nowrap; }
 .fire-mini .fm-more { font: 700 10.5px var(--p-font); color: var(--p-muted); font-style: normal; white-space: nowrap; }
@@ -2041,7 +2041,7 @@ body.home-play .fg-card:not([hidden]) { display: block; }
 .fg-after { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--p-border); }
 .fg-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--p-surface); color: var(--p-muted); font: 800 13px var(--p-font); cursor: pointer; }
 .ev-cta.ev-cta-top.fg-hi { animation: fgPulse 1.6s ease-in-out infinite; }
-@keyframes fgPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, .55); } 60% { box-shadow: 0 0 0 14px rgba(230, 0, 35, 0); } }
+@keyframes fgPulse { 0%, 100% { transform: scale(1); } 60% { transform: scale(1.035); } } /* #774: sólo transform */
 @media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi { animation: none; box-shadow: 0 0 0 4px rgba(230, 0, 35, .35); } }
 
 /* #675: versión corta en el BÁSICO (arriba del botón CARGAR, flecha hacia abajo) */
@@ -2131,7 +2131,7 @@ html[data-theme="dark"] .bv-load { background: var(--p-load) !important; }
 .casino-load .cl-btn.cl-wd, .bv-wd, .bv-action-wd, .withdraw-row-btn, html[data-theme="dark"] .withdraw-row-btn, html[data-theme="dark"] .bv-wd { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-color: transparent !important; box-shadow: 0 6px 18px rgba(230, 0, 35, .25) !important; }
 .withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-text small, html[data-theme="dark"] .withdraw-row-btn .lr-text b, .withdraw-row-btn .lr-auto { color: #fff !important; opacity: 1 !important; }
 .casino-load .cl-btn.cl-sup { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; box-shadow: none !important; }
-@keyframes fgPulseG { 0%, 100% { box-shadow: 0 0 0 0 rgba(10, 122, 62, .55); } 60% { box-shadow: 0 0 0 14px rgba(10, 122, 62, 0); } }
+@keyframes fgPulseG { 0%, 100% { transform: scale(1); } 60% { transform: scale(1.035); } } /* #774: sólo transform */
 .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation-name: fgPulseG !important; }
 @media (prefers-reduced-motion: reduce) { .ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi { animation: none !important; box-shadow: 0 0 0 4px rgba(10, 122, 62, .35) !important; } }
 /* #706 (owner): nota de carga mínima RESUMIDA con el monto más grande + botón "Adjuntar comprobante" llamativo hasta la 5ª carga */
@@ -2351,7 +2351,7 @@ body.home-basic #topRow .vip-mini { display: none !important; }
 .bv-quick-ico svg { width: 17px; height: 17px; }
 .bv-quick button small { font: 800 8.5px var(--p-font); color: var(--p-red); }
 /* #766 (owner): PRIMERA CARGA — el botón de cargar se agranda y achica (pulso) y avisa el mínimo, hasta la primera carga */
-@keyframes fdScale { 0%, 100% { transform: scale(1); box-shadow: 0 6px 18px rgba(10, 122, 62, .28); } 50% { transform: scale(1.035); box-shadow: 0 0 0 8px rgba(10, 122, 62, 0), 0 10px 26px rgba(10, 122, 62, .35); } }
+@keyframes fdScale { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } } /* #774: sólo transform (la sombra es fija, abajo) */
 body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { animation: fdScale 1.5s ease-in-out infinite !important; }
 body.nodep .ev-cta.ev-cta-top .ev-cta-b { font-size: 20px !important; letter-spacing: 1.4px !important; }
 body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: #fff !important; font-weight: 800 !important; }
@@ -2388,3 +2388,11 @@ body.nodep .ev-cta.ev-cta-top .ev-cta-t, body.nodep #bvLoadBtn .bv-min { color: 
 #missionsModal .ms-track { height: 6px !important; margin: 5px 0 !important; }
 #missionsModal .ms-item small, #missionsModal .ms-row small { font-size: 10.5px !important; }
 #missionsModal .modal-content { padding: 12px 12px 10px !important; }
+/* #774 (velocidad): las animaciones infinitas animan SÓLO transform (lo hace el compositor, sin repintar la página cada frame).
+   Antes animaban box-shadow/margin y en celulares flojos o navegadores sin aceleración (Tor) trababan toda la página.
+   Las sombras quedan fijas acá. */
+.ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi, .pf-topsms, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn, .story-viewer #storyLink.st-bonus, body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first, .lg-ring.has-new .lg-ring-av, .lg-bar i { will-change: transform; }
+.ev-cta.ev-cta-top.fg-hi, .bv-btn.bv-load.fg-hi, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn, .story-viewer #storyLink.st-bonus { box-shadow: 0 0 0 4px rgba(10, 122, 62, .22), 0 6px 16px rgba(10, 122, 62, .25); }
+.pf-topsms { box-shadow: 0 0 0 3px rgba(230, 0, 35, .14); }
+body.nodep .ev-cta.ev-cta-top, body.nodep #bvLoadBtn, body.nodep .casino-load .cl-attach.cl-first { box-shadow: 0 0 0 5px rgba(10, 122, 62, .18), 0 8px 22px rgba(10, 122, 62, .32) !important; }
+@media (prefers-reduced-motion: reduce) { .lg-ring.has-new .lg-ring-av, .lg-bar i, .pf-topsms, .story-viewer #storyLink.st-bonus, body.fewdep .cl-btn.cl-attach, body.fewdep .bv-action:not(.bv-action-wd), body.fewdep #loadHereBtn { animation: none !important; } }

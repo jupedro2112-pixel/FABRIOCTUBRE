@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 774. ⚡ Velocidad en el celular: los pulsos ya no repintan la página cada frame — SW v547
+**Pedido (owner, captura de Tor Browser "…está ralentizando el navegador" y "se traba todo").** Había 6 animaciones infinitas
+(PRIMERA CARGA, botones de cargar, aviso de SMS del Perfil, botón de la historia, anillo de historias, barra de carga) que animaban
+`box-shadow`/`margin`: eso obliga al navegador a repintar toda la página 60 veces por segundo y en celulares flojos o navegadores
+sin aceleración (Tor) traba todo. Ahora todas animan SÓLO `transform` (lo hace el compositor, sin repintar), con la sombra fija y
+`will-change: transform`. Mismo efecto visual (el botón se agranda y achica), sin costo. (El aviso de la captura es de la extensión
+NoScript de Tor Browser, pero el repintado constante era real.)
+
 ### 773. ⚡ Velocidad: `/api/platforms` en paralelo + caché de los textos de COMANDOS
 **Pedido (owner):** "revisá la velocidad de la página, la veo algo lenta de punta a punta". Medido en Render: cualquier pedido chico
 tarda lo mismo (~latencia de red) salvo `GET /api/platforms` (lo primero que pide la app al entrar), que tardaba 2 s MÁS que el resto:
