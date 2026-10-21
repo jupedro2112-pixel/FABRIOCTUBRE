@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 680. 📖 Historia de Telegram rediseñada: canal oficial, plata por código todas las semanas, novedades y regalos exclusivos
+**Pedido (owner, captura):** "hacela mejor, con más estilo, no tan así; que dé predominancia a entrar a Telegram y a los beneficios de
+lo que publicamos: regalamos plata por código todas las semanas y nuestras novedades". **Foto** `st2-7.png` (gen_stories.py `s7`
+reescrita): tarjeta oscura con degradé y borde dorado, kicker "CANAL OFICIAL", avión de Telegram grande con brillo (recortado a la
+tarjeta), "Unite a nuestro TELEGRAM" en dorado, tres beneficios con medallón dorado ($ Plata por código, todas las semanas · ★ Novedades
+primero · ✦ Regalos exclusivos del canal) y botón dorado "UNITE AL CANAL ›"; nota rollover ×5 chica. Se fue el "la semana que viene /
+primeras 100" (#652). Texto de la historia en la DB: "Unite a nuestro canal de Telegram: plata por código todas las semanas, novedades
+primero y regalos exclusivos del canal." Republicadas las 8 en el orden de #676 (Telegram anteúltima, SMS última).
+
 ### 679. 🎰 Ruleta: el +100% EXTRA baja al 3% (el +20% sube al 50%); reembolsos quedan como están hasta diciembre
 **Contexto:** revisión de toda la configuración de regalos pedida por el owner ("armar algo para que no me dé pérdidas"). Veredicto
 entregado en el chat: fueguito, niveles VIP, referidos, segunda carga y extra por instalar se pagan solos o están acotados con el
