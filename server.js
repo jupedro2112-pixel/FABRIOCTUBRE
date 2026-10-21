@@ -19206,7 +19206,8 @@ app.post('/api/admin/users/:userId/reset-test', authMiddleware, adminMiddleware,
     await del('messages', Message, { $or: [{ receiverId: u.id }, { senderId: u.id }] });
     await User.updateOne({ id: u.id }, { $set: {
       balance: 0, lifetimeWagered: 0, vipLevel: 0, vipLevelUpdatedAt: null, dailyRoulettePendingPct: 0, supportSessionSince: null,
-      'installGift.status': 'none', 'installGift.amount': 0, 'installGift.baseAmount': 0,
+      'installGift.status': 'none', 'installGift.amount': 0, 'installGift.baseAmount': 0, 'installGift.pct': null, 'installGift.offeredAt': null, 'installGift.expiresAt': null, 'installGift.deferredAt': null, 'installGift.claimedAt': null,
+      fcmTokenContext: null, // #725: sin esto el usuario figuraba "con la app instalada" y la primera carga no ofrecía el extra por instalar
       'secondDepositOffer.status': 'none', 'secondDepositOffer.pct': null, 'secondDepositOffer.offeredAt': null,
       welcomeCodeBonusStatus: 'none', welcomeCodeBonusType: null, welcomeCodeBonusAmount: null, welcomeCodeClaimedAt: null, welcomeCodeBonusUsedAt: null, welcomeCodeBonusUsedBy: null
     } });

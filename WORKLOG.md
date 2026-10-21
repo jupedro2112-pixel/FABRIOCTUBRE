@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-18
 
+### 725. 🧪 Reinicio de usuario de prueba: también borra la marca "app instalada" y la oferta vieja de instalar
+**Pedido (owner):** "¿dejaste después de la primera carga la parte de incentivar a instalar la app? reiniciá siempre las cargas en este
+usuario que quiero testear cómo figura después de la primera carga". Probado en Render: tras el reinicio, la carga de prueba NO
+ofrecía el extra porque `/api/install-gift/status` devolvía `appInstalled:true` (`User.fcmTokenContext === 'standalone'`, quedó de
+cuando se probó la app instalada) y `installGift.expiresAt` viejo. `reset-test` ahora pone `fcmTokenContext:null` y limpia
+`installGift.{pct,offeredAt,expiresAt,deferredAt,claimedAt}`. El incentivo dentro del casino está (#722): al acreditarse la PRIMERA
+carga sin la app, se abre la hoja "Instalar ahora y cargar el extra / Ahora quiero jugar" (la misma del menú completo) y, si elige
+después, queda "📲 Instalar la app" en la Carga rápida bajo Soporte. Si prueba desde la app INSTALADA no se ofrece (es lo correcto).
+
 ### 724. 🎰 Burbuja de Carga rápida: vuelve a su lugar fijo y no puede estirarse — SW v517
 **Pedido (owner, capturas):** "no ves, está muy mal" (la burbuja estirada como una columna verde de arriba a abajo) · "revertí lo último,
 está todo mal". **Causa:** en v512–v514 convivían un `top` inline (posición "sobre la marca", #720) con un `bottom` fijo (`#casinoOverlay.
