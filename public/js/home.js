@@ -1253,10 +1253,8 @@
     // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
     function _igQuickBtnHtml() {
         if (_isStandalone()) return '';
-        if (_igPending()) return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.installGiftOpen()">🎁 Tenés <b>+' + _igFmt(_ig.amount) + ' extra</b> por tu primera carga instalando la app · <u>Instalar acá</u></button>';
-        const pct = _igExtraPct(); const noDep = !_fdJ || _fdJ.noDeposits !== false;
-        if (pct && noDep) return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.casinoInstall()">🎁 Recordá: <b>+' + pct + ' extra</b> por tu primera carga instalando la app · <u>Instalar acá</u></button>';
-        return '';
+        // #723 (owner): sin hablar del extra: "si lo quieren instalar que lo instalen". Con extra pendiente abre la oferta; si no, instala.
+        return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.casinoInstall()">📲 Instalar la app</button>';
     }
     function _igPaintBar() {
         try { _igPaintCasinoBar(); } catch (_) {} // #719
@@ -1876,7 +1874,7 @@
         // abre solo; entrando a jugar desde OTRO menú (completo/básico/intermedio) la burbuja arranca MINIMIZADA (sólo el logo) y el
         // panel cerrado, para no molestar.
         const direct = !!(opts && opts.embed);
-        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; if (direct) { _applyQuickMini(false); try { toggleCasinoLoad(true); } catch (_) {} } else { _applyQuickMini(true); try { toggleCasinoLoad(false); } catch (_) {} } } }, 60);
+        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; try { toggleCasinoLoad(!!direct); } catch (_) {} } }, 60); // #723: directo → panel abierto; otro menú → cerrado
     }
     function playOn(platformId) { openPlatform(platformId); }
     // #673 (owner): INSTALAR EN iPHONE CON LA SESIÓN. iOS no comparte el localStorage de Safari con la app instalada: el manifest
@@ -1926,7 +1924,8 @@
             if (row) row.insertAdjacentHTML('beforeend', '<button type="button" id="casinoQuickBtn" class="casino-quick-btn" style="display:none" onclick="VIP.home.restoreCasinoQuick()">💳 Carga rápida</button>');
         }
         if (bubble) bubble.style.display = _quickDismissed ? 'none' : '';
-        try { if (bubble) { bubble.classList.toggle('cq-mini', localStorage.getItem('vip_cq_mini') === '1'); bubble.classList.toggle('cq-top', localStorage.getItem('vip_cq_top') === '1'); } } catch (_) {} // #711/#721
+        // #723: limpieza única de los estados viejos (posición arriba, mini) para que la burbuja vuelva a su lugar de siempre
+        try { if (!localStorage.getItem('vip_cq_reset723')) { ['vip_cq_pos', 'vip_cq_mini', 'vip_cq_top'].forEach((k) => localStorage.removeItem(k)); localStorage.setItem('vip_cq_reset723', '1'); if (bubble) { bubble.style.left = ''; bubble.style.top = ''; bubble.style.right = ''; bubble.style.bottom = ''; } } if (bubble) bubble.classList.remove('cq-mini', 'cq-top'); } catch (_) {}
         const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = _quickDismissed ? '' : 'none';
     }
     // #712 (owner): "cuando la gente carga dentro de la app rápida de Girox que le salte un cartel: ¡Buena suerte! Recordá que tenemos
@@ -1937,8 +1936,8 @@
         // #722 (owner): con la carga acreditada, si el server ofreció el extra por instalar (primera carga sin la app), se muestra LA
         // MISMA hoja del menú completo (Instalar ahora / Ahora quiero jugar) y se queda hasta que elijan. Si elige "después", el botón
         // queda en la Carga rápida (bajo Soporte). Si no hay oferta, va el cartel "¡Buena suerte!" de 5 s.
-        try { const { ok, j } = await _igFetch('/api/install-gift/status'); if (ok && j) { _ig = j; _igPaintBar(); if (!_isStandalone() && j.status === 'offered' && Number(j.amount) > 0) { try { toggleCasinoLoad(false); _applyQuickMini(false); _applyQuickTop(true); _bubbleToBrand(); } catch (_) {} showInstallGift(j); return; } } } catch (_) {}
-        try { toggleCasinoLoad(false); _applyQuickMini(false); _applyQuickTop(true); _bubbleToBrand(); } catch (_) {} // #716/#720/#721: tras la carga, arriba sobre PICA ROJA, logo + CARGA RÁPIDA
+        try { const { ok, j } = await _igFetch('/api/install-gift/status'); if (ok && j) { _ig = j; _igPaintBar(); if (!_isStandalone() && j.status === 'offered' && Number(j.amount) > 0) { try { toggleCasinoLoad(false); } catch (_) {} showInstallGift(j); return; } } } catch (_) {}
+        try { toggleCasinoLoad(false); } catch (_) {} // #723 (owner): tras la carga se cierra el panel y listo
         let n = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}
         if (n != null && n > 5) return;
@@ -1956,7 +1955,7 @@
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.
     function onWithdrawRequested(amount) {
-        try { if (VIP.ui && VIP.ui._casinoOpen) { toggleCasinoLoad(false); _applyQuickMini(false); _applyQuickTop(true); _bubbleToBrand(); } } catch (_) {} // #716/#720/#721: tras el retiro, ídem
+        try { if (VIP.ui && VIP.ui._casinoOpen) toggleCasinoLoad(false); } catch (_) {} // #723: tras el retiro se cierra el panel
         const old = _el('luckCard'); if (old) old.remove();
         const amt = Number(amount) || 0;
         document.body.insertAdjacentHTML('beforeend',
@@ -1970,26 +1969,14 @@
     }
     let _luckT = null;
     function luckClose() { clearTimeout(_luckT); const c = _el('luckCard'); if (c) { c.classList.add('out'); setTimeout(() => { try { c.remove(); } catch (_) {} }, 250); } }
-    // #711: minimizar = panel cerrado + burbuja sólo con el logo (recordado); cerrar = panel cerrado + burbuja normal.
-    function _applyQuickMini(on) { const b = _el('casinoSupportBubble'); if (b) b.classList.toggle('cq-mini', !!on); try { localStorage.setItem('vip_cq_mini', on ? '1' : '0'); } catch (_) {} }
-    // #721 (owner): tras cargar, la burbuja queda arriba con el logo + "CARGA RÁPIDA" solamente (sin "movela si te molesta"), recordado.
-    function _applyQuickTop(on) { const b = _el('casinoSupportBubble'); if (b) b.classList.toggle('cq-top', !!on); try { localStorage.setItem('vip_cq_top', on ? '1' : '0'); } catch (_) {} }
-    function casinoQuickMini() { toggleCasinoLoad(false); _applyQuickMini(true); }
-    // #720 (owner): "una vez que cargan, que la Carga rápida pase a estar en el medio, encima de PICA ROJA, chiquita, sin tapar
-    // Historias ni Menú". Se centra sobre la pastilla de la marca de la barra (coordenadas del overlay) y se recuerda la posición.
-    function _bubbleToBrand() {
-        try {
-            const b = _el('casinoSupportBubble'), br = document.querySelector('#casinoTopBar .cb-box'), ov = _el('casinoOverlay');
-            if (!b || !br || !ov) return;
-            requestAnimationFrame(() => {
-                const r = br.getBoundingClientRect(), o = ov.getBoundingClientRect(), w = b.offsetWidth || 42, h = b.offsetHeight || 42;
-                const left = Math.max(4, r.left + r.width / 2 - w / 2 - o.left), top = Math.max(2, r.top + r.height / 2 - h / 2 - o.top);
-                b.style.left = left + 'px'; b.style.top = top + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto';
-                try { localStorage.setItem('vip_cq_pos', JSON.stringify({ left, top })); } catch (_) {}
-            });
-        } catch (_) {}
-    }
-    function casinoQuickClose() { toggleCasinoLoad(false); _applyQuickMini(false); }
+    // #723 (owner): "la burbuja que diga Carga rápida nomás y si se carga que se cierre la ventana y listo, sencillo". Se fueron los modos
+    // mini (#711/#716), "arriba sobre la marca" (#720/#721) y el aviso de mover (#717). Quedan: burbuja logo + CARGA RÁPIDA, arrastrable,
+    // y el panel con ✕. Estas funciones quedan como no-op por compatibilidad.
+    function _applyQuickMini() {}
+    function _applyQuickTop() {}
+    function _bubbleToBrand() {}
+    function casinoQuickMini() { toggleCasinoLoad(false); }
+    function casinoQuickClose() { toggleCasinoLoad(false); }
     function dismissCasinoQuick() {
         _quickDismissed = true; _quickOpen = false;
         const b = _el('casinoSupportBubble'); if (b) b.style.display = 'none';
@@ -2020,7 +2007,7 @@
         const row = (k, v) => v ? '<div class="cl-row"><small>' + k + '</small><b>' + _esc(v) + '</b><button type="button" class="cl-copy" onclick="VIP.ui.copyText(\'' + _esc(v) + '\')">Copiar</button></div>' : '';
         p.innerHTML =
             // #711 (owner): "–" minimiza (queda sólo el logo de PICA ROJA como burbuja movible); "✕" cierra y la burbuja vuelve a logo + texto.
-            '<div class="cl-head"><span>💳 Carga rápida</span><span class="cl-hbtns"><button type="button" class="cl-close cl-min" onclick="VIP.home.casinoQuickMini()" title="Minimizar: queda sólo el logo">–</button><button type="button" class="cl-close" onclick="VIP.home.casinoQuickClose()" title="Cerrar">✕</button></span></div>' +
+            '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.casinoQuickClose()" title="Cerrar">✕</button></div>' + // #723: sólo ✕
             (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626

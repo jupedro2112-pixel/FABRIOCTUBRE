@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 723. 🎰 Burbuja de Carga rápida SIMPLE otra vez + "Instalar la app" sin hablar del extra — SW v516
+**Pedido (owner):** "no te vayas mucho: la burbuja dejala como estaba, que diga Carga rápida nomás y si se carga que se cierre la
+ventana y listo, sencillo, porque se desconfiguró todo" · "el botón de instalar no hable del 50% extra; si lo quieren instalar que lo
+instalen, sólo 'Instalar app' como en el menú completo". Se revierten los modos mini (#711/#716), "arriba sobre la marca" (#720/#721) y
+el aviso "movela si te molesta" (#717): la burbuja vuelve a ser logo + CARGA RÁPIDA, arrastrable, abajo a la derecha (un poco más chica,
+#711); el panel tiene sólo ✕. Limpieza única en el cliente de `vip_cq_pos/mini/top` (`vip_cq_reset723`) para que vuelva a su lugar.
+Tras una carga o un retiro dentro del casino sólo se cierra el panel; si el server ofreció el extra por instalar se abre la hoja del
+menú completo (#722). En la Carga rápida, bajo Soporte, el botón dice "📲 Instalar la app" (con extra pendiente abre la oferta; si no,
+instala). Girox directo → panel abierto; desde otro menú → panel cerrado (sin mini).
+
 ### 722. 📲 Instalar la app en el casino COMO EN EL MENÚ COMPLETO: la oferta se queda hasta que elijan; "después" = botón en la Carga rápida — SW v515
 **Pedido (owner):** "está mal: lo de instalar app que funcione como está configurado el mensaje de aviso en el menú completo, que no
 se vaya y que la gente elija si instalar la app o instalar después; si pone instalar después que lo vea donde está la carga/retiro,
