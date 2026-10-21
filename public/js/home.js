@@ -1938,7 +1938,7 @@
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
             // #684 (owner): carga mínima clara también acá
-            (function () { const md = Number(_platforms && _platforms.minDepositArs) || 5000; return '<p class="cl-meta min-note">✅ Con <b>$' + md.toLocaleString('es-AR') + '</b> o más se acredita sola. Si cargás menos, escribinos por <b>Soporte</b> y vemos tu caso.</p>'; })() +
+            (function () { const md = Number(_platforms && _platforms.minDepositArs) || 5000; return '<p class="cl-meta min-note">✅ Con <b>$' + md.toLocaleString('es-AR') + '</b> o más se acredita sola. <b>Con una carga menor a $' + md.toLocaleString('es-AR') + ', tu carga NO va a ser acreditada</b>: escribinos por <b>Soporte</b>.</p>'; })() +
             '<button type="button" class="cl-btn" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante</button>' +
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +

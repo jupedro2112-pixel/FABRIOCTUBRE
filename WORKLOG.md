@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 688. 💵 Texto firme en todos lados: "con una carga menor a $5.000, tu carga NO va a ser acreditada" — SW v491
+**Pedido (owner):** "con una carga menor a 5.000 su carga no va a ser acreditada, ponemos". Reemplaza el "si cargás menos, escribinos y
+vemos tu caso" por la frase firme en: notas `.min-note` (carga automática, básico, carga rápida del casino), franjas `.min-strip`
+("con menos NO se acredita · dudas: Soporte"), guías de primera carga, Info, bases y condiciones (sección 3), las dos landings y el
+mensaje automático `/sys_below_min` + su push ("con una carga menor a $5.000 tu carga NO va a ser acreditada. Escribinos por Soporte
+para ver tu caso").
+
 ### 687. 💬 Botón "Ir a Soporte" dentro de la Carga rápida del casino — SW v490
 **Pedido (owner):** "el de soporte dentro de Girox que sea un botón para ir a Soporte directo". En el panel de Carga rápida del casino
 embebido (`toggleCasinoLoad`), debajo de Adjuntar comprobante y Retirar premio, botón `.cl-btn.cl-sup` "💬 Ir a Soporte" →

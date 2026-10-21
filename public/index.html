@@ -1113,7 +1113,7 @@
             <!-- #641 (owner): CARGÁ AHORA grande y centrado, debajo de la barra superior y arriba del nivel VIP (sólo en el Inicio). Antes vivía en el carrusel. -->
             <button type="button" class="ev-cta ev-cta-top" id="evCtaTop" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">transferís, mandás la foto y se acredita solo</span></button>
             <!-- #686 (owner): carga mínima BIEN GRANDE debajo de CARGÁ AHORA (todos, no sólo primera carga): "la página es automática, no quiero trabas" -->
-            <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · con menos, Soporte</span></div>
+            <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · <b>con menos NO se acredita</b> · dudas: Soporte</span></div>
             <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
                  CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
             <div class="fg-card" id="firstGuide" hidden>
@@ -1121,7 +1121,7 @@
                 <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
                 <b class="fg-t">👆 Acá arriba hacés tus cargas</b>
                 <p class="fg-p">Tocá <b>CARGÁ AHORA</b>: transferís, mandás la foto del comprobante y se acredita solo.</p>
-                <p class="fg-p">💵 Carga mínima <b class="md-amt">$5.000</b>: con ese monto o más se acredita sola. Si cargás menos, escribinos por Soporte y vemos tu caso.</p>
+                <p class="fg-p">💵 Carga mínima <b class="md-amt">$5.000</b>: con ese monto o más se acredita sola. <b>Con menos de <span class="md-amt">$5.000</span> tu carga NO va a ser acreditada</b>: escribinos por Soporte.</p>
                 <p class="fg-p fg-after">Después de jugar, mirá más abajo todo lo que te damos para sacarle el mejor provecho: <b>reembolsos, ruleta, fueguito, misiones y referidos</b>.</p>
             </div>
             <div class="status-row" id="statusRow" hidden>
@@ -1261,16 +1261,16 @@
                     <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
                     <b class="fg-t">¿Cómo cargo? 👇</b>
                     <p class="fg-p">Tocá <b>CARGAR</b>, transferí a la cuenta que te mostramos y mandá la foto del comprobante. Se acredita solo.</p>
-                    <p class="fg-p">💵 Mínimo <b class="md-amt">$5.000</b>. Con menos, escribinos por Soporte.</p>
+                    <p class="fg-p">💵 Mínimo <b class="md-amt">$5.000</b>. <b>Con menos NO se acredita</b>: escribinos por Soporte.</p>
                     <i class="fg-arrow fg-arrow-down" aria-hidden="true"></i>
                 </div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
-                <div class="min-strip ms-basic"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · con menos, Soporte</span></div><!-- #686 -->
+                <div class="min-strip ms-basic"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · <b>con menos NO se acredita</b> · dudas: Soporte</span></div><!-- #686 -->
                 <button type="button" class="bv-btn bv-load" id="bvLoadBtn" onclick="VIP.home.basicToggle('load')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg></i><span><b>CARGAR</b><small>Transferís y se acredita solo</small></span><em class="bv-chev">▾</em></button>
                 <div class="bv-panel" id="bvLoadPanel" hidden>
                     <ol class="bv-steps">
                         <li><b>Transferí</b> el monto que quieras (mínimo <b id="bvMinDep">$5.000</b>) a esta cuenta:
-                            <small class="min-note">✅ Con <b class="md-amt">$5.000</b> o más se acredita sola. Si cargás menos, escribinos por <b>Soporte</b> y vemos tu caso.</small>
+                            <small class="min-note">✅ Con <b class="md-amt">$5.000</b> o más se acredita sola. <b>Con una carga menor a <span class="md-amt">$5.000</span>, tu carga NO va a ser acreditada</b>: escribinos por <b>Soporte</b>.</small>
                             <div class="bv-cbu"><div><small>Alias</small><b id="bvAlias">cargando…</b></div><button type="button" class="bv-copy" onclick="VIP.home.basicCopy('alias')">Copiar</button></div>
                             <div class="bv-cbu"><div><small>CBU</small><b id="bvCbu">cargando…</b></div><button type="button" class="bv-copy" onclick="VIP.home.basicCopy('cbu')">Copiar</button></div>
                             <small class="bv-tit">Titular: <span id="bvTitular">—</span> · <span id="bvBank">—</span></small></li>
@@ -1470,7 +1470,7 @@
                             <!-- #302 (owner): aclaración visible de la carga mínima (valor de Config minDepositArs; default $5.000) -->
                             <div class="al-minline" id="alMinLine">💵 Carga mínima: <b>$5.000</b></div>
                             <!-- #684 (owner): que quede CLARO: $5.000 o más = automática; menos = Soporte revisa el caso -->
-                            <p class="min-note">✅ Con <b class="md-amt">$5.000</b> o más se acredita sola. Si cargás menos, escribinos por <b>Soporte</b> y vemos tu caso.</p>
+                            <p class="min-note">✅ Con <b class="md-amt">$5.000</b> o más se acredita sola. <b>Con una carga menor a <span class="md-amt">$5.000</span>, tu carga NO va a ser acreditada</b>: escribinos por <b>Soporte</b>.</p>
                         </div>
                     </div>
                     <div class="al-step al-step-c al-step-2">
@@ -2417,7 +2417,7 @@
                 <!-- #622 (owner 2026-10-20): textos MINIMIZADOS para que todo el Info entre en una pantalla. Mismos ids
                      (home.js llena infoMs*, infoDailyMax/Weekly/Monthly, infoCardWhyTitle, infoCardTwoPlatsDesc). -->
                 <!-- #640 (owner 2026-10-20): orden = Por qué elegirnos · (plataformas) · Niveles VIP · Reembolsos · Ruleta diaria · Referidos · Fueguito · Misiones -->
-                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Cargás solo en minutos, retirás a tu CBU y soporte en vivo 24 hs. <b>Carga mínima <span class="md-amt">$5.000</span>:</b> con ese monto o más se acredita sola; si cargás menos, escribinos por Soporte y vemos tu caso. <b>La plataforma mejor paga de internet.</b> Los bonos de bienvenida y regalos se juegan <b>×5</b> (rollover) antes de retirarlos; las comisiones de referidos, sin apostar.</p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Cargás solo en minutos, retirás a tu CBU y soporte en vivo 24 hs. <b>Carga mínima <span class="md-amt">$5.000</span>:</b> con ese monto o más se acredita sola; <b>con una carga menor, tu carga NO va a ser acreditada</b> (escribinos por Soporte). <b>La plataforma mejor paga de internet.</b> Los bonos de bienvenida y regalos se juegan <b>×5</b> (rollover) antes de retirarlos; las comisiones de referidos, sin apostar.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
                 <p class="im-sec" id="infoCardTwoPlats" style="display:none;"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b> con el mismo usuario: elegí en cada carga.</span></p>
@@ -2570,7 +2570,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v490</div>
+                    <div class="pf-build" id="appBuildTag">app v491</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

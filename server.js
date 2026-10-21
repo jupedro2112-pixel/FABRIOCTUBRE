@@ -2560,7 +2560,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
       // #686 (owner): avisarle AL CLIENTE automáticamente que contacte a Soporte (texto editable en COMANDOS: /sys_below_min)
       try {
         const txt = await renderSystemCommand('/sys_below_min', BELOW_MIN_DEFAULT, { monto: Number(amount).toLocaleString('es-AR'), min: minCharge.toLocaleString('es-AR') });
-        if (txt) await _sendUserSystemMessage(user, txt, { metadata: { kind: 'below_min', movementId: movement.movementId, amount: Number(amount), min: minCharge }, push: { title: '⚠️ Tu carga es menor al mínimo', body: `Recibimos $${Number(amount).toLocaleString('es-AR')}; la carga mínima es $${minCharge.toLocaleString('es-AR')}. Escribinos por Soporte.`, data: { tag: 'below_min' } } });
+        if (txt) await _sendUserSystemMessage(user, txt, { metadata: { kind: 'below_min', movementId: movement.movementId, amount: Number(amount), min: minCharge }, push: { title: '⚠️ Tu carga es menor al mínimo', body: `Recibimos $${Number(amount).toLocaleString('es-AR')}; con menos de $${minCharge.toLocaleString('es-AR')} tu carga NO va a ser acreditada. Escribinos por Soporte.`, data: { tag: 'below_min' } } });
       } catch (e) { logger.warn(`[hgcash] aviso bajo mínimo al cliente falló: ${e.message}`); }
       await BankMovement.updateOne({ movementId: movement.movementId },
         { $set: { matchStatus: 'needs_review', matchedUserId: user.id, matchedUsername: user.username, matchedComprobanteId: comprobante.id, chargeError: `monto $${Number(amount)} menor al mínimo $${minCharge}` } });
@@ -13389,7 +13389,7 @@ async function _bankPayoutOk() {
 }
 const LOAD_BTN_DEFAULT = 'Comprobante aquí'; // #391 (antes 'Adjuntar comprobante aquí')
 // #686: transferencia menor a la carga mínima → mensaje automático al cliente
-const BELOW_MIN_DEFAULT = '⚠️ Recibimos tu transferencia de ${monto}, pero la CARGA MÍNIMA es de ${min}, así que no se acreditó sola.\n\n👉 Escribinos por Soporte y vemos tu caso (podés completar la diferencia con otra transferencia y la cargamos juntas).';
+const BELOW_MIN_DEFAULT = '⚠️ Recibimos tu transferencia de ${monto}, pero la CARGA MÍNIMA es de ${min}: con una carga menor a ${min} tu carga NO va a ser acreditada.\n\n👉 Escribinos por Soporte para ver tu caso.';
 const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';
 const WITHDRAW_BTN_DEFAULT = 'Retirar premio';
 const WITHDRAW_BTN_SUB_DEFAULT = 'Mínimo {retiro_min} · pago automático'; // #391: corto y legible
