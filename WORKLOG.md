@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 707. 🎰 Barra del casino: Info al lado de Historias (marca bien centrada) + recuadro mínimo a PICA ROJA OFICIAL — SW v503
+**Pedido (owner):** "mové Info al lado de Historias así queda PICA ROJA bien centrado y ponele un recuadro mínimo a PICA ROJA
+oficial". Orden: Volver · Menú · [marca] · Historias · Info · Perfil. La marca va dentro de `.cb-box` (pastilla con borde fino y
+fondo surface).
+
 ### 706. 💳 Nota de carga mínima RESUMIDA (monto más grande) + "Adjuntar comprobante" llamativo hasta la 5ª carga — SW v502
 **Pedido (owner, captura):** "resumí esto, carga mínima $5.000 un poco más grande, y en la primera carga o próximas 5 poné en
 Adjuntar comprobante un botón más llamativo aclarando lo de la carga mínima 5000". La nota (`.min-note` en Cargá, básico y Carga

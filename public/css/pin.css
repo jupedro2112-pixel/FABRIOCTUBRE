@@ -2114,6 +2114,9 @@ body.casino-open .modal, body.casino-open .story-viewer { z-index: 100001 !impor
 .plat-btn.plat-terms { background: var(--p-surface) !important; color: var(--p-text) !important; border: 1px solid var(--p-border) !important; }
 /* #703 (owner): PICA ROJA OFICIAL con el logo en el medio de la barra del casino */
 .casino-brand { flex: 1 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; pointer-events: none; }
+/* #707 (owner): recuadro mínimo alrededor de la marca (va sobre el <span> interno para no estirar el flex) */
+.casino-brand > img, .casino-brand > .cb-txt { position: relative; z-index: 1; }
+.casino-brand .cb-box { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 4px; border: 1px solid var(--p-border); border-radius: 999px; background: var(--p-surface); }
 .casino-brand img { width: 24px; height: 24px; border-radius: 7px; object-fit: cover; flex: 0 0 auto; }
 .casino-brand .cb-txt { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
 .casino-brand b { font: 900 11px var(--p-font); letter-spacing: .8px; color: var(--p-text); white-space: nowrap; }
