@@ -768,7 +768,7 @@ app.use((req, res, next) => {
   // landings puente en dominios/hosts rotables (Vercel, Cloudflare, etc.)
   // funcionen sin agregar cada uno a ALLOWED_ORIGINS ni redeployar. Reflejamos
   // el origin (no `*`) y NO mandamos Allow-Credentials: la landing no usa cookies.
-  if (req.path === '/api/landing/signup' || req.path === '/api/landing/info') { // #553: + info (plataformas, %, modo) para la landing de Vercel
+  if (req.path === '/api/landing/signup' || req.path === '/api/landing/info' || req.path === '/api/meta-pixel-id') { // #553: + info (plataformas, %, modo) para la landing de Vercel · #797: + píxel de Meta
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Vary', 'Origin');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -4754,7 +4754,7 @@ async function _landingSignupHandler(req, res) {
       'CompleteRegistration',
       { externalId: newUser.id, fbc: metaFbc, fbp: metaFbp },
       { content_name: 'signup_landing', status: true, campaign_code: normalizedCode, publisher: campaign.publisher },
-      { req }
+      { req, eventId: 'reg_' + newUser.id } // #797: mismo event_id que dispara la landing con fbq ⇒ Meta deduplica navegador + CAPI
     );
     try { fbAdsWebhook.notify('CompleteRegistration', newUser); } catch (_) {}
     try { outboundWebhook.notify('registro', newUser); } catch (_) {} // #562 webhooks salientes
@@ -4779,7 +4779,7 @@ async function _landingSignupHandler(req, res) {
     let _platNames = {};
     try { (await platforms.listAll()).forEach((p) => { _platNames[p.id] = p.name; }); } catch (_) {}
     res.status(201).json({
-      success: true, accessUrl, username, password,
+      success: true, accessUrl, username, password, metaEventId: 'reg_' + newUser.id, // #797
       platforms: _platResults.map((r) => ({ id: r.id, name: _platNames[r.id] || r.id, created: !!r.created, reason: r.reason || null }))
     });
   } catch (error) {
@@ -4792,6 +4792,19 @@ async function _landingSignupHandler(req, res) {
   }
 }
 app.post('/api/landing/signup', landingIpLimiter, _landingSignupHandler);
+// #797: píxel(es) de Meta que la landing tiene que cargar en el navegador para esta campaña (ids públicos por naturaleza; los
+// valores salen de META_PIXEL_ID_n / META_PIXEL_PUBLISHER_n en SSM). Sin coincidencia ⇒ [] y la landing no carga fbq.
+app.get('/api/meta-pixel-id', async (req, res) => {
+  try {
+    const raw = String((req.query && req.query.c) || '').trim();
+    const code = /^[A-Za-z0-9_-]{3,40}$/.test(raw) ? raw.toUpperCase() : '';
+    const ids = await metaCapi.pixelIdsForCampaign(code);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({ pixelIds: ids, campaign: code || null });
+  } catch (e) {
+    res.json({ pixelIds: [], campaign: null });
+  }
+});
 
 // #421 (owner 2026-10-18): MODO DE REGISTRO. Config['registrationMode'] = 'sms' (default: usuario + clave + teléfono con
 // SMS) | 'quick' (registro DESACTIVADO: la persona completa sólo su NOMBRE y entra directo — se crea la cuenta en las

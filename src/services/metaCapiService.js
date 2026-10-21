@@ -68,6 +68,29 @@ async function _publisherOfCampaign(code) {
 // Devuelve { publisher, campaignCode } o null. Acepta opts.publisher /
 // opts.campaignCode explícitos (evita el lookup) o resuelve por el usuario
 // (`userInfo.externalId` = User.id).
+// #797 (réplica del #198 de CARGASGIROX): píxeles de Meta para el NAVEGADOR de la landing, por campaña/publicista.
+// META_PIXEL_ID_n (n = 2..9) + META_PIXEL_PUBLISHER_n = lista separada por coma de códigos de campaña, nombres de publicista o '*'.
+// META_PIXEL_CAPIONLY_n=1 ⇒ ese píxel sólo recibe eventos server-side (no se entrega al navegador). Los valores viven en SSM, nunca acá.
+function _parsePixelScope(raw) {
+  return String(raw || '').split(',').map((x) => x.trim()).filter(Boolean);
+}
+async function pixelIdsForCampaign(campaignCode) {
+  const code = String(campaignCode || '').trim().toUpperCase();
+  if (!code) return [];
+  const publisher = await _publisherOfCampaign(code);
+  const pubLower = publisher ? String(publisher).trim().toLowerCase() : null;
+  const ids = [];
+  for (let i = 2; i <= 9; i++) {
+    const pid = String(process.env['META_PIXEL_ID_' + i] || '').trim();
+    if (!pid) continue;
+    if (/^(1|true|on|yes)$/i.test(String(process.env['META_PIXEL_CAPIONLY_' + i] || ''))) continue;
+    const scope = _parsePixelScope(process.env['META_PIXEL_PUBLISHER_' + i]);
+    if (!scope.length) continue;
+    const ok = scope.some((s) => s === '*' || s.toUpperCase() === code || (pubLower && s.toLowerCase() === pubLower));
+    if (ok) ids.push(pid);
+  }
+  return ids;
+}
 async function resolveEventScope(userInfo, opts) {
   const o = opts || {};
   if (o.publisher || o.campaignCode) {
@@ -315,6 +338,7 @@ function valueCategory(amount) {
 
 module.exports = {
   resolveEventScope,
+  pixelIdsForCampaign, // #797
   isConfigured,
   newEventId,
   extractRequestContext,

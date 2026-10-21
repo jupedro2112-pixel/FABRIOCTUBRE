@@ -1307,6 +1307,9 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Qué:** POST JSON firmado (`X-Webhook-Event/Id/Timestamp/Signature`, HMAC-SHA256 de `"{ts}.{body}"`) a hasta 10 destinos
   (`Config['outboundWebhooks'].destinations[]`, secreto cifrado con `_credEncrypt`). Eventos `registro` y `primera_carga` siempre;
   `carga` y `retiro` opcionales por destino; alcance `all` o lista de publicistas/códigos (resuelto por `metaCapi.resolveEventScope`).
+  **Píxel en el navegador de la landing (#797):** `GET /api/meta-pixel-id?c=<campaña>` → `metaCapi.pixelIdsForCampaign` (env/SSM
+  `META_PIXEL_ID_n` + `META_PIXEL_PUBLISHER_n` con códigos/publicistas/`*`; `META_PIXEL_CAPIONLY_n=1` = sólo CAPI). La landing carga
+  `fbq` con esos ids y el registro dispara `CompleteRegistration` con `eventID = metaEventId` (= `event_id` de la CAPI) para deduplicar.
   El payload NO lleva username (sólo `user.id`).
 - **Servicio:** `src/services/outboundWebhookService.js` (`notify(event, user, opts)` fire-and-forget; 3 reintentos 1/4/16 s; cola
   `OutboundWebhookQueue` reintentada cada 5 min hasta 10; 4xx no se reintenta). `_isFirstDeposit(userId, {unrecorded})` decide

@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 797. 📣 Píxel de Meta de la landing por publicista (réplica del #198 de CARGASGIROX)
+**Pedido (owner):** en grupospicaroja.com/picarojaok el asistente de Meta decía "No se han encontrado píxeles" aunque en SSM
+(`/picaroja/prod/`) estaban `META_PIXEL_ID_2`, `META_PIXEL_PUBLISHER_2` y `META_CAPI_ACCESS_TOKEN_2`: #553 había quitado de la
+landing el bloque que pedía el píxel y el backend no tenía `GET /api/meta-pixel-id` (los SSM sólo alimentaban la CAPI server-side).
+(1) `metaCapiService.pixelIdsForCampaign(code)`: recorre `META_PIXEL_ID_2..9`; el píxel entra si `META_PIXEL_PUBLISHER_n` (lista por
+coma) contiene el código de campaña, el nombre del publicista de esa campaña o `*`; `META_PIXEL_CAPIONLY_n=1` lo excluye del
+navegador. (2) `GET /api/meta-pixel-id?c=<campaña>` (CORS abierto como `/api/landing/*`, caché 5 min) ⇒ `{pixelIds, campaign}`.
+(3) `_landingSignupHandler` manda `eventId: 'reg_<userId>'` a la CAPI y devuelve `metaEventId` ⇒ la landing dispara
+`fbq('track','CompleteRegistration',…,{eventID})` y Meta deduplica navegador + CAPI. (4) `landing/index.html`: bloque `loadMetaPixel`
+(pide los ids y hace `fbq('init')` + `PageView`). **Verificación tras el deploy a EB + redeploy de la landing en Vercel:**
+`https://picaroja.com/api/meta-pixel-id?c=PICAROJAOK` debe devolver `{"pixelIds":["…"]}`; si devuelve `[]`, `META_PIXEL_PUBLISHER_2`
+tiene que contener `PICAROJAOK`, el nombre del publicista o `*`. Nunca escribir los ids/tokens en código ni docs.
+
 ### 796. 🐛 Panel: Publicidad, Dashboard de publicistas y otras secciones con clave fallaban — admin-sw v150
 **Reporte (owner, captura "Error cargando campañas: Failed to load"):** las rutas protegidas con la clave de Datos (#743/#745/#770)
 responden 423 si falta `x-datos-pin`; `authFetch` lo agrega por regex, pero `loadCampaigns`, el dashboard y las cuentas de publicistas,
