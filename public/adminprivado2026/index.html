@@ -2735,11 +2735,11 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                             <input type="checkbox" id="drRequireApp" style="accent-color:#26e07f;"> <span>Exigir app instalada</span>
                         </label>
                         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;" title="Al menos una carga real desde el lunes 00:00 (hora AR)">
-                            <input type="checkbox" id="drRequireWeek" style="accent-color:#26e07f;"> <span>Solo clientes activos de la SEMANA (cargaron desde el lunes)</span>
+                            <input type="checkbox" id="drRequireWeek" style="accent-color:#26e07f;"> <span>Solo con la carga mínima DEL DÍA (suma de las cargas de hoy, #677)</span>
                         </label>
                         <!-- #669 (owner): carga que DESBLOQUEA la ruleta (propia, distinta de la carga mínima general) -->
                         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;" title="La carga de la semana tiene que ser de al menos este monto para girar. 0 = usar la carga mínima general.">
-                            <span>Carga que desbloquea la ruleta: $</span><input type="number" id="drMinDep" min="0" step="1000" style="width:100px;">
+                            <span>Carga del día que desbloquea la ruleta (suma): $</span><input type="number" id="drMinDep" min="0" step="1000" style="width:100px;">
                         </label>
                         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;">
                             Cargas mínimas en 30 días (más de): <input id="drMinCargas" type="number" min="0" max="1000" value="10" style="width:60px;background:rgba(0,0,0,0.45);border:1px solid rgba(38,224,127,0.40);color:#fff;padding:5px 7px;border-radius:6px;">

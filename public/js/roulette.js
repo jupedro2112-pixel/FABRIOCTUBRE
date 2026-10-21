@@ -202,7 +202,7 @@
         const topHtml = topCash ? '<div class="rl-top"><span class="rl-top-k">🏆 Premio mayor</span><b>$' + _fmt(topCash.value) + '</b></div>' : '';
         let html = '<div class="rl-card">';
         html += '<button type="button" class="rl-x" onclick="VIP.roulette.close()" aria-label="Cerrar">✕</button>';
-        html += '<div class="rl-head"><div class="rl-kicker">Todos los días</div><h2 class="rl-title">Ruleta diaria</h2><p class="rl-sub">Se desbloquea con tu carga mínima de <b>$' + _fmt(minDep) + '</b> · 1 giro por día · si ganás, se acredita solo</p></div>';
+        html += '<div class="rl-head"><div class="rl-kicker">Todos los días</div><h2 class="rl-title">Ruleta diaria</h2><p class="rl-sub">Se desbloquea con <b>$' + _fmt(minDep) + '</b> cargados en el día (podés sumar cargas) · 1 giro gratis por día · si ganás, se acredita solo</p></div>';
         html += topHtml;
 
         if (alreadySpun) {
@@ -234,8 +234,9 @@
                     '<div class="rl-hero-s">La ruleta se juega desde la app instalada con las notificaciones activas.</div>' +
                     '<button type="button" class="rl-spin" onclick="VIP.roulette.needsApp()">Ver cómo</button></div>';
             } else {
-                html += '<div class="rl-hero rl-locked"><div class="rl-emoji">🔒</div><div class="rl-hero-t">Se desbloquea con tu carga</div>' +
-                    '<div class="rl-hero-s">Hacé una carga mínima de <b>$' + _fmt(minDep) + '</b> y girás <b>todos los días</b> de la semana. Podés ganar % extra en tu próxima carga o plata al instante.</div>' +
+                const _tl = Number(_state.todayLoaded); const _half = Math.ceil(minDep / 2); // #677
+                html += '<div class="rl-hero rl-locked"><div class="rl-emoji">🔒</div><div class="rl-hero-t">Cargá $' + _fmt(minDep) + ' hoy y girás gratis</div>' +
+                    '<div class="rl-hero-s">Vale sumar cargas: por ejemplo <b>2 de $' + _fmt(_half) + '</b>. Cada día que llegás a <b>$' + _fmt(minDep) + '</b> tenés un giro: % extra en tu próxima carga o plata al instante.' + (_tl > 0 ? ' Hoy llevás <b>$' + _fmt(_tl) + '</b>.' : '') + '</div>' +
                     '<button type="button" class="rl-spin" onclick="VIP.roulette.close(); if (window.VIP && VIP.home) VIP.home.setHomeMode(\'full\');">Cargar ahora</button></div>';
             }
             html += prizesHtml;

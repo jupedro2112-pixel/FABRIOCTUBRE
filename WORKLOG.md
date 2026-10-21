@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-18
 
+### 677. 🎰 Ruleta por CARGA DEL DÍA: $10.000 cargados hoy (sumando cargas, ej. 2 de $5.000) = 1 giro gratis — SW v484 · admin-sw v137
+**Pedido (owner, 2026-10-21):** "cambió el sistema: mínimo de carga diaria 10.000; serían 2 cargas de 5.000 para tener un giro gratis;
+modificá la historia de la ruleta". **Server:** `_rouletteIsActiveThisWeek` (mismo nombre por los callers) ya no busca UNA carga ≥ X
+desde el lunes (#228/#669): suma las cargas reales de HOY (día ART, aggregate sobre Transaction `type:'deposit'`, sin install/welcome/
+payout_refund) y es `active` si `sum ≥ minDep`; devuelve `sum`. `ROULETTE_MIN_DEPOSIT_DEFAULT` = 10.000 (#669 era 20.000; se fija
+también en la config de Render). `/api/roulette/status` suma `todayLoaded`; el 403 al girar dice "cargando $10.000 en el día (podés
+sumar cargas, ej. 2 de $5.000). Hoy llevás $X". **App:** cabecera del modal "Se desbloquea con $10.000 cargados en el día (podés sumar
+cargas) · 1 giro gratis por día"; bloqueada: "Cargá $10.000 hoy y girás gratis · Vale sumar cargas: por ejemplo 2 de $5.000 · Hoy
+llevás $X"; tarjetas del Inicio/menú fácil e Info con el texto nuevo (`.rl-min` sigue pintando el monto real). **Panel:** etiquetas
+"Solo con la carga mínima DEL DÍA (suma)" y "Carga del día que desbloquea la ruleta (suma): $". **Historia** `st2-5.png` regenerada:
+"Giro gratis todos los días · Cargá $10.000 en el día (vale sumar: 2 cargas de $5.000) y tenés un giro gratis" con píldora "2 CARGAS
+DE $5.000 · 1 GIRO GRATIS"; texto de la historia en la DB actualizado al republicar (orden de #676, SMS al final).
+
 ### 676. 📖 Historia del SMS: código centrado adentro de la burbuja y pasa a ser la ÚLTIMA
 **Pedido (owner, captura):** "esta historia ponela en la última y arreglá el recuadro del código, dejalo centrado adentro". **Foto**
 `st2-1.png` regenerada (gen_stories.py `s1`: burbuja más ancha y "Código: 4 8 2 1" centrado por ancho de texto). **Orden republicado

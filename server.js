@@ -21590,7 +21590,7 @@ const ROULETTE_PRIZES = [
 // UNA carga real desde el lunes 00:00 (hora AR). Se combina con los otros gates.
 // #669 (owner): la ruleta se desbloquea con una carga de $20.000 (propia de la ruleta, distinta de la carga mínima general de $5.000)
 // "para no generar tantos regalos". Config['dailyRoulette'].minDepositArs; 0 = usar la carga mínima general.
-const ROULETTE_MIN_DEPOSIT_DEFAULT = 20000;
+const ROULETTE_MIN_DEPOSIT_DEFAULT = 10000; // #677 (owner): $10.000 cargados EN EL DÍA (sumando cargas, ej. 2 de $5.000) = 1 giro gratis
 const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, requireActiveWeek: false, minDepositArs: ROULETTE_MIN_DEPOSIT_DEFAULT, prizes: ROULETTE_PRIZES };
 async function _rouletteMinDepositArs(cfg) {
   const v = Number(cfg && cfg.minDepositArs);
@@ -21624,24 +21624,24 @@ function _rouletteWeekStartART(now = new Date()) {
   const mondayART = Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate() - back, 0, 0, 0);
   return new Date(mondayART + 3 * 3600 * 1000); // de vuelta a UTC real
 }
+// #677 (owner 2026-10-21): "mínimo de carga diaria $10.000; serían 2 cargas de $5.000 para tener un giro gratis". El gate ya no es
+// UNA carga ≥ X desde el lunes (#228/#669) sino la SUMA de las cargas reales DE HOY (día ART) ≥ minDep. Mantiene el nombre por los
+// callers; devuelve también `sum` (lo cargado hoy) para mostrar "llevás $X".
 async function _rouletteIsActiveThisWeek(userId, username, minDepArg) {
   try {
-    const since = _rouletteWeekStartART();
-    // #374: la carga que desbloquea tiene que ser de al menos la carga mínima; #669: la propia de la ruleta ($20.000) si el caller la pasa.
+    const dateKey = _rouletteDateKeyART();
+    const since = new Date(dateKey + 'T00:00:00-03:00');
     let minDep = Number(minDepArg) || 0;
     if (!(minDep > 0)) { try { minDep = Number(await getMinDepositArs()) || 0; } catch (_) { minDep = 0; } }
-    const q = {
-      $or: [{ userId: userId }, { username: username }],
-      type: 'deposit',
-      'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] },
-      timestamp: { $gte: since }
-    };
-    if (minDep > 0) q.amount = { $gte: minDep };
-    const count = await Transaction.countDocuments(q);
-    return { active: count > 0, count, since };
+    const agg = await Transaction.aggregate([
+      { $match: { $or: [{ userId: userId }, { username: username }], type: 'deposit', 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] }, timestamp: { $gte: since } } },
+      { $group: { _id: null, sum: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
+    const sum = agg[0] ? Number(agg[0].sum) || 0 : 0, count = agg[0] ? agg[0].count : 0;
+    return { active: sum >= minDep, count, sum, since };
   } catch (e) {
-    logger.warn(`[roulette] chequeo activo de la semana falló: ${e.message}`);
-    return { active: true, count: null }; // fail-open
+    logger.warn(`[roulette] chequeo de cargas del día falló: ${e.message}`);
+    return { active: true, count: null, sum: null }; // fail-open
   }
 }
 function _normalizeRoulettePrizes(raw) {
@@ -21834,7 +21834,8 @@ app.get('/api/roulette/status', authMiddleware, async (req, res) => {
       eligible,
       needsAppNotifs: !appOk,
       needsActive: appOk && !act.active, // app OK pero no llega a las cargas mínimas
-      needsActiveWeek: appOk && act.active && !week.active, // #228: sin carga esta semana
+      needsActiveWeek: appOk && act.active && !week.active, // #228: sin carga esta semana · #677: sin llegar a la carga del día
+      todayLoaded: week.sum != null ? week.sum : null, // #677: lo cargado hoy (para "llevás $X")
       requireActiveWeek: cfg.requireActiveWeek === true,
       minCargas: cfg.minCargas30d,
       minDepositArs: _rlMin, // #374/#669: la carga que desbloquea la ruleta ($20.000 propia de la ruleta)
@@ -22201,7 +22202,7 @@ app.post('/api/roulette/spin', authMiddleware, async (req, res) => {
       const minDep = await _rouletteMinDepositArs(cfg); // #669
       const week = await _rouletteIsActiveThisWeek(userId, username, minDep);
       if (!week.active) {
-        return res.status(403).json({ error: 'La ruleta se desbloquea con una carga mínima de $' + Number(minDep).toLocaleString('es-AR') + '. Hacé tu carga y volvé a girar.', needsActiveWeek: true, minDepositArs: minDep });
+        return res.status(403).json({ error: 'La ruleta se desbloquea cargando $' + Number(minDep).toLocaleString('es-AR') + ' en el día (podés sumar cargas, ej. 2 de $' + Number(Math.ceil(minDep / 2)).toLocaleString('es-AR') + ')' + (week.sum != null ? '. Hoy llevás $' + Number(week.sum).toLocaleString('es-AR') : '') + '. Completalo y volvé a girar.', needsActiveWeek: true, minDepositArs: minDep, todayLoaded: week.sum }); // #677
       }
     }
 
