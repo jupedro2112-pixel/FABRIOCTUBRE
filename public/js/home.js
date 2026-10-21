@@ -370,6 +370,14 @@
     function fdGo() { fdClose(); try { easyLoad(); } catch (_) { setHomeMode('full'); } }
     function openMenuChooser() {
         const m = _el('menuChooser'); if (!m) return;
+        // #795 (owner): el recuadro marcado es el menú ACTUAL (antes el CSS marcaba siempre "Menú completo").
+        try {
+            let cur = null; try { cur = localStorage.getItem('vip_menu_pref'); } catch (_) {}
+            const b = document.body.classList;
+            if (!cur || !['full', 'girox', 'basic', 'easy'].includes(cur)) cur = b.contains('home-basic') ? 'basic' : (b.contains('home-easy') ? 'easy' : (b.contains('home-play') ? 'girox' : 'full'));
+            if (b.contains('home-basic')) cur = 'basic'; else if (b.contains('home-easy')) cur = 'easy'; else if (b.contains('home-full')) cur = 'full';
+            m.querySelectorAll('.mc-opt').forEach((o) => o.classList.toggle('is-cur', o.classList.contains('mc-' + cur)));
+        } catch (_) {}
         m.classList.add('open'); document.body.classList.add('mc-open');
     }
     function closeMenuChooser() {

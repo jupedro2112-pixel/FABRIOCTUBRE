@@ -2416,3 +2416,7 @@ body.home-full .ev-svc > b { font: 800 10.5px var(--p-font) !important; gap: 4px
 body.home-full .ev-svc .li { width: 30px !important; height: 30px !important; border-radius: 50%; background: var(--p-red-soft); color: var(--p-red); display: inline-flex !important; align-items: center; justify-content: center; }
 body.home-full .ev-svc .li svg { width: 17px !important; height: 17px !important; }
 body.home-full .ev-svc::after { content: "Ver más ›"; display: block; margin: 2px 0 0 !important; font: 800 8.5px var(--p-font) !important; color: var(--p-red); }
+/* #795 (owner): en el selector de menú se marca el ACTUAL (clase is-cur que pone openMenuChooser), no siempre el completo */
+.mc-opt, .mc-opt.mc-full, .mc-opt.mc-basic, .mc-opt.mc-easy, .mc-opt.mc-girox { border-color: transparent !important; }
+.mc-opt b, .mc-opt.mc-full b, .mc-opt.mc-basic b, .mc-opt.mc-easy b, .mc-opt.mc-girox b { color: var(--p-text) !important; }
+.mc-opt.is-cur { border-color: var(--p-red) !important; } .mc-opt.is-cur b { color: var(--p-red) !important; }
