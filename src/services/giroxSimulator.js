@@ -177,7 +177,10 @@ async function handle({ method, path, body, playUrl }) {
   if (action === 'session' && m === 'post') {
     // #775: antes mandaba a 1girox.com (la web real, sin sesión) y en el celular el iframe quedaba en "Entrando al casino…".
     // Ahora el casino de prueba es una página NUESTRA (/casino-sim, embebible) con el saldo del simulador y apuesta simulada.
-    return _ok({ redirect_url: '/casino-sim?u=' + encodeURIComponent(p.username), token: 'sim-' + Date.now().toString(36) });
+    // #780 (owner: "hace 2 h podía ver Girox"): por defecto vuelve a abrir la web real de 1girox (sin sesión, como siempre fue en
+    // Render); la página propia /casino-sim queda disponible sólo con GIROX_SIM_PAGE=1.
+    if (process.env.GIROX_SIM_PAGE === '1') return _ok({ redirect_url: '/casino-sim?u=' + encodeURIComponent(p.username), token: 'sim-' + Date.now().toString(36) });
+    return _ok({ redirect_url: (playUrl || 'https://1girox.com') + '/?sim_login=' + encodeURIComponent(p.username), token: 'sim-' + Date.now().toString(36) });
   }
   if (action === 'deposit' && m === 'post') return _money(st, p, 'deposit', body);
   if (action === 'withdraw' && m === 'post') return _money(st, p, 'withdraw', body);

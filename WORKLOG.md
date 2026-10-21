@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 780. ↩️ Girox directo en Render vuelve a abrir 1girox.com (como antes de #775)
+**Pedido (owner):** "¿por qué ahora no puedo jugar o ver Girox si podía hace 2 h?". Lo que veía era la web pública de 1girox dentro
+del recuadro (simulador sin key); #775 lo cambió por `/casino-sim`. Se vuelve al destino anterior por defecto; la página propia queda
+sólo con `GIROX_SIM_PAGE=1`. La solución de fondo sigue siendo `GIROX_API_URL/KEY` en el env de Render (#779).
+
 ### 779. 🚨 SEGURIDAD: Render comparte la BASE DE DATOS con producción
 **Hallazgo (al investigar por qué Render no veía la API de 1girox):** `fabrioctubre.onrender.com` usa la MISMA MongoDB que
 `picaroja.com` (mismas historias, usuarios, cierres…). La key de 1girox guardada desde el panel de producción no se puede descifrar en
