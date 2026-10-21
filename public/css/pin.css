@@ -2282,3 +2282,5 @@ body:not(.fewdep) .casino-load .cl-attach { display: flex !important; flex-direc
 .ev-cta.ev-cta-top .ev-cta-b, .ev-cta.ev-cta-top .ev-cta-t { display: block !important; width: 100% !important; text-align: center !important; white-space: normal !important; overflow: visible !important; }
 .ev-cta.ev-cta-top .ev-cta-t { font-size: 11px !important; line-height: 1.25 !important; }
 body.home-play .ev-hero { display: none !important; }
+/* #755: en el básico, el bloque de servicios arriba, compacto */
+.bv-sec-t { margin: 6px 12px 2px !important; } .bv-sec-t b { font-size: 14px !important; }

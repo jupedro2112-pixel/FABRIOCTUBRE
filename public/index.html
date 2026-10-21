@@ -1259,6 +1259,15 @@
                 <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
                 <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas"><span class="bv-new">Novedad</span>🔥 Fueguito <b><span id="bvFireN">0</span> d</b></button></div>
                 <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
+                <!-- #755 (owner): los servicios ARRIBA de todo en el básico -->
+                <div class="bv-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div><!-- #751 -->
+                <div class="bv-quick">
+                    <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos<small>Ver más ›</small></button>
+                    <!-- #584 (owner): "Niveles VIP" se sacó de acá: ya está arriba, con el progreso (#578) -->
+                    <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria<small>Ver más ›</small></button>
+                </div>
                 <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
                 <div class="bv-plats" id="basicPlats"></div>
                 <!-- #675 (owner): guía corta de primera carga en el BÁSICO (sólo quien nunca cargó): flecha al botón CARGAR -->
@@ -1296,14 +1305,6 @@
                 </div>
                 <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
                 <!-- #524 (owner): accesos rápidos debajo de "Entrar a jugar", en el orden del Inicio -->
-                <div class="bv-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div><!-- #751 -->
-                <div class="bv-quick">
-                    <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones<small>Ver más ›</small></button>
-                    <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos<small>Ver más ›</small></button>
-                    <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos<small>Ver más ›</small></button>
-                    <!-- #584 (owner): "Niveles VIP" se sacó de acá: ya está arriba, con el progreso (#578) -->
-                    <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria<small>Ver más ›</small></button>
-                </div>
                 <!-- #516: el pase a otro menú, con más lugar y explicado -->
                 <div class="bv-switch2">
                     <div class="bv-switch2-h">¿Querés ver más?</div>
@@ -2586,7 +2587,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v536</div>
+                    <div class="pf-build" id="appBuildTag">app v537</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

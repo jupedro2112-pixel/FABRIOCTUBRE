@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-18
 
+### 755. 🏠 Básico: "Todo lo que ofrecemos 100% para vos" y sus accesos pasan arriba de todo — SW v537
+**Pedido (owner, captura):** "y acá ponelo en la parte superior". El título y los accesos (Misiones · Reembolsos · Referidos · Ruleta)
+pasan debajo de nombre · saldo · racha, antes de "¿Dónde jugás?" y de los botones de cargar/retirar.
+
 ### 754. 🏠 CARGÁ AHORA centrado y corto; sin la pastilla "NOVEDAD" — SW v536
 **Pedido (owner, captura):** "el Cargá ahora hacé que esté todo centrado; la novedad 'aprovechá…' sacala y unificalo". El subtítulo del
 botón queda "Carga mínima $5.000 · se acredita sola", en bloque centrado y con salto de línea permitido (antes se cortaba a los
