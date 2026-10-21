@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 751. 🏠 Inicio completo y básico: "Todo lo que ofrecemos 100% para vos", carga mínima adentro del botón, Telegram bajo el nivel — SW v534
+**Pedido (owner):** "como ahora cargan desde Girox, en el completo y el básico dale predominancia al servicio: poné todo el servicio con
+el título 'Todo lo que ofrecemos 100% para vos' y que en cada uno se entienda que se puede expandir para ver más; la carga mínima de
+$5.000 en verde del rápido y del completo metela adentro del botón de cargar así no ocupa lugar; y lo de Telegram ponelo abajo del
+nivel, y en el básico". **Completo:** título `.ev-sec-t` + "Tocá cada uno para ver más ›" sobre los servicios; tarjetas con "Ver más ›"
+(`::after`), ahora 6 en dos filas: Reembolsos · Ruleta · Misiones · Fueguito · Niveles VIP · Referidos. CARGÁ AHORA lleva "Carga mínima
+$5.000 · transferís, mandás la foto y se acredita sola" (la franja verde se oculta). La tarjeta de Telegram pasa a estar debajo de
+nivel + racha (antes de CARGÁ AHORA). **Básico:** tarjeta de Telegram debajo de nombre · saldo · racha; título "Todo lo que ofrecemos
+100% para vos" sobre los accesos, que suman Fueguito y Niveles VIP. **Casino (Carga rápida):** sin la nota verde; "Adjuntar comprobante"
+dice siempre "Carga mínima $5.000 · con menos no se acredita".
+
 ### 750. 📊 Análisis del día en Cargas pendientes y Retiros pendientes (automático vs a mano) — admin-sw v145
 **Pedido (owner):** "en Cargas pendientes quiero un análisis del día como cierre para ver qué tanto falló la app y fue manual o fue todo
 correcto; lo mismo en Retiros pendientes; y en el cierre automático, si hay diferencia, ver si fue por alguna manual de carga o retiro".

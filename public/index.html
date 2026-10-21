@@ -1119,17 +1119,17 @@
                 <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" ><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
                 <button type="button" class="fire-mini" id="fireMiniBtn" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" hidden><span class="fm-flame">🔥</span><span class="fm-txt"><b>Racha</b><small id="fireMiniSub" hidden>Reclamá tu premio de hoy</small></span><span class="fm-streak" id="fireMiniStreak">0 d</span><em class="fm-more">Ver más ›</em></button>
             </div>
-            <button type="button" class="ev-cta ev-cta-top" id="evCtaTop" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">transferís, mandás la foto y se acredita solo</span></button>
-            <!-- #686 (owner): carga mínima BIEN GRANDE debajo de CARGÁ AHORA (todos, no sólo primera carga): "la página es automática, no quiero trabas" -->
-            <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · <b>con menos de <span class="md-amt">$5.000</span> tu carga no será acreditada</b></span></div>
-            <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
-                 CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
-            <!-- #749 (owner): canal de Telegram en el Inicio: ver lo que publicamos + invitación a la comunidad -->
+            <!-- #749/#751 (owner): canal de Telegram DEBAJO del nivel y la racha: ver lo que publicamos + invitación a la comunidad -->
             <div class="tg-card" id="tgCard" hidden>
                 <div class="tg-ico"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#229ed9"/><path d="M5.5 11.6l11.3-4.4c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.8-2.1-1.3 1.3c-.2.2-.3.3-.6.3l.2-2.8 5.1-4.6c.2-.2 0-.3-.3-.1l-6.3 4-2.7-.9c-.6-.2-.6-.6.1-.9z" fill="#fff"/></svg></div>
                 <div class="tg-txt"><b>Canal oficial de Telegram</b><small>Mirá lo que publicamos: novedades y plata por código todas las semanas.</small></div>
                 <div class="tg-btns"><button type="button" class="tg-go" onclick="VIP.home.openTelegram()">Entrar al canal ›</button><button type="button" class="tg-inv" id="tgInviteBtn" hidden onclick="VIP.home.openTelegramInvite()">Unirme a la comunidad</button></div>
             </div>
+            <button type="button" class="ev-cta ev-cta-top" id="evCtaTop" onclick="VIP.home.setHomeMode('full')"><span class="ev-cta-b">⚡ CARGÁ AHORA</span><span class="ev-cta-t">Carga mínima <b class="md-amt">$5.000</b> · transferís, mandás la foto y se acredita sola</span></button><!-- #751: la carga mínima va adentro del botón -->
+            <!-- #686 (owner): carga mínima BIEN GRANDE debajo de CARGÁ AHORA (todos, no sólo primera carga): "la página es automática, no quiero trabas" -->
+            <div class="min-strip ms-play"><span class="ms-k">💵 CARGA MÍNIMA</span><b class="md-amt">$5.000</b><span class="ms-t">con ese monto o más se acredita sola · <b>con menos de <span class="md-amt">$5.000</span> tu carga no será acreditada</b></span></div>
+            <!-- #675 (owner): GUÍA DE PRIMERA CARGA (sólo quien nunca cargó, en el Inicio del completo): cartel con flecha al botón
+                 CARGÁ AHORA (que queda resaltado con un pulso) + "después de jugar mirá los beneficios". La ✕ lo saca (localStorage vip_fguide_off). -->
             <div class="fg-card" id="firstGuide" hidden>
                 <i class="fg-arrow" aria-hidden="true"></i>
                 <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
@@ -1160,6 +1160,8 @@
                 <!-- #269 (owner): "en el inicio, arriba de la página, el reembolso, la ruleta diaria y el sistema
                      de referidos como servicio para que vean". Tres accesos compactos; el % de reembolso lo llena
                      home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
+                <!-- #751 (owner): "dale predominancia al servicio: Todo lo que ofrecemos 100% para vos; que se entienda que se puede expandir" -->
+                <div class="ev-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div>
                 <div class="ev-services" id="entryServices">
                     <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso</b><small id="evSvcRefund">de tu NETWIN</small>
@@ -1171,6 +1173,8 @@
                     <button type="button" class="ev-svc svc-missions" onclick="VIP.home.openMissions()" title="Misiones de la semana">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones</b><small id="evSvcMissions">de la semana</small>
                     </button>
+                    <button type="button" class="ev-svc svc-fire" onclick="VIP.fire.showFireModal()" title="Fueguito: tu racha de cargas"><b><i class="li">🔥</i>Fueguito</b><small>Racha con premios</small></button><!-- #751 -->
+                    <button type="button" class="ev-svc svc-vip" onclick="VIP.home.openVipLevels()" title="Niveles VIP"><b><i class="li">🏆</i>Niveles VIP</b><small>Bonos al subir</small></button><!-- #751 -->
                     <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
                         <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b><small>cobrá todos los meses</small>
                     </button>
@@ -1263,6 +1267,12 @@
                 <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
                 <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas"><span class="bv-new">Novedad</span>🔥 Fueguito <b><span id="bvFireN">0</span> d</b></button></div>
                 <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
+                <!-- #751 (owner): Telegram debajo del nivel y la racha, también en el básico -->
+                <div class="tg-card tg-basic" hidden>
+                    <div class="tg-ico"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#229ed9"/><path d="M5.5 11.6l11.3-4.4c.5-.2 1 .1.8.9l-1.9 9c-.1.6-.5.8-1 .5l-2.8-2.1-1.3 1.3c-.2.2-.3.3-.6.3l.2-2.8 5.1-4.6c.2-.2 0-.3-.3-.1l-6.3 4-2.7-.9c-.6-.2-.6-.6.1-.9z" fill="#fff"/></svg></div>
+                    <div class="tg-txt"><b>Canal oficial de Telegram</b><small>Novedades y plata por código todas las semanas.</small></div>
+                    <div class="tg-btns"><button type="button" class="tg-go" onclick="VIP.home.openTelegram()">Entrar al canal ›</button><button type="button" class="tg-inv tg-inv-btn" hidden onclick="VIP.home.openTelegramInvite()">Unirme a la comunidad</button></div>
+                </div>
                 <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
                 <div class="bv-plats" id="basicPlats"></div>
                 <!-- #675 (owner): guía corta de primera carga en el BÁSICO (sólo quien nunca cargó): flecha al botón CARGAR -->
@@ -1300,12 +1310,15 @@
                 </div>
                 <button type="button" class="bv-play" id="basicPlay" onclick="VIP.home.basicPlay()">Entrar a jugar ›</button>
                 <!-- #524 (owner): accesos rápidos debajo de "Entrar a jugar", en el orden del Inicio -->
+                <div class="bv-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div><!-- #751 -->
                 <div class="bv-quick">
                     <button type="button" onclick="VIP.home.openMissions()"><i>🎯</i>Misiones<small>Ver más ›</small></button>
                     <button type="button" onclick="VIP.home.svcRefund()"><i>💸</i>Reembolsos<small>Ver más ›</small></button>
                     <button type="button" onclick="VIP.ui.openReferralModal()"><i>🤝</i>Referidos<small>Ver más ›</small></button>
                     <!-- #584 (owner): "Niveles VIP" se sacó de acá: ya está arriba, con el progreso (#578) -->
                     <button type="button" onclick="VIP.home.svcRoulette()"><i>🎰</i>Ruleta diaria<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.fire.showFireModal()"><i>🔥</i>Fueguito<small>Ver más ›</small></button><!-- #751 -->
+                    <button type="button" onclick="VIP.home.openVipLevels()"><i>🏆</i>Niveles VIP<small>Ver más ›</small></button><!-- #751 -->
                 </div>
                 <!-- #516: el pase a otro menú, con más lugar y explicado -->
                 <div class="bv-switch2">
@@ -2589,7 +2602,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v533</div>
+                    <div class="pf-build" id="appBuildTag">app v534</div>
                 </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->

@@ -974,9 +974,8 @@
     let _tg = null;
     async function paintTelegramCard() {
         try { const r = await fetch(VIP.config.API_URL + '/api/config/community', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); if (r.ok) _tg = await r.json(); } catch (_) {}
-        const card = _el('tgCard'); if (!card) return;
-        const has = !!(_tg && (_tg.channelUrl || _tg.inviteUrl)); card.hidden = !has;
-        const ib = _el('tgInviteBtn'); if (ib) ib.hidden = !(_tg && _tg.inviteUrl);
+        const has = !!(_tg && (_tg.channelUrl || _tg.inviteUrl)); const inv = !!(_tg && _tg.inviteUrl);
+        document.querySelectorAll('.tg-card').forEach((card) => { card.hidden = !has; card.querySelectorAll('.tg-inv').forEach((b) => { b.hidden = !inv; }); }); // #751: completo y básico
     }
     function openTelegramInvite() { const u = _tg && _tg.inviteUrl; if (u) window.open(u, '_blank', 'noopener'); else openTelegram(); }
     async function openTelegram() {
@@ -2095,8 +2094,8 @@
             _fdNoteHtml() + // #626
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
-            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<p class="cl-meta min-note"><b class="mn-big">Carga mínima ' + md + '</b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>.</span></p>' + // #709 (owner): sin "escribinos a Soporte" acá (ya está el botón Ir a Soporte)
-              '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante' + _sbTagHtml() + '<small class="min-tag">Carga mínima ' + md + '</small></button>'; })() + // #742: + bono de historia
+            // #751 (owner): la carga mínima va ADENTRO del botón (siempre), sin la nota verde que ocupaba lugar
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); return '<button type="button" class="cl-btn cl-attach" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante' + _sbTagHtml() + '<small class="min-tag min-always">Carga mínima ' + md + ' · con menos no se acredita</small></button>'; })() + // #742: + bono de historia
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
