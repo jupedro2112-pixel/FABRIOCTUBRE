@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 728. 🧪 diego651917 se reinicia solo como primer cliente después de cada pedido de retiro (sólo entorno de prueba)
+**Pedido (owner):** "reiniciá siempre todo una vez que pongo retirar; quiero que vuelva a aparecer todo como primera carga en este
+usuario solamente, en el resto normal". La lógica de `reset-test` pasa a `_resetTestUser(u, by)` (misma limpieza de #708/#725 + emite
+`balance_updated: 0`) y la ruta la llama. En `_withdrawalRequestHandler`, tras responder OK, si `_isTestEnv()` y el username está en
+`AUTO_RESET_USERNAMES = ['diego651917']`, a los 8 s se ejecuta el reinicio (así alcanza a verse el cartel de felicitaciones y el
+mensaje del retiro). Los demás usuarios no cambian; en producción no existe.
+
 ### 727. 🎁 Primera carga sin la app dentro del casino: el MISMO cartel del menú completo, se queda hasta elegir; "lo cargo después" = recordatorio abajo — SW v519
 **Pedido (owner, captura del cartel del completo):** "en las primeras cargas así aparece en el menú completo; en vez de Buena suerte
 ponemos este cartel; si es primera carga y no tiene app que aparezca así también en el menú Girox sin que se vaya, que la gente pueda

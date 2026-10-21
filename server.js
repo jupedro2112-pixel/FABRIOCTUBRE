@@ -13316,6 +13316,8 @@ async function _withdrawalRequestHandler(req, res) {
       success: true,
       message: `Retiro de ${amountFmt} solicitado correctamente`
     });
+    // #728 (owner): el usuario de prueba vuelve a "primer cliente" solo, 8 s después de pedir el retiro (sólo entorno de prueba).
+    try { if (_isTestEnv() && AUTO_RESET_USERNAMES.includes(String(user.username))) setTimeout(() => { _resetTestUser({ id: user.id, username: user.username }, 'auto tras retiro').catch(() => {}); }, 8000); } catch (_) {}
   } catch (error) {
     logger.error(`Error en withdrawal/request: ${error.message}`);
     res.status(500).json({ error: 'Error del servidor' });
@@ -19181,39 +19183,47 @@ app.post('/api/test/withdraw', authMiddleware, async (req, res) => {
 });
 // Reinicio TOTAL de un usuario de prueba: borra cargas, retiros, comprobantes, movimientos, fueguito, misiones, ruleta, reembolsos,
 // cashback, sesiones, pagos pendientes y mensajes, y vuelve a cero saldo/nivel/regalos; el jugador simulado también vuelve a 0.
+// #728 (owner): "reiniciá siempre todo una vez que pongo retirar; quiero que vuelva a aparecer todo como primera carga en este
+// usuario solamente". AUTO_RESET_USERNAMES se reinicia solo unos segundos después de cada pedido de retiro (sólo entorno de prueba).
+const AUTO_RESET_USERNAMES = ['diego651917'];
+async function _resetTestUser(u, by) {
+  const q = { userId: u.id };
+  const out = {};
+  const del = async (name, Model, filter) => { try { const r = await Model.deleteMany(filter); out[name] = r.deletedCount; } catch (e) { out[name] = 'error: ' + e.message; } };
+  await del('transactions', Transaction, q);
+  await del('comprobantes', Comprobante, q);
+  await del('bankMovements', BankMovement, { matchedUserId: u.id });
+  await del('fireStreak', FireStreak, q);
+  await del('missionClaims', MissionClaim, q);
+  await del('rouletteSpins', DailyRouletteSpin, q);
+  await del('refundClaims', RefundClaim, q);
+  await del('cashbackClaims', CashbackClaim, q);
+  await del('hgcashCharges', HgcashCharge, q);
+  await del('strategyEnrollments', StrategyEnrollment, q);
+  await del('vipWagerMonths', VipWagerMonth, q);
+  await del('appSessions', AppSession, q);
+  await del('pendingPayouts', PendingPayout, q);
+  await del('messages', Message, { $or: [{ receiverId: u.id }, { senderId: u.id }] });
+  await User.updateOne({ id: u.id }, { $set: {
+    balance: 0, lifetimeWagered: 0, vipLevel: 0, vipLevelUpdatedAt: null, dailyRoulettePendingPct: 0, supportSessionSince: null,
+    'installGift.status': 'none', 'installGift.amount': 0, 'installGift.baseAmount': 0, 'installGift.pct': null, 'installGift.offeredAt': null, 'installGift.expiresAt': null, 'installGift.deferredAt': null, 'installGift.claimedAt': null,
+    fcmTokenContext: null, // #725: sin esto el usuario figuraba "con la app instalada" y la primera carga no ofrecía el extra por instalar
+    'secondDepositOffer.status': 'none', 'secondDepositOffer.pct': null, 'secondDepositOffer.offeredAt': null,
+    welcomeCodeBonusStatus: 'none', welcomeCodeBonusType: null, welcomeCodeBonusAmount: null, welcomeCodeClaimedAt: null, welcomeCodeBonusUsedAt: null, welcomeCodeBonusUsedBy: null
+  } });
+  try { if (girox.isSimulated()) { const giroxSim = require('./src/services/giroxSimulator'); await giroxSim.adjustPlayer(String(u.username), { netwin: 0, wagered: 0, balance: 0 }); out.simulador = 'jugador a 0'; } } catch (e) { out.simulador = 'error: ' + e.message; }
+  try { _giroxKeyCache.delete(u.username); } catch (_) {}
+  try { io.to(`user_${u.id}`).emit('balance_updated', { balance: 0 }); } catch (_) {}
+  logger.warn(`[reset-test] ${u.username} reiniciado por ${by}: ${JSON.stringify(out)}`);
+  return out;
+}
 app.post('/api/admin/users/:userId/reset-test', authMiddleware, adminMiddleware, async (req, res) => {
   if (!_isTestEnv()) return res.status(404).json({ error: 'Endpoint no encontrado' });
   try {
     const u = await User.findOne({ id: req.params.userId }).select('id username role').lean();
     if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
     if (!TEST_USERNAMES.includes(String(u.username))) return res.status(403).json({ error: 'Sólo usuarios de prueba: ' + TEST_USERNAMES.join(', ') });
-    const q = { userId: u.id };
-    const out = {};
-    const del = async (name, Model, filter) => { try { const r = await Model.deleteMany(filter); out[name] = r.deletedCount; } catch (e) { out[name] = 'error: ' + e.message; } };
-    await del('transactions', Transaction, q);
-    await del('comprobantes', Comprobante, q);
-    await del('bankMovements', BankMovement, { matchedUserId: u.id });
-    await del('fireStreak', FireStreak, q);
-    await del('missionClaims', MissionClaim, q);
-    await del('rouletteSpins', DailyRouletteSpin, q);
-    await del('refundClaims', RefundClaim, q);
-    await del('cashbackClaims', CashbackClaim, q);
-    await del('hgcashCharges', HgcashCharge, q);
-    await del('strategyEnrollments', StrategyEnrollment, q);
-    await del('vipWagerMonths', VipWagerMonth, q);
-    await del('appSessions', AppSession, q);
-    await del('pendingPayouts', PendingPayout, q);
-    await del('messages', Message, { $or: [{ receiverId: u.id }, { senderId: u.id }] });
-    await User.updateOne({ id: u.id }, { $set: {
-      balance: 0, lifetimeWagered: 0, vipLevel: 0, vipLevelUpdatedAt: null, dailyRoulettePendingPct: 0, supportSessionSince: null,
-      'installGift.status': 'none', 'installGift.amount': 0, 'installGift.baseAmount': 0, 'installGift.pct': null, 'installGift.offeredAt': null, 'installGift.expiresAt': null, 'installGift.deferredAt': null, 'installGift.claimedAt': null,
-      fcmTokenContext: null, // #725: sin esto el usuario figuraba "con la app instalada" y la primera carga no ofrecía el extra por instalar
-      'secondDepositOffer.status': 'none', 'secondDepositOffer.pct': null, 'secondDepositOffer.offeredAt': null,
-      welcomeCodeBonusStatus: 'none', welcomeCodeBonusType: null, welcomeCodeBonusAmount: null, welcomeCodeClaimedAt: null, welcomeCodeBonusUsedAt: null, welcomeCodeBonusUsedBy: null
-    } });
-    try { if (girox.isSimulated()) { const giroxSim = require('./src/services/giroxSimulator'); await giroxSim.adjustPlayer(String(u.username), { netwin: 0, wagered: 0, balance: 0 }); out.simulador = 'jugador a 0'; } } catch (e) { out.simulador = 'error: ' + e.message; }
-    try { _giroxKeyCache.delete(u.username); } catch (_) {}
-    logger.warn(`[reset-test] ${u.username} reiniciado por ${req.user.username}: ${JSON.stringify(out)}`);
+    const out = await _resetTestUser(u, req.user.username);
     res.json({ success: true, username: u.username, borrado: out });
   } catch (e) { logger.warn(`[reset-test] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
