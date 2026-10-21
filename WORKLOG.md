@@ -8,6 +8,30 @@
 
 ## Sesión 2026-10-18
 
+### 694. 🏠 Inicio del completo sin la tarjeta "Elegí dónde jugar" (queda en Carga automática y básico) — SW v496
+**Pedido (owner, captura):** "esto del Inicio completo dejalo sólo para cuando van a cargar, sacalo así entra bien el resto; en el
+básico sí dejá como está". CSS: `body.home-play .ev-play-first { display:none }` (las pestañas Girox/Ganamos/Jugaygana del Inicio).
+JUGÁ AQUÍ sigue abriendo el selector de plataforma.
+
+### 693. ↩️ Devolución de transferencias MENORES a la carga mínima: botón en Soporte y en Movimientos, rebote al CBU de origen por hgcash, aviso al cliente — admin-sw v138
+**Pedido (owner):** "si la gente carga menos de 5.000 y va a Soporte, que se pueda reintegrar la plata con un botón y que le aparezca un
+cartel de que la devolución ya fue hecha con éxito; recordá que la carga mínima es 5.000" · "cuando se rechaza que rebote para afuera
+la transferencia". **Server:** `POST /api/admin/hgcash/movements/:movementId/refund` (roles admin/depositor/withdrawer): sólo movimientos
+ENTRANTES no cargados (`needs_review`/`no_match`/`pending`/`error`) con `amount < carga mínima` y `fromCBU` de 22 dígitos → cash-out
+hgcash al CBU de origen (`hgcashPay.createCashOut`, `externalID = refund-<movementId>` idempotente, reintento 403 con accountId fresco,
+409 duplicate = ya devuelta) → `matchStatus:'refunded'` (+ `refundedAt/refundHgId/refundBy`, enum nuevo en BankMovement; `refundError`
+si falla), el comprobante matcheado pasa a `rejected` (así el cliente deja de ver "carga pendiente"), mensaje de sistema + push al
+cliente con `/sys_below_min_refunded` (nuevo en COMANDOS, `{monto}` `{min}`: "✅ Tu devolución de $X ya fue hecha con éxito a tu
+cuenta de origen… Recordá que la carga mínima es de $5.000") y nota interna. `GET /api/admin/support/:userId/below-min` lista las
+transferencias menores al mínimo de ese cliente (15 días). **Panel:** en Soporte, al abrir una charla aparece arriba del chat el cartel
+"⚠️ Transferencia de $X MENOR a la carga mínima · nombre · CBU · [↩ Devolver $X]" (`spBelowMinBanner`, y "✅ Devuelta" cuando ya se
+hizo); en Banco automático → Movimientos, el estado `needs_review` por "menor al mínimo" trae el botón "↩ Devolver" y el badge
+"↩️ Devuelta al origen". `refundBelowMin()` confirma, llama la ruta y refresca charla y tabla.
+
+### 692. 🏠 Sin el hueco debajo de las tarjetas de juegos del Inicio — SW v495
+**Pedido (owner, captura):** "ese espacio lo sacamos, no lo quiero". `.ev-slides-track.games` reservaba 56px abajo para el CTA viejo
+(que desde #641 va arriba) → `padding-bottom: 10px`; los puntitos del carrusel en modo juegos se ocultan.
+
 ### 691. 💬 "Escribinos a Soporte" con link directo en las notas de carga mínima (cargas y dentro de Girox) — SW v494
 **Pedido (owner):** "en 'escribinos a Soporte' dentro de cargas o de 1girox que sea con el link para entrar directo desde ahí".
 Las notas `.min-note` del paso 1 de la Carga automática y del panel CARGAR del básico terminan con el botón `.sup-link`

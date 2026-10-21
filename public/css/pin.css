@@ -2087,3 +2087,8 @@ body.ms-off .min-strip, body.ms-off .ms-easy { display: none !important; }
 /* #691: "escribinos a Soporte" como link directo dentro de las notas de carga mínima */
 .sup-link { display: inline-block; margin-top: 4px; border: 0; background: var(--p-text); color: var(--p-inv, #fff); font: 800 12px var(--p-font); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
 .casino-load .sup-link { background: var(--p-red) !important; color: #fff !important; }
+/* #692 (owner): sin el hueco debajo de las tarjetas de juegos (los 56px reservados para el CTA viejo, que desde #641 va arriba) */
+.ev-slides-track.games { padding-bottom: 10px !important; }
+.ev-frame-wrap.games .ev-slides-dots { display: none !important; }
+/* #694 (owner): la tarjeta "Elegí dónde jugar" NO va en el Inicio del completo (queda para cuando van a cargar y en el básico) */
+body.home-play .ev-play-first { display: none !important; }

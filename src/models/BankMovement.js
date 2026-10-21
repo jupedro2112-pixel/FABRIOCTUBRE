@@ -61,7 +61,7 @@ const bankMovementSchema = new mongoose.Schema({
     //   (_platformChoiceTick → última plataforma elegida / default).
     // redirected: el cliente eligió una plataforma SIN API conectada (ej. Ganamos) → NO se cargó
     //   acá, se lo mandó al link externo de esa plataforma. Queda consumido (nadie lo carga por error).
-    enum: ['pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'no_match', 'ignored', 'error', 'duplicate', 'needs_review', 'awaiting_platform', 'redirected'],
+    enum: ['pending', 'claiming', 'shadow_matched', 'auto_charged', 'manual_charged', 'no_match', 'ignored', 'error', 'duplicate', 'needs_review', 'awaiting_platform', 'redirected', 'refunded'], // #693: refunded = devuelta al CBU de origen (carga menor al mínimo)
     default: 'pending',
     index: true
   },
@@ -69,6 +69,11 @@ const bankMovementSchema = new mongoose.Schema({
   matchedUsername: { type: String, default: null },
   matchedComprobanteId: { type: String, default: null },
   chargeError: { type: String, default: null },
+  // #693: devolución al CBU de origen (transferencia menor a la carga mínima) por hgcash
+  refundedAt: { type: Date, default: null },
+  refundHgId: { type: String, default: null },
+  refundBy: { type: String, default: null },
+  refundError: { type: String, default: null },
   chargeAttempts: { type: Number, default: 0 }, // intentos de auto-carga fallidos
   chargedAt: { type: Date, default: null },
 

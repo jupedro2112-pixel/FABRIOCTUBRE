@@ -7208,7 +7208,8 @@ function hgcashStatusBadge(st) {
         duplicate:      ['Duplicado (no cargado)', '#7a1010'],
         needs_review:   ['⚠️ Revisar (posible duplicado)', '#b5651d'],
         awaiting_platform: ['🎮 Esperando elección del cliente', '#6a1b9a'],
-        redirected:     ['➡️ Derivado a otra plataforma (no cargado acá)', '#4a148c']
+        redirected:     ['➡️ Derivado a otra plataforma (no cargado acá)', '#4a148c'],
+        refunded:       ['↩️ Devuelta al origen (menor al mínimo)', '#555'] // #693
     };
     const [label, color] = map[st] || [st || '—', '#888'];
     return '<span style="background:' + color + ';color:#fff;border-radius:9px;padding:2px 8px;font-size:10.5px;white-space:nowrap;">' + escapeHtml(label) + '</span>';
@@ -7251,7 +7252,7 @@ async function loadHgcashMovements(page = 1) {
                 '<td style="font-size:11px;">' + escapeHtml(cbuOrigen) + '</td>' +
                 '<td>' + escapeHtml(destino) + '</td>' +
                 '<td style="font-size:11px;">' + escapeHtml(cbuDestino) + '</td>' +
-                '<td>' + hgcashStatusBadge(m.matchStatus) + (m.chargeError ? '<br><span style="color:#dc3545;font-size:10px;">' + escapeHtml(String(m.chargeError).slice(0,60)) + '</span>' : '') + '</td>' +
+                '<td>' + hgcashStatusBadge(m.matchStatus) + (m.chargeError ? '<br><span style="color:#dc3545;font-size:10px;">' + escapeHtml(String(m.chargeError).slice(0,60)) + '</span>' : '') + (m.matchStatus === 'needs_review' && /menor al m/i.test(String(m.chargeError || '')) ? '<br><button type="button" onclick="refundBelowMin(\'' + escapeHtml(m.movementId) + '\',' + Number(m.amount || 0) + ')" style="margin-top:4px;padding:3px 8px;background:#b5651d;color:#fff;border:0;border-radius:6px;cursor:pointer;font-size:11px;">↩ Devolver</button>' : '') + '</td>' +
                 '<td>' + escapeHtml(usuario) + '</td>' +
                 '<td style="font-size:11px;">' + escapeHtml(op) + '</td>' +
                 '</tr>';
@@ -16096,9 +16097,39 @@ async function spSelect(userId, username) {
     const h = document.getElementById('spHead');
     if (h) h.innerHTML = '<button type="button" class="btn-secondary btn-small" onclick="spClose()" title="Cierra la charla: el cliente vuelve al selector de problema" style="margin-left:auto;order:9;color:#ff8080;">✅ Cerrar charla</button><b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
     await spLoadMessages(userId, false);
+    spBelowMinBanner(userId); // #693
     try { await authFetch('/api/messages/read/' + encodeURIComponent(userId), { method: 'POST' }); } catch (_) {}
     const c = _spConvs.find(function (x) { return x.userId === userId; }); if (c) { c.unread = 0; _spRenderList(); _spSetBadge(_spConvs.reduce(function (s, x) { return s + (x.unread || 0); }, 0)); }
 }
+// #693 (owner): cartel en Soporte cuando el cliente tiene una transferencia MENOR a la carga mínima sin cargar → botón Devolver
+async function spBelowMinBanner(userId) {
+    const box = document.getElementById('spMessages'); if (!box) return;
+    let el = document.getElementById('spBelowMin');
+    if (!el) { el = document.createElement('div'); el.id = 'spBelowMin'; el.style.cssText = 'display:none;margin:0 12px 6px;padding:10px 12px;border-radius:10px;background:#3a2a10;border:1px solid #b5651d;color:#fff;font-size:12.5px;line-height:1.45;'; box.parentNode.insertBefore(el, box); }
+    el.style.display = 'none';
+    try {
+        const r = await authFetch('/api/admin/support/' + encodeURIComponent(userId) + '/below-min'); const j = await r.json(); if (!r.ok || !j.items || !j.items.length) return;
+        const min = Number(j.minDepositArs || 5000);
+        el.innerHTML = j.items.map(function (m) {
+            const amt = Number(m.amount || 0).toLocaleString('es-AR');
+            if (m.matchStatus === 'refunded') return '<div>✅ Devuelta: <b>$' + amt + '</b> al CBU de origen ' + (m.refundedAt ? '(' + new Date(m.refundedAt).toLocaleString('es-AR') + ')' : '') + '</div>';
+            return '<div>⚠️ Transferencia de <b>$' + amt + '</b> MENOR a la carga mínima ($' + min.toLocaleString('es-AR') + ') · ' + escapeHtml(m.fromName || '') + ' · CBU ' + escapeHtml(m.fromCBU || '—') + ' <button type="button" onclick="refundBelowMin(\'' + escapeHtml(m.movementId) + '\',' + Number(m.amount || 0) + ')" style="margin-left:6px;padding:4px 10px;background:#b5651d;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:700;">↩ Devolver $' + amt + '</button></div>';
+        }).join('');
+        el.style.display = '';
+    } catch (_) {}
+}
+async function refundBelowMin(movementId, amount) {
+    if (!confirm('¿Devolver $' + Number(amount || 0).toLocaleString('es-AR') + ' al CBU de origen por hgcash? Se le avisa al cliente por Soporte y la transferencia queda marcada como devuelta.')) return;
+    try {
+        const r = await authFetch('/api/admin/hgcash/movements/' + encodeURIComponent(movementId) + '/refund', { method: 'POST' });
+        const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) { showToast(j.error || 'No se pudo devolver', 'error'); return; }
+        showToast(j.already ? 'Ya estaba devuelta' : '✅ Devolución enviada. Se le avisó al cliente.', 'success');
+        if (typeof _spSelected !== 'undefined' && _spSelected && _spSelected.userId) { spBelowMinBanner(_spSelected.userId); spLoadMessages(_spSelected.userId, false); }
+        try { if (typeof loadHgcashMovements === 'function' && document.getElementById('hgcashMovementsBody')) loadHgcashMovements(); } catch (_) {}
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.refundBelowMin = refundBelowMin; window.spBelowMinBanner = spBelowMinBanner;
 async function spLoadMessages(userId, keepScroll) {
     const box = document.getElementById('spMessages'); if (!box) return;
     try {
