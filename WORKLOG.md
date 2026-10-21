@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-18
 
+### 793. 🧪 El reinicio de prueba también borra la marca de "app instalada"
+**Pedido (owner):** "reiniciame lo de la app en el usuario para ver cómo aparece sin instalar la app". `_rouletteHasAppInstalled` mira
+`fcmTokenContext` Y los tokens con `context:'standalone'`; el reset sólo limpiaba el primero ⇒ seguía "instalada". Ahora vacía `fcmTokens`.
+(Sin panel de admin el reinicio se dispara igual con Carga + Retiro de prueba: diego651917 se reinicia solo 8 s después del retiro.)
+
+### 792. 💳 Tarjeta "Cargá acá" mejor distribuida — SW v557
+**Pedido (owner, captura):** "mejor distribuida, con sus burbujas, el texto bien segmentado". Cada paso en su burbuja; CBU y alias
+como filas (valor + Copiar) con fondo blanco; banco y titular centrados; se oculta la pastilla "Carga mínima" repetida (queda en el título
+del paso y en la nota verde, ahora en una línea con el botón a Soporte); pasos 2 y 3 con texto más legible.
+
+### 791. 🏠 Servicios del completo en UNA línea, como el básico — SW v557
+**Pedido (owner, capturas):** "en el menú completo poné este (la fila del básico) en vez del que está, todo en una línea". Las 4
+tarjetas (Reembolso · Ruleta · Misiones · Referidos) en una fila, ícono en círculo rojo suave, sin subtítulos, "Ver más ›" debajo.
+
 ### 790. 🐛 Perfil roto (recuadro sin cerrar) + el recuadro de usuario se OCULTA por pedido del owner — SW v556
 **Capturas del owner (nombre en vertical, "Canjear un código" y "Modo nocturno" al costado) y luego "ese recuadro no va, hay que dejar
 el de abajo; arriba el verificador de SMS, el código y el modo nocturno".** Causa del desarmado: al mover `#pfUserBox` (#783/#789) su
