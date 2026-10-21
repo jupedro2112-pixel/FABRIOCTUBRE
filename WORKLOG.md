@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 720. 🎰 Tras la carga (o retiro), la burbuja mini se ubica centrada sobre PICA ROJA en la barra — SW v513
+**Pedido (owner):** "una vez que cargan que la Carga rápida pase a estar en la parte central, en el medio, que no tape Historias ni
+Menú, achicala justo que quede encima de PICA ROJA". `_bubbleToBrand()`: con la burbuja ya en modo mini (#716) la centra sobre la
+pastilla `.cb-box` de la marca (coordenadas relativas al overlay) y guarda la posición en `localStorage vip_cq_pos` (la que usa el
+arrastre), así queda ahí hasta que la muevan. Se llama desde `onDepositCredited` y `onWithdrawRequested`.
+
 ### 719. 📲 Instalar la app DENTRO del casino: barra fija abajo + aviso en el cartel de carga (sin fricción) — SW v512
 **Pedido (owner):** "la parte de instalar app dentro de Girox, cuando realizan la carga, que ahí mismo figure lo mismo de instalar la
 app; si no quiere instalar en el momento puede hacerlo después desde el menú completo eligiendo en la parte superior; no generar

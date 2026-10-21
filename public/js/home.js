@@ -1934,7 +1934,7 @@
     async function onDepositCredited(d) {
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }
-        try { toggleCasinoLoad(false); _applyQuickMini(true); } catch (_) {} // #716 (owner): tras la carga la burbuja se minimiza así no molesta
+        try { toggleCasinoLoad(false); _applyQuickMini(true); _bubbleToBrand(); } catch (_) {} // #716/#720: tras la carga la burbuja se minimiza y va al medio, sobre PICA ROJA
         let n = null;
         try { const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const j = await r.json(); n = j && j.depositsCount != null ? Number(j.depositsCount) : null; } catch (_) {}
         if (n != null && n > 5) return;
@@ -1958,7 +1958,7 @@
     // #714 (owner): "quiero darle unas felicitaciones a la gente: en breve ya sale su pago, recordá que tenemos muchos beneficios para vos
     // en el menú completo" — al pedir un retiro (desde donde sea), 5 s o ✕, mismo estilo.
     function onWithdrawRequested(amount) {
-        try { if (VIP.ui && VIP.ui._casinoOpen) { toggleCasinoLoad(false); _applyQuickMini(true); } } catch (_) {} // #716: tras el retiro, burbuja minimizada
+        try { if (VIP.ui && VIP.ui._casinoOpen) { toggleCasinoLoad(false); _applyQuickMini(true); _bubbleToBrand(); } } catch (_) {} // #716/#720: tras el retiro, burbuja mini sobre la marca
         const old = _el('luckCard'); if (old) old.remove();
         const amt = Number(amount) || 0;
         document.body.insertAdjacentHTML('beforeend',
@@ -1975,6 +1975,20 @@
     // #711: minimizar = panel cerrado + burbuja sólo con el logo (recordado); cerrar = panel cerrado + burbuja normal.
     function _applyQuickMini(on) { const b = _el('casinoSupportBubble'); if (b) b.classList.toggle('cq-mini', !!on); try { localStorage.setItem('vip_cq_mini', on ? '1' : '0'); } catch (_) {} }
     function casinoQuickMini() { toggleCasinoLoad(false); _applyQuickMini(true); }
+    // #720 (owner): "una vez que cargan, que la Carga rápida pase a estar en el medio, encima de PICA ROJA, chiquita, sin tapar
+    // Historias ni Menú". Se centra sobre la pastilla de la marca de la barra (coordenadas del overlay) y se recuerda la posición.
+    function _bubbleToBrand() {
+        try {
+            const b = _el('casinoSupportBubble'), br = document.querySelector('#casinoTopBar .cb-box'), ov = _el('casinoOverlay');
+            if (!b || !br || !ov) return;
+            requestAnimationFrame(() => {
+                const r = br.getBoundingClientRect(), o = ov.getBoundingClientRect(), w = b.offsetWidth || 42, h = b.offsetHeight || 42;
+                const left = Math.max(4, r.left + r.width / 2 - w / 2 - o.left), top = Math.max(2, r.top + r.height / 2 - h / 2 - o.top);
+                b.style.left = left + 'px'; b.style.top = top + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto';
+                try { localStorage.setItem('vip_cq_pos', JSON.stringify({ left, top })); } catch (_) {}
+            });
+        } catch (_) {}
+    }
     function casinoQuickClose() { toggleCasinoLoad(false); _applyQuickMini(false); }
     function dismissCasinoQuick() {
         _quickDismissed = true; _quickOpen = false;
