@@ -12392,6 +12392,8 @@ async function initializeData() {
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
+  // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
+  try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
   // #811 (owner 2026-10-22): "las cargas y pagos quiero que sean automáticos". One-shot: carga automática en modo AUTO (acredita sola;
   // antes podía estar en 'shadow' = sólo detecta), retiros por debajo del umbral se pagan solos (autoBelow) y el acuse del comprobante
   // pasa a "en breve tu carga será realizada" (sólo si el texto guardado seguía siendo el viejo).
@@ -14187,7 +14189,9 @@ async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
     if (ap > 0) c = { pct: ap, claimed: true, source: 'auto_load', label: `bono por carga automática (${ap}%)`, revert: async () => {} };
   }
   if (!c.claimed) return none;
-  const cfg = await getBonusCapConfig();
+  // #812 (owner): "el 100% de la PRIMERA carga es LIBRE (sin tope); después respetar hasta $20.000 si es 100% y después un 20%" ⇒ el bono de
+  // primera carga no pasa por el tope; todas las demás fuentes sí. El rollover ×5 es el global de siempre (Config['bonusRolloverX']).
+  const cfg = c.source === 'first_deposit' ? Object.assign({}, await getBonusCapConfig(), { enabled: false }) : await getBonusCapConfig();
   // Lote: _loteBonusAmount (#172, mismo tope, mismo resultado que bonusWithCap);
   // el resto de las fuentes: bonusWithCap.
   const bonus = c.source === 'promo_bonus' ? _loteBonusAmount(amount, c.pct, _loteCfgFor(c, cfg)) : bonusCap.bonusWithCap(amount, c.pct, cfg); // #CAP tope propio del lote

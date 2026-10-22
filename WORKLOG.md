@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 812. 🎁 100% de la primera carga LIBRE; el resto con tope; rollover ×5
+**Pedido (owner):** "las cargas automáticas de 100% que sean libres y el bono siempre rollover x5; lo de libre solamente en la primera
+carga, después respetar hasta $20.000 si es un 100% y después un 20%". `resolveAutoBonus`: la fuente `first_deposit` se calcula SIN el
+tope de `Config['bonusCap']` (ej. primera carga de $50.000 ⇒ +$50.000); todas las demás (2ª carga, código, ruleta, lotes, carga
+automática, historias) siguen con el tope ($20.000 al X% + 20% sobre el resto ⇒ $50.000 al 100% ⇒ +$26.000). Migración única
+(`Config['mig812Rollover5']`): `bonusRolloverX = 5` y `fireRolloverMultiplier = 5`. El extra por instalar la app mantiene su propio
+tope (`installGift.capArs`).
+
 ### 811. ⚙️ Cargas y pagos automáticos, con caída a manual si falla
 **Pedido (owner):** "las cargas y pagos quiero que sean automáticos: adjunta el comprobante y carga directo; si no carga, 'en breve su
 carga será realizada' y cuando se confirma le avisa; si falla leer el comprobante, que lo reenvíe con los datos completos; si falla por la
