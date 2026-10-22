@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 861. 🚨 FIX favoritos/Deportes deslogueados: se reusaba un código de ingreso YA CANJEADO — SW v584
+**Pedido (owner):** "revisá de punta a punta qué pasa con el login, hace 1 h estamos con lo mismo; usá el ingreso de autologin del menú de Girox".
+Causa (bug mío de #855/#857): el server canjeaba el código de ESE ingreso (`/sso/exchange`) y, si no salía el juego directo, le pasaba al recuadro
+el MISMO código (o un `?token=` no probado) ⇒ código de un solo uso ya usado ⇒ 1girox deja el navegador DESLOGUEADO (manual 2.7) ⇒ "Iniciar
+sesión" + verificación de edad.
+- Ahora el intento de juego directo usa un SEGUNDO `/session` (código aparte) para canjear y pedir `launch_url`. Si no hay juego directo, el
+  recuadro abre con el ingreso ORIGINAL intacto = idéntico al botón de Girox (logueado) + aviso con el motivo (`gameStep`).
+- Deportes: siempre el ingreso intacto (sin canje) + aviso "tocá DEPORTES".
+- ⚠️ Trampa: un código de `/players/{u}/session` es de UN SOLO USO: nunca canjearlo y además pasarlo al recuadro.
+
 ### 858–860. 📊 Cuotas en las historias de partido · 🔎 diagnóstico de juegos · 📇 Info fina — SW v583
 - **#858 cuotas** (owner: "republicá las historias de deportes con la cuota; si no es la misma de Digitain está ok, abajo que puede variar por
   horario"): `topMatches` suma `odds` 1X2 de REFERENCIA del scoreboard público de ESPN (casa que publica ahí, hoy DraftKings; americana ⇒

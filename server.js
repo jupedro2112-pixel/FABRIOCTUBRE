@@ -6232,46 +6232,46 @@ async function platformSessionHandler(req, res) {
     // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
     // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
     let _redir = session.redirectUrl, _gameReady = false, _directGame = false, _gameStep = 'sin juego'; // #859: qué paso falló (se muestra en la app)
+    // #861 (owner: "hace 1 h con lo mismo: que use el ingreso de autologin del menú de Girox"). BUG de #855/#857: el canje consumía el código de
+    // ESTE ingreso y, si no salía el juego directo, se le pasaba al recuadro ese MISMO código ya usado ⇒ 1girox lo rechazaba y dejaba el
+    // navegador DESLOGUEADO (manual 2.7). Ahora el intento del juego directo usa un ingreso APARTE; el recuadro, si no hay juego directo, abre
+    // con el ingreso intacto = exactamente lo mismo que el botón de Girox (que sí entra logueado). Nada de `?token=` (no probado).
     try {
       const game = String((req.body && req.body.game) || '');
-      if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game)) {
-        // #855 (owner: "que use la misma API de cuando entrás con el menú de Girox y estás logueado"): MISMO ingreso que el botón de Girox
-        // (POST /players/{u}/session ⇒ código de un solo uso) pero el CANJE del código lo hacemos acá, contra la misma Partner API
-        // (`<GIROX_API_URL>/sso/exchange`, el endpoint que usa la web de 1girox). Así el recuadro abre `/auth/sso?token=<sesión de la web>`
-        // y la web guarda la sesión al instante: en el celular el canje tardaba y el salto al juego llegaba antes (abría deslogueado).
-        const u0 = new URL(session.redirectUrl); const code = u0.searchParams.get('code'); _gameStep = code ? 'canje' : 'sin código en el ingreso';
-        if (code) {
+      const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
+      if (mm) {
+        _gameStep = 'canje';
+        const s2 = await girox.createSession(user.username); // ingreso APARTE sólo para pedir el juego
+        const code = s2 && s2.success ? new URL(s2.redirectUrl).searchParams.get('code') : null;
+        if (!code) _gameStep = 'no se pudo pedir un segundo ingreso';
+        else {
           const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+          let siteToken = null;
           try {
             const rx = await fetch(girox.getBaseUrl() + '/sso/exchange', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }), signal: ctrl.signal });
             const jx = await rx.json().catch(() => null);
-            if (rx.ok && jx && jx.token) {
-              const u1 = new URL('/auth/sso', u0.origin); u1.searchParams.set('token', String(jx.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
-              _redir = u1.toString(); _gameReady = true; _gameStep = 'canje ok';
-              // #857 (owner: "sigue sin loguear lo de favoritos"): recargar el recuadro para ir al juego pierde la sesión de la web (el navegador
-              // guarda aparte lo de una web metida en otra). Se hace lo MISMO que la web de 1girox al tocar un juego: con la sesión del jugador
-              // se pide `GET <api del sitio>/games/<juego>?id&launcher_key&aggregator_id` ⇒ `launch_url` del proveedor, y se abre directo.
-              const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
-              if (mm) {
-                const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
-                _gameStep = meta ? 'pidiendo el juego' : 'juego no encontrado en el catálogo';
-                if (meta) {
-                  const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
-                  const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] });
-                  const c2 = new AbortController(); const t2 = setTimeout(() => c2.abort(), 10000);
-                  try {
-                    const rg = await fetch(`${site}/games/${encodeURIComponent(mm[2])}?${q}`, { headers: { Authorization: 'Bearer ' + jx.token, Accept: 'application/json' }, signal: c2.signal });
-                    const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
-                    if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'directo'; }
-                    else { _gameStep = `1girox no dio el juego (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`; logger.warn(`[girox-sso] launch de ${game} para ${user.username} sin URL (${rg.status}): se abre Girox logueado`); }
-                  } catch (e) { _gameStep = 'pedir el juego: ' + e.message.slice(0, 60); logger.warn(`[girox-sso] launch de ${game}: ${e.message} — se abre Girox logueado`); } finally { clearTimeout(t2); }
-                }
-              }
-            } else { _gameStep = `canje rechazado (HTTP ${rx.status}${jx && jx.error ? ': ' + String(jx.error.code || jx.error.message || '').slice(0, 40) : ''})`; logger.warn(`[girox-sso] canje del código para juego falló (${rx.status}) ${user.username}: se usa el ingreso normal`); }
-          } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); logger.warn(`[girox-sso] canje del código para juego: ${e.message} — ingreso normal`); } finally { clearTimeout(t); }
+            siteToken = (jx && (jx.token || (jx.data && jx.data.token))) || null;
+            _gameStep = rx.ok && siteToken ? 'canje ok' : `canje rechazado (HTTP ${rx.status}${jx && jx.error ? ': ' + String(jx.error.code || jx.error.message || '').slice(0, 40) : ''})`;
+          } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); } finally { clearTimeout(t); }
+          if (siteToken) {
+            const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
+            if (!meta) _gameStep = 'juego no encontrado en el catálogo';
+            else {
+              const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
+              const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] });
+              const c2 = new AbortController(); const t2 = setTimeout(() => c2.abort(), 10000);
+              try {
+                const rg = await fetch(`${site}/games/${encodeURIComponent(mm[2])}?${q}`, { headers: { Authorization: 'Bearer ' + siteToken, Accept: 'application/json' }, signal: c2.signal });
+                const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
+                if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'directo'; }
+                else _gameStep = `1girox no dio el juego (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`;
+              } catch (e) { _gameStep = 'pedir el juego: ' + e.message.slice(0, 60); } finally { clearTimeout(t2); }
+            }
+          }
         }
+        if (!_directGame) logger.warn(`[girox-sso] ${user.username} ${game}: sin juego directo (${_gameStep}) ⇒ Girox logueado con el ingreso normal`);
       }
-    } catch (_) { _redir = session.redirectUrl; _gameReady = false; }
+    } catch (e) { _directGame = false; _redir = session.redirectUrl; _gameStep = 'error: ' + String(e.message).slice(0, 60); }
     res.json({
       success: true,
       redirectUrl: _redir,

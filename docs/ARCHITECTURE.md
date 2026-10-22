@@ -1201,6 +1201,8 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
 - **#831 — entrar logueado tras el registro:** `/api/auth/access-link` tiene 30 min de gracia para links de landing/instalación
   (`accessLinkGraceHash`); la PWA reintenta el canje y `verifyToken` (nunca borrar `userToken` por un corte: sólo con 401/403) y, si
   todo falla, `_loginWithSignupCreds` usa `sessionStorage.vip_signup_creds` que deja la landing del mismo dominio.
+- **#861 — SSO de 1girox:** el código de `/session` es de UN SOLO USO. Si el server lo canjea (`/sso/exchange`), NO pasárselo al recuadro:
+  para el recuadro pedir otro `/session`. Recargar el recuadro tras el login pierde la sesión de la web (usar `launch_url` del juego).
 - **#846 — jugadores de publicista:** nunca crearlos al vuelo con otra key (`setPublisherOwnedCheck`); toda carga sin bono va con `no_bonus`
   (si no, hereda reglas automáticas del panel de 1girox).
 - **#839 — carga con bono:** usar SIEMPRE `_depositWithBonus` (nunca `depositToUser` con bonusAmount directo): maneja el 422 por el bono
