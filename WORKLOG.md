@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 828. 🗑️ Historias automáticas: se puede BORRAR una — admin SW v161
+**Pedido (owner):** "el cronograma de historias siempre automático, pero que si quiero borrar una porque la veo mal se pueda". Botón 🗑️ Borrar
+en cada historia del día/próximos días (Cronograma → Historias automáticas). `POST /api/admin/stories-autopilot/remove {day, slot}`: publicada ⇒
+`isActive:false` (sale de la app al instante, conserva `autoKey` ⇒ el motor no la republica); programada ⇒ se reserva el horario con un doc
+`autoKind:'borrada'` (ese horario no sale). Admin y depositor.
+
 ### 827. 📖 HISTORIAS AUTOMÁTICAS: 5 por día del servicio + partidos fuertes + slot de la semana + bono semanal con push — SW v567, admin SW v160
 **Pedido (owner):** "un plan de historias automáticas abajo del cronograma, que funcione igual: 4-5 historias diarias del lado del servicio que
 ofrecemos (que conozcan todo, entendiendo que siempre entra gente nueva); un poco de todo y, con la API de Girox en deportes, los mejores partidos

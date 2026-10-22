@@ -16047,7 +16047,9 @@ async function loadStoriesAuto() {
                     return '<div class="cron-item" style="border-left-color:' + k[1] + ';font-size:.76rem;padding:5px 7px"><b>' + escHtml(it.time) + '</b> ' + k[0] + ' <b>' + escHtml(it.title) + '</b>' +
                         '<span class="ci-who" style="white-space:pre-wrap">' + escHtml(it.text) + '</span>' +
                         (it.label ? '<span class="ci-what">Botón: ' + escHtml(it.label) + '</span>' : '') +
-                        (it.published ? '<span class="ci-who" style="color:#22c55e">✅ publicada · 👁 ' + num(it.views) + ' vistas' + (it.bonusPct ? ' · 🎁 ' + num(it.claims) + ' reclamaron · ' + num(it.uses) + ' cargaron' : '') + '</span>' : '<span class="ci-who">🕒 programada</span>') + '</div>'; }).join('') +
+                        (it.removed ? '<span class="ci-who" style="color:#f87171">🚫 borrada (no se muestra)</span>'
+                            : (it.published ? '<span class="ci-who" style="color:#22c55e">✅ publicada · 👁 ' + num(it.views) + ' vistas' + (it.bonusPct ? ' · 🎁 ' + num(it.claims) + ' reclamaron · ' + num(it.uses) + ' cargaron' : '') + '</span>' : '<span class="ci-who">🕒 programada</span>') +
+                              '<button type="button" class="btn btn-secondary btn-sm" style="margin-top:4px;color:#f87171" onclick="storiesAutoRemove(\'' + d.day + '\',' + it.slot + ')">🗑️ Borrar</button>') + '</div>'; }).join('') +
                 '</div></details>';
         });
         const bs = j.bonusStories || [];
@@ -16060,7 +16062,16 @@ async function loadStoriesAuto() {
         box.innerHTML = h;
     } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
 }
-window.loadStoriesAuto = loadStoriesAuto;
+// #828: borrar una historia automática (publicada ⇒ sale de la app; programada ⇒ ese horario no sale). El resto sigue automático.
+async function storiesAutoRemove(day, slot) {
+    if (!confirm('¿Borrar esta historia? Si ya está publicada, deja de verse en la app al instante; si está programada, ese horario no sale. Las demás siguen automáticas.')) return;
+    try {
+        const r = await authFetch('/api/admin/stories-autopilot/remove', { method: 'POST', body: JSON.stringify({ day, slot }) }); const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo borrar', 'error'); return; }
+        showToast('Historia borrada', 'success'); loadStoriesAuto();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.loadStoriesAuto = loadStoriesAuto; window.storiesAutoRemove = storiesAutoRemove;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
 async function loadCronAutopilot() {

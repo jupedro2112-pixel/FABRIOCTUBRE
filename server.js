@@ -24645,6 +24645,24 @@ async function _storyAutoTick() {
   } catch (e) { logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; }
 }
 setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyAutoTick().catch(() => {}); }, 5 * 60 * 1000); }, 2 * 60 * 1000);
+// #828 (owner): "siempre automática, pero que si veo una mal la pueda borrar". Borrar = la historia sale de la app al instante (queda
+// isActive:false con su autoKey, así el motor NO la vuelve a publicar); si todavía no salió, se reserva el horario como 'borrada' (no sale).
+app.post('/api/admin/stories-autopilot/remove', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!['admin', 'depositor'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const day = String((req.body || {}).day || ''), slot = parseInt((req.body || {}).slot, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !(slot >= 0 && slot < storyAuto.SLOTS.length)) return res.status(400).json({ error: 'Datos inválidos.' });
+    const autoKey = `sa-${day}-${slot}`;
+    const upd = await Story.updateOne({ autoKey }, { $set: { isActive: false } });
+    if (!(upd.matchedCount || upd.n)) {
+      const now = new Date();
+      try { await Story.create({ id: uuidv4(), title: '(borrada)', text: '', mediaType: 'none', hours: 1, publishedAt: now, expiresAt: now, isActive: false, autoKey, autoKind: 'borrada', createdBy: req.user.username }); }
+      catch (e) { if (!(e && e.code === 11000)) throw e; await Story.updateOne({ autoKey }, { $set: { isActive: false } }); }
+    }
+    logger.info(`[historias-auto] ${req.user.username} borró ${autoKey}`);
+    res.json({ success: true });
+  } catch (e) { logger.warn('[historias-auto] borrar: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 // Panel (Cronograma): hoy (publicadas y pendientes, con la respuesta de cada una) + los próximos 6 días (lo que va a salir) + las últimas
 // historias con bono y cómo respondió la gente.
 app.get('/api/admin/stories-autopilot', authMiddleware, adminMiddleware, async (req, res) => {
@@ -24654,10 +24672,10 @@ app.get('/api/admin/stories-autopilot', authMiddleware, adminMiddleware, async (
     for (let i = 0; i < 7; i++) {
       const dk = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() + i * 86400000));
       const plan = await _storyAutoPlan(dk, { noMatches: i >= 2 }); // partidos: hoy y mañana (más adelante se definen ese día)
-      const pub = await Story.find({ autoKey: { $in: plan.map((p) => `sa-${dk}-${p.slot}`) } }).select('autoKey id views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats').lean();
+      const pub = await Story.find({ autoKey: { $in: plan.map((p) => `sa-${dk}-${p.slot}`) } }).select('autoKey id views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats isActive autoKind').lean();
       const pubBy = new Map(pub.map((p) => [p.autoKey, p]));
       days.push({ day: dk, matchesKnown: i < 2, items: plan.map((p) => { const d = pubBy.get(`sa-${dk}-${p.slot}`); return { time: p.time, kind: p.kind, title: p.title, text: p.text, label: p.label, bonusPct: p.bonusPct || 0, bonusHours: p.bonusHours || 0,
-        published: !!d, views: d ? d.views || 0 : null, claims: d ? d.bonusClaims || 0 : null, uses: d ? d.bonusUses || 0 : null, bonusTotal: d ? d.bonusUsedTotal || 0 : null, depositTotal: d ? d.bonusDepositTotal || 0 : null }; }) });
+        slot: p.slot, removed: !!(d && (d.isActive === false || d.autoKind === 'borrada')), published: !!(d && d.isActive !== false && d.autoKind !== 'borrada'), views: d ? d.views || 0 : null, claims: d ? d.bonusClaims || 0 : null, uses: d ? d.bonusUses || 0 : null, bonusTotal: d ? d.bonusUsedTotal || 0 : null, depositTotal: d ? d.bonusDepositTotal || 0 : null }; }) });
     }
     const bonusStories = await Story.find({ autoKind: 'bono' }).sort({ publishedAt: -1 }).limit(8).select('title publishedAt bonusPct bonusHours views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats').lean();
     res.json({ success: true, today, days, bonusStories, sources: { matches: 'ESPN (scoreboard público)', slots: '1girox (catálogo público, más jugados)' } });
