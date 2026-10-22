@@ -8,6 +8,35 @@
 
 ## Sesión 2026-10-22
 
+### 820. 🔧 Cargas y retiros automáticos: auditoría completa y arreglos de por qué fallaban
+**Pedido (owner):** "revisá los retiros y cargas porque fallaban, si está ok". Auditoría del código (sin acceso a logs ni a la base).
+**Retiros:**
+- Reintento de un pago que el banco RECHAZÓ (ERROR/CANCELLED): con el mismo externalID hgcash contestaba 409 "duplicate" y quedaba
+  "en curso" sin pagarse nunca ⇒ externalID nuevo `<id>-rN` (`PendingPayout.extSuffix`); el webhook asocia quitando el sufijo e ignora avisos
+  de intentos viejos (si uno viejo llega DONE ⇒ alerta de posible pago doble).
+- Sin respuesta del banco (timeout): antes `failed` "normal" (un agente podía rechazarlo/pagarlo por otro banco y después el banco pagaba ⇒
+  doble). Ahora `hgStatus:'UNKNOWN'` + nota "NO lo rechaces ni pagues por otro lado"; se reintenta con el MISMO externalID.
+- Webhook DONE sobre un retiro `cancelled` o pagado por otro banco ⇒ no pisa el estado, alerta urgente. DONE con claim atómico ⇒ un solo aviso.
+- Poller de pagos en curso: ventana 48 h por `updatedAt` (antes 2 h por `createdAt`: un retiro grande aprobado tarde quedaba colgado).
+- Excepción después de tomar el pago ⇒ vuelve a `failed` (antes quedaba `paying` para siempre).
+- Descuento en 1girox que vuelve `duplicate` (ya hecho en un intento anterior) ⇒ se da por confirmado (antes "Descuento no confirmado" para
+  siempre: el retiro no se podía pagar nunca).
+- La clasificación revisión/automático va por el id del retiro nuevo (antes por usuario+monto: podía marcar uno viejo).
+- Cliente avisado (una vez, `/sys_withdraw_delayed`) cuando su retiro necesita a una persona; la nota interna dice si se reintenta o no
+  (`_payoutRetrySafe`, mismo criterio que el cron).
+**Cargas:**
+- El aviso del banco "acreditado" que llega DESPUÉS de un "pendiente" no disparaba la carga (sólo el primer aviso matcheaba) ⇒ ahora sí.
+- Nombres en distinto orden ("JUAN PEREZ" vs "PEREZ JUAN") no matcheaban ⇒ comparación por palabras (≥2 palabras de ≥3 letras).
+- Confirmar/cargar a mano cerraba OTRA carga pendiente de distinto monto ⇒ sólo la del mismo monto, y nunca desde el propio Confirmar.
+- Confirmar un comprobante cuya automática falló (p. ej. timeout de 1girox) usa la MISMA reference `vip-hg-*` ⇒ no se acredita dos veces
+  (`Comprobante.matchedMovementId` se guarda también en la falla). La nota ya no dice "cargá manual".
+- Carrera agente/automática: Confirmar rebota si la automática lo está procesando (`claiming`/`awaiting_platform`) y la automática no toma
+  lo que un agente confirmó o rechazó. El escalado a Cargas pendientes no toma lo que está en curso.
+- `_hgcashRecoveryPass` (en el tick de cada minuto): libera lo trabado en `claiming` >10 min y cada 3 min vuelve a buscar la transferencia
+  de los comprobantes pendientes de la ventana (`windowMinutes`): aviso tardío del banco, reintento tras falla, comprobante antes que el banco.
+**Para revisar en el panel (apagan la carga automática en silencio):** hgcash `enabled`, `mode:'auto'`, secreto del webhook correcto, IA de
+comprobantes (ANTHROPIC_API_KEY), API de 1girox conectada.
+
 ### 819. 🧹 Cronograma con UNA configuración definitiva (el autopiloto)
 **Pedido (owner):** "limpiá la configuración vieja; todo lo que te estoy diciendo quiero que quede una definitiva así no queda tan cargada".
 - Se ELIMINÓ la plantilla "Retención app · 8 por mes" (#813: botón, `POST /api/admin/cronograma-plans/retention-template`,

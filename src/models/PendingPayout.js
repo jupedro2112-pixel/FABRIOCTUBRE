@@ -79,6 +79,9 @@ const pendingPayoutSchema = new mongoose.Schema({
   autoPay: { type: Boolean, default: false },
   // #814: cuántas veces el reintento automático (_payoutAutoRetryTick) volvió a intentar este pago automático.
   autoRetries: { type: Number, default: 0 },
+  // #820: sufijo del externalID de hgcash cuando el banco RECHAZÓ el intento anterior ('-r1', '-r2'…). Vacío = externalID = id.
+  extSuffix: { type: String, default: '' },
+  clientDelayNotifiedAt: { type: Date, default: null }, // #820: se le avisó al cliente que su retiro está demorado
   reviewedBy: { type: String, default: null },
   reviewNote: { type: String, default: null },
   createdAt: { type: Date, default: Date.now, index: true }

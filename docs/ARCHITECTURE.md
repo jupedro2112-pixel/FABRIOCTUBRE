@@ -1269,6 +1269,13 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   `_batchImpact` agrega `before48h` (línea base de los mismos clientes) ⇒ `lift48h` en el reporte; el panel lo pinta por día y por lote.
   App: `.promo-live` (CARGAR AHORA + tarjeta de carga) desde `js/promobonus.js`.
 
+## #820 Robustez de cargas y retiros
+- Retiros: externalID `<id>+extSuffix` (nuevo sufijo `-rN` sólo tras rechazo confirmado del banco); timeout ⇒ `hgStatus:'UNKNOWN'` (mismo
+  externalID); webhook ignora intentos viejos y no pisa `cancelled`/`other_bank`; poller 48 h por `updatedAt`; `w.duplicate` en el descuento =
+  confirmado; `_payoutRetrySafe`; aviso `/sys_withdraw_delayed` (`clientDelayNotifiedAt`).
+- Cargas: rematch en `status_change`; `_nameMatch` por palabras; `_depositReviewConsume` sólo mismo monto; Confirm con `_reference` del
+  movimiento y exclusión mutua con `claiming`; `_hgcashRecoveryPass` (libera `claiming` >10 min, rematch cada 3 min).
+
 ## #816/#817 Cronograma: personas por envío + AUTOPILOTO
 - `GET /api/admin/notif-batches/:id` → `recipients[].dep48*`, `summary.recibieron/sinNotis/fallaron/cargaron48`, `timeline {used[], firstDep[]}` (48 h).
   `GET /api/admin/cronograma/:id/audience` = audiencia de una campaña no enviada. Panel: `cronPeopleToggle` / `_cronPeopleRender`.

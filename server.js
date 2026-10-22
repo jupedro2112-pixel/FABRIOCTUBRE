@@ -1973,6 +1973,30 @@ function _emitDepositReviewUpdate(userId, extra) {
   try { io.to(`user_${userId}`).emit('deposit_review_update', extra || {}); } catch (_) {}
   try { notifyAdmins('deposit_review', Object.assign({ userId }, extra || {})); } catch (_) {}
 }
+// #820 RECUPERACIÓN AUTOMÁTICA de cargas (corre en el tick de cada minuto):
+//  1) lo que quedó 'claiming' más de 10 min (reinicio de la instancia a mitad de la carga, excepción) vuelve a 'pending'. Es seguro: el
+//     reintento usa la misma reference `vip-hg-*` (1girox responde duplicate si ya se había acreditado) y el candado HgcashCharge.
+//  2) cada 3 min, los comprobantes pendientes de la última ventana (`windowMinutes`) vuelven a buscar su transferencia: cubre el aviso
+//     del banco que llega tarde, el reintento tras una falla de la plataforma y el caso "comprobante antes que el banco" fuera de la
+//     ventana corta. Si ya estaba escalado y la transferencia aparece, se acredita sola y la tarjeta de Cargas pendientes se cierra.
+let _hgcashRecoveryAt = 0;
+async function _hgcashRecoveryPass() {
+  try {
+    const stale = new Date(Date.now() - 10 * 60 * 1000);
+    const m = await BankMovement.updateMany({ matchStatus: 'claiming', updatedAt: { $lt: stale } }, { $set: { matchStatus: 'pending' } });
+    const c = await Comprobante.updateMany({ bankMatchStatus: 'claiming', autoCharged: { $ne: true }, updatedAt: { $lt: stale } }, { $set: { bankMatchStatus: 'pending' } });
+    const nm = m.modifiedCount || m.nModified || 0, nc = c.modifiedCount || c.nModified || 0;
+    if (nm || nc) logger.warn(`[hgcash] recuperación: ${nm} movimiento(s) y ${nc} comprobante(s) trabados en 'claiming' vuelven a pendiente`);
+    if (Date.now() - _hgcashRecoveryAt < 3 * 60 * 1000) return;
+    _hgcashRecoveryAt = Date.now();
+    const cfg = await getHgcashConfig();
+    if (!cfg.enabled) return;
+    const since = new Date(Date.now() - (cfg.windowMinutes || 60) * 60 * 1000);
+    const pend = await Comprobante.find({ isComprobante: true, autoCharged: { $ne: true }, status: { $ne: 'duplicate' }, reviewStatus: 'pending',
+      bankMatchStatus: { $in: ['none', 'pending'] }, amount: { $gt: 0 }, createdAt: { $gte: since, $lte: new Date(Date.now() - 60 * 1000) } }).sort({ createdAt: 1 }).limit(30).lean();
+    for (const comp of pend) await hgcashMatchFromComprobante(comp);
+  } catch (e) { logger.warn(`[hgcash] recuperación: ${e.message}`); }
+}
 // Escala un comprobante pendiente: aviso al cliente + nota interna + panel.
 async function _depositReviewEscalate(c, why) {
   try {
@@ -1996,15 +2020,17 @@ async function _depositReviewTick() {
       { $set: { reviewStatus: 'confirmed', reviewResolution: 'auto', reviewedBy: 'auto', reviewedAt: new Date() } });
     const since = new Date(Date.now() - 72 * 3600 * 1000);
     const limit = new Date(Date.now() - cfg.escalateMinutes * 60 * 1000);
-    const due = await Comprobante.find({ reviewStatus: 'pending', reviewEscalatedAt: null, autoCharged: { $ne: true }, createdAt: { $gte: since, $lte: limit } }).limit(50).lean();
+    const due = await Comprobante.find({ reviewStatus: 'pending', reviewEscalatedAt: null, autoCharged: { $ne: true }, bankMatchStatus: { $nin: ['claiming', 'awaiting_platform'] }, createdAt: { $gte: since, $lte: limit } }).limit(50).lean();
     for (const c of due) await _depositReviewEscalate(c, `sin acreditación automática en ${cfg.escalateMinutes} min`);
+    await _hgcashRecoveryPass();
   } catch (e) { logger.warn(`[deposit-review] tick: ${e.message}`); }
 }
 // Una carga manual del agente (misma persona, mismo monto) cierra el comprobante pendiente más viejo que coincide.
 async function _depositReviewConsume(userId, amount, by) {
   try {
     const cands = await Comprobante.find({ userId, reviewStatus: 'pending', autoCharged: { $ne: true } }).sort({ createdAt: 1 }).limit(10).lean();
-    const c = cands.find((x) => _amountsEqual(x.amount, amount)) || (cands.length === 1 ? cands[0] : null);
+    // #820: SÓLO el del mismo monto (antes, si quedaba uno solo, lo cerraba aunque fuera de otro monto ⇒ una carga real desaparecía de la cola).
+    const c = cands.find((x) => _amountsEqual(x.amount, amount));
     if (!c) return false;
     const r = await Comprobante.findOneAndUpdate({ id: c.id, reviewStatus: 'pending' },
       { $set: { reviewStatus: 'confirmed', reviewResolution: 'manual', reviewedBy: by || 'agente', reviewedAt: new Date(), bankMatchStatus: 'manual_charged', autoCharged: true } }, { new: true }).lean();
@@ -2238,7 +2264,12 @@ function _normName(s) {
 function _nameMatch(a, b) {
   const na = _normName(a), nb = _normName(b);
   if (!na || !nb || na.length < 5 || nb.length < 5) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
+  if (na === nb || na.includes(nb) || nb.includes(na)) return true;
+  // #820: mismo nombre en OTRO orden ("JUAN PEREZ" vs "PEREZ JUAN", o con un segundo nombre en el medio). Todas las palabras (≥3 letras)
+  // del nombre más corto tienen que estar en el otro, y tienen que ser al menos 2 (una sola palabra no alcanza para confirmar).
+  const wa = na.split(' ').filter((w) => w.length >= 3), wb = nb.split(' ').filter((w) => w.length >= 3);
+  const [short, long] = wa.length <= wb.length ? [wa, new Set(wb)] : [wb, new Set(wa)];
+  return short.length >= 2 && short.every((w) => long.has(w));
 }
 
 // ¿El estado del movimiento cuenta como acreditado?
@@ -2324,14 +2355,16 @@ async function hgcashHandleChargeFailure(movement, comprobante, errMsg, dataDesc
   } catch (_) {}
   const terminal = attempts >= HGCASH_MAX_CHARGE_ATTEMPTS;
   await BankMovement.updateOne({ movementId: movement.movementId }, { $set: { matchStatus: terminal ? 'error' : 'pending' } });
-  await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'pending' } });
+  // #820: guardar a qué transferencia correspondía ⇒ si un agente la confirma desde Cargas pendientes, usa la MISMA reference (no duplica
+  // si 1girox en realidad la había acreditado, p. ej. tras un timeout).
+  await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'pending', matchedMovementId: movement.movementId } });
   // #811 (owner): "si falla por la API, que entre en confirmación de forma manual" ⇒ agotados los reintentos, el comprobante pasa a
   // "Esperando agente" en Cargas pendientes (el cliente recibe /sys_deposit_pending_review: "un agente la está verificando").
   if (terminal && user) { try { await _depositReviewEscalate({ id: comprobante.id, userId: user.id, username: user.username, amount: Number(movement.amount) || comprobante.amount || 0 }, 'falló la acreditación en la plataforma'); } catch (_) {} }
   if (user) {
     const prefijo = terminal ? `Se agotaron los ${HGCASH_MAX_CHARGE_ATTEMPTS} intentos automáticos. ` : '';
     await _emitAdminOnlyChatNote(user.id, user.username,
-      `🏦 MATCH hgcash — ${dataDesc}\n⚠️ La AUTO-CARGA FALLÓ en la plataforma (${errMsg || 's/detalle'}). ${prefijo}Cargá MANUAL a este usuario por el mismo monto: al hacerlo se marca como usado (no se duplica).`);
+      `🏦 MATCH hgcash — ${dataDesc}\n⚠️ La AUTO-CARGA FALLÓ en la plataforma (${errMsg || 's/detalle'}). ${prefijo}Confirmala desde Cargas pendientes (usa la MISMA referencia: si la plataforma ya la había acreditado, no se duplica). Evitá cargarla a mano por otro lado.`);
   }
 }
 
@@ -2512,9 +2545,16 @@ async function handlePayoutStatusWebhook(p) {
     const status = String(p.status || '').toUpperCase();
     const ext = p.externalID ? String(p.externalID) : null;
     const hgId = p.id ? String(p.id) : null;
-    const query = ext ? { id: ext } : (hgId ? { hgTransactionId: hgId } : null);
+    const extBase = ext ? String(ext).replace(/-r\d+$/, '') : ext; // #820: reintentos con externalID `<id>-rN`
+    const query = ext ? { id: extBase } : (hgId ? { hgTransactionId: hgId } : null);
     if (!query) return;
     const payout = await PendingPayout.findOne(query);
+    // #820: aviso de un intento ANTERIOR (otro externalID) que llega tarde ⇒ no pisa el intento actual.
+    if (payout && ext && String(ext) !== payout.id + (payout.extSuffix || '') && !(hgId && payout.hgTransactionId && String(hgId) === String(payout.hgTransactionId))) {
+      logger.warn(`[hgcash-pay] webhook de un intento viejo ignorado: ext=${ext} actual=${payout.id + (payout.extSuffix || '')} status=${status}`);
+      if (status === 'DONE') await _emitAdminOnlyChatNote(payout.userId, payout.username, `🚨 URGENTE: el banco confirmó como PAGADO un intento ANTERIOR del retiro de $${Number(payout.amount).toLocaleString('es-AR')} (${ext}). Revisá en hgcash que no haya salido dos veces.`).catch(() => {});
+      return;
+    }
     if (!payout) {
       logger.warn(`[hgcash-pay] webhook de pago sin payout local: ext=${ext} hgId=${hgId} status=${status}`);
       return;
@@ -2532,7 +2572,16 @@ async function handlePayoutStatusWebhook(p) {
 
     if (status === 'DONE') {
       if (payout.status === 'paid') return; // idempotente
-      await PendingPayout.updateOne({ id: payout.id }, { $set: { status: 'paid', hgStatus: status, paidAt: new Date() } });
+      // #820: el banco pagó algo que ya estaba RECHAZADO (fichas devueltas) o pagado por otro banco ⇒ posible pago doble: alertar, no pisar.
+      if (payout.status === 'cancelled' || payout.paidVia === 'other_bank') {
+        await PendingPayout.updateOne({ id: payout.id }, { $set: { hgStatus: status } });
+        await _emitAdminOnlyChatNote(payout.userId, payout.username, `🚨 URGENTE: hgcash confirmó PAGADO el retiro de $${Number(payout.amount).toLocaleString('es-AR')}, pero en el panel estaba ${payout.status === 'cancelled' ? 'RECHAZADO (con las fichas devueltas)' : 'pagado por OTRO banco'}. Revisá: el cliente pudo cobrar dos veces.`).catch(() => {});
+        try { io.to('admins').emit('security_alert', { username: payout.username, message: `Posible pago doble: retiro $${payout.amount} de ${payout.username}`, at: new Date() }); } catch (_) {}
+        return;
+      }
+      // Claim atómico: webhook y poller pueden llegar juntos ⇒ un solo aviso al cliente.
+      const upd = await PendingPayout.updateOne({ id: payout.id, status: { $ne: 'paid' } }, { $set: { status: 'paid', hgStatus: status, paidAt: new Date() } });
+      if (!(upd.modifiedCount || upd.nModified)) return;
       _bankPayoutOk().catch(() => {}); // #442
       await notifyPayoutPaid(payout);
       maybeSendPayoutReceipt(payout).catch(() => {}); // comprobante PDF automático (con reintentos)
@@ -2576,7 +2625,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
 
   // 2) Reclamar el comprobante (no cargado/tomado todavía).
   const compClaim = await Comprobante.findOneAndUpdate(
-    { id: comprobante.id, autoCharged: { $ne: true }, bankMatchStatus: { $nin: ['claiming', 'auto_charged', 'shadow_matched'] } },
+    { id: comprobante.id, autoCharged: { $ne: true }, reviewStatus: { $nin: ['confirmed', 'rejected'] }, bankMatchStatus: { $nin: ['claiming', 'auto_charged', 'shadow_matched'] } }, // #820
     { $set: { bankMatchStatus: 'claiming', toApiBank: true } }, { new: true }
   );
   if (!compClaim) {
@@ -3069,6 +3118,7 @@ async function hgcashMatchFromMovement(movement) {
       autoCharged: { $ne: true },
       status: { $ne: 'duplicate' }, // un comprobante re-enviado/duplicado NO es objetivo de carga
       bankMatchStatus: { $in: ['none', 'pending'] },
+      reviewStatus: { $nin: ['confirmed', 'rejected'] }, // #820: lo que ya resolvió un agente no se vuelve a cargar
       createdAt: { $gte: since }
     }).sort({ createdAt: -1 }).limit(80).lean();
 
@@ -3492,7 +3542,7 @@ app.post('/api/hgcash/webhook', async (req, res) => {
       topic: p.topic || null, eventType: p.eventType || null, raw: p
     };
 
-    let isNew = false;
+    let isNew = false, statusChanged = false;
     try {
       await BankMovement.create({
         ...doc,
@@ -3504,6 +3554,7 @@ app.post('/api/hgcash/webhook', async (req, res) => {
       if (e && e.code === 11000) {
         // Reentrega / created+status_change: actualizar datos sin pisar el matchStatus.
         await BankMovement.updateOne({ movementId: doc.movementId }, { $set: { status: doc.status, eventType: doc.eventType, raw: doc.raw } });
+        statusChanged = true;
       } else { throw e; }
     }
 
@@ -3511,7 +3562,9 @@ app.post('/api/hgcash/webhook', async (req, res) => {
     res.status(200).json({ ok: true });
 
     if (isNew) _emitHgcashUpdate('movimiento'); // panel en vivo (entrantes y salientes)
-    if (isNew && doc.direction === 'Inbound') {
+    // #820: también cuando el banco avisa DESPUÉS que el movimiento quedó acreditado (primero 'pending', luego 'done'): antes sólo se
+    // matcheaba en el primer aviso y esa carga caía a manual.
+    if ((isNew || statusChanged) && doc.direction === 'Inbound') {
       BankMovement.findOne({ movementId: doc.movementId }).lean()
         .then(fresh => { if (fresh) return hgcashMatchFromMovement(fresh); })
         .catch(() => {});
@@ -10171,7 +10224,7 @@ async function _agentDepositHandler(req, res, body) {
     const _depTxId = uuidv4();
     // bonusMultiplier OBLIGATORIO cuando va bonus_amount (lo exige la API).
     const result = await _adapter.depositToUser(
-      user.username, parseFloat(amount), description, `vip-dep-${_depTxId}`,
+      user.username, parseFloat(amount), description, (body && body._reference) || `vip-dep-${_depTxId}`, // #820: confirm de un comprobante con movimiento ⇒ misma reference que la carga automática
       bonusRequested
         ? { bonusAmount: _effectiveBonus, bonusMultiplier: await _bonusMultiplierFor(_adapter) }
         : null
@@ -10226,7 +10279,7 @@ async function _agentDepositHandler(req, res, body) {
       // de ese usuario (mismo monto), marcarla como cargada → no se auto-carga después.
       // Fire-and-forget: no frena la respuesta de la carga.
       hgcashConsumeOnManualDeposit(user.id, user.username, parseFloat(amount)).catch(() => {});
-      _depositReviewConsume(user.id, parseFloat(amount), req.user && req.user.username).catch(() => {}); // #376: cierra la carga pendiente del mismo monto
+      if (!(body && body._fromReviewId)) _depositReviewConsume(user.id, parseFloat(amount), req.user && req.user.username).catch(() => {}); // #376: cierra la carga pendiente del mismo monto (#820: no si viene del Confirmar de esa misma cola)
 
       // Nota interna: bono automático aplicado (y corrección de lo que puso el agente).
       if (_auto.claimed && bonusActuallyApplied) {
@@ -13447,9 +13500,11 @@ async function _withdrawalRequestHandler(req, res) {
     // verifica y, al CONFIRMAR el pago, recién ahí se descuentan las fichas (con
     // verificación anti-fantasma) y, si el descuento sale OK, se paga automático por
     // hgcash. El saldo del cliente NO baja todavía.
+    let _newPayoutId = null;
     try {
+      _newPayoutId = uuidv4();
       await PendingPayout.create({
-        id: uuidv4(), userId: user.id, username: user.username,
+        id: _newPayoutId, userId: user.id, username: user.username,
         platform: _wdPlatform,
         amount: amountNum, titular: titularT, cbu: cbuT, alias: aliasT,
         status: 'pending_review',
@@ -13549,11 +13604,12 @@ async function _withdrawalRequestHandler(req, res) {
       const prCfg = await getPayoutReviewConfig();
       // #814 (owner 2026-10-22): "pagos y retiros automáticos, excepto mayores a $100.000" ⇒ revisión sólo si SUPERA el umbral.
       const needsReview = amountNum > prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
-      await PendingPayout.updateOne({ userId: user.id, amount: amountNum, status: 'pending_review' }, { $set: { reviewRequired: needsReview, autoPay: !needsReview } });
+      // #820: por id (antes por usuario+monto: podía marcar un retiro VIEJO del mismo monto).
+      await PendingPayout.updateOne({ id: _newPayoutId }, { $set: { reviewRequired: needsReview, autoPay: !needsReview } });
       if (needsReview) {
         await _emitAdminOnlyChatNote(user.id, user.username, `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} (umbral $${prCfg.minArs.toLocaleString('es-AR')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`).catch(() => {});
       } else {
-        const pp = await PendingPayout.findOne({ userId: user.id, amount: amountNum, status: 'pending_review' }).sort({ createdAt: -1 }).select('id').lean();
+        const pp = { id: _newPayoutId };
         if (pp) setImmediate(() => { _payPendingPayout(pp.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl()).then((o) => { logger.info(`[pay-review] pago AUTOMÁTICO $${amountNum} ${user.username} → ${o.code} ${JSON.stringify(o.body).slice(0, 160)}`); _payoutAutoFailNote(pp.id, o).catch(() => {}); }).catch((e) => logger.warn(`[pay-review] pago automático falló: ${e.message}`)); });
       }
     } catch (e) { logger.warn(`[pay-review] no se pudo clasificar el retiro: ${e.message}`); }
@@ -19916,14 +19972,23 @@ app.post('/api/admin/deposit-reviews/:id/confirm', authMiddleware, depositorMidd
     if (c.reviewStatus !== 'pending' || c.autoCharged) return res.status(409).json({ error: 'Esa carga ya fue resuelta (' + (c.reviewResolution || c.reviewStatus || c.bankMatchStatus) + ').' });
     const amount = Number(req.body && req.body.amount) > 0 ? Number(req.body.amount) : Number(c.amount);
     if (!(amount > 0)) return res.status(400).json({ error: 'Monto inválido: el comprobante no tiene monto legible, ingresalo a mano.' });
-    // Claim atómico: si dos agentes confirman a la vez, el segundo rebota.
-    const claimed = await Comprobante.findOneAndUpdate({ id, reviewStatus: 'pending' },
+    // #820: si la carga automática lo está procesando en este momento (o espera que el cliente elija plataforma), no se confirma a mano.
+    if (['claiming', 'awaiting_platform'].includes(c.bankMatchStatus)) return res.status(409).json({ error: 'La carga automática está procesando este comprobante ahora mismo. Esperá un minuto y refrescá.' });
+    // Claim atómico: si dos agentes confirman a la vez, el segundo rebota. (#820: y no si la automática lo tomó recién.)
+    const claimed = await Comprobante.findOneAndUpdate({ id, reviewStatus: 'pending', bankMatchStatus: { $nin: ['claiming', 'awaiting_platform'] } },
       { $set: { reviewStatus: 'confirmed', reviewResolution: 'manual', reviewedBy: req.user.username || 'agente', reviewedAt: new Date(), reviewNote: String((req.body && req.body.note) || '').slice(0, 200) } }, { new: true }).lean();
     if (!claimed) return res.status(409).json({ error: 'Otro agente ya resolvió esta carga.' });
     // La carga en sí es la carga manual de siempre (bonos automáticos, consumo hgcash, mensajes, SLA): mismo handler.
     const out = { status: 200, json: null };
     const proxy = { status(s) { out.status = s; return proxy; }, json(j) { out.json = j; return proxy; } };
-    await _agentDepositHandler(req, proxy, { userId: c.userId, amount, bonus: Number(req.body && req.body.bonus) || 0, platform: req.body && req.body.platform, description: `Carga automática · confirmada por ${req.user.username || 'agente'}` });
+    // #820: si el comprobante ya estaba asociado a una transferencia del banco (la automática falló, p. ej. timeout de 1girox), se carga con
+    // la MISMA reference que usó la automática: si 1girox ya la había acreditado, responde duplicate y NO se carga dos veces.
+    let _reference = null;
+    if (c.matchedMovementId && Number(amount) === Number(c.amount)) {
+      const mv = await BankMovement.findOne({ movementId: c.matchedMovementId }).select('movementId coelsaCode externalId').lean();
+      if (mv) _reference = `vip-hg-${String(mv.coelsaCode || mv.externalId || '').trim() || mv.movementId}`;
+    }
+    await _agentDepositHandler(req, proxy, { userId: c.userId, amount, bonus: Number(req.body && req.body.bonus) || 0, platform: req.body && req.body.platform, description: `Carga automática · confirmada por ${req.user.username || 'agente'}`, _fromReviewId: id, _reference });
     if (out.status !== 200 || !out.json || out.json.error) {
       await Comprobante.updateOne({ id }, { $set: { reviewStatus: 'pending', reviewResolution: null, reviewedBy: null, reviewedAt: null } });
       return res.status(out.status && out.status !== 200 ? out.status : 400).json({ error: (out.json && out.json.error) || 'No se pudo cargar' });
@@ -21261,7 +21326,13 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   // y, si el agente lo rechaza, la devolución se saltea por "no se descontó nada"
   // → el cliente se queda sin fichas Y sin plata.
   let after = null, deducted = false;
-  try {
+  // #820: `duplicate` = 1girox YA había hecho este descuento (misma reference) en un intento anterior cuya respuesta se perdió. La
+  // verificación por saldo antes/después daría siempre "no confirmado" (el saldo ya había bajado antes) y el retiro no se podía pagar nunca.
+  if (w.duplicate === true) {
+    deducted = true;
+    try { const a = await _ad.getUserBalanceWithRetry(payout.username, { fresh: true }); if (a && a.success) after = Number(a.available != null ? a.available : a.balance) || 0; } catch (_) {}
+    logger.info(`[pay] descuento duplicado (ya hecho antes) payout=${payout.id} ${payout.username}`);
+  } else try {
     // fresh: el "después" DEBE ser el saldo real post-descuento (no cache).
     const a = await _ad.getUserBalanceWithRetry(payout.username, { fresh: true });
     if (a && a.success) {
@@ -21301,13 +21372,29 @@ async function _deductChipsAtConfirm(payout, agentUser) {
 //  - 'pending_review' que nunca se llegó a tomar (paidBy null: cuenta hgcash sin resolver, error de red…).
 // "Descuento no confirmado" NO se reintenta (puede haberse descontado): queda para una persona.
 const PAYOUT_AUTO_RETRIES = 6;
+// ¿Se puede reintentar solo sin riesgo de descontar o pagar dos veces? (mismo criterio en el cron y en la nota).
+function _payoutRetrySafe(r) {
+  if (r.status === 'pending_review') return !r.paidBy;
+  if (r.status !== 'failed') return false;
+  return r.debitConfirmed === true || /^No se pudo leer el saldo/.test(String(r.error || ''));
+}
+const WITHDRAW_DELAYED_DEFAULT = '⏳ Tu retiro de ${amount} está demorado. Ya lo está revisando un agente y te avisamos apenas salga. ¡Gracias por la paciencia!';
 async function _payoutAutoFailNote(id, o) {
   if (o && o.code === 200 && o.body && o.body.success !== false) return;
-  const p = await PendingPayout.findOne({ id }).lean(); if (!p || p.status === 'paid' || p.status === 'paying') return;
-  const why = (o && o.body && (o.body.error || o.body.message)) || 'sin detalle';
-  const last = Number(p.autoRetries || 0) >= PAYOUT_AUTO_RETRIES;
+  const p = await PendingPayout.findOne({ id }).lean(); if (!p || p.status === 'paid' || p.status === 'paying' || p.status === 'cancelled') return;
+  const why = (o && o.body && (o.body.error || o.body.message)) || p.error || 'sin detalle';
+  const willRetry = _payoutRetrySafe(p) && Number(p.autoRetries || 0) < PAYOUT_AUTO_RETRIES;
   await _emitAdminOnlyChatNote(p.userId, p.username, `💸 ⚠️ PAGO AUTOMÁTICO de $${Number(p.amount || 0).toLocaleString('es-AR')} no salió (${String(why).slice(0, 160)}). ` +
-    (last ? 'Se agotaron los reintentos automáticos: resolvelo en Panel → Confirmación de pagos.' : 'Se reintenta solo cada 10 min; si sigue fallando queda en Confirmación de pagos.')).catch(() => {});
+    (willRetry ? 'Se reintenta solo cada 10 min; si sigue fallando queda en Confirmación de pagos.' : 'NO se reintenta solo: resolvelo en Panel → Confirmación de pagos.')).catch(() => {});
+  // #820: el cliente se entera (una vez) cuando su retiro necesita a una persona.
+  if (!willRetry && !p.clientDelayNotifiedAt) {
+    try {
+      const u = await User.findOne({ id: p.userId }).select('id username fcmToken fcmTokens fcmTokenContext').lean();
+      const txt = await renderSystemCommand('/sys_withdraw_delayed', WITHDRAW_DELAYED_DEFAULT, { amount: Number(p.amount || 0).toLocaleString('es-AR') });
+      if (u && txt) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'withdraw_delayed', channel: 'support' }, push: { title: '⏳ Tu retiro está demorado', body: 'Lo está revisando un agente. Te avisamos apenas salga.' } });
+      await PendingPayout.updateOne({ id: p.id }, { $set: { clientDelayNotifiedAt: new Date() } });
+    } catch (e) { logger.warn('[pay-retry] aviso al cliente: ' + e.message); }
+  }
 }
 async function _payoutAutoRetryTick() {
   if (!hgcashPay.isEnabled()) return;
@@ -21317,9 +21404,7 @@ async function _payoutAutoRetryTick() {
     createdAt: { $gte: new Date(now - 24 * 3600 * 1000) }, updatedAt: { $lt: new Date(now - 10 * 60 * 1000) }
   }).select('id status debitConfirmed error paidBy autoRetries updatedAt').limit(20).lean();
   for (const r of rows) {
-    const safe = r.status === 'pending_review' ? !r.paidBy
-      : (r.debitConfirmed === true || /^No se pudo leer el saldo/.test(String(r.error || '')));
-    if (!safe) continue;
+    if (!_payoutRetrySafe(r)) continue;
     // Claim multi-instancia: sólo la instancia que mueve updatedAt intenta.
     const c = await PendingPayout.findOneAndUpdate({ id: r.id, status: r.status, updatedAt: r.updatedAt }, { $inc: { autoRetries: 1 } }, { new: true }).lean();
     if (!c) continue;
@@ -21482,6 +21567,16 @@ async function _payPendingPayout(id, actor, baseUrl) {
       }
     }
 
+    // #820: si el intento anterior fue RECHAZADO por el banco (ERROR/CANCELLED confirmado), reintentar con el MISMO externalID
+    // devolvía 409 "duplicate" y el pago quedaba "en curso" sin pagarse nunca. Con un rechazo confirmado no hay riesgo de doble
+    // pago ⇒ externalID nuevo `<id>-rN` (el webhook lo vuelve a asociar quitando el sufijo). Sin respuesta del banco (UNKNOWN) se
+    // mantiene el mismo externalID: ahí el 409 SÍ significa "ya lo tenía".
+    let extId = payout.id + (payout.extSuffix || '');
+    if (['ERROR', 'CANCELLED'].includes(String(claimed.hgStatus || '').toUpperCase())) {
+      const n = (parseInt(String(payout.extSuffix || '').replace(/\D/g, ''), 10) || 0) + 1;
+      extId = `${payout.id}-r${n}`;
+      await PendingPayout.updateOne({ id }, { $set: { extSuffix: `-r${n}`, hgTransactionId: null, hgStatus: null } });
+    }
     const webhookUrl = `${baseUrl}/api/hgcash/webhook`;
     const buildCashOut = (acct) => hgcashPay.createCashOut({
       accountId: acct,
@@ -21489,7 +21584,7 @@ async function _payPendingPayout(id, actor, baseUrl) {
       toCBU: resolvedCbu,
       toName: payout.titular || lookupName || undefined,
       concept: `Retiro Sala de Juegos - ${payout.username}`,
-      externalID: payout.id, // idempotencia (mismo externalID = no duplica)
+      externalID: extId, // idempotencia (mismo externalID = no duplica)
       webhookUrl
     });
     let result = await buildCashOut(accountId);
@@ -21512,6 +21607,14 @@ async function _payPendingPayout(id, actor, baseUrl) {
       if (result.httpStatus === 409 && /duplicate/i.test(String(result.error))) {
         await PendingPayout.updateOne({ id }, { $set: { status: 'paying' } });
         return res.json({ success: true, message: 'El pago ya estaba en curso (idempotencia).', status: 'paying' });
+      }
+      // #820: SIN respuesta HTTP (timeout/red) el banco PUEDE haber tomado el pago. Queda 'failed' con hgStatus 'UNKNOWN': el
+      // reintento usa el MISMO externalID (si ya lo tenía, 409 ⇒ queda en curso y lo confirma el webhook/poller) y se avisa que
+      // NO se rechace ni se pague por otro banco hasta confirmar.
+      if (!result.httpStatus) {
+        await PendingPayout.updateOne({ id }, { $set: { status: 'failed', hgStatus: 'UNKNOWN', error: ('Sin respuesta del banco (puede haberse enviado): ' + String(result.error || '')).slice(0, 300) } });
+        await _emitAdminOnlyChatNote(claimed.userId, claimed.username, `💸 ⏳ El banco NO respondió al pago de $${Number(claimed.amount).toLocaleString('es-AR')} (${String(result.error || 'timeout').slice(0, 80)}). Puede haber salido igual: NO lo rechaces ni lo pagues por otro banco hasta verlo en hgcash. Se reintenta solo con el mismo identificador (no se paga dos veces).`).catch(() => {});
+        return res.status(400).json({ error: 'El banco no respondió. Se reintenta solo con el mismo identificador (no duplica).' });
       }
       await PendingPayout.updateOne({ id }, { $set: { status: 'failed', error: String(result.error).slice(0, 300) } });
       _bankPayoutFailed(result.error, claimed).catch(() => {}); // #442/#443
@@ -21550,6 +21653,8 @@ async function _payPendingPayout(id, actor, baseUrl) {
     return res.json({ success: true, status: isDone ? 'paid' : 'paying', hgTransactionId: hgId, hgStatus });
   } catch (error) {
     console.error('Error pagando payout:', error);
+    // #820: si explotó después de tomarlo y antes de mandarlo al banco, no queda colgado en 'paying' (el poller no lo ve sin hgTransactionId).
+    try { await PendingPayout.updateOne({ id, status: 'paying', hgTransactionId: null }, { $set: { status: 'failed', error: ('Error interno: ' + String(error && error.message || error)).slice(0, 300) } }); } catch (_) {}
     return res.status(500).json({ error: 'Error del servidor' });
   }
 }
@@ -23525,9 +23630,10 @@ setInterval(function () { _runInactividadTick(); }, 6 * 60 * 60 * 1000);
 async function _pollPayingPayouts() {
   try {
     if (!hgcashPay.isEnabled()) return;
-    const since = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const paying = await PendingPayout.find({ status: 'paying', createdAt: { $gte: since } })
-      .sort({ createdAt: -1 }).limit(25).lean();
+    // #820: ventana por updatedAt (48 h): un retiro grande aprobado horas después, o un reintento, también se confirma solo.
+    const since = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const paying = await PendingPayout.find({ status: 'paying', updatedAt: { $gte: since } })
+      .sort({ updatedAt: -1 }).limit(40).lean();
     for (const p of paying) {
       if (!p.hgTransactionId) continue;
       try {
