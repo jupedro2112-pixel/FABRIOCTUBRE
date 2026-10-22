@@ -21609,6 +21609,8 @@ async function _payoutAutoFailNote(id, o) {
 }
 async function _payoutAutoRetryTick() {
   if (!hgcashPay.isEnabled()) return;
+  // #838 (owner): "si le saco el tilde desde el admin, que sea todo manual" ⇒ sin "Pagar solos los menores al umbral" tampoco se reintenta solo.
+  try { if (!(await getPayoutReviewConfig()).autoBelow) return; } catch (_) {}
   const now = Date.now();
   const rows = await PendingPayout.find({
     autoPay: true, status: { $in: ['failed', 'pending_review'] }, autoRetries: { $not: { $gte: PAYOUT_AUTO_RETRIES } },
