@@ -6227,9 +6227,22 @@ async function platformSessionHandler(req, res) {
       return res.status(503).json({ error: 'El casino no está respondiendo. Reintentá en un momento.' });
     }
 
+    // #848 (owner: "esos juegos quiero que entren logueados como si entraras del menú de Girox"): para abrir un JUEGO puntual (favoritos,
+    // historias) el /auth/sso de 1girox va con `?token=` (lo acepta su página: guarda la sesión al instante) en vez del código de un solo
+    // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
+    // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
+    let _redir = session.redirectUrl;
+    try {
+      const game = String((req.body && req.body.game) || '');
+      if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game) && session.token) {
+        const u0 = new URL(session.redirectUrl); const u1 = new URL('/auth/sso', u0.origin);
+        u1.searchParams.set('token', String(session.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
+        _redir = u1.toString();
+      }
+    } catch (_) { _redir = session.redirectUrl; }
     res.json({
       success: true,
-      redirectUrl: session.redirectUrl,
+      redirectUrl: _redir,
       platformUrl: girox.getPlayUrl()
     });
   } catch (error) {

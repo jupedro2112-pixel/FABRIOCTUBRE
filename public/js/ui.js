@@ -1107,7 +1107,7 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
         'Authorization': `Bearer ${VIP.state.currentToken}`
       },
       // Multi-plataforma (#219/#220): a qué casino entrar. Sin el campo el back usa girox.
-      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox' }),
+      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox', game: VIP.ui._casinoGamePath || undefined }), // #848: juego puntual ⇒ SSO con token
       signal: ctrl ? ctrl.signal : undefined
     });
     const data = await response.json().catch(function() { return {}; });
@@ -1411,7 +1411,7 @@ VIP.ui._showCasinoFrame = function() {
       // juego (misma web, misma sesión). 1,5 s de margen para que el intercambio del código de un solo uso termine.
       const gp = VIP.ui._casinoGamePath; if (gp && /^\/(play\/|sports$)/.test(gp)) { // #827: también Deportes
         VIP.ui._casinoGamePath = null;
-        try { const origin = new URL(src, location.href).origin; setTimeout(function() { if (VIP.ui._casinoOpen) frame.src = origin + gp; }, 1500); } catch (_) {}
+        try { const origin = new URL(src, location.href).origin; setTimeout(function() { if (VIP.ui._casinoOpen) frame.src = origin + gp; }, 2200); } catch (_) {} // #848: con el SSO por token la sesión queda al instante; 2,2 s de margen
       }
     });
 

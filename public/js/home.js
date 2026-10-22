@@ -1045,6 +1045,8 @@
     }
     function favPlay(key) {
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
+        // #848: con el casino YA abierto (sesión iniciada) se va directo al juego, sin otro login.
+        try { if (VIP.ui && VIP.ui._casinoOpen) { const fr = document.getElementById('casinoFrame'); const src = fr && fr.getAttribute('src'); if (src && src !== 'about:blank') { fr.src = new URL(src, location.href).origin + '/play/' + key; favClosePicker(); return; } } } catch (_) {}
         try { VIP.ui._casinoGamePath = '/play/' + key; } catch (_) {}
         try { VIP.ui.showToast('🎰 Abriendo ' + ((f && f.name) || 'el juego') + '…', 'info'); } catch (_) {}
         favClosePicker(); openPlatform('girox', { embed: true });

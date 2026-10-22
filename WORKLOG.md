@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 848. 🎰 Los juegos (favoritos, historias) entran LOGUEADOS como desde el menú de Girox — SW v577
+**Pedido (owner, captura de favoritos):** "esos juegos quiero que entren logueados como si entraras del menú de Girox".
+Causa: el juego abría el SSO (`/auth/sso?code=…`) y a los 1,5 s se navegaba el recuadro a `/play/…`. La página SSO de 1girox (leída de su
+bundle, AuthSso) con `code` primero pide `frontend-flags`, después canjea en `<partner_api>/sso/exchange` y recién ahí guarda el token ⇒ en un
+celular lento la navegación cortaba el login y el juego abría deslogueado. La misma página acepta `?token=` (guarda la sesión al instante).
+- `platformSessionHandler` (girox): con `body.game` válido (`/play/…` o `/sports`) devuelve `<origen>/auth/sso?token=<token>&embed=1` (el
+  `token` que ya da `POST /players/{u}/session`); la entrada normal sigue con el código de un solo uso.
+- ui.js manda `game: VIP.ui._casinoGamePath` al pedir la sesión y navega al juego a los 2,2 s. `favPlay`: con el casino YA abierto va directo
+  al juego (la sesión ya está).
+- No probado con la API real desde acá: confirmar tocando un favorito en el celular después del deploy.
+
 ### 847. 🎰 "Tu saldo para jugar" arriba de todo en el Inicio, el básico y el Perfil — SW v576
 **Pedido (owner):** "poné el saldo del usuario en Girox, en el completo y básico, en el perfil, arriba de todo el saldo que tiene para jugar".
 Franja `.play-bal` (#playBalTop sólo en modo play, #playBalBasic, #playBalProfile) con ↻ (`VIP.ui.syncBalance`); `updateBalanceDisplay` llena
