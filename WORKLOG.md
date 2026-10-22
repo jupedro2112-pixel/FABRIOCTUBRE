@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 865. 📱 "Ajustá la pantalla a tu teléfono" (modelo con buscador) + Info sin lo borroso — SW v587
+**Pedido (owner):** "en iPhone en la app se corta la parte de arriba: que se pueda ajustar o elegir el modelo como opción cuando abrís la app, con
+buscador, para que la pantalla se ajuste al teléfono; en Info sacá la parte que se ve medio borrosa; lo de ajustar teléfono dejalo abajo del saldo".
+- `localStorage vip_sat_override` (px) manda sobre el margen superior automático (`--sat`, #823; index.html lo aplica antes de pintar).
+  Selector (home.js `openFitPhone`): buscador + 19 modelos (iPhone 6s…17/Air por tamaño de isla/notch, Samsung, Motorola, Xiaomi, otro Android,
+  Android con barra aparte) + "Automático" + ▲▼ de a 4 px; se aplica al instante. Link "📱 Ajustar la pantalla a mi teléfono ›" abajo de las 3
+  franjas de saldo. En iPhone con la app instalada se ofrece SOLO la primera vez (`vip_fit_asked`).
+- Info: se sacó el degradé `::after` que desvanecía el final del texto cerrado (lo "borroso").
+
 ### 863–864. 🎰 Favoritos sin pantalla negra · 📲 carteles de instalar ENCIMA de Girox — SW v586
 - **#863** (owner: "abre pero pantalla negra"): con #862 el juego directo SÍ salía (`launch_url` del proveedor), pero el proveedor no se deja
   mostrar dentro de una página que no sea la de 1girox ⇒ pantalla negra. Juego directo APAGADO (`GIROX_DIRECT_GAME=1` lo reactiva): el favorito

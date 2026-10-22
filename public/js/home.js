@@ -991,6 +991,63 @@
         tr.addEventListener('scroll', () => { const w = tr.clientWidth || 1; const i = Math.round(tr.scrollLeft / w); if (i !== _slIdx) { _slIdx = i; _slidesDots(); } }, { passive: true });
         _slBuilt = true;
     }
+    // ---------------- #865 AJUSTAR LA PANTALLA AL TELÉFONO ----------------
+    // Owner: "en iPhone se corta la parte de arriba: que se pueda elegir el modelo con un buscador cuando abrís la app, para que la pantalla
+    // se ajuste al teléfono". El margen superior (--sat, #823) se puede FIJAR por modelo (localStorage vip_sat_override; index.html lo aplica
+    // antes de pintar) y afinar con ▲▼. "Automático" vuelve al cálculo de siempre. En iPhone con la app instalada se ofrece 1 vez al abrir.
+    const FIT_MODELS = [
+        ['iPhone 17 Pro Max / 17 Pro / 17 / Air', 62], ['iPhone 16 Pro Max / 16 Pro', 62], ['iPhone 16 Plus / 16', 59], ['iPhone 15 Pro Max / 15 Pro / 15 Plus / 15', 59],
+        ['iPhone 14 Pro Max / 14 Pro', 59], ['iPhone 14 Plus / 14', 47], ['iPhone 13 Pro Max / 13 Pro / 13', 47], ['iPhone 13 mini / 12 mini', 50],
+        ['iPhone 12 Pro Max / 12 Pro / 12', 47], ['iPhone 11', 48], ['iPhone XR', 48], ['iPhone 11 Pro Max / 11 Pro', 44], ['iPhone XS Max / XS / X', 44],
+        ['iPhone SE (2ª y 3ª) / 8 / 8 Plus / 7 / 6s', 20],
+        ['Samsung Galaxy (S, A, Z) — pantalla completa', 32], ['Motorola (Moto G, Edge)', 28], ['Xiaomi / Redmi / Poco', 32], ['Otro Android — pantalla completa', 28],
+        ['Android con la barra de arriba aparte', 0]
+    ];
+    function _fitCur() { try { const v = localStorage.getItem('vip_sat_override'); return v === null || v === '' ? null : Number(v); } catch (_) { return null; } }
+    function _fitApply(v, label) {
+        try { if (v == null) localStorage.removeItem('vip_sat_override'); else localStorage.setItem('vip_sat_override', String(v)); localStorage.setItem('vip_fit_asked', '1'); if (label) localStorage.setItem('vip_fit_model', label); else localStorage.removeItem('vip_fit_model'); } catch (_) {}
+        let sat = v;
+        if (sat == null) { try { sat = (window.VIP_DEVICE && window.VIP_DEVICE.sat) || 0; } catch (_) { sat = 0; } }
+        document.documentElement.style.setProperty('--sat', Math.max(0, Math.min(80, Math.round(sat))) + 'px');
+        _fitPaintCur();
+    }
+    function _fitPaintCur() {
+        const el = _el('fitCur'); if (!el) return; const v = _fitCur(); let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || ''; } catch (_) {}
+        el.textContent = v == null ? 'Ahora: automático' : ('Ahora: ' + (lb || 'a mano') + ' · ' + v + ' px');
+    }
+    function openFitPhone() {
+        let m = _el('fitModal');
+        if (!m) {
+            document.body.insertAdjacentHTML('beforeend', '<div id="fitModal" class="modal hidden fav-modal" onclick="if(event.target===this)VIP.home.closeFitPhone()"><div class="modal-content fav-pick fit-pick" onclick="event.stopPropagation()">' +
+                '<div class="fav-pick-h"><b>📱 Ajustá la pantalla a tu teléfono</b><button type="button" class="fav-x" onclick="VIP.home.closeFitPhone()" aria-label="Cerrar">✕</button></div>' +
+                '<p class="fav-pick-sub">Si arriba se corta algo, elegí tu modelo. Después podés subir o bajar un poco con ▲ ▼.</p>' +
+                '<input type="search" id="fitSearch" class="fav-search" placeholder="Buscá tu modelo (ej. iPhone 13, Galaxy, Moto)" autocomplete="off" oninput="VIP.home.fitFilter(this.value)">' +
+                '<div class="fit-tune"><span id="fitCur"></span><button type="button" onclick="VIP.home.fitNudge(-4)" aria-label="Subir">▲ subir</button><button type="button" onclick="VIP.home.fitNudge(4)" aria-label="Bajar">▼ bajar</button></div>' +
+                '<div id="fitList" class="fit-list"></div>' +
+                '<button type="button" class="btn btn-primary fav-done" onclick="VIP.home.closeFitPhone()">Listo</button></div></div>');
+            m = _el('fitModal');
+        }
+        fitFilter(''); _fitPaintCur(); m.classList.remove('hidden');
+    }
+    function closeFitPhone() { const m = _el('fitModal'); if (m) m.classList.add('hidden'); try { localStorage.setItem('vip_fit_asked', '1'); } catch (_) {} }
+    function fitFilter(q) {
+        const box = _el('fitList'); if (!box) return; const t = String(q || '').toLowerCase().trim();
+        const ios = document.documentElement.classList.contains('dev-ios');
+        const list = FIT_MODELS.filter((x) => !t || x[0].toLowerCase().includes(t)).sort((a, b) => (ios ? (/iPhone/.test(b[0]) - /iPhone/.test(a[0])) : (/iPhone/.test(a[0]) - /iPhone/.test(b[0]))));
+        const cur = _fitCur(); let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || ''; } catch (_) {}
+        box.innerHTML = '<button type="button" class="fit-item' + (cur == null ? ' on' : '') + '" onclick="VIP.home.fitPick(-1)"><b>✨ Automático</b><small>La app lo calcula sola (recomendado si ya se ve bien)</small></button>' +
+            list.map((x) => '<button type="button" class="fit-item' + (lb === x[0] ? ' on' : '') + '" onclick="VIP.home.fitPick(' + FIT_MODELS.indexOf(x) + ')"><b>' + _esc(x[0]) + '</b></button>').join('') +
+            (list.length ? '' : '<div class="fav-msg">No está en la lista: elegí "Otro Android" o el iPhone más parecido y ajustá con ▲ ▼.</div>');
+    }
+    function fitPick(i) { if (i < 0) _fitApply(null, null); else { const x = FIT_MODELS[i]; if (x) _fitApply(x[1], x[0]); } fitFilter((_el('fitSearch') || {}).value || ''); try { VIP.ui.showToast('📱 Listo: pantalla ajustada', 'success'); } catch (_) {} }
+    function fitNudge(d) {
+        let v = _fitCur(); if (v == null) { try { v = (window.VIP_DEVICE && window.VIP_DEVICE.sat) || 0; } catch (_) { v = 0; } }
+        let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || 'a mano'; } catch (_) {}
+        _fitApply(Math.max(0, Math.min(80, v + d)), lb);
+    }
+    // 1 vez: iPhone con la app instalada que nunca eligió.
+    function _fitMaybeAsk() { try { if (!document.documentElement.classList.contains('dev-ios') || !document.documentElement.classList.contains('is-app')) return; if (localStorage.getItem('vip_fit_asked') === '1') return; setTimeout(openFitPhone, 2500); } catch (_) {} }
+    try { setTimeout(_fitMaybeAsk, 1200); } catch (_) {}
     // ---------------- #840 JUEGOS FAVORITOS ----------------
     // El cliente marca ⭐ en los Top juegos o en el catálogo de Girox (buscador) y sus favoritos aparecen arriba del Inicio con link directo
     // al juego. Se guardan en su cuenta (GET/POST /api/games/favorites). Sin favoritos: aviso + botón para agregarlos (quedan los Top juegos).
@@ -2608,4 +2665,5 @@
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
     Object.assign(VIP.home, { favOpenPicker, favClosePicker, favSearch, favMore, favToggle, favToggleTop, favPlay }); // #840
+    Object.assign(VIP.home, { openFitPhone, closeFitPhone, fitFilter, fitPick, fitNudge }); // #865
 })();
