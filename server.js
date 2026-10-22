@@ -16172,6 +16172,74 @@ app.get('/api/admin/campaigns/:code/stats', authMiddleware, adminMiddleware, asy
   }
 });
 
+// #805 (owner): LINK DE ESTADÍSTICAS para el publicista — sin usuario ni clave, sólo lectura, revocable. Ej. Leila abre
+// https://picaroja.com/r/<token> y ve clics, registros, cuántos cargaron y cuánto, total y de hoy. Generar de nuevo = el link viejo deja
+// de andar. Sólo admin general (y pasa por la clave de Datos como el resto de /api/admin/campaigns).
+app.post('/api/admin/campaigns/:code/stats-link', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const code = String(req.params.code).toUpperCase().trim();
+    const revoke = !!(req.body && req.body.revoke);
+    const token = revoke ? null : crypto.randomBytes(18).toString('base64url');
+    const c = await Campaign.findOneAndUpdate({ code }, { $set: { statsToken: token } }, { new: true }).lean();
+    if (!c) return res.status(404).json({ error: 'Campaña no encontrada' });
+    logger.info(`[stats-link] ${req.user.username} ${revoke ? 'revocó' : 'generó'} el link de estadísticas de ${code}`);
+    res.json({ success: true, token, url: token ? `${getPublicBaseUrl()}/r/${token}` : null });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+async function _publicCampaignStats(token) {
+  if (!/^[A-Za-z0-9_-]{20,40}$/.test(String(token || ''))) return null;
+  const c = await Campaign.findOne({ statsToken: String(token) }).select('code name publisher isActive createdAt').lean();
+  if (!c) return null;
+  const st = await computeCampaignStats(c.code);
+  // HOY (hora argentina)
+  const now = Date.now(); const art = new Date(now - 3 * 3600000); const todayStart = new Date(Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate()) + 3 * 3600000);
+  const todayUsers = await User.find({ acquisitionCampaign: c.code }).select('username createdAt').lean();
+  const regsToday = todayUsers.filter((u) => u.createdAt && new Date(u.createdAt) >= todayStart).length;
+  const names = todayUsers.map((u) => u.username);
+  let depToday = { count: 0, total: 0, users: 0 };
+  if (names.length) {
+    const agg = await Transaction.aggregate([
+      { $match: { type: 'deposit', username: { $in: names }, createdAt: { $gte: todayStart }, $or: [{ 'metadata.source': { $exists: false } }, { 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code'] } }] } },
+      { $group: { _id: '$username', total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
+    depToday = { count: agg.reduce((s, x) => s + x.count, 0), total: Math.round(agg.reduce((s, x) => s + (x.total || 0), 0)), users: agg.length };
+  }
+  return {
+    campaign: { code: c.code, name: c.name || c.code, publisher: c.publisher || null, active: c.isActive !== false },
+    total: { clicks: st.clicks, registrations: st.registrations, depositors: st.ftd, deposited: Math.round(st.totalRevenue || 0),
+      crRegister: st.crClickToRegister, crDeposit: st.crRegisterToFtd },
+    today: { registrations: regsToday, depositors: depToday.users, deposits: depToday.count, deposited: depToday.total },
+    updatedAt: new Date().toISOString()
+  };
+}
+app.get('/api/public/campaign-stats/:token', async (req, res) => {
+  try {
+    const d = await _publicCampaignStats(req.params.token);
+    if (!d) return res.status(404).json({ error: 'Link inválido o revocado' });
+    res.set('Cache-Control', 'no-store'); res.json(d);
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/r/:token', (req, res) => {
+  res.set('Cache-Control', 'no-store'); res.set('X-Robots-Tag', 'noindex');
+  res.type('html').send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Resultados de la pauta</title>
+<style>:root{--bg:#0f1012;--card:#191a1d;--line:#2a2c30;--fg:#f2f2f0;--mut:#9a9da3;--acc:#e0566a;--ok:#6fbf93}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left)) 40px}h1{font-size:22px;margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 18px}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:20px 0 8px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.k b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.k span{color:var(--mut);font-size:12.5px}.k small{display:block;color:var(--ok);font-size:12px;margin-top:2px}
+.top{display:flex;align-items:center;gap:10px}.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(111,191,147,.18)}.err{color:var(--acc);padding:30px 0}.foot{color:var(--mut);font-size:12px;margin-top:22px}</style></head>
+<body><div class="w" id="app"><p class="sub">Cargando…</p></div><script>
+var T=${JSON.stringify(String(req.params.token || '').slice(0, 60))};
+function m(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-AR')}function p(x){return x==null?'—':(x*100).toFixed(1)+'%'}
+function k(v,l,s){return '<div class="k"><b>'+v+'</b><span>'+l+'</span>'+(s?'<small>'+s+'</small>':'')+'</div>'}
+function load(){fetch('/api/public/campaign-stats/'+encodeURIComponent(T),{cache:'no-store'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
+var a=document.getElementById('app');if(!x.ok){a.innerHTML='<p class="err">Este link no es válido o fue desactivado.</p>';return}var d=x.j;
+a.innerHTML='<div class="top"><span class="dot"></span><h1>Pauta '+d.campaign.name.replace(/[<>&]/g,'')+'</h1></div><p class="sub">Código '+d.campaign.code+' · '+(d.campaign.active?'activa':'pausada')+' · se actualiza solo cada minuto</p>'
++'<h2>Hoy</h2><div class="g">'+k(d.today.registrations,'Registros')+k(d.today.depositors,'Cargaron')+k(d.today.deposits,'Cargas')+k(m(d.today.deposited),'Total cargado')+'</div>'
++'<h2>Desde el inicio</h2><div class="g">'+k(d.total.clicks,'Clics en el link')+k(d.total.registrations,'Registros',p(d.total.crRegister)+' de los clics')+k(d.total.depositors,'Cargaron',p(d.total.crDeposit)+' de los registros')+k(m(d.total.deposited),'Total cargado')+'</div>'
++'<p class="foot">Actualizado '+new Date(d.updatedAt).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})+' · PICA ROJA</p>'}).catch(function(){})}
+load();setInterval(load,60000);</script></body></html>`);
+});
 // Lista los últimos N usuarios atribuidos a una campaña (para debugging / control).
 app.get('/api/admin/campaigns/:code/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {

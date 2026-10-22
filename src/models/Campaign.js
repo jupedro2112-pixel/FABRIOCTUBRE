@@ -113,6 +113,8 @@ const campaignSchema = new mongoose.Schema({
   // impide que viaje en queries normales: sólo se trae cuando se necesita para
   // firmar un request. NUNCA devolverla en respuestas del panel — exponer sólo
   // hasGiroxApiKey:bool.
+  // #805: link secreto de SÓLO LECTURA para que el publicista vea sus números (/r/<token>). null = sin link / revocado.
+  statsToken: { type: String, default: null, index: true, sparse: true },
   giroxApiKey: {
     type: String,
     default: null,

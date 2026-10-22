@@ -10668,6 +10668,21 @@ function renderCampaigns() {
     `).join('');
 }
 
+// #805: link de resultados del publicista
+function copyStatsLink(code, token) {
+    const link = buildCampaignLink(code).replace(/\/l\/[^/]+$/, '') + '/r/' + token;
+    navigator.clipboard.writeText(link).then(() => showToast('Link de resultados copiado', 'success'), () => showToast(link, 'info'));
+}
+async function statsLinkAction(code, revoke) {
+    if (revoke && !window.confirm('¿Desactivar el link de resultados? El publicista deja de ver los números.')) return;
+    try {
+        const r = await authFetch('/api/admin/campaigns/' + encodeURIComponent(code) + '/stats-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revoke: !!revoke }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
+        if (j.url) { try { await navigator.clipboard.writeText(j.url); } catch (_) {} showToast('Link de resultados listo y copiado', 'success'); } else showToast('Link desactivado', 'success');
+        try { viewCampaignStats(code); } catch (_) {}
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.copyStatsLink = copyStatsLink; window.statsLinkAction = statsLinkAction;
 function copyCampaignLink(code) {
     const link = buildCampaignLink(code);
     navigator.clipboard.writeText(link).then(
@@ -11130,6 +11145,12 @@ async function viewCampaignStats(code) {
                 <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Link para el publicista</div>
                 <code style="display:block;background:#0d0d1a;padding:8px;border-radius:6px;color:#00ff88;font-size:12px;word-break:break-all;">${escapeHtml(buildCampaignLink(campaign.code))}</code>
                 <button onclick="copyCampaignLink('${escapeHtml(campaign.code)}')" style="margin-top:8px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.4);color:#00ff88;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;">📋 Copiar</button>
+            </div>
+            <div id="statsLinkBox" style="background:rgba(0,0,0,0.4);border:1px solid rgba(111,191,147,0.35);border-radius:8px;padding:12px;margin-bottom:12px;">
+                <div style="font-size:11px;color:#aaa;margin-bottom:4px;">📊 Link de RESULTADOS para el publicista (sin usuario ni clave, sólo lectura)</div>
+                ${campaign.statsToken ? `<code style="display:block;background:#0d0d1a;padding:8px;border-radius:6px;color:#6fbf93;font-size:12px;word-break:break-all;">${escapeHtml(buildCampaignLink(campaign.code).replace(/\/l\/[^/]+$/, '') + '/r/' + campaign.statsToken)}</code>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><button onclick="copyStatsLink('${escapeHtml(campaign.code)}','${escapeHtml(campaign.statsToken)}')" class="btn-secondary btn-small">📋 Copiar</button><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', false)" class="btn-secondary btn-small">🔄 Generar uno nuevo</button><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', true)" class="btn-secondary btn-small">⛔ Desactivar</button></div>`
+                : `<div style="font-size:12px;color:#888;margin-bottom:6px;">Todavía no tiene link. Con el link ve clics, registros, cuántos cargaron y cuánto, de hoy y desde el inicio.</div><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', false)" class="btn-primary btn-small">📊 Crear link de resultados</button>`}
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
                 <div style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;">

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 805. 📊 Link de RESULTADOS para el publicista (sin usuario ni clave, sólo lectura)
+**Pedido (owner):** que el publicista (ej. Leila) pueda ver cómo va su pauta (cuántos ingresaron, cuántos cargaron…) sin que le mandemos
+reportes. Aclaración: el "Link para el publicista" de Publicidad es el link de la PAUTA (`/l/<código>`, donde la gente se registra), no
+un reporte. Nuevo: `Campaign.statsToken` (secreto, 18 bytes base64url). Panel → Publicidad → estadísticas de la campaña → "📊 Crear link
+de resultados" (copiar / generar uno nuevo = el viejo deja de andar / desactivar) vía `POST /api/admin/campaigns/:code/stats-link`
+(admin general + clave de Datos). El publicista abre `https://picaroja.com/r/<token>`: página propia, oscura, sólo lectura, que se
+refresca sola cada minuto con HOY (registros, cuántos cargaron, cargas, total cargado, hora ART) y DESDE EL INICIO (clics, registros con
+% de conversión, cuántos cargaron con %, total cargado). Datos de `computeCampaignStats` (mismo cálculo que el panel; excluye regalos);
+NO muestra retiros, neto, comisión ni usuarios. JSON en `GET /api/public/campaign-stats/:token` (404 si el link no existe o se revocó).
+
 ### 804. 💬 Entrar a Soporte ya no crea la charla en el panel
 **Pedido (owner, captura del panel):** "cuando la gente entra a Soporte, si no aprieta ningún botón que no vaya a Soporte el mensaje;
 recién cuando aprieta un botón sí". La app pedía `POST /api/messages/welcome` al abrir el chat y eso creaba un mensaje de sistema
