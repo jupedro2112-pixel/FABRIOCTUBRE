@@ -1673,8 +1673,24 @@
     function infoMore(btn) {
         const p = btn && btn.previousElementSibling; if (!p) return;
         const open = p.classList.toggle('open'); btn.textContent = open ? 'Minimizar ▴' : 'Ver más ›';
+        // #852: la tarjeta abierta ocupa todo el ancho de la grilla (estilo Pinterest)
+        try { const card = btn.closest('.im-card'); if (card) { card.classList.toggle('open', open); if (open) setTimeout(() => { try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {} }, 60); } } catch (_) {}
+    }
+    // #852 (owner): "todo lo que es Info, estilo Pinterest: ver más y todo minimizado con sus títulos y recuadros, premium (si no queda muy
+    // cargado)". Cada tema (p.im-sec + su botón Ver más) se agrupa en una TARJETA (.im-card) de una grilla de 2 columnas; mismos ids adentro.
+    function _infoCardsWrap() {
+        const box = _el('infoMsg'); if (!box || box.dataset.cards === '1') return;
+        Array.from(box.querySelectorAll(':scope > .im-sec')).forEach((p) => {
+            const btn = p.nextElementSibling && p.nextElementSibling.classList.contains('im-more') ? p.nextElementSibling : null;
+            const card = document.createElement('div'); card.className = 'im-card' + (p.classList.contains('im-missions') ? ' im-card-missions' : '');
+            if (p.id) card.dataset.for = p.id;
+            box.insertBefore(card, p); card.appendChild(p); if (btn) card.appendChild(btn);
+        });
+        box.dataset.cards = '1'; box.classList.add('im-grid');
     }
     function infoFoldInit() {
+        try { _infoCardsWrap(); } catch (_) {}
+        try { document.querySelectorAll('#infoMsg .im-card').forEach((c) => { c.classList.remove('open'); const p = c.querySelector('.im-sec'); c.hidden = !!(p && (p.style.display === 'none' || p.hidden)); }); } catch (_) {}
         try {
             document.querySelectorAll('#infoMsg .im-sec').forEach((p) => {
                 p.classList.remove('open'); const btn = p.nextElementSibling;

@@ -2520,3 +2520,25 @@ body.fewdep .casino-load .cl-btn.cl-attach { animation-name: fgPulseIn !importan
 #basicView .play-bal { margin: 0 0 8px; } #basicView .bv-top #basicBalance { display: none; }
 .profile-modal .play-bal { margin: 4px 0 10px; }
 body:not(.home-play) #playBalTop { display: none; }
+
+/* #852 INFO estilo PINTEREST premium: grilla de 2 columnas, cada tema una tarjeta con ícono + título + 2 líneas, "Ver más" abre a lo ancho */
+#infoModal .modal-content { padding-bottom: 14px !important; }
+#infoMsg.im-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; background: transparent !important; padding: 0 !important; margin: 10px 0 0 !important; }
+#infoMsg .im-card { display: flex; flex-direction: column; background: var(--p-card); border: 1px solid var(--p-border); border-radius: 18px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,.06); transition: box-shadow .2s ease, transform .2s ease; }
+#infoMsg .im-card[hidden] { display: none !important; }
+#infoMsg .im-card.open { grid-column: 1 / -1; box-shadow: 0 10px 28px rgba(0,0,0,.10); }
+#infoMsg .im-card .im-sec { margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; padding: 12px 12px 4px !important; font-size: 11.5px !important; line-height: 1.45 !important; color: var(--p-text-2) !important;
+  display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; max-height: none !important; }
+#infoMsg .im-card .im-sec.open { display: block !important; -webkit-line-clamp: unset; font-size: 12.5px !important; padding: 14px 14px 6px !important; }
+#infoMsg .im-card .im-sec > b:first-child { display: flex !important; align-items: center; gap: 6px; background: none !important; border: 0 !important; padding: 0 !important; margin: 0 0 6px !important; font: 900 12.5px/1.25 var(--p-font) !important; color: var(--p-text) !important; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico { width: 30px; height: 30px; border-radius: 10px; background: var(--p-red-soft); color: var(--p-red); display: inline-flex; align-items: center; justify-content: center; margin: 0 !important; flex: 0 0 30px; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico svg { width: 18px; height: 18px; }
+#infoMsg .im-card .im-line { display: block; margin-top: 3px; }
+#infoMsg .im-card .im-more { margin: auto 0 0 !important; width: 100%; border: 0 !important; border-top: 1px solid var(--p-border) !important; border-radius: 0 !important; background: transparent !important; color: var(--p-red) !important; font: 800 11.5px var(--p-font) !important; padding: 9px 12px !important; text-align: left; cursor: pointer; display: block !important; }
+#infoMsg .im-card.open .im-more { color: var(--p-muted) !important; }
+#infoMsg .im-card-missions { border-color: var(--p-red); }
+#infoModal .info-reviews-wrap { border: 1px solid var(--p-border) !important; background: var(--p-card) !important; box-shadow: 0 4px 14px rgba(0,0,0,.06); border-radius: 18px !important; }
+#infoModal .info-reviews-head { padding: 12px 14px !important; font: 900 13px var(--p-font) !important; }
+#infoModal .im-terms { display: block; text-align: center; margin: 4px 0 8px; font: 700 12px var(--p-font); color: var(--p-muted); }
+@media (max-width: 340px) { #infoMsg.im-grid { grid-template-columns: 1fr; } }
+html[data-theme="dark"] #infoMsg .im-card { box-shadow: none; }

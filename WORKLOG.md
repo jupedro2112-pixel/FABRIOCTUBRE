@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 852. 📇 Info estilo PINTEREST premium: grilla de tarjetas minimizadas con "Ver más" — SW v579
+**Pedido (owner):** "todo lo que es Info, seguir el estilo de Pinterest: ver más y todo minimizado con sus títulos y recuadros, armalo
+premium porque queda muy cargado". `_infoCardsWrap` (home.js, al abrir Info vía `infoFoldInit`) agrupa cada `p.im-sec` + su "Ver más" en
+una `.im-card` de una grilla de 2 columnas (1 en ≤340 px): ícono en cuadrito rojo suave + título + texto cortado a 4 líneas; "Ver más" es el
+pie de la tarjeta y la abre a todo el ancho (`.im-card.open`). Mismos ids adentro (home.js sigue llenando %/textos). Opiniones como tarjeta.
+
 ### 851. 🎰 Favoritos: el MISMO ingreso que el botón de Girox y después el juego — SW v578
 **Pedido (owner, captura: Joker abría el login de 1girox):** "que use el mismo ingreso de Girox de la app y entre al juego específico con el
 mismo menú de Girox". El SSO por `?token=` de #848 abría DESLOGUEADO (el token de `/session` no le sirve a la web para la sesión) ⇒ se
