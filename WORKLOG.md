@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 833. 💸 Reembolso DIARIO al 10% — SW v570
+**Pedido (owner):** "el reembolso quiero que sea de un 10%; ajustemos todo a un 10% en configuraciones y demás, el diario, así cuidamos la
+economía de la aplicación". Producción tenía diario 20% · semanal 3% · mensual 3%.
+- Migración one-shot `mig833DailyRefund10`: `Config['refundTiersByPeriod'].daily` = plano 10%; semanal y mensual quedan como estaban.
+  Después manda el panel (Comandos → Rangos de reembolso).
+- Default del código (`DEFAULT_TIERS_BY_PERIOD.daily`) 25 → 10 y el texto de respaldo del cartel NOVEDAD de index.html (lo pisa
+  `/sys_entry_news` con `{pct}`). Los demás textos ya usan el % de Config. Si algún comando `/sys_*` se editó a mano con un número fijo,
+  hay que corregirlo en COMANDOS.
+
 ### 832. 🎁 Landing: "100% EN TU PRIMERA CARGA · +50% EXTRA de regalo instalando la app" + la 1ª carga lleva SIEMPRE el 100%
 **Pedido (owner):** "en /landing poné el 100% y un 50% de regalo extra instalando la app, resumido; en la primera carga libre con rollover ×5,
 sólo ahí libre, el 100% automático y después el 50% ofrecer por instalar la app; configuralo automático".

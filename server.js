@@ -12650,6 +12650,17 @@ async function initializeData() {
       console.log('✅ Reembolsos (#349): diario 25% · semanal 3% · mensual 1%');
     }
   } catch (e) { console.warn('[startup-migration] reembolsos 25/3/1:', e.message); }
+  // #833 (owner 2026-10-22): "el reembolso DIARIO al 10%, así cuidamos la economía de la aplicación". Una sola vez: deja el diario plano en
+  // 10% y conserva tal cual el semanal y el mensual guardados. Después manda el panel (Comandos → Rangos de reembolso).
+  try {
+    if (!(await getConfig('mig833DailyRefund10', null))) {
+      const cur = (await getConfig(REFUND_TIERS_CONFIG_KEY, null)) || {};
+      const next = Object.assign({}, typeof cur === 'object' ? cur : {}, { daily: [{ name: 'Diario', pct: 10, max: null }] });
+      await Config.set(REFUND_TIERS_CONFIG_KEY, next, 'mig#833');
+      await Config.set('mig833DailyRefund10', new Date().toISOString(), 'mig#833');
+      console.log('✅ #833: reembolso diario 10%');
+    }
+  } catch (e) { console.warn('[startup-migration] #833:', e.message); }
   // #346 (owner): premios del fueguito ×5 — una sola vez sobre lo que haya guardado en el panel (si no hay config
   // guardada, ya rigen los defaults nuevos). Después, el panel manda.
   try {

@@ -57,7 +57,7 @@ const DEFAULT_TIERS = normalizeTiers([
  * Se editan en el panel (Comandos → Rangos de reembolso): se puede volver a escalonar.
  */
 const DEFAULT_TIERS_BY_PERIOD = {
-  daily: normalizeTiers([{ name: 'Diario', pct: 25, max: null }]),
+  daily: normalizeTiers([{ name: 'Diario', pct: 10, max: null }]), // #833: 10% (antes 25%)
   weekly: normalizeTiers([{ name: 'Semanal', pct: 3, max: null }]),
   monthly: normalizeTiers([{ name: 'Mensual', pct: 1, max: null }])
 };

@@ -105,7 +105,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   comisiones de referidos sin comerse el límite de 60 req/min.
 - **Reembolsos por RANGO**, según lo perdido EN EL PERÍODO que se reclama — no un acumulado.
   Ver `src/utils/refundTiers.js`. **Desde #349 (2026-10-17) hay TRES períodos: DIARIO (sobre lo
-  perdido ayer, todos los días) 25% · SEMANAL 3% · MENSUAL 1%**, planos (un solo rango sin techo),
+  perdido ayer, todos los días) · SEMANAL · MENSUAL**; desde #833 (2026-10-22) el DIARIO es 10% (antes 25% / 20%), planos (un solo rango sin techo),
   editables en Comandos → Rangos de reembolso. El diario había sido eliminado el 2026-08-07 (#153).
   Cartel "NOVEDAD" del Inicio: `/sys_entry_news` ({pct} = % diario).
   **Desde 2026-09-11 la base es la pérdida sobre plata REAL** (`netwin −
