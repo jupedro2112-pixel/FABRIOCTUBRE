@@ -15525,6 +15525,7 @@ async function loadCronograma() {
     }
     loadCronReport();
     loadCronPlans(); // #293
+    loadCronAutopilot(); // #817
 }
 function _cronRenderCalendar() {
     const el = document.getElementById('cronCalendar'); if (!el) return;
@@ -15607,10 +15608,135 @@ function _cronRenderDayPanel() {
             return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>' + _cronBadge(st) + ' <b>' + _cronArtHM(p.runAt) + '</b> ' + escHtml(c.name || '') + (c.partsTotal > 1 ? ' <span style="color:#a5b4fc">(lote ' + (p.idx + 1) + '/' + c.partsTotal + ')</span>' : '') + ' · <span style="color:#8fd3a8">' + escHtml(_cronGiftTxt(c.gift)) + '</span> · ' + escHtml(c.audienceLabel || '') + (c.estimatedCount != null ? ' ~' + Number(c.estimatedCount).toLocaleString('es-AR') : '') + '</span>' +
                 '<span style="display:block;flex-basis:100%;color:#cbd5e1;font-size:.76rem;white-space:pre-wrap">' + escHtml(((c.gift.title ? c.gift.title + ': ' : '') + (c.gift.message || '')).slice(0, 260)) + '</span>' +
                 (p.batchId ? _cronBatchImpactHtml(p.batchId) : '') +
-                (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap">ver lote</a>' : (!c.cancelled ? '<a href="#" onclick="cronOpenEdit(\'' + c.id + '\');return false" style="color:#a5b4fc;white-space:nowrap">editar</a>' : '')) + '</div>';
+                '<span style="display:flex;gap:.6rem;flex-wrap:wrap;flex-basis:100%;margin-top:3px">' +
+                (p.batchId ? '<button class="btn btn-secondary btn-sm" onclick="cronPeopleToggle(\'' + c.id + '\',' + p.idx + ',\'' + p.batchId + '\')">👥 A quién le llegó y cómo van reclamando</button>'
+                    : (!c.cancelled ? '<button class="btn btn-secondary btn-sm" onclick="cronPeopleToggle(\'' + c.id + '\',' + p.idx + ',\'\')">👥 A quién le va a llegar</button>' : '')) +
+                (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap;align-self:center">ver lote</a>' : (!c.cancelled ? '<a href="#" onclick="cronOpenEdit(\'' + c.id + '\');return false" style="color:#a5b4fc;white-space:nowrap;align-self:center">editar</a>' : '')) + '</span>' +
+                '<div id="cronPeople_' + c.id + '_' + p.idx + '" class="cron-people" style="display:none;flex-basis:100%"></div></div>';
         }).join('') + '</div>' : '<div style="margin-top:.4rem;color:#888;font-size:.82rem">Nada programado este día todavía.</div>') + _cronDayImpactHtml(k);
     el.style.display = '';
 }
+// ═══ #816 (owner 2026-10-22): "dentro del cronograma detallá a qué gente le llega y después, abajo, cómo va reclamando la gente" ═══
+// Enviado → GET /api/admin/notif-batches/:id (entrega por persona, estado del bono, carga en 48 h y línea de tiempo por hora).
+// Programado → GET /api/admin/cronograma/:id/audience (la audiencia calculada AHORA; al salir se recalcula).
+const _cronPeopleCache = {};
+const _cronPeopleFilter = {};
+function _cpEsc(v) { return escHtml(String(v == null ? '' : v)); }
+function _cpWhen(d) { return d ? new Date(d).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'; }
+function _cpChannel(ch) { return ch === 'app' ? '📱 app' : ch === 'browser' ? '🌐 navegador' : '🔕 sin notis'; }
+function _cpDelivery(d) {
+    if (d === 'push') return '<span style="color:#22c55e">✅ push</span>';
+    if (d === 'socket') return '<span style="color:#22c55e">✅ en la app</span>';
+    if (d === 'none') return '<span style="color:#f59e0b">🔕 sin notis (sólo chat)</span>';
+    if (d === 'error') return '<span style="color:#f87171">❌ falló el push (quedó en el chat)</span>';
+    return '<span style="color:#9ca3af">⏳ enviando</span>';
+}
+function _cpOutcome(r) {
+    if (r.outcome === 'used') return '<span style="color:#22c55e">✅ usó el bono</span>';
+    if (r.outcome === 'active') return '<span style="color:#60a5fa">🟢 bono activo</span>';
+    if (r.outcome === 'expired') return '<span style="color:#9ca3af">⌛ venció sin usar</span>';
+    if (r.outcome === 'cancelled') return '<span style="color:#9ca3af">🚫 reemplazado</span>';
+    if (r.creditedAt) return '<span style="color:#22c55e">✅ fichas acreditadas</span>';
+    if (r.creditError) return '<span style="color:#f87171" title="' + _cpEsc(r.creditError) + '">❌ no se acreditó</span>';
+    return '—';
+}
+async function cronPeopleToggle(cid, idx, batchId) {
+    const box = document.getElementById('cronPeople_' + cid + '_' + idx); if (!box) return;
+    if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+    box.style.display = ''; box.innerHTML = '<div style="color:#888;font-size:.8rem;padding:.4rem 0">Cargando…</div>';
+    const key = batchId ? 'b:' + batchId : 'c:' + cid;
+    try {
+        const r = await authFetch(batchId ? '/api/admin/notif-batches/' + encodeURIComponent(batchId) : '/api/admin/cronograma/' + encodeURIComponent(cid) + '/audience');
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        _cronPeopleCache[key] = j; _cronPeopleFilter[key] = { f: 'all', q: '' };
+        _cronPeopleRender(box, key, !!batchId);
+    } catch (e) { box.innerHTML = '<div style="color:#f87171;font-size:.8rem;padding:.4rem 0">No se pudo cargar: ' + _cpEsc(e.message) + '</div>'; }
+}
+function cronPeopleFilter(boxId, key, f, sent) {
+    const st = _cronPeopleFilter[key] || { f: 'all', q: '' };
+    if (f != null) st.f = f;
+    const q = document.getElementById(boxId + '_q'); if (q) st.q = q.value;
+    _cronPeopleFilter[key] = st;
+    const box = document.getElementById(boxId); if (box) _cronPeopleRender(box, key, sent);
+}
+function _cpTimeline(t) {
+    if (!t || !Array.isArray(t.used)) return '';
+    const max = Math.max(1, ...t.used, ...t.firstDep);
+    const lastH = Math.min(48, Math.max(1, Math.floor((Date.now() - new Date(t.sentAt).getTime()) / 3600000)));
+    let bars = '';
+    for (let h = 0; h <= lastH && h <= 48; h++) {
+        const u = t.used[h] || 0, d = t.firstDep[h] || 0;
+        bars += '<div title="Hora ' + h + ' desde el envío: ' + d + ' cargaron por primera vez · ' + u + ' usaron el bono" style="flex:1;min-width:5px;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;height:70px">' +
+            '<i style="display:block;height:' + Math.round(d / max * 34) + 'px;background:#60a5fa;border-radius:2px 2px 0 0"></i>' +
+            '<i style="display:block;height:' + Math.round(u / max * 34) + 'px;background:#22c55e;border-radius:2px 2px 0 0"></i></div>';
+    }
+    const cum = (arr, H) => arr.slice(0, H + 1).reduce((a, n) => a + n, 0);
+    const marks = [1, 4, 12, 24, 48].filter((H) => H <= lastH).map((H) => '<b>' + H + ' h:</b> ' + cum(t.firstDep, H) + ' cargaron · ' + cum(t.used, H) + ' usaron el bono').join(' &nbsp;·&nbsp; ');
+    return '<div style="margin:.5rem 0"><div style="font-weight:700;font-size:.82rem;margin-bottom:.2rem">⏱️ Cómo va reclamando la gente (hora por hora desde el envío)</div>' +
+        '<div style="display:flex;gap:1px;align-items:flex-end;padding:4px;border:1px solid var(--p-border,rgba(255,255,255,.1));border-radius:6px">' + bars + '</div>' +
+        '<div style="font-size:.72rem;color:#888;margin-top:2px"><span style="color:#60a5fa">■</span> primera carga · <span style="color:#22c55e">■</span> usó el bono · acumulado → ' + (marks || 'todavía no pasó la primera hora') + '</div></div>';
+}
+function _cronPeopleRender(box, key, sent) {
+    const j = _cronPeopleCache[key]; if (!j) return;
+    const st = _cronPeopleFilter[key] || { f: 'all', q: '' };
+    const boxId = box.id;
+    const num = (n) => Number(n || 0).toLocaleString('es-AR');
+    const chip = (f, label, n) => '<button type="button" class="btn btn-sm ' + (st.f === f ? 'btn-primary' : 'btn-secondary') + '" onclick="cronPeopleFilter(\'' + boxId + '\',\'' + key + '\',\'' + f + '\',' + sent + ')">' + label + (n != null ? ' (' + num(n) + ')' : '') + '</button>';
+    const search = '<input type="search" id="' + boxId + '_q" class="form-input" placeholder="Buscar usuario…" value="' + _cpEsc(st.q) + '" oninput="cronPeopleFilter(\'' + boxId + '\',\'' + key + '\',null,' + sent + ')" style="width:180px;padding:4px 8px;font-size:.8rem">';
+    const q = String(st.q || '').trim().toLowerCase();
+    let html = '<div style="margin-top:.4rem;padding:.6rem;border-radius:8px;border:1px solid var(--p-border,rgba(255,255,255,.12));background:var(--p-surface,rgba(0,0,0,.2));font-size:.8rem">';
+    if (!sent) {
+        const t = j.totals || {};
+        const rows = (j.users || []).filter((u) => (st.f === 'all' || u.channel === st.f) && (!q || String(u.username).toLowerCase().includes(q)));
+        html += '<div style="font-weight:700;margin-bottom:.3rem">👥 A quién le va a llegar <span style="font-weight:400;color:#888">(' + (j.fromParts ? 'listas ya repartidas en tandas' : 'calculado ahora; al salir se vuelve a calcular con el mismo criterio') + ')</span></div>' +
+            '<div style="margin-bottom:.4rem">' + _cpEsc(j.audienceLabel) + ' → <b>' + num(t.total) + '</b> clientes · 📱 ' + num(t.app) + ' con app · 🌐 ' + num(t.browser) + ' navegador · 🔕 ' + num(t.none) + ' sin notificaciones (sólo les queda en el chat)</div>' +
+            '<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.4rem">' + chip('all', 'Todos', t.total) + chip('app', '📱 App', t.app) + chip('browser', '🌐 Navegador', t.browser) + chip('none', '🔕 Sin notis', t.none) + search + '</div>' +
+            '<div style="max-height:320px;overflow:auto"><table class="cron-tbl"><thead><tr><th>Usuario</th><th>Canal</th><th>Último ingreso</th></tr></thead><tbody>' +
+            rows.slice(0, 500).map((u) => '<tr><td>' + _cpEsc(u.username) + '</td><td>' + _cpChannel(u.channel) + '</td><td>' + _cpWhen(u.lastLogin) + '</td></tr>').join('') +
+            '</tbody></table></div>' + (rows.length > 500 ? '<div style="color:#888">… y ' + num(rows.length - 500) + ' más (usá el buscador)</div>' : '') + (j.truncated ? '<div style="color:#888">La lista muestra los primeros 1.000.</div>' : '');
+        box.innerHTML = html + '</div>'; return;
+    }
+    const s = j.summary || {}, rec = j.recipients || [], b = j.batch || {};
+    const isGift = b.giftType && b.giftType !== 'none';
+    const noResp = rec.filter((r) => (r.delivery === 'push' || r.delivery === 'socket') && !(r.dep48Count > 0) && r.outcome !== 'used').length;
+    // 1) A quién le llegó
+    html += '<div style="font-weight:700;margin-bottom:.3rem">📬 A quién le llegó</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.4rem;margin-bottom:.4rem">' +
+        [['Destinatarios', s.total], ['✅ Recibieron', s.recibieron], ['🔕 Sin notis (chat)', s.sinNotis], ['❌ Falló el push', s.fallaron], ['⏳ Enviando', s.pendientes]]
+            .map(([l, n]) => '<div style="padding:.35rem .5rem;border-radius:6px;background:var(--p-card,rgba(255,255,255,.04));border:1px solid var(--p-border,rgba(255,255,255,.08))"><div style="color:#888;font-size:.7rem">' + l + '</div><b style="font-size:1rem">' + num(n) + '</b>' + (s.total && l !== 'Destinatarios' ? ' <span style="color:#888;font-size:.7rem">' + Math.round((n || 0) / s.total * 100) + '%</span>' : '') + '</div>').join('') + '</div>';
+    // 2) Cómo van reclamando
+    html += '<div style="font-weight:700;margin:.5rem 0 .3rem">🎁 Cómo van reclamando</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.4rem">' +
+        (isGift ? [['🟢 Bono activo', s.activos], ['✅ Usaron el bono', s.usaron], ['⌛ Venció sin usar', s.vencidos], ['$ bono entregado', null, fmtARS(s.bonoTotal)]] : [])
+            .concat([['💰 Cargaron (48 h)', s.cargaron48], ['$ cargado (48 h)', null, fmtARS(s.cargado48)], ['😶 Recibieron y no cargaron', noResp]])
+            .map(([l, n, txt]) => '<div style="padding:.35rem .5rem;border-radius:6px;background:var(--p-card,rgba(255,255,255,.04));border:1px solid var(--p-border,rgba(255,255,255,.08))"><div style="color:#888;font-size:.7rem">' + l + '</div><b style="font-size:1rem">' + (txt || num(n)) + '</b>' + (txt == null && s.total ? ' <span style="color:#888;font-size:.7rem">' + Math.round((n || 0) / s.total * 100) + '%</span>' : '') + '</div>').join('') + '</div>';
+    html += _cpTimeline(j.timeline);
+    // 3) Persona por persona
+    const F = {
+        all: () => true,
+        got: (r) => r.delivery === 'push' || r.delivery === 'socket',
+        notgot: (r) => r.delivery === 'none' || r.delivery === 'error',
+        used: (r) => r.outcome === 'used' || !!r.creditedAt,
+        active: (r) => r.outcome === 'active',
+        dep: (r) => r.dep48Count > 0,
+        nores: (r) => (r.delivery === 'push' || r.delivery === 'socket') && !(r.dep48Count > 0) && r.outcome !== 'used'
+    };
+    const rows = rec.filter((r) => (F[st.f] || F.all)(r) && (!q || String(r.username).toLowerCase().includes(q)))
+        .sort((a, b2) => (b2.dep48Amount || 0) - (a.dep48Amount || 0) || String(a.username).localeCompare(String(b2.username)));
+    html += '<div style="font-weight:700;margin:.5rem 0 .3rem">👤 Persona por persona</div>' +
+        '<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.4rem">' + chip('all', 'Todos', rec.length) + chip('got', '✅ Les llegó', rec.filter(F.got).length) + chip('notgot', '🔕/❌ No les llegó', rec.filter(F.notgot).length) +
+        (isGift ? chip('active', '🟢 Bono activo', rec.filter(F.active).length) + chip('used', '✅ Usaron', rec.filter(F.used).length) : '') +
+        chip('dep', '💰 Cargaron', rec.filter(F.dep).length) + chip('nores', '😶 Sin respuesta', rec.filter(F.nores).length) + search + '</div>' +
+        '<div style="max-height:380px;overflow:auto"><table class="cron-tbl"><thead><tr><th>Usuario</th><th>Canal</th><th>Entrega</th>' + (isGift ? '<th>Bono</th><th>Usó</th><th>Carga / bono</th>' : '') + '<th>Cargó en 48 h</th><th>1ª carga</th></tr></thead><tbody>' +
+        rows.slice(0, 500).map((r) => '<tr><td>' + _cpEsc(r.username) + '</td><td>' + _cpChannel(r.channel) + '</td><td>' + _cpDelivery(r.delivery) + '</td>' +
+            (isGift ? '<td>' + _cpOutcome(r) + '</td><td>' + (r.usedAt && r.outcome === 'used' ? _cpWhen(r.usedAt) : '—') + '</td><td>' + (r.cargaMonto ? fmtARS(r.cargaMonto) + ' / +' + fmtARS(r.usesTotalBonus) : '—') + '</td>' : '') +
+            '<td>' + (r.dep48Count ? '<b>' + fmtARS(r.dep48Amount) + '</b> <span style="color:#888">(' + r.dep48Count + ')</span>' : '—') + '</td><td>' + (r.firstDepAt ? _cpWhen(r.firstDepAt) : '—') + '</td></tr>').join('') +
+        '</tbody></table></div>' + (rows.length > 500 ? '<div style="color:#888">… y ' + num(rows.length - 500) + ' más (usá el buscador o los filtros)</div>' : '');
+    box.innerHTML = html + '</div>';
+    const qi = document.getElementById(boxId + '_q'); if (qi && st.q) { qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); }
+}
+window.cronPeopleToggle = cronPeopleToggle; window.cronPeopleFilter = cronPeopleFilter;
 // #297: desde el calendario al formulario del lote, con la fecha ya puesta ("qué quiero configurar ese día").
 let _cronReturnTo = null;
 function cronPlanDay(k, mode) {
@@ -15790,6 +15916,48 @@ async function loadCronReport() {
         el.innerHTML = html;
     } catch (e) { el.innerHTML = '<span style="color:#f87171">No se pudo calcular el comparativo</span>'; }
 }
+// ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
+let _apData = null;
+async function loadCronAutopilot() {
+    const box = document.getElementById('apMonths'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-autopilot'); const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        _apData = j; const c = j.config || {};
+        const set = (id, v) => { const e = document.getElementById(id); if (e) { if (e.type === 'checkbox') e.checked = !!v; else e.value = v; e.disabled = !j.canEdit; } };
+        set('apTime', c.time); set('apHours', c.hours); set('apCap', c.cap); set('apParts', c.parts); set('apGap', c.gapMin); set('apAppOnly', c.appOnly);
+        const st = document.getElementById('apState');
+        if (st) st.innerHTML = c.enabled ? '<b style="color:#22c55e">🟢 ENCENDIDO</b> · ' + c.parts + ' tanda(s) desde las ' + escHtml(c.time) + ' · bono ' + c.hours + ' h · máx ' + c.cap + ' por cliente/mes' : '<b style="color:#9ca3af">⚪ APAGADO</b>';
+        const num = (n) => Number(n || 0).toLocaleString('es-AR');
+        box.innerHTML = '<div style="font-weight:700;margin-bottom:.3rem">📆 Plan del año (' + (j.months || []).length + ' meses: se programa solo cada mes)</div>' + (j.months || []).map((m) => {
+            const [y, mo] = m.month.split('-').map(Number);
+            const label = new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^./, (x) => x.toUpperCase());
+            const specials = m.items.filter((i) => i.special).map((i) => i.day + ' ' + i.special);
+            const bonos = m.items.filter((i) => i.gift !== 'aviso').length;
+            return '<details style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b>' + label + '</b> · ' + m.days + ' días · ' + m.groups + ' grupos que rotan + ' + m.forAll + ' día(s) para todos · ' + bonos + ' con bono' +
+                (m.programmed ? ' · <span style="color:#22c55e">✅ ' + num(m.programmed) + ' programados</span>' : (c.enabled ? ' · <span style="color:#9ca3af">se programa al llegar el mes anterior</span>' : '')) +
+                (specials.length ? '<div style="color:#a5b4fc;font-size:.74rem;margin-left:1rem">🎉 ' + escHtml(specials.join(' · ')) + '</div>' : '') + '</summary>' +
+                '<div style="overflow:auto"><table class="cron-tbl" style="margin-top:.3rem"><thead><tr><th>Día</th><th>Qué sale</th><th>A quién</th><th>Por qué</th><th>Mensaje</th></tr></thead><tbody>' +
+                m.items.map((i) => '<tr' + (i.kind === 'todos' ? ' class="cron-best"' : '') + '><td style="white-space:nowrap">' + i.dayKey.slice(8, 10) + '/' + i.dayKey.slice(5, 7) + ' ' + escHtml(i.dow.slice(0, 3)) + ' ' + escHtml(i.time) + '</td><td><b>' + escHtml(i.gift) + '</b></td><td>' + escHtml(i.who) + '</td><td>' + escHtml(i.reason) + '</td><td style="font-size:.74rem;color:#cbd5e1;min-width:240px">' + escHtml((i.title ? i.title + ': ' : '') + i.message) + '</td></tr>').join('') +
+                '</tbody></table></div></details>';
+        }).join('');
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar el autopiloto</span>'; }
+}
+async function cronAutopilotSave(enabled) {
+    const v = (id) => (document.getElementById(id) || {}).value;
+    const body = { enabled, time: v('apTime'), hours: Number(v('apHours')), cap: Number(v('apCap')), parts: Number(v('apParts')), gapMin: Number(v('apGap')), appOnly: !!(document.getElementById('apAppOnly') || {}).checked };
+    if (!confirm(enabled
+        ? '¿Encender el autopiloto?\n\nSe borran las campañas del autopiloto que todavía no salieron y se vuelven a programar con esta configuración: un envío por día en ' + body.parts + ' tanda(s) desde las ' + body.time + ', bono ' + body.hours + ' h, máximo ' + body.cap + ' por cliente en el mes. Queda programado este mes y el siguiente, y se sigue programando solo.\n\nOjo: salen notificaciones y bonos REALES.'
+        : '¿Apagar el autopiloto? Se borran sus campañas que todavía no salieron (lo ya enviado queda).')) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-autopilot', { method: 'POST', body: JSON.stringify(body) }); const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        const created = (j.programmed || []).reduce((a, x) => a + (x.created || 0), 0);
+        showToast(enabled ? 'Autopiloto encendido: ' + created + ' días programados' : 'Autopiloto apagado (' + (j.removed || 0) + ' campañas futuras borradas)', 'success');
+        loadCronograma();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.cronAutopilotSave = cronAutopilotSave; window.loadCronAutopilot = loadCronAutopilot;
 // ═══ #293: planes de estrategia (plantillas del mes) ═══
 let _cronPlans = [];
 async function loadCronPlans() {

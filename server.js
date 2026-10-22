@@ -24695,14 +24695,24 @@ async function _notifMonthCounts(ids, now) {
   ]);
   return new Map(rows.map((r) => [r._id, r.n]));
 }
+// FNV-1a 32 bits sobre el id del cliente → grupo estable (mismo cliente, mismo grupo para un n dado).
+function _rotGroupOf(id, n) {
+  let h = 0x811c9dc5; const s = String(id || '');
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h % n;
+}
 async function _resolveNotifBatchAudience(b) {
   const r = await _resolveNotifBatchAudienceBase(b);
   if (!r || r.error || !Array.isArray(r.users)) return r;
   const appOnly = b.appOnly === true || b.appOnly === 'true';
   const cap = b.monthlyCap == null || b.monthlyCap === '' ? null : Math.round(Number(b.monthlyCap));
   if (cap != null && (!Number.isFinite(cap) || cap < 1 || cap > 60)) return { error: 'El tope por cliente en el mes tiene que estar entre 1 y 60 (o vacío = sin tope).' };
-  if (!appOnly && cap == null) return r;
+  // #817 GRUPO DE ROTACIÓN del autopiloto: `rotGroup: {n, k}` deja sólo a los clientes cuyo id cae en el grupo k de n (hash
+  // estable). Como se evalúa al enviar, los clientes NUEVOS entran solos a algún grupo: nadie queda afuera de la rotación.
+  const rg = b.rotGroup && Number(b.rotGroup.n) > 1 ? { n: Math.min(60, Math.round(Number(b.rotGroup.n))), k: Math.round(Number(b.rotGroup.k)) || 0 } : null;
+  if (!appOnly && cap == null && !rg) return r;
   let users = r.users, noApp = 0, capped = 0;
+  if (rg) users = users.filter((u) => _rotGroupOf(u.id, rg.n) === ((rg.k % rg.n) + rg.n) % rg.n);
   if (appOnly) { const before = users.length; users = users.filter((u) => _notifChannelOf(u) === 'app' && u.notifPermission !== 'denied'); noApp = before - users.length; }
   if (cap != null && users.length) {
     const counts = await _notifMonthCounts(users.map((u) => u.id), new Date());
@@ -24710,7 +24720,7 @@ async function _resolveNotifBatchAudience(b) {
   }
   const aud = Object.assign({}, r.audience || {});
   const base = aud.audienceLabel || (aud.audienceType === 'all' ? '🌍 todos' : aud.audienceType === 'list' ? '📋 lista' : '');
-  aud.audienceLabel = [base, appOnly ? '📱 con app y notis' : '', cap != null ? `tope ${cap}/mes` : ''].filter(Boolean).join(' · ').slice(0, 200);
+  aud.audienceLabel = [base, rg ? `grupo ${(rg.k % rg.n) + 1}/${rg.n}` : '', appOnly ? '📱 con app y notis' : '', cap != null ? `tope ${cap}/mes` : ''].filter(Boolean).join(' · ').slice(0, 200);
   return Object.assign({}, r, { users, audience: aud, filtered: { noApp, capped } });
 }
 async function _resolveNotifBatchAudienceBase(b) {
@@ -25636,8 +25646,37 @@ app.get('/api/admin/notif-batches/:id', authMiddleware, adminMiddleware, async (
     // #293: impacto real (primera carga, cargas siguientes, recuperados).
     let impact = null;
     try { impact = await _batchImpact(batch, SCHED_ADAPTER.realDepositMatch()); } catch (e) { logger.warn(`[notif-batch] impacto ${batch.id}: ${e.message}`); }
+    // #816 (owner 2026-10-22: "en el cronograma detallá a qué gente le llega y abajo cómo va reclamando la gente"): por destinatario,
+    // lo que cargó en las 48 h siguientes al envío (cargas reales) + línea de tiempo por hora de bonos usados y primeras cargas.
+    let timeline = null;
+    try {
+      const sentAt = new Date(batch.sentAt || Date.now());
+      const t48 = new Date(sentAt.getTime() + 48 * 3600 * 1000);
+      const ids = [...new Set((batch.recipients || []).map((r) => r.userId).filter(Boolean))];
+      const deps = ids.length ? await Transaction.aggregate([
+        { $match: Object.assign({ userId: { $in: ids }, timestamp: { $gte: sentAt, $lte: t48 } }, SCHED_ADAPTER.realDepositMatch()) },
+        { $group: { _id: '$userId', n: { $sum: 1 }, a: { $sum: '$amount' }, first: { $min: '$timestamp' } } }
+      ]) : [];
+      const depBy = new Map(deps.map((d) => [d._id, d]));
+      const uidByName = new Map((batch.recipients || []).map((r) => [r.username, r.userId]));
+      const hourOf = (d) => Math.max(0, Math.floor((new Date(d).getTime() - sentAt.getTime()) / 3600000));
+      const used = new Array(49).fill(0), firstDep = new Array(49).fill(0);
+      for (const r of recipients) {
+        const d = depBy.get(uidByName.get(r.username));
+        r.dep48Count = d ? d.n : 0; r.dep48Amount = d ? Math.round(d.a) : 0; r.firstDepAt = d ? d.first : null;
+        if (r.outcome === 'used' && r.usedAt) { const h = hourOf(r.usedAt); if (h <= 48) used[h]++; }
+        if (d) { const h = hourOf(d.first); if (h <= 48) firstDep[h]++; }
+      }
+      summary.recibieron = recipients.filter((r) => r.delivery === 'push' || r.delivery === 'socket').length;
+      summary.sinNotis = recipients.filter((r) => r.delivery === 'none').length;
+      summary.fallaron = recipients.filter((r) => r.delivery === 'error').length;
+      summary.pendientes = recipients.filter((r) => !r.delivery || r.delivery === 'sending').length;
+      summary.cargaron48 = recipients.filter((r) => r.dep48Count > 0).length;
+      summary.cargado48 = recipients.reduce((a, r) => a + (r.dep48Amount || 0), 0);
+      timeline = { hours: 48, used, firstDep, sentAt };
+    } catch (e) { logger.warn(`[notif-batch] personas ${batch.id}: ${e.message}`); }
     delete batch.recipients;
-    res.json({ batch, recipients, summary, impact });
+    res.json({ batch, recipients, summary, impact, timeline });
   } catch (err) {
     logger.error(`GET /api/admin/notif-batches/:id: ${err.message}`);
     res.status(500).json({ error: 'Error del servidor' });
@@ -25876,6 +25915,32 @@ app.get('/api/admin/cronograma', authMiddleware, adminMiddleware, async (req, re
   } catch (err) { logger.error(`GET /api/admin/cronograma: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 // GET /api/admin/cronograma/:id
+// #816: A QUIÉN LE VA A LLEGAR una campaña todavía no enviada (la audiencia se resuelve AHORA con el mismo criterio que al enviar;
+// al salir se vuelve a calcular). Si la campaña ya repartió tandas, muestra esas listas.
+app.get('/api/admin/cronograma/:id/audience', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const c = await ScheduledCampaign.findOne({ id: String(req.params.id || '') }).lean();
+    if (!c) return res.status(404).json({ error: 'Campaña no encontrada' });
+    const fixed = (c.parts || []).filter((p) => Array.isArray(p.usernames) && p.usernames.length);
+    let users;
+    if (fixed.length) {
+      const names = [...new Set(fixed.flatMap((p) => p.usernames))];
+      users = await User.find({ role: 'user', username: { $in: names } }).select(NOTIF_BATCH_USER_SELECT + ' lastLogin').lean();
+    } else {
+      const est = await _schedEstimate(c.payload || {});
+      if (est.error) return res.status(400).json({ error: est.error });
+      users = est.users || [];
+      const ids = users.map((u) => u.id);
+      const ll = ids.length ? await User.find({ id: { $in: ids } }).select('id lastLogin').lean() : [];
+      const llBy = new Map(ll.map((u) => [u.id, u.lastLogin]));
+      users = users.map((u) => Object.assign({}, u, { lastLogin: llBy.get(u.id) || null }));
+    }
+    const list = users.map((u) => ({ username: u.username, channel: _notifChannelOf(u), lastLogin: u.lastLogin || null }));
+    const totals = { total: list.length, app: list.filter((x) => x.channel === 'app').length, browser: list.filter((x) => x.channel === 'browser').length, none: list.filter((x) => x.channel === 'none').length };
+    res.json({ success: true, fromParts: !!fixed.length, audienceLabel: c.audienceLabel || '', totals, users: list.slice(0, 1000), truncated: Math.max(0, list.length - 1000) });
+  } catch (err) { logger.error(`GET /api/admin/cronograma/:id/audience: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/cronograma/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
@@ -26279,6 +26344,177 @@ app.post('/api/admin/cronograma-plans/retention-template', authMiddleware, admin
     res.json({ success: true, plan: _planPublic(p.toObject ? p.toObject() : p) });
   } catch (err) { logger.error(`POST /api/admin/cronograma-plans/retention-template: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// ============================================================================
+// #817 AUTOPILOTO DE RETENCIÓN (owner 2026-10-22)
+// ============================================================================
+// "Abarcá todos los días y armá lotes de personas así llega todos los días; bonos fuertes o más chicos entendiendo todo: fin de mes
+// incentivo más fuerte, el 5 algo más chico, los feriados de Argentina con algo personalizado y un bono; para todos los meses, este año y
+// el que viene, automático por mes; siempre por lotes y repartido en todos los días; los clientes nuevos entran solos a los lotes".
+// Config['retentionAutopilot'] = { enabled, time, hours, cap, parts, gapMin, appOnly }. El motor (_autopilotTick, cada 3 h en cada
+// instancia) programa el mes en curso y el siguiente: UNA ScheduledCampaign por día (`autoKey` único 'ap-YYYY-MM-DD'), partida en
+// `parts` tandas. Cada día es de uno de dos tipos:
+//  - DÍA PARA TODOS: el último día del mes (cierre, +100%) y las fechas especiales fuertes (bono ≥ 50%: Navidad, Año Nuevo, aguinaldos,
+//    Día de la Madre/Padre/Amigo, 9 de Julio, Viernes Santo, Carnaval…, src/utils/arCalendar.js).
+//  - DÍA DE ROTACIÓN: le toca a un GRUPO de clientes (hash del id, `rotGroup`), en orden; feriados chicos con su mensaje propio; el resto
+//    según el día: 1–4 cobro (+30%), 5 (+20%), 15 quincena (+50%), penúltimo (+50%), 10 y 20 aviso de reembolso, viernes +50%,
+//    sábado +30%, domingo +20%, miércoles "te extrañamos" +30% a los del grupo que no entran hace 4+ días, lunes/martes/jueves +20%.
+// La cantidad de grupos sale del tope por cliente: grupos = ⌈días de rotación / (tope − días para todos)⌉ ⇒ nadie recibe más de `cap`
+// en el mes (además lo garantiza `monthlyCap` al enviar, contando también los lotes manuales). Los bonos son % AUTOMÁTICO de una carga
+// por `hours` horas con el tope global de bonos y el rollover global. La audiencia se resuelve al salir cada tanda ⇒ los clientes
+// nuevos entran solos. Los textos nunca nombran la ruleta (guard isRouletteText).
+const arCalendar = require('./src/utils/arCalendar');
+const AUTOPILOT_DEFAULT = { enabled: false, time: '20:00', hours: 4, cap: 8, parts: 3, gapMin: 30, appOnly: true };
+async function getAutopilotConfig() {
+  const raw = await getConfig('retentionAutopilot', null); const r = raw && typeof raw === 'object' ? raw : {};
+  const num = (v, d, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : d; };
+  return {
+    enabled: r.enabled === true,
+    time: /^\d{2}:\d{2}$/.test(String(r.time || '')) ? String(r.time) : AUTOPILOT_DEFAULT.time,
+    hours: num(r.hours, AUTOPILOT_DEFAULT.hours, 1, 48), cap: num(r.cap, AUTOPILOT_DEFAULT.cap, 2, 60),
+    parts: num(r.parts, AUTOPILOT_DEFAULT.parts, 1, 12), gapMin: num(r.gapMin, AUTOPILOT_DEFAULT.gapMin, 5, 180),
+    appOnly: r.appOnly !== false
+  };
+}
+const _AP_DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+// Lista de días del mes 'YYYY-MM' con lo que sale cada uno (no toca la base).
+function _autopilotMonthItems(month, cfg) {
+  const [y, mo] = month.split('-').map(Number);
+  const daysIn = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const spec = arCalendar.specialDays(y);
+  const H = cfg.hours;
+  const fill = (t) => String(t || '').replace(/\{h\}/g, String(H));
+  const base = { mode: 'window', validHours: H, appOnly: cfg.appOnly, monthlyCap: cfg.cap };
+  const bono = (pct, title, message, extra) => Object.assign({}, base, { giftType: 'percent', amount: pct, applyMode: 'auto', applyScope: 'first', title: fill(title), message: fill(message) }, extra || {});
+  const aviso = (title, message, extra) => Object.assign({}, base, { giftType: 'none', amount: 0, title: fill(title), message: fill(message) }, extra || {});
+  // 1) Clasificar los días.
+  const days = [];
+  for (let d = 1; d <= daysIn; d++) {
+    const k = `${month}-${String(d).padStart(2, '0')}`;
+    const dow = new Date(Date.UTC(y, mo - 1, d)).getUTCDay();
+    const sp = spec.get(k) || null;
+    const last = d === daysIn;
+    days.push({ d, k, dow, sp, last, forAll: last || (sp && sp.pct >= 50) });
+  }
+  const forAllN = days.filter((x) => x.forAll).length;
+  const rotDays = days.filter((x) => !x.forAll);
+  const budget = Math.max(1, cfg.cap - forAllN);
+  const groups = Math.max(1, Math.ceil(rotDays.length / budget));
+  // 2) Armar cada día.
+  let rot = 0;
+  return days.map((x) => {
+    const { d, k, dow, sp, last } = x;
+    let it;
+    if (x.forAll) {
+      const aud = { audienceType: 'all' };
+      if (sp && last) it = { kind: 'todos', reason: sp.name + ' + cierre de mes', payload: bono(Math.max(100, sp.pct), sp.title, sp.message, aud) };
+      else if (sp) it = { kind: 'todos', reason: sp.name, payload: bono(sp.pct, sp.title, sp.message, aud) };
+      else it = { kind: 'todos', reason: 'Cierre de mes', payload: bono(100, '💥 ¡Último día del mes: +100%!', 'Cerramos el mes a lo grande 💥 Cargá en las próximas {h} horas y te DUPLICAMOS la carga automático (con el tope de bonos). Ya está activo en el botón CARGAR AHORA.', aud) };
+    } else {
+      const g = rot % groups; rot++;
+      const aud = groups > 1 ? { audienceType: 'all', rotGroup: { n: groups, k: g } } : { audienceType: 'all' };
+      const audInact = Object.assign({ audienceType: 'inactive', audienceDays: 4, audienceDaysMax: null }, groups > 1 ? { rotGroup: { n: groups, k: g } } : {});
+      const penult = d === days.length - 1;
+      if (sp) it = { reason: sp.name, payload: bono(sp.pct || 20, sp.title, sp.message, aud) };
+      else if (d <= 4) it = { reason: 'Cobro de sueldo (inicio de mes)', payload: bono(30, '💸 +30% para arrancar el mes', '¡Arrancó el mes! 💸 Cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.', aud) };
+      else if (d === 5) it = { reason: 'Día 5 (más chico)', payload: bono(20, '🎁 +20% por {h} horas', 'Te dejamos un empujón: cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
+      else if (d === 15) it = { reason: 'Quincena', payload: bono(50, '💰 ¡Quincena! +50%', 'Cobraste la quincena 💰 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
+      else if (penult) it = { reason: 'Se termina el mes', payload: bono(50, '⏳ Se termina el mes: +50%', 'Últimas horas del mes ⏳ Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático.', aud) };
+      else if (d === 10 || d === 20) it = { reason: 'Aviso de reembolso', payload: aviso('💸 Tu reembolso te espera', 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a la app y reclamalo desde Reembolso: se acredita al toque 🔴', aud) };
+      else if (dow === 5) it = { reason: 'Viernes', payload: bono(50, '🔥 ¡Arrancó el finde! +50%', 'Viernes en Pica Roja 🔥 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
+      else if (dow === 6) it = { reason: 'Sábado', payload: bono(30, '🎉 Sábado: +30%', 'Sábado de juego 🎉 Cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático.', aud) };
+      else if (dow === 0) it = { reason: 'Domingo', payload: bono(20, '☀️ Domingo: +20%', 'Domingo tranqui ☀️ Cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático.', aud) };
+      else if (dow === 3) it = { reason: 'Te extrañamos (sin entrar 4+ días)', payload: bono(30, '👋 ¡Te extrañamos! +30%', 'Hace unos días que no pasás por Pica Roja. Te guardamos un regalo: cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático 🔴', audInact) };
+      else it = { reason: 'Promo del día', payload: bono(20, '⚡ Promo relámpago: +20%', 'Promo del día ⚡ Cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.', aud) };
+      it.kind = 'grupo'; it.group = g + 1; it.groups = groups;
+    }
+    const pl = it.payload;
+    const gtxt = pl.giftType === 'percent' ? `+${pl.amount}%` : 'aviso';
+    pl.name = `Autopiloto · ${k.slice(8, 10)}/${k.slice(5, 7)} · ${it.reason}`.slice(0, 60);
+    const who = it.kind === 'todos' ? 'todos' : (pl.audienceType === 'inactive' ? `grupo ${it.group}/${it.groups} sin entrar 4+ d` : `grupo ${it.group}/${it.groups}`);
+    return { day: d, dayKey: k, dow: _AP_DOW[dow], time: cfg.time, kind: it.kind, reason: it.reason, gift: gtxt, who, special: sp ? sp.name : null,
+      name: `🤖 ${gtxt} · ${it.reason}`.slice(0, 80), payload: pl, autoKey: 'ap-' + k };
+  }).map((it) => Object.assign(it, { groups, budget, forAll: forAllN }));
+}
+// Programa (idempotente) los días que faltan del mes. Devuelve { created, existing, skipped }.
+async function _autopilotProgramMonth(month, cfg, by) {
+  const items = _autopilotMonthItems(month, cfg);
+  const out = { month, created: 0, existing: 0, skipped: 0 };
+  const have = new Set((await ScheduledCampaign.find({ autoKey: { $in: items.map((i) => i.autoKey) } }).select('autoKey').lean()).map((c) => c.autoKey));
+  for (const it of items) {
+    if (have.has(it.autoKey)) { out.existing++; continue; }
+    const first = _schedParseRunAt(`${it.dayKey}T${it.time}`);
+    if (!first || first.getTime() < Date.now() + 2 * 60 * 1000) { out.skipped++; continue; }
+    const parts = Array.from({ length: cfg.parts }, (_, i) => ({ idx: i, runAt: new Date(first.getTime() + i * cfg.gapMin * 60000), status: 'scheduled' }));
+    try {
+      await ScheduledCampaign.create({
+        id: uuidv4(), name: it.name, payload: it.payload, audienceLabel: (it.kind === 'todos' ? '🌍 todos' : '🔁 ' + it.who) + (cfg.appOnly ? ' · 📱 con app y notis' : '') + ` · tope ${cfg.cap}/mes`,
+        estimatedCount: null, parts, runAt: parts[0].runAt, createdBy: by || 'autopiloto', createdByRole: 'admin',
+        notes: `Plan "Autopiloto retención" (aplicado a ${month}) · ${it.reason}`.slice(0, 500), autoKey: it.autoKey
+      });
+      out.created++;
+    } catch (e) { if (e && e.code === 11000) out.existing++; else throw e; }
+  }
+  return out;
+}
+function _apMonthAdd(m, n) { let [y, mo] = m.split('-').map(Number); mo += n; while (mo > 12) { mo -= 12; y++; } while (mo < 1) { mo += 12; y--; } return `${y}-${String(mo).padStart(2, '0')}`; }
+// Borra las campañas del autopiloto que todavía no empezaron a salir (para reprogramar con otra config o apagarlo).
+async function _autopilotClearFuture() {
+  const r = await ScheduledCampaign.deleteMany({ autoKey: { $exists: true, $ne: null }, parts: { $not: { $elemMatch: { status: { $ne: 'scheduled' } } } }, runAt: { $gt: new Date(Date.now() + 60 * 1000) } });
+  return r.deletedCount || 0;
+}
+let _autopilotRunning = false;
+async function _autopilotTick(by) {
+  if (_autopilotRunning) return null;
+  _autopilotRunning = true;
+  try {
+    const cfg = await getAutopilotConfig();
+    if (!cfg.enabled) return null;
+    const cur = _schedArtKey(new Date()).slice(0, 7);
+    const res = [];
+    for (const m of [cur, _apMonthAdd(cur, 1)]) res.push(await _autopilotProgramMonth(m, cfg, by));
+    const created = res.reduce((a, r) => a + r.created, 0);
+    if (created) logger.info(`[autopiloto] programadas ${created} campañas (${res.map((r) => r.month + ':' + r.created).join(' ')})`);
+    return res;
+  } catch (e) { logger.warn('[autopiloto] ' + e.message); return null; } finally { _autopilotRunning = false; }
+}
+setTimeout(() => { _autopilotTick().catch(() => {}); setInterval(() => { _autopilotTick().catch(() => {}); }, 3 * 3600 * 1000); }, 5 * 60 * 1000);
+
+app.get('/api/admin/cronograma-autopilot', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const cfg = await getAutopilotConfig();
+    const cur = _schedArtKey(new Date()).slice(0, 7);
+    const months = [];
+    // "Este año y el que viene": del mes en curso a diciembre del año siguiente.
+    const endY = Number(cur.slice(0, 4)) + 1;
+    for (let m = cur; Number(m.slice(0, 4)) <= endY; m = _apMonthAdd(m, 1)) {
+      const items = _autopilotMonthItems(m, cfg);
+      const programmed = await ScheduledCampaign.countDocuments({ autoKey: { $in: items.map((i) => i.autoKey) } });
+      months.push({ month: m, programmed, days: items.length, groups: items[0] ? items[0].groups : 1, forAll: items[0] ? items[0].forAll : 0,
+        items: items.map((i) => ({ day: i.day, dayKey: i.dayKey, dow: i.dow, time: i.time, kind: i.kind, reason: i.reason, gift: i.gift, who: i.who, special: i.special, title: i.payload.title, message: i.payload.message })) });
+    }
+    res.json({ success: true, config: cfg, months, canEdit: _schedCanManage(req.user.role) });
+  } catch (err) { logger.error(`GET /api/admin/cronograma-autopilot: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Guarda la config. enabled:true ⇒ reprograma lo futuro con la config nueva; enabled:false ⇒ borra lo que no salió todavía.
+app.post('/api/admin/cronograma-autopilot', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const b = req.body || {};
+    const prev = await getAutopilotConfig();
+    const next = Object.assign({}, prev, {
+      enabled: b.enabled === true, time: b.time, hours: b.hours, cap: b.cap, parts: b.parts, gapMin: b.gapMin, appOnly: b.appOnly !== false
+    });
+    await Config.set('retentionAutopilot', next, req.user.username);
+    const cfg = await getAutopilotConfig();
+    const removed = await _autopilotClearFuture();
+    let programmed = null;
+    if (cfg.enabled) programmed = await _autopilotTick(req.user.username);
+    logger.info(`[autopiloto] ${req.user.username} → ${cfg.enabled ? 'ENCENDIDO' : 'apagado'} (${removed} futuras borradas)`);
+    res.json({ success: true, config: cfg, removed, programmed });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-autopilot: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 // Arma un plan con lo YA programado/enviado en un mes ("guardar este mes como plan").
 app.post('/api/admin/cronograma-plans/from-month', authMiddleware, adminMiddleware, async (req, res) => {
   try {

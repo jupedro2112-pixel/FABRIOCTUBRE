@@ -49,10 +49,13 @@ const scheduledCampaignSchema = new mongoose.Schema({
   createdBy: { type: String, default: null },
   createdByRole: { type: String, default: null },
   updatedBy: { type: String, default: null },
-  notes: { type: String, default: '', maxlength: 500 }
+  notes: { type: String, default: '', maxlength: 500 },
+  // #817 AUTOPILOTO de retención: 'ap-YYYY-MM-DD' (una campaña por día). Único ⇒ dos instancias no programan el mismo día dos veces.
+  autoKey: { type: String, default: undefined }
 }, { timestamps: true });
 
 scheduledCampaignSchema.index({ runAt: 1, cancelled: 1 });
+scheduledCampaignSchema.index({ autoKey: 1 }, { unique: true, sparse: true });
 scheduledCampaignSchema.index({ 'parts.status': 1, 'parts.runAt': 1 });
 
 module.exports = mongoose.models['ScheduledCampaign'] || mongoose.model('ScheduledCampaign', scheduledCampaignSchema);

@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-22
 
+### 817. 🤖 AUTOPILOTO de retención: todos los días, por lotes, mes a mes (feriados de Argentina incluidos) — admin SW v155
+**Pedido (owner):** "abarcá todos los días y armá lotes de personas así llega todos los días; bonos fuertes o más chicos: fin de mes más
+fuerte, el 5 más chico, los días festivos de Argentina algo personalizado con un bono; para todos los meses, este año y el que viene, automático
+por mes; siempre por lotes y repartido en todos los días; los clientes nuevos entran solos a los lotes así nadie queda afuera".
+- `Config['retentionAutopilot']` {enabled, time 20:00, hours 4, cap 8, parts 3, gapMin 30, appOnly}. Cronograma → "🤖 Autopiloto". Apagado
+  por defecto: el owner lo enciende desde el panel.
+- Motor `_autopilotTick` (cada 3 h, en cada instancia): programa el mes en curso y el siguiente, UNA ScheduledCampaign por día con
+  `autoKey 'ap-YYYY-MM-DD'` (índice único sparse ⇒ idempotente multi-instancia), partida en `parts` tandas. notes = `Plan "Autopiloto retención"
+  (aplicado a YYYY-MM) · motivo` ⇒ el reporte lo agrupa como plan.
+- `_autopilotMonthItems(month, cfg)`: días PARA TODOS = último del mes (+100%) y fechas especiales con bono ≥50%; el resto ROTA por grupos
+  (`rotGroup {n,k}` = hash FNV del id ⇒ los clientes nuevos caen solos en un grupo). Grupos = ⌈días de rotación / (tope − días para todos)⌉
+  ⇒ ≤ tope por cliente (además `monthlyCap` al enviar). Reglas: 1–4 +30% · 5 +20% · 15 +50% · penúltimo +50% · 10 y 20 aviso de reembolso ·
+  viernes +50% · sábado +30% · domingo +20% · miércoles "te extrañamos" +30% (grupo, sin entrar 4+ d) · lun/mar/jue +20%.
+- `src/utils/arCalendar.js`: feriados nacionales (Pascua por cómputo ⇒ Carnaval/Viernes Santo correctos cualquier año), Día del Padre/Madre/
+  Infancias/Amigo, aguinaldos (30/6, 18/12), cada uno con título, mensaje ({h} = horas) y %.
+- Guardar con la config ⇒ borra las campañas del autopiloto que no empezaron a salir y reprograma; Apagar ⇒ las borra. El panel muestra el plan
+  del año (mes en curso → diciembre del año siguiente) día por día. Ojo: si además se aplica el plan "Retención app · 8 por mes" (#813), el tope
+  mensual corta lo que sobre.
+
+### 816. 👥 En el Cronograma: a quién le llegó y cómo van reclamando
+**Pedido (owner):** "dentro del cronograma detallá a qué gente le llega bien y después el detalle abajo de cómo va reclamando la gente".
+Día del calendario → cada envío tiene "👥 A quién le llegó y cómo van reclamando" (enviado) o "👥 A quién le va a llegar" (programado,
+`GET /api/admin/cronograma/:id/audience`, calculado en el momento). Enviado: `GET /api/admin/notif-batches/:id` ahora suma por persona lo
+cargado en 48 h (`dep48Count/dep48Amount/firstDepAt`), `summary` con recibieron / sin notis / falló / cargaron, y `timeline` hora por hora
+(primeras cargas y bonos usados). Panel: tarjetas "A quién le llegó" y "Cómo van reclamando", gráfico por hora con acumulados a 1/4/12/24/48 h
+y tabla persona por persona con filtros (les llegó, no les llegó, bono activo, usaron, cargaron, sin respuesta) y buscador.
+
 ### 815. 📅 Cronograma arriba de todo en el menú del panel — admin SW v154
 **Pedido (owner):** "poné el cronograma en admin arriba de todo". El link pasó a ser el primero del menú (antes de ⚙️ Configuración).
 

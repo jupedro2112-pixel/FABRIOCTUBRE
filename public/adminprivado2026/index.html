@@ -2668,6 +2668,27 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <h3 style="margin:0 0 .6rem 0;font-size:1rem">🗂️ Campañas del mes</h3>
                     <div id="cronList" style="font-size:.85rem">Cargando…</div>
                 </div>
+                <!-- #817: AUTOPILOTO de retención — programa solo el mes en curso y el siguiente, todos los días, por lotes y grupos -->
+                <div class="card" style="margin-bottom:1rem" id="cronAutopilotCard">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+                        <h3 style="margin:0;font-size:1rem">🤖 Autopiloto de retención (todos los días, por lotes, mes a mes)</h3>
+                        <span id="apState" style="font-size:.85rem"></span>
+                    </div>
+                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Programa solo, cada mes, un envío por día en tandas: los clientes se reparten en grupos que rotan (nadie pasa el tope del mes) y los clientes nuevos entran solos. Fin de mes +100% a todos, el 5 más chico, quincena, viernes fuerte, "te extrañamos" los miércoles y los feriados y fechas de Argentina con su mensaje y su bono. Siempre deja programado este mes y el siguiente.</div>
+                    <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;font-size:.82rem">
+                        <label>Hora<br><input type="time" id="apTime" class="form-input" style="width:110px"></label>
+                        <label>Horas del bono<br><input type="number" id="apHours" class="form-input" min="1" max="48" style="width:80px"></label>
+                        <label>Tope por cliente/mes<br><input type="number" id="apCap" class="form-input" min="2" max="60" style="width:80px"></label>
+                        <label>Tandas por día<br><input type="number" id="apParts" class="form-input" min="1" max="12" style="width:80px"></label>
+                        <label>Min. entre tandas<br><input type="number" id="apGap" class="form-input" min="5" max="180" style="width:80px"></label>
+                        <label style="cursor:pointer"><input type="checkbox" id="apAppOnly"> 📱 Sólo clientes con app y notificaciones</label>
+                    </div>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">
+                        <button class="btn btn-primary" onclick="cronAutopilotSave(true)">▶ Encender / guardar y reprogramar</button>
+                        <button class="btn btn-secondary" style="color:#f87171" onclick="cronAutopilotSave(false)">⏹ Apagar</button>
+                    </div>
+                    <div id="apMonths" style="margin-top:.8rem;font-size:.82rem"></div>
+                </div>
                 <!-- #293: planes de estrategia del mes (plantillas reutilizables). El envío manual sigue en Notificaciones. -->
                 <div class="card" style="margin-bottom:1rem">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">

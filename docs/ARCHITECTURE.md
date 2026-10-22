@@ -1270,6 +1270,13 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   `_batchImpact` agrega `before48h` (línea base de los mismos clientes) ⇒ `lift48h` en el reporte; el panel lo pinta por día y por lote.
   App: `.promo-live` (CARGAR AHORA + tarjeta de carga) desde `js/promobonus.js`.
 
+## #816/#817 Cronograma: personas por envío + AUTOPILOTO
+- `GET /api/admin/notif-batches/:id` → `recipients[].dep48*`, `summary.recibieron/sinNotis/fallaron/cargaron48`, `timeline {used[], firstDep[]}` (48 h).
+  `GET /api/admin/cronograma/:id/audience` = audiencia de una campaña no enviada. Panel: `cronPeopleToggle` / `_cronPeopleRender`.
+- Autopiloto: `Config['retentionAutopilot']`, `_autopilotMonthItems` (reglas + `arCalendar.specialDays`), `_autopilotProgramMonth`
+  (`ScheduledCampaign.autoKey` único), `_autopilotTick` cada 3 h (mes en curso + siguiente), `_autopilotClearFuture` (sólo campañas con todas las
+  tandas 'scheduled'). Filtro `rotGroup {n,k}` en `_resolveNotifBatchAudience` (`_rotGroupOf` FNV-1a). Rutas `GET/POST /api/admin/cronograma-autopilot`.
+
 ## #814 Soporte desde Chats + reintento de retiros automáticos
 - Todo mensaje de agente a cliente (REST y socket) lleva `channel:'support'` y firma de turno; excepción: el texto del comando en REST. Las
   respuestas de comandos de agente van al canal. El filtro del cliente (`GET /api/messages`, socket.js) no cambió.
