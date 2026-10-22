@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 809. 📦 Deploy liviano
+**Consulta (owner):** "quedó muy pesado, ¿hay que limpiar algo?". El proyecto pesa ~15 MB; lo pesado es la carpeta oculta `.git`
+(~400 MB de historial), que NO tiene que viajar a AWS. Para subir a mano: `git archive -o picaroja.zip HEAD` (≈8 MB, sin `.git`, `docs/`,
+`landing/` de Vercel, `scripts/` ni el WORKLOG gracias a `.gitattributes export-ignore`). Con `eb deploy` lo mismo lo cubre `.ebignore`.
+El servidor no lee ninguno de esos archivos en producción.
+
 ### 808. 📸 Comprobante con TODOS los datos visibles: aviso en todos lados + pedido automático de reenvío — SW v562
 **Pedido (owner):** "avisar en todos lados que el comprobante tiene que ser enviado con los datos visibles, si no el pago será rechazado;
 si no lo detecta de forma automática, mandar ese mensaje diciendo que lo reenvíen de forma correcta". App: toast al tocar cualquier
