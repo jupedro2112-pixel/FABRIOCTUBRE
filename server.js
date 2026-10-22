@@ -12456,6 +12456,9 @@ async function initializeData() {
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
   try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
+  // #822 (owner 2026-10-22): "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados": los chats que estaban en Comunidad vuelven a
+  // Abiertos (si no, quedaban escondidos: la pestaña ya no existe).
+  try { if (!(await getConfig('mig822NoComunidad', null))) { const r = await ChatStatus.updateMany({ status: 'comunidad' }, { $set: { status: 'open' } }); await Config.set('mig822NoComunidad', new Date().toISOString(), 'mig#822'); console.log(`✅ #822: ${r.modifiedCount || 0} chats de Comunidad pasan a Abiertos`); } } catch (e) { console.warn('[startup-migration] #822:', e.message); }
   // #821 (owner 2026-10-22): "el de notificaciones dejá todo anulado si hay algo programado": one-shot que apaga las push programadas viejas
   // (ScheduledNotif), cancela las campañas programadas A MANO que no salieron y borra las del autopiloto no enviadas (se regeneran solas
   // con los textos nuevos, sin referencias a sueldos ni a la plata). El plan viejo de 8 envíos también se va.

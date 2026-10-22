@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 822. 🧹 Chat de soporte sin Comunidad: Abiertos · Cerrados · Pagos — admin SW v158
+**Pedido (owner):** "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados". Se sacaron del chat del panel la pestaña Comunidad, el botón
+"Derivar a Comunidad" y las etiquetas rápidas Comunidad / NO Comunidad. Migración `mig822NoComunidad`: los chats que estaban en Comunidad pasan a
+Abiertos (si no, quedaban escondidos). La config del canal de Telegram y el código de bienvenida no se tocaron.
+
 ### 821. 🔒 Estrategia de notificaciones FIJA y automática (sin lanzar ni editar) + textos de servicio + Notificaciones abajo — admin SW v157
 **Pedido (owner):** "que el cronograma tenga toda la estrategia, que no sea editable ni se lance, que empiece a correr sola; cada día con su
 estrategia; nada de sueldos cobrados ni 'ya cobraste' porque no sabés la economía del país: más servicial, del producto, no buscando su
