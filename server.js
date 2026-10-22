@@ -16455,38 +16455,110 @@ async function _publicCampaignStats(token) {
     depToday = { count: agg.reduce((s, x) => s + x.count, 0), total: Math.round(agg.reduce((s, x) => s + (x.total || 0), 0)), users: agg.length };
   }
   return {
-    campaign: { code: c.code, name: c.name || c.code, publisher: c.publisher || null, active: c.isActive !== false },
+    campaign: { code: c.code, name: c.name || c.code, publisher: c.publisher || null, active: c.isActive !== false, since: c.createdAt ? _ART_DAY(c.createdAt) : null },
     total: { clicks: st.clicks, registrations: st.registrations, depositors: st.ftd, deposited: Math.round(st.totalRevenue || 0),
       crRegister: st.crClickToRegister, crDeposit: st.crRegisterToFtd },
     today: { registrations: regsToday, depositors: depToday.users, deposits: depToday.count, deposited: depToday.total },
     updatedAt: new Date().toISOString()
   };
 }
+// #835 (owner): "en lo del publicista, ver cómo funciona día a día o ver y comparar: estadísticas diarias y seleccionar fechas".
+// Período [from, to] en días ARGENTINOS (YYYY-MM-DD, hasta 92 días) con totales del período y el detalle día por día: clics, registros,
+// primeras cargas (FTD), clientes que cargaron, cargas y total cargado. Sólo números agregados (nunca usuarios ni retiros, #805).
+const _ART_DAY = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(0, 10);
+async function _publicCampaignRange(code, from, to) {
+  const start = new Date(from + 'T00:00:00-03:00'), end = new Date(new Date(to + 'T00:00:00-03:00').getTime() + 86400000);
+  const users = await User.find({ acquisitionCampaign: code }).select('username createdAt').lean();
+  const names = users.map((u) => u.username);
+  const days = []; for (let t = start.getTime(); t < end.getTime(); t += 86400000) days.push(_ART_DAY(t));
+  const row = Object.fromEntries(days.map((d) => [d, { day: d, clicks: 0, registrations: 0, ftd: 0, depositors: 0, deposits: 0, deposited: 0 }]));
+  const tz = '-03:00';
+  const [clicks, deps, firsts] = await Promise.all([
+    CampaignClick.aggregate([{ $match: { campaignCode: code, clickedAt: { $gte: start, $lt: end } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$clickedAt', timezone: tz } }, n: { $sum: 1 } } }]),
+    names.length ? Transaction.aggregate([
+      { $match: { type: 'deposit', username: { $in: names }, createdAt: { $gte: start, $lt: end }, $or: [{ 'metadata.source': { $exists: false } }, { 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code'] } }] } },
+      { $group: { _id: { d: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: tz } }, u: '$username' }, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]) : [],
+    names.length ? Transaction.aggregate([
+      { $match: { type: 'deposit', username: { $in: names }, $or: [{ 'metadata.source': { $exists: false } }, { 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code'] } }] } },
+      { $group: { _id: '$username', first: { $min: '$createdAt' } } }, { $match: { first: { $gte: start, $lt: end } } }
+    ]) : []
+  ]);
+  for (const c of clicks) if (row[c._id]) row[c._id].clicks = c.n;
+  for (const u of users) { const d = u.createdAt && _ART_DAY(u.createdAt); if (d && row[d]) row[d].registrations++; }
+  const depUsers = new Set();
+  for (const x of deps) { const r = row[x._id.d]; if (!r) continue; r.depositors++; r.deposits += x.count; r.deposited += x.total || 0; depUsers.add(x._id.u); }
+  for (const f of firsts) { const d = _ART_DAY(f.first); if (row[d]) row[d].ftd++; }
+  const daily = days.map((d) => Object.assign(row[d], { deposited: Math.round(row[d].deposited) }));
+  const sum = (k) => daily.reduce((a, r) => a + r[k], 0);
+  const tot = { clicks: sum('clicks'), registrations: sum('registrations'), ftd: sum('ftd'), depositors: depUsers.size, deposits: sum('deposits'), deposited: sum('deposited') };
+  tot.crRegister = tot.clicks > 0 ? tot.registrations / tot.clicks : null;
+  tot.crDeposit = tot.registrations > 0 ? tot.ftd / tot.registrations : null;
+  return { from, to, totals: tot, daily };
+}
 app.get('/api/public/campaign-stats/:token', async (req, res) => {
   try {
     const d = await _publicCampaignStats(req.params.token);
     if (!d) return res.status(404).json({ error: 'Link inválido o revocado' });
+    const today = _ART_DAY(Date.now());
+    const okDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !isNaN(new Date(v + 'T00:00:00-03:00'));
+    let from = okDay(req.query.from) ? String(req.query.from) : today, to = okDay(req.query.to) ? String(req.query.to) : from;
+    if (to > today) to = today; if (from > to) from = to;
+    const span = Math.round((new Date(to + 'T12:00:00Z') - new Date(from + 'T12:00:00Z')) / 86400000);
+    if (span > 91) from = _ART_DAY(new Date(to + 'T12:00:00-03:00').getTime() - 91 * 86400000);
+    d.range = await _publicCampaignRange(d.campaign.code, from, to);
+    d.since = d.campaign.since || null;
     res.set('Cache-Control', 'no-store'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.get('/r/:token', (req, res) => {
+  // #805 página pública de resultados del publicista · #835: períodos (Hoy/Ayer/7/30/Total), rango de fechas y detalle día por día.
   res.set('Cache-Control', 'no-store'); res.set('X-Robots-Tag', 'noindex');
   res.type('html').send(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Resultados de la pauta</title>
-<style>:root{--bg:#0f1012;--card:#191a1d;--line:#2a2c30;--fg:#f2f2f0;--mut:#9a9da3;--acc:#e0566a;--ok:#6fbf93}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-.w{max-width:760px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left)) 40px}h1{font-size:22px;margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 18px}
-h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:20px 0 8px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.k b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.k span{color:var(--mut);font-size:12.5px}.k small{display:block;color:var(--ok);font-size:12px;margin-top:2px}
-.top{display:flex;align-items:center;gap:10px}.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(111,191,147,.18)}.err{color:var(--acc);padding:30px 0}.foot{color:var(--mut);font-size:12px;margin-top:22px}</style></head>
+<style>:root{--bg:#0f1012;--card:#191a1d;--line:#2a2c30;--fg:#f2f2f0;--mut:#9a9da3;--acc:#e0566a;--ok:#6fbf93;--btn:#24262b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.w{max-width:820px;margin:0 auto;padding:22px 16px 40px}h1{font-size:22px;margin:0}.sub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:20px 0 8px}.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}.k b{display:block;font-size:24px;font-variant-numeric:tabular-nums}.k span{color:var(--mut);font-size:12.5px}.k small{display:block;color:var(--ok);font-size:12px;margin-top:2px}
+.top{display:flex;align-items:center;gap:10px}.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px rgba(111,191,147,.18)}.err{color:var(--acc);padding:30px 0}.foot{color:var(--mut);font-size:12px;margin-top:22px}
+.per{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.per button{background:var(--btn);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 4px;font:700 14px inherit;cursor:pointer}.per button.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.rng{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}.rng p{margin:0 0 8px;font-size:13px;color:var(--mut)}.rng .f{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.rng label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:4px}.rng input{background:#0f1012;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px;font:14px inherit;color-scheme:dark}
+.rng button{background:#16a34a;color:#fff;border:0;border-radius:8px;padding:10px 18px;font:800 14px inherit;cursor:pointer}.showing{color:var(--ok);font-weight:700;font-size:13px;margin:10px 0 0}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:600;font-size:12px;position:sticky;top:0;background:var(--card)}td:first-child,th:first-child{text-align:left}
+tr:last-child td{border-bottom:0}tr.zero td{color:#5c5f66}.bar{display:inline-block;height:6px;border-radius:3px;background:var(--ok);vertical-align:middle;margin-left:6px;opacity:.8}tfoot td{font-weight:800;border-top:1px solid var(--line)}</style></head>
 <body><div class="w" id="app"><p class="sub">Cargando…</p></div><script>
 var T=${JSON.stringify(String(req.params.token || '').slice(0, 60))};
+var S={per:'hoy',from:'',to:''};var D=null;
 function m(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-AR')}function p(x){return x==null?'—':(x*100).toFixed(1)+'%'}
+function e(t){return String(t==null?'':t).replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
 function k(v,l,s){return '<div class="k"><b>'+v+'</b><span>'+l+'</span>'+(s?'<small>'+s+'</small>':'')+'</div>'}
-function load(){fetch('/api/public/campaign-stats/'+encodeURIComponent(T),{cache:'no-store'}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
-var a=document.getElementById('app');if(!x.ok){a.innerHTML='<p class="err">Este link no es válido o fue desactivado.</p>';return}var d=x.j;
-a.innerHTML='<div class="top"><span class="dot"></span><h1>Pauta '+d.campaign.name.replace(/[<>&]/g,'')+'</h1></div><p class="sub">Código '+d.campaign.code+' · '+(d.campaign.active?'activa':'pausada')+' · se actualiza solo cada minuto</p>'
-+'<h2>Hoy</h2><div class="g">'+k(d.today.registrations,'Registros')+k(d.today.depositors,'Cargaron')+k(d.today.deposits,'Cargas')+k(m(d.today.deposited),'Total cargado')+'</div>'
-+'<h2>Desde el inicio</h2><div class="g">'+k(d.total.clicks,'Clics en el link')+k(d.total.registrations,'Registros',p(d.total.crRegister)+' de los clics')+k(d.total.depositors,'Cargaron',p(d.total.crDeposit)+' de los registros')+k(m(d.total.deposited),'Total cargado')+'</div>'
-+'<p class="foot">Actualizado '+new Date(d.updatedAt).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})+' · PICA ROJA</p>'}).catch(function(){})}
+function art(off){var d=new Date(Date.now()-3*3600000-(off||0)*86400000);return d.toISOString().slice(0,10)}
+function fmt(d){var a=d.split('-');return a[2]+'/'+a[1]}
+var WD=['dom','lun','mar','mié','jue','vie','sáb'];function wd(d){return WD[new Date(d+'T12:00:00Z').getUTCDay()]}
+function rangeFor(per){var t=art(0);if(per==='hoy')return[t,t];if(per==='ayer'){var y=art(1);return[y,y]}if(per==='7')return[art(6),t];if(per==='30')return[art(29),t];
+var since=(D&&D.campaign&&D.campaign.since)||art(89);if(since<art(91))since=art(91);return[since,t]}
+var LBL={hoy:'Hoy',ayer:'Ayer','7':'Últimos 7 días','30':'Últimos 30 días',total:'Total (desde el inicio)'};
+function load(){var r=S.per==='rango'?[S.from,S.to]:rangeFor(S.per);
+fetch('/api/public/campaign-stats/'+encodeURIComponent(T)+'?from='+r[0]+'&to='+r[1],{cache:'no-store'}).then(function(x){return x.json().then(function(j){return{ok:x.ok,j:j}})}).then(function(x){
+var a=document.getElementById('app');if(!x.ok){a.innerHTML='<p class="err">Este link no es válido o fue desactivado.</p>';return}D=x.j;render()}).catch(function(){})}
+function render(){var d=D,R=d.range,t=R.totals,a=document.getElementById('app');
+var label=S.per==='rango'?(R.from===R.to?fmt(R.from):fmt(R.from)+' al '+fmt(R.to)):LBL[S.per];
+var h='<div class="top"><span class="dot"></span><h1>Pauta '+e(d.campaign.name)+'</h1></div><p class="sub">Código '+e(d.campaign.code)+' · '+(d.campaign.active?'activa':'pausada')+' · se actualiza solo cada minuto</p>';
+h+='<div class="per">'+['hoy','ayer','7','30','total'].map(function(q){return '<button data-p="'+q+'" class="'+(S.per===q?'on':'')+'">'+({hoy:'Hoy',ayer:'Ayer','7':'7 días','30':'30 días',total:'Total'})[q]+'</button>'}).join('')+'</div>';
+h+='<div class="rng"><p>📅 Elegí un día o un rango (horario argentino)</p><div class="f"><label>Desde<input type="date" id="f1" value="'+R.from+'" max="'+art(0)+'"></label><label>Hasta<input type="date" id="f2" value="'+R.to+'" max="'+art(0)+'"></label><button id="go">Ver</button></div>';
+h+='<p class="showing">Mostrando: '+e(label)+' ('+(R.from===R.to?R.from:R.from+' a '+R.to)+')</p></div>';
+h+='<h2>'+e(label)+'</h2><div class="g">'+k(t.clicks,'Clics en el link')+k(t.registrations,'Registros',t.crRegister!=null?p(t.crRegister)+' de los clics':'')+k(t.ftd,'Primeras cargas',t.crDeposit!=null?p(t.crDeposit)+' de los registros':'')+k(t.depositors,'Clientes que cargaron')+k(t.deposits,'Cargas')+k(m(t.deposited),'Total cargado')+'</div>';
+if(R.daily.length>1){var mx=Math.max.apply(null,R.daily.map(function(r){return r.registrations}).concat([1]));
+h+='<h2>Día por día</h2><div class="tw"><table><thead><tr><th>Día</th><th>Clics</th><th>Registros</th><th>1ª carga</th><th>Cargaron</th><th>Cargas</th><th>Total cargado</th></tr></thead><tbody>';
+R.daily.slice().reverse().forEach(function(r){var z=!(r.clicks||r.registrations||r.deposits);h+='<tr class="'+(z?'zero':'')+'"><td>'+wd(r.day)+' '+fmt(r.day)+'</td><td>'+r.clicks+'</td><td>'+r.registrations+(r.registrations?'<span class="bar" style="width:'+Math.max(4,Math.round(40*r.registrations/mx))+'px"></span>':'')+'</td><td>'+r.ftd+'</td><td>'+r.depositors+'</td><td>'+r.deposits+'</td><td>'+m(r.deposited)+'</td></tr>'});
+h+='</tbody><tfoot><tr><td>Total</td><td>'+t.clicks+'</td><td>'+t.registrations+'</td><td>'+t.ftd+'</td><td>'+t.depositors+'</td><td>'+t.deposits+'</td><td>'+m(t.deposited)+'</td></tr></tfoot></table></div>'}
+h+='<h2>Desde el inicio</h2><div class="g">'+k(d.total.clicks,'Clics en el link')+k(d.total.registrations,'Registros',p(d.total.crRegister)+' de los clics')+k(d.total.depositors,'Cargaron',p(d.total.crDeposit)+' de los registros')+k(m(d.total.deposited),'Total cargado')+'</div>';
+h+='<p class="foot">Los clics se guardan 90 días; el detalle diario llega hasta 92 días. Actualizado '+new Date(d.updatedAt).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})+' · PICA ROJA</p>';
+a.innerHTML=h;
+a.querySelectorAll('.per button').forEach(function(b){b.onclick=function(){S.per=b.getAttribute('data-p');load()}});
+document.getElementById('go').onclick=function(){var f=document.getElementById('f1').value,g=document.getElementById('f2').value;if(!f)return;if(!g)g=f;if(g<f){var x=f;f=g;g=x}S.per='rango';S.from=f;S.to=g;load()}}
 load();setInterval(load,60000);</script></body></html>`);
 });
 // Lista los últimos N usuarios atribuidos a una campaña (para debugging / control).

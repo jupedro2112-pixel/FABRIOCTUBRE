@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 835. 📊 Link de RESULTADOS del publicista: períodos, rango de fechas y estadísticas DÍA POR DÍA
+**Pedido (owner, captura):** "agregá en lo del publicista esto (Hoy · Ayer · 7 días · 30 días · Total + elegí un día o un rango), como para ver cómo
+funciona día a día o comparar; dame estadísticas diarias y seleccionar fechas".
+- `GET /api/public/campaign-stats/:token?from=&to=` (días ARGENTINOS, máx. 92): suma `range` = totales del período (clics, registros, primeras
+  cargas, clientes que cargaron, cargas, total cargado, conversiones) + `daily[]` día por día (agregaciones de Mongo con timezone -03:00;
+  FTD = 1ª carga real del cliente cae ese día). Sin parámetros = hoy. Se mantienen `total` y `today` (compatibles).
+- `/r/<token>`: botones Hoy/Ayer/7 días/30 días/Total, "📅 Elegí un día o un rango" (Desde/Hasta + Ver), "Mostrando: …", tarjetas del período,
+  tabla día por día (más nuevo arriba, barrita de registros, fila Total) y "Desde el inicio". Los clics viven 90 días (TTL de CampaignClick).
+- Sigue sin mostrar usuarios, retiros ni nada personal (#805).
+
 ### 834. 🖼️ Historias automáticas CON FOTO (estilo de las manuales + logo) y partidos apenas cambia el día — admin SW v163
 **Pedido (owner):** "las fotos de las historias armalas automáticamente con el mismo estilo de las manuales y con el logo de PICA ROJA; en las de
 partido poné foto del partido, algo prolijo que incentive; la de los partidos publicala apenas cambia el día, siempre; la de hoy publicala hoy".
