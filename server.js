@@ -12389,6 +12389,17 @@ async function initializeData() {
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
+  // #810 (owner 2026-10-22): "100% en la primera carga y regalo EXTRA de 50% instalando la app". One-shot (flag en Config): deja
+  // firstDepositBonusPct = 100 e installGift activo al 50% (conserva tope y días guardados). Después se edita normal desde el panel.
+  try {
+    if (!(await getConfig('mig810FirstDeposit100', null))) {
+      await Config.set('firstDepositBonusPct', 100, 'mig#810');
+      const ig = (await getConfig('installGift', null)) || {};
+      await Config.set('installGift', Object.assign({}, typeof ig === 'object' ? ig : {}, { enabled: true, pct: 50 }), 'mig#810');
+      await Config.set('mig810FirstDeposit100', new Date().toISOString(), 'mig#810');
+      console.log('✅ #810: primera carga 100% + extra por instalar 50%');
+    }
+  } catch (e) { console.warn('[startup-migration] #810:', e.message); }
   // #586 (owner 2026-10-19): premios de las misiones al 50 % también en la config GUARDADA (si el panel ya las editó). One-shot.
   try {
     if (!(await getConfig('migration_missions_half_v1_done', false))) {
@@ -13567,7 +13578,7 @@ async function getAutoLoadBonusPct() {
 // #290 (owner 2026-10-17): "la publi va a venir con un 50% automático en la primera carga". % que lleva la
 // PRIMERA carga real de cada cliente (manual o hgcash) cuando no tiene otro bono pendiente, con el tope de
 // siempre. Config['firstDepositBonusPct'] (default 50), editable en COMANDOS → Bonos automáticos. 0 = apagado.
-const FIRST_DEPOSIT_BONUS_PCT_DEFAULT = 50;
+const FIRST_DEPOSIT_BONUS_PCT_DEFAULT = 100; // #810 (owner 2026-10-22): 100% en la primera carga
 async function getFirstDepositBonusPct() {
   try {
     const n = Number(await getConfig('firstDepositBonusPct', null));

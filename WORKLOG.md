@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 810. 🎁 Primera carga al 100% + regalo EXTRA de 50% por instalar la app
+**Pedido (owner):** "configurá un 100% en la primera carga y ofrezcamos regalo extra de 50% instalando la app". Migración única al
+arrancar (flag `Config['mig810FirstDeposit100']`): `firstDepositBonusPct = 100` e `installGift = {enabled:true, pct:50}` (conserva
+tope y días). Default del código también 100. Los textos que usan `{pct}` (cartel de primera carga, PRIMERA CARGA, Info) se actualizan
+solos. Ojo: el bono sigue sujeto al TOPE de bonos automáticos (`Config['bonusCap']`: 100% hasta $20.000 de carga y 20% sobre el resto)
+y al rollover global; el extra de instalar tiene su propio tope (`installGift.capArs`, $20.000). Render y producción comparten la base
+⇒ el cambio aplica a producción en cuanto Render arranca con este commit.
+
 ### 809. 📦 Deploy liviano
 **Consulta (owner):** "quedó muy pesado, ¿hay que limpiar algo?". El proyecto pesa ~15 MB; lo pesado es la carpeta oculta `.git`
 (~400 MB de historial), que NO tiene que viajar a AWS. Para subir a mano: `git archive -o picaroja.zip HEAD` (≈8 MB, sin `.git`, `docs/`,
