@@ -1269,6 +1269,10 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   `_batchImpact` agrega `before48h` (línea base de los mismos clientes) ⇒ `lift48h` en el reporte; el panel lo pinta por día y por lote.
   App: `.promo-live` (CARGAR AHORA + tarjeta de carga) desde `js/promobonus.js`.
 
+## #824 Análisis de la estrategia de notificaciones
+`GET /api/admin/cronograma-analysis?day=YYYY-MM-DD|month=YYYY-MM` (default ayer) → `_notifAnalysis` (cache 5 min por rango; `_batchImpact` +
+`_notifBatchPeople` por lote + ventas reales totales del rango). Panel: `loadNotifAnalysis` / `_naRender` (tarjeta `#naCard` arriba del Cronograma).
+
 ## #820 Robustez de cargas y retiros
 - Retiros: externalID `<id>+extSuffix` (nuevo sufijo `-rN` sólo tras rechazo confirmado del banco); timeout ⇒ `hgStatus:'UNKNOWN'` (mismo
   externalID); webhook ignora intentos viejos y no pisa `cancelled`/`other_bank`; poller 48 h por `updatedAt`; `w.duplicate` en el descuento =

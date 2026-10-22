@@ -15526,6 +15526,7 @@ async function loadCronograma() {
     loadCronReport();
     loadCronPlans(); // #293
     loadCronAutopilot(); // #817
+    if (!_naLoaded) { _naLoaded = true; naYesterday(); } // #824 análisis (día vencido por defecto)
 }
 function _cronRenderCalendar() {
     const el = document.getElementById('cronCalendar'); if (!el) return;
@@ -15946,6 +15947,87 @@ async function loadCronReport() {
         el.innerHTML = html;
     } catch (e) { el.innerHTML = '<span style="color:#f87171">No se pudo calcular el comparativo</span>'; }
 }
+// ═══ #824: ANÁLISIS de la estrategia de notificaciones — día vencido por defecto, o el día / mes que se elija ═══
+let _naLoaded = false;
+function _naArtToday() { return new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); }
+function naYesterday() {
+    const k = document.getElementById('naKind'); if (k) k.value = 'day';
+    const d = document.getElementById('naDay'); if (d) d.value = new Date(new Date(_naArtToday() + 'T12:00:00Z').getTime() - 86400000).toISOString().slice(0, 10);
+    naKindChange(true); loadNotifAnalysis();
+}
+function naKindChange(silent) {
+    const kind = (document.getElementById('naKind') || {}).value || 'day';
+    const d = document.getElementById('naDay'), m = document.getElementById('naMonth');
+    if (d) d.style.display = kind === 'day' ? '' : 'none';
+    if (m) { m.style.display = kind === 'month' ? '' : 'none'; if (!m.value) m.value = (d && d.value ? d.value : _naArtToday()).slice(0, 7); }
+    if (!silent) loadNotifAnalysis();
+}
+function naShift(n) {
+    const kind = (document.getElementById('naKind') || {}).value || 'day';
+    if (kind === 'day') { const d = document.getElementById('naDay'); if (!d || !d.value) return; d.value = new Date(new Date(d.value + 'T12:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10); }
+    else { const m = document.getElementById('naMonth'); if (!m || !m.value) return; let [y, mo] = m.value.split('-').map(Number); mo += n; if (mo < 1) { mo = 12; y--; } if (mo > 12) { mo = 1; y++; } m.value = y + '-' + String(mo).padStart(2, '0'); }
+    loadNotifAnalysis();
+}
+function naPickDay(k) { const kd = document.getElementById('naKind'); if (kd) kd.value = 'day'; const d = document.getElementById('naDay'); if (d) d.value = k; naKindChange(true); loadNotifAnalysis(); }
+async function loadNotifAnalysis() {
+    const box = document.getElementById('naBody'); if (!box) return;
+    const kind = (document.getElementById('naKind') || {}).value || 'day';
+    const v = kind === 'day' ? (document.getElementById('naDay') || {}).value : (document.getElementById('naMonth') || {}).value;
+    box.innerHTML = '<span style="color:#888">Calculando…</span>';
+    try {
+        const r = await authFetch('/api/admin/cronograma-analysis?' + (kind === 'day' ? 'day=' : 'month=') + encodeURIComponent(v || ''));
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        box.innerHTML = _naRender(j);
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo calcular: ' + escHtml(e.message) + '</span>'; }
+}
+function _naRender(j) {
+    const t = j.totals || {}, c = j.context || {}, B = j.buckets || {};
+    const num = (n) => Number(n || 0).toLocaleString('es-AR');
+    const pct = (n) => (n == null ? '—' : (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + '%');
+    const of = (a, b) => (b ? Math.round(a / b * 100) + '%' : '—');
+    const lift = (n) => { const x = Math.round(Number(n) || 0); return '<b style="color:' + (x >= 0 ? '#22c55e' : '#f87171') + '">' + (x >= 0 ? '+' : '−') + fmtARS(Math.abs(x)) + '</b>'; };
+    const tile = (label, val, sub) => '<div style="padding:.45rem .6rem;border-radius:8px;background:var(--p-card,rgba(255,255,255,.04));border:1px solid var(--p-border,rgba(255,255,255,.08))"><div style="color:#888;font-size:.7rem">' + label + '</div><div style="font-size:1.05rem;font-weight:800">' + val + '</div>' + (sub ? '<div style="color:#888;font-size:.7rem">' + sub + '</div>' : '') + '</div>';
+    const when = j.kind === 'day' ? new Date(j.label + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' }) : new Date(j.label + '-15T12:00:00Z').toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    let h = '<div style="margin-bottom:.5rem"><b style="text-transform:capitalize">' + escHtml(when) + '</b>' + (j.partial ? ' <span style="color:#f59e0b;font-size:.76rem">(parcial: todavía no pasaron 48 h de algún envío; los números siguen subiendo)</span>' : '') + '</div>';
+    if (!t.sends) return h + '<div style="color:#888">No salieron notificaciones en este período. Ventas reales del período: ' + fmtARS(c.amount) + ' (' + num(c.count) + ' cargas de ' + num(c.users) + ' clientes).</div>';
+    // Resumen: lo que importa de un vistazo
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.45rem">' +
+        tile('💰 Vendido por los avisados (48 h)', fmtARS(t.deposits48h), num(t.depositCount48h) + ' cargas') +
+        tile('📈 Impulso vs 48 h antes', lift(t.lift48h), 'antes: ' + fmtARS(t.before48h)) +
+        tile('👥 Cargaron tras el aviso', num(t.depositors), pct(t.conv) + ' de ' + num(t.recipients) + ' avisados') +
+        tile('♻️ Inactivos recuperados', num(t.recovered48h) + ' de ' + num(t.recoveredTargets), 'no cargaban hace 10+ días') +
+        tile('🎁 Costo en bonos', fmtARS(t.cost), t.roi48 != null ? 'retorno x' + t.roi48 + ' (48 h) · x' + t.roi7d + ' (7 d)' : '') +
+        tile('🏪 Ventas totales del período', fmtARS(c.amount), num(c.count) + ' cargas · ' + num(c.users) + ' clientes') +
+        '</div>';
+    // Detalle completo (plegado)
+    h += '<details style="margin-top:.6rem"><summary style="cursor:pointer;color:#a5b4fc;font-weight:700">Ver detalle completo</summary><div style="margin-top:.5rem">';
+    h += '<div style="font-weight:700;margin:.3rem 0">📬 Entrega</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.4rem">' +
+        tile('Envíos (lotes)', num(t.sends)) + tile('Avisados', num(t.recipients)) + tile('✅ Recibieron', num(t.delivered), of(t.delivered, t.recipients)) +
+        tile('🔕 Sin notificaciones', num(t.noNotif), 'sólo les quedó en el chat') + tile('❌ Falló el push', num(t.failed)) + '</div>';
+    h += '<div style="font-weight:700;margin:.6rem 0 .3rem">🎁 Respuesta</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.4rem">' +
+        tile('✅ Reclamaron (usaron el bono)', num(t.claimed), pct(t.claimRate) + ' de los que recibieron') +
+        tile('💰 Cargaron en 48 h', num(t.depositors), pct(t.conv)) +
+        tile('😶 Ignoraron', num(t.ignored), pct(t.ignoreRate) + ' de los que recibieron (ni bono ni carga)') +
+        tile('⌛ Bono venció sin usar', num(t.expiredUnused)) + tile('🟢 Bono todavía vigente', num(t.activeNow)) +
+        tile('🔁 Siguieron cargando (7 d)', num(t.repeaters), num(t.single) + ' cargaron una sola vez') +
+        tile('➕ Recargas el mismo día', num(t.sameDayExtraCount), fmtARS(t.sameDayExtraAmount)) +
+        tile('💵 Todo lo cargado en 7 días', fmtARS(t.deposits7d), num(t.depositors7d) + ' clientes') + '</div>';
+    h += '<div style="font-weight:700;margin:.6rem 0 .3rem">♻️ Inactivos recuperados (por cuánto hacía que no cargaban)</div><div style="overflow:auto"><table class="cron-tbl"><thead><tr><th>Hacía</th><th>Avisados</th><th>Al otro día</th><th>En 48 h</th><th>En 7 días</th><th>Siguieron</th><th>$ 7 días</th></tr></thead><tbody>' +
+        [['nuevo', 'Nunca cargó'], ['<10', 'Menos de 10 días (activos)'], ['10-19', '10 a 19 días'], ['20-29', '20 a 29 días'], ['30+', '30 días o más']].map(([k, l]) => { const x = B[k] || {}; return '<tr><td>' + l + '</td><td>' + num(x.targets) + '</td><td>' + num(x.dep24h) + '</td><td>' + num(x.dep48h) + ' <span style="color:#888">' + of(x.dep48h, x.targets) + '</span></td><td>' + num(x.dep7d) + '</td><td>' + num(x.stayed) + '</td><td>' + fmtARS(x.amount7d) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>';
+    if (j.kind === 'month' && (j.days || []).length) {
+        h += '<div style="font-weight:700;margin:.6rem 0 .3rem">📅 Día por día (tocá un día para verlo)</div><div style="overflow:auto"><table class="cron-tbl"><thead><tr><th>Día</th><th>Avisados</th><th>Recibieron</th><th>Reclamaron</th><th>Ignoraron</th><th>Cargaron</th><th>$ 48 h</th><th>Impulso</th><th>Recuperados</th><th>Costo</th></tr></thead><tbody>' +
+            j.days.map((d) => '<tr style="cursor:pointer" onclick="naPickDay(\'' + d.day + '\')"><td>' + d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + '</td><td>' + num(d.recipients) + '</td><td>' + num(d.delivered) + '</td><td>' + num(d.claimed) + '</td><td>' + num(d.ignored) + '</td><td>' + num(d.depositors) + ' <span style="color:#888">' + pct(d.conv) + '</span></td><td>' + fmtARS(d.deposits48h) + '</td><td>' + lift(d.lift48h) + '</td><td>' + num(d.recovered48h) + '/' + num(d.recoveredTargets) + '</td><td>' + fmtARS(d.cost) + '</td></tr>').join('') +
+            '</tbody></table></div>';
+    }
+    h += '<div style="font-weight:700;margin:.6rem 0 .3rem">✉️ Envío por envío</div><div style="overflow:auto"><table class="cron-tbl"><thead><tr><th>Cuándo</th><th>Envío</th><th>A quién</th><th>Regalo</th><th>Avisados</th><th>Recibieron</th><th>Reclamaron</th><th>Ignoraron</th><th>Cargaron</th><th>$ 48 h</th><th>Impulso</th><th>Recuperados</th></tr></thead><tbody>' +
+        (j.sends || []).map((r) => '<tr><td style="white-space:nowrap">' + r.day.slice(8, 10) + '/' + r.day.slice(5, 7) + ' ' + escHtml(r.hour || '') + '</td><td>' + (r.auto ? '🤖 ' : '') + escHtml(String(r.name || '').replace(/^🤖\s*/, '')) + '</td><td style="font-size:.74rem">' + escHtml(String(r.audienceLabel || '').split(' · ').slice(0, 2).join(' · ')) + '</td><td>' + escHtml(r.gift) + '</td><td>' + num(r.recipients) + '</td><td>' + num(r.delivered) + '</td><td>' + num(r.claimed) + '</td><td>' + num(r.ignored) + '</td><td>' + num(r.depositors) + '</td><td>' + fmtARS(r.deposits48h) + '</td><td>' + lift(r.lift48h) + '</td><td>' + num(r.recovered48h) + '/' + num(r.recoveredTargets) + '</td></tr>').join('') +
+        '</tbody></table></div>';
+    h += '<div style="color:#888;font-size:.72rem;margin-top:.4rem">Reclamaron = usaron el bono del aviso. Ignoraron = les llegó y ni usaron el bono ni cargaron en 48 h. Impulso = lo que cargaron esos mismos clientes en las 48 h después del aviso menos lo que habían cargado en las 48 h antes. Recuperados = no cargaban hace 10 días o más y volvieron a cargar en 48 h. Todo sobre cargas reales (sin regalos). "Ventas totales" incluye a los que no recibieron aviso.</div>';
+    return h + '</div></details>';
+}
+window.naYesterday = naYesterday; window.naKindChange = naKindChange; window.naShift = naShift; window.naPickDay = naPickDay; window.loadNotifAnalysis = loadNotifAnalysis;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
 async function loadCronAutopilot() {

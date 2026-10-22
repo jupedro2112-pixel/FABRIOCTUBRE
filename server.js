@@ -26382,6 +26382,129 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
 });
 
 // ============================================================================
+// #824 ANÁLISIS DIARIO de la estrategia de notificaciones (owner 2026-10-22)
+// ============================================================================
+// "Arriba de todo del cronograma automático el detalle de cómo impulsa la venta día a día; abriendo el detalle, cuánta gente reclamó,
+// cuánta ignoró, cuántos inactivos recuperamos…; siempre a día vencido, pero que se pueda elegir fecha, día o mes".
+// GET /api/admin/cronograma-analysis?day=YYYY-MM-DD | ?month=YYYY-MM (sin nada = AYER, hora AR). Por envío (lote) y total:
+//  - entrega: avisados · recibieron (push o en la app) · sin notificaciones (sólo chat) · falló el push
+//  - respuesta: reclamaron = usaron el bono · cargaron en 48 h · ignoraron = les llegó y ni usaron el bono ni cargaron en 48 h ·
+//    bono vigente todavía / venció sin usar
+//  - venta: $ 48 h después vs $ 48 h antes de los mismos clientes (impulso) · $ 7 días · siguieron cargando · costo en bonos · retorno
+//  - inactivos recuperados (no cargaban hace 10+ días): volvieron al otro día / 48 h / 7 días y siguieron, por antigüedad
+//  - contexto: ventas reales TOTALES del período y cuánto de eso vino de clientes avisados.
+// Todo sobre cargas REALES (SCHED_ADAPTER.realDepositMatch). Cache 5 min por proceso (un mes son ~90 lotes).
+const _notifAnalysisCache = new Map();
+async function _notifBatchPeople(b, depMatch) {
+  const recs = b.recipients || [];
+  const sentAt = new Date(b.sentAt);
+  const uids = [...new Set(recs.map((r) => r.userId).filter(Boolean))];
+  const deps = uids.length ? await Transaction.aggregate([
+    { $match: Object.assign({ userId: { $in: uids }, timestamp: { $gte: sentAt, $lte: new Date(sentAt.getTime() + 48 * 3600 * 1000) } }, depMatch) },
+    { $group: { _id: '$userId' } }
+  ]) : [];
+  const depSet = new Set(deps.map((d) => d._id));
+  const pbs = await PromoBonus.find({ sourceRuleCode: 'lote', sourceRuleId: b.id }).select('username status usesCount expiresAt').lean();
+  const now = Date.now();
+  const pbBy = new Map(pbs.map((p) => [String(p.username).toLowerCase(), p]));
+  const o = { delivered: 0, noNotif: 0, failed: 0, claimed: 0, activeNow: 0, expiredUnused: 0, depositors: 0, ignored: 0 };
+  for (const r of recs) {
+    const got = r.delivery === 'push' || r.delivery === 'socket';
+    if (got) o.delivered++; else if (r.delivery === 'none') o.noNotif++; else if (r.delivery === 'error') o.failed++;
+    const pb = pbBy.get(String(r.username).toLowerCase());
+    const used = !!(pb && (pb.status === 'used' || (pb.usesCount || 0) > 0)) || !!r.creditedAt;
+    if (used) o.claimed++;
+    else if (pb && pb.status === 'active' && new Date(pb.expiresAt).getTime() > now) o.activeNow++;
+    else if (pb) o.expiredUnused++;
+    const dep = depSet.has(r.userId);
+    if (dep) o.depositors++;
+    if (got && !used && !dep) o.ignored++;
+  }
+  return o;
+}
+async function _notifAnalysis(from, to) {
+  const key = from.toISOString() + '|' + to.toISOString();
+  const hit = _notifAnalysisCache.get(key);
+  if (hit && Date.now() - hit.at < 5 * 60 * 1000) return hit.data;
+  const depMatch = SCHED_ADAPTER.realDepositMatch();
+  const batches = await NotifBatch.find({ sentAt: { $gte: from, $lt: to }, isPublic: { $ne: true } })
+    .select('id name giftType amount mode audienceType audienceLabel sentAt recipients.userId recipients.username recipients.delivery recipients.creditedAt').sort({ sentAt: 1 }).lean();
+  const sched = batches.length ? await ScheduledCampaign.find({ 'parts.batchId': { $in: batches.map((b) => b.id) } }).select('name parts.batchId autoKey audienceLabel').lean() : [];
+  const schedBy = new Map(); for (const c of sched) for (const pt of c.parts || []) if (pt.batchId) schedBy.set(pt.batchId, c);
+  const pbCost = batches.length ? await PromoBonus.aggregate([
+    { $match: { sourceRuleCode: 'lote', sourceRuleId: { $in: batches.map((b) => b.id) } } },
+    { $group: { _id: '$sourceRuleId', cost: { $sum: { $ifNull: ['$usesTotalBonus', { $ifNull: ['$bonoMonto', 0] }] } } } }
+  ]) : [];
+  const costBy = new Map(pbCost.map((x) => [x._id, Math.round(x.cost || 0)]));
+  const SUM = ['recipients', 'delivered', 'noNotif', 'failed', 'claimed', 'activeNow', 'expiredUnused', 'depositors', 'ignored', 'deposits48h', 'depositCount48h', 'before48h', 'lift48h',
+    'deposits7d', 'depositors7d', 'repeaters', 'single', 'recoveredTargets', 'recoveredNextDay', 'recovered48h', 'recovered7d', 'recoveredStayed', 'recoveredAmount7d', 'cost', 'sameDayExtraCount', 'sameDayExtraAmount'];
+  const rows = [];
+  const buckets = {}; for (const k of ['nuevo', '<10', '10-19', '20-29', '30+']) buckets[k] = { targets: 0, dep24h: 0, dep48h: 0, dep7d: 0, stayed: 0, amount7d: 0 };
+  for (const b of batches) {
+    const imp = await _batchImpact(b, depMatch);
+    const ppl = await _notifBatchPeople(b, depMatch);
+    for (const k of Object.keys(buckets)) for (const f of Object.keys(buckets[k])) buckets[k][f] += Number((imp.buckets[k] || {})[f]) || 0;
+    const sc = schedBy.get(b.id);
+    const cost = (costBy.get(b.id) || 0) + (b.giftType === 'fixed' ? (b.recipients || []).filter((r) => r.creditedAt).length * (Number(b.amount) || 0) : 0);
+    rows.push(Object.assign({
+      batchId: b.id, sentAt: b.sentAt, day: _schedArtKey(b.sentAt), hour: new Date(new Date(b.sentAt).getTime() - SCHED_ART_OFFSET_MS).toISOString().slice(11, 16),
+      name: (sc && sc.name) || b.name || '', auto: !!(sc && sc.autoKey), audienceLabel: b.audienceLabel || (sc && sc.audienceLabel) || '',
+      gift: b.giftType === 'percent' ? '+' + b.amount + '%' : (b.giftType === 'fixed' ? '$' + Number(b.amount || 0).toLocaleString('es-AR') : 'aviso'),
+      recipients: (b.recipients || []).length, deposits48h: imp.deposits48h.amount, depositCount48h: imp.deposits48h.count, before48h: imp.before48h.amount,
+      lift48h: imp.deposits48h.amount - imp.before48h.amount, deposits7d: imp.within7d.amount, depositors7d: imp.within7d.users, repeaters: imp.repeaters, single: imp.single,
+      recoveredTargets: imp.recovered.targets, recoveredNextDay: imp.recovered.nextDay, recovered48h: imp.recovered.in48h, recovered7d: imp.recovered.in7d,
+      recoveredStayed: imp.recovered.stayed, recoveredAmount7d: imp.recovered.amount7d, cost, sameDayExtraCount: imp.sameDayExtra.count, sameDayExtraAmount: imp.sameDayExtra.amount
+    }, ppl));
+  }
+  const agg = (rs) => {
+    const t = { sends: rs.length }; for (const k of SUM) t[k] = rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
+    t.deliveryRate = t.recipients ? Math.round(t.delivered / t.recipients * 1000) / 10 : 0;
+    t.conv = t.recipients ? Math.round(t.depositors / t.recipients * 1000) / 10 : 0;
+    t.claimRate = t.delivered ? Math.round(t.claimed / t.delivered * 1000) / 10 : 0;
+    t.ignoreRate = t.delivered ? Math.round(t.ignored / t.delivered * 1000) / 10 : 0;
+    t.recoveryRate = t.recoveredTargets ? Math.round(t.recovered48h / t.recoveredTargets * 1000) / 10 : null;
+    t.roi48 = t.cost > 0 ? Math.round(t.deposits48h / t.cost * 10) / 10 : null;
+    t.roi7d = t.cost > 0 ? Math.round(t.deposits7d / t.cost * 10) / 10 : null;
+    return t;
+  };
+  const totals = agg(rows);
+  // Contexto: TODAS las cargas reales del período (con o sin aviso).
+  const all = await Transaction.aggregate([
+    { $match: Object.assign({ timestamp: { $gte: from, $lt: to } }, depMatch) },
+    { $group: { _id: null, n: { $sum: 1 }, amount: { $sum: '$amount' }, users: { $addToSet: '$userId' } } },
+    { $project: { n: 1, amount: 1, users: { $size: '$users' } } }
+  ]);
+  const ctx = all[0] ? { count: all[0].n, amount: Math.round(all[0].amount || 0), users: all[0].users } : { count: 0, amount: 0, users: 0 };
+  const dayKeys = [...new Set(rows.map((r) => r.day))].sort();
+  const days = dayKeys.map((d) => Object.assign({ day: d }, agg(rows.filter((r) => r.day === d))));
+  const data = { from, to, totals, context: ctx, buckets, days, sends: rows };
+  _notifAnalysisCache.set(key, { at: Date.now(), data });
+  if (_notifAnalysisCache.size > 60) _notifAnalysisCache.delete(_notifAnalysisCache.keys().next().value);
+  return data;
+}
+app.get('/api/admin/cronograma-analysis', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanView(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const todayKey = _schedArtKey(new Date());
+    let from, to, label, kind;
+    const m = String(req.query.month || ''), d = String(req.query.day || '');
+    if (/^\d{4}-\d{2}$/.test(m)) {
+      kind = 'month'; label = m;
+      from = new Date(m + '-01T00:00:00-03:00'); to = new Date(_apMonthAdd(m, 1) + '-01T00:00:00-03:00');
+    } else {
+      kind = 'day';
+      // Sin fecha = AYER (día vencido: la respuesta de 48 h todavía se completa, pero el día de envíos ya cerró).
+      label = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : _schedArtKey(new Date(new Date(todayKey + 'T12:00:00-03:00').getTime() - 86400000));
+      from = new Date(label + 'T00:00:00-03:00'); to = new Date(from.getTime() + 86400000);
+    }
+    if (from > new Date()) return res.status(400).json({ error: 'Esa fecha todavía no pasó.' });
+    const data = await _notifAnalysis(from, to);
+    const hoursSince = Math.round((Date.now() - to.getTime()) / 3600000);
+    res.json(Object.assign({ success: true, kind, label, today: todayKey, partial: hoursSince < 48 }, data));
+  } catch (err) { logger.error(`GET /api/admin/cronograma-analysis: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
+// ============================================================================
 // #293 PLANES DE ESTRATEGIA — plantillas del mes completo, reutilizables (owner 2026-10-17)
 // ============================================================================
 // "Programar todo el mes con diferentes estrategias, guardarlo y después ver cómo rindió cada día y

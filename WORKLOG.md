@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 824. 📈 Análisis de la estrategia de notificaciones ARRIBA del Cronograma (día vencido, o el día / mes que se elija) — admin SW v159
+**Pedido (owner):** "arriba de todo el detalle para ver cómo impulsa la venta día a día el sistema de notificaciones; abriendo el detalle,
+cuánta gente reclamó, cuánta ignoró, cuántos inactivos recuperamos, etc.; siempre a día vencido, pero que se pueda seleccionar fecha, día o mes".
+- `GET /api/admin/cronograma-analysis?day=|month=` (sin nada = AYER, hora AR) → `_notifAnalysis(from,to)` (cache 5 min): por envío y total —
+  entrega (avisados, recibieron, sin notis, falló), respuesta (`_notifBatchPeople`: reclamaron = usaron el bono; cargaron 48 h; ignoraron = les
+  llegó y ni bono ni carga; bono vencido / vigente), venta ($ 48 h vs 48 h antes = impulso, 7 días, siguieron cargando, recargas del mismo día,
+  costo y retorno), inactivos recuperados por antigüedad (de `_batchImpact.buckets`) y contexto (ventas reales TOTALES del período). Mes ⇒ además
+  día por día. `partial:true` si todavía no pasaron 48 h.
+- Panel: tarjeta "📈 Cómo impulsa la venta" arriba de todo (Día/Mes, ◀ ▶, Ayer): 6 números de un vistazo + "Ver detalle completo" (entrega,
+  respuesta, recuperados por antigüedad, día por día clickeable en el mes, envío por envío).
+
 ### 823. 📱 Ajuste por teléfono: margen superior real + barra del casino compacta + detección del modelo — SW v564
 **Pedido (owner, captura de Android en Girox directo):** "esto pasa en varias apps: ver todos los teléfonos argentinos (Android comunes,
 iPhone) y ajustarlos en cada celular; detectar qué teléfono es cuando instalan así ven bien el formato; en un iPhone 17 también estaba
