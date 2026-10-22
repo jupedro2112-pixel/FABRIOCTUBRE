@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-22
 
+### 834. 🖼️ Historias automáticas CON FOTO (estilo de las manuales + logo) y partidos apenas cambia el día — admin SW v163
+**Pedido (owner):** "las fotos de las historias armalas automáticamente con el mismo estilo de las manuales y con el logo de PICA ROJA; en las de
+partido poné foto del partido, algo prolijo que incentive; la de los partidos publicala apenas cambia el día, siempre; la de hoy publicala hoy".
+- `src/services/storyImage.js`: `renderSvg(spec)` arma un SVG 1080×1920 con el estilo de `st2-*.png` (pica `public/images/stories/spade-mark.png`
+  + PICA ROJA arriba, subtítulo espaciado, tarjeta gris con ícono dibujado, titular negro + rojo, texto, píldora negra, nota de rollover,
+  "Gracias por confiar"). Partidos: tarjeta tipo cancha con los ESCUDOS de ESPN (embebidos en base64 al publicar: un <img> SVG no pide
+  recursos externos), liga, "HOY · hh:mm HS" y estadio. Íconos: como, carga, retiro, reembolso, soporte, misiones, vip, referidos, juegos,
+  deportes, app, seguro, regalo (badge +pct%).
+- `storyAutopilot`: cada tema trae `img` ({pct} = 1ª carga, {rx} = rollover global); el slot de la semana y el bono también. Los partidos ahora van
+  en horarios PROPIOS `m0..m2` a las **00:05** (antes, en el horario previo al partido); los 5 horarios quedan para servicio/slot/bono.
+  `topMatches` suma logo, color y estadio. Texto de la bienvenida sin "(con el tope de bonos)" (la 1ª carga no tiene tope desde #812).
+- server.js: `Story.autoImg` (select:false) + `GET /api/stories/:id/auto.svg` (CSP sin scripts). `_storyAutoBackfillImages` le pone la foto a
+  las automáticas vigentes que salieron sin foto (por título, hoy y ayer). Un partido que ya salió hoy en otro horario no se repite.
+  ⚠️ En Render (`RENDER=true`) NO se arman fotos (`STORY_IMAGES_ON_RENDER=1` lo fuerza): Render comparte la base y publicaría fotos que
+  producción todavía no sabe servir; producción se las agrega en ≤5 min.
+- Panel: Borrar acepta los horarios de partido (`'m0'`, entre comillas en el onclick).
+- Revisado renderizando las 16 fotos con Inkscape (13 temas + partido real de hoy Flamengo vs Estudiantes + slot + bono). En el teléfono la
+  fuente es la del sistema (no DejaVu): el texto que pasa el ancho se comprime con `textLength`, no se corta.
+
 ### 833. 💸 Reembolso DIARIO al 10% — SW v570
 **Pedido (owner):** "el reembolso quiero que sea de un 10%; ajustemos todo a un 10% en configuraciones y demás, el diario, así cuidamos la
 economía de la aplicación". Producción tenía diario 20% · semanal 3% · mensual 3%.

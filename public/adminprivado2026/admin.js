@@ -16054,7 +16054,7 @@ async function loadStoriesAuto() {
                         (it.label ? '<span class="ci-what">Botón: ' + escHtml(it.label) + '</span>' : '') +
                         (it.removed ? '<span class="ci-who" style="color:#f87171">🚫 borrada (no se muestra)</span>'
                             : (it.published ? '<span class="ci-who" style="color:#22c55e">✅ publicada · 👁 ' + num(it.views) + ' vistas' + (it.bonusPct ? ' · 🎁 ' + num(it.claims) + ' reclamaron · ' + num(it.uses) + ' cargaron' : '') + '</span>' : '<span class="ci-who">🕒 programada</span>') +
-                              '<button type="button" class="btn btn-secondary btn-sm" style="margin-top:4px;color:#f87171" onclick="storiesAutoRemove(\'' + d.day + '\',' + it.slot + ')">🗑️ Borrar</button>') + '</div>'; }).join('') +
+                              '<button type="button" class="btn btn-secondary btn-sm" style="margin-top:4px;color:#f87171" onclick="storiesAutoRemove(\'' + d.day + '\',\'' + it.slot + '\')">🗑️ Borrar</button>') + '</div>'; }).join('') +
                 '</div></details>';
         });
         const bs = j.bonusStories || [];

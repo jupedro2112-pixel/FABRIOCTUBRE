@@ -49,6 +49,9 @@ const storySchema = new mongoose.Schema({
   // #827 HISTORIAS AUTOMÁTICAS: 'sa-YYYY-MM-DD-<slot>' (única ⇒ multi-instancia sin duplicar) y qué es ('servicio' | 'deporte').
   autoKey: { type: String, default: undefined },
   autoKind: { type: String, default: null },
+  // #834: FOTO de la historia automática (spec para storyImage.renderSvg, con los escudos/fotos ya embebidos en base64). Se sirve en
+  // GET /api/stories/:id/auto.svg. select:false: pesa (escudos ~80 KB) y no hace falta en los listados.
+  autoImg: { type: mongoose.Schema.Types.Mixed, default: null, select: false },
   // #827: respuesta a la historia con bono: cuántos lo usaron en una carga, bono entregado y lo que cargaron; resultado de la push a todos.
   bonusUses: { type: Number, default: 0 },
   bonusUsedTotal: { type: Number, default: 0 },

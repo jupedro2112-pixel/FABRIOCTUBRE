@@ -78,7 +78,10 @@ async function topMatches(dayKey) {
         const score = base + (/^(arg\.|fifa\.worldq\.conmebol)/.test(lg) ? 3 : 0);
         const home = (c.competitors || []).find((x) => x.homeAway === 'home'), away = (c.competitors || []).find((x) => x.homeAway === 'away');
         seen.add(e.id);
-        out.push({ id: e.id, league: lgName, home: short(home ? home.team.displayName : teams[0]), away: short(away ? away.team.displayName : teams[1]), date: e.date, hour: _artHM(e.date), score });
+        const tm = (x) => (x && x.team) || {};
+        out.push({ id: e.id, league: lgName, home: short(home ? home.team.displayName : teams[0]), away: short(away ? away.team.displayName : teams[1]), date: e.date, hour: _artHM(e.date), score,
+          // #834: para la foto de la historia (escudos de ESPN, color del club y estadio)
+          homeLogo: tm(home).logo || '', awayLogo: tm(away).logo || '', homeColor: tm(home).color || '', awayColor: tm(away).color || '', venue: (c.venue && c.venue.fullName) || '' });
       }
     }
   }
@@ -90,21 +93,22 @@ async function topMatches(dayKey) {
 
 // Catálogo de historias de SERVICIO (lo que ofrece la app). `{pct}` = bono de la primera carga vigente (Config, nunca fijo en el texto).
 const THEMES = [
-  { key: 'como', title: '🆕 ¿Sos nuevo? Así funciona', text: '1️⃣ Cargás con una transferencia y mandás la foto del comprobante.\n2️⃣ Jugás en 1Girox: casino y deportes.\n3️⃣ Retirás tus premios a tu cuenta. Todo desde la app.', link: 'app:cargar', label: 'Empezar ahora ›', bg: '#d23a4e' },
-  { key: 'carga', title: '⚡ Carga automática', text: 'Transferís, mandás la foto del comprobante y se acredita SOLA en minutos. Sin esperar a nadie, a cualquier hora.', link: 'app:cargar', label: 'Cargar ahora ›', bg: '#0f766e' },
-  { key: 'retiro', title: '💸 Retiros a tu cuenta', text: 'Pedís tu retiro desde la app y va directo a tu cuenta bancaria. Rápido, simple y seguro.', link: 'app:retirar', label: 'Ver cómo retirar ›', bg: '#1e3a8a' },
-  { key: 'reembolso', title: '🔁 Reembolso todos los días', text: 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a Reembolso y reclamalo: se acredita al toque.', link: 'app:reembolso', label: 'Ver mi reembolso ›', bg: '#7c2d12' },
-  { key: 'soporte', title: '🛟 Soporte de verdad', text: 'Personas reales te responden todos los días desde el chat de Soporte de la app. Cualquier duda, escribinos.', link: 'app:soporte', label: 'Ir a Soporte ›', bg: '#111827' },
-  { key: 'misiones', title: '🎯 Misiones de la semana', text: 'Cada semana tenés misiones con premio. Completalas jugando y sumá extra automáticamente.', link: 'app:misiones', label: 'Ver mis misiones ›', bg: '#4c1d95' },
-  { key: 'vip', title: '💎 Niveles VIP', text: 'Cuanto más jugás, más subís de nivel. Cada nivel desbloquea beneficios y un regalo al subir.', link: 'app:vip', label: 'Ver niveles ›', bg: '#713f12' },
-  { key: 'referidos', title: '🤝 Jugá con tus amigos', text: 'Invitá a tus amigos con tu link y ganá una comisión por lo que juegan. Todos los días entra gente nueva a Pica Roja.', link: 'app:referidos', label: 'Mi link de referidos ›', bg: '#065f46' },
-  { key: 'juegos', title: '🎰 Los más jugados', text: "Joker's Jewels, Gates of Olympus, Sweet Bonanza, Sugar Rush y más: los favoritos de la comunidad te esperan en 1Girox.", link: 'app:juegos', label: 'Jugar ahora ›', bg: '#9d174d' },
-  { key: 'deportes', title: '⚽ Deportes en vivo', text: 'Fútbol argentino, Libertadores, Champions, Premier y mucho más. Apostá antes y durante el partido desde Deportes.', link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d' },
-  { key: 'app', title: '📲 Llevá Pica Roja en el celu', text: 'Instalá la app: entrás en un toque, te llegan los avisos de bonos y tenés todo a mano.', link: 'app:instalar', label: 'Instalar la app ›', bg: '#334155' },
-  { key: 'seguro', title: '🔒 Tu cuenta, segura', text: 'Verificación por SMS y retiros sólo a cuentas a tu nombre. Tu plata y tus datos, cuidados.', link: 'app:verificar', label: 'Verificar mi celular ›', bg: '#0c4a6e' },
-  { key: 'primera', title: '🎁 Bienvenida para los nuevos', text: 'Si es tu primera carga, te sumamos un {pct}% extra automático (con el tope de bonos). Todos los días se suman jugadores nuevos.', link: 'app:cargar', label: 'Hacer mi primera carga ›', bg: '#be123c' }
+  { key: 'como', title: '🆕 ¿Sos nuevo? Así funciona', text: '1️⃣ Cargás con una transferencia y mandás la foto del comprobante.\n2️⃣ Jugás en 1Girox: casino y deportes.\n3️⃣ Retirás tus premios a tu cuenta. Todo desde la app.', link: 'app:cargar', label: 'Empezar ahora ›', bg: '#d23a4e', img: { kicker: 'Cómo funciona', icon: 'como', h1: '¿Sos nuevo?', h2: 'Así funciona', text: 'Cargás con una transferencia, jugás en 1Girox (casino y deportes) y retirás tus premios a tu cuenta. Todo desde la app.', pill: 'Cargás  ·  Jugás  ·  Retirás' } },
+  { key: 'carga', title: '⚡ Carga automática', text: 'Transferís, mandás la foto del comprobante y se acredita SOLA en minutos. Sin esperar a nadie, a cualquier hora.', link: 'app:cargar', label: 'Cargar ahora ›', bg: '#0f766e', img: { kicker: 'Carga automática', icon: 'carga', h1: 'Cargá en', h2: 'segundos', text: 'Transferís, mandás la foto del comprobante y se acredita sola en minutos, a cualquier hora.', pill: 'Transferí  ·  Foto  ·  Listo' } },
+  { key: 'retiro', title: '💸 Retiros a tu cuenta', text: 'Pedís tu retiro desde la app y va directo a tu cuenta bancaria. Rápido, simple y seguro.', link: 'app:retirar', label: 'Ver cómo retirar ›', bg: '#1e3a8a', img: { kicker: 'Retiros', icon: 'retiro', h1: 'Retirá a', h2: 'tu cuenta', text: 'Pedís tu retiro desde la app y va directo a tu cuenta bancaria. Rápido, simple y seguro.', pill: 'Menú  ›  Retirar' } },
+  { key: 'reembolso', title: '🔁 Reembolso todos los días', text: 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a Reembolso y reclamalo: se acredita al toque.', link: 'app:reembolso', label: 'Ver mi reembolso ›', bg: '#7c2d12', img: { kicker: 'Reembolsos', icon: 'reembolso', h1: '¿Perdiste?', h2: 'Recuperás', text: 'Todos los días te devolvemos parte de lo que perdés con tu plata. Se cobra solo desde la app.', pill: 'Menú  ›  Reembolso', note: 'El reembolso se juega ×{rx} (rollover) para retirarlo' } },
+  { key: 'soporte', title: '🛟 Soporte de verdad', text: 'Personas reales te responden todos los días desde el chat de Soporte de la app. Cualquier duda, escribinos.', link: 'app:soporte', label: 'Ir a Soporte ›', bg: '#111827', img: { kicker: 'Soporte', icon: 'soporte', h1: 'Personas', h2: 'reales', text: 'Te responden todos los días desde el chat de Soporte de la app. Cualquier duda, escribinos.', pill: 'Menú  ›  Soporte' } },
+  { key: 'misiones', title: '🎯 Misiones de la semana', text: 'Cada semana tenés misiones con premio. Completalas jugando y sumá extra automáticamente.', link: 'app:misiones', label: 'Ver mis misiones ›', bg: '#4c1d95', img: { kicker: 'Misiones de la semana', icon: 'misiones', h1: 'Cumplí metas y', h2: 'cobrá premios', text: 'Cada semana tenés misiones con premio. Completalas jugando y el premio se acredita solo.', pill: 'Lunes a domingo  ·  Se acredita solo', note: 'El premio se juega ×{rx} (rollover) para retirarlo' } },
+  { key: 'vip', title: '💎 Niveles VIP', text: 'Cuanto más jugás, más subís de nivel. Cada nivel desbloquea beneficios y un regalo al subir.', link: 'app:vip', label: 'Ver niveles ›', bg: '#713f12', img: { kicker: 'Niveles VIP', icon: 'vip', h1: 'Subí de', h2: 'nivel', text: 'Cuanto más jugás, más subís. Cada nivel desbloquea beneficios y un regalo al subir.', pill: 'Menú  ›  Niveles VIP' } },
+  { key: 'referidos', title: '🤝 Jugá con tus amigos', text: 'Invitá a tus amigos con tu link y ganá una comisión por lo que juegan. Todos los días entra gente nueva a Pica Roja.', link: 'app:referidos', label: 'Mi link de referidos ›', bg: '#065f46', img: { kicker: 'Referidos', icon: 'referidos', h1: 'Invitá y', h2: 'cobrá', text: 'Compartí tu link y ganá una comisión por lo que juegan tus amigos, todos los meses.', pill: 'Tu link  ·  Todos los meses', note: 'Las comisiones se retiran sin apostar (sin rollover)' } },
+  { key: 'juegos', title: '🎰 Los más jugados', text: "Joker's Jewels, Gates of Olympus, Sweet Bonanza, Sugar Rush y más: los favoritos de la comunidad te esperan en 1Girox.", link: 'app:juegos', label: 'Jugar ahora ›', bg: '#9d174d', img: { kicker: 'Los más jugados', icon: 'juegos', h1: 'Tus slots', h2: 'favoritos', text: "Joker's Jewels, Gates of Olympus, Sweet Bonanza, Sugar Rush y más te esperan en 1Girox.", pill: 'Jugá ahora en 1Girox' } },
+  { key: 'deportes', title: '⚽ Deportes en vivo', text: 'Fútbol argentino, Libertadores, Champions, Premier y mucho más. Apostá antes y durante el partido desde Deportes.', link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d', img: { kicker: 'Deportes', icon: 'deportes', h1: 'Apostá en', h2: 'vivo', text: 'Fútbol argentino, Libertadores, Champions, Premier y mucho más, antes y durante el partido.', pill: 'Menú  ›  Deportes' } },
+  { key: 'app', title: '📲 Llevá Pica Roja en el celu', text: 'Instalá la app: entrás en un toque, te llegan los avisos de bonos y tenés todo a mano.', link: 'app:instalar', label: 'Instalar la app ›', bg: '#334155', img: { kicker: 'Instalá la app', icon: 'app', h1: 'Instalá la', h2: 'app', text: 'Entrás en un toque y te avisamos de cargas, retiros y bonos. Todo a mano.', pill: 'Compartir  ›  Agregar a inicio' } },
+  { key: 'seguro', title: '🔒 Tu cuenta, segura', text: 'Verificación por SMS y retiros sólo a cuentas a tu nombre. Tu plata y tus datos, cuidados.', link: 'app:verificar', label: 'Verificar mi celular ›', bg: '#0c4a6e', img: { kicker: 'Tu cuenta, segura', icon: 'seguro', h1: 'Verificá tu', h2: 'teléfono', text: 'Verificación por SMS y retiros sólo a cuentas a tu nombre. Tu plata y tus datos, cuidados.', pill: 'Perfil  ›  Verificación de teléfono' } },
+  { key: 'primera', title: '🎁 Bienvenida para los nuevos', text: 'Si es tu primera carga, te sumamos un {pct}% extra automático. Todos los días se suman jugadores nuevos.', link: 'app:cargar', label: 'Hacer mi primera carga ›', bg: '#be123c', img: { kicker: 'Bienvenida', icon: 'regalo', badge: '+{pct}%', h1: 'Primera carga', h2: '+{pct}% extra', text: 'Si es tu primera carga te sumamos un {pct}% extra automático. Todos los días se suman jugadores nuevos.', pill: 'Hacé tu primera carga', note: 'El bono se juega ×{rx} (rollover) para retirarlo' } }
 ];
 const SLOTS = ['10:00', '13:00', '16:00', '19:00', '21:30'];
+const MATCH_TIME = '00:05'; // #834: los partidos salen apenas cambia el día
 
 /** Slot (juego) favorito: el más jugado de 1girox (catálogo público ordenado por popularidad). La Partner API no da netwin por juego,
  *  así que "favorito" = más partidas. Si hay una foto anterior de los conteos (prev: {gameKey: plays}) gana el que MÁS creció en la semana. */
@@ -132,27 +136,28 @@ function planDay(dayKey, matches, ctx) {
   const themes = THEMES.filter((t) => t.key !== 'primera' || pct > 0);
   const toMin = (hm) => { const [h, m] = String(hm).split(':').map(Number); return h * 60 + m; };
   const out = new Array(SLOTS.length).fill(null);
-  // 1) Partidos destacados en el horario previo al partido.
+  // 1) #834 (owner): "la historia de los partidos publicala apenas cambia el día, siempre" ⇒ los partidos destacados van en horarios PROPIOS
+  //    (slot 'm0', 'm1', 'm2' a las 00:05) y los 5 horarios de siempre quedan para el servicio. Foto: cancha con los escudos de ESPN.
   const ms = (matches || []).filter((m, i) => i < 2 || (i === 2 && m.score >= 16)).slice(0, 3);
-  for (const m of ms) {
-    let idx = 0; for (let i = 0; i < SLOTS.length; i++) if (toMin(SLOTS[i]) <= toMin(m.hour) - 60) idx = i;
-    while (idx >= 0 && out[idx]) idx--;
-    if (idx < 0) continue;
-    out[idx] = { kind: 'deporte', title: `⚽ HOY: ${m.home} vs ${m.away}`.slice(0, 60),
-      text: `${m.league} · ${m.hour} hs.\nViví el partido y apostá antes y durante el juego desde Deportes en Pica Roja 🔴`, link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d', match: m };
-  }
+  const matchItems = ms.map((m, i) => ({ slot: 'm' + i, time: MATCH_TIME, kind: 'deporte', title: `⚽ HOY: ${m.home} vs ${m.away}`.slice(0, 60),
+    text: `${m.league} · ${m.hour} hs.\nViví el partido y apostá antes y durante el juego desde Deportes en Pica Roja 🔴`, link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d', match: m,
+    img: { kicker: 'Partido de hoy', match: { home: m.home, away: m.away, league: m.league, hour: m.hour, venue: m.venue, homeColor: m.homeColor, awayColor: m.awayColor },
+      matchLogos: { home: m.homeLogo, away: m.awayLogo }, h1: `${m.home} vs ${m.away}`, h2: `Hoy ${m.hour} hs`,
+      text: (m.venue ? m.venue + '. ' : '') + 'Viví el partido y apostá antes y durante el juego desde Deportes.', pill: 'Deportes  ›  Apostá en vivo' } }));
   const freeSlot = (pref) => { for (const i of [pref, 2, 3, 1, 4, 0]) if (i >= 0 && i < SLOTS.length && !out[i]) return i; return -1; };
   // 2) Lunes: el slot favorito de la semana.
   if (ctx.dow === 1 && ctx.favorite) {
     const f = ctx.favorite, i = freeSlot(2);
     if (i >= 0) out[i] = { kind: 'slot', title: `🔥 El slot de la semana: ${f.name}`.slice(0, 60),
-      text: `Es el más jugado de Pica Roja${f.weekPlays ? ' esta semana' : ''}${f.provider ? ' (' + f.provider + ')' : ''}. Entrá directo y probá suerte 🍀`, link: 'app:play:' + f.path, label: 'Jugar ' + f.name.slice(0, 22) + ' ›', bg: '#9d174d', image: f.image, game: f };
+      text: `Es el más jugado de Pica Roja${f.weekPlays ? ' esta semana' : ''}${f.provider ? ' (' + f.provider + ')' : ''}. Entrá directo y probá suerte 🍀`, link: 'app:play:' + f.path, label: 'Jugar ' + f.name.slice(0, 22) + ' ›', bg: '#9d174d', game: f,
+      img: { kicker: 'El slot de la semana', icon: 'juegos', iconOpts: { gameName: f.provider || '' }, h1: f.name, h2: 'el más jugado', text: `Es el favorito de Pica Roja${f.weekPlays ? ' esta semana' : ''}. Entrá directo y probá suerte.`, pill: 'Jugar ahora' } };
   }
   // 3) Miércoles: historia con BONO semanal (con notificación a todos).
   if (ctx.dow === 3 && ctx.weeklyBonus && ctx.weeklyBonus.pct > 0) {
     const b = ctx.weeklyBonus, i = freeSlot(3);
     if (i >= 0) out[i] = { kind: 'bono', title: `🎁 Bono de la semana: +${b.pct}%`, text: `Sólo por ${b.hours} horas: tocá "Reclamar ahora" y tu próxima carga lleva +${b.pct}% EXTRA automático (con el tope de bonos). ¡Gracias por elegir Pica Roja!`,
-      link: '', label: '', bg: '#be123c', bonusPct: b.pct, bonusHours: b.hours, notifyAll: true };
+      link: '', label: '', bg: '#be123c', bonusPct: b.pct, bonusHours: b.hours, notifyAll: true,
+      img: { kicker: 'Bono de la semana', icon: 'regalo', iconOpts: { badge: `+${b.pct}%` }, h1: `Sólo ${b.hours} horas`, h2: `+${b.pct}% extra`, text: `Tocá "Reclamar ahora" y tu próxima carga lleva +${b.pct}% EXTRA automático.`, pill: 'Reclamar ahora', note: 'El bono se juega ×{rx} (rollover) para retirarlo' } };
   }
   // 4) El resto, temas de servicio que rotan día a día (sin el genérico de deportes si ese día ya hay partidos).
   let ti = (dayN * 3) % themes.length;
@@ -160,9 +165,13 @@ function planDay(dayKey, matches, ctx) {
     if (out[i]) continue;
     let t = themes[ti % themes.length]; ti++;
     if (t.key === 'deportes' && ms.length) { t = themes[ti % themes.length]; ti++; }
-    out[i] = { kind: 'servicio', theme: t.key, title: t.title, text: t.text.replace('{pct}', String(pct)), link: t.link, label: t.label, bg: t.bg };
+    const im = t.img ? Object.assign({}, t.img, { iconOpts: t.img.badge ? { badge: t.img.badge } : undefined }) : null;
+    out[i] = { kind: 'servicio', theme: t.key, title: t.title, text: t.text.replace('{pct}', String(pct)), link: t.link, label: t.label, bg: t.bg, img: im };
   }
-  return out.map((x, i) => Object.assign({ slot: i, time: SLOTS[i] }, x));
+  // {pct} = bono de la 1ª carga, {rx} = rollover global (Config): nunca fijos en el texto.
+  const rx = ctx.rolloverX > 0 ? ctx.rolloverX : 5;
+  const fill = (v) => (typeof v === 'string' ? v.replace(/\{pct\}/g, String(pct)).replace(/\{rx\}/g, String(rx)) : (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fill(x)])) : v));
+  return matchItems.concat(out.map((x, i) => Object.assign({ slot: i, time: SLOTS[i] }, x))).map((x) => (x.img ? Object.assign(x, { img: fill(x.img) }) : x));
 }
 
-module.exports = { topMatches, planDay, favoriteSlot, SLOTS, THEMES };
+module.exports = { topMatches, planDay, favoriteSlot, SLOTS, THEMES, MATCH_TIME };

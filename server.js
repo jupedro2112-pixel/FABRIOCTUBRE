@@ -24468,6 +24468,17 @@ app.post('/api/stories/:id/view', authMiddleware, async (req, res) => {
   catch (_) { res.json({ ok: false }); }
 });
 // Media subida desde el panel (guardada en Mongo como data URL). Público: la URL no es adivinable (uuid) y es contenido de pauta.
+// #834: foto de una historia automática (SVG 1080×1920 con el estilo de las historias de PICA ROJA).
+app.get('/api/stories/:id/auto.svg', async (req, res) => {
+  try {
+    const s = await Story.findOne({ id: String(req.params.id) }).select('+autoImg').lean();
+    if (!s || !s.autoImg) return res.status(404).end();
+    res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    res.set('Content-Security-Policy', "default-src 'none'; img-src data:; style-src 'unsafe-inline'"); // sin scripts ni recursos externos
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(storyImage.renderSvg(s.autoImg));
+  } catch (e) { res.status(500).end(); }
+});
 app.get('/api/stories/:id/media', async (req, res) => {
   try {
     const s = await Story.findOne({ id: String(req.params.id) }).select('+mediaData mediaMime').lean();
@@ -24619,6 +24630,7 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
 // MIÉRCOLES la historia con BONO semanal (+50% por 3 h, push a todos; se mide cuántos reclamaron / usaron / cargaron). Fijo y siempre
 // encendido como la estrategia de notificaciones (frena sólo con STORIES_AUTOPILOT_DISABLED=1). `Story.autoKey` único ⇒ multi-instancia.
 const storyAuto = require('./src/services/storyAutopilot');
+const storyImage = require('./src/services/storyImage'); // #834 fotos de las historias automáticas
 const STORY_AUTO_BONUS = { pct: 50, hours: 3 };
 async function _storyAutoCtx(dayKey) {
   const dow = new Date(dayKey + 'T12:00:00Z').getUTCDay();
@@ -24633,11 +24645,46 @@ async function _storyAutoCtx(dayKey) {
     }
   }
   let firstPct = 0; try { firstPct = await getFirstDepositBonusPct(); } catch (_) {}
-  return { firstPct, dow, favorite, weeklyBonus: STORY_AUTO_BONUS };
+  let rolloverX = 5; try { rolloverX = await _giftRolloverX(); } catch (_) {}
+  return { firstPct, dow, favorite, weeklyBonus: STORY_AUTO_BONUS, rolloverX };
 }
 async function _storyAutoPlan(dayKey, opts) {
   let matches = []; if (!(opts && opts.noMatches)) { try { matches = await storyAuto.topMatches(dayKey); } catch (_) {} }
   return storyAuto.planDay(dayKey, matches, await _storyAutoCtx(dayKey));
+}
+// #834: foto de la historia = spec de storyImage con los escudos ya embebidos (un <img> con SVG no puede pedir nada afuera).
+// Render comparte la base con producción (#779): si Render publicara con foto antes del deploy de AWS, producción no tendría la ruta de la
+// foto y la historia saldría en blanco ⇒ en Render se publica sin foto y producción se la agrega (_storyAutoBackfillImages, cada 5 min).
+const _STORY_IMAGES_ON = process.env.RENDER !== 'true' || process.env.STORY_IMAGES_ON_RENDER === '1';
+async function _storyAutoImgSpec(it) {
+  if (!_STORY_IMAGES_ON || !it || !it.img) return null;
+  const spec = JSON.parse(JSON.stringify(it.img));
+  if (spec.match && spec.matchLogos) {
+    const [h, a] = await Promise.all([storyImage.fetchImageData(spec.matchLogos.home), storyImage.fetchImageData(spec.matchLogos.away)]);
+    spec.match.homeImg = h || ''; spec.match.awayImg = a || '';
+  }
+  delete spec.matchLogos;
+  return spec;
+}
+// #834 (owner): las historias automáticas que YA estaban publicadas sin foto (texto sobre color) reciben la suya: se busca en el plan del
+// día la que tiene el mismo título. Sólo las vigentes; las borradas por el admin no se tocan.
+async function _storyAutoBackfillImages(today, plan) {
+  if (!_STORY_IMAGES_ON) return;
+  try {
+    const olds = await Story.find({ autoKey: /^sa-/, isActive: true, expiresAt: { $gt: new Date() }, mediaType: 'none', autoKind: { $ne: 'borrada' } }).select('id title autoKey').lean();
+    if (!olds.length) return;
+    const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));
+    const plans = { [today]: plan };
+    for (const s of olds) {
+      const dk = String(s.autoKey).slice(3, 13);
+      if (!plans[dk] && dk === yesterday) { try { plans[dk] = await _storyAutoPlan(dk); } catch (_) { plans[dk] = []; } }
+      const it = (plans[dk] || []).find((p) => String(p.title || '').slice(0, 60) === s.title);
+      const spec = await _storyAutoImgSpec(it);
+      if (!spec) continue;
+      await Story.updateOne({ id: s.id, mediaType: 'none' }, { $set: { mediaType: 'image', mediaUrl: `/api/stories/${s.id}/auto.svg`, autoImg: spec, bgColor: '#ffffff' } });
+      logger.info(`[historias-auto] foto agregada a ${s.autoKey}: ${s.title}`);
+    }
+  } catch (e) { logger.warn('[historias-auto] fotos: ' + e.message); }
 }
 let _storyAutoRunning = false;
 async function _storyAutoTick() {
@@ -24646,17 +24693,22 @@ async function _storyAutoTick() {
   try {
     const now = new Date(); const today = _schedArtKey(now);
     const plan = await _storyAutoPlan(today);
+    await _storyAutoBackfillImages(today, plan);
     for (const it of plan) {
       const at = new Date(`${today}T${it.time}:00-03:00`);
       if (at > now) continue;
       const autoKey = `sa-${today}-${it.slot}`;
       if (await Story.exists({ autoKey })) continue;
+      // #834: el partido ya salió hoy en otro horario (antes iban antes del partido) ⇒ no se repite.
+      if (it.kind === 'deporte' && await Story.exists({ autoKey: new RegExp('^sa-' + today + '-'), title: String(it.title || '').slice(0, 60) })) continue;
       const bonusPct = Number(it.bonusPct) || 0, bonusHours = Number(it.bonusHours) || 1;
+      const newId = uuidv4();
+      const autoImg = await _storyAutoImgSpec(it);
       let doc;
       try {
         doc = await Story.create({
-          id: uuidv4(), title: String(it.title || '').slice(0, 60), text: String(it.text || '').slice(0, 300),
-          mediaType: it.image ? 'image' : 'none', mediaUrl: it.image ? String(it.image).slice(0, 500) : '', bgColor: it.bg || '#06070d',
+          id: newId, title: String(it.title || '').slice(0, 60), text: String(it.text || '').slice(0, 300),
+          mediaType: autoImg ? 'image' : 'none', mediaUrl: autoImg ? `/api/stories/${newId}/auto.svg` : '', autoImg: autoImg || null, bgColor: autoImg ? '#ffffff' : (it.bg || '#06070d'),
           linkUrl: it.link || '', linkLabel: String(it.label || '').slice(0, 40), durationSec: 7, hours: 24,
           publishedAt: at, expiresAt: new Date(at.getTime() + 24 * 3600 * 1000), isActive: true,
           bonusPct, bonusHours, bonusUntil: bonusPct > 0 ? new Date(at.getTime() + bonusHours * 3600 * 1000) : null, notifyAll: !!it.notifyAll,
@@ -24683,8 +24735,9 @@ setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyA
 app.post('/api/admin/stories-autopilot/remove', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!['admin', 'depositor'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
-    const day = String((req.body || {}).day || ''), slot = parseInt((req.body || {}).slot, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !(slot >= 0 && slot < storyAuto.SLOTS.length)) return res.status(400).json({ error: 'Datos inválidos.' });
+    const day = String((req.body || {}).day || ''), rawSlot = String((req.body || {}).slot == null ? '' : (req.body || {}).slot);
+    const slot = /^m[0-2]$/.test(rawSlot) ? rawSlot : parseInt(rawSlot, 10); // #834: 'm0'..'m2' = partidos de las 00:05
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !(typeof slot === 'string' || (slot >= 0 && slot < storyAuto.SLOTS.length))) return res.status(400).json({ error: 'Datos inválidos.' });
     const autoKey = `sa-${day}-${slot}`;
     const upd = await Story.updateOne({ autoKey }, { $set: { isActive: false } });
     if (!(upd.matchedCount || upd.n)) {
