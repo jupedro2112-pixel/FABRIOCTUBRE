@@ -2511,3 +2511,12 @@ body.fewdep .casino-load .cl-btn.cl-attach { animation-name: fgPulseIn !importan
 .casino-load { width: min(286px, calc(100vw - 24px)) !important; max-height: min(62vh, calc(100vh - 170px - env(safe-area-inset-bottom, 0px))) !important; overflow-y: auto !important; }
 .casino-load .cl-btn { padding: 10px !important; font-size: 12px !important; margin-top: 6px !important; }
 .casino-load .cl-rcpt { font-size: 10px !important; margin-top: 3px !important; }
+
+/* #847: franja "🎰 Tu saldo para jugar" arriba de todo (Inicio completo / Girox directo, básico y Perfil) */
+.play-bal { display: flex; align-items: center; gap: 8px; margin: 6px 12px 8px; padding: 9px 12px; border-radius: 14px; background: var(--p-card); border: 1px solid var(--p-border); box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+.play-bal .pb-k { flex: 1 1 auto; font: 800 12.5px var(--p-font); color: var(--p-muted); }
+.play-bal b { font: 900 20px var(--p-font); color: var(--p-text); font-variant-numeric: tabular-nums; }
+.play-bal .pb-r { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--p-border); background: var(--p-surface); color: var(--p-text); font: 900 15px/1 var(--p-font); cursor: pointer; padding: 0; }
+#basicView .play-bal { margin: 0 0 8px; } #basicView .bv-top #basicBalance { display: none; }
+.profile-modal .play-bal { margin: 4px 0 10px; }
+body:not(.home-play) #playBalTop { display: none; }

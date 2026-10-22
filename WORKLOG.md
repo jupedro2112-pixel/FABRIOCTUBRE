@@ -8,6 +8,36 @@
 
 ## Sesión 2026-10-22
 
+### 847. 🎰 "Tu saldo para jugar" arriba de todo en el Inicio, el básico y el Perfil — SW v576
+**Pedido (owner):** "poné el saldo del usuario en Girox, en el completo y básico, en el perfil, arriba de todo el saldo que tiene para jugar".
+Franja `.play-bal` (#playBalTop sólo en modo play, #playBalBasic, #playBalProfile) con ↻ (`VIP.ui.syncBalance`); `updateBalanceDisplay` llena
+todas las `.js-play-bal` (formato es-AR) y el viejo #basicBalance (oculto en el básico, lo reemplaza la franja).
+
+### 846. 💰 Cargas = cargas (sin bonos heredados) + jugadores de PUBLICISTA protegidos
+**Pedido (owner, captura):** "este que me creé con el publicista, el agente me confirmó que me cargó pero en 1girox no está el saldo; revisá que
+no falle nada; las cargas son cargas; todo bono con rollover ×5 y que funcione bien en Girox".
+- `giroxService.depositToUser`: toda carga SIN bono propio va con `no_bonus:true` (manual v1.12+: si no, heredaba las reglas automáticas del
+  panel de 1girox del agente/publicista ⇒ una carga podía llegar con un bono ajeno). Los bonos nuestros siguen con `bonusRolloverX` (×5).
+- **Gemelo en la red principal:** si la key del publicista no se resolvía, la master respondía `player_not_found` y `depositToUser` CREABA AL
+  VUELO un jugador con el mismo nombre en la red principal y cargaba ahí (el agente veía "cargado"; el panel del publicista, $0). Ahora
+  `setPublisherOwnedCheck`: a un jugador con `giroxOwnerCampaign` nunca se lo crea al vuelo ⇒ error claro `publisher_player_not_found`.
+  El resolver ya no cachea "sin dueño" para usuarios que todavía no existen (alta en curso) y loguea si la campaña no tiene key.
+- Carga manual: nota interna con lo que devolvió 1girox (saldo del jugador después, bono y rollover, con qué key — principal o del
+  publicista y que sale del saldo de ESE agente — o "⚠️ DUPLICADO: no se acreditó nada nuevo").
+- ⚠️ Caso de la captura (picamoises43, creado por picarojaok): no se pudo ver la base/logs desde acá. Revisar en 1girox si existe un
+  "picamoises43" en la red PRINCIPAL con ese saldo, y el saldo del agente picarojaok (las cargas de sus jugadores salen de ahí).
+
+### 845. 🖼️ Historias con estilo PREMIUM (como la de Telegram) + fotos reales de slots; reset y republicación
+**Pedido (owner):** "borrá las que están y publicá con lo del partido, estilo prolijo con el logo e imágenes ilustrativas como la de Telegram;
+si mostrás slots, fotos de los slots; bien profesional".
+- `storyImage.renderPremium` (`spec.style:'premium'`): fondo blanco con la pica + PICA ROJA, TARJETA OSCURA con degradé, borde y textos
+  dorados, brillo del color del tema detrás de la ilustración (ícono en círculo con anillo dorado, FOTOS REALES de juegos —las del repo
+  embebidas desde disco con `localImageData`, la del slot de la semana desde el catálogo— o la cancha con escudos), titular blanco + línea
+  grande dorada, 3 beneficios con íconos dorados, botón dorado y nota de rollover. Las 13 + partido + slot + bono reescritas (`storyAutopilot`).
+  `fill` de {pct}/{rx} ahora también entra a las listas. `fetchImageData` con un reintento.
+- `_storyResetOnce` (`mig845StoriesPremium`, SÓLO donde se arman fotos = producción): apaga las manuales vigentes y borra las automáticas de
+  hoy y ayer ⇒ el motor republica al toque los horarios ya pasados de hoy (incluido el partido) con el estilo nuevo.
+
 ### 844. 🔒 Revisión de seguridad de todo lo nuevo antes del deploy (owner: "revisá seguridad y todo que publico")
 Revisado lo agregado desde v569 (#829–#843): sin claves/secretos en el diff; favoritos (key/img con regex en el server, nombres y links
 escapados en la app, máx. 30, con login); catálogo proxy (con login + límite general por IP); fotos SVG de historias (texto escapado, CSP sin

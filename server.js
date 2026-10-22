@@ -505,10 +505,15 @@ girox.setKeyResolver(async (username) => {
       key = extras.length ? [c.giroxApiKey, ...extras] : c.giroxApiKey;
     }
   }
-  _giroxKeyCache.set(username, { key, ts: now });
+  // #846: sólo se cachea si el usuario YA existe (en pleno alta todavía no está en la base: cachear "sin dueño" 60 s hacía que sus
+  // primeras operaciones fueran con la key master, que no lo ve).
+  if (u) _giroxKeyCache.set(username, { key, ts: now });
   if (_giroxKeyCache.size > 5000) _giroxKeyCache.clear(); // backstop anti-fuga
+  if (u && u.giroxOwnerCampaign && !key) logger.error(`[girox] ${username} es del publicista ${u.giroxOwnerCampaign} pero la campaña no tiene API key activa: sus operaciones van a fallar`);
   return key;
 });
+// #846: jugadores de publicista ⇒ giroxService no los crea al vuelo con otra key (ver setPublisherOwnedCheck).
+girox.setPublisherOwnedCheck(async (username) => { const u = await User.findOne({ username }).select('giroxOwnerCampaign role').lean(); return !!(u && u.role === 'user' && u.giroxOwnerCampaign); });
 // Rangos de fecha en hora argentina para los períodos de reembolso.
 const periodRanges = require('./src/utils/periodRanges');
 // Rangos de reembolso Bronce/Plata/Oro según la pérdida del período.
@@ -10349,6 +10354,19 @@ async function _agentDepositHandler(req, res, body) {
         );
       }
 
+      // #846 (owner: "el agente me confirmó que me cargó, pero en 1girox no está el saldo", cliente creado por un publicista): nota interna
+      // con lo que DEVOLVIÓ 1girox — saldo del jugador después de la carga, con qué key se firmó (principal o la del publicista) y si fue
+      // `duplicate` (esa reference ya existía ⇒ NO se acreditó nada nuevo). Así el agente ve al instante si la plata llegó de verdad.
+      try {
+        const _after = result.data && result.data.user_balance_after;
+        const _pub = user.giroxOwnerCampaign ? `la key del PUBLICISTA ${user.giroxOwnerCampaign} (sale del saldo de ese agente en 1girox)` : 'la key principal';
+        const _m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        const _txt = result.duplicate
+          ? `⚠️ 1GIROX RESPONDIÓ "DUPLICADO" a la carga de ${_m(amount)} (ref ya usada): NO se acreditó nada nuevo. Revisá en 1girox antes de cargar de nuevo. Firmada con ${_pub}.`
+          : `✅ Carga de ${_m(amount)} confirmada por 1girox${_after != null ? ` · saldo del jugador en la plataforma: ${_m(_after)}` : ''}${bonusActuallyApplied ? ` · bono ${_m(_effectiveBonus)} (rollover ×${await _bonusMultiplierFor(_adapter)})` : ''} · firmada con ${_pub}.`;
+        _emitAdminOnlyChatNote(user.id, user.username, _txt).catch(() => {});
+        if (result.duplicate) logger.error(`[deposit] DUPLICATE user=${user.username} amount=$${amount} ref=${(body && body._reference) || 'vip-dep-' + _depTxId} owner=${user.giroxOwnerCampaign || 'master'}`);
+      } catch (_) {}
       await recordUserActivity(user.id, 'deposit', parseFloat(amount));
       // Multi-plataforma: recordar dónde cargó (fallback de la pregunta / timeout).
       User.updateOne({ id: user.id }, { $set: { lastPlatform: _platformId } }).catch(() => {});
@@ -24866,6 +24884,12 @@ async function _storyAutoImgSpec(it) {
     spec.match.homeImg = h || ''; spec.match.awayImg = a || '';
   }
   delete spec.matchLogos;
+  // #845: fotos reales de juegos embebidas (las del repo desde disco; las del catálogo de 1girox, bajadas).
+  if (Array.isArray(spec.photos)) {
+    const out = [];
+    for (const ph of spec.photos.slice(0, 3)) { const d = /^\/images\//.test(String(ph || '')) ? storyImage.localImageData(ph) : await storyImage.fetchImageData(ph); if (d) out.push(d); }
+    spec.photos = out; if (!out.length) { delete spec.photos; spec.icon = spec.icon || 'carga'; }
+  }
   return spec;
 }
 // #834 (owner): las historias automáticas que YA estaban publicadas sin foto (texto sobre color) reciben la suya: se busca en el plan del
@@ -24888,11 +24912,26 @@ async function _storyAutoBackfillImages(today, plan) {
     }
   } catch (e) { logger.warn('[historias-auto] fotos: ' + e.message); }
 }
+// #845 (owner 2026-10-22): "borrá las historias que están y publicá con el estilo nuevo (como la de Telegram), el partido de hoy y fotos de
+// los slots". Una sola vez y SÓLO donde se arman fotos (producción; Render comparte la base y publicaría sin foto): se apagan las manuales
+// vigentes y se borran las automáticas de hoy y de ayer ⇒ el motor republica al toque los horarios ya pasados de hoy con el estilo premium.
+async function _storyResetOnce() {
+  if (!_STORY_IMAGES_ON) return;
+  try {
+    if (await getConfig('mig845StoriesPremium', null)) return;
+    await Config.set('mig845StoriesPremium', new Date().toISOString(), 'mig#845'); // primero la marca: multi-instancia, una sola corre
+    const off = await Story.updateMany({ isActive: true, autoKey: { $not: /^sa-/ } }, { $set: { isActive: false } });
+    const today = _schedArtKey(new Date()); const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));
+    const del = await Story.deleteMany({ autoKey: { $regex: '^sa-(' + today + '|' + yesterday + ')-' } });
+    logger.info(`[historias-auto] #845 reset: ${off.modifiedCount || off.nModified || 0} manuales apagadas, ${del.deletedCount || 0} automáticas borradas ⇒ se republican con el estilo nuevo`);
+  } catch (e) { logger.warn('[historias-auto] #845 reset: ' + e.message); }
+}
 let _storyAutoRunning = false;
 async function _storyAutoTick() {
   if (process.env.STORIES_AUTOPILOT_DISABLED === '1' || _storyAutoRunning) return;
   _storyAutoRunning = true;
   try {
+    await _storyResetOnce(); // #845
     const now = new Date(); const today = _schedArtKey(now);
     const plan = await _storyAutoPlan(today);
     await _storyAutoBackfillImages(today, plan);

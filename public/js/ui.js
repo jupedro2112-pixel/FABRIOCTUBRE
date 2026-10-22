@@ -318,9 +318,13 @@ VIP.ui = (function () {
 
     function updateBalanceDisplay(balance) {
         const balanceElement = document.getElementById('userBalance');
+        const txt = '$' + Math.round(Number(balance) || 0).toLocaleString('es-AR'); // #847: siempre formato argentino ($12.345)
         if (balanceElement) {
-            balanceElement.textContent = `$${balance.toLocaleString()}`;
+            balanceElement.textContent = txt;
         }
+        // #847 (owner): "el saldo del usuario en Girox, en el completo, básico y perfil, arriba de todo": la franja "Tu saldo para jugar".
+        try { document.querySelectorAll('.js-play-bal').forEach((el) => { el.textContent = txt; }); } catch (_) {}
+        try { const bb = document.getElementById('basicBalance'); if (bb) bb.textContent = txt; } catch (_) {}
     }
 
     function startBalancePolling() {

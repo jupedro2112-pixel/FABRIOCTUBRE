@@ -267,6 +267,12 @@ async function _acquireSlot(laneKey) {
 // sites. null / error del resolver → key master (comportamiento de siempre).
 let _keyResolver = null;
 function setKeyResolver(fn) { _keyResolver = typeof fn === 'function' ? fn : null; }
+// #846: ¿el jugador es de un PUBLICISTA? (server.js lo inyecta). Si lo es, NUNCA se crea al vuelo con otra key: antes, si la key del
+// publicista no se resolvía, la master respondía player_not_found, se creaba un jugador GEMELO en la red principal y la carga iba ahí
+// (el agente veía "cargado" y en el panel del publicista el saldo seguía en $0).
+let _publisherOwned = null;
+function setPublisherOwnedCheck(fn) { _publisherOwned = typeof fn === 'function' ? fn : null; }
+async function _isPublisherOwned(username) { try { return !!(_publisherOwned && await _publisherOwned(String(username))); } catch (_) { return false; } }
 async function _resolveKeyFor(username) {
   if (!_keyResolver || !username) return null;
   try {
@@ -892,6 +898,9 @@ async function depositToUser(username, amount, description = '', reference = nul
     if (wagering.bonusMultiplier != null) body.bonus_multiplier = Number(wagering.bonusMultiplier);
     if (wagering.noBonus) body.no_bonus = true; // #839: que la carga NO herede reglas automáticas de bono del panel de 1girox
   }
+  // #846 (owner: "las cargas son cargas; todo bono con rollover ×5"): una carga SIN bono propio no hereda las reglas automáticas del panel
+  // de 1girox (1er depósito / código del agente o del publicista, manual v1.12+): si no, una carga "pura" podía llegar con un bono ajeno.
+  if (!wagering || (wagering.bonusAmount == null && wagering.bonusPercent == null)) body.no_bonus = true;
 
   let r = await _request({
     method: 'post',
@@ -909,6 +918,10 @@ async function depositToUser(username, amount, description = '', reference = nul
   // vieja, migración incompleta, caída momentánea de la API) queda imposible de
   // cargar, y el cliente transfirió la plata. Se crea al vuelo y se reintenta UNA vez
   // con la MISMA reference (así el reintento sigue siendo idempotente).
+  if (!r.ok && r.code === 'player_not_found' && await _isPublisherOwned(username)) {
+    logger.error(`[girox] deposit(${username}) — player_not_found con un jugador de PUBLICISTA: NO se crea al vuelo (iría a otra red). Revisar la API key del publicista.`);
+    return { success: false, error: 'El jugador es de un publicista y la plataforma no lo encontró con su key. Revisá la API key del publicista en el panel (Publicistas) antes de cargar.', code: 'publisher_player_not_found', httpStatus: r.httpStatus };
+  }
   if (!r.ok && r.code === 'player_not_found') {
     logger.warn(`[girox] deposit(${username}) — el jugador no existe en la plataforma; creándolo al vuelo`);
     // Contraseña random: acá no tenemos la del usuario. No lo deja afuera (al casino
@@ -1576,6 +1589,7 @@ module.exports = {
   getPublisherKeyOverridesCount: function () { return _publisherKeyConfigs().length; },
   // ruteo por dueño del jugador (server.js inyecta el resolver username→apiKey)
   setKeyResolver,
+  setPublisherOwnedCheck,
   // jugadores
   createPlatformUser,
   getUserInfoByName,

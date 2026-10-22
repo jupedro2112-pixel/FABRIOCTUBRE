@@ -141,6 +141,7 @@ function matchCard(m) {
  */
 function renderSvg(spec) {
   spec = spec || {};
+  if (spec.style === 'premium') return renderPremium(spec); // #845
   const parts = [];
   parts.push(`<rect width="${W}" height="${H}" fill="${WHITE}"/>`);
   if (_spade) parts.push(`<image href="${_spade}" x="${(W - 150) / 2}" y="250" width="150" height="150"/>`);
@@ -174,9 +175,104 @@ function renderSvg(spec) {
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${parts.join('')}</svg>`;
 }
 
+// ───────────────────────── #845 ESTILO PREMIUM (como la historia vieja de Telegram, st2-7) ─────────────────────────
+// Owner: "estilo prolijo con el logo de la marca e imágenes ilustrativas como la de Telegram; si mostrás slots, foto de los slots; bien
+// profesional". Fondo blanco con la pica + PICA ROJA arriba, TARJETA OSCURA con degradé y borde dorado, subtítulo dorado espaciado, ilustración
+// (ícono en círculo con anillo dorado, fotos reales de juegos o la cancha con escudos), titular blanco + línea grande dorada, 3 beneficios con
+// íconos dorados, botón dorado y nota. spec.style = 'premium'.
+const GOLD = '#e6b422', GOLD2 = '#ffd166', DARK = '#0f0f12', MUT2 = '#b9b9c3';
+const PX0 = 70, PY0 = 540, PX1 = W - 70, PY1 = 1590;
+function _glyph(kind, color) {
+  const c = 790, x = W / 2;
+  const ring = `<circle cx="${x}" cy="${c}" r="140" fill="${color || RED}"/><circle cx="${x}" cy="${c}" r="149" fill="none" stroke="${GOLD}" stroke-width="3"/>`;
+  const wt = (t, sz, dy) => `<text x="${x}" y="${c + (dy || 0)}" text-anchor="middle" font-family="${FONT}" font-size="${sz}" font-weight="900" fill="#fff">${t}</text>`;
+  const G = {
+    carga: `<polygon points="${x + 22},${c - 105} ${x - 66},${c + 14} ${x - 4},${c + 14} ${x - 24},${c + 108} ${x + 68},${c - 14} ${x + 6},${c - 14}" fill="#fff"/>`,
+    reembolso: `<path d="M${x + 60},${c - 82} A100,100 0 1 0 ${x + 88},${c + 46}" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round"/><polygon points="${x + 34},${c - 120} ${x + 104},${c - 86} ${x + 38},${c - 50}" fill="#fff"/>` + wt('%', 84, 30),
+    retiro: wt('$', 150, 52),
+    soporte: `<rect x="${x - 86}" y="${c - 74}" width="172" height="112" rx="30" fill="#fff"/><polygon points="${x - 48},${c + 34} ${x - 64},${c + 82} ${x - 10},${c + 34}" fill="#fff"/><circle cx="${x - 40}" cy="${c - 18}" r="11" fill="${color}"/><circle cx="${x}" cy="${c - 18}" r="11" fill="${color}"/><circle cx="${x + 40}" cy="${c - 18}" r="11" fill="${color}"/>`,
+    misiones: `<circle cx="${x}" cy="${c}" r="96" fill="#fff"/><circle cx="${x}" cy="${c}" r="66" fill="${color}"/><circle cx="${x}" cy="${c}" r="38" fill="#fff"/><circle cx="${x}" cy="${c}" r="14" fill="${color}"/>`,
+    vip: `<polygon points="${x - 100},${c - 30} ${x - 52},${c - 86} ${x + 52},${c - 86} ${x + 100},${c - 30} ${x},${c + 96}" fill="#fff"/><polygon points="${x - 100},${c - 30} ${x + 100},${c - 30} ${x},${c + 96}" fill="#ffe7a8"/>`,
+    referidos: `<circle cx="${x - 46}" cy="${c - 36}" r="34" fill="#fff"/><rect x="${x - 96}" y="${c + 6}" width="100" height="70" rx="34" fill="#fff"/><circle cx="${x + 50}" cy="${c - 24}" r="28" fill="#ffe7a8"/><rect x="${x + 8}" y="${c + 12}" width="86" height="60" rx="30" fill="#ffe7a8"/>`,
+    app: `<rect x="${x - 62}" y="${c - 104}" width="124" height="208" rx="22" fill="#fff"/><rect x="${x - 50}" y="${c - 82}" width="100" height="160" rx="10" fill="${color}"/>` + (_spade ? `<image href="${_spade}" x="${x - 32}" y="${c - 36}" width="64" height="64"/>` : ''),
+    seguro: `<path d="M${x},${c - 104} L${x + 84},${c - 70} L${x + 84},${c + 4} C${x + 84},${c + 58} ${x + 44},${c + 92} ${x},${c + 108} C${x - 44},${c + 92} ${x - 84},${c + 58} ${x - 84},${c + 4} L${x - 84},${c - 70} Z" fill="#fff"/><polyline points="${x - 40},${c + 2} ${x - 8},${c + 34} ${x + 46},${c - 28}" fill="none" stroke="${color}" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>`,
+    regalo: `<rect x="${x - 86}" y="${c - 30}" width="172" height="124" rx="14" fill="#fff"/><rect x="${x - 100}" y="${c - 70}" width="200" height="50" rx="12" fill="#ffe7a8"/><rect x="${x - 15}" y="${c - 70}" width="30" height="164" fill="${color}"/><path d="M${x},${c - 70} C${x - 70},${c - 140} ${x - 110},${c - 80} ${x},${c - 70} C${x + 110},${c - 80} ${x + 70},${c - 140} ${x},${c - 70} Z" fill="none" stroke="#ffe7a8" stroke-width="14"/>`,
+    como: wt('1·2·3', 74, 26),
+    juegos: wt('777', 96, 34),
+    deportes: `<circle cx="${x}" cy="${c}" r="98" fill="#fff"/><polygon points="${x},${c - 36} ${x + 34},${c - 11} ${x + 21},${c + 29} ${x - 21},${c + 29} ${x - 34},${c - 11}" fill="${DARK}"/>` +
+      [[0, -98], [93, -30], [58, 79], [-58, 79], [-93, -30]].map(([dx, dy]) => `<line x1="${x + dx * .38}" y1="${c + dy * .38}" x2="${x + dx * .9}" y2="${c + dy * .9}" stroke="${DARK}" stroke-width="8"/>`).join('')
+  };
+  return ring + (G[kind] || G.carga);
+}
+// Fotos reales de juegos: la del medio más grande, las de los costados atrás; esquinas redondeadas y borde dorado fino.
+function _photos(list) {
+  const imgs = (list || []).filter(Boolean).slice(0, 3); if (!imgs.length) return _glyph('juegos', RED);
+  const card = (img, x, y, w, id, rot) => { const h = Math.round(w * 1.047); return `<defs><clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="26"/></clipPath></defs>` +
+    `<g transform="rotate(${rot} ${x + w / 2} ${y + h / 2})"><rect x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${h + 8}" rx="30" fill="${GOLD}" opacity=".9"/><image href="${img}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/></g>`; };
+  if (imgs.length === 1) return card(imgs[0], W / 2 - 128, 652, 256, 'ph0', 0); // #845: no toca el titular
+  let out = '';
+  if (imgs[1]) out += card(imgs[1], 150, 680, 230, 'ph1', -7);
+  if (imgs[2]) out += card(imgs[2], W - 380, 680, 230, 'ph2', 7);
+  out += card(imgs[0], W / 2 - 140, 630, 280, 'ph0', 0);
+  return out;
+}
+function _matchHero(m) {
+  const cy = 790;
+  const crest = (x, img, name, color) => `<circle cx="${x}" cy="${cy - 20}" r="112" fill="#fff"/><circle cx="${x}" cy="${cy - 20}" r="119" fill="none" stroke="${GOLD}" stroke-width="3"/>` +
+    (img ? `<image href="${img}" x="${x - 82}" y="${cy - 102}" width="164" height="164" preserveAspectRatio="xMidYMid meet"/>` : `<text x="${x}" y="${cy + 14}" text-anchor="middle" font-family="${FONT}" font-size="90" font-weight="900" fill="${DARK}">${esc(clean(name).charAt(0).toUpperCase())}</text>`) +
+    ctext(cy + 140, clean(name), 40, '#fff', { maxw: 360, weight: 900 }).replace(`x="${W / 2}"`, `x="${x}"`);
+  return crest(285, m.homeImg, m.home, m.homeColor) + crest(W - 285, m.awayImg, m.away, m.awayColor) +
+    `<circle cx="${W / 2}" cy="${cy - 20}" r="56" fill="${RED}"/><circle cx="${W / 2}" cy="${cy - 20}" r="63" fill="none" stroke="${GOLD}" stroke-width="3"/><text x="${W / 2}" y="${cy - 4}" text-anchor="middle" font-family="${FONT}" font-size="44" font-weight="900" fill="#fff">VS</text>`;
+}
+function renderPremium(spec) {
+  const P = [];
+  P.push(`<rect width="${W}" height="${H}" fill="${WHITE}"/>`);
+  if (_spade) P.push(`<image href="${_spade}" x="${(W - 150) / 2}" y="250" width="150" height="150"/>`);
+  P.push(ctext(448, 'PICA ROJA', 38, BLACK));
+  P.push(ctext(486, 'oficial · cargas automáticas', 24, MUTED, { bold: false }));
+  // tarjeta oscura con degradé + brillo detrás de la ilustración + borde dorado
+  const accent = /^#[0-9a-f]{6}$/i.test(spec.accent || '') ? spec.accent : RED;
+  P.push(`<defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1c22"/><stop offset="1" stop-color="#0c0c10"/></linearGradient>` +
+    `<radialGradient id="pglow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${accent}" stop-opacity=".45"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient>` +
+    `<clipPath id="pcard"><rect x="${PX0}" y="${PY0}" width="${PX1 - PX0}" height="${PY1 - PY0}" rx="48"/></clipPath></defs>`);
+  P.push(`<rect x="${PX0}" y="${PY0}" width="${PX1 - PX0}" height="${PY1 - PY0}" rx="48" fill="url(#pg)"/>`);
+  P.push(`<g clip-path="url(#pcard)"><circle cx="${W / 2}" cy="790" r="330" fill="url(#pglow)"/></g>`);
+  const kicker = clean(spec.kicker).toUpperCase();
+  if (kicker) P.push(ctext(612, kicker, 30, GOLD, { maxw: 880, spacing: 8 }));
+  if (spec.match) P.push(_matchHero(spec.match));
+  else if (spec.photos && spec.photos.length) P.push(_photos(spec.photos));
+  else P.push(_glyph(spec.icon, accent));
+  const h1 = clean(spec.h1), h2 = clean(spec.h2).toUpperCase();
+  let y = spec.match ? 1010 : 1012;
+  if (h1) { const sz = Math.min(64, fitSize(h1, 64, 860)); P.push(ctext(y, h1, sz, '#fff', { maxw: 880, weight: 900 })); y += 18; }
+  if (h2) { const sz = Math.min(104, fitSize(h2, 104, 880)); P.push(ctext(y + sz * 0.86, h2, sz, GOLD2, { maxw: 900, weight: 900 })); y += sz + 22; }
+  const bl = (spec.bullets || []).slice(0, 3);
+  let by = Math.max(y + 8, 1150);
+  for (const b of bl) {
+    const sym = esc(String(b[0] || '✓').slice(0, 2)), t = clean(b[1]), sub = clean(b[2]);
+    P.push(`<circle cx="182" cy="${by + 32}" r="32" fill="${GOLD}"/><text x="182" y="${by + 47}" text-anchor="middle" font-family="${FONT}" font-size="${sym.length > 1 ? 26 : 38}" font-weight="900" fill="${DARK}">${sym}</text>`);
+    const fit1 = estW(t, 34, true) > 700 ? ` textLength="700" lengthAdjust="spacingAndGlyphs"` : '';
+    const fit2 = estW(sub, 26, false) > 700 ? ` textLength="700" lengthAdjust="spacingAndGlyphs"` : '';
+    P.push(`<text x="240" y="${by + 28}" font-family="${FONT}" font-size="34" font-weight="800" fill="#fff"${fit1}>${esc(t)}</text>`);
+    if (sub) P.push(`<text x="240" y="${by + 66}" font-family="${FONT}" font-size="26" font-weight="600" fill="${MUT2}"${fit2}>${esc(sub)}</text>`);
+    by += 90;
+  }
+  const cta = clean(spec.cta || spec.pill).toUpperCase();
+  const ctaY = Math.min(PY1 - 150, Math.max(by + 14, 1430));
+  if (cta) { const t = cta + '  ›'; const tw = Math.min(760, estW(t, 34, true)); const h = 92;
+    P.push(`<rect x="${(W - tw) / 2 - 60}" y="${ctaY}" width="${tw + 120}" height="${h}" rx="46" fill="${GOLD}"/>` + ctext(ctaY + 58, t, 34, DARK, { maxw: 740 })); }
+  const note = clean(spec.note);
+  if (note) P.push(ctext(ctaY + 128, note, 23, MUT2, { maxw: 860, bold: false, weight: 600 }));
+  P.push(ctext(1672, 'Gracias por confiar en PICA ROJA', 28, MUTED));
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${P.join('')}</svg>`;
+}
+
 /** Baja una imagen (escudo / foto del juego) y la devuelve como data URL (≤ 600 KB, 8 s). null si falla. */
 async function fetchImageData(url) {
   if (!/^https:\/\//i.test(String(url || ''))) return null;
+  const first = await _fetchImageDataOnce(url); return first || _fetchImageDataOnce(url); // #845: un reintento (cortes de red)
+}
+async function _fetchImageDataOnce(url) {
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch(url, { signal: ctrl.signal }); if (!r.ok) return null;
@@ -187,4 +283,13 @@ async function fetchImageData(url) {
   } catch (_) { return null; } finally { clearTimeout(t); }
 }
 
-module.exports = { renderSvg, fetchImageData, W, H };
+/** #845: foto LOCAL del repo (ej. /images/games/x.jpg) como data URL, para embeberla en la historia. */
+function localImageData(relPath) {
+  try {
+    if (!/^\/images\/[\w.\-\/]+\.(jpg|jpeg|png|webp)$/i.test(String(relPath || ''))) return null;
+    const f = path.join(__dirname, '../../public', relPath); const buf = fs.readFileSync(f);
+    const ext = relPath.split('.').pop().toLowerCase(); const mime = ext === 'png' ? 'image/png' : (ext === 'webp' ? 'image/webp' : 'image/jpeg');
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch (_) { return null; }
+}
+module.exports = { renderSvg, fetchImageData, localImageData, W, H };
