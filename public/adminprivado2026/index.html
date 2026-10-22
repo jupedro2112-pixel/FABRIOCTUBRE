@@ -162,10 +162,6 @@ document.addEventListener('change', function (ev) {
 <span>📽️</span>
 <span>Historias</span>
 </a>
-<a href="#" class="nav-item" data-section="notifications">
-<span class="icon icon-bell"></span>
-<span>Notificaciones</span>
-</a>
 <a href="#" class="nav-item" data-section="reviews">
 <span>⭐</span>
 <span>Reseñas</span>
@@ -262,6 +258,11 @@ document.addEventListener('change', function (ev) {
 <!-- #408 (owner): se eliminaron del menú "Automatización" y "Estrategia de bonos" (grupo "No se usa"); sus secciones se quitaron del HTML. -->
                 <!-- #383/#387 (owner): el chat viejo (tipo WhatsApp) queda INTERNO y abajo de todo; Soporte pasó arriba (#387). -->
                 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;opacity:.6;">Interno</div>
+                <!-- #821 (owner): Notificaciones manuales abajo (la estrategia automática del Cronograma manda; lo programado viejo quedó anulado) -->
+                <a href="#" class="nav-item nav-legacy" data-section="notifications" title="Envíos manuales (la estrategia automática está en Cronograma)">
+                    <span class="icon icon-bell"></span>
+                    <span>Notificaciones (manual)</span>
+                </a>
                 <!-- #814: la columna Soporte quedó abajo (el soporte se responde desde Chats). -->
                 <a href="#" class="nav-item nav-legacy" data-section="support" title="Columna de soporte anterior (el soporte ahora se responde desde Chats)">
                     <span>💬</span>
@@ -2646,28 +2647,15 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                         <input type="month" id="cronMonthPick" class="form-input" style="width:160px" onchange="cronMonthGo(this.value)" title="Ir a un mes">
                         <button class="btn btn-secondary" onclick="cronMonthShift(1)">▶</button>
                         <button class="btn btn-secondary" onclick="cronMonthShift(0)">Hoy</button>
-                        <button class="btn btn-primary" onclick="cronNewCampaign()">➕ Nueva campaña programada</button>
                     </div>
                 </div>
                 <!-- #819: la configuración DEFINITIVA va arriba de todo. #817: AUTOPILOTO de retención — programa solo el mes en curso y el siguiente, todos los días, por lotes y grupos -->
                 <div class="card" style="margin-bottom:1rem" id="cronAutopilotCard">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
-                        <h3 style="margin:0;font-size:1rem">🤖 Autopiloto de retención (todos los días, por lotes, mes a mes)</h3>
+                        <h3 style="margin:0;font-size:1rem">🤖 Estrategia automática de notificaciones (corre sola, todos los días)</h3>
                         <span id="apState" style="font-size:.85rem"></span>
                     </div>
-                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Programa solo, cada mes, un envío por día en tandas: los clientes se reparten en grupos que rotan (nadie pasa el tope del mes) y los clientes nuevos entran solos. Fin de mes +100% a todos, el 5 más chico, quincena, viernes fuerte, "te extrañamos" los miércoles y los feriados y fechas de Argentina con su mensaje y su bono. Siempre deja programado este mes y el siguiente.</div>
-                    <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;font-size:.82rem">
-                        <label>Hora<br><input type="time" id="apTime" class="form-input" style="width:110px"></label>
-                        <label>Horas del bono<br><input type="number" id="apHours" class="form-input" min="1" max="48" style="width:80px"></label>
-                        <label>Tope por cliente/mes<br><input type="number" id="apCap" class="form-input" min="2" max="60" style="width:80px"></label>
-                        <label>Tandas por día<br><input type="number" id="apParts" class="form-input" min="1" max="12" style="width:80px"></label>
-                        <label>Min. entre tandas<br><input type="number" id="apGap" class="form-input" min="5" max="180" style="width:80px"></label>
-                        <label style="cursor:pointer"><input type="checkbox" id="apAppOnly"> 📱 Sólo clientes con app y notificaciones</label>
-                    </div>
-                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">
-                        <button class="btn btn-primary" onclick="cronAutopilotSave(true)">▶ Encender / guardar y reprogramar</button>
-                        <button class="btn btn-secondary" style="color:#f87171" onclick="cronAutopilotSave(false)">⏹ Apagar</button>
-                    </div>
+                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Todos los días sale una notificación a las 20:00, en 3 lotes, con un bono automático de 4 h en una carga (con el tope y el rollover de siempre). Los clientes con la app se reparten en grupos que rotan (máximo 8 por cliente en el mes) y los nuevos entran solos. Fin de mes +100% para todos, el día 5 más chico, viernes más fuerte, "te extrañamos" los miércoles y los feriados y fechas de Argentina con su mensaje. Los textos hablan del servicio (carga automática, retiros, soporte, juegos, misiones, VIP), nunca de sueldos ni de plata. Se programa sola mes a mes: no hay que lanzarla ni editarla.</div>
                     <div id="apMonths" style="margin-top:.8rem;font-size:.82rem"></div>
                 </div>
                 <div class="card" style="margin-bottom:1rem">
@@ -2679,29 +2667,14 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                         <span><span class="cron-dot" style="background:#9ca3af"></span> Pausada</span>
                         <span><span class="cron-dot" style="background:#ef4444"></span> Error</span>
                         <span><span class="cron-dot" style="background:#6b7280;opacity:.5"></span> Cancelada</span>
-                        <span style="margin-left:auto">Tocá un día: ves lo que hay y lo completás desde ahí (➕).</span>
+                        <span style="margin-left:auto">Tocá un día: ves qué sale, a quién le llegó y cómo van reclamando.</span>
                     </div>
                     <div id="cronCalendar" class="cron-grid cron-sheet"></div>
                     <!-- #297: panel del día elegido — qué hay y botones para programar algo ese día -->
                     <div id="cronDayPanel" style="display:none;margin-top:.6rem;padding:.7rem .8rem;border:1px solid rgba(165,180,252,0.45);border-radius:8px;background:rgba(79,70,229,0.08)"></div>
                 </div>
-                <details class="card" style="margin-bottom:1rem"><!-- #819: plegada (con el autopiloto son ~30 por mes; el detalle está en cada día) -->
-                    <summary style="cursor:pointer;font-size:1rem;font-weight:700">🗂️ Lista de campañas del mes (editar / pausar / borrar una por una)</summary>
-                    <div id="cronList" style="font-size:.85rem;margin-top:.6rem">Cargando…</div>
-                </details>
-                <!-- #293: planes de estrategia del mes (plantillas reutilizables). #819: plegado como "avanzado" (lo definitivo es el autopiloto). -->
-                <details class="card" style="margin-bottom:1rem">
-                    <summary style="cursor:pointer;font-size:1rem;font-weight:700">🧭 Planes manuales (avanzado)</summary>
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin-top:.6rem">
-                        <h3 style="margin:0;font-size:.9rem">Planes guardados (mes completo, reutilizables)</h3>
-<div style="display:flex;gap:.4rem;flex-wrap:wrap">
-                        
-                        <button class="btn btn-secondary" onclick="cronSaveMonthAsPlan()">💾 Guardar este mes como plan</button>
-                        </div>
-                    </div>
-                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Un plan guarda las campañas del mes por día y hora (día 1 → bono a inactivos, día 5 → fichas, finde → código…). Lo aplicás a cualquier mes y queda todo programado; abajo, el comparativo te dice cómo rindió cada día, cada semana y cada plan. El envío manual de lotes y la programación campaña por campaña siguen igual.</div>
-                    <div id="cronPlans" style="font-size:.85rem">Cargando…</div>
-                </details>
+                <!-- #821: sin lista editable de campañas (el detalle está en cada día del calendario) -->
+                <!-- #821: sin planes manuales: la estrategia es fija y automática -->
                 <div id="cronEditCard" class="card" style="display:none;margin-bottom:1rem;border:1px solid rgba(165,180,252,0.5)">
                     <h3 style="margin:0 0 .6rem 0;font-size:1rem">✏️ Editar campaña <span id="cronEditName" style="color:#a5b4fc"></span></h3>
                     <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">

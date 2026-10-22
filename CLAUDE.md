@@ -315,7 +315,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de
   comprobantes/hgcash, mantené esos cierres (`reviewStatus`), si no el cliente ve "carga pendiente" para siempre.
-- **AUTOPILOTO DE RETENCIÓN (#817):** `Config['retentionAutopilot']` programa solo el mes en curso + el siguiente (una campaña por día,
+- **AUTOPILOTO DE RETENCIÓN (#817/#821):** FIJO y siempre encendido (config en el código, `getAutopilotConfig`; frena sólo con
+  `AUTOPILOT_DISABLED=1`). Textos de SERVICIO/producto: nunca sueldos, aguinaldo ni "ya cobraste" (owner). Programa solo el mes en curso + el siguiente (una campaña por día,
   `ScheduledCampaign.autoKey` único `ap-YYYY-MM-DD`, grupos que rotan por `rotGroup`, feriados de `src/utils/arCalendar.js`). No quitar el índice
   único de `autoKey` (multi-instancia). Si cambiás las reglas, el tope por cliente tiene que seguir cerrando (probar con el generador aislado).
 - **Lotes y Cronograma (#218):** el POST `/api/admin/notif-batches` es un wrapper de

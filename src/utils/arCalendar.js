@@ -4,11 +4,11 @@
  * "Los días festivos en Argentina armar algo personalizado sobre ese día con un bono; tenelo en cuenta para todos los meses que
  * se programe". Calcula para CUALQUIER año (sin listas a mano que venzan): feriados nacionales en su fecha de celebración (la
  * Pascua sale por cómputo, así Carnaval y Viernes Santo caen bien), fechas comerciales (Día del Padre / Madre / Infancias / Amigo)
- * y los días de plata del país (aguinaldo). Los traslados por decreto de los feriados "trasladables" no se siguen a propósito: el
+ * Los traslados por decreto de los feriados "trasladables" no se siguen a propósito: el
  * mensaje habla de la celebración, que es la fecha de siempre.
  *
  * specialDays(year) → Map 'YYYY-MM-DD' → { name, emoji, pct, title, message, kind }
- *   pct = bono sugerido (el autopiloto lo usa tal cual; 0 = sólo aviso). kind: 'feriado' | 'comercial' | 'plata'.
+ *   pct = bono sugerido (el autopiloto lo usa tal cual; 0 = sólo aviso). kind: 'feriado' | 'comercial'.
  */
 'use strict';
 
@@ -66,9 +66,7 @@ function specialDays(y) {
   add(key(y, 7, 20), { kind: 'comercial', emoji: '🤝', name: 'Día del Amigo', pct: 50, title: '🤝 ¡Feliz Día del Amigo!', message: 'Festejalo con nosotros 🍻 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático. Invitá a tus amigos con tu link de referidos.' });
   add(dkey(nthSunday(y, 8, 3)), { kind: 'comercial', emoji: '🧸', name: 'Día de las Infancias', pct: 30, title: '🧸 Domingo de las Infancias', message: 'Día para disfrutar en familia 🧸 Cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático.' });
   add(dkey(nthSunday(y, 10, 3)), { kind: 'comercial', emoji: '💐', name: 'Día de la Madre', pct: 50, title: '💐 ¡Feliz Día de la Madre!', message: 'Para todas las mamás 💐 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático.' });
-  // ── Días de plata ──
-  add(key(y, 6, 30), { kind: 'plata', emoji: '💸', name: 'Aguinaldo de junio', pct: 100, title: '💸 ¡Llegó el aguinaldo!', message: 'Cobraste el medio aguinaldo 💸 Cargá en las próximas {h} horas y te DUPLICAMOS la carga automático (con el tope de bonos).' });
-  add(key(y, 12, 18), { kind: 'plata', emoji: '💸', name: 'Aguinaldo de diciembre', pct: 100, title: '💸 ¡Llegó el aguinaldo!', message: 'Cobraste el aguinaldo de fin de año 💸 Cargá en las próximas {h} horas y te DUPLICAMOS la carga automático (con el tope de bonos).' });
+  // #821 (owner): sin "días de plata" (aguinaldo, sueldos): no sabemos la economía de cada uno; los mensajes hablan del producto.
   return out;
 }
 

@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 821. 🔒 Estrategia de notificaciones FIJA y automática (sin lanzar ni editar) + textos de servicio + Notificaciones abajo — admin SW v157
+**Pedido (owner):** "que el cronograma tenga toda la estrategia, que no sea editable ni se lance, que empiece a correr sola; cada día con su
+estrategia; nada de sueldos cobrados ni 'ya cobraste' porque no sabés la economía del país: más servicial, del producto, no buscando su
+bolsillo; Notificaciones: dejá anulado lo programado y bajalo abajo de todo con el otro chat de soporte".
+- `getAutopilotConfig` devuelve SIEMPRE la config fija (20:00, 3 lotes cada 30 min, bono 4 h, tope 8/mes, sólo app) y encendida; sólo
+  `AUTOPILOT_DISABLED=1` (env) la frena. Se quitó `POST /api/admin/cronograma-autopilot` y todo lo de editar/lanzar del panel (botón Nueva
+  campaña, "+" de cada día, Programar/Agregar a un plan, editar, lista editable, planes manuales).
+- Textos: sin días de plata (se quitaron los aguinaldos de `arCalendar`), sin "cobro/quincena/sueldo". Los días comunes rotan 7 temas del
+  producto (carga automática, Top juegos, retiros, soporte, misiones, VIP, referidos); inicio de mes, mitad de mes, antes del cierre y cierre
+  con textos de servicio. Montos iguales (fin de mes +100% el más fuerte, 5 más chico).
+- Migración `mig821StrategyOnly`: apaga las push programadas viejas (`ScheduledNotif`), cancela las campañas programadas a mano no enviadas,
+  borra las del autopiloto no enviadas (se regeneran con los textos nuevos) y el plan viejo de 8 envíos.
+- Menú: "Notificaciones (manual)" pasó abajo, en Interno, con la columna vieja de Soporte.
+
 ### 820. 🔧 Cargas y retiros automáticos: auditoría completa y arreglos de por qué fallaban
 **Pedido (owner):** "revisá los retiros y cargas porque fallaban, si está ok". Auditoría del código (sin acceso a logs ni a la base).
 **Retiros:**

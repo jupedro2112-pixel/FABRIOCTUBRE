@@ -12456,6 +12456,22 @@ async function initializeData() {
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
   try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
+  // #821 (owner 2026-10-22): "el de notificaciones dejá todo anulado si hay algo programado": one-shot que apaga las push programadas viejas
+  // (ScheduledNotif), cancela las campañas programadas A MANO que no salieron y borra las del autopiloto no enviadas (se regeneran solas
+  // con los textos nuevos, sin referencias a sueldos ni a la plata). El plan viejo de 8 envíos también se va.
+  try {
+    if (!(await getConfig('mig821StrategyOnly', null))) {
+      const SN = require('./src/models/ScheduledNotif');
+      const a = await SN.updateMany({ enabled: true }, { $set: { enabled: false, lastResult: 'anulada (#821: la estrategia automática del Cronograma reemplaza lo programado)' } });
+      const SC = require('./src/models/ScheduledCampaign');
+      const b = await SC.updateMany({ autoKey: { $in: [null, undefined] }, cancelled: { $ne: true }, 'parts.status': 'scheduled' },
+        { $set: { cancelled: true, updatedBy: 'mig#821', 'parts.$[p].status': 'cancelled' } }, { arrayFilters: [{ 'p.status': 'scheduled' }] });
+      const c = await SC.deleteMany({ autoKey: { $exists: true, $ne: null }, parts: { $not: { $elemMatch: { status: { $ne: 'scheduled' } } } } });
+      try { await require('./src/models/StrategyPlan').deleteMany({ name: /^Retención app/ }); } catch (_) {}
+      await Config.set('mig821StrategyOnly', new Date().toISOString(), 'mig#821');
+      console.log(`✅ #821: ${a.modifiedCount || 0} push programadas apagadas, ${b.modifiedCount || 0} campañas manuales canceladas, ${c.deletedCount || 0} del autopiloto a regenerar`);
+    }
+  } catch (e) { console.warn('[startup-migration] #821:', e.message); }
   // #814 (owner 2026-10-22): "pagos y retiros automáticos excepto mayores a $100.000, configuralo directo". One-shot: umbral de
   // Confirmación de pagos en $100.000 (se revisa sólo lo que lo SUPERA), pago automático de los menores, carga automática en AUTO y la
   // alerta automática de banco recién con 3 fallas seguidas (con 1 sola, un CBU mal cargado frenaba los retiros de todos).
@@ -26431,8 +26447,10 @@ app.post('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (
 // nuevos entran solos. Los textos nunca nombran la ruleta (guard isRouletteText).
 const arCalendar = require('./src/utils/arCalendar');
 const AUTOPILOT_DEFAULT = { enabled: false, time: '20:00', hours: 4, cap: 8, parts: 3, gapMin: 30, appOnly: true };
+// #821 (owner 2026-10-22): "que no sea ni editable ni que se lance: que automáticamente empiece a correr la estrategia" ⇒ SIEMPRE
+// encendido y con la configuración fija de abajo (sin panel para cambiarla). Sólo se apaga con la env AUTOPILOT_DISABLED=1 (emergencia).
 async function getAutopilotConfig() {
-  const raw = await getConfig('retentionAutopilot', null); const r = raw && typeof raw === 'object' ? raw : {};
+  const r = { enabled: process.env.AUTOPILOT_DISABLED !== '1' };
   const num = (v, d, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : d; };
   return {
     enabled: r.enabled === true,
@@ -26475,23 +26493,36 @@ function _autopilotMonthItems(month, cfg) {
       const aud = { audienceType: 'all' };
       if (sp && last) it = { kind: 'todos', reason: sp.name + ' + cierre de mes', payload: bono(Math.max(100, sp.pct), sp.title, sp.message, aud) };
       else if (sp) it = { kind: 'todos', reason: sp.name, payload: bono(sp.pct, sp.title, sp.message, aud) };
-      else it = { kind: 'todos', reason: 'Cierre de mes', payload: bono(100, '💥 ¡Último día del mes: +100%!', 'Cerramos el mes a lo grande 💥 Cargá en las próximas {h} horas y te DUPLICAMOS la carga automático (con el tope de bonos). Ya está activo en el botón CARGAR AHORA.', aud) };
+      else it = { kind: 'todos', reason: 'Cierre de mes', payload: bono(100, '🎁 Cierre de mes: +100%', 'Gracias por elegir Pica Roja 🔴 Para cerrar el mes, cargá en las próximas {h} horas y te DUPLICAMOS la carga automático (con el tope de bonos). Ya está activo en el botón CARGAR AHORA.', aud) };
     } else {
       const g = rot % groups; rot++;
       const aud = groups > 1 ? { audienceType: 'all', rotGroup: { n: groups, k: g } } : { audienceType: 'all' };
       const audInact = Object.assign({ audienceType: 'inactive', audienceDays: 4, audienceDaysMax: null }, groups > 1 ? { rotGroup: { n: groups, k: g } } : {});
       const penult = d === days.length - 1;
+      // #821 (owner): "nada de 'ya cobraste' ni sueldos: no sabés la economía del país; acá es más servicial, del producto, no buscando su
+      // bolsillo" ⇒ los mensajes cuentan lo que ofrece la app (carga automática, retiros, soporte, juegos, misiones, VIP, referidos) y el
+      // bono va como regalo del día. Los montos siguen la estrategia: fin de mes el más fuerte, el 5 más chico.
+      const TH = [
+        (pct) => ['⚡ Cargá en segundos: +' + pct + '%', 'Transferís, mandás la foto y se acredita solo. Hoy tenés +' + pct + '% EXTRA en tu carga por {h} horas: ya está activo en el botón CARGAR AHORA.'],
+        (pct) => ['🎮 Los juegos más jugados te esperan: +' + pct + '%', 'Mirá el Top juegos de la semana en Pica Roja. Si cargás en las próximas {h} horas te sumamos +' + pct + '% EXTRA automático.'],
+        (pct) => ['💸 Retirás rápido y sin vueltas: +' + pct + '%', 'Tus premios van directo a tu cuenta. Y hoy, +' + pct + '% EXTRA en tu carga por {h} horas (ya activo en CARGAR AHORA).'],
+        (pct) => ['🛟 Estamos para ayudarte: +' + pct + '%', 'Nuestro soporte te responde desde la app todos los días. Y para hoy: +' + pct + '% EXTRA en tu carga por {h} horas.'],
+        (pct) => ['🎯 Misiones de la semana: +' + pct + '%', 'Completá tus misiones y sumá premios. Hoy además tenés +' + pct + '% EXTRA en tu carga por {h} horas.'],
+        (pct) => ['💎 Subí de nivel VIP: +' + pct + '%', 'Cada carga te acerca al próximo nivel VIP y sus beneficios. Hoy +' + pct + '% EXTRA en tu carga por {h} horas.'],
+        (pct) => ['🤝 Jugá con tus amigos: +' + pct + '%', 'Invitá a tus amigos con tu link y ganá por lo que juegan. Hoy tenés +' + pct + '% EXTRA en tu carga por {h} horas.']
+      ];
+      const tb = (pct, reason, extra) => { const t = TH[(d * 3 + mo) % TH.length](pct); return { reason, payload: bono(pct, t[0], t[1], extra || aud) }; };
       if (sp) it = { reason: sp.name, payload: bono(sp.pct || 20, sp.title, sp.message, aud) };
-      else if (d <= 4) it = { reason: 'Cobro de sueldo (inicio de mes)', payload: bono(30, '💸 +30% para arrancar el mes', '¡Arrancó el mes! 💸 Cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.', aud) };
-      else if (d === 5) it = { reason: 'Día 5 (más chico)', payload: bono(20, '🎁 +20% por {h} horas', 'Te dejamos un empujón: cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
-      else if (d === 15) it = { reason: 'Quincena', payload: bono(50, '💰 ¡Quincena! +50%', 'Cobraste la quincena 💰 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
-      else if (penult) it = { reason: 'Se termina el mes', payload: bono(50, '⏳ Se termina el mes: +50%', 'Últimas horas del mes ⏳ Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático.', aud) };
-      else if (d === 10 || d === 20) it = { reason: 'Aviso de reembolso', payload: aviso('💸 Tu reembolso te espera', 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a la app y reclamalo desde Reembolso: se acredita al toque 🔴', aud) };
-      else if (dow === 5) it = { reason: 'Viernes', payload: bono(50, '🔥 ¡Arrancó el finde! +50%', 'Viernes en Pica Roja 🔥 Cargá en las próximas {h} horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
-      else if (dow === 6) it = { reason: 'Sábado', payload: bono(30, '🎉 Sábado: +30%', 'Sábado de juego 🎉 Cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático.', aud) };
-      else if (dow === 0) it = { reason: 'Domingo', payload: bono(20, '☀️ Domingo: +20%', 'Domingo tranqui ☀️ Cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático.', aud) };
-      else if (dow === 3) it = { reason: 'Te extrañamos (sin entrar 4+ días)', payload: bono(30, '👋 ¡Te extrañamos! +30%', 'Hace unos días que no pasás por Pica Roja. Te guardamos un regalo: cargá en las próximas {h} horas y te sumamos un 30% EXTRA automático 🔴', audInact) };
-      else it = { reason: 'Promo del día', payload: bono(20, '⚡ Promo relámpago: +20%', 'Promo del día ⚡ Cargá en las próximas {h} horas y te sumamos un 20% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.', aud) };
+      else if (d <= 4) it = { reason: 'Inicio de mes', payload: bono(30, '🎉 Mes nuevo en Pica Roja: +30%', 'Arrancamos el mes con todo: carga automática en segundos, retiros rápidos y soporte en la app. Cargá en las próximas {h} horas y te sumamos +30% EXTRA.', aud) };
+      else if (d === 5) it = tb(20, 'Día 5 (más chico)');
+      else if (d === 15) it = { reason: 'Mitad de mes', payload: bono(50, '🌟 Mitad de mes: +50%', 'Llegamos a la mitad del mes con un regalo: cargá en las próximas {h} horas y te sumamos +50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.', aud) };
+      else if (penult) it = { reason: 'Antes del cierre de mes', payload: bono(50, '⏳ Mañana cerramos el mes: +50%', 'Se viene el cierre de mes en Pica Roja. Cargá en las próximas {h} horas y te sumamos +50% EXTRA automático.', aud) };
+      else if (d === 10 || d === 20) it = { reason: 'Aviso de reembolso', payload: aviso('🔁 Tu reembolso te espera', 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a la app y reclamalo desde Reembolso: se acredita al toque 🔴', aud) };
+      else if (dow === 5) it = tb(50, 'Viernes');
+      else if (dow === 6) it = tb(30, 'Sábado');
+      else if (dow === 0) it = tb(20, 'Domingo');
+      else if (dow === 3) it = { reason: 'Te extrañamos (sin entrar 4+ días)', payload: bono(30, '👋 ¡Te extrañamos! +30%', 'Tu cuenta en Pica Roja te espera con novedades. Volvé hoy: tenés +30% EXTRA en tu carga por {h} horas 🔴', audInact) };
+      else it = tb(20, 'Promo del día');
       it.kind = 'grupo'; it.group = g + 1; it.groups = groups;
     }
     const pl = it.payload;
@@ -26569,27 +26600,10 @@ app.get('/api/admin/cronograma-autopilot', authMiddleware, adminMiddleware, asyn
       months.push({ month: m, programmed, days: items.length, groups: items[0] ? items[0].groups : 1, forAll: items[0] ? items[0].forAll : 0,
         items: items.map((i) => ({ day: i.day, dayKey: i.dayKey, dow: i.dow, time: i.time, kind: i.kind, reason: i.reason, gift: i.gift, who: i.who, special: i.special, title: i.payload.title, message: i.payload.message })) });
     }
-    res.json({ success: true, config: cfg, months, canEdit: _schedCanManage(req.user.role) });
+    res.json({ success: true, config: cfg, months });
   } catch (err) { logger.error(`GET /api/admin/cronograma-autopilot: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
-// Guarda la config. enabled:true ⇒ reprograma lo futuro con la config nueva; enabled:false ⇒ borra lo que no salió todavía.
-app.post('/api/admin/cronograma-autopilot', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
-    const b = req.body || {};
-    const prev = await getAutopilotConfig();
-    const next = Object.assign({}, prev, {
-      enabled: b.enabled === true, time: b.time, hours: b.hours, cap: b.cap, parts: b.parts, gapMin: b.gapMin, appOnly: b.appOnly !== false
-    });
-    await Config.set('retentionAutopilot', next, req.user.username);
-    const cfg = await getAutopilotConfig();
-    const removed = await _autopilotClearFuture() + (cfg.enabled ? await _autopilotCleanLegacy() : 0);
-    let programmed = null;
-    if (cfg.enabled) programmed = await _autopilotTick(req.user.username);
-    logger.info(`[autopiloto] ${req.user.username} → ${cfg.enabled ? 'ENCENDIDO' : 'apagado'} (${removed} futuras borradas)`);
-    res.json({ success: true, config: cfg, removed, programmed });
-  } catch (err) { logger.error(`POST /api/admin/cronograma-autopilot: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
-});
+// #821: sin ruta para editar ni lanzar: la estrategia es fija y corre sola (ver getAutopilotConfig).
 
 // Arma un plan con lo YA programado/enviado en un mes ("guardar este mes como plan").
 app.post('/api/admin/cronograma-plans/from-month', authMiddleware, adminMiddleware, async (req, res) => {

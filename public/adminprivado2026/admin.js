@@ -15555,7 +15555,7 @@ function _cronRenderCalendar() {
         if (byCamp.length > 3) chips += '<span style="color:#a5b4fc">+' + (byCamp.length - 3) + ' más</span>';
         // #297: hoja del mes — tocar el día abre el panel; "+" lleva directo a programar algo ese día.
         html += '<div class="cron-day' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (items.length ? ' has-items' : '') + (_cronDayFilter === k ? ' picked' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-size:.7rem">(' + items.length + ')</span>' : '') + '</div>' + chips + _cronDayImpactChip(k) +
-            (!isPast ? '<button type="button" class="cron-add" title="Programar algo el ' + k.slice(8, 10) + '/' + k.slice(5, 7) + '" onclick="event.stopPropagation();cronPlanDay(\'' + k + '\',\'schedule\')">+</button>' : '') + '</div>';
+            '</div>'; // #821: sin "+" (la estrategia es automática)
     }
     el.innerHTML = html;
 }
@@ -15631,8 +15631,7 @@ function _cronRenderDayPanel() {
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">' +
         '<strong>📅 ' + fecha + '</strong>' +
         '<div style="display:flex;gap:.4rem;flex-wrap:wrap">' +
-        (!isPast ? '<button class="btn btn-primary" onclick="cronPlanDay(\'' + k + '\',\'schedule\')">➕ Programar algo este día</button>' : '') +
-        '<button class="btn btn-secondary" onclick="cronPlanDay(\'' + k + '\',\'plan\')">🧭 Agregar a un plan (día ' + Number(k.slice(8, 10)) + ')</button>' +
+
         '<button class="btn btn-secondary" onclick="cronPickDay(\'' + k + '\')">Cerrar</button></div></div>' +
         (items.length ? '<div style="margin-top:.5rem;font-size:.82rem">' + items.map(({ c, p }) => {
             const st = c.cancelled ? 'cancelled' : (c.paused && p.status === 'scheduled' ? 'paused' : p.status);
@@ -15642,7 +15641,7 @@ function _cronRenderDayPanel() {
                 '<span style="display:flex;gap:.6rem;flex-wrap:wrap;flex-basis:100%;margin-top:3px">' +
                 (p.batchId ? '<button class="btn btn-secondary btn-sm" onclick="cronPeopleToggle(\'' + c.id + '\',' + p.idx + ',\'' + p.batchId + '\')">👥 A quién le llegó y cómo van reclamando</button>'
                     : (!c.cancelled ? '<button class="btn btn-secondary btn-sm" onclick="cronPeopleToggle(\'' + c.id + '\',' + p.idx + ',\'\')">👥 A quién le va a llegar</button>' : '')) +
-                (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap;align-self:center">ver lote</a>' : (!c.cancelled ? '<a href="#" onclick="cronOpenEdit(\'' + c.id + '\');return false" style="color:#a5b4fc;white-space:nowrap;align-self:center">editar</a>' : '')) + '</span>' +
+                (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap;align-self:center">ver lote</a>' : '') + '</span>' + // #821: sin editar
                 '<div id="cronPeople_' + c.id + '_' + p.idx + '" class="cron-people" style="display:none;flex-basis:100%"></div></div>';
         }).join('') + '</div>' : '<div style="margin-top:.4rem;color:#888;font-size:.82rem">Nada programado este día todavía.</div>') + _cronDayImpactHtml(k);
     el.style.display = '';
@@ -15955,21 +15954,19 @@ async function loadCronAutopilot() {
         const r = await authFetch('/api/admin/cronograma-autopilot'); const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'error');
         _apData = j; const c = j.config || {};
-        const set = (id, v) => { const e = document.getElementById(id); if (e) { if (e.type === 'checkbox') e.checked = !!v; else e.value = v; e.disabled = !j.canEdit; } };
-        set('apTime', c.time); set('apHours', c.hours); set('apCap', c.cap); set('apParts', c.parts); set('apGap', c.gapMin); set('apAppOnly', c.appOnly);
-        const st = document.getElementById('apState');
-        if (st) st.innerHTML = c.enabled ? '<b style="color:#22c55e">🟢 ENCENDIDO</b> · ' + c.parts + ' tanda(s) desde las ' + escHtml(c.time) + ' · bono ' + c.hours + ' h · máx ' + c.cap + ' por cliente/mes' : '<b style="color:#9ca3af">⚪ APAGADO</b>';
+        const st = document.getElementById('apState'); // #821: fija y siempre en marcha (no se edita ni se lanza)
+        if (st) st.innerHTML = c.enabled ? '<b style="color:#22c55e">🟢 EN MARCHA</b> · ' + c.parts + ' lotes desde las ' + escHtml(c.time) + ' · bono ' + c.hours + ' h · máx ' + c.cap + ' por cliente/mes' : '<b style="color:#f87171">⛔ detenida por el servidor (AUTOPILOT_DISABLED)</b>';
         const num = (n) => Number(n || 0).toLocaleString('es-AR');
-        box.innerHTML = '<div style="font-weight:700;margin-bottom:.3rem">📆 Plan del año (' + (j.months || []).length + ' meses: se programa solo cada mes)</div>' + (j.months || []).map((m) => {
+        box.innerHTML = '<div style="font-weight:700;margin-bottom:.3rem">📆 Estrategia del año (' + (j.months || []).length + ' meses, automática)</div>' + (j.months || []).map((m) => {
             const [y, mo] = m.month.split('-').map(Number);
             const label = new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString('es-AR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^./, (x) => x.toUpperCase());
             const specials = m.items.filter((i) => i.special).map((i) => i.day + ' ' + i.special);
             const bonos = m.items.filter((i) => i.gift !== 'aviso').length;
             return '<details style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b>' + label + '</b> · ' + m.days + ' días · ' + m.groups + ' grupos que rotan + ' + m.forAll + ' día(s) para todos · ' + bonos + ' con bono' +
-                (m.programmed ? ' · <span style="color:#22c55e">✅ ' + num(m.programmed) + ' programados</span>' : (c.enabled ? ' · <span style="color:#9ca3af">se programa al llegar el mes anterior</span>' : '')) +
+                (m.programmed ? ' · <span style="color:#22c55e">✅ ' + num(m.programmed) + ' programados</span>' : (c.enabled ? ' · <span style="color:#9ca3af">se programa solo un mes antes</span>' : '')) +
                 (specials.length ? '<div style="color:#a5b4fc;font-size:.74rem;margin-left:1rem">🎉 ' + escHtml(specials.join(' · ')) + '</div>' : '') + '</summary>' +
                 // #818: así queda el mes, con el detalle adentro de cada recuadro (como el calendario manual)
-                '<div style="margin:.4rem 0;color:#888;font-size:.74rem">Así queda el mes (verde = para todos · violeta = grupo que rota). Al encenderlo, estas mismas campañas aparecen en el calendario de arriba y se pueden abrir, editar o pausar una por una.</div>' +
+                '<div style="margin:.4rem 0;color:#888;font-size:.74rem">Así queda el mes (verde = para todos · violeta = grupo que rota). Se programa solo y aparece en el calendario de arriba.</div>' +
                 _cronMonthGridHtml(m.month, m.items.reduce((acc, i) => { (acc[i.dayKey] = acc[i.dayKey] || []).push({ time: i.time + (c.parts > 1 ? ' · ' + c.parts + ' lotes' : ''), gift: _cronGiftShort(i), who: i.who, what: i.reason, color: i.kind === 'todos' ? '#22c55e' : '#6366f1', title: (i.title ? i.title + ': ' : '') + i.message }); return acc; }, {})) +
                 '<details style="margin-top:.4rem"><summary style="cursor:pointer;color:#a5b4fc">Ver los mensajes día por día</summary>' +
                 '<div style="overflow:auto"><table class="cron-tbl" style="margin-top:.3rem"><thead><tr><th>Día</th><th>Qué sale</th><th>A quién</th><th>Por qué</th><th>Mensaje</th></tr></thead><tbody>' +
