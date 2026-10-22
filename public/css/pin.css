@@ -2502,3 +2502,12 @@ body.fewdep .casino-load .cl-btn.cl-attach { animation-name: fgPulseIn !importan
 .ev-favs .fav-h span { display: flex; flex-direction: column; } .ev-favs .fav-sub { font: 600 11px var(--p-font); color: var(--p-muted); margin-top: 1px; } /* #842 */
 .fav-loading { padding: 18px 8px; text-align: center; font: 700 12.5px var(--p-font); color: var(--p-muted); }
 .fav-card { flex-basis: 34%; max-width: 150px; } @media (min-width: 480px) { .fav-card { flex-basis: 24%; } }
+/* #843: nota de primera carga COMPACTA en la Carga rápida (".fd-app" chocaba con el cartel de entrada: flex + 18px) */
+.fd-note .fd-app { display: block !important; background: none !important; padding: 0 !important; border-radius: 0 !important; font: 700 11px/1.35 var(--p-font) !important; color: var(--p-text) !important; }
+.fd-note .fd-app b { font-size: inherit !important; }
+.casino-load .fd-note { padding: 6px 10px !important; margin: 4px 0 6px !important; gap: 1px 6px !important; }
+.casino-load .fd-note .fd-l1 { font-size: 11px; }
+/* #843: la Carga rápida más chica (no tapa toda la pantalla) */
+.casino-load { width: min(286px, calc(100vw - 24px)) !important; max-height: min(62vh, calc(100vh - 170px - env(safe-area-inset-bottom, 0px))) !important; overflow-y: auto !important; }
+.casino-load .cl-btn { padding: 10px !important; font-size: 12px !important; margin-top: 6px !important; }
+.casino-load .cl-rcpt { font-size: 10px !important; margin-top: 3px !important; }

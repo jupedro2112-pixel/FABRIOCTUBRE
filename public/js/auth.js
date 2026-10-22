@@ -684,6 +684,7 @@ VIP.auth = (function () {
             if (_ir === 'casino') VIP.state._openCasinoAfterLogin = true;
             if (_ir === 'cargar') VIP.state._openLoadAfterLogin = true; // #581: alta por landing → directo a Cargá acá
             if (_ir === 'girox') VIP.state._openGiroxAfterLogin = true; // #704: alta por landing → directo a la pantalla de Girox (Girox directo)
+            if (_ir === 'girox' || _ir === 'cargar') { try { sessionStorage.setItem('vip_from_pauta', '1'); } catch (_) {} } // #843: la Carga rápida se abre sola sólo esta vez
         } catch (e) {}
 
         // Sacar el token de la URL YA MISMO: es de un solo uso y no tiene que

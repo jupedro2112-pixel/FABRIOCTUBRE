@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 843. 💳 Carga rápida más chica y abierta SÓLO al entrar por pauta — SW v575
+**Pedido (owner, captura):** "achicalo un poco más, que no tape toda la pantalla; que cuando la gente entre por pauta aparezca abierto,
+después ya cerrado, que lo abran ellos". Antes se abría sola cada vez mientras el cliente no tuviera cargas (`body.nodep`).
+- auth.js: entrar con `?acceso=…&ir=girox|cargar` (landing / entrada rápida) marca `sessionStorage vip_from_pauta`; home.js abre la Carga rápida
+  sola UNA vez (`localStorage vip_cq_auto_done`); después arranca cerrada y queda la burbuja.
+- CSS: panel 286 px y máx. 62vh con scroll; botones y nota más chicos. La nota "Después, +50% EXTRA…" usaba la clase `.fd-app` del cartel de
+  entrada (flex + 18 px ⇒ salía en columna gigante): ahora en una línea chica.
+
 ### 842. ⭐ Inicio: SÓLO "Mis juegos favoritos" (10 de entrada, editables) — sin la lista de Top juegos — SW v574
 **Pedido (owner, captura):** "si agrega juegos, que desaparezcan los preseleccionados" + "dejalo así como favoritos y elegí 10 de los más
 jugados: Joker, Sweet Bonanza, Ezugi en vivo y otros; eliminá la lista de abajo; si quieren editar, que saquen desde ahí eligiendo; arriba el

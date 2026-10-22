@@ -2087,7 +2087,11 @@
         // arranca CERRADO en todos los casos (queda la burbuja logo + CARGA RÁPIDA) y un aviso de 5 s debajo dice que se puede mover.
         // #798 (owner): "cuando abren la app después del registro, que aparezca Girox para jugar y ABIERTA la carga rápida" ⇒ hasta la
         // primera carga (body.nodep) el panel entra desplegado; después de la primera carga entra cerrado como antes (#723).
-        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false; const first = document.body.classList.contains('nodep'); try { toggleCasinoLoad(first); } catch (_) {} try { if (!first) _cqTipShow(); } catch (_) {} } }, 60);
+        // #843 (owner): "que no tape toda la pantalla: cuando la gente entra por pauta, que aparezca abierto; después, ya cerrado, que lo abran
+        // ellos" ⇒ abierto solo UNA vez (primera entrada desde la landing, `vip_from_pauta`), después arranca cerrado (queda la burbuja).
+        setTimeout(() => { _setCasinoTestMode(test); _setupCasinoQuick(); if (!test) { _quickDismissed = false;
+            let first = false; try { first = sessionStorage.getItem('vip_from_pauta') === '1' && localStorage.getItem('vip_cq_auto_done') !== '1'; if (first) { localStorage.setItem('vip_cq_auto_done', '1'); sessionStorage.removeItem('vip_from_pauta'); } } catch (_) {}
+            try { toggleCasinoLoad(first); } catch (_) {} try { if (!first) _cqTipShow(); } catch (_) {} } }, 60);
     }
     function playOn(platformId) { openPlatform(platformId); }
     // #673 (owner): INSTALAR EN iPHONE CON LA SESIÓN. iOS no comparte el localStorage de Safari con la app instalada: el manifest
