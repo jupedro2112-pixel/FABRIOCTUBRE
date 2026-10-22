@@ -714,6 +714,11 @@ body.home-mini .wa-head .chat-topbar-info { cursor: default; }
 .withdraw-row-btn .lr-text b { font: 800 13px var(--p-font) !important; color: var(--p-text) !important; }
 .withdraw-row-btn .lr-text small { font: 600 10px var(--p-font) !important; color: var(--p-muted) !important; }
 
+/* #813: bono vigente de una notificación adentro de CARGAR AHORA y arriba de la tarjeta de carga (js/promobonus.js) */
+.promo-live[hidden] { display: none !important; }
+.ez-main .promo-live { display: inline-block; align-self: flex-start; margin-top: 4px; padding: 3px 9px; border-radius: 999px; background: var(--p-card); color: var(--p-green) !important; font: 800 11.5px var(--p-font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.promo-live-strip { display: block; margin: 0 0 10px; padding: 9px 12px; border-radius: 14px; background: var(--p-green-soft); border: 1px solid var(--p-green-line); color: var(--p-green); font: 800 13px var(--p-font); text-align: center; }
+
 /* ── #392 (owner 2026-10-18): MODO NOCTURNO de la app. html[data-theme="dark"] (localStorage 'vip_theme'; se alterna
    desde Perfil y desde el botón 🌙/☀️ de la barra de arriba). Sólo cambian los tokens; la Carga manual (#supportPanel),
    la ruleta y las historias no dependen de pin.css y siguen igual. ── */

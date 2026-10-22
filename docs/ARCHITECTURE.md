@@ -1264,6 +1264,12 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   20-29/30+ → al otro día / 48 h / 7 d / siguen activos). Lo exponen `GET /api/admin/notif-batches/:id`
   (`impact`) y `cronograma-report` (campañas, `weeks`, `days`, `plans`, `bestWeek7d`, recomendaciones).
 
+- **#813 Retención app:** filtros de audiencia `appOnly` (token standalone, permiso ≠ denied) y `monthlyCap` (lotes recibidos en el
+  mes ART, `_notifMonthCounts`) en el wrapper `_resolveNotifBatchAudience` → aplican a lotes, cronograma y planes. Plantilla
+  `POST /api/admin/cronograma-plans/retention-template` (`_retentionPlanItems(hours, cap)`, 8 envíos, mismo nombre = se actualiza).
+  `_batchImpact` agrega `before48h` (línea base de los mismos clientes) ⇒ `lift48h` en el reporte; el panel lo pinta por día y por lote.
+  App: `.promo-live` (CARGAR AHORA + tarjeta de carga) desde `js/promobonus.js`.
+
 ## Datos IA (#459 → #477, 2026-10-18) — `src/services/datosIaService.js` + rutas `/api/admin/datos-ia/*`
 
 Análisis del negocio **por reglas, sin IA externa**, a partir de Transaction / User / AppSession / RefundClaim /

@@ -24466,7 +24466,7 @@ app.get('/api/promo-bonus/mine', authMiddleware, async (req, res) => {
     const b = await _getActivePromoBonus(req.user.username);
     if (!b) return res.json({ bonus: null });
     res.json({
-      bonus: { percent: b.percent, activatedAt: b.activatedAt, expiresAt: b.expiresAt }
+      bonus: { percent: b.percent, activatedAt: b.activatedAt, expiresAt: b.expiresAt, applyMode: b.applyMode || 'auto', applyScope: b.applyScope || 'first' } // #813: la app lo muestra en CARGAR AHORA
     });
   } catch (err) {
     logger.error(`/api/promo-bonus/mine: ${err.message}`);
@@ -24602,7 +24602,49 @@ function _notifInactiveRange(b) {
   const or = winFrom ? [{ lastLogin: { $gte: winFrom, $lte: winTo } }] : [{ lastLogin: { $lt: winTo } }, { lastLogin: null }, { lastLogin: { $exists: false } }];
   return { days: days || null, daysMax, dateFrom: hasDates ? b.dateFrom : null, dateTo: hasDates ? b.dateTo : null, hasRange: !!winFrom, winFrom, winTo, label, or };
 }
+// #813 PLAN DE RETENCIÓN (owner 2026-10-22): "clientes que instalan la app y aceptan notificaciones, 8 de tope por cliente en el mes".
+// Dos filtros que se suman a CUALQUIER audiencia del lote (y por lo tanto al cronograma y a los planes, que usan el mismo payload):
+//  - `appOnly: true`  → sólo quien tiene la app INSTALADA con un token push activo (canal 📱 'app' del lote, permiso no denegado).
+//  - `monthlyCap: N`  → saca a quien ya recibió N lotes en el mes en curso (hora AR), de cualquier origen. Así el tope por cliente
+//    se respeta aunque el mes tenga más campañas o se manden lotes a mano.
+const NOTIF_APP_COND = { $or: [
+  { fcmTokens: { $elemMatch: { context: 'standalone', token: { $nin: [null, ''] }, notifPermission: { $ne: 'denied' } } } },
+  { fcmTokenContext: 'standalone', fcmToken: { $nin: [null, ''] }, notifPermission: { $ne: 'denied' } }
+] };
+function _notifMonthStartART(d) {
+  const k = _schedArtKey(d || new Date()).slice(0, 7);
+  return new Date(k + '-01T00:00:00-03:00');
+}
+// userId → cantidad de lotes recibidos este mes (sólo para los ids pedidos).
+async function _notifMonthCounts(ids, now) {
+  if (!ids.length) return new Map();
+  const rows = await NotifBatch.aggregate([
+    { $match: { sentAt: { $gte: _notifMonthStartART(now) }, isPublic: { $ne: true }, 'recipients.userId': { $in: ids } } },
+    { $project: { recipients: { $filter: { input: '$recipients', as: 'r', cond: { $in: ['$$r.userId', ids] } } } } },
+    { $unwind: '$recipients' },
+    { $group: { _id: '$recipients.userId', n: { $sum: 1 } } }
+  ]);
+  return new Map(rows.map((r) => [r._id, r.n]));
+}
 async function _resolveNotifBatchAudience(b) {
+  const r = await _resolveNotifBatchAudienceBase(b);
+  if (!r || r.error || !Array.isArray(r.users)) return r;
+  const appOnly = b.appOnly === true || b.appOnly === 'true';
+  const cap = b.monthlyCap == null || b.monthlyCap === '' ? null : Math.round(Number(b.monthlyCap));
+  if (cap != null && (!Number.isFinite(cap) || cap < 1 || cap > 60)) return { error: 'El tope por cliente en el mes tiene que estar entre 1 y 60 (o vacío = sin tope).' };
+  if (!appOnly && cap == null) return r;
+  let users = r.users, noApp = 0, capped = 0;
+  if (appOnly) { const before = users.length; users = users.filter((u) => _notifChannelOf(u) === 'app' && u.notifPermission !== 'denied'); noApp = before - users.length; }
+  if (cap != null && users.length) {
+    const counts = await _notifMonthCounts(users.map((u) => u.id), new Date());
+    const before = users.length; users = users.filter((u) => (counts.get(u.id) || 0) < cap); capped = before - users.length;
+  }
+  const aud = Object.assign({}, r.audience || {});
+  const base = aud.audienceLabel || (aud.audienceType === 'all' ? '🌍 todos' : aud.audienceType === 'list' ? '📋 lista' : '');
+  aud.audienceLabel = [base, appOnly ? '📱 con app y notis' : '', cap != null ? `tope ${cap}/mes` : ''].filter(Boolean).join(' · ').slice(0, 200);
+  return Object.assign({}, r, { users, audience: aud, filtered: { noApp, capped } });
+}
+async function _resolveNotifBatchAudienceBase(b) {
   const type = (b.audienceType === 'inactive' || b.audienceType === 'all' || b.audienceType === 'depositors') ? b.audienceType : 'list';
   // #295 segmento CARGADORES: clientes con ≥ N cargas reales en los últimos D días (los más recientes primero).
   if (type === 'depositors') {
@@ -24634,7 +24676,7 @@ async function _resolveNotifBatchAudience(b) {
     return { ...r, audience: { audienceType: 'list', audienceDays: null, audienceLimit: null } };
   }
   if (type === 'all') {
-    const users = await User.find({ role: 'user', isBlocked: { $ne: true } })
+    const users = await User.find(Object.assign({ role: 'user', isBlocked: { $ne: true } }, b.appOnly === true || b.appOnly === 'true' ? NOTIF_APP_COND : {}))
       .limit(NOTIF_BATCH_MAX_RECIPIENTS)
       .select(NOTIF_BATCH_USER_SELECT).lean();
     return { users, notFound: [], skipped: [], audience: { audienceType: 'all', audienceDays: null, audienceLimit: null } };
@@ -24649,7 +24691,7 @@ async function _resolveNotifBatchAudience(b) {
   }
   const users = await User.find({
     role: 'user', isBlocked: { $ne: true },
-    $or: rg.or
+    $and: [{ $or: rg.or }].concat(b.appOnly === true || b.appOnly === 'true' ? [NOTIF_APP_COND] : [])
   })
     .sort({ lastLogin: -1 })
     .limit(limit || NOTIF_BATCH_MAX_RECIPIENTS)
@@ -25181,6 +25223,7 @@ app.post('/api/admin/notif-batches/preview', authMiddleware, adminMiddleware, as
       truncated: Math.max(0, list.length - 150),
       notFound,
       skipped,
+      filtered: resolved.filtered || null, // #813: cuántos quedaron afuera por no tener la app o por el tope del mes
       totals: {
         ok: list.length,
         app: list.filter((x) => x.channel === 'app').length,
@@ -25590,7 +25633,7 @@ function _schedPublic(c) {
     id: c.id, name: c.name, status: _schedCampaignStatus(c), paused: !!c.paused, cancelled: !!c.cancelled,
     runAt: c.runAt, dayKey: _schedArtKey(c.runAt), parts, partsTotal: parts.length, partsSent: parts.filter(p => p.status === 'sent').length,
     audienceLabel: c.audienceLabel || '', estimatedCount: c.estimatedCount,
-    gift: { mode: pl.mode, giftType: pl.giftType, amount: pl.amount, applyMode: pl.applyMode, applyScope: pl.applyScope, validHours: pl.validHours, capARS: pl.capARS, capExcessPct: pl.capExcessPct, audienceType: pl.audienceType, title: pl.title || '', message: pl.message || '' },
+    gift: { mode: pl.mode, giftType: pl.giftType, amount: pl.amount, applyMode: pl.applyMode, applyScope: pl.applyScope, validHours: pl.validHours, capARS: pl.capARS, capExcessPct: pl.capExcessPct, audienceType: pl.audienceType, title: pl.title || '', message: pl.message || '', appOnly: pl.appOnly === true, monthlyCap: pl.monthlyCap || null },
     createdBy: c.createdBy, createdAt: c.createdAt, updatedAt: c.updatedAt, notes: c.notes || ''
   };
 }
@@ -25907,12 +25950,21 @@ async function _batchImpact(batch, depMatch) {
     buckets: {}, recovered: null, windowDays: 7
   };
   for (const k of BUCKETS) out.buckets[k] = { targets: 0, dep24h: 0, dep48h: 0, dep7d: 0, stayed: 0, amount7d: 0 };
-  if (!uids.length) { out.recovered = { targets: 0, nextDay: 0, in48h: 0, in7d: 0, stayed: 0, amount7d: 0 }; return out; }
+  if (!uids.length) { out.recovered = { targets: 0, nextDay: 0, in48h: 0, in7d: 0, stayed: 0, amount7d: 0 }; out.before48h = { users: 0, count: 0, amount: 0 }; return out; }
+  // #813: además de la última carga previa, lo que esos MISMOS clientes cargaron en las 48 h ANTES del aviso
+  // (línea base): "impulso" = cargas 48 h después − cargas 48 h antes. Así se ve si la notificación movió la venta o
+  // si esa gente iba a cargar igual.
+  const tPrev48 = new Date(sentAt.getTime() - 48 * H);
   const before = await Transaction.aggregate([
     { $match: Object.assign({ userId: { $in: uids }, timestamp: { $lt: sentAt } }, depMatch) },
-    { $group: { _id: '$userId', last: { $max: '$timestamp' } } }
+    { $group: { _id: '$userId', last: { $max: '$timestamp' },
+      n48: { $sum: { $cond: [{ $gte: ['$timestamp', tPrev48] }, 1, 0] } },
+      a48: { $sum: { $cond: [{ $gte: ['$timestamp', tPrev48] }, '$amount', 0] } } } }
   ]);
   const lastBefore = new Map(before.map(b => [b._id, new Date(b.last).getTime()]));
+  out.before48h = { users: 0, count: 0, amount: 0 };
+  for (const b of before) if (b.n48 > 0) { out.before48h.users++; out.before48h.count += b.n48; out.before48h.amount += Number(b.a48) || 0; }
+  out.before48h.amount = Math.round(out.before48h.amount);
   const after = await Transaction.aggregate([
     { $match: Object.assign({ userId: { $in: uids }, timestamp: { $gte: sentAt, $lte: new Date(t7) } }, depMatch) },
     { $sort: { timestamp: 1 } },
@@ -25987,6 +26039,8 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
         extraSameDayCount: imp.sameDayExtra.count, extraSameDayAmount: imp.sameDayExtra.amount,
         depositors7d: imp.within7d.users, depositCount7d: imp.within7d.count, deposits7d: imp.within7d.amount,
         repeaters: imp.repeaters, single: imp.single,
+        before48hUsers: imp.before48h.users, before48hCount: imp.before48h.count, before48h: imp.before48h.amount, // #813 línea base
+        lift48h: imp.deposits48h.amount - imp.before48h.amount, liftUsers48h: imp.first48.users - imp.before48h.users,
         recoveredTargets: imp.recovered.targets, recoveredNextDay: imp.recovered.nextDay, recovered48h: imp.recovered.in48h, recovered7d: imp.recovered.in7d, recoveredStayed: imp.recovered.stayed, recoveredAmount7d: imp.recovered.amount7d,
         buckets: imp.buckets,
         conv: recs.length ? Math.round(imp.first48.users / recs.length * 1000) / 10 : 0,
@@ -25995,7 +26049,7 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
         roi7d: cost > 0 ? Math.round(imp.within7d.amount / cost * 10) / 10 : null
       });
     }
-    const SUMK = ['recipients', 'delivered', 'depositors48h', 'deposits48h', 'depositCount48h', 'firstAmount48h', 'extraSameDayCount', 'extraSameDayAmount', 'depositors7d', 'depositCount7d', 'deposits7d', 'repeaters', 'single', 'recoveredTargets', 'recoveredNextDay', 'recovered48h', 'recovered7d', 'recoveredStayed', 'recoveredAmount7d', 'bonusUsed', 'cost'];
+    const SUMK = ['recipients', 'delivered', 'depositors48h', 'deposits48h', 'depositCount48h', 'firstAmount48h', 'extraSameDayCount', 'extraSameDayAmount', 'depositors7d', 'depositCount7d', 'deposits7d', 'repeaters', 'single', 'recoveredTargets', 'recoveredNextDay', 'recovered48h', 'recovered7d', 'recoveredStayed', 'recoveredAmount7d', 'bonusUsed', 'cost', 'before48hUsers', 'before48hCount', 'before48h', 'lift48h', 'liftUsers48h'];
     const agg = (rs) => {
       const o = { campaigns: rs.length };
       for (const k of SUMK) o[k] = rs.reduce((a, r) => a + (Number(r[k]) || 0), 0);
@@ -26030,6 +26084,10 @@ app.get('/api/admin/cronograma-report', authMiddleware, adminMiddleware, async (
     if (T.depositors48h > 0) {
       const extraPct = T.deposits7d > 0 ? Math.round(Math.max(0, T.deposits7d - T.firstAmount48h) / T.deposits7d * 100) : 0;
       recs.push({ kind: 'followup', text: `🔁 Impulso real: de los ${T.depositors48h.toLocaleString('es-AR')} que cargaron tras un aviso, ${T.repeaters.toLocaleString('es-AR')} siguieron cargando (≥2 cargas en 7 días) y ${T.single.toLocaleString('es-AR')} hicieron una sola. La primera carga fue $${T.firstAmount48h.toLocaleString('es-AR')}; con las cargas siguientes del mismo día sumaron $${(T.firstAmount48h + T.extraSameDayAmount).toLocaleString('es-AR')} y en 7 días $${T.deposits7d.toLocaleString('es-AR')} (${extraPct}% del total vino DESPUÉS de la primera carga).` });
+    }
+    if (T.recipients > 0 && (T.deposits48h > 0 || T.before48h > 0)) { // #813 impulso contra la línea base
+      const lift = T.deposits48h - T.before48h;
+      recs.push({ kind: 'lift', text: `📈 Impulso de las notificaciones: los avisados cargaron $${Math.round(T.deposits48h).toLocaleString('es-AR')} en las 48 h siguientes contra $${Math.round(T.before48h).toLocaleString('es-AR')} en las 48 h previas (${lift >= 0 ? '+' : '−'}$${Math.abs(Math.round(lift)).toLocaleString('es-AR')}); ${T.depositors48h.toLocaleString('es-AR')} clientes cargaron después vs ${T.before48hUsers.toLocaleString('es-AR')} antes.` });
     }
     if (T.recoveredTargets > 0) {
       recs.push({ kind: 'recovery', text: `♻️ Recuperados: se avisó a ${T.recoveredTargets.toLocaleString('es-AR')} clientes que no cargaban hace 10 días o más; ${T.recoveredNextDay.toLocaleString('es-AR')} cargaron al otro día, ${T.recovered48h.toLocaleString('es-AR')} en 48 h y ${T.recovered7d.toLocaleString('es-AR')} en 7 días (${T.recoveryRate != null ? T.recoveryRate + '%' : '—'}); ${T.recoveredStayed.toLocaleString('es-AR')} siguieron activos (2+ cargas) y en total cargaron $${T.recoveredAmount7d.toLocaleString('es-AR')}.` });
@@ -26110,6 +26168,47 @@ app.post('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (
     const p = await StrategyPlan.create({ id: uuidv4(), name, notes: String(b.notes || '').slice(0, 500), items: n.items, createdBy: req.user.username });
     res.json({ success: true, plan: _planPublic(p.toObject()) });
   } catch (err) { logger.error(`POST /api/admin/cronograma-plans: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #813 PLAN DE RETENCIÓN APP (owner 2026-10-22): "plan para clientes que instalan la app y aceptan notificaciones, repartidas en
+// todo el mes, 8 de tope por cliente; de esas un 50%, un 100%, un 20%, respetando los topes; que al entrar ya tengan el bono vigente
+// en el botón de carga, siempre por 4 h; y avisos tipo 'te extrañamos' si no entran hace varios días". Arma (o actualiza, mismo
+// nombre) un StrategyPlan con 8 envíos. Cada uno es un lote 'window' con % AUTOMÁTICO de una sola carga por `hours` horas (el
+// PromoBonus nace al enviarse ⇒ el cliente lo ve en CARGAR AHORA y lo suma resolveAutoBonus con el tope global de bonos y el
+// rollover global), audiencia `appOnly` y `monthlyCap` (nadie recibe más de `cap` lotes en el mes, contando los manuales).
+// Los textos no nombran la ruleta (guard isRouletteText). El plan se aplica a un mes con el botón de siempre y es editable.
+function _retentionPlanItems(hours, cap) {
+  const H = hours, base = { mode: 'window', validHours: H, appOnly: true, monthlyCap: cap };
+  const bono = (pct, extra) => Object.assign({}, base, { giftType: 'percent', amount: pct, applyMode: 'auto', applyScope: 'first' }, extra);
+  const aviso = (extra) => Object.assign({}, base, { giftType: 'none', amount: 0 }, extra);
+  const todos = { audienceType: 'all' };
+  const inact = (d, dMax) => ({ audienceType: 'inactive', audienceDays: d, audienceDaysMax: dMax == null ? null : dMax });
+  return [
+    { day: 1, time: '20:00', name: 'Arranque de mes · +20% (4 h)', payload: bono(20, Object.assign({}, todos, { name: 'Retención · +20% arranque', title: '🎁 +20% en tu carga por ' + H + ' horas', message: 'Arrancó el mes en Pica Roja 🔴 Cargá en las próximas ' + H + ' horas y te sumamos un 20% EXTRA automático. Ya lo tenés activo en el botón CARGAR AHORA.' })) },
+    { day: 4, time: '21:00', name: 'Te extrañamos · inactivos 3–10 d', payload: aviso(Object.assign({}, inact(3, 10), { name: 'Retención · te extrañamos 3-10 d', title: '👋 ¡Te extrañamos!', message: 'Hace unos días que no pasás por Pica Roja. Tu cuenta te espera: entrá y mirá tu reembolso y las promos de hoy 🔴' })) },
+    { day: 8, time: '20:00', name: 'Finde · +50% (4 h)', payload: bono(50, Object.assign({}, todos, { name: 'Retención · +50% finde', title: '🔥 +50% en tu carga por ' + H + ' horas', message: 'Se viene el finde 🔥 Cargá en las próximas ' + H + ' horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.' })) },
+    { day: 12, time: '21:00', name: 'Aviso · tu reembolso te espera', payload: aviso(Object.assign({}, todos, { name: 'Retención · aviso reembolso', title: '💸 Tu reembolso te espera', message: 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a la app y reclamalo desde Reembolso: se acredita al toque.' })) },
+    { day: 15, time: '20:00', name: 'Quincena · +100% (4 h)', payload: bono(100, Object.assign({}, todos, { name: 'Retención · +100% quincena', title: '💥 +100% en tu carga por ' + H + ' horas', message: '¡Cobraste la quincena! 💥 Cargá en las próximas ' + H + ' horas y te DUPLICAMOS la carga automático (con el tope de bonos). Ya está activo en el botón CARGAR AHORA.' })) },
+    { day: 19, time: '21:00', name: 'Volvé · inactivos 7–30 d · +50% (4 h)', payload: bono(50, Object.assign({}, inact(7, 30), { name: 'Retención · volvé +50%', title: '❤️ Volvé con +50%', message: 'Te guardamos un regalo: cargá en las próximas ' + H + ' horas y te sumamos un 50% EXTRA automático. Te esperamos en Pica Roja 🔴' })) },
+    { day: 23, time: '20:00', name: 'Mitad de semana · +20% (4 h)', payload: bono(20, Object.assign({}, todos, { name: 'Retención · +20% semana', title: '🎁 +20% por ' + H + ' horas', message: 'Promo relámpago ⚡ Cargá en las próximas ' + H + ' horas y te sumamos un 20% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.' })) },
+    { day: 28, time: '21:00', name: 'Te extrañamos · inactivos 15+ d', payload: aviso(Object.assign({}, inact(15, null), { name: 'Retención · te extrañamos 15+ d', title: '👋 Hace rato no te vemos', message: 'Tu cuenta en Pica Roja sigue activa y con novedades. Entrá cuando quieras: tu reembolso y tus promos te esperan 🔴' })) }
+  ].map((it) => Object.assign({ parts: 1, gapHours: 5 }, it));
+}
+app.post('/api/admin/cronograma-plans/retention-template', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const b = req.body || {};
+    const hours = Math.min(48, Math.max(1, Math.round(Number(b.hours) || 4)));
+    const cap = Math.min(60, Math.max(1, Math.round(Number(b.cap) || 8)));
+    const name = (String(b.name || '').trim() || 'Retención app · 8 por mes').slice(0, 80);
+    const n = _planNormalizeItems(_retentionPlanItems(hours, cap));
+    if (n.error) return res.status(400).json({ error: n.error });
+    const notes = `Sólo clientes con la app y notificaciones · bonos automáticos por ${hours} h en una carga (tope global de bonos y rollover) · máx ${cap} avisos por cliente en el mes · 20% / 50% / 100% / 50% a inactivos / 20% + 3 avisos de retención.`.slice(0, 500);
+    let p = await StrategyPlan.findOne({ name });
+    if (p) { p.items = n.items; p.notes = notes; p.updatedBy = req.user.username; await p.save(); }
+    else p = await StrategyPlan.create({ id: uuidv4(), name, notes, items: n.items, createdBy: req.user.username });
+    logger.info(`[plan] ${req.user.username} armó el plan de retención "${name}" (${hours} h, tope ${cap}/mes)`);
+    res.json({ success: true, plan: _planPublic(p.toObject ? p.toObject() : p) });
+  } catch (err) { logger.error(`POST /api/admin/cronograma-plans/retention-template: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 // Arma un plan con lo YA programado/enviado en un mes ("guardar este mes como plan").
 app.post('/api/admin/cronograma-plans/from-month', authMiddleware, adminMiddleware, async (req, res) => {

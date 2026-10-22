@@ -4,7 +4,30 @@
 > commit por commit está en `git log --oneline`. Esto captura decisiones, umbrales de
 > negocio y pendientes que NO se ven leyendo el código.
 >
-> **Última actualización: 2026-10-20**
+> **Última actualización: 2026-10-22**
+
+## Sesión 2026-10-22
+
+### 813. 📲 Plan de RETENCIÓN para clientes con la app (8 por mes, bonos de 4 h) + impulso por día en el Cronograma — SW v563
+**Pedido (owner):** "plan estratégico de retención sobre el cronograma: clientes que instalan la app y aceptan notificaciones, repartidas
+en todo el mes, 8 de tope por cliente; un 50%, un 100%, un 20%, respetando los topes; que al entrar ya tengan el bono vigente en el botón
+de cargas, siempre por 4 h; detallar en el cronograma qué sale cada día y el lote; avisos tipo 'te extrañamos' si no entran hace días; y
+abajo de cada día cuánto impulsó la venta en depósitos o gente".
+- **Filtros nuevos de audiencia** (cualquier lote, cronograma y planes): `appOnly` = sólo app instalada con token push activo (canal 📱,
+  permiso no denegado) y `monthlyCap` = saca a quien ya recibió N lotes en el mes ART (cuenta TODOS los lotes, también los manuales).
+  `_resolveNotifBatchAudience` es ahora un wrapper de `_resolveNotifBatchAudienceBase`. En el formulario del lote: checkbox + "Tope por
+  cliente en el mes"; la vista previa dice cuántos quedaron afuera.
+- **Plantilla** `POST /api/admin/cronograma-plans/retention-template` (botón "📲 Armar plan de retención (app)" en Cronograma → Planes):
+  crea/actualiza el plan "Retención app · 8 por mes" y ofrece aplicarlo al mes. 8 envíos: día 1 +20% todos · día 4 aviso "te extrañamos"
+  (sin entrar 3–10 d) · día 8 +50% · día 12 aviso reembolso · día 15 +100% (quincena) · día 19 +50% a inactivos 7–30 d · día 23 +20% ·
+  día 28 aviso a inactivos 15+ d. Bonos = lote 'window', % AUTOMÁTICO en UNA carga, 4 h, con el tope global de bonos y el rollover
+  global. Inactivo = sin login (lastLogin). Los textos no nombran la ruleta (guard). Todo editable después (quitar envíos, editar textos).
+- **App:** el bono vigente se ve ADENTRO de CARGAR AHORA y arriba de la tarjeta de carga automática (`.promo-live`, js/promobonus.js) con
+  cuenta regresiva; `/api/promo-bonus/mine` devuelve `applyMode`. El cartel verde ya no dice "pedíselo al agente" si es automático.
+- **Impulso:** `_batchImpact` suma la LÍNEA BASE (`before48h`: lo que esos mismos clientes cargaron en las 48 h ANTES del aviso);
+  `cronograma-report` expone `before48h`, `lift48h` (= $48 h después − $48 h antes) y `liftUsers48h` por lote/día/semana. En el calendario
+  cada día con envíos muestra "📈 clientes · $ (±impulso)"; al tocar el día, debajo de cada lote: avisados, recibieron, cargaron, $ vs antes,
+  7 días, usaron el bono, costo, recuperados, y un total "Cuánto impulsó la venta este día". La tabla "Día a día" suma "$ 48 h antes" e "Impulso".
 
 ## Sesión 2026-10-18
 

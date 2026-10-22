@@ -2294,6 +2294,12 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                             <label style="margin-right:1rem;font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="all" onchange="updateGiftBatchAudienceUI()"> 🌍 Lote completo (todos)</label>
                             <label style="font-size:.85rem;cursor:pointer"><input type="radio" name="giftBatchAudience" value="public" onchange="updateGiftBatchAudienceUI()"> 📣 Código PÚBLICO (para Telegram/redes)</label>
                         </div>
+                        <!-- #813: filtros que se suman a cualquier audiencia (no aplican al código público) -->
+                        <div id="giftBatchAppFilters" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .6rem;font-size:.82rem">
+                            <label style="cursor:pointer"><input type="checkbox" id="giftBatchAppOnly"> 📱 Sólo clientes con la APP instalada y notificaciones aceptadas</label>
+                            <label>Tope por cliente en el mes: <input type="number" id="giftBatchMonthlyCap" class="form-input" min="1" max="60" placeholder="sin tope" style="width:90px;display:inline-block"></label>
+                            <span style="color:#888">(saca a quien ya recibió esa cantidad de lotes este mes)</span>
+                        </div>
                         <div id="giftBatchListWrap">
                             <textarea id="giftBatchUsers" class="form-input" rows="4" placeholder="gxjuan123&#10;gxana456&#10;gxpedro789 (separados por coma, espacio o enter)" style="resize:vertical"></textarea>
                         </div>
@@ -2664,7 +2670,10 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 <div class="card" style="margin-bottom:1rem">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
                         <h3 style="margin:0;font-size:1rem">🧭 Planes de estrategia (mes completo, reutilizables)</h3>
+<div style="display:flex;gap:.4rem;flex-wrap:wrap">
+                        <button class="btn btn-primary" onclick="cronRetentionPlan()" title="8 envíos en el mes, sólo app con notificaciones, bonos automáticos por 4 h">📲 Armar plan de retención (app)</button>
                         <button class="btn btn-secondary" onclick="cronSaveMonthAsPlan()">💾 Guardar este mes como plan</button>
+                        </div>
                     </div>
                     <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Un plan guarda las campañas del mes por día y hora (día 1 → bono a inactivos, día 5 → fichas, finde → código…). Lo aplicás a cualquier mes y queda todo programado; abajo, el comparativo te dice cómo rindió cada día, cada semana y cada plan. El envío manual de lotes y la programación campaña por campaña siguen igual.</div>
                     <div id="cronPlans" style="font-size:.85rem">Cargando…</div>
@@ -2708,6 +2717,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     .cron-day.off{opacity:.35;cursor:default}
                     .cron-day.today{border-color:#d4af37;box-shadow:0 0 0 1px #d4af37 inset}
                     .cron-day .n{color:#cbd5e1;font-weight:600;margin-bottom:2px}
+                    .cron-imp{display:block;margin-top:2px;font-size:.66rem;color:var(--p-text,#e5e7eb);background:var(--p-green-soft,rgba(34,197,94,0.12));border-radius:4px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* #813 impulso del día */
                     .cron-chip{display:block;border-radius:4px;padding:1px 4px;margin-bottom:2px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.7rem}
                     .cron-row{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem .4rem;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap}
                     .cron-row .acts{display:flex;gap:.3rem;flex-wrap:wrap;margin-left:auto}

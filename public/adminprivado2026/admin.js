@@ -12936,6 +12936,7 @@ function updateGiftBatchAudienceUI() {
     if (inacW) inacW.style.display = (aud === 'inactive' && kind !== 'depositors') ? 'flex' : 'none';
     if (allN) allN.style.display = aud === 'all' ? '' : 'none';
     if (pubW) pubW.style.display = aud === 'public' ? '' : 'none';
+    const appF = document.getElementById('giftBatchAppFilters'); if (appF) appF.style.display = aud === 'public' ? 'none' : 'flex'; // #813
     try { updateGiftBatchScheduleUI(); } catch (_) {} // #190 tandas no aplican a código público
     // Código público: siempre es "con código" (no hay a quién notificar) →
     // forzar el modo y ocultar la fila de modo para no confundir.
@@ -12951,7 +12952,16 @@ function updateGiftBatchAudienceUI() {
 
 // Arma la parte de AUDIENCIA del body (compartida por preview y envío).
 // Devuelve null si falta algo (ya avisa con toast).
+// #813: + filtros "sólo app con notificaciones" y "tope por cliente en el mes" (no aplican al código público).
 function _giftBatchAudiencePayload() {
+    const a = _giftBatchAudiencePayloadBase();
+    if (!a || a.audienceType === 'public') return a;
+    if ((document.getElementById('giftBatchAppOnly') || {}).checked) a.appOnly = true;
+    const cap = ((document.getElementById('giftBatchMonthlyCap') || {}).value || '').trim();
+    if (cap !== '') a.monthlyCap = Number(cap);
+    return a;
+}
+function _giftBatchAudiencePayloadBase() {
     const aud = (document.querySelector('input[name="giftBatchAudience"]:checked') || {}).value || 'list';
     if (aud === 'list') {
         const usernames = _giftBatchUsernames();
@@ -13022,6 +13032,7 @@ async function _runGiftBatchPreview(renderInBox) {
             let html = '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:.75rem;font-size:.82rem;">' +
                 '<div style="margin-bottom:.5rem;color:#ccc;"><b>' + t.ok + '</b> destinatarios — ' +
                 '📱 ' + t.app + ' con app · 🌐 ' + t.browser + ' navegador · 🔕 <b style="color:#ff9d76;">' + t.none + ' SIN notis</b> (solo les llega el mensaje al chat)</div>' +
+                (j.filtered && (j.filtered.noApp || j.filtered.capped) ? '<div style="margin-bottom:.5rem;color:#a5b4fc;">Quedaron afuera: ' + (j.filtered.noApp ? j.filtered.noApp + ' sin la app / sin notificaciones' : '') + (j.filtered.noApp && j.filtered.capped ? ' · ' : '') + (j.filtered.capped ? j.filtered.capped + ' que ya llegaron al tope del mes' : '') + '</div>' : '') +
                 '<div style="display:flex;flex-wrap:wrap;gap:.35rem;">' +
                 (j.users || []).map((u) => '<span style="background:rgba(0,0,0,0.3);border-radius:6px;padding:2px 8px;">' + escapeHtml(u.username) + ' ' + _giftBatchChannelChip(u.channel) + '</span>').join('') +
                 '</div>';
@@ -15363,10 +15374,11 @@ function _cronFmt(d) { const k = _cronArtKey(d); return k.slice(8, 10) + '/' + k
 function _cronBadge(st) { const s = CRON_STATUS[st] || { t: st, c: '#888' }; return '<span style="background:' + s.c + ';color:#fff;border-radius:4px;padding:1px 6px;font-size:.72rem;font-weight:600">' + s.t + '</span>'; }
 function _cronGiftTxt(g) {
     if (!g) return '';
-    if (g.giftType === 'none') return '📢 sin regalo (aviso)' + (g.mode === 'code' ? '' : ' · por tiempo ' + g.validHours + 'h');
+    if (g.giftType === 'none') return '📢 sin regalo (aviso)' + _cronAppTxt(g);
     const base = g.giftType === 'percent' ? ('+' + g.amount + '%' + (g.applyMode === 'auto' ? ' auto' : ' c/agente') + (g.capARS != null ? (Number(g.capARS) === 0 ? ' sin tope' : ' tope $' + Number(g.capARS).toLocaleString('es-AR')) : '')) : ('$' + Number(g.amount || 0).toLocaleString('es-AR') + ' fichas');
-    return base + ' · ' + (g.mode === 'code' ? 'código' : 'por tiempo ' + g.validHours + 'h');
+    return base + ' · ' + (g.mode === 'code' ? 'código' : 'por tiempo ' + g.validHours + 'h') + _cronAppTxt(g);
 }
+function _cronAppTxt(g) { return (g && g.appOnly ? ' · 📱 sólo app' : '') + (g && g.monthlyCap ? ' · tope ' + g.monthlyCap + '/mes' : ''); } // #813
 
 // ── Formulario de lote: programar / tandas ──
 function updateGiftBatchScheduleUI() {
@@ -15537,10 +15549,42 @@ function _cronRenderCalendar() {
         });
         if (items.length > 4) chips += '<span style="color:#a5b4fc">+' + (items.length - 4) + ' más</span>';
         // #297: hoja del mes — tocar el día abre el panel; "+" lleva directo a programar algo ese día.
-        html += '<div class="cron-day' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (items.length ? ' has-items' : '') + (_cronDayFilter === k ? ' picked' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-size:.7rem">(' + items.length + ')</span>' : '') + '</div>' + chips +
+        html += '<div class="cron-day' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (items.length ? ' has-items' : '') + (_cronDayFilter === k ? ' picked' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-size:.7rem">(' + items.length + ')</span>' : '') + '</div>' + chips + _cronDayImpactChip(k) +
             (!isPast ? '<button type="button" class="cron-add" title="Programar algo el ' + k.slice(8, 10) + '/' + k.slice(5, 7) + '" onclick="event.stopPropagation();cronPlanDay(\'' + k + '\',\'schedule\')">+</button>' : '') + '</div>';
     }
     el.innerHTML = html;
+}
+// #813: IMPULSO de cada notificación (sale de /cronograma-report): cargas reales de los avisados en las 48 h siguientes vs las 48 h
+// previas (línea base), clientes que cargaron, 7 días y recuperados. Se pinta bajo cada lote del día y como chip en el calendario.
+let _cronReport = null;
+function _cronRep() { return _cronReport && _cronReport.month === _cronMonth ? _cronReport : null; }
+function _cronLiftTxt(n) { const v = Math.round(Number(n) || 0); return (v >= 0 ? '+' : '−') + fmtARS(Math.abs(v)); }
+function _cronDayImpactChip(k) {
+    const j = _cronRep(); if (!j) return '';
+    const d = (j.days || []).find((x) => x.day === k); if (!d || !d.recipients) return '';
+    return '<div class="cron-imp" title="Avisados que cargaron en 48 h · $ cargado en 48 h (impulso vs 48 h antes)">📈 ' + Number(d.depositors48h || 0).toLocaleString('es-AR') + ' · ' + fmtARS(d.deposits48h) + ' <span style="color:' + ((d.lift48h || 0) >= 0 ? '#22c55e' : '#f87171') + '">(' + _cronLiftTxt(d.lift48h) + ')</span></div>';
+}
+function _cronBatchImpactHtml(batchId) {
+    const j = _cronRep(); if (!j) return '';
+    const r = (j.campaigns || []).find((c) => c.batchId === batchId); if (!r) return '';
+    const num = (n) => Number(n || 0).toLocaleString('es-AR');
+    const fresh = Date.now() - new Date(r.sentAt).getTime() < 48 * 3600 * 1000;
+    return '<span style="display:block;flex-basis:100%;margin-top:2px;font-size:.76rem;color:#e5e7eb;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;padding:3px 6px;border-radius:4px">' +
+        '📈 <b>Impulso:</b> ' + num(r.recipients) + ' avisados (' + num(r.delivered) + ' recibieron) → <b>' + num(r.depositors48h) + ' cargaron</b> en 48 h (' + (r.conv || 0) + '%) · ' +
+        '<b>' + fmtARS(r.deposits48h) + '</b> cargado vs ' + fmtARS(r.before48h) + ' en las 48 h previas = <b style="color:' + ((r.lift48h || 0) >= 0 ? '#22c55e' : '#f87171') + '">' + _cronLiftTxt(r.lift48h) + '</b>' +
+        ' · 7 días: ' + fmtARS(r.deposits7d) + ' (' + num(r.repeaters) + ' siguieron cargando)' +
+        (r.giftType === 'percent' ? ' · usaron el bono: ' + num(r.bonusUsed) + ' · costo ' + fmtARS(r.cost) : '') +
+        (r.recoveredTargets ? ' · recuperados: ' + num(r.recovered48h) + ' de ' + num(r.recoveredTargets) : '') +
+        (fresh ? ' <i style="color:#f59e0b">(parcial: todavía no pasaron 48 h)</i>' : '') + '</span>';
+}
+function _cronDayImpactHtml(k) {
+    const j = _cronRep(); if (!j) return '';
+    const d = (j.days || []).find((x) => x.day === k); if (!d || !d.recipients) return '';
+    const num = (n) => Number(n || 0).toLocaleString('es-AR');
+    return '<div style="margin-top:.5rem;padding:.5rem .6rem;border-radius:6px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.35);font-size:.82rem">' +
+        '<b>📈 Cuánto impulsó la venta este día</b><br>' + num(d.campaigns) + ' envío(s) · ' + num(d.recipients) + ' avisados → <b>' + num(d.depositors48h) + ' clientes cargaron</b> en 48 h (' + (d.conv || 0) + '%; antes del aviso cargaban ' + num(d.before48hUsers) + ') · ' +
+        '<b>' + fmtARS(d.deposits48h) + '</b> en 48 h vs ' + fmtARS(d.before48h) + ' las 48 h previas = <b style="color:' + ((d.lift48h || 0) >= 0 ? '#22c55e' : '#f87171') + '">' + _cronLiftTxt(d.lift48h) + '</b> · ' +
+        '7 días: ' + fmtARS(d.deposits7d) + ' · costo en bonos ' + fmtARS(d.cost) + (d.roi7d != null ? ' (x' + d.roi7d + ')' : '') + '</div>';
 }
 // #297: panel del día elegido — lo que hay ese día + programar/agregar al plan ese día.
 function _cronRenderDayPanel() {
@@ -15560,9 +15604,11 @@ function _cronRenderDayPanel() {
         '<button class="btn btn-secondary" onclick="cronPickDay(\'' + k + '\')">Cerrar</button></div></div>' +
         (items.length ? '<div style="margin-top:.5rem;font-size:.82rem">' + items.map(({ c, p }) => {
             const st = c.cancelled ? 'cancelled' : (c.paused && p.status === 'scheduled' ? 'paused' : p.status);
-            return '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>' + _cronBadge(st) + ' <b>' + _cronArtHM(p.runAt) + '</b> ' + escHtml(c.name || '') + (c.partsTotal > 1 ? ' <span style="color:#a5b4fc">(lote ' + (p.idx + 1) + '/' + c.partsTotal + ')</span>' : '') + ' · <span style="color:#8fd3a8">' + escHtml(_cronGiftTxt(c.gift)) + '</span> · ' + escHtml(c.audienceLabel || '') + (c.estimatedCount != null ? ' ~' + Number(c.estimatedCount).toLocaleString('es-AR') : '') + '</span>' +
+            return '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:.2rem .5rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>' + _cronBadge(st) + ' <b>' + _cronArtHM(p.runAt) + '</b> ' + escHtml(c.name || '') + (c.partsTotal > 1 ? ' <span style="color:#a5b4fc">(lote ' + (p.idx + 1) + '/' + c.partsTotal + ')</span>' : '') + ' · <span style="color:#8fd3a8">' + escHtml(_cronGiftTxt(c.gift)) + '</span> · ' + escHtml(c.audienceLabel || '') + (c.estimatedCount != null ? ' ~' + Number(c.estimatedCount).toLocaleString('es-AR') : '') + '</span>' +
+                '<span style="display:block;flex-basis:100%;color:#cbd5e1;font-size:.76rem;white-space:pre-wrap">' + escHtml(((c.gift.title ? c.gift.title + ': ' : '') + (c.gift.message || '')).slice(0, 260)) + '</span>' +
+                (p.batchId ? _cronBatchImpactHtml(p.batchId) : '') +
                 (p.batchId ? '<a href="#" onclick="cronGoBatch(\'' + p.batchId + '\');return false" style="color:#a5b4fc;white-space:nowrap">ver lote</a>' : (!c.cancelled ? '<a href="#" onclick="cronOpenEdit(\'' + c.id + '\');return false" style="color:#a5b4fc;white-space:nowrap">editar</a>' : '')) + '</div>';
-        }).join('') + '</div>' : '<div style="margin-top:.4rem;color:#888;font-size:.82rem">Nada programado este día todavía.</div>');
+        }).join('') + '</div>' : '<div style="margin-top:.4rem;color:#888;font-size:.82rem">Nada programado este día todavía.</div>') + _cronDayImpactHtml(k);
     el.style.display = '';
 }
 // #297: desde el calendario al formulario del lote, con la fecha ya puesta ("qué quiero configurar ese día").
@@ -15711,6 +15757,7 @@ async function loadCronReport() {
         const r = await authFetch('/api/admin/cronograma-report?month=' + (_cronMonth || ''));
         const j = await r.json();
         if (!r.ok) throw new Error(j.error || 'error');
+        _cronReport = j; try { _cronRenderCalendar(); _cronRenderDayPanel(); } catch (_) {} // #813 impulso en el calendario
         const pct = (n) => (n == null ? '—' : (Number(n) || 0).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + '%');
         const num = (n) => Number(n || 0).toLocaleString('es-AR');
         const x = (n) => (n != null ? 'x' + n : '—');
@@ -15728,9 +15775,9 @@ async function loadCronReport() {
         }
         // #293: día a día.
         if ((j.days || []).length) {
-            html += '<details style="margin-top:.8rem" open><summary style="cursor:pointer;color:#a5b4fc;font-size:.85rem">📅 Día a día: cómo rindió la estrategia cada día (' + j.days.length + ' días con envíos)</summary><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.4rem"><thead><tr><th>Día</th><th>Campañas</th><th>Avisados</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ 48 h</th><th>$ 7 días</th><th>Siguieron</th><th>Recuperados</th><th>Costo</th></tr></thead><tbody>';
+            html += '<details style="margin-top:.8rem" open><summary style="cursor:pointer;color:#a5b4fc;font-size:.85rem">📅 Día a día: cómo rindió la estrategia cada día (' + j.days.length + ' días con envíos)</summary><div style="overflow:auto"><table class="cron-tbl" style="margin-top:.4rem"><thead><tr><th>Día</th><th>Campañas</th><th>Avisados</th><th>Cargaron 48 h</th><th>Conv.</th><th>$ 48 h</th><th>$ 48 h antes</th><th>Impulso</th><th>$ 7 días</th><th>Siguieron</th><th>Recuperados</th><th>Costo</th></tr></thead><tbody>';
             const bestDay = j.days.filter((d) => d.recipients >= 30).sort((a, b) => b.conv - a.conv)[0];
-            for (const d of j.days) html += '<tr class="' + (bestDay && bestDay.day === d.day ? 'cron-best' : '') + '"><td>' + d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + '<div style="color:#888;font-size:.7rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml((d.names || []).join(' · ')) + '</div></td><td>' + num(d.campaigns) + '</td><td>' + num(d.recipients) + '</td><td>' + num(d.depositors48h) + '</td><td><strong>' + pct(d.conv) + '</strong></td><td>' + fmtARS(d.deposits48h) + '</td><td>' + fmtARS(d.deposits7d) + '</td><td>' + num(d.repeaters) + '</td><td>' + num(d.recovered48h) + ' de ' + num(d.recoveredTargets) + '</td><td>' + fmtARS(d.cost) + '</td></tr>';
+            for (const d of j.days) html += '<tr class="' + (bestDay && bestDay.day === d.day ? 'cron-best' : '') + '"><td>' + d.day.slice(8, 10) + '/' + d.day.slice(5, 7) + '<div style="color:#888;font-size:.7rem;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml((d.names || []).join(' · ')) + '</div></td><td>' + num(d.campaigns) + '</td><td>' + num(d.recipients) + '</td><td>' + num(d.depositors48h) + '</td><td><strong>' + pct(d.conv) + '</strong></td><td>' + fmtARS(d.deposits48h) + '</td><td>' + fmtARS(d.before48h) + '</td><td style="color:' + ((d.lift48h || 0) >= 0 ? '#22c55e' : '#f87171') + ';font-weight:700">' + _cronLiftTxt(d.lift48h) + '</td><td>' + fmtARS(d.deposits7d) + '</td><td>' + num(d.repeaters) + '</td><td>' + num(d.recovered48h) + ' de ' + num(d.recoveredTargets) + '</td><td>' + fmtARS(d.cost) + '</td></tr>';
             html += '</tbody></table></div></details>';
         }
         html += '<div style="margin-top:.8rem"><strong>🧭 Resumen y recomendaciones</strong><ul style="margin:.3rem 0 0 1rem;padding:0;font-size:.82rem;line-height:1.5">' + (j.recommendations || []).map((xx) => '<li>' + escHtml(xx.text) + '</li>').join('') + '</ul></div>';
@@ -15778,9 +15825,34 @@ function cronPlanToggleCal(id) {
         const items = (byDay[d] || []).sort((a, b) => String(a.time).localeCompare(String(b.time)));
         html += '<div class="cron-day" style="min-height:64px;cursor:default"><div class="n">' + d + '</div>' + items.map((it) => '<span class="cron-chip" style="background:#4f46e5" title="' + escHtml(it.name || '') + '">' + escHtml(it.time) + ' ' + gTxt(it) + (it.parts > 1 ? ' ×' + it.parts : '') + '</span>').join('') + '</div>';
     }
-    html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' lotes c/' + Math.round((it.gapHours || 0) * 60) + ' min' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
+    html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' lotes c/' + Math.round((it.gapHours || 0) * 60) + ' min' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + _planItemDetail(it.payload) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
     box.innerHTML = html; box.style.display = '';
 }
+// #813: detalle de cada envío del plan — a quién, cuánto dura el bono y qué dice la notificación.
+function _planItemDetail(pl) {
+    pl = pl || {};
+    const aud = pl.audienceType === 'all' ? '🌍 todos' : pl.audienceType === 'inactive' ? ('😴 sin entrar ' + (pl.audienceDays || '?') + (pl.audienceDaysMax ? '–' + pl.audienceDaysMax : '+') + ' días') : pl.audienceType === 'depositors' ? '💸 cargadores' : pl.audienceType === 'public' ? '📣 público' : '📋 lista';
+    const bono = pl.giftType === 'percent' ? ' · bono vigente ' + (pl.validHours || '?') + ' h en el botón de carga (1 carga, con tope)' : '';
+    return '<span style="display:block;color:#8fd3a8;font-size:.74rem">' + aud + _cronAppTxt(pl) + bono + '</span>' +
+        (pl.message ? '<span style="display:block;color:#cbd5e1;font-size:.74rem;white-space:pre-wrap">' + escHtml(((pl.title ? pl.title + ': ' : '') + pl.message).slice(0, 240)) + '</span>' : '');
+}
+// #813: plan de RETENCIÓN para clientes con la app: 8 envíos en el mes (20/50/100/50 inactivos/20 + 3 avisos), bonos automáticos por
+// 4 h, máx 8 por cliente. Lo arma el servidor (mismo nombre = se actualiza) y se ofrece aplicarlo al mes que estás mirando.
+async function cronRetentionPlan() {
+    if (!confirm('Se arma (o actualiza) el plan "Retención app · 8 por mes":\n\n• Sólo clientes con la app instalada y notificaciones aceptadas\n• Máximo 8 notificaciones por cliente en el mes\n• Bonos de +20%, +50%, +100% y +50% a inactivos, automáticos en UNA carga, vigentes 4 h (con el tope y el rollover de siempre)\n• 3 avisos de retención (te extrañamos / reembolso)\n\nDespués lo podés editar o quitar envíos. ¿Seguimos?')) return;
+    try {
+        const r = await authFetch('/api/admin/cronograma-plans/retention-template', { method: 'POST', body: JSON.stringify({ hours: 4, cap: 8 }) });
+        const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo armar el plan', 'error'); return; }
+        showToast('Plan "' + j.plan.name + '" listo (' + j.plan.itemsCount + ' envíos)', 'success');
+        await loadCronPlans();
+        try { cronPlanToggleCal(j.plan.id); } catch (_) {}
+        const m = _cronMonth || _cronArtKey(new Date()).slice(0, 7);
+        const inp = document.getElementById('cronPlanMonth_' + j.plan.id); if (inp) inp.value = m;
+        cronApplyPlan(j.plan.id); // pide su propia confirmación (mes elegido, días pasados se saltean)
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.cronRetentionPlan = cronRetentionPlan;
 async function cronPlanRemoveItem(id, idx) {
     if (!confirm('¿Quitar esta campaña del plan? (las ya programadas en el calendario no se tocan)')) return;
     try {

@@ -34,15 +34,29 @@
         return m + ':' + String(s).padStart(2, '0');
     }
 
+    // #813: el bono vigente también se ve ADENTRO de los botones de carga (CARGAR AHORA del menú fácil y la tarjeta de
+    // carga automática): elementos .promo-live. Con applyMode 'auto' se suma solo al acreditar la carga.
+    function _paintLive(percent, left, auto) {
+        const els = document.querySelectorAll('.promo-live');
+        for (let i = 0; i < els.length; i++) {
+            const el = els[i];
+            if (!(percent > 0) || left <= 0) { el.hidden = true; el.textContent = ''; continue; }
+            el.textContent = '🎁 +' + percent + '% EXTRA ' + (auto ? 'activo' : 'pedíselo al agente') + ' · vence en ' + _fmtLeft(left);
+            el.hidden = false;
+        }
+    }
+
     function _render() {
         const card = document.getElementById('promoBonusCard');
-        if (!card) return;
         if (_tickId) { clearInterval(_tickId); _tickId = null; }
-        if (!_bonus) { card.style.display = 'none'; card.innerHTML = ''; return; }
+        if (!_bonus) { _paintLive(0, 0); if (card) { card.style.display = 'none'; card.innerHTML = ''; } return; }
+        if (!card) return;
         const exp = new Date(_bonus.expiresAt).getTime();
         const percent = Number(_bonus.percent) || 0;
+        const auto = _bonus.applyMode !== 'agent';
         const paint = function () {
             const left = exp - Date.now();
+            _paintLive(percent, left, auto);
             if (left <= 0) {
                 _bonus = null;
                 card.style.display = 'none';
@@ -55,7 +69,7 @@
                 + '<span style="font-size:26px;">🎁</span>'
                 + '<div style="flex:1;min-width:0;">'
                 + '<div style="color:#ffd700;font-weight:900;font-size:14px;">¡Bonificación vigente: ' + percent + '% en tu carga!</div>'
-                + '<div style="color:#fff;font-size:11.5px;margin-top:2px;">Cargá ahora y pedí tu bono al agente. Vence en <strong>' + _fmtLeft(left) + '</strong>.</div>'
+                + '<div style="color:#fff;font-size:11.5px;margin-top:2px;">' + (auto ? 'Se suma SOLO en tu próxima carga (con el tope de bonos).' : 'Cargá ahora y pedí tu bono al agente.') + ' Vence en <strong>' + _fmtLeft(left) + '</strong>.</div>'
                 + '</div>'
                 + '</div>'
                 + '</div>';
