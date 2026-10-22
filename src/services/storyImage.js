@@ -257,12 +257,12 @@ function renderPremium(spec) {
     if (sub) P.push(`<text x="240" y="${by + 66}" font-family="${FONT}" font-size="26" font-weight="600" fill="${MUT2}"${fit2}>${esc(sub)}</text>`);
     by += 90;
   }
-  const cta = clean(spec.cta || spec.pill).toUpperCase();
-  const ctaY = Math.min(PY1 - 150, Math.max(by + 14, 1430));
-  if (cta) { const t = cta + '  ›'; const tw = Math.min(760, estW(t, 34, true)); const h = 92;
-    P.push(`<rect x="${(W - tw) / 2 - 60}" y="${ctaY}" width="${tw + 120}" height="${h}" rx="46" fill="${GOLD}"/>` + ctext(ctaY + 58, t, 34, DARK, { maxw: 740 })); }
+  // #853 (owner): "ese botón dorado no va, va el de abajo rojo": la foto NO lleva botón (no se puede tocar y confundía); el botón real es
+  // el rojo de la historia (linkLabel). En su lugar, una flecha suave que invita a tocar abajo.
+  const ctaY = Math.min(PY1 - 150, Math.max(by + 20, 1440));
+  P.push(ctext(ctaY + 50, 'Tocá el botón de abajo  ↓', 30, GOLD2, { maxw: 760, weight: 800 }));
   const note = clean(spec.note);
-  if (note) P.push(ctext(ctaY + 128, note, 23, MUT2, { maxw: 860, bold: false, weight: 600 }));
+  if (note) P.push(ctext(ctaY + 110, note, 23, MUT2, { maxw: 860, bold: false, weight: 600 }));
   P.push(ctext(1672, 'Gracias por confiar en PICA ROJA', 28, MUTED));
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${P.join('')}</svg>`;
 }

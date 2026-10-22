@@ -24894,7 +24894,8 @@ const _STORY_IMAGES_ON = true; // #850: también Render (sirve sus propias fotos
 // con URL ABSOLUTA a Render (producción vieja no tiene /auto.svg pero la app muestra imágenes https). Producción usa la ruta relativa y, ya
 // con este código, pasa a servir ella las que hubiera publicado Render (_storyAutoBackfillImages).
 const _STORY_IMG_BASE = process.env.RENDER === 'true' ? String(process.env.RENDER_EXTERNAL_URL || 'https://fabrioctubre.onrender.com').replace(/\/$/, '') : '';
-const _storyImgUrl = (id) => `${_STORY_IMG_BASE}/api/stories/${id}/auto.svg`;
+const STORY_IMG_VER = '853'; // #853: subirlo cuando cambia el dibujo ⇒ los teléfonos piden la foto nueva (la vieja queda en caché 1 día)
+const _storyImgUrl = (id) => `${_STORY_IMG_BASE}/api/stories/${id}/auto.svg?v=${STORY_IMG_VER}`;
 async function _storyAutoImgSpec(it) {
   if (!_STORY_IMAGES_ON || !it || !it.img) return null;
   const spec = JSON.parse(JSON.stringify(it.img));
@@ -24917,7 +24918,11 @@ async function _storyAutoBackfillImages(today, plan) {
   if (!_STORY_IMAGES_ON) return;
   try {
     // #850: en PRODUCCIÓN, las fotos que publicó Render (URL absoluta a Render) pasan a servirse desde acá.
-    if (!_STORY_IMG_BASE) { try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /^https:\/\/[^/]+\/api\/stories\/[^/]+\/auto\.svg$/ }, [{ $set: { mediaUrl: { $concat: ['/api/stories/', '$id', '/auto.svg'] } } }]); } catch (_) {} }
+    // #850: en PRODUCCIÓN, las fotos que publicó Render (URL absoluta a Render) pasan a servirse desde acá.
+    if (!_STORY_IMG_BASE) { try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /^https:\/\/[^/]+\/api\/stories\/[^/]+\/auto\.svg/ }, [{ $set: { mediaUrl: { $concat: ['/api/stories/', '$id', '/auto.svg?v=' + STORY_IMG_VER] } } }]); } catch (_) {} }
+    // #853: además, toda historia automática con foto queda apuntando a la versión vigente del dibujo (?v=STORY_IMG_VER).
+    try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /\/api\/stories\/[^/]+\/auto\.svg/, $nor: [{ mediaUrl: new RegExp('auto\\.svg\\?v=' + STORY_IMG_VER + '$') }] },
+      [{ $set: { mediaUrl: { $concat: [_STORY_IMG_BASE, '/api/stories/', '$id', '/auto.svg?v=' + STORY_IMG_VER] } } }]); } catch (_) {}
     const olds = await Story.find({ autoKey: /^sa-/, isActive: true, expiresAt: { $gt: new Date() }, mediaType: 'none', autoKind: { $ne: 'borrada' } }).select('id title autoKey').lean();
     if (!olds.length) return;
     const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));

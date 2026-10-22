@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 853. 🔘 Historias sin botón dorado en la foto + revisión de TODOS los botones
+**Pedido (owner, captura):** "ese APOSTÁ AHORA dorado en todas las historias no va, va el de abajo rojo; fijate que funcionen todos" +
+"revisá que todos los botones de todos lados funcionen: instalar app, historias, etc." + cuotas de Digitain con un usuario de prueba.
+- `renderPremium`: sin botón en la foto (no se podía tocar y la gente tocaba ahí); en su lugar "Tocá el botón de abajo ↓". `STORY_IMG_VER`
+  ('853') en la URL de la foto: el motor actualiza las historias publicadas a `?v=853` ⇒ los teléfonos piden la foto nueva (caché de 1 día).
+- Revisión automática (jsdom con la PWA real): 384 handlers / 356 llamadas — todas apuntan a funciones existentes (los 3 "faltantes" del
+  test están definidos en scripts inline de index.html o protegidos con `&&`). Los 14 destinos de los botones de historias existen
+  (instalar, referidos, cargar, ruleta, reembolso, verificar, soporte, misiones, deportes, juegos, retirar, vip, play, instalar barra).
+- Cuotas: NO se implementa entrar con la cuenta de un jugador a Digitain para leer cuotas (credencial compartida en el chat, API privada de un
+  tercero, frágil). Alternativa propuesta al owner: pedir a 1girox/Digitain un feed o cuotas públicas (ESPN trae `odds` a veces, no coinciden).
+
 ### 852. 📇 Info estilo PINTEREST premium: grilla de tarjetas minimizadas con "Ver más" — SW v579
 **Pedido (owner):** "todo lo que es Info, seguir el estilo de Pinterest: ver más y todo minimizado con sus títulos y recuadros, armalo
 premium porque queda muy cargado". `_infoCardsWrap` (home.js, al abrir Info vía `infoFoldInit`) agrupa cada `p.im-sec` + su "Ver más" en
