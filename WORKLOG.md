@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-18
 
+### 802. 👤 Usuarios fáciles en la landing: pica + nombre + 2 números (3 si se repite)
+**Pedido (owner):** "los usuarios que se registran desde la landing, que sea fácil: pica y su nombre, terminación 2 números o 3 si se
+repite". `_deriveUniqueUsername` (lo usan la landing `/l/:code`, `/ingreso` y la entrada rápida vía `_landingSignupHandler`): primer
+nombre sin tildes/símbolos (máx 10 letras) con prefijo `pica` + 2 dígitos al azar; si están tomados prueba 3 dígitos, y como red de
+seguridad 4-5. Ej. "Juan Pérez" → `picajuan27`. Usuarios existentes no cambian.
+
 ### 801. 🖼️ Banner "¡Bienvenidos a 1girox · todo en un mismo lugar"
 **Pedido (owner, captura del banner "Actualizamos la página" de 1girox):** "hacé una foto tipo así de bienvenidos de 1girox, todo en
 un mismo lugar, y pasame el link". Generado con PIL (1200×420, verde con rombos, ruleta, fichas, texto dorado, pastilla PICA ROJA) en

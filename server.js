@@ -4580,16 +4580,29 @@ function _sanitizeUsernameBase(name) {
   if (base.length < 3) base = 'gx' + base;           // nombres muy cortos / vacíos
   return base;
 }
+// #802 (owner): "los usuarios que se registran desde la landing, que sea fácil: pica + su nombre + 2 números, o 3 si se repite".
+// Ej.: "Juan Pérez" → picajuan27 (si está tomado, picajuan418). Sólo el PRIMER nombre, sin tildes ni símbolos, hasta 10 letras.
+function _picaUsernameBase(name) {
+  const first = String(name || '').trim().split(/\s+/)[0] || '';
+  let b = first.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (b.length > 10) b = b.slice(0, 10);
+  return 'pica' + b;
+}
 async function _deriveUniqueUsername(name) {
-  const base = _sanitizeUsernameBase(name);
-  for (let i = 0; i < 12; i++) {
-    const suffix = String(crypto.randomInt(100, 999999)); // 3-6 dígitos
+  const base = _picaUsernameBase(name);
+  const tries = [];
+  for (let i = 0; i < 25; i++) tries.push(String(crypto.randomInt(10, 100)));      // 2 números
+  for (let i = 0; i < 40; i++) tries.push(String(crypto.randomInt(100, 1000)));    // 3 números si se repite
+  for (let i = 0; i < 12; i++) tries.push(String(crypto.randomInt(1000, 100000))); // red de seguridad (nombres muy comunes)
+  const seen = new Set();
+  for (const suffix of tries) {
     const candidate = (base + suffix).slice(0, 18);
+    if (seen.has(candidate)) continue; seen.add(candidate);
     if (!girox.validateUsername(candidate).valid) continue;
     const taken = await findUserByUsernameCI(candidate, { lean: true });
     if (!taken) return candidate;
   }
-  return null; // improbable: 12 intentos con sufijo aleatorio
+  return null;
 }
 
 // #421: handler nombrado para poder reutilizarlo desde la ENTRADA RÁPIDA (/api/auth/quick-entry) con la campaña INGRESO.
