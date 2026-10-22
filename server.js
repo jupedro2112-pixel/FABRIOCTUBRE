@@ -6231,7 +6231,7 @@ async function platformSessionHandler(req, res) {
     // historias) el /auth/sso de 1girox va con `?token=` (lo acepta su página: guarda la sesión al instante) en vez del código de un solo
     // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
     // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
-    let _redir = session.redirectUrl, _gameReady = false, _directGame = false;
+    let _redir = session.redirectUrl, _gameReady = false, _directGame = false, _gameStep = 'sin juego'; // #859: qué paso falló (se muestra en la app)
     try {
       const game = String((req.body && req.body.game) || '');
       if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game)) {
@@ -6239,7 +6239,7 @@ async function platformSessionHandler(req, res) {
         // (POST /players/{u}/session ⇒ código de un solo uso) pero el CANJE del código lo hacemos acá, contra la misma Partner API
         // (`<GIROX_API_URL>/sso/exchange`, el endpoint que usa la web de 1girox). Así el recuadro abre `/auth/sso?token=<sesión de la web>`
         // y la web guarda la sesión al instante: en el celular el canje tardaba y el salto al juego llegaba antes (abría deslogueado).
-        const u0 = new URL(session.redirectUrl); const code = u0.searchParams.get('code');
+        const u0 = new URL(session.redirectUrl); const code = u0.searchParams.get('code'); _gameStep = code ? 'canje' : 'sin código en el ingreso';
         if (code) {
           const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
           try {
@@ -6247,13 +6247,14 @@ async function platformSessionHandler(req, res) {
             const jx = await rx.json().catch(() => null);
             if (rx.ok && jx && jx.token) {
               const u1 = new URL('/auth/sso', u0.origin); u1.searchParams.set('token', String(jx.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
-              _redir = u1.toString(); _gameReady = true;
+              _redir = u1.toString(); _gameReady = true; _gameStep = 'canje ok';
               // #857 (owner: "sigue sin loguear lo de favoritos"): recargar el recuadro para ir al juego pierde la sesión de la web (el navegador
               // guarda aparte lo de una web metida en otra). Se hace lo MISMO que la web de 1girox al tocar un juego: con la sesión del jugador
               // se pide `GET <api del sitio>/games/<juego>?id&launcher_key&aggregator_id` ⇒ `launch_url` del proveedor, y se abre directo.
               const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
               if (mm) {
                 const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
+                _gameStep = meta ? 'pidiendo el juego' : 'juego no encontrado en el catálogo';
                 if (meta) {
                   const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
                   const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] });
@@ -6261,13 +6262,13 @@ async function platformSessionHandler(req, res) {
                   try {
                     const rg = await fetch(`${site}/games/${encodeURIComponent(mm[2])}?${q}`, { headers: { Authorization: 'Bearer ' + jx.token, Accept: 'application/json' }, signal: c2.signal });
                     const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
-                    if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; }
-                    else logger.warn(`[girox-sso] launch de ${game} para ${user.username} sin URL (${rg.status}): se abre Girox logueado`);
-                  } catch (e) { logger.warn(`[girox-sso] launch de ${game}: ${e.message} — se abre Girox logueado`); } finally { clearTimeout(t2); }
+                    if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'directo'; }
+                    else { _gameStep = `1girox no dio el juego (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`; logger.warn(`[girox-sso] launch de ${game} para ${user.username} sin URL (${rg.status}): se abre Girox logueado`); }
+                  } catch (e) { _gameStep = 'pedir el juego: ' + e.message.slice(0, 60); logger.warn(`[girox-sso] launch de ${game}: ${e.message} — se abre Girox logueado`); } finally { clearTimeout(t2); }
                 }
               }
-            } else logger.warn(`[girox-sso] canje del código para juego falló (${rx.status}) ${user.username}: se usa el ingreso normal`);
-          } catch (e) { logger.warn(`[girox-sso] canje del código para juego: ${e.message} — ingreso normal`); } finally { clearTimeout(t); }
+            } else { _gameStep = `canje rechazado (HTTP ${rx.status}${jx && jx.error ? ': ' + String(jx.error.code || jx.error.message || '').slice(0, 40) : ''})`; logger.warn(`[girox-sso] canje del código para juego falló (${rx.status}) ${user.username}: se usa el ingreso normal`); }
+          } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); logger.warn(`[girox-sso] canje del código para juego: ${e.message} — ingreso normal`); } finally { clearTimeout(t); }
         }
       }
     } catch (_) { _redir = session.redirectUrl; _gameReady = false; }
@@ -6276,6 +6277,7 @@ async function platformSessionHandler(req, res) {
       redirectUrl: _redir,
       gameReady: _gameReady, // #855: la sesión de la web ya viene canjeada ⇒ el salto al juego puede ser corto
       directGame: _directGame, // #857: redirectUrl ES el juego (launch_url del proveedor): no hay que saltar a nada
+      gameStep: _gameStep, // #859: diagnóstico visible
       platformUrl: girox.getPlayUrl()
     });
   } catch (error) {
@@ -24943,7 +24945,7 @@ const _STORY_IMAGES_ON = true; // #850: también Render (sirve sus propias fotos
 // con URL ABSOLUTA a Render (producción vieja no tiene /auto.svg pero la app muestra imágenes https). Producción usa la ruta relativa y, ya
 // con este código, pasa a servir ella las que hubiera publicado Render (_storyAutoBackfillImages).
 const _STORY_IMG_BASE = process.env.RENDER === 'true' ? String(process.env.RENDER_EXTERNAL_URL || 'https://fabrioctubre.onrender.com').replace(/\/$/, '') : '';
-const STORY_IMG_VER = '853'; // #853: subirlo cuando cambia el dibujo ⇒ los teléfonos piden la foto nueva (la vieja queda en caché 1 día)
+const STORY_IMG_VER = '858'; // 858: cuotas en los partidos // #853: subirlo cuando cambia el dibujo ⇒ los teléfonos piden la foto nueva (la vieja queda en caché 1 día)
 const _storyImgUrl = (id) => `${_STORY_IMG_BASE}/api/stories/${id}/auto.svg?v=${STORY_IMG_VER}`;
 async function _storyAutoImgSpec(it) {
   if (!_STORY_IMAGES_ON || !it || !it.img) return null;
@@ -24972,6 +24974,17 @@ async function _storyAutoBackfillImages(today, plan) {
     // #853: además, toda historia automática con foto queda apuntando a la versión vigente del dibujo (?v=STORY_IMG_VER).
     try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /\/api\/stories\/[^/]+\/auto\.svg/, $nor: [{ mediaUrl: new RegExp('auto\\.svg\\?v=' + STORY_IMG_VER + '$') }] },
       [{ $set: { mediaUrl: { $concat: [_STORY_IMG_BASE, '/api/stories/', '$id', '/auto.svg?v=' + STORY_IMG_VER] } } }]); } catch (_) {}
+    // #858: historias automáticas VIGENTES armadas con un diseño anterior ⇒ se rearma la foto desde el plan del día (mismo título), p. ej. para
+    // sumar las cuotas al partido de hoy sin borrarla. Si el título ya no está en el plan, queda como estaba.
+    try {
+      const stale = await Story.find({ autoKey: new RegExp('^sa-' + today + '-'), isActive: true, mediaType: 'image', autoImgVer: { $ne: STORY_IMG_VER } }).select('id title').lean();
+      for (const st of stale) {
+        const it = (plan || []).find((p) => String(p.title || '').slice(0, 60) === st.title);
+        const spec = it ? await _storyAutoImgSpec(it) : null;
+        await Story.updateOne({ id: st.id }, { $set: spec ? { autoImg: spec, autoImgVer: STORY_IMG_VER, mediaUrl: _storyImgUrl(st.id) } : { autoImgVer: STORY_IMG_VER } });
+        if (spec) logger.info(`[historias-auto] foto rearmada (diseño ${STORY_IMG_VER}): ${st.title}`);
+      }
+    } catch (e) { logger.warn('[historias-auto] rearmar fotos: ' + e.message); }
     const olds = await Story.find({ autoKey: /^sa-/, isActive: true, expiresAt: { $gt: new Date() }, mediaType: 'none', autoKind: { $ne: 'borrada' } }).select('id title autoKey').lean();
     if (!olds.length) return;
     const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));
@@ -24982,7 +24995,7 @@ async function _storyAutoBackfillImages(today, plan) {
       const it = (plans[dk] || []).find((p) => String(p.title || '').slice(0, 60) === s.title);
       const spec = await _storyAutoImgSpec(it);
       if (!spec) continue;
-      await Story.updateOne({ id: s.id, mediaType: 'none' }, { $set: { mediaType: 'image', mediaUrl: _storyImgUrl(s.id), autoImg: spec, bgColor: '#ffffff' } });
+      await Story.updateOne({ id: s.id, mediaType: 'none' }, { $set: { mediaType: 'image', mediaUrl: _storyImgUrl(s.id), autoImg: spec, autoImgVer: STORY_IMG_VER, bgColor: '#ffffff' } });
       logger.info(`[historias-auto] foto agregada a ${s.autoKey}: ${s.title}`);
     }
   } catch (e) { logger.warn('[historias-auto] fotos: ' + e.message); }
@@ -25024,7 +25037,7 @@ async function _storyAutoTick() {
       try {
         doc = await Story.create({
           id: newId, title: String(it.title || '').slice(0, 60), text: String(it.text || '').slice(0, 300),
-          mediaType: autoImg ? 'image' : 'none', mediaUrl: autoImg ? _storyImgUrl(newId) : '', autoImg: autoImg || null, bgColor: autoImg ? '#ffffff' : (it.bg || '#06070d'),
+          mediaType: autoImg ? 'image' : 'none', mediaUrl: autoImg ? _storyImgUrl(newId) : '', autoImg: autoImg || null, autoImgVer: autoImg ? STORY_IMG_VER : null, bgColor: autoImg ? '#ffffff' : (it.bg || '#06070d'),
           linkUrl: it.link || '', linkLabel: String(it.label || '').slice(0, 40), durationSec: 7, hours: 24,
           publishedAt: at, expiresAt: new Date(at.getTime() + 24 * 3600 * 1000), isActive: true,
           bonusPct, bonusHours, bonusUntil: bonusPct > 0 ? new Date(at.getTime() + bonusHours * 3600 * 1000) : null, notifyAll: !!it.notifyAll,

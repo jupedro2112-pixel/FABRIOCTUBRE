@@ -246,8 +246,23 @@ function renderPremium(spec) {
   let y = spec.match ? 1010 : 1012;
   if (h1) { const sz = Math.min(64, fitSize(h1, 64, 860)); P.push(ctext(y, h1, sz, '#fff', { maxw: 880, weight: 900 })); y += 18; }
   if (h2) { const sz = Math.min(104, fitSize(h2, 104, 880)); P.push(ctext(y + sz * 0.86, h2, sz, GOLD2, { maxw: 900, weight: 900 })); y += sz + 22; }
-  const bl = (spec.bullets || []).slice(0, 3);
-  let by = Math.max(y + 8, 1150);
+  // #858: CUOTAS de referencia (1 · X · 2) en tres recuadros; con cuotas van 2 beneficios y la aclaración abajo.
+  const od = spec.odds && spec.odds.home && spec.odds.away ? spec.odds : null;
+  if (od && spec.match) {
+    const cells = [[clean(spec.match.home), od.home], ['Empate', od.draw], [clean(spec.match.away), od.away]].filter((c) => c[1]);
+    const bw = 258, gap = 22, tot = cells.length * bw + (cells.length - 1) * gap; let bx = (W - tot) / 2; const oy = Math.max(y + 6, 1150);
+    for (const [lab, val] of cells) {
+      const cxx = bx + bw / 2;
+      P.push(`<rect x="${bx}" y="${oy}" width="${bw}" height="112" rx="20" fill="#ffffff" fill-opacity=".06" stroke="${GOLD}" stroke-opacity=".55" stroke-width="2"/>`);
+      const ls = Math.min(26, Math.floor(26 * (bw - 30) / Math.max(1, estW(lab, 26, true))));
+      P.push(`<text x="${cxx}" y="${oy + 38}" text-anchor="middle" font-family="${FONT}" font-size="${ls}" font-weight="700" fill="${MUT2}">${esc(lab)}</text>`);
+      P.push(`<text x="${cxx}" y="${oy + 92}" text-anchor="middle" font-family="${FONT}" font-size="50" font-weight="900" fill="${GOLD2}">${Number(val).toFixed(2)}</text>`);
+      bx += bw + gap;
+    }
+    y = oy + 112 + 6;
+  }
+  const bl = (spec.bullets || []).slice(0, od && spec.match ? 2 : 3);
+  let by = Math.max(y + 8, od && spec.match ? y + 14 : 1150);
   for (const b of bl) {
     const sym = esc(String(b[0] || '✓').slice(0, 2)), t = clean(b[1]), sub = clean(b[2]);
     P.push(`<circle cx="182" cy="${by + 32}" r="32" fill="${GOLD}"/><text x="182" y="${by + 47}" text-anchor="middle" font-family="${FONT}" font-size="${sym.length > 1 ? 26 : 38}" font-weight="900" fill="${DARK}">${sym}</text>`);
@@ -261,8 +276,8 @@ function renderPremium(spec) {
   // el rojo de la historia (linkLabel). En su lugar, una flecha suave que invita a tocar abajo.
   const ctaY = Math.min(PY1 - 150, Math.max(by + 20, 1440));
   P.push(ctext(ctaY + 50, 'Tocá el botón de abajo  ↓', 30, GOLD2, { maxw: 760, weight: 800 }));
-  const note = clean(spec.note);
-  if (note) P.push(ctext(ctaY + 110, note, 23, MUT2, { maxw: 860, bold: false, weight: 600 }));
+  const note = od && spec.match ? 'Cuota de referencia · puede variar en Girox según el horario' : clean(spec.note);
+  if (note) P.push(ctext(ctaY + 110, note, 23, MUT2, { maxw: 880, bold: false, weight: 600 }));
   P.push(ctext(1672, 'Gracias por confiar en PICA ROJA', 28, MUTED));
   return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${P.join('')}</svg>`;
 }

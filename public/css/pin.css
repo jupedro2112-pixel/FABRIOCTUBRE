@@ -2552,3 +2552,20 @@ html[data-theme="dark"] #infoMsg .im-card { box-shadow: none; }
 #infoMsg .im-card.open { flex-direction: column !important; align-items: stretch; }
 #infoMsg .im-card.open .im-sec > b:first-child { font-size: 14px !important; margin-bottom: 8px !important; }
 #infoMsg .im-card.open .im-more { border-top: 1px solid var(--p-border) !important; text-align: center; }
+
+/* #860 (owner): Info estilo Pinterest FINO y ELEGANTE — recuadros de esquinas rectas (10 px), borde de 1 px, sin sombras pesadas, mucho aire */
+#infoMsg.im-grid { gap: 6px !important; }
+#infoMsg .im-card { border-radius: 10px !important; border: 1px solid var(--p-border) !important; box-shadow: none !important; background: var(--p-card) !important; }
+#infoMsg .im-card:hover { border-color: var(--p-text-2, #999) !important; }
+#infoMsg .im-card .im-sec > b:first-child { font: 700 13px/1.3 var(--p-font) !important; letter-spacing: .1px; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico { width: 26px; height: 26px; flex-basis: 26px; border-radius: 7px; background: transparent; border: 1px solid var(--p-border); color: var(--p-text); }
+#infoMsg .im-card .im-sec > b:first-child .im-ico svg { width: 15px; height: 15px; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico svg path, #infoMsg .im-card .im-sec > b:first-child .im-ico svg circle, #infoMsg .im-card .im-sec > b:first-child .im-ico svg rect { fill: none !important; }
+#infoMsg .im-card:not(.open) .im-more { color: var(--p-muted) !important; font-weight: 600 !important; font-size: 11.5px !important; }
+#infoMsg .im-card:not(.open) .im-more::first-letter { color: inherit; }
+#infoMsg .im-card.open { border-color: var(--p-text) !important; }
+#infoMsg .im-card.open .im-sec { color: var(--p-text-2) !important; font-weight: 400; }
+#infoMsg .im-card.open .im-more { color: var(--p-muted) !important; font-weight: 600 !important; }
+#infoMsg .im-card-missions { border-color: var(--p-border) !important; }
+#infoModal .info-reviews-wrap { border-radius: 10px !important; box-shadow: none !important; }
+html[data-theme="dark"] #infoMsg .im-card .im-sec > b:first-child .im-ico { border-color: rgba(255,255,255,.14); }

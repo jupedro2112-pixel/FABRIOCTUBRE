@@ -50,6 +50,18 @@ async function _fetchJson(url) {
     return data;
   } catch (_) { return null; } finally { clearTimeout(t); }
 }
+// #858 (owner: "las historias de deportes con la cuota; si no es la misma de Digitain está ok, ponemos abajo que puede variar por horario"):
+// cuota 1X2 de REFERENCIA del scoreboard público de ESPN (casa de apuestas que publica ahí, p. ej. DraftKings), americana ⇒ decimal.
+function _american(x) { const n = Number(String(x == null ? '' : x).replace(/[^\d+-]/g, '')); if (!Number.isFinite(n) || n === 0) return null; const d = n > 0 ? 1 + n / 100 : 1 + 100 / Math.abs(n); return Math.round(d * 100) / 100; }
+function _decOdds(list) {
+  try {
+    const o = (Array.isArray(list) ? list : []).find((x) => x && x.moneyline) || (Array.isArray(list) ? list[0] : null); if (!o) return null;
+    const ml = o.moneyline || {}; const pick = (side) => side && ((side.close && side.close.odds) || (side.open && side.open.odds));
+    const home = _american(pick(ml.home)), away = _american(pick(ml.away)), draw = _american(pick(ml.draw) || (o.drawOdds && o.drawOdds.moneyLine));
+    if (!home || !away) return null;
+    return { home, draw: draw || null, away, source: (o.provider && (o.provider.displayName || o.provider.name)) || '' };
+  } catch (_) { return null; }
+}
 const _artKey = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(0, 10);
 const _artHM = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(11, 16);
 
@@ -81,7 +93,8 @@ async function topMatches(dayKey) {
         const tm = (x) => (x && x.team) || {};
         out.push({ id: e.id, league: lgName, home: short(home ? home.team.displayName : teams[0]), away: short(away ? away.team.displayName : teams[1]), date: e.date, hour: _artHM(e.date), score,
           // #834: para la foto de la historia (escudos de ESPN, color del club y estadio)
-          homeLogo: tm(home).logo || '', awayLogo: tm(away).logo || '', homeColor: tm(home).color || '', awayColor: tm(away).color || '', venue: (c.venue && c.venue.fullName) || '' });
+          homeLogo: tm(home).logo || '', awayLogo: tm(away).logo || '', homeColor: tm(home).color || '', awayColor: tm(away).color || '', venue: (c.venue && c.venue.fullName) || '',
+          odds: _decOdds(c.odds) });
       }
     }
   }
@@ -142,7 +155,7 @@ function planDay(dayKey, matches, ctx) {
   const matchItems = ms.map((m, i) => ({ slot: 'm' + i, time: MATCH_TIME, kind: 'deporte', title: `⚽ HOY: ${m.home} vs ${m.away}`.slice(0, 60),
     text: `${m.league} · ${m.hour} hs.\nViví el partido y apostá antes y durante el juego desde Deportes en Pica Roja 🔴`, link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d', match: m,
     img: { style: 'premium', accent: '#16a34a', kicker: 'Partido de hoy · ' + m.league, match: { home: m.home, away: m.away, league: m.league, hour: m.hour, venue: m.venue, homeColor: m.homeColor, awayColor: m.awayColor },
-      matchLogos: { home: m.homeLogo, away: m.awayLogo }, h1: `${m.home} vs ${m.away}`, h2: `Hoy ${m.hour} hs`,
+      matchLogos: { home: m.homeLogo, away: m.awayLogo }, h1: `${m.home} vs ${m.away}`, h2: `Hoy ${m.hour} hs`, odds: m.odds || null,
       bullets: [['★', m.league, m.venue || 'Partido destacado del día'], ['✓', 'Apostá antes y durante', 'Seguilo en vivo desde Deportes'], ['$', 'Cargá y jugá', 'Tus fichas al instante']], cta: 'Apostar ahora' } }));
   const freeSlot = (pref) => { for (const i of [pref, 2, 3, 1, 4, 0]) if (i >= 0 && i < SLOTS.length && !out[i]) return i; return -1; };
   // 2) Lunes: el slot favorito de la semana.

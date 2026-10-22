@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 858–860. 📊 Cuotas en las historias de partido · 🔎 diagnóstico de juegos · 📇 Info fina — SW v583
+- **#858 cuotas** (owner: "republicá las historias de deportes con la cuota; si no es la misma de Digitain está ok, abajo que puede variar por
+  horario"): `topMatches` suma `odds` 1X2 de REFERENCIA del scoreboard público de ESPN (casa que publica ahí, hoy DraftKings; americana ⇒
+  decimal, `_decOdds`). `renderPremium`: tres recuadros (local · empate · visitante) bajo la hora, 2 beneficios y "Cuota de referencia · puede
+  variar en Girox según el horario". `STORY_IMG_VER` = '858' + `Story.autoImgVer`: el motor REARMA la foto de las automáticas vigentes de hoy
+  hechas con un diseño anterior (por título contra el plan) ⇒ el partido de hoy se actualiza solo con las cuotas, sin borrar.
+- **#859 diagnóstico** (owner: "sigue sin loguear favoritos y deportes"): `platformSessionHandler` devuelve `gameStep` (canje ok / canje
+  rechazado (HTTP …) / juego no encontrado / 1girox no dio el juego (HTTP …) / directo) y la app lo muestra en el aviso cuando el juego no abrió
+  directo ⇒ la próxima prueba del owner dice qué paso falla. Pregunta abierta: ¿en Render el botón Girox normal entra logueado?
+- **#860 Info** (owner: "estilo Pinterest, fino, elegante, moderno, recuadro cuadrado"): tiras de esquinas de 10 px, borde de 1 px sin sombras,
+  ícono de línea en cuadrito con borde, tipografía más liviana.
+
 ### 857. 🎰 Favoritos: el juego se lanza DIRECTO con la sesión del jugador (sin recargar la web de Girox) — SW v582
 **Pedido (owner):** "sigue sin loguear lo de favoritos". Diagnóstico: aun con la sesión canjeada (#855), RECARGAR el recuadro hacia `/play/…` abría
 deslogueado (verificación de edad = sin token en su localStorage): el navegador guarda aparte lo de una web metida en otra y la recarga la perdía.
