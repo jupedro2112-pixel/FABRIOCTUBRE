@@ -15543,12 +15543,16 @@ function _cronRenderCalendar() {
         const isToday = k === _cronData.today;
         const isPast = k < _cronData.today;
         let chips = '';
-        items.slice(0, 4).forEach(({ c, p }) => {
-            const st = c.cancelled ? 'cancelled' : (c.paused && p.status === 'scheduled' ? 'paused' : p.status);
-            const col = (CRON_STATUS[st] || {}).c || '#888';
-            chips += '<span class="cron-chip" style="background:' + col + (st === 'cancelled' ? ';opacity:.5' : '') + '" title="' + escHtml(c.name) + ' — ' + _cronArtHM(p.runAt) + (c.partsTotal > 1 ? ' (lote ' + (p.idx + 1) + '/' + c.partsTotal + ')' : '') + '">' + _cronArtHM(p.runAt) + ' ' + escHtml(c.name || _cronGiftTxt(c.gift)) + '</span>';
+        // #818 (owner): adentro de cada recuadro, el DETALLE de lo que sale: hora (y tandas), regalo, a quién y qué es — una caja por campaña.
+        const byCamp = []; const seen = new Map();
+        items.forEach(({ c, p }) => { if (!seen.has(c.id)) { seen.set(c.id, { c, ps: [] }); byCamp.push(seen.get(c.id)); } seen.get(c.id).ps.push(p); });
+        byCamp.slice(0, 3).forEach(({ c, ps }) => {
+            const p0 = ps[0], pl = ps[ps.length - 1];
+            const st = c.cancelled ? 'cancelled' : (c.paused && p0.status === 'scheduled' ? 'paused' : (ps.every((x) => x.status === 'sent') ? 'sent' : (ps.some((x) => x.status === 'error') ? 'error' : (ps.some((x) => x.status === 'sent' || x.status === 'sending') ? 'sending' : p0.status))));
+            chips += _cronItemHtml({ color: (CRON_STATUS[st] || {}).c || '#888', faded: st === 'cancelled', time: _cronArtHM(p0.runAt) + (ps.length > 1 ? '–' + _cronArtHM(pl.runAt) + ' · ' + ps.length + ' lotes' : ''),
+                gift: _cronGiftShort(c.gift), who: String(c.audienceLabel || '').split(' · ')[0], what: String(c.name || '').replace(/^🤖\s*[^·]*·\s*/, ''), title: c.name });
         });
-        if (items.length > 4) chips += '<span style="color:#a5b4fc">+' + (items.length - 4) + ' más</span>';
+        if (byCamp.length > 3) chips += '<span style="color:#a5b4fc">+' + (byCamp.length - 3) + ' más</span>';
         // #297: hoja del mes — tocar el día abre el panel; "+" lleva directo a programar algo ese día.
         html += '<div class="cron-day' + (isToday ? ' today' : '') + (isPast ? ' past' : '') + (items.length ? ' has-items' : '') + (_cronDayFilter === k ? ' picked' : '') + '" onclick="cronPickDay(\'' + k + '\')"><div class="n">' + d + (items.length ? ' <span style="color:#a5b4fc;font-size:.7rem">(' + items.length + ')</span>' : '') + '</div>' + chips + _cronDayImpactChip(k) +
             (!isPast ? '<button type="button" class="cron-add" title="Programar algo el ' + k.slice(8, 10) + '/' + k.slice(5, 7) + '" onclick="event.stopPropagation();cronPlanDay(\'' + k + '\',\'schedule\')">+</button>' : '') + '</div>';
@@ -15558,6 +15562,33 @@ function _cronRenderCalendar() {
 // #813: IMPULSO de cada notificación (sale de /cronograma-report): cargas reales de los avisados en las 48 h siguientes vs las 48 h
 // previas (línea base), clientes que cargaron, 7 días y recuperados. Se pinta bajo cada lote del día y como chip en el calendario.
 let _cronReport = null;
+// #818: caja de detalle adentro del recuadro del día (calendario del mes, vista previa del autopiloto y calendario de planes).
+function _cronGiftShort(g) {
+    g = g || {};
+    if (g.giftType === 'none' || g.gift === 'aviso') return '📢 aviso';
+    if (g.gift) return '🎁 ' + g.gift;
+    return g.giftType === 'percent' ? '🎁 +' + g.amount + '%' : (g.giftType === 'fixed' ? '🎁 $' + Number(g.amount || 0).toLocaleString('es-AR') : '');
+}
+function _cronItemHtml(o) {
+    return '<div class="cron-item" style="border-left-color:' + (o.color || '#4f46e5') + (o.faded ? ';opacity:.5' : '') + '" title="' + escHtml(o.title || o.what || '') + '">' +
+        '<b>' + escHtml(o.time || '') + '</b> <span class="ci-gift">' + escHtml(o.gift || '') + '</span>' +
+        (o.who ? '<span class="ci-who">' + escHtml(o.who) + '</span>' : '') +
+        (o.what ? '<span class="ci-what">' + escHtml(o.what) + '</span>' : '') + '</div>';
+}
+// Grilla de un mes (lunes primero) con cajas de detalle: itemsByDay = { 'YYYY-MM-DD': [ {time,gift,who,what,color} ] }.
+function _cronMonthGridHtml(month, itemsByDay) {
+    const [y, m] = month.split('-').map(Number);
+    const daysIn = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const offset = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+    let html = '<div class="cron-grid cron-sheet">' + ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => '<div class="cron-dow">' + d + '</div>').join('');
+    for (let i = 0; i < offset; i++) html += '<div class="cron-day off"></div>';
+    for (let d = 1; d <= daysIn; d++) {
+        const k = month + '-' + String(d).padStart(2, '0');
+        const its = itemsByDay[k] || [];
+        html += '<div class="cron-day' + (its.length ? ' has-items' : '') + '" style="cursor:default;padding-bottom:5px"><div class="n">' + d + '</div>' + its.map(_cronItemHtml).join('') + '</div>';
+    }
+    return html + '</div>';
+}
 function _cronRep() { return _cronReport && _cronReport.month === _cronMonth ? _cronReport : null; }
 function _cronLiftTxt(n) { const v = Math.round(Number(n) || 0); return (v >= 0 ? '+' : '−') + fmtARS(Math.abs(v)); }
 function _cronDayImpactChip(k) {
@@ -15937,10 +15968,15 @@ async function loadCronAutopilot() {
             return '<details style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b>' + label + '</b> · ' + m.days + ' días · ' + m.groups + ' grupos que rotan + ' + m.forAll + ' día(s) para todos · ' + bonos + ' con bono' +
                 (m.programmed ? ' · <span style="color:#22c55e">✅ ' + num(m.programmed) + ' programados</span>' : (c.enabled ? ' · <span style="color:#9ca3af">se programa al llegar el mes anterior</span>' : '')) +
                 (specials.length ? '<div style="color:#a5b4fc;font-size:.74rem;margin-left:1rem">🎉 ' + escHtml(specials.join(' · ')) + '</div>' : '') + '</summary>' +
+                // #818: así queda el mes, con el detalle adentro de cada recuadro (como el calendario manual)
+                '<div style="margin:.4rem 0;color:#888;font-size:.74rem">Así queda el mes (verde = para todos · violeta = grupo que rota). Al encenderlo, estas mismas campañas aparecen en el calendario de arriba y se pueden abrir, editar o pausar una por una.</div>' +
+                _cronMonthGridHtml(m.month, m.items.reduce((acc, i) => { (acc[i.dayKey] = acc[i.dayKey] || []).push({ time: i.time + (c.parts > 1 ? ' · ' + c.parts + ' lotes' : ''), gift: _cronGiftShort(i), who: i.who, what: i.reason, color: i.kind === 'todos' ? '#22c55e' : '#6366f1', title: (i.title ? i.title + ': ' : '') + i.message }); return acc; }, {})) +
+                '<details style="margin-top:.4rem"><summary style="cursor:pointer;color:#a5b4fc">Ver los mensajes día por día</summary>' +
                 '<div style="overflow:auto"><table class="cron-tbl" style="margin-top:.3rem"><thead><tr><th>Día</th><th>Qué sale</th><th>A quién</th><th>Por qué</th><th>Mensaje</th></tr></thead><tbody>' +
                 m.items.map((i) => '<tr' + (i.kind === 'todos' ? ' class="cron-best"' : '') + '><td style="white-space:nowrap">' + i.dayKey.slice(8, 10) + '/' + i.dayKey.slice(5, 7) + ' ' + escHtml(i.dow.slice(0, 3)) + ' ' + escHtml(i.time) + '</td><td><b>' + escHtml(i.gift) + '</b></td><td>' + escHtml(i.who) + '</td><td>' + escHtml(i.reason) + '</td><td style="font-size:.74rem;color:#cbd5e1;min-width:240px">' + escHtml((i.title ? i.title + ': ' : '') + i.message) + '</td></tr>').join('') +
-                '</tbody></table></div></details>';
+                '</tbody></table></div></details></details>';
         }).join('');
+        try { const first = box.querySelector('details'); if (first) first.open = true; } catch (_) {}
     } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar el autopiloto</span>'; }
 }
 async function cronAutopilotSave(enabled) {
@@ -15991,7 +16027,7 @@ function cronPlanToggleCal(id) {
     let html = '<div class="cron-grid" style="grid-template-columns:repeat(7,1fr)">';
     for (let d = 1; d <= 31; d++) {
         const items = (byDay[d] || []).sort((a, b) => String(a.time).localeCompare(String(b.time)));
-        html += '<div class="cron-day" style="min-height:64px;cursor:default"><div class="n">' + d + '</div>' + items.map((it) => '<span class="cron-chip" style="background:#4f46e5" title="' + escHtml(it.name || '') + '">' + escHtml(it.time) + ' ' + gTxt(it) + (it.parts > 1 ? ' ×' + it.parts : '') + '</span>').join('') + '</div>';
+        html += '<div class="cron-day" style="min-height:64px;cursor:default"><div class="n">' + d + '</div>' + items.map((it) => { const pl = it.payload || {}; return _cronItemHtml({ time: it.time + (it.parts > 1 ? ' · ' + it.parts + ' lotes' : ''), gift: gTxt(it), who: pl.audienceType === 'all' ? '🌍 todos' : pl.audienceType === 'inactive' ? '😴 sin entrar ' + (pl.audienceDays || '?') + (pl.audienceDaysMax ? '–' + pl.audienceDaysMax : '+') + ' d' : (pl.audienceType || ''), what: it.name || '', color: '#4f46e5', title: (pl.title ? pl.title + ': ' : '') + (pl.message || '') }); }).join('') + '</div>'; // #818
     }
     html += '</div><div style="margin-top:.5rem;font-size:.8rem">' + (p.items || []).map((it, i) => '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,0.06)"><span>📅 día <b>' + it.day + '</b> ' + escHtml(it.time) + (it.parts > 1 ? ' · ' + it.parts + ' lotes c/' + Math.round((it.gapHours || 0) * 60) + ' min' : '') + ' · ' + gTxt(it) + ' · ' + escHtml(it.name || ((it.payload || {}).audienceType || '')) + _planItemDetail(it.payload) + '</span><button class="btn btn-secondary btn-sm" style="color:#f87171" onclick="cronPlanRemoveItem(\'' + p.id + '\',' + i + ')" title="Quitar del plan">🗑️</button></div>').join('') + '</div>';
     box.innerHTML = html; box.style.display = '';
@@ -16004,23 +16040,6 @@ function _planItemDetail(pl) {
     return '<span style="display:block;color:#8fd3a8;font-size:.74rem">' + aud + _cronAppTxt(pl) + bono + '</span>' +
         (pl.message ? '<span style="display:block;color:#cbd5e1;font-size:.74rem;white-space:pre-wrap">' + escHtml(((pl.title ? pl.title + ': ' : '') + pl.message).slice(0, 240)) + '</span>' : '');
 }
-// #813: plan de RETENCIÓN para clientes con la app: 8 envíos en el mes (20/50/100/50 inactivos/20 + 3 avisos), bonos automáticos por
-// 4 h, máx 8 por cliente. Lo arma el servidor (mismo nombre = se actualiza) y se ofrece aplicarlo al mes que estás mirando.
-async function cronRetentionPlan() {
-    if (!confirm('Se arma (o actualiza) el plan "Retención app · 8 por mes":\n\n• Sólo clientes con la app instalada y notificaciones aceptadas\n• Máximo 8 notificaciones por cliente en el mes\n• Bonos de +20%, +50%, +100% y +50% a inactivos, automáticos en UNA carga, vigentes 4 h (con el tope y el rollover de siempre)\n• 3 avisos de retención (te extrañamos / reembolso)\n\nDespués lo podés editar o quitar envíos. ¿Seguimos?')) return;
-    try {
-        const r = await authFetch('/api/admin/cronograma-plans/retention-template', { method: 'POST', body: JSON.stringify({ hours: 4, cap: 8 }) });
-        const j = await r.json();
-        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo armar el plan', 'error'); return; }
-        showToast('Plan "' + j.plan.name + '" listo (' + j.plan.itemsCount + ' envíos)', 'success');
-        await loadCronPlans();
-        try { cronPlanToggleCal(j.plan.id); } catch (_) {}
-        const m = _cronMonth || _cronArtKey(new Date()).slice(0, 7);
-        const inp = document.getElementById('cronPlanMonth_' + j.plan.id); if (inp) inp.value = m;
-        cronApplyPlan(j.plan.id); // pide su propia confirmación (mes elegido, días pasados se saltean)
-    } catch (e) { showToast('Error de conexión', 'error'); }
-}
-window.cronRetentionPlan = cronRetentionPlan;
 async function cronPlanRemoveItem(id, idx) {
     if (!confirm('¿Quitar esta campaña del plan? (las ya programadas en el calendario no se tocan)')) return;
     try {

@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-22
 
+### 819. 🧹 Cronograma con UNA configuración definitiva (el autopiloto)
+**Pedido (owner):** "limpiá la configuración vieja; todo lo que te estoy diciendo quiero que quede una definitiva así no queda tan cargada".
+- Se ELIMINÓ la plantilla "Retención app · 8 por mes" (#813: botón, `POST /api/admin/cronograma-plans/retention-template`,
+  `_retentionPlanItems`). La reemplaza el autopiloto. Al encenderlo, `_autopilotCleanLegacy` borra ese plan y sus campañas que no salieron.
+- Pantalla: el 🤖 Autopiloto quedó ARRIBA de todo; la lista de campañas del mes y los "Planes manuales (avanzado)" quedaron plegados.
+  Siguen: calendario con el detalle por día, impulso, personas por envío y el comparativo.
+- Los filtros `appOnly` / `monthlyCap` del lote (#813) quedan: los usa el autopiloto.
+
+### 818. 🗓️ Detalle adentro de cada recuadro del mes — admin SW v156
+**Pedido (owner):** "que el plan que se arma y se confirma se vea como el manual, en el mes y se pueda ver el detalle; dentro del lanzamiento
+ver el detalle del mes como quedó adentro de cada recuadro". Calendario del mes: una caja por campaña con hora (y "N lotes"), regalo,
+a quién y qué es (antes un chip por tanda con el nombre cortado). Autopiloto: cada mes del plan del año muestra la GRILLA del mes con esas
+cajas (verde = para todos, violeta = grupo que rota) antes de encenderlo; los mensajes día por día quedan plegados abajo. El calendario de los
+planes manuales usa las mismas cajas. Helpers `_cronItemHtml`, `_cronMonthGridHtml`, `_cronGiftShort`.
+
 ### 817. 🤖 AUTOPILOTO de retención: todos los días, por lotes, mes a mes (feriados de Argentina incluidos) — admin SW v155
 **Pedido (owner):** "abarcá todos los días y armá lotes de personas así llega todos los días; bonos fuertes o más chicos: fin de mes más
 fuerte, el 5 más chico, los días festivos de Argentina algo personalizado con un bono; para todos los meses, este año y el que viene, automático

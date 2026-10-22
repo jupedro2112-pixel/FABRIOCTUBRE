@@ -26303,47 +26303,8 @@ app.post('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (
     res.json({ success: true, plan: _planPublic(p.toObject()) });
   } catch (err) { logger.error(`POST /api/admin/cronograma-plans: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
-// #813 PLAN DE RETENCIÓN APP (owner 2026-10-22): "plan para clientes que instalan la app y aceptan notificaciones, repartidas en
-// todo el mes, 8 de tope por cliente; de esas un 50%, un 100%, un 20%, respetando los topes; que al entrar ya tengan el bono vigente
-// en el botón de carga, siempre por 4 h; y avisos tipo 'te extrañamos' si no entran hace varios días". Arma (o actualiza, mismo
-// nombre) un StrategyPlan con 8 envíos. Cada uno es un lote 'window' con % AUTOMÁTICO de una sola carga por `hours` horas (el
-// PromoBonus nace al enviarse ⇒ el cliente lo ve en CARGAR AHORA y lo suma resolveAutoBonus con el tope global de bonos y el
-// rollover global), audiencia `appOnly` y `monthlyCap` (nadie recibe más de `cap` lotes en el mes, contando los manuales).
-// Los textos no nombran la ruleta (guard isRouletteText). El plan se aplica a un mes con el botón de siempre y es editable.
-function _retentionPlanItems(hours, cap) {
-  const H = hours, base = { mode: 'window', validHours: H, appOnly: true, monthlyCap: cap };
-  const bono = (pct, extra) => Object.assign({}, base, { giftType: 'percent', amount: pct, applyMode: 'auto', applyScope: 'first' }, extra);
-  const aviso = (extra) => Object.assign({}, base, { giftType: 'none', amount: 0 }, extra);
-  const todos = { audienceType: 'all' };
-  const inact = (d, dMax) => ({ audienceType: 'inactive', audienceDays: d, audienceDaysMax: dMax == null ? null : dMax });
-  return [
-    { day: 1, time: '20:00', name: 'Arranque de mes · +20% (4 h)', payload: bono(20, Object.assign({}, todos, { name: 'Retención · +20% arranque', title: '🎁 +20% en tu carga por ' + H + ' horas', message: 'Arrancó el mes en Pica Roja 🔴 Cargá en las próximas ' + H + ' horas y te sumamos un 20% EXTRA automático. Ya lo tenés activo en el botón CARGAR AHORA.' })) },
-    { day: 4, time: '21:00', name: 'Te extrañamos · inactivos 3–10 d', payload: aviso(Object.assign({}, inact(3, 10), { name: 'Retención · te extrañamos 3-10 d', title: '👋 ¡Te extrañamos!', message: 'Hace unos días que no pasás por Pica Roja. Tu cuenta te espera: entrá y mirá tu reembolso y las promos de hoy 🔴' })) },
-    { day: 8, time: '20:00', name: 'Finde · +50% (4 h)', payload: bono(50, Object.assign({}, todos, { name: 'Retención · +50% finde', title: '🔥 +50% en tu carga por ' + H + ' horas', message: 'Se viene el finde 🔥 Cargá en las próximas ' + H + ' horas y te sumamos un 50% EXTRA automático. Ya está activo en el botón CARGAR AHORA.' })) },
-    { day: 12, time: '21:00', name: 'Aviso · tu reembolso te espera', payload: aviso(Object.assign({}, todos, { name: 'Retención · aviso reembolso', title: '💸 Tu reembolso te espera', message: 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a la app y reclamalo desde Reembolso: se acredita al toque.' })) },
-    { day: 15, time: '20:00', name: 'Quincena · +100% (4 h)', payload: bono(100, Object.assign({}, todos, { name: 'Retención · +100% quincena', title: '💥 +100% en tu carga por ' + H + ' horas', message: '¡Cobraste la quincena! 💥 Cargá en las próximas ' + H + ' horas y te DUPLICAMOS la carga automático (con el tope de bonos). Ya está activo en el botón CARGAR AHORA.' })) },
-    { day: 19, time: '21:00', name: 'Volvé · inactivos 7–30 d · +50% (4 h)', payload: bono(50, Object.assign({}, inact(7, 30), { name: 'Retención · volvé +50%', title: '❤️ Volvé con +50%', message: 'Te guardamos un regalo: cargá en las próximas ' + H + ' horas y te sumamos un 50% EXTRA automático. Te esperamos en Pica Roja 🔴' })) },
-    { day: 23, time: '20:00', name: 'Mitad de semana · +20% (4 h)', payload: bono(20, Object.assign({}, todos, { name: 'Retención · +20% semana', title: '🎁 +20% por ' + H + ' horas', message: 'Promo relámpago ⚡ Cargá en las próximas ' + H + ' horas y te sumamos un 20% EXTRA automático. Ya lo tenés en el botón CARGAR AHORA.' })) },
-    { day: 28, time: '21:00', name: 'Te extrañamos · inactivos 15+ d', payload: aviso(Object.assign({}, inact(15, null), { name: 'Retención · te extrañamos 15+ d', title: '👋 Hace rato no te vemos', message: 'Tu cuenta en Pica Roja sigue activa y con novedades. Entrá cuando quieras: tu reembolso y tus promos te esperan 🔴' })) }
-  ].map((it) => Object.assign({ parts: 1, gapHours: 5 }, it));
-}
-app.post('/api/admin/cronograma-plans/retention-template', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    if (!_schedCanManage(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
-    const b = req.body || {};
-    const hours = Math.min(48, Math.max(1, Math.round(Number(b.hours) || 4)));
-    const cap = Math.min(60, Math.max(1, Math.round(Number(b.cap) || 8)));
-    const name = (String(b.name || '').trim() || 'Retención app · 8 por mes').slice(0, 80);
-    const n = _planNormalizeItems(_retentionPlanItems(hours, cap));
-    if (n.error) return res.status(400).json({ error: n.error });
-    const notes = `Sólo clientes con la app y notificaciones · bonos automáticos por ${hours} h en una carga (tope global de bonos y rollover) · máx ${cap} avisos por cliente en el mes · 20% / 50% / 100% / 50% a inactivos / 20% + 3 avisos de retención.`.slice(0, 500);
-    let p = await StrategyPlan.findOne({ name });
-    if (p) { p.items = n.items; p.notes = notes; p.updatedBy = req.user.username; await p.save(); }
-    else p = await StrategyPlan.create({ id: uuidv4(), name, notes, items: n.items, createdBy: req.user.username });
-    logger.info(`[plan] ${req.user.username} armó el plan de retención "${name}" (${hours} h, tope ${cap}/mes)`);
-    res.json({ success: true, plan: _planPublic(p.toObject ? p.toObject() : p) });
-  } catch (err) { logger.error(`POST /api/admin/cronograma-plans/retention-template: ${err.message}`); res.status(500).json({ error: 'Error del servidor' }); }
-});
+// #813 → #819: la plantilla "Retención app · 8 por mes" se ELIMINÓ (owner: "una sola configuración definitiva"): la reemplaza el
+// autopiloto de abajo. Al encenderlo se borran ese plan y sus campañas que no salieron (_autopilotCleanLegacy).
 // ============================================================================
 // #817 AUTOPILOTO DE RETENCIÓN (owner 2026-10-22)
 // ============================================================================
@@ -26462,6 +26423,15 @@ async function _autopilotClearFuture() {
   const r = await ScheduledCampaign.deleteMany({ autoKey: { $exists: true, $ne: null }, parts: { $not: { $elemMatch: { status: { $ne: 'scheduled' } } } }, runAt: { $gt: new Date(Date.now() + 60 * 1000) } });
   return r.deletedCount || 0;
 }
+// #819 (owner: "limpiá la configuración vieja, que quede una definitiva"): al encender el autopiloto se borra el plan viejo
+// "Retención app · 8 por mes" (#813) y sus campañas que todavía no salieron, para que no se superpongan.
+async function _autopilotCleanLegacy() {
+  try {
+    await StrategyPlan.deleteMany({ name: /^Retención app/ });
+    const r = await ScheduledCampaign.deleteMany({ notes: /^Plan "Retención app/, parts: { $not: { $elemMatch: { status: { $ne: 'scheduled' } } } } });
+    return r.deletedCount || 0;
+  } catch (e) { logger.warn('[autopiloto] limpieza del plan viejo: ' + e.message); return 0; }
+}
 let _autopilotRunning = false;
 async function _autopilotTick(by) {
   if (_autopilotRunning) return null;
@@ -26507,7 +26477,7 @@ app.post('/api/admin/cronograma-autopilot', authMiddleware, adminMiddleware, asy
     });
     await Config.set('retentionAutopilot', next, req.user.username);
     const cfg = await getAutopilotConfig();
-    const removed = await _autopilotClearFuture();
+    const removed = await _autopilotClearFuture() + (cfg.enabled ? await _autopilotCleanLegacy() : 0);
     let programmed = null;
     if (cfg.enabled) programmed = await _autopilotTick(req.user.username);
     logger.info(`[autopiloto] ${req.user.username} → ${cfg.enabled ? 'ENCENDIDO' : 'apagado'} (${removed} futuras borradas)`);
