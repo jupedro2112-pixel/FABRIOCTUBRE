@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 850. 🖼️ Historias premium YA (aunque producción siga vieja): Render publica y sirve las fotos
+**Pedido (owner):** "borrá las historias desde ya y publicá la nueva estrategia" (picaroja.com seguía en v569 y publicaba historias de texto).
+- Render (comparte la base) vuelve a correr el motor de historias CON fotos (`_STORY_IMAGES_ON = true`) y las publica con URL ABSOLUTA a sí
+  mismo (`_storyImgUrl`, `RENDER_EXTERNAL_URL`): la app de producción vieja no tiene `/auto.svg` pero muestra imágenes https (CSP `img-src https:`).
+  `/auto.svg` lleva `Cross-Origin-Resource-Policy: cross-origin`. El reset #845 corre desde Render ⇒ se borran las de texto y salen las premium.
+- Si producción vieja publica alguna de texto en un horario, el backfill de Render le pone la foto (≤5 min).
+- Producción con este código: pasa las URL absolutas de Render a la ruta relativa (sirve ella las fotos) en cada pasada del motor.
+- Reemplaza el corte de #849 (Render no publicaba).
+
 ### 849. 🤖 Revisión de las automatizaciones (historias y notificaciones) — Render ya no publica historias
 **Pedido (owner):** "¿publicaste de nuevo las historias con ese estilo? revisá que funcione bien la automatización de notificaciones y de
 historias, porque eso va automático sin confirmar desde el panel".

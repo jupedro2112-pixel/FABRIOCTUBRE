@@ -24708,6 +24708,7 @@ app.get('/api/stories/:id/auto.svg', async (req, res) => {
     if (!s || !s.autoImg) return res.status(404).end();
     res.set('Content-Type', 'image/svg+xml; charset=utf-8');
     res.set('Content-Security-Policy', "default-src 'none'; img-src data:; style-src 'unsafe-inline'"); // sin scripts ni recursos externos
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin'); // #850: la app de picaroja.com muestra fotos servidas por Render
     res.set('Cache-Control', 'public, max-age=86400');
     res.send(storyImage.renderSvg(s.autoImg));
   } catch (e) { res.status(500).end(); }
@@ -24888,7 +24889,12 @@ async function _storyAutoPlan(dayKey, opts) {
 // #834: foto de la historia = spec de storyImage con los escudos ya embebidos (un <img> con SVG no puede pedir nada afuera).
 // Render comparte la base con producción (#779): si Render publicara con foto antes del deploy de AWS, producción no tendría la ruta de la
 // foto y la historia saldría en blanco ⇒ en Render se publica sin foto y producción se la agrega (_storyAutoBackfillImages, cada 5 min).
-const _STORY_IMAGES_ON = process.env.RENDER !== 'true' || process.env.STORY_IMAGES_ON_RENDER === '1';
+const _STORY_IMAGES_ON = true; // #850: también Render (sirve sus propias fotos con URL absoluta, ver _storyImgUrl)
+// #850 (owner: "borrá las historias desde ya y publicá la nueva estrategia" con producción todavía en una versión vieja): en Render la foto va
+// con URL ABSOLUTA a Render (producción vieja no tiene /auto.svg pero la app muestra imágenes https). Producción usa la ruta relativa y, ya
+// con este código, pasa a servir ella las que hubiera publicado Render (_storyAutoBackfillImages).
+const _STORY_IMG_BASE = process.env.RENDER === 'true' ? String(process.env.RENDER_EXTERNAL_URL || 'https://fabrioctubre.onrender.com').replace(/\/$/, '') : '';
+const _storyImgUrl = (id) => `${_STORY_IMG_BASE}/api/stories/${id}/auto.svg`;
 async function _storyAutoImgSpec(it) {
   if (!_STORY_IMAGES_ON || !it || !it.img) return null;
   const spec = JSON.parse(JSON.stringify(it.img));
@@ -24910,6 +24916,8 @@ async function _storyAutoImgSpec(it) {
 async function _storyAutoBackfillImages(today, plan) {
   if (!_STORY_IMAGES_ON) return;
   try {
+    // #850: en PRODUCCIÓN, las fotos que publicó Render (URL absoluta a Render) pasan a servirse desde acá.
+    if (!_STORY_IMG_BASE) { try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /^https:\/\/[^/]+\/api\/stories\/[^/]+\/auto\.svg$/ }, [{ $set: { mediaUrl: { $concat: ['/api/stories/', '$id', '/auto.svg'] } } }]); } catch (_) {} }
     const olds = await Story.find({ autoKey: /^sa-/, isActive: true, expiresAt: { $gt: new Date() }, mediaType: 'none', autoKind: { $ne: 'borrada' } }).select('id title autoKey').lean();
     if (!olds.length) return;
     const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));
@@ -24920,7 +24928,7 @@ async function _storyAutoBackfillImages(today, plan) {
       const it = (plans[dk] || []).find((p) => String(p.title || '').slice(0, 60) === s.title);
       const spec = await _storyAutoImgSpec(it);
       if (!spec) continue;
-      await Story.updateOne({ id: s.id, mediaType: 'none' }, { $set: { mediaType: 'image', mediaUrl: `/api/stories/${s.id}/auto.svg`, autoImg: spec, bgColor: '#ffffff' } });
+      await Story.updateOne({ id: s.id, mediaType: 'none' }, { $set: { mediaType: 'image', mediaUrl: _storyImgUrl(s.id), autoImg: spec, bgColor: '#ffffff' } });
       logger.info(`[historias-auto] foto agregada a ${s.autoKey}: ${s.title}`);
     }
   } catch (e) { logger.warn('[historias-auto] fotos: ' + e.message); }
@@ -24942,9 +24950,6 @@ async function _storyResetOnce() {
 let _storyAutoRunning = false;
 async function _storyAutoTick() {
   if (process.env.STORIES_AUTOPILOT_DISABLED === '1' || _storyAutoRunning) return;
-  // #849: las historias las publica SÓLO producción. Render comparte la base (#779) y, con otra versión del código, publicaba historias sin
-  // foto (o con otro plan) en la base real. `STORY_IMAGES_ON_RENDER=1` lo vuelve a habilitar para probar.
-  if (!_STORY_IMAGES_ON) return;
   _storyAutoRunning = true;
   try {
     await _storyResetOnce(); // #845
@@ -24965,7 +24970,7 @@ async function _storyAutoTick() {
       try {
         doc = await Story.create({
           id: newId, title: String(it.title || '').slice(0, 60), text: String(it.text || '').slice(0, 300),
-          mediaType: autoImg ? 'image' : 'none', mediaUrl: autoImg ? `/api/stories/${newId}/auto.svg` : '', autoImg: autoImg || null, bgColor: autoImg ? '#ffffff' : (it.bg || '#06070d'),
+          mediaType: autoImg ? 'image' : 'none', mediaUrl: autoImg ? _storyImgUrl(newId) : '', autoImg: autoImg || null, bgColor: autoImg ? '#ffffff' : (it.bg || '#06070d'),
           linkUrl: it.link || '', linkLabel: String(it.label || '').slice(0, 40), durationSec: 7, hours: 24,
           publishedAt: at, expiresAt: new Date(at.getTime() + 24 * 3600 * 1000), isActive: true,
           bonusPct, bonusHours, bonusUntil: bonusPct > 0 ? new Date(at.getTime() + bonusHours * 3600 * 1000) : null, notifyAll: !!it.notifyAll,
