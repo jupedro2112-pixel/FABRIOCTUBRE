@@ -1096,6 +1096,16 @@ VIP.ui._casinoOpen = false;
  *  → el botón CASINO no hacía NADA al volver a tocarlo ("no ingresa y queda en
  *  el mismo lugar", reclamo del owner 2026-08-19).
  *  @returns {ok:true, url} | {ok:false, error, retryable} */
+// #854: con el casino YA abierto (sesión iniciada en el recuadro), ir directo a una sección/juego de la plataforma sin otro ingreso.
+// Devuelve true si navegó. Lo usan favoritos e historias (Deportes, juegos).
+VIP.ui.casinoGoTo = function(path) {
+  try {
+    if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/]+|sports)$/.test(String(path || ''))) return false;
+    const fr = document.getElementById('casinoFrame'); const src = fr && fr.getAttribute('src');
+    if (!src || src === 'about:blank') return false;
+    fr.src = new URL(src, location.href).origin + path; return true;
+  } catch (_) { return false; }
+};
 VIP.ui._fetchCasinoSession = async function(timeoutMs) {
   const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
   const timer = ctrl ? setTimeout(function() { ctrl.abort(); }, timeoutMs || 20000) : null;

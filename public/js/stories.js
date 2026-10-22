@@ -113,7 +113,7 @@
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
             const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions(),
                 // #827: historias automáticas — casino directo en Deportes / en los juegos, retirar y niveles VIP
-                deportes: () => { try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); },
+                deportes: () => { if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return; try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); }, // #854: mismo ingreso que favoritos
                 juegos: () => VIP.home.openPlatform('girox', { embed: true }),
                 retirar: () => { try { VIP.home.casinoWithdraw(); } catch (_) { VIP.withdraw.openWithdrawModal(); } },
                 vip: () => VIP.home.openVipLevels() }; // #646: verificar (Perfil → teléfono) y soporte
@@ -128,11 +128,14 @@
             } else if (appKey) { link.href = '#'; link.textContent = s.linkLabel || 'Me interesa ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close(); const fn = APP_LINKS[appKey[1].toLowerCase()];
                 // #799 (owner): si la historia se tocó ADENTRO del casino, primero se sale del casino al menú completo y recién ahí se abre
                 // lo que pidió el botón (antes se abría detrás del casino y parecía que no hacía nada).
-                let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
                 const k = appKey[1].toLowerCase();
+                // #854: Deportes con el casino YA abierto ⇒ directo adentro (la sesión ya está), sin cerrar ni volver a entrar.
+                if (k === 'deportes' && VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return;
+                let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
                 try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
                 setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
             else if (playPath) { link.href = '#'; link.textContent = s.linkLabel || 'Jugar ahora ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close();
+                if (VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo(playPath[1])) return; // #854
                 let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
                 setTimeout(() => { try { VIP.ui._casinoGamePath = playPath[1]; VIP.home.openPlatform('girox', { embed: true }); } catch (e) { console.warn('[stories] play', e); } }, wait); }; }
             else if (s.linkUrl) { link.href = s.linkUrl; link.onclick = null; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }

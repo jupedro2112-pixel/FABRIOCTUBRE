@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 854. ⚽ Deportes (y juegos) desde historias con el mismo ingreso que los favoritos — SW v580
+**Pedido (owner):** "lo de deportes de historias quiero que entre logueado de la misma forma que favoritos, cuando van a deportes, todos".
+- `VIP.ui.casinoGoTo(path)`: con el casino YA abierto (sesión en el recuadro) navega directo a `/sports` o `/play/…` sin otro ingreso.
+  La usan la historia de Deportes (antes cerraba el casino y volvía a entrar), la del slot (`app:play:`) y los favoritos.
+- Con el casino cerrado: el mismo camino de #851 (ingreso de la API igual que el botón de Girox, cartel tapando, a los 5 s a Deportes).
+- Probado en jsdom: historia Deportes con casino cerrado ⇒ 1 ingreso `{platform:'girox'}` + `/sports` pendiente; abierto ⇒ 0 ingresos, recuadro
+  en `/sports`; favorito con casino abierto ⇒ directo al juego.
+
 ### 853. 🔘 Historias sin botón dorado en la foto + revisión de TODOS los botones
 **Pedido (owner, captura):** "ese APOSTÁ AHORA dorado en todas las historias no va, va el de abajo rojo; fijate que funcionen todos" +
 "revisá que todos los botones de todos lados funcionen: instalar app, historias, etc." + cuotas de Digitain con un usuario de prueba.
