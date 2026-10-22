@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 836. 🎰 Al entrar a la app: SIEMPRE Girox directo, salvo que la persona haya elegido otro menú — SW v571
+**Pedido (owner):** "que siempre cuando la gente entra a la app entre al menú de Girox; si lo cambian, está ok que usen el que cambian".
+Antes (#733/#678): sin "Dejar fijo" se entraba siempre a Girox aunque la persona hubiera elegido otro menú, y a los 10 min en segundo plano se
+volvía a abrir el selector.
+- `localStorage vip_menu_user='1'` = la PERSONA eligió el menú (selector, botones de cambiar menú, o el `?menu=` del manifest del iPhone, que
+  replica lo elegido en Safari). `setMenuPref(pref, { auto: true })` = elección automática (entrada por defecto, landing, un solo menú activo):
+  no se guarda como elección. Girox también se recuerda si lo eligió.
+- `maybeShowMenuChooser`: fijo → ése; elegido por la persona → ése; si no → Girox directo. `_initHomeMode` arranca igual (sin parpadeo).
+- Ya NO se vuelve a preguntar el menú al volver de segundo plano. Las preferencias viejas guardadas sin la marca nueva no cuentan como
+  elección (todos arrancan en Girox hasta que elijan).
+
 ### 835. 📊 Link de RESULTADOS del publicista: períodos, rango de fechas y estadísticas DÍA POR DÍA
 **Pedido (owner, captura):** "agregá en lo del publicista esto (Hoy · Ayer · 7 días · 30 días · Total + elegí un día o un rango), como para ver cómo
 funciona día a día o comparar; dame estadísticas diarias y seleccionar fechas".

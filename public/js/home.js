@@ -65,11 +65,15 @@
         MENU_ORDER.forEach((p) => document.body.classList.toggle('no-menu-' + p, !_menuOn(p)));
         const on = MENU_ORDER.filter(_menuOn); document.body.classList.toggle('menus-one', on.length === 1);
         try {
-            if (on.length === 1) { const ch = _el('menuChooser'); if (ch && ch.classList.contains('open')) setMenuPref(on[0], { quiet: true }); }
+            if (on.length === 1) { const ch = _el('menuChooser'); if (ch && ch.classList.contains('open')) setMenuPref(on[0], { quiet: true, auto: true }); }
             if (_homeMode && (_homeMode === 'basic' || _homeMode === 'easy' || _homeMode === 'play') && !_menuOn(_prefOfMode())) setHomeMode(_modeFor(getMenuPref()), { persist: false });
         } catch (_) {}
     }
     const MENU_FIXED_KEY = 'vip_menu_fixed'; // #559: '1' = el menú guardado es el del ingreso (no se vuelve a preguntar)
+    // #836 (owner): "que siempre cuando la gente entra a la app entre al menú de Girox; si lo cambian, que usen el que cambian" ⇒ '1' = la
+    // persona ELIGIÓ un menú (desde el selector o los botones de cambiar menú): al volver a entrar arranca en ése, sin preguntar.
+    const MENU_USER_KEY = 'vip_menu_user';
+    function _userPickedMenu() { try { return localStorage.getItem(MENU_USER_KEY) === '1' && !!localStorage.getItem(MENU_PREF_KEY); } catch (_) { return false; } }
     function isMenuFixed() { try { return localStorage.getItem(MENU_FIXED_KEY) === '1'; } catch (_) { return false; } }
     let _homeMode = 'play';
     let _easyTimer = null;
@@ -185,9 +189,9 @@
     function setMenuPref(pref, opts) {
         pref = (pref === 'easy' || pref === 'basic' || pref === 'girox') ? pref : 'full'; // #670: + girox
         if (!_menuOn(pref)) pref = _firstMenuOn(); // #635
-        // #678 (owner): Girox directo NO queda como predeterminado: abre la plataforma ahora y la próxima vez vuelve a elegir
-        // (salvo que toque "Dejar fijo", que sí lo guarda a propósito). Los otros menús se recuerdan como siempre.
-        if (pref !== 'girox') { try { localStorage.setItem(MENU_PREF_KEY, pref); } catch (_) {} }
+        // #836: lo que elige la PERSONA se recuerda (también Girox) y es donde arranca la próxima vez; lo automático (entrada por defecto
+        // a Girox, un solo menú activo) no pisa una elección suya. 🪦 #678: antes Girox directo no se guardaba.
+        if (!opts || !opts.auto) { try { localStorage.setItem(MENU_PREF_KEY, pref); localStorage.setItem(MENU_USER_KEY, '1'); } catch (_) {} }
         closeMenuChooser();
         setHomeMode(_modeFor(pref));
         _afterPref(pref); // #670
@@ -390,14 +394,15 @@
     let _hiddenAt = 0;
     function maybeShowMenuChooser() {
         // #704 (owner): entrada desde la landing (`ir=girox`) → directo a la pantalla de Girox; el menú lo elige después desde "Menú".
-        if (VIP.state && VIP.state._openGiroxAfterLogin) { VIP.state._openGiroxAfterLogin = false; setMenuPref('girox', { quiet: true }); return; }
-        const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true }); return; } // #635: un solo menú activo → directo
+        if (VIP.state && VIP.state._openGiroxAfterLogin) { VIP.state._openGiroxAfterLogin = false; setMenuPref('girox', { quiet: true, auto: true }); return; }
+        const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true, auto: true }); return; } // #635: un solo menú activo → directo
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
         if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #559: preseleccionado → entra directo · #670
+        if (pref && _userPickedMenu()) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #836: el menú que eligió la persona
         // #733 (owner): "el menú seleccionado para todos (landing o común) cuando abran la app sea el de Girox, y después lo pueden cambiar
         // desde Menú; la idea es que todos entren directo a cargar". Sin menú fijo → Girox directo, sin selector (si ese menú está activo).
-        if (_menuOn('girox')) { setMenuPref('girox', { quiet: true }); return; }
+        if (_menuOn('girox')) { setMenuPref('girox', { quiet: true, auto: true }); return; }
         setTimeout(openMenuChooser, 350);
     }
     // #559 (owner): "Dejar preseleccionado para el ingreso" al lado de Cambiar menú. Guarda el menú actual como preferencia
@@ -425,7 +430,8 @@
             const away = _hiddenAt ? Date.now() - _hiddenAt : 0;
             _hiddenAt = 0;
             const logged = VIP.state && VIP.state.currentToken && !(_el('chatScreen') || {}).classList?.contains('hidden');
-            if (logged && away >= MENU_REASK_MS && !isMenuFixed()) openMenuChooser(); // #559 (#678: con Girox directo también se vuelve a preguntar)
+            // #836: ya no se vuelve a preguntar el menú al volver de segundo plano (sigue donde estaba; se cambia desde "Menú").
+            void away; void logged;
         });
     }
     function easyLoad() { setHomeMode('full'); }
@@ -606,7 +612,7 @@
         try { if (localStorage.getItem('vip_nodep') === '1') document.body.classList.add('nodep'); } catch (_) {} // #731
         try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
-        const m = _modeFor(getMenuPref()); // #512
+        const m = _modeFor((_userPickedMenu() || isMenuFixed() || !_menuOn('girox')) ? getMenuPref() : 'girox'); // #512 · #836: Girox salvo elección propia
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
