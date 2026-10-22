@@ -331,6 +331,9 @@ const userSchema = new mongoose.Schema({
   // #826: tokens de INSTALACIÓN aparte del link del agente (antes compartían el único accessLinkHash ⇒ un link nuevo invalidaba el que ya
   // estaba en el manifest del iPhone). Hasta 5 vigentes por 7 días, cada uno de un solo uso.
   installLinks: { type: [{ hash: String, createdAt: Date, _id: false }], default: [] },
+  // #840: JUEGOS FAVORITOS que el cliente marca en la app (la Partner API de 1girox no expone los favoritos de su web). key =
+  // '<aggregator_id>/<game_id>' (el juego se abre en /play/<key>), img = foto del catálogo público de 1girox. Máx. 30.
+  favoriteGames: { type: [{ key: String, name: String, img: String, provider: String, at: Date, _id: false }], default: [] },
   // #831: GRACIA del link de acceso (alta por landing / instalación): el mismo link vuelve a entrar durante 30 min después de canjearse
   // (doble apertura in-app → Chrome, recarga, respuesta perdida en un corte). Pasado ese rato muere como siempre.
   accessLinkGraceHash: { type: String, default: null, index: { sparse: true } },

@@ -24584,6 +24584,66 @@ app.post('/api/stories/:id/view', authMiddleware, async (req, res) => {
   catch (_) { res.json({ ok: false }); }
 });
 // Media subida desde el panel (guardada en Mongo como data URL). Público: la URL no es adivinable (uuid) y es contenido de pauta.
+// ===== #840 JUEGOS FAVORITOS (owner 2026-10-22): "que los juegos favoritos aparezcan en el Inicio con el link directo al juego; si no eligió,
+// los de siempre; botón para agregar sus juegos". La Partner API de 1girox NO tiene favoritos (y los de su web sólo se ven con la sesión del
+// jugador adentro de 1girox), así que se marcan en NUESTRA app. Catálogo = el público de 1girox (admin.1girox.com/api/games, sin CORS ⇒ pasa
+// por acá, cache 10 min). El juego se abre con el SSO de siempre + `_casinoGamePath = '/play/<key>'`.
+const FAV_GAMES_MAX = 30;
+const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
+const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
+const _gameCatalogCache = new Map();
+async function _gameCatalog(q, page) {
+  const k = q + '|' + page; const hit = _gameCatalogCache.get(k);
+  if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
+  const url = 'https://admin.1girox.com/api/games?sort=popular&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '');
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const games = ((j && j.games) || []).filter((g) => g && g.aggregator_id != null && g.game_id).map((g) => ({
+      key: String(g.aggregator_id) + '/' + String(g.game_id), name: String(g.name || '').replace(/[™®]/g, '').trim().slice(0, 60),
+      img: String(g.image_url || g.thumbnail || ''), provider: String(g.provider_name || g.provider || '').slice(0, 40), category: String(g.category || '').slice(0, 30)
+    })).filter((g) => _FAV_KEY_RE.test(g.key) && g.name).map((g) => (_FAV_IMG_RE.test(g.img) ? g : Object.assign(g, { img: '' })));
+    const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore };
+    _gameCatalogCache.set(k, { at: Date.now(), data }); if (_gameCatalogCache.size > 300) _gameCatalogCache.delete(_gameCatalogCache.keys().next().value);
+    return data;
+  } catch (_) { return null; } finally { clearTimeout(t); }
+}
+app.get('/api/games/catalog', authMiddleware, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(50, parseInt(req.query.page, 10) || 1));
+    const d = await _gameCatalog(q, page);
+    if (!d) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
+    res.set('Cache-Control', 'private, max-age=300'); res.json(d);
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/games/favorites', authMiddleware, async (req, res) => {
+  try {
+    const u = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
+    res.set('Cache-Control', 'no-store'); res.json({ favorites: (u && u.favoriteGames) || [], max: FAV_GAMES_MAX });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/games/favorites', authMiddleware, async (req, res) => {
+  try {
+    const b = req.body || {}; const key = String(b.key || '');
+    if (!_FAV_KEY_RE.test(key)) return res.status(400).json({ error: 'Juego inválido.' });
+    if (b.on === false) {
+      await User.updateOne({ id: req.user.userId }, { $pull: { favoriteGames: { key } } });
+    } else {
+      const img = String(b.img || ''); const name = String(b.name || '').replace(/[<>]/g, '').trim().slice(0, 60);
+      if (!name || (img && !_FAV_IMG_RE.test(img))) return res.status(400).json({ error: 'Juego inválido.' });
+      const u = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
+      const list = (u && u.favoriteGames) || [];
+      if (!list.some((f) => f.key === key)) {
+        if (list.length >= FAV_GAMES_MAX) return res.status(400).json({ error: `Podés tener hasta ${FAV_GAMES_MAX} favoritos. Sacá alguno para agregar otro.` });
+        await User.updateOne({ id: req.user.userId, 'favoriteGames.key': { $ne: key } }, { $push: { favoriteGames: { key, name, img, provider: String(b.provider || '').slice(0, 40), at: new Date() } } });
+      }
+    }
+    const u2 = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
+    res.json({ success: true, favorites: (u2 && u2.favoriteGames) || [] });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #834: foto de una historia automática (SVG 1080×1920 con el estilo de las historias de PICA ROJA).
 app.get('/api/stories/:id/auto.svg', async (req, res) => {
   try {

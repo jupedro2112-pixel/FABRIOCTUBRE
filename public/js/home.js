@@ -124,6 +124,7 @@
             try { const i = _el('messageInput'); if (i) i.blur(); } catch (_) {}
             renderEntryTabs();
             _entryLoad();
+            try { if (_el('evFavs')) _favLoad(); } catch (_) {} // #840
         } else if (mode === 'easy' || mode === 'basic') {
             _entryUnload();
             if (p) p.classList.add('hidden');
@@ -972,7 +973,9 @@
         if (ENTRY_GAMES.length) {
             tr.classList.add('games'); const fw = tr.closest('.ev-frame-wrap'); if (fw) fw.classList.add('games');
             if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos · jugá desde acá</span><small><i></i>jugando ahora</small>'; /* #786 · #787 */ tr.parentNode.insertBefore(hd, tr); }
-            tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span><span class="ev-play">👆 Jugar ahora</span></div>').join(''); // #785: manito + "Jugar ahora"
+            if (!_el('evFavs')) { const fv = document.createElement('div'); fv.id = 'evFavs'; fv.className = 'ev-favs'; _el('evGamesH').parentNode.insertBefore(fv, _el('evGamesH')); } // #840
+            tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span><span class="ev-play">👆 Jugar ahora</span>' + (GAME_PLAY[id] ? '<button type="button" class="fav-star" data-k="' + _esc(GAME_PLAY[id].slice(6)) + '" onclick="event.stopPropagation();VIP.home.favToggleTop(\'' + id + '\')" aria-label="Favorito">☆</button>' : '') + '</div>').join(''); // #785: manito + "Jugar ahora" · #840: ⭐
+            _favLoad();
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };
             ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
@@ -988,6 +991,107 @@
         tr.addEventListener('scroll', () => { const w = tr.clientWidth || 1; const i = Math.round(tr.scrollLeft / w); if (i !== _slIdx) { _slIdx = i; _slidesDots(); } }, { passive: true });
         _slBuilt = true;
     }
+    // ---------------- #840 JUEGOS FAVORITOS ----------------
+    // El cliente marca ⭐ en los Top juegos o en el catálogo de Girox (buscador) y sus favoritos aparecen arriba del Inicio con link directo
+    // al juego. Se guardan en su cuenta (GET/POST /api/games/favorites). Sin favoritos: aviso + botón para agregarlos (quedan los Top juegos).
+    let _favs = null, _favLoading = null, _favUser = null;
+    function _favHas(key) { return !!(_favs && _favs.some((f) => f.key === key)); }
+    function _favLoad(force) {
+        const tok = VIP.state && VIP.state.currentToken; if (!tok) return Promise.resolve([]);
+        const uid = (VIP.state.currentUser && (VIP.state.currentUser.id || VIP.state.currentUser.username)) || tok.slice(-12);
+        if (_favUser !== uid) { _favUser = uid; _favs = null; } // otra cuenta en el mismo teléfono ⇒ sus favoritos
+        if (_favs && !force) { _favPaint(); return Promise.resolve(_favs); }
+        if (!_favLoading) _favLoading = fetch(VIP.config.API_URL + '/api/games/favorites', { headers: { Authorization: 'Bearer ' + tok } })
+            .then((r) => r.ok ? r.json() : null).then((j) => { if (j && Array.isArray(j.favorites)) _favs = j.favorites; else if (!_favs) _favs = []; _favPaint(); return _favs; })
+            .catch(() => { if (!_favs) _favs = []; _favPaint(); return _favs; }).finally(() => { _favLoading = null; });
+        return _favLoading;
+    }
+    function _favImg(f) { return f.img ? (/^\/images\//.test(f.img) ? _slideUrl(f.img) : f.img) : '/icons/icon-192x192.png'; }
+    function _favPaint() {
+        const box = _el('evFavs');
+        if (box) {
+            const list = _favs || [];
+            box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos</span><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button></div>' +
+                (list.length
+                    ? '<div class="fav-row">' + list.map((f) => '<div class="fav-card" role="button" onclick="VIP.home.favPlay(\'' + _esc(f.key) + '\')"><img src="' + _esc(_favImg(f)) + '" alt="' + _esc(f.name) + '" loading="lazy" decoding="async" draggable="false"><b>' + _esc(f.name) + '</b><button type="button" class="fav-star on" onclick="event.stopPropagation();VIP.home.favToggle(\'' + _esc(f.key) + '\')" aria-label="Sacar de favoritos">★</button></div>').join('') + '</div>'
+                    : '<button type="button" class="fav-empty" onclick="VIP.home.favOpenPicker()"><b>⭐ Agregá tus juegos favoritos para que aparezcan acá</b><small>Tocá la ☆ de cualquier juego o buscalos en Girox · entrás directo con un toque</small><span>⭐ Agregar mis juegos favoritos ›</span></button>');
+        }
+        document.querySelectorAll('.fav-star[data-k]').forEach((b) => { const on = _favHas(b.dataset.k); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; });
+    }
+    async function _favSet(g, on) {
+        const tok = VIP.state && VIP.state.currentToken; if (!tok) return;
+        const prev = _favs ? _favs.slice() : [];
+        // Se pinta al toque (optimista) y se corrige con lo que diga el server.
+        if (on) { if (!_favHas(g.key)) _favs = (_favs || []).concat([{ key: g.key, name: g.name, img: g.img, provider: g.provider || '' }]); } else _favs = (_favs || []).filter((f) => f.key !== g.key);
+        _favPaint(); _favPickerPaintStars();
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/games/favorites', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok }, body: JSON.stringify({ key: g.key, name: g.name, img: g.img || '', provider: g.provider || '', on }) });
+            const j = await r.json().catch(() => ({}));
+            if (r.ok && Array.isArray(j.favorites)) _favs = j.favorites; else { _favs = prev; try { VIP.ui.showToast(j.error || 'No se pudo guardar el favorito. Probá de nuevo.', 'error'); } catch (_) {} }
+        } catch (_) { _favs = prev; try { VIP.ui.showToast('Sin conexión: no se guardó el favorito.', 'error'); } catch (_) {} }
+        _favPaint(); _favPickerPaintStars();
+        if (on && _favHas(g.key)) { try { VIP.ui.showToast('⭐ ' + g.name + ' quedó en tus favoritos del Inicio', 'success'); } catch (_) {} }
+        if (_favQ.length < 2 && _el('favPicker') && !_el('favPicker').classList.contains('hidden')) _favPickerPaint(); // lista de favoritos al día
+    }
+    function favToggle(key) { const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key); if (!f) return; _favSet(f, !_favHas(key)); }
+    function favToggleTop(id) {
+        const path = GAME_PLAY[id]; if (!path) return; const name = ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1]) || 'Juego';
+        const key = path.slice(6); _favSet({ key, name, img: '/images/games/' + id + '.jpg', provider: '' }, !_favHas(key));
+    }
+    function favPlay(key) {
+        const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
+        try { VIP.ui._casinoGamePath = '/play/' + key; } catch (_) {}
+        try { VIP.ui.showToast('🎰 Abriendo ' + ((f && f.name) || 'el juego') + '…', 'info'); } catch (_) {}
+        favClosePicker(); openPlatform('girox', { embed: true });
+    }
+    // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
+    let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;
+    function favOpenPicker() {
+        let m = _el('favPicker');
+        if (!m) {
+            document.body.insertAdjacentHTML('beforeend', '<div id="favPicker" class="modal hidden fav-modal" onclick="if(event.target===this)VIP.home.favClosePicker()"><div class="modal-content fav-pick" onclick="event.stopPropagation()">' +
+                '<div class="fav-pick-h"><b>⭐ Elegí tus juegos favoritos</b><button type="button" class="fav-x" onclick="VIP.home.favClosePicker()" aria-label="Cerrar">✕</button></div>' +
+                '<p class="fav-pick-sub">Buscá tus juegos y tocá la ☆: aparecen en tu Inicio y entrás directo.</p>' +
+                '<input type="search" id="favSearch" class="fav-search" placeholder="Buscar juego (ej. Olympus, Sweet Bonanza)" autocomplete="off" oninput="VIP.home.favSearch(this.value)">' +
+                '<div id="favGrid" class="fav-grid"></div><button type="button" id="favMoreBtn" class="fav-more" onclick="VIP.home.favMore()" hidden>Ver más juegos</button>' +
+                '<button type="button" class="btn btn-primary fav-done" onclick="VIP.home.favClosePicker()">Listo</button></div></div>');
+            m = _el('favPicker');
+        }
+        m.classList.remove('hidden'); document.body.classList.add('fav-open');
+        // #840 (owner): "con un buscador: que aparezcan los juegos buscando y sólo los favoritos, para no mostrar toda la página" ⇒ sin
+        // búsqueda se ven SÓLO tus favoritos; el catálogo aparece recién al escribir (2+ letras).
+        const inp = _el('favSearch'); if (inp) { inp.value = _favQ; setTimeout(() => { try { inp.focus(); } catch (_) {} }, 120); }
+        _favLoad().then(() => { if (_favQ.length < 2) _favPickerPaint(); });
+        if (_favQ.length >= 2) _favFetch(true); else _favPickerPaint();
+    }
+    function favClosePicker() { const m = _el('favPicker'); if (m) m.classList.add('hidden'); document.body.classList.remove('fav-open'); }
+    function favSearch(v) { clearTimeout(_favQT); _favQT = setTimeout(() => { _favQ = String(v || '').trim(); if (_favQ.length >= 2) _favFetch(true); else { _favReq++; _favCat = []; _favMore = false; _favPickerPaint(); } }, 350); }
+    function favMore() { _favPage++; _favFetch(false); }
+    async function _favFetch(reset) {
+        const tok = VIP.state && VIP.state.currentToken; const grid = _el('favGrid'); if (!tok || !grid) return;
+        if (reset) { _favPage = 1; _favCat = []; grid.innerHTML = '<div class="fav-msg">Buscando juegos…</div>'; }
+        const my = ++_favReq;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/games/catalog?q=' + encodeURIComponent(_favQ) + '&page=' + _favPage, { headers: { Authorization: 'Bearer ' + tok } });
+            const j = await r.json().catch(() => ({})); if (my !== _favReq) return;
+            if (!r.ok) { grid.innerHTML = '<div class="fav-msg">' + _esc(j.error || 'No pudimos traer los juegos. Probá de nuevo.') + '</div>'; return; }
+            const seen = new Set(_favCat.map((g) => g.key)); _favCat = _favCat.concat((j.games || []).filter((g) => !seen.has(g.key))); _favMore = !!j.hasMore;
+        } catch (_) { if (my === _favReq) grid.innerHTML = '<div class="fav-msg">Sin conexión. Probá de nuevo.</div>'; return; }
+        _favPickerPaint();
+    }
+    function _favPickerPaint() {
+        const grid = _el('favGrid'), more = _el('favMoreBtn'); if (!grid) return;
+        if (_favQ.length < 2) { // sin búsqueda: sólo los favoritos
+            const list = _favs || [];
+            grid.innerHTML = '<div class="fav-msg fav-msg-h">' + (list.length ? '⭐ Tus favoritos (' + list.length + ') · tocá la ★ para sacarlo' : '🔎 Escribí el nombre de un juego arriba para buscarlo y agregarlo') + '</div>' +
+                list.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">★</span></div>').join('');
+            if (more) more.hidden = true; _favPickerPaintStars(); return;
+        }
+        grid.innerHTML = _favCat.length ? _favCat.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">☆</span></div>').join('') : '<div class="fav-msg">No encontramos juegos con ese nombre.</div>';
+        if (more) more.hidden = !_favMore;
+        _favPickerPaintStars();
+    }
+    function _favPickerPaintStars() { document.querySelectorAll('#favGrid .fav-star[data-k], .ev-game .fav-star[data-k]').forEach((b) => { const on = _favHas(b.dataset.k); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; }); }
     function _slidesDots() { const dots = _el('entrySlidesDots'); if (!dots) return; Array.from(dots.children).forEach((d, i) => d.classList.toggle('on', i === _slIdx)); }
     function _slidesGo(i) {
         const tr = _el('entrySlidesTrack'); if (!tr) return;
@@ -2473,4 +2577,5 @@
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
+    Object.assign(VIP.home, { favOpenPicker, favClosePicker, favSearch, favMore, favToggle, favToggleTop, favPlay }); // #840
 })();

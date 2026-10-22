@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 840. ⭐ JUEGOS FAVORITOS en el Inicio con buscador y link directo — SW v573
+**Pedido (owner):** "que los juegos favoritos de Girox aparezcan en el Inicio con el link directo al juego; si no eligió, los de siempre; un
+botón para agregar sus juegos" + "con un buscador: que aparezcan los juegos buscando y sólo los favoritos, para no mostrar toda la página".
+- La Partner API de 1girox NO tiene favoritos (y `admin.1girox.com/api/games/favorites` sólo responde con la sesión del jugador en su web, 401
+  sin ella) ⇒ acordado con el owner: se marcan en NUESTRA app. Si 1girox agrega un endpoint de favoritos por jugador, se suman.
+- `User.favoriteGames` [{key '<aggregator_id>/<game_id>', name, img, provider, at}] (máx. 30). `GET/POST /api/games/favorites`;
+  `GET /api/games/catalog?q=&page=` = proxy del catálogo público de 1girox (sin CORS; cache 10 min; fotos sólo de admin.1girox.com /
+  img-girox.red777.win / /images/games/).
+- Inicio (modo play: completo / Girox directo): "⭐ Mis juegos favoritos" ARRIBA de "🔥 Top juegos" (fila deslizante, tocar = abre el juego con
+  `_casinoGamePath='/play/<key>'` + SSO; ★ para sacarlo). Sin favoritos: "⭐ Agregá tus juegos favoritos para que aparezcan acá" + botón.
+  Cada Top juego tiene ☆. Selector: buscador; sin búsqueda muestra SÓLO tus favoritos, con 2+ letras los resultados (con "Ver más").
+- Probado en jsdom con la PWA real (agregar desde Top juegos, buscar, agregar del catálogo, abrir, sacar) y el proxy contra el catálogo real.
+
 ### 839. 🎁 El bono de la carga LLEGA de verdad + textos "100% · después +50% instalando la app y activando notificaciones" — SW v572
 **Pedido (owner, capturas):** "el bono está mal: la app dice $15.000 instalando la app y en el panel de Girox figura sólo una carga de $10.000;
 que funcione y cargue el bono de forma real" + "no es 150% si instalás: es 100% por la primera carga y el 50% EXTRA después de su carga
