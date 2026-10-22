@@ -1949,14 +1949,49 @@ async function _sendUserSystemMessage(user, content, { metadata = null, senderUs
 // Los retiros ya tenían su stand-by (PendingPayout.pending_review → sección Pagos → pagar / rechazar).
 // ============================================================
 // #808 (owner): comprobante que NO se pudo leer bien ⇒ pedirle al cliente que lo reenvíe con todos los datos visibles (editable en COMANDOS).
-const RECEIPT_UNREADABLE_DEFAULT = '⚠️ No pudimos leer bien tu comprobante. Reenvialo de forma correcta, con TODOS los datos visibles: monto, fecha y hora, nombre de quien envía, CBU/alias de destino y N° de operación.\n\n📸 Si los datos no se ven, el pago será rechazado.';
-async function _askReceiptResend(userId, username, why) {
+// #825 (owner 2026-10-22): "cuando mandan el comprobante sin estar completo, decirles que se necesita que se vean los datos: titular, CUIT,
+// horario y monto, todo lo que usás para leerlo; si sigue fallando, entra a Soporte automáticamente del lado interno para hacerlo manual".
+// 1er comprobante ilegible/incompleto ⇒ /sys_receipt_unreadable con la lista de datos. 2do en 60 min ⇒ NO se le vuelve a pedir: pasa solo a
+// un agente (/sys_receipt_to_agent al cliente; el comprobante entra a Cargas pendientes ya escalado; el chat se abre en Abiertos con nota).
+const RECEIPT_UNREADABLE_DEFAULT = '⚠️ No pudimos leer bien tu comprobante. Mandalo de nuevo con TODOS estos datos bien visibles:\n\n👤 Nombre del titular que envía\n🪪 CUIT/CUIL\n🕒 Fecha y hora de la transferencia\n💵 Monto\n🏦 CBU/alias de destino\n🔢 N° de operación\n\n📸 Captura entera, sin recortar. Si no se ven los datos, la carga no se puede acreditar.';
+const RECEIPT_UNREADABLE_OLD_808 = '⚠️ No pudimos leer bien tu comprobante. Reenvialo de forma correcta, con TODOS los datos visibles: monto, fecha y hora, nombre de quien envía, CBU/alias de destino y N° de operación.\n\n📸 Si los datos no se ven, el pago será rechazado.';
+const RECEIPT_TO_AGENT_DEFAULT = '🙋 No pudimos leer tu comprobante de forma automática, así que ya se lo pasamos a un agente para que lo revise a mano. No hace falta que hagas nada: te avisamos acá apenas se acredite.';
+async function _askReceiptResend(userId, username, why, compId) {
   try {
-    const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'receipt_unreadable', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
-    if (recent) return; // a lo sumo uno cada 10 min
+    const since60 = new Date(Date.now() - 60 * 60 * 1000);
+    // Ya escalado en la última hora ⇒ no insistir (el agente lo tiene).
+    const esc = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'receipt_to_agent', timestamp: { $gte: since60 } }).select('_id').lean();
+    if (esc) { await _receiptQueueForAgent(userId, username, compId, why, false); return; }
+    const prev = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'receipt_unreadable', timestamp: { $gte: since60 } }).select('timestamp').lean();
+    if (prev) {
+      // SEGUNDA vez que falla ⇒ a un agente, automático.
+      if (Date.now() - new Date(prev.timestamp).getTime() < 20 * 1000) return; // misma tanda de imágenes: no cuenta como reintento
+      const txt = await renderSystemCommand('/sys_receipt_to_agent', RECEIPT_TO_AGENT_DEFAULT, {});
+      if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_to_agent', why: String(why || '').slice(0, 60), channel: 'support' } });
+      await _receiptQueueForAgent(userId, username, compId, why, true);
+      return;
+    }
     const txt = await renderSystemCommand('/sys_receipt_unreadable', RECEIPT_UNREADABLE_DEFAULT, {});
-    if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_unreadable', why: String(why || '').slice(0, 60), channel: 'support' }, push: { title: '📸 Reenviá tu comprobante', body: 'No se ven todos los datos. Mandalo de nuevo con monto, fecha, titular y N° de operación visibles.' } });
+    if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_unreadable', why: String(why || '').slice(0, 60), channel: 'support' }, push: { title: '📸 Reenviá tu comprobante', body: 'Necesitamos ver titular, CUIT, fecha y hora, monto y N° de operación.' } });
   } catch (e) { logger.warn(`[comprobante] pedido de reenvío: ${e.message}`); }
+}
+// Deja el comprobante en Cargas pendientes YA escalado (sin otro mensaje al cliente) y abre el chat en Abiertos con una nota interna.
+async function _receiptQueueForAgent(userId, username, compId, why, first) {
+  try {
+    // El comprobante del flujo "incompleto" se guarda unos instantes DESPUÉS de esta llamada ⇒ esperar un poco.
+    await new Promise((r) => setTimeout(r, 4000));
+    let c = compId ? await Comprobante.findOne({ id: compId }).lean() : null;
+    if (!c) c = await Comprobante.findOne({ userId, createdAt: { $gte: new Date(Date.now() - 10 * 60 * 1000) }, autoCharged: { $ne: true } }).sort({ createdAt: -1 }).lean();
+    if (c && c.reviewStatus !== 'confirmed' && c.reviewStatus !== 'rejected') {
+      await Comprobante.updateOne({ id: c.id }, { $set: { reviewStatus: 'pending', reviewQueuedAt: c.reviewQueuedAt || new Date(), reviewEscalatedAt: new Date(), reviewEscalateReason: 'comprobante ilegible / incompleto (2 intentos)' } });
+      _emitDepositReviewUpdate(userId, { action: 'escalated', id: c.id, username, amount: c.amount || 0 });
+    }
+    if (!first) return;
+    await ChatStatus.findOneAndUpdate({ userId }, { $set: { userId, username, status: 'open', category: 'cargas', closedAt: null, closedBy: null, lastMessageAt: new Date() } }, { upsert: true, setDefaultsOnInsert: true });
+    await _emitAdminOnlyChatNote(userId, username, `📸 COMPROBANTE ILEGIBLE 2 VECES (${String(why || '').slice(0, 40)}) — pasó solo a manual. Revisalo en "Cargas pendientes": si se ve, confirmalo con el monto; si no, pedile acá los datos (titular, CUIT, fecha y hora, monto, N° de operación).`);
+    try { notifyAdmins('chat_moved', { userId, to: 'open', by: 'sistema' }); } catch (_) {}
+    logger.info(`[comprobante] ${username}: 2 comprobantes ilegibles ⇒ a un agente`);
+  } catch (e) { logger.warn(`[comprobante] pase a agente: ${e.message}`); }
 }
 const RECEIPT_RECEIVED_DEFAULT = '✅ Recibimos tu comprobante{amount}. En breve tu carga será realizada: te avisamos acá apenas se acredite.'; // #811
 const RECEIPT_DUPLICATE_DEFAULT = '⚠️ Ese comprobante ya fue usado{amount}. Cada transferencia se acredita UNA sola vez. Si creés que es un error, contanos acá en Soporte y lo revisamos.';
@@ -2062,29 +2097,31 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
 
     // La IA no pudo analizar (error técnico): registrar y salir en silencio.
     if (!result.ok) {
+      const _cidE = uuidv4();
       try {
         await Comprobante.create({
-          id: uuidv4(), userId, username, messageId,
+          id: _cidE, userId, username, messageId,
           isComprobante: false, status: 'error',
           errorReason: String(result.error || '').slice(0, 300),
           rawText: result.rawText || null, model: comprobanteAi.getModel(), createdAt: new Date()
         });
       } catch (_) {}
-      _askReceiptResend(userId, username, 'error'); // #808
+      _askReceiptResend(userId, username, 'error', _cidE); // #808 · #825
       return;
     }
 
     // No es comprobante (captura de error, foto cualquiera): registrar liviano, sin avisar.
     if (!result.isComprobante) {
+      const _cidN = uuidv4();
       try {
         await Comprobante.create({
-          id: uuidv4(), userId, username, messageId,
+          id: _cidN, userId, username, messageId,
           isComprobante: false, aiConfidence: result.confidence || 0,
           status: 'not_comprobante', rawText: result.rawText || null,
           model: result.model, createdAt: new Date()
         });
       } catch (_) {}
-      _askReceiptResend(userId, username, 'not_comprobante'); // #808: si era un comprobante, que lo reenvíe bien
+      _askReceiptResend(userId, username, 'not_comprobante', _cidN); // #808: si era un comprobante, que lo reenvíe bien · #825
       return;
     }
 
@@ -2139,7 +2176,8 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
 
     // #808: comprobante reconocido pero con datos clave ilegibles (sin monto, o sin titular y sin N° de operación) ⇒ pedir reenvío.
     // Sigue el flujo igual (queda en la cola para revisión manual), así no se pierde si el agente lo puede leer.
-    if (!(Number(result.amount) > 0) || (!result.originHolder && !result.operationNumber)) _askReceiptResend(userId, username, 'incomplete');
+    // #825: también sin fecha/hora (se usa para ubicar la transferencia).
+    if (!(Number(result.amount) > 0) || (!result.originHolder && !result.operationNumber) || !result.paymentDate) _askReceiptResend(userId, username, 'incomplete', base.id);
     const montoStr = result.amount ? `$${Number(result.amount).toLocaleString('es-AR')}` : 's/monto';
     const opStr = result.operationNumber ? `op. N°${result.operationNumber}` : 's/N° operación';
     const dataDesc = `${opStr} · ${montoStr}${result.paymentDate ? ' · ' + result.paymentDate : ''}`;
@@ -12456,6 +12494,8 @@ async function initializeData() {
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
   try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
+  // #825: el texto del pedido de reenvío pasa a listar los datos (titular, CUIT, fecha y hora, monto…) si seguía el de #808 sin editar.
+  try { if (!(await getConfig('mig825ReceiptText', null))) { await Command.updateOne({ name: '/sys_receipt_unreadable', response: RECEIPT_UNREADABLE_OLD_808 }, { $set: { response: RECEIPT_UNREADABLE_DEFAULT } }); await Config.set('mig825ReceiptText', new Date().toISOString(), 'mig#825'); } } catch (e) { console.warn('[startup-migration] #825:', e.message); }
   // #822 (owner 2026-10-22): "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados": los chats que estaban en Comunidad vuelven a
   // Abiertos (si no, quedaban escondidos: la pestaña ya no existe).
   try { if (!(await getConfig('mig822NoComunidad', null))) { const r = await ChatStatus.updateMany({ status: 'comunidad' }, { $set: { status: 'open' } }); await Config.set('mig822NoComunidad', new Date().toISOString(), 'mig#822'); console.log(`✅ #822: ${r.modifiedCount || 0} chats de Comunidad pasan a Abiertos`); } } catch (e) { console.warn('[startup-migration] #822:', e.message); }
@@ -12891,10 +12931,16 @@ async function initializeData() {
       response: RECEIPT_RECEIVED_DEFAULT
     },
     {
-      name: '/sys_receipt_unreadable', // #808
-      description: 'Comprobante ilegible o incompleto (o una foto que no parece comprobante): se le pide reenviarlo con todos los datos visibles. Máx. 1 cada 10 min.',
+      name: '/sys_receipt_unreadable', // #808 · #825
+      description: 'Comprobante ilegible o incompleto (o una foto que no parece comprobante): se le pide reenviarlo con los datos visibles (titular, CUIT, fecha y hora, monto, destino, N° de operación). Si el segundo también falla, pasa solo a un agente (/sys_receipt_to_agent).',
       type: 'message',
       response: RECEIPT_UNREADABLE_DEFAULT
+    },
+    {
+      name: '/sys_receipt_to_agent', // #825
+      description: 'Segundo comprobante ilegible en 1 hora: se avisa al cliente que lo revisa un agente a mano (el comprobante queda en Cargas pendientes y el chat en Abiertos).',
+      type: 'message',
+      response: RECEIPT_TO_AGENT_DEFAULT
     },
     {
       name: '/sys_receipt_duplicate',

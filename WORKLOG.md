@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 825. 📸 Comprobante incompleto: se piden los datos exactos y, si vuelve a fallar, pasa solo a un agente — SW v565
+**Pedido (owner):** "cuando envían el comprobante sin estar completo, decirles que se necesita que se vean titular, CUIT, horario y monto,
+todo lo que usás para leer el comprobante; si sigue fallando, que entre a soporte automáticamente del lado interno para hacerlo manual".
+- `/sys_receipt_unreadable` (default nuevo, migración `mig825ReceiptText` si seguía el texto de #808): lista 👤 titular · 🪪 CUIT/CUIL · 🕒 fecha y
+  hora · 💵 monto · 🏦 CBU/alias de destino · 🔢 N° de operación, captura entera. "Incompleto" ahora también si falta la fecha/hora.
+- SEGUNDO comprobante ilegible/incompleto en 60 min (ignora los que llegan en la misma tanda, <20 s) ⇒ no se le vuelve a pedir:
+  `/sys_receipt_to_agent` al cliente ("ya se lo pasamos a un agente"), `_receiptQueueForAgent` deja ese comprobante en Cargas pendientes YA
+  escalado (también los que la IA no pudo leer o no reconoció como comprobante), abre el chat en Abiertos (categoría cargas) y nota interna con
+  qué pedirle. Los siguientes en esa hora entran directo a la cola sin más mensajes.
+- App: el toast de adjuntar y los textos de "Comprobante aquí" piden los mismos datos.
+
 ### 824. 📈 Análisis de la estrategia de notificaciones ARRIBA del Cronograma (día vencido, o el día / mes que se elija) — admin SW v159
 **Pedido (owner):** "arriba de todo el detalle para ver cómo impulsa la venta día a día el sistema de notificaciones; abriendo el detalle,
 cuánta gente reclamó, cuánta ignoró, cuántos inactivos recuperamos, etc.; siempre a día vencido, pero que se pueda seleccionar fecha, día o mes".
