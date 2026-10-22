@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 830. 🔗 FIX link de RESULTADOS del publicista — admin SW v162
+**Pedido (owner):** "cuando copiás e ingresás al link te ingresa a la plataforma; necesito un link independiente para mandarle al publicista".
+Causa (#805): el panel armaba el link sobre el de la campaña (`buildCampaignLink` = `/<CODE>`) esperando un `/l/<code>` que ya no existe ⇒
+salía `picaroja.com/PICAROJAOK/r/<token>` y el vanity `/:code` lo mandaba a la app. Ahora `buildStatsLink` ⇒ `picaroja.com/r/<token>`
+(la página `/r/:token` del server estaba bien). Los links que ya se copiaron mal: volver a copiarlos (el token es el mismo).
+
 ### 829. 🚨 FIX: la app no cargaba ("Entrando a tu cuenta…" colgado tras crear usuario en la landing) — SW v568
 **Pedido (owner):** "no me funciona la página /landing, creo usuarios y queda cargando; de la última actualización a la anterior se rompió algo".
 Causa (#826): en `ui.js` se hacía `VIP.ui.installCredsHtml = …` / `VIP.ui.showInstalledReminder = …` DENTRO del IIFE que crea `VIP.ui`

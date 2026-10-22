@@ -10670,8 +10670,13 @@ function renderCampaigns() {
 }
 
 // #805: link de resultados del publicista
+// #830: el link va en la RAÍZ del dominio (/r/<token>). Antes se armaba sobre el link de la campaña (/<CODE>/r/…) y llevaba a la plataforma.
+function buildStatsLink(code, token) {
+    const base = buildCampaignLink(code).replace(/\/[^/]*$/, '');
+    return base + '/r/' + encodeURIComponent(token);
+}
 function copyStatsLink(code, token) {
-    const link = buildCampaignLink(code).replace(/\/l\/[^/]+$/, '') + '/r/' + token;
+    const link = buildStatsLink(code, token);
     navigator.clipboard.writeText(link).then(() => showToast('Link de resultados copiado', 'success'), () => showToast(link, 'info'));
 }
 async function statsLinkAction(code, revoke) {
@@ -11149,7 +11154,7 @@ async function viewCampaignStats(code) {
             </div>
             <div id="statsLinkBox" style="background:rgba(0,0,0,0.4);border:1px solid rgba(111,191,147,0.35);border-radius:8px;padding:12px;margin-bottom:12px;">
                 <div style="font-size:11px;color:#aaa;margin-bottom:4px;">📊 Link de RESULTADOS para el publicista (sin usuario ni clave, sólo lectura)</div>
-                ${campaign.statsToken ? `<code style="display:block;background:#0d0d1a;padding:8px;border-radius:6px;color:#6fbf93;font-size:12px;word-break:break-all;">${escapeHtml(buildCampaignLink(campaign.code).replace(/\/l\/[^/]+$/, '') + '/r/' + campaign.statsToken)}</code>
+                ${campaign.statsToken ? `<code style="display:block;background:#0d0d1a;padding:8px;border-radius:6px;color:#6fbf93;font-size:12px;word-break:break-all;">${escapeHtml(buildStatsLink(campaign.code, campaign.statsToken))}</code>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"><button onclick="copyStatsLink('${escapeHtml(campaign.code)}','${escapeHtml(campaign.statsToken)}')" class="btn-secondary btn-small">📋 Copiar</button><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', false)" class="btn-secondary btn-small">🔄 Generar uno nuevo</button><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', true)" class="btn-secondary btn-small">⛔ Desactivar</button></div>`
                 : `<div style="font-size:12px;color:#888;margin-bottom:6px;">Todavía no tiene link. Con el link ve clics, registros, cuántos cargaron y cuánto, de hoy y desde el inicio.</div><button onclick="statsLinkAction('${escapeHtml(campaign.code)}', false)" class="btn-primary btn-small">📊 Crear link de resultados</button>`}
             </div>
