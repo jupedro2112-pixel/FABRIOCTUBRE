@@ -191,6 +191,7 @@ VIP.installBonus = (function () {
                 <p style="color:#f7931e;margin-bottom:10px;">El bono se reclama <strong>desde la app instalada</strong>. Parece que todavía no la estás usando instalada.</p>
                 <p style="color:#fff;font-size:13px;margin-bottom:8px;text-align:left;">Hacé estos pasos:</p>
                 <ol style="text-align:left;">${installSteps.map(s => `<li>${s}</li>`).join('')}</ol>
+                ${(VIP.ui && VIP.ui.installCredsHtml) ? VIP.ui.installCredsHtml() : ''}
                 <p style="color:#00ff88;font-size:13px;margin-top:10px;">Ya dentro de la app instalada, tocá <strong>"${_buttonLabel}"</strong> y el bono queda reservado al instante.</p>
                 ${reinstallHtml}
                 <button onclick="this.closest('.ios-install-modal').remove()" class="btn btn-primary" style="margin-top:15px;">Entendido</button>

@@ -1344,11 +1344,20 @@ app.get('/manifest.json', (req, res) => {
   try {
     if (!_manifestBase) _manifestBase = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'public', 'manifest.json'), 'utf8'));
     const m = Object.assign({}, _manifestBase);
-    const a = String(req.query.a || ''), menu = String(req.query.menu || ''), fixed = req.query.fixed === '1';
+    let a = String(req.query.a || ''), uName = String(req.query.u || '');
+    const menu = String(req.query.menu || ''), fixed = req.query.fixed === '1';
+    // #826: si Safari pidió el manifest sin ?a (no tomó el cambio del <link>), el token sale de la cookie vip_inst (Path=/manifest.json).
+    if (!a) {
+      const ck = (String(req.headers.cookie || '').split(';').map((x) => x.trim()).find((x) => x.startsWith('vip_inst=')) || '').slice(9);
+      const dot = ck.indexOf('.');
+      if (dot > 0) { a = ck.slice(0, dot); if (!uName) { try { uName = decodeURIComponent(ck.slice(dot + 1)); } catch (_) {} } }
+    }
     let su = '/?source=pwa';
     if (/^[A-Za-z0-9_-]{20,64}$/.test(a)) su += '&acceso=' + a;
+    if (/^[A-Za-z0-9._-]{3,40}$/.test(uName)) su += '&u=' + encodeURIComponent(uName); // #826: si el acceso automático falla, el usuario ya viene escrito
     if (['full', 'basic', 'easy', 'girox'].includes(menu)) su += '&menu=' + menu + (fixed ? '&fixed=1' : '');
     m.start_url = su;
+    res.setHeader('Vary', 'Cookie');
     res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json(m);
@@ -5468,6 +5477,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // esté expirado.
 app.post('/api/auth/logout', async (req, res) => {
   try {
+    // #826: al cerrar sesión se borra el token de instalación del navegador (si no, instalar después abriría la cuenta anterior).
+    try { res.setHeader('Set-Cookie', 'vip_inst=; Max-Age=0; Path=/manifest.json; SameSite=Lax; HttpOnly'); } catch (_) {}
     const fcmToken = (req.body && req.body.fcmToken) || (req.query && req.query.fcmToken) || null;
 
     // Intentar identificar al usuario por el JWT. Si está expirado o ausente,
@@ -21143,12 +21154,20 @@ async function issueAccessLinkFor(userId, opts) {
   return `${getPublicBaseUrl()}/?acceso=${token}`;
 }
 // #673: el PROPIO cliente pide un token de acceso (de un solo uso) para que la app instalada en iPhone arranque con su sesión.
-app.post('/api/auth/install-link', authMiddleware, authLimiter, async (req, res) => {
+// #826 (owner 2026-10-22: "instalé la app desde la página y no quedó iniciada la sesión en iPhone; tiene que entrar sí o sí"): el token de
+// instalación ya NO pisa el link del agente (va en `installLinks`, hasta 5 vigentes 7 días, uno por carga de la página) y además queda en la
+// cookie `vip_inst` (sólo para /manifest.json): si Safari no toma el cambio del <link rel=manifest>, igual lo encuentra al pedir el manifest.
+const INSTALL_LINK_TTL_MS = 7 * 86400000;
+app.post('/api/auth/install-link', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
-    const link = await issueAccessLinkFor(req.user.userId, { purpose: 'install' }); // req.user.userId = id uuid (req.user.id sería el _id virtual: no matchea)
-    const token = new URL(link).searchParams.get('acceso');
-    res.json({ success: true, token });
+    const token = crypto.randomBytes(24).toString('base64url');
+    const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const u = await User.findOneAndUpdate({ id: req.user.userId }, { $push: { installLinks: { $each: [{ hash, createdAt: new Date() }], $slice: -5 } } }, { new: true }).select('username').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+    res.setHeader('Set-Cookie', `vip_inst=${token}.${encodeURIComponent(u.username)}; Max-Age=${INSTALL_LINK_TTL_MS / 1000}; Path=/manifest.json; SameSite=Lax; HttpOnly${secure}`);
+    res.json({ success: true, token, username: u.username });
   } catch (e) { logger.warn(`[install-link] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/users/:userId/access-link', authMiddleware, adminMiddleware, async (req, res) => {
@@ -21187,11 +21206,20 @@ app.post('/api/auth/access-link', authLimiter, async (req, res) => {
 
     // Consumo atómico del link (single-use: se borra el hash en el mismo paso).
     // El cambio de clave NO se fuerza acá: depende del origen de la cuenta (abajo).
-    const user = await User.findOneAndUpdate(
+    let user = await User.findOneAndUpdate(
       { accessLinkHash: hash, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
       { $set: { accessLinkHash: null, lastLogin: new Date() } },
       { new: false } // #673: con el doc ANTERIOR se lee accessLinkPurpose (el hash ya quedó borrado atómicamente igual)
     ).select('id username role tokenVersion acquisitionSource mustChangePassword accessLinkPurpose').lean();
+    // #826: token de INSTALACIÓN (installLinks, 7 días, un solo uso: se saca del array en el mismo paso).
+    if (!user) {
+      user = await User.findOneAndUpdate(
+        { installLinks: { $elemMatch: { hash, createdAt: { $gte: new Date(Date.now() - INSTALL_LINK_TTL_MS) } } }, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
+        { $pull: { installLinks: { hash } }, $set: { lastLogin: new Date() } },
+        { new: false }
+      ).select('id username role tokenVersion acquisitionSource mustChangePassword').lean();
+      if (user) user.accessLinkPurpose = 'install';
+    }
 
     if (!user) {
       // Genérico a propósito: no revelar si el link existió, venció o la cuenta

@@ -1977,14 +1977,17 @@
             if (!_isIOS() || _isStandalone()) return;
             const u = VIP.state && VIP.state.currentUser && VIP.state.currentUser.username, tk = VIP.state && VIP.state.currentToken;
             if (!u || !tk) return;
-            let c = null; try { c = JSON.parse(localStorage.getItem('vip_install_tok') || 'null'); } catch (_) {}
-            if (!c || c.u !== u || !c.t || Date.now() - (c.at || 0) > 7 * 86400000) {
-                const r = await fetch(VIP.config.API_URL + '/api/auth/install-link', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tk } });
+            // #826: token FRESCO por carga de página (antes se reusaba 7 días desde localStorage: si ya se había canjeado — reinstalación —
+            // o si otro link lo había pisado, la app instalada abría sin sesión). Se reusa sólo dentro de la misma pestaña por 30 min.
+            try { localStorage.removeItem('vip_install_tok'); } catch (_) {}
+            let c = null; try { c = JSON.parse(sessionStorage.getItem('vip_install_tok2') || 'null'); } catch (_) {}
+            if (!c || c.u !== u || !c.t || Date.now() - (c.at || 0) > 30 * 60000) {
+                const r = await fetch(VIP.config.API_URL + '/api/auth/install-link', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tk }, credentials: 'same-origin' });
                 const j = await r.json(); if (!r.ok || !j.token) return;
-                c = { u, t: j.token, at: Date.now() }; try { localStorage.setItem('vip_install_tok', JSON.stringify(c)); } catch (_) {}
+                c = { u, t: j.token, at: Date.now() }; try { sessionStorage.setItem('vip_install_tok2', JSON.stringify(c)); } catch (_) {}
             }
             const pref = getMenuPref(), fixed = isMenuFixed();
-            const href = '/manifest.json?a=' + encodeURIComponent(c.t) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '');
+            const href = '/manifest.json?a=' + encodeURIComponent(c.t) + '&u=' + encodeURIComponent(u) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '');
             const l = document.querySelector('link[rel="manifest"]'); if (l && l.getAttribute('href') !== href) l.setAttribute('href', href);
         } catch (_) {}
     }
@@ -2453,4 +2456,5 @@
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
+    VIP.home.installManifestSync = installManifestSync; // #826
 })();

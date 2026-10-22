@@ -633,6 +633,8 @@ VIP.auth = (function () {
     async function tryAccessLink() {
         let token = null;
         try { token = new URLSearchParams(window.location.search).get('acceso'); } catch (e) {}
+        // #826: el inicio de la app instalada trae el usuario (?u=) por si el acceso automático falla: se guarda para dejarlo escrito en el login.
+        try { const pu = new URLSearchParams(window.location.search).get('u'); if (pu && /^[A-Za-z0-9._-]{3,40}$/.test(pu)) sessionStorage.setItem('vip_prefill_user', pu); } catch (e) {}
         // #673 (iPhone): la app instalada arranca con ?menu=<pref>&fixed=1 (del manifest): se replica el menú elegido en Safari.
         try {
             const sp = new URLSearchParams(window.location.search); const mn = sp.get('menu');
@@ -668,7 +670,8 @@ VIP.auth = (function () {
                 localStorage.setItem('userToken', data.token);
                 return true; // el caller sigue con verifyToken() → sesión completa
             }
-            VIP.ui.showToast(data.error || 'Este link de acceso ya fue usado o no es válido.', 'error');
+            // #826: en la app recién instalada (trae ?u=) no se muestra "link usado": el login ya tiene el usuario escrito y pide la clave.
+            if (!sessionStorage.getItem('vip_prefill_user')) VIP.ui.showToast(data.error || 'Este link de acceso ya fue usado o no es válido.', 'error');
         } catch (e) {
             VIP.ui.showToast('Error de conexión al validar tu link de acceso. Probá de nuevo.', 'error');
         }

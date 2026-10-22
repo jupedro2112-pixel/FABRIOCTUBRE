@@ -88,6 +88,16 @@ VIP.ui = (function () {
         // #283: sin sesión no hay carga gratis pendiente que mostrar.
         try { document.body.classList.remove('ig-pending'); document.body.classList.remove('is-tester'); const b = document.getElementById('installGiftBar'); if (b) b.style.display = 'none'; } catch (_) {}
         document.getElementById('chatScreen').classList.add('hidden');
+        // #826: app recién instalada desde el navegador y el acceso automático falló ⇒ el usuario ya viene escrito y se pide sólo la clave.
+        try {
+            const pu = sessionStorage.getItem('vip_prefill_user');
+            const inp = document.getElementById('username');
+            if (pu && inp && !inp.value) {
+                inp.value = pu;
+                const pw = document.getElementById('password'); if (pw) setTimeout(() => { try { pw.focus(); } catch (_) {} }, 300);
+                VIP.ui.showToast('👋 Tu usuario ya está escrito: poné tu contraseña para entrar (es la misma de la página).', 'info');
+            }
+        } catch (_) {}
     }
 
     function showChatScreen() {
@@ -744,7 +754,37 @@ VIP.ui = (function () {
         window.deferredPrompt = null;
     }
 
+    // #826 (owner): "cuando instalan desde el navegador, decirles que vayan a la app de inicio y recordarles su usuario y contraseña; el inicio
+    // es automático, pero por si falla". Recuadro con los datos (la clave sólo si la app la conoce: la inicial o la que recordó en el teléfono).
+    function installCredsHtml() {
+        const u = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '';
+        if (!u) return '';
+        let pw = ''; try { pw = (VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword()) || ''; } catch (_) {}
+        const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        return '<div style="margin:12px 0 4px;padding:10px 12px;border-radius:12px;border:1px solid var(--p-border,#ddd);background:var(--p-surface,#f5f5f5);text-align:left">' +
+            '<p style="margin:0 0 6px;font-weight:800">📲 Después, abrí <b>PICA ROJA</b> desde tu pantalla de inicio</p>' +
+            '<p style="margin:0 0 8px;font-size:12.5px">Entrás <b>solo, con tu cuenta</b>. Por si alguna vez te pide los datos:</p>' +
+            '<p style="margin:0;font-size:13px">👤 Usuario: <b style="font-family:monospace">' + esc(u) + '</b></p>' +
+            '<p style="margin:2px 0 0;font-size:13px">🔑 Contraseña: <b style="font-family:monospace">' + (pw ? esc(pw) : 'la misma que usás acá') + '</b></p>' +
+            (pw ? '' : '<p style="margin:6px 0 0;font-size:11.5px;color:var(--p-muted,#777)">¿No la recordás? Cambiala ahora en Perfil → 🔑 Clave antes de instalar.</p>') +
+            '</div>';
+    }
+    VIP.ui.installCredsHtml = installCredsHtml;
+    function showInstalledReminder() {
+        const box = installCredsHtml(); if (!box) return;
+        // Si ya hay un aviso de instalación abierto (Android: "Un paso más"), se suma ahí en vez de abrir otro encima.
+        const open = document.querySelector('.ios-install-modal .ios-install-content');
+        if (open) { if (!open.querySelector('[data-creds]')) { const btn = open.querySelector('button'); const w = document.createElement('div'); w.setAttribute('data-creds', '1'); w.innerHTML = box; open.insertBefore(w, btn); } return; }
+        const modal = document.createElement('div');
+        modal.className = 'ios-install-modal';
+        modal.innerHTML = '<div class="ios-install-content"><h3>✅ ¡App instalada!</h3>' + box +
+            '<button onclick="this.closest(\'.ios-install-modal\').remove()" class="btn btn-primary" style="margin-top:15px;">Entendido</button></div>';
+        document.body.appendChild(modal);
+    }
+    VIP.ui.showInstalledReminder = showInstalledReminder;
+
     function showInstallInstructions(platform) {
+        try { if (VIP.home && VIP.home.installManifestSync) VIP.home.installManifestSync(); } catch (_) {} // #826: token fresco antes de "Agregar a inicio"
         const modal = document.createElement('div');
         modal.className = 'ios-install-modal';
 
@@ -846,6 +886,7 @@ VIP.ui = (function () {
                 <h3>${title}</h3>
                 ${note ? `<p class="ios-note">${note}</p>` : ''}
                 <ol>${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+                ${isMobilePlatform ? installCredsHtml() : ''}
                 ${notifWarning}
                 <button onclick="this.closest('.ios-install-modal').remove()" class="btn btn-primary" style="margin-top:15px;">Entendido</button>
             </div>
@@ -940,6 +981,7 @@ window.addEventListener('appinstalled', () => {
     if (appInstallBtn)    { appInstallBtn.classList.add('hidden'); }
     window.deferredPrompt = null;
     VIP.ui.showToast('✅ App instalada exitosamente', 'success');
+    setTimeout(() => { try { VIP.ui.showInstalledReminder(); } catch (_) {} }, 1200); // #826
 });
 
 // Hide install buttons if already running as standalone

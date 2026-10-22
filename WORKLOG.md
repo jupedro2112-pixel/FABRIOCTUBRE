@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-22
 
+### 826. 📲 iPhone: la app instalada entra con la sesión SÍ O SÍ + recordatorio de usuario y clave al instalar — SW v566
+**Pedido (owner):** "instalé la app desde la página y no quedó iniciada la sesión en iPhone; tiene que entrar sí o sí; cuando instalan desde el
+navegador decirles que vayan a la app de inicio y recordarles usuario y contraseña (el inicio es automático, pero por si falla)".
+Causa: el token de instalación (#673) compartía el ÚNICO `accessLinkHash` del usuario con el link del agente / entrada rápida (uno pisaba al otro)
+y la página lo reusaba 7 días desde localStorage aunque ya se hubiera canjeado (reinstalación) ⇒ la app instalada abría sin sesión.
+- `User.installLinks` (hasta 5, 7 días, un solo uso cada uno) aparte del link del agente; `POST /api/auth/install-link` genera uno nuevo por carga
+  de página (sin authLimiter) y lo deja también en la cookie `vip_inst` (HttpOnly, Path=/manifest.json). `GET /manifest.json` toma el token de
+  `?a=` o, si Safari pidió el manifest sin él, de la cookie (el `<link rel=manifest>` ahora va con `crossorigin="use-credentials"`). start_url
+  lleva además `&u=<usuario>`. `POST /api/auth/access-link` canjea también los de instalación (sin forzar cambio de clave). Logout borra la cookie.
+- Si igual falla: la app instalada abre el login con el USUARIO ya escrito (`?u=` → sessionStorage `vip_prefill_user`) y pide sólo la clave
+  (sin el toast de "link usado").
+- Al instalar: las instrucciones de iPhone/Android y el modal del extra por instalar muestran "Después abrí PICA ROJA desde tu pantalla de inicio;
+  entrás solo; por si te pide: Usuario X · Contraseña Y" (la clave sólo si la app la conoce; si no, "la misma que usás acá" + cambiarla en Perfil).
+  En Android, al terminar la instalación (`appinstalled`) aparece el mismo recordatorio.
+- No probado en un iPhone real: confirmar instalando desde Safari con sesión iniciada.
+
 ### 825. 📸 Comprobante incompleto: se piden los datos exactos y, si vuelve a fallar, pasa solo a un agente — SW v565
 **Pedido (owner):** "cuando envían el comprobante sin estar completo, decirles que se necesita que se vean titular, CUIT, horario y monto,
 todo lo que usás para leer el comprobante; si sigue fallando, que entre a soporte automáticamente del lado interno para hacerlo manual".
