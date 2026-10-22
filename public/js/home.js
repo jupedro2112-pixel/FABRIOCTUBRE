@@ -2263,6 +2263,39 @@
     function casinoInfo() { try { const b = _el('infoBtn'); if (b) { b.click(); return; } } catch (_) {} try { VIP.ui.showModal('infoModal'); } catch (_) {} }
 
     // Botón "llave" de la cabecera (#222): cambiar la contraseña.
+    // #806 (owner): "el cambio de clave apenas entren, que se lo pida como RECOMENDACIÓN y quede guardado en Perfil, formato Pinterest".
+    // Si la clave guardada en el dispositivo es la inicial (asd123), a los pocos segundos de entrar aparece un cartel con "Cambiar ahora"
+    // (abre el cambio de clave de siempre, que ya la guarda en el dispositivo y la muestra en Perfil) o "Más tarde" (vuelve a los 24 h).
+    // Espera a que no haya otro cartel o el selector de menú abierto.
+    function _pwRecoKey() { const u = (VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || 'x'; return 'vip_pwreco_' + u; }
+    function _pwIsInitial() { try { const pw = VIP.autoload && VIP.autoload.getPassword && VIP.autoload.getPassword(); return pw === 'asd123'; } catch (_) { return false; } }
+    function _pwRecoSchedule(tries) {
+        tries = tries || 0; if (tries > 12) return;
+        setTimeout(() => {
+            try {
+                if (!_pwIsInitial()) return;
+                let last = 0; try { last = Number(localStorage.getItem(_pwRecoKey())) || 0; } catch (_) {}
+                if (Date.now() - last < 24 * 3600 * 1000) return;
+                const busy = document.body.classList.contains('mc-open') || document.querySelector('.modal:not(.hidden)') || document.querySelector('.play-now-card') || _el('pwRecoCard');
+                if (busy) return _pwRecoSchedule(tries + 1);
+                _pwRecoShow();
+            } catch (_) {}
+        }, tries ? 10000 : 6000);
+    }
+    function _pwRecoShow() {
+        const d = document.createElement('div'); d.id = 'pwRecoCard'; d.className = 'pwreco-ov';
+        d.innerHTML = '<div class="pwreco" role="dialog" aria-labelledby="pwRecoT">' +
+            '<div class="pwreco-ico"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4"/></svg></div>' +
+            '<b id="pwRecoT">Te recomendamos cambiar tu clave</b>' +
+            '<p>Estás usando la clave inicial. Poné una tuya: queda guardada en tu Perfil y es la misma para entrar a la app y a la plataforma.</p>' +
+            '<button type="button" class="pwreco-go" onclick="VIP.home.pwRecoGo()">Cambiar ahora</button>' +
+            '<button type="button" class="pwreco-later" onclick="VIP.home.pwRecoLater()">Más tarde</button></div>';
+        d.addEventListener('click', (e) => { if (e.target === d) pwRecoLater(); });
+        document.body.appendChild(d);
+    }
+    function _pwRecoClose() { try { localStorage.setItem(_pwRecoKey(), String(Date.now())); } catch (_) {} const c = _el('pwRecoCard'); if (c) c.remove(); }
+    function pwRecoLater() { _pwRecoClose(); }
+    function pwRecoGo() { _pwRecoClose(); openChangePassword(); }
     function openChangePassword() {
         try { VIP.ui.hideModal('settingsModal'); } catch (_) {}
         VIP.state.passwordChangePending = false;
@@ -2373,6 +2406,7 @@
         renderHowItWorks();
         try { _applyTesterClass(); } catch (_) {} // #296: botones de test sólo para el usuario de prueba
         try { _avatarInit(); } catch (_) {} // #304
+        try { _pwRecoSchedule(); } catch (_) {} // #806: recomendación de cambiar la clave inicial
         try { _menuReaskInit(); } catch (_) {} // #367: volver a preguntar fácil / completo tras 10 min afuera
         try { _paintPlatformTexts(); } catch (_) {} // #296: textos según cuántas plataformas hay
         try { renderVipDetail(); renderVipCard(); setTimeout(() => { renderVipDetail(); renderVipCard(); }, 4000); } catch (_) {}
@@ -2416,6 +2450,7 @@
 
     VIP.home = { openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         playGame, // #782
+        pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         get platformsData() { return _platforms; } };
 })();

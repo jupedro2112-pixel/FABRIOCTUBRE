@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 806. 🔒 Recomendación de cambiar la clave inicial al entrar — SW v561
+**Pedido (owner):** "agregá el cambio de clave de la app apenas entren, que se lo pida como recomendación y quede guardado así en
+Perfil, formato Pinterest". Si la clave guardada en el dispositivo es la inicial (`asd123`), 6 s después de entrar (y cuando no hay otro
+cartel ni el selector de menú abierto) aparece un cartel blanco redondeado con candado: "Te recomendamos cambiar tu clave" ·
+**Cambiar ahora** (abre el cambio de clave de siempre; al guardar, `rememberPassword` la deja guardada y Perfil la muestra) · **Más
+tarde** (vuelve a aparecer a las 24 h, `localStorage vip_pwreco_<usuario>`). No obliga a nada.
+
 ### 805. 📊 Link de RESULTADOS para el publicista (sin usuario ni clave, sólo lectura)
 **Pedido (owner):** que el publicista (ej. Leila) pueda ver cómo va su pauta (cuántos ingresaron, cuántos cargaron…) sin que le mandemos
 reportes. Aclaración: el "Link para el publicista" de Publicidad es el link de la PAUTA (`/l/<código>`, donde la gente se registra), no
