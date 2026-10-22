@@ -367,6 +367,8 @@
   $('continue').addEventListener('click', function () {
     if (!result || !result.accessUrl) return;
     var url = result.accessUrl;
+    // #831: respaldo si el link de acceso falla (corte, doble apertura): la app de ESTE dominio entra con el usuario y la clave recién creados.
+    try { if (result.username && result.password) sessionStorage.setItem('vip_signup_creds', JSON.stringify({ u: result.username, p: result.password, at: Date.now() })); } catch (e) {}
     if (inApp && isAndroid) { location.href = chromeIntent(url); setTimeout(function () { location.href = url; }, 2500); return; }
     location.href = url;
   });

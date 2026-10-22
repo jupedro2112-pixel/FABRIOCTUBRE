@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 831. 🔐 La gente nueva ENTRA LOGUEADA sí o sí (registro por landing / entrada rápida / app instalada) — SW v569
+**Pedido (owner):** "no quiero que muestre el login, quiero que la gente nueva que se registre entre logueada; lo mismo si instala la app".
+- **Server (`/api/auth/access-link`):** los links de alta por LANDING (`acquisitionSource:'landing'`) y los de instalación dejan 30 min de
+  GRACIA (`User.accessLinkGraceHash/GraceUntil`, `ACCESS_LINK_GRACE_MS`): el mismo link vuelve a entrar (doble apertura in-app → Chrome,
+  recarga, respuesta perdida en un corte). Los links del AGENTE siguen de un solo uso.
+- **PWA `tryAccessLink` y `quickGo`:** reintentan solos (hasta 5/4 veces) ante corte, 429, 5xx o respuesta no-JSON (página de Cloudflare);
+  401/400 no se reintenta. Último recurso: `_loginWithSignupCreds()` entra con usuario+clave recién creados que dejó la landing del MISMO
+  dominio (`public/landing`, sessionStorage `vip_signup_creds`, 2 h; la de Vercel es otro dominio y depende de la gracia + reintentos).
+- **`verifyToken`:** antes, CUALQUIER falla (corte, 503) borraba `userToken` y dejaba el cartel colgado ⇒ ahora reintenta y, si no hay
+  respuesta, vuelve a probar a los 8 s SIN cerrar la sesión; sólo un 401/403 cierra la sesión y muestra el login.
+- Simulado (DOM falso, los 25 js en orden): ok · corte ×2 · 429 ×2 · página HTML de Cloudflare · verify 503 ×3 · link usado + datos de la
+  landing ⇒ todos ENTRAN logueados. Sólo terminan en login: sin internet, link vencido (>30 min) sin datos, sesión vencida (401).
+- App instalada: el arreglo de #826 recién empieza a andar con v568+ (en v567 el bundle estaba roto). Sigue sin probarse en un iPhone real.
+
 ### 830. 🔗 FIX link de RESULTADOS del publicista — admin SW v162
 **Pedido (owner):** "cuando copiás e ingresás al link te ingresa a la plataforma; necesito un link independiente para mandarle al publicista".
 Causa (#805): el panel armaba el link sobre el de la campaña (`buildCampaignLink` = `/<CODE>`) esperando un `/l/<code>` que ya no existe ⇒

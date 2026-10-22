@@ -21163,6 +21163,7 @@ async function issueAccessLinkFor(userId, opts) {
 // instalación ya NO pisa el link del agente (va en `installLinks`, hasta 5 vigentes 7 días, uno por carga de la página) y además queda en la
 // cookie `vip_inst` (sólo para /manifest.json): si Safari no toma el cambio del <link rel=manifest>, igual lo encuentra al pedir el manifest.
 const INSTALL_LINK_TTL_MS = 7 * 86400000;
+const ACCESS_LINK_GRACE_MS = 30 * 60000; // #831
 app.post('/api/auth/install-link', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
@@ -21211,19 +21212,33 @@ app.post('/api/auth/access-link', authLimiter, async (req, res) => {
 
     // Consumo atómico del link (single-use: se borra el hash en el mismo paso).
     // El cambio de clave NO se fuerza acá: depende del origen de la cuenta (abajo).
+    // #831: los links de alta por LANDING y de instalación dejan 30 min de gracia (mismo link vuelve a entrar); los del agente siguen de un solo uso.
+    const _graceSet = { accessLinkGraceHash: hash, accessLinkGraceUntil: new Date(Date.now() + ACCESS_LINK_GRACE_MS) };
     let user = await User.findOneAndUpdate(
       { accessLinkHash: hash, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
       { $set: { accessLinkHash: null, lastLogin: new Date() } },
       { new: false } // #673: con el doc ANTERIOR se lee accessLinkPurpose (el hash ya quedó borrado atómicamente igual)
     ).select('id username role tokenVersion acquisitionSource mustChangePassword accessLinkPurpose').lean();
+    if (user && (user.acquisitionSource === 'landing' || user.accessLinkPurpose === 'install')) {
+      try { await User.updateOne({ id: user.id }, { $set: _graceSet }); } catch (_) {}
+    }
     // #826: token de INSTALACIÓN (installLinks, 7 días, un solo uso: se saca del array en el mismo paso).
     if (!user) {
       user = await User.findOneAndUpdate(
         { installLinks: { $elemMatch: { hash, createdAt: { $gte: new Date(Date.now() - INSTALL_LINK_TTL_MS) } } }, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
-        { $pull: { installLinks: { hash } }, $set: { lastLogin: new Date() } },
+        { $pull: { installLinks: { hash } }, $set: Object.assign({ lastLogin: new Date() }, _graceSet) },
         { new: false }
       ).select('id username role tokenVersion acquisitionSource mustChangePassword').lean();
       if (user) user.accessLinkPurpose = 'install';
+    }
+    // #831: mismo link dentro de la gracia (ya canjeado hace < 30 min) ⇒ entra igual, sin forzar cambio de clave.
+    if (!user) {
+      user = await User.findOneAndUpdate(
+        { accessLinkGraceHash: hash, accessLinkGraceUntil: { $gt: new Date() }, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
+        { $set: { lastLogin: new Date() } },
+        { new: false }
+      ).select('id username role tokenVersion acquisitionSource mustChangePassword').lean();
+      if (user) { user.accessLinkPurpose = 'install'; logger.info(`[access-link] ${user.username} reentró con el mismo link (gracia #831)`); }
     }
 
     if (!user) {

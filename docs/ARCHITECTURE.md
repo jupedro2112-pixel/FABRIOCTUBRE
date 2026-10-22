@@ -1198,6 +1198,9 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   por-instancia.
 - **USERS_LIST_FIELDS** (`GET /api/admin/users`) y la proyección de
   `AUTH_USER_FIELDS` (authMiddleware): campo nuevo consumido ⇒ sumarlo al select.
+- **#831 — entrar logueado tras el registro:** `/api/auth/access-link` tiene 30 min de gracia para links de landing/instalación
+  (`accessLinkGraceHash`); la PWA reintenta el canje y `verifyToken` (nunca borrar `userToken` por un corte: sólo con 401/403) y, si
+  todo falla, `_loginWithSignupCreds` usa `sessionStorage.vip_signup_creds` que deja la landing del mismo dominio.
 - **#829 — UN error en un js de la PWA tumba TODA la app:** se sirven concatenados en un solo `/js/bundle.js`, así que un throw al cargar
   (ej. `VIP.ui.x = …` DENTRO del IIFE que define `VIP.ui`, cuando todavía es undefined) corta todo lo que viene después (app.js incluido:
   queda colgado "Entrando a tu cuenta…"). Exportar siempre en el `return` del módulo.

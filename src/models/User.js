@@ -331,6 +331,10 @@ const userSchema = new mongoose.Schema({
   // #826: tokens de INSTALACIÓN aparte del link del agente (antes compartían el único accessLinkHash ⇒ un link nuevo invalidaba el que ya
   // estaba en el manifest del iPhone). Hasta 5 vigentes por 7 días, cada uno de un solo uso.
   installLinks: { type: [{ hash: String, createdAt: Date, _id: false }], default: [] },
+  // #831: GRACIA del link de acceso (alta por landing / instalación): el mismo link vuelve a entrar durante 30 min después de canjearse
+  // (doble apertura in-app → Chrome, recarga, respuesta perdida en un corte). Pasado ese rato muere como siempre.
+  accessLinkGraceHash: { type: String, default: null, index: { sparse: true } },
+  accessLinkGraceUntil: { type: Date, default: null },
 
 
   // Token FCM para notificaciones push (último registrado – se mantiene para compatibilidad y vista admin)

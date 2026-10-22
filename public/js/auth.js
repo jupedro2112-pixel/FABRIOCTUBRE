@@ -438,11 +438,30 @@ VIP.auth = (function () {
         }
     }
 
+    // #831: corte de red o servidor ocupado (429/5xx) ⇒ reintenta; sólo un 401/403 significa que la sesión no sirve.
+    let _verifyRetryTimer = null;
+    async function _verifyFetch() {
+        let last = null;
+        for (let attempt = 0; attempt < 4; attempt++) {
+            if (attempt) await new Promise((r) => setTimeout(r, [0, 1500, 3000, 5000][attempt]));
+            try {
+                const r = await fetch(`${VIP.config.API_URL}/api/auth/verify`, { headers: { 'Authorization': `Bearer ${VIP.state.currentToken}` } });
+                if (r.ok || r.status === 401 || r.status === 403) return r;
+                last = r;
+            } catch (_) { last = null; }
+        }
+        return last; // null = sin conexión
+    }
     async function verifyToken() {
+        let response = null;
         try {
-            const response = await fetch(`${VIP.config.API_URL}/api/auth/verify`, {
-                headers: { 'Authorization': `Bearer ${VIP.state.currentToken}` }
-            });
+            response = await _verifyFetch();
+            if (!response || !(response.ok || response.status === 401 || response.status === 403)) {
+                // #831: no se pudo confirmar (red/servidor) ⇒ NO se borra la sesión: se vuelve a probar sola en unos segundos.
+                clearTimeout(_verifyRetryTimer);
+                _verifyRetryTimer = setTimeout(() => { if (VIP.state.currentToken && !VIP.state.currentUser) verifyToken(); }, 8000);
+                return;
+            }
 
             if (response.ok) {
                 const data = await response.json();
@@ -511,11 +530,15 @@ VIP.auth = (function () {
                     console.warn('[FCM] Error al re-sincronizar token en verifyToken:', e);
                 });
             } else {
+                // 401/403: la sesión venció o la cuenta no sirve ⇒ ahora sí al login (antes se borraba y quedaba el cartel colgado).
                 localStorage.removeItem('userToken');
+                VIP.state.currentToken = null;
+                try { VIP.ui.showLoginScreen(); } catch (_) {}
             }
         } catch (error) {
+            // #831: un error DESPUÉS de validar (armando pantallas) no es motivo para cerrar la sesión.
             console.error('Error verificando token:', error);
-            localStorage.removeItem('userToken');
+            if (!response) { clearTimeout(_verifyRetryTimer); _verifyRetryTimer = setTimeout(() => { if (VIP.state.currentToken && !VIP.state.currentUser) verifyToken(); }, 8000); }
         }
     }
 
@@ -592,6 +615,7 @@ VIP.auth = (function () {
             if (!r.ok || !d.accessToken) { if (err) err.textContent = d.error || 'No pudimos crear tu cuenta. Probá de nuevo.'; return; }
             // #426: paso siguiente — mostrar usuario + clave ("¡Te registraste con éxito!") y recién con "Entrar" se inicia la sesión.
             _quickAccess = d.accessToken;
+            try { if (d.username && d.password) sessionStorage.setItem('vip_signup_creds', JSON.stringify({ u: d.username, p: d.password, at: Date.now() })); } catch (_) {} // #831 respaldo
             try { if (d.password && VIP.autoload && VIP.autoload.setPassword) VIP.autoload.setPassword(d.password); } catch (_) {}
             const u = document.getElementById('quickUser'), p = document.getElementById('quickPass'), note = document.getElementById('quickDoneNote');
             if (u) u.textContent = d.username || '—';
@@ -619,12 +643,20 @@ VIP.auth = (function () {
         if (!_quickAccess) { fallback(null); return; }
         if (btn) { btn.disabled = true; btn.textContent = 'Entrando…'; }
         try {
-            const r2 = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _quickAccess }) });
-            const d2 = await r2.json().catch(() => ({}));
-            if (!r2.ok || !d2.token) { fallback(d2.error || 'No pudimos entrar automáticamente. Entrá con tu usuario y clave.'); return; }
+            // #831: reintenta solo ante cortes / servidor ocupado y, si igual no entra, usa el usuario y la clave recién creados.
+            let tok = null, errMsg = null;
+            for (let attempt = 0; attempt < 4 && !tok; attempt++) {
+                if (attempt) await new Promise((r) => setTimeout(r, [0, 1500, 3000, 5000][attempt]));
+                try {
+                    const r2 = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _quickAccess }) });
+                    const d2 = await r2.json().catch(() => null);
+                    if (r2.ok && d2 && d2.token) tok = d2.token;
+                    else if (d2 && [400, 401, 403].includes(r2.status)) { errMsg = d2.error; break; }
+                } catch (_) {}
+            }
+            if (tok) { VIP.state.currentToken = tok; localStorage.setItem('userToken', tok); try { sessionStorage.removeItem('vip_signup_creds'); } catch (_) {} }
+            else if (!(await _loginWithSignupCreds())) { fallback(errMsg || 'No pudimos entrar automáticamente. Entrá con tu usuario y clave.'); return; }
             _quickAccess = null;
-            VIP.state.currentToken = d2.token;
-            localStorage.setItem('userToken', d2.token);
             await verifyToken();
             if (ld) ld.style.display = 'none';
         } catch (_) { fallback('Error de conexión. Probá de nuevo.'); }
@@ -658,22 +690,52 @@ VIP.auth = (function () {
         // quedar en el historial ni compartirse por accidente.
         try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
 
-        try {
-            const response = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token })
-            });
-            const data = await response.json();
-            if (response.ok && data.token) {
-                VIP.state.currentToken = data.token;
-                localStorage.setItem('userToken', data.token);
-                return true; // el caller sigue con verifyToken() → sesión completa
-            }
-            // #826: en la app recién instalada (trae ?u=) no se muestra "link usado": el login ya tiene el usuario escrito y pide la clave.
-            if (!sessionStorage.getItem('vip_prefill_user')) VIP.ui.showToast(data.error || 'Este link de acceso ya fue usado o no es válido.', 'error');
-        } catch (e) {
-            VIP.ui.showToast('Error de conexión al validar tu link de acceso. Probá de nuevo.', 'error');
+        // #831 (owner: "la gente nueva que se registre tiene que entrar logueada"): corte de red, servidor ocupado (429/5xx) o respuesta que
+        // no es JSON (página de Cloudflare) ⇒ se reintenta solo hasta 5 veces antes de rendirse. Un 401/400 (link inválido) no se reintenta.
+        const _wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        let lastErr = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+            if (attempt) await _wait([0, 1500, 3000, 5000, 8000][attempt]);
+            try {
+                const response = await fetch(`${VIP.config.API_URL}/api/auth/access-link`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                let data = null; try { data = await response.json(); } catch (_) { data = null; }
+                if (response.ok && data && data.token) {
+                    VIP.state.currentToken = data.token;
+                    localStorage.setItem('userToken', data.token);
+                    try { sessionStorage.removeItem('vip_signup_creds'); } catch (_) {}
+                    return true; // el caller sigue con verifyToken() → sesión completa
+                }
+                if (data && (response.status === 400 || response.status === 401 || response.status === 403)) { lastErr = data.error || null; break; }
+                lastErr = 'retry';
+            } catch (e) { lastErr = 'retry'; }
+        }
+        // #831: último recurso — recién registrado desde la landing de este mismo dominio: entra con el usuario y la clave que acaba de recibir.
+        if (await _loginWithSignupCreds()) return true;
+        // #826: en la app recién instalada (trae ?u=) no se muestra "link usado": el login ya tiene el usuario escrito y pide la clave.
+        if (lastErr === 'retry') VIP.ui.showToast('Error de conexión al validar tu link de acceso. Probá de nuevo.', 'error');
+        else if (!sessionStorage.getItem('vip_prefill_user')) VIP.ui.showToast(lastErr || 'Este link de acceso ya fue usado o no es válido.', 'error');
+        return false;
+    }
+    // #831: la landing (mismo dominio) deja usuario+clave por 2 h en sessionStorage de la pestaña antes de ir a la app; sólo se usan si el link falló.
+    async function _loginWithSignupCreds() {
+        let c = null; try { c = JSON.parse(sessionStorage.getItem('vip_signup_creds') || 'null'); } catch (_) {}
+        if (!c || !c.u || !c.p || Date.now() - (c.at || 0) > 2 * 3600000) return false;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt) await new Promise((r) => setTimeout(r, 2000 * attempt));
+            try {
+                const r = await fetch(`${VIP.config.API_URL}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: c.u, password: c.p }) });
+                let d = null; try { d = await r.json(); } catch (_) {}
+                if (r.ok && d && d.token) {
+                    VIP.state.currentToken = d.token; localStorage.setItem('userToken', d.token);
+                    try { sessionStorage.removeItem('vip_signup_creds'); } catch (_) {}
+                    return true;
+                }
+                if (d && (r.status === 400 || r.status === 401)) break;
+            } catch (_) {}
         }
         return false;
     }
