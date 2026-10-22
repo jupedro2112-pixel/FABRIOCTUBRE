@@ -46,10 +46,19 @@ const storySchema = new mongoose.Schema({
   notifyAll: { type: Boolean, default: false },
   bonusClaims: { type: Number, default: 0 },
   views: { type: Number, default: 0 },
+  // #827 HISTORIAS AUTOMÁTICAS: 'sa-YYYY-MM-DD-<slot>' (única ⇒ multi-instancia sin duplicar) y qué es ('servicio' | 'deporte').
+  autoKey: { type: String, default: undefined },
+  autoKind: { type: String, default: null },
+  // #827: respuesta a la historia con bono: cuántos lo usaron en una carga, bono entregado y lo que cargaron; resultado de la push a todos.
+  bonusUses: { type: Number, default: 0 },
+  bonusUsedTotal: { type: Number, default: 0 },
+  bonusDepositTotal: { type: Number, default: 0 },
+  pushStats: { type: mongoose.Schema.Types.Mixed, default: null },
   createdBy: { type: String, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 
 storySchema.index({ isActive: 1, expiresAt: 1, publishedAt: 1 });
+storySchema.index({ autoKey: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.models.Story || mongoose.model('Story', storySchema);

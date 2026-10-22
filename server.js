@@ -12505,6 +12505,9 @@ async function initializeData() {
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
   try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
+  // #827 (owner 2026-10-22): "borrá y publicá historias nuevas" ⇒ una sola vez: se borran TODAS las historias anteriores; el motor de
+  // historias automáticas publica las del día (los horarios ya pasados de hoy salen enseguida).
+  try { if (!(await getConfig('mig827StoriesReset', null))) { const r = await Story.deleteMany({ autoKey: { $in: [null, undefined] } }); await Config.set('mig827StoriesReset', new Date().toISOString(), 'mig#827'); console.log(`✅ #827: ${r.deletedCount || 0} historias viejas borradas (arrancan las automáticas)`); } } catch (e) { console.warn('[startup-migration] #827:', e.message); }
   // #825: el texto del pedido de reenvío pasa a listar los datos (titular, CUIT, fecha y hora, monto…) si seguía el de #808 sin editar.
   try { if (!(await getConfig('mig825ReceiptText', null))) { await Command.updateOne({ name: '/sys_receipt_unreadable', response: RECEIPT_UNREADABLE_OLD_808 }, { $set: { response: RECEIPT_UNREADABLE_DEFAULT } }); await Config.set('mig825ReceiptText', new Date().toISOString(), 'mig#825'); } } catch (e) { console.warn('[startup-migration] #825:', e.message); }
   // #822 (owner 2026-10-22): "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados": los chats que estaban en Comunidad vuelven a
@@ -14239,7 +14242,7 @@ async function claimSecondDepositPercent(user, usedBy) {
   } catch (e) { logger.warn(`[auto-bonus] claim segunda carga falló: ${e.message}`); return { pct: 0, claimed: false }; }
 }
 // #742: bono reclamado desde una HISTORIA — se consume en la próxima carga (antes que cualquier otro bono) si no venció.
-async function claimStoryBonusPercent(user, usedBy) {
+async function claimStoryBonusPercent(user, usedBy, amount) {
   try {
     const now = new Date();
     const prev = await User.findOneAndUpdate(
@@ -14251,6 +14254,8 @@ async function claimStoryBonusPercent(user, usedBy) {
     if (!sb || !(sb.pct > 0)) return { pct: 0, claimed: false };
     const pct = Number(sb.pct) || 0;
     return { pct, claimed: true, source: 'story_bonus', label: sb.label || `historia: +${pct}%`,
+      // #827: cómo respondió la gente a la historia con bono ⇒ cuántos lo USARON en una carga, cuánto cargaron y cuánto bono se dio.
+      settle: (bonusAmt) => Story.updateOne({ id: sb.storyId }, { $inc: { bonusUses: 1, bonusUsedTotal: Math.round(Number(bonusAmt) || 0), bonusDepositTotal: Math.round(Number(amount) || 0) } }).catch(() => {}),
       revert: () => User.updateOne({ id: user.id, 'storyBonus.pct': 0 }, { $set: { 'storyBonus.pct': pct } }).catch(() => {}) };
   } catch (e) { logger.warn(`[auto-bonus] claim bono de historia falló: ${e.message}`); return { pct: 0, claimed: false }; }
 }
@@ -14329,7 +14334,7 @@ async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
   if (!user || !(Number(amount) > 0)) return none;
   // #509: cuenta marcada por multicuenta → sin bonos de bienvenida ni 2ª carga (sí ruleta/lotes, que ya ganó)
   const blockWelcome = opts.noWelcome || _isFlagged(user);
-  let c = await claimStoryBonusPercent(user, usedBy); // #742: el bono de la historia manda (vence en horas)
+  let c = await claimStoryBonusPercent(user, usedBy, amount); // #742: el bono de la historia manda (vence en horas)
   if (!c.claimed && !blockWelcome) c = await claimInstallBonusPercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimWelcomeCodePercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimSecondDepositPercent(user, usedBy); // #504
@@ -24564,7 +24569,7 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
       setTimeout(() => {
         try {
           Promise.resolve(sendNotificationToAllUsers(User, pTitle, pBody, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' }))
-            .then((r) => logger.info(`[stories] push a todos: ${JSON.stringify(r || {}).slice(0, 200)}`))
+            .then((r) => { logger.info(`[stories] push a todos: ${JSON.stringify(r || {}).slice(0, 200)}`); Story.updateOne({ id: doc.id }, { $set: { pushStats: r || null } }).catch(() => {}); })
             .catch((e) => logger.warn(`[stories] push a todos falló: ${e.message}`));
         } catch (e) { logger.warn(`[stories] push a todos falló: ${e.message}`); }
       }, 50);
@@ -24572,6 +24577,93 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
     res.json({ success: true, story: _storyPublic(doc.toObject(), req) });
   } catch (e) { logger.warn(`[stories] crear: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// ============================================================================
+// #827 HISTORIAS AUTOMÁTICAS (owner 2026-10-22) — src/services/storyAutopilot.js arma el contenido; acá se publica.
+// ============================================================================
+// 5 por día (10:00 · 13:00 · 16:00 · 19:00 · 21:30, hora AR), cada una 24 h ⇒ siempre hay ~5 a la vista. Temas de SERVICIO que rotan
+// (cómo funciona, carga automática, retiros, reembolso, soporte, misiones, VIP, referidos, top juegos, deportes, instalar la app, seguridad,
+// bienvenida), los PARTIDOS fuertes del día (botón → casino directo en Deportes), los LUNES el slot más jugado (botón → ese juego) y los
+// MIÉRCOLES la historia con BONO semanal (+50% por 3 h, push a todos; se mide cuántos reclamaron / usaron / cargaron). Fijo y siempre
+// encendido como la estrategia de notificaciones (frena sólo con STORIES_AUTOPILOT_DISABLED=1). `Story.autoKey` único ⇒ multi-instancia.
+const storyAuto = require('./src/services/storyAutopilot');
+const STORY_AUTO_BONUS = { pct: 50, hours: 3 };
+async function _storyAutoCtx(dayKey) {
+  const dow = new Date(dayKey + 'T12:00:00Z').getUTCDay();
+  let favorite = null;
+  if (dow === 1) {
+    // Slot de la semana: se calcula UNA vez el lunes (gana el que más creció desde el lunes anterior) y se guarda.
+    const snap = await getConfig('storyGamesSnapshot', null);
+    if (snap && snap.dayKey === dayKey && snap.favorite) favorite = snap.favorite;
+    else {
+      try { favorite = await storyAuto.favoriteSlot(snap && snap.counts); } catch (_) { favorite = null; }
+      if (favorite) { const counts = favorite.snapshot; delete favorite.snapshot; await Config.set('storyGamesSnapshot', { dayKey, counts, favorite }, 'historias-auto'); }
+    }
+  }
+  let firstPct = 0; try { firstPct = await getFirstDepositBonusPct(); } catch (_) {}
+  return { firstPct, dow, favorite, weeklyBonus: STORY_AUTO_BONUS };
+}
+async function _storyAutoPlan(dayKey, opts) {
+  let matches = []; if (!(opts && opts.noMatches)) { try { matches = await storyAuto.topMatches(dayKey); } catch (_) {} }
+  return storyAuto.planDay(dayKey, matches, await _storyAutoCtx(dayKey));
+}
+let _storyAutoRunning = false;
+async function _storyAutoTick() {
+  if (process.env.STORIES_AUTOPILOT_DISABLED === '1' || _storyAutoRunning) return;
+  _storyAutoRunning = true;
+  try {
+    const now = new Date(); const today = _schedArtKey(now);
+    const plan = await _storyAutoPlan(today);
+    for (const it of plan) {
+      const at = new Date(`${today}T${it.time}:00-03:00`);
+      if (at > now) continue;
+      const autoKey = `sa-${today}-${it.slot}`;
+      if (await Story.exists({ autoKey })) continue;
+      const bonusPct = Number(it.bonusPct) || 0, bonusHours = Number(it.bonusHours) || 1;
+      let doc;
+      try {
+        doc = await Story.create({
+          id: uuidv4(), title: String(it.title || '').slice(0, 60), text: String(it.text || '').slice(0, 300),
+          mediaType: it.image ? 'image' : 'none', mediaUrl: it.image ? String(it.image).slice(0, 500) : '', bgColor: it.bg || '#06070d',
+          linkUrl: it.link || '', linkLabel: String(it.label || '').slice(0, 40), durationSec: 7, hours: 24,
+          publishedAt: at, expiresAt: new Date(at.getTime() + 24 * 3600 * 1000), isActive: true,
+          bonusPct, bonusHours, bonusUntil: bonusPct > 0 ? new Date(at.getTime() + bonusHours * 3600 * 1000) : null, notifyAll: !!it.notifyAll,
+          autoKey, autoKind: it.kind, createdBy: 'automático'
+        });
+      } catch (e) { if (e && e.code === 11000) continue; throw e; }
+      logger.info(`[historias-auto] ${today} ${it.time} ${it.kind}: ${it.title}`);
+      // Push a todos sólo si se publica a tiempo (no al recuperar un horario viejo tras un reinicio).
+      if (it.notifyAll && now - at < 30 * 60 * 1000) {
+        const pTitle = bonusPct > 0 ? `🎁 +${bonusPct}% extra en tu próxima carga` : String(it.title || '📣 Novedad en PICA ROJA');
+        const pBody = bonusPct > 0 ? `Sólo por ${bonusHours} h: abrí la historia y tocá "Reclamar ahora".` : String(it.text || '').slice(0, 120);
+        setTimeout(() => {
+          Promise.resolve(sendNotificationToAllUsers(User, pTitle, pBody, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' }))
+            .then((r) => { Story.updateOne({ id: doc.id }, { $set: { pushStats: r || null } }).catch(() => {}); logger.info(`[historias-auto] push: ${JSON.stringify(r || {}).slice(0, 160)}`); })
+            .catch((e) => logger.warn(`[historias-auto] push falló: ${e.message}`));
+        }, 50);
+      }
+    }
+  } catch (e) { logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; }
+}
+setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyAutoTick().catch(() => {}); }, 5 * 60 * 1000); }, 2 * 60 * 1000);
+// Panel (Cronograma): hoy (publicadas y pendientes, con la respuesta de cada una) + los próximos 6 días (lo que va a salir) + las últimas
+// historias con bono y cómo respondió la gente.
+app.get('/api/admin/stories-autopilot', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const now = new Date(); const today = _schedArtKey(now);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const dk = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() + i * 86400000));
+      const plan = await _storyAutoPlan(dk, { noMatches: i >= 2 }); // partidos: hoy y mañana (más adelante se definen ese día)
+      const pub = await Story.find({ autoKey: { $in: plan.map((p) => `sa-${dk}-${p.slot}`) } }).select('autoKey id views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats').lean();
+      const pubBy = new Map(pub.map((p) => [p.autoKey, p]));
+      days.push({ day: dk, matchesKnown: i < 2, items: plan.map((p) => { const d = pubBy.get(`sa-${dk}-${p.slot}`); return { time: p.time, kind: p.kind, title: p.title, text: p.text, label: p.label, bonusPct: p.bonusPct || 0, bonusHours: p.bonusHours || 0,
+        published: !!d, views: d ? d.views || 0 : null, claims: d ? d.bonusClaims || 0 : null, uses: d ? d.bonusUses || 0 : null, bonusTotal: d ? d.bonusUsedTotal || 0 : null, depositTotal: d ? d.bonusDepositTotal || 0 : null }; }) });
+    }
+    const bonusStories = await Story.find({ autoKind: 'bono' }).sort({ publishedAt: -1 }).limit(8).select('title publishedAt bonusPct bonusHours views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats').lean();
+    res.json({ success: true, today, days, bonusStories, sources: { matches: 'ESPN (scoreboard público)', slots: '1girox (catálogo público, más jugados)' } });
+  } catch (e) { logger.warn('[historias-auto] panel: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.patch('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!_storiesAdminOnly(req, res)) return;

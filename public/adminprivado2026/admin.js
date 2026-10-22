@@ -15527,6 +15527,7 @@ async function loadCronograma() {
     loadCronPlans(); // #293
     loadCronAutopilot(); // #817
     if (!_naLoaded) { _naLoaded = true; naYesterday(); } // #824 análisis (día vencido por defecto)
+    loadStoriesAuto(); // #827
 }
 function _cronRenderCalendar() {
     const el = document.getElementById('cronCalendar'); if (!el) return;
@@ -16028,6 +16029,38 @@ function _naRender(j) {
     return h + '</div></details>';
 }
 window.naYesterday = naYesterday; window.naKindChange = naKindChange; window.naShift = naShift; window.naPickDay = naPickDay; window.loadNotifAnalysis = loadNotifAnalysis;
+// ═══ #827: HISTORIAS AUTOMÁTICAS — hoy (publicadas, con respuesta), próximos días y cómo respondió la gente a la historia con bono ═══
+async function loadStoriesAuto() {
+    const box = document.getElementById('stAutoBody'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/stories-autopilot'); const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        const num = (n) => Number(n || 0).toLocaleString('es-AR');
+        const KIND = { servicio: ['🧭', '#6366f1'], deporte: ['⚽', '#16a34a'], slot: ['🎰', '#db2777'], bono: ['🎁', '#dc2626'] };
+        const dayLbl = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+        let h = '';
+        (j.days || []).forEach((d, di) => {
+            h += '<details' + (di === 0 ? ' open' : '') + ' style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b style="text-transform:capitalize">' + (di === 0 ? 'Hoy · ' : (di === 1 ? 'Mañana · ' : '')) + escHtml(dayLbl(d.day)) + '</b> · ' +
+                d.items.map((it) => (KIND[it.kind] || ['•'])[0]).join(' ') + (d.matchesKnown ? '' : ' <span style="color:#888;font-size:.74rem">(los partidos se definen ese día)</span>') + '</summary>' +
+                '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.4rem 0">' +
+                d.items.map((it) => { const k = KIND[it.kind] || ['•', '#888'];
+                    return '<div class="cron-item" style="border-left-color:' + k[1] + ';font-size:.76rem;padding:5px 7px"><b>' + escHtml(it.time) + '</b> ' + k[0] + ' <b>' + escHtml(it.title) + '</b>' +
+                        '<span class="ci-who" style="white-space:pre-wrap">' + escHtml(it.text) + '</span>' +
+                        (it.label ? '<span class="ci-what">Botón: ' + escHtml(it.label) + '</span>' : '') +
+                        (it.published ? '<span class="ci-who" style="color:#22c55e">✅ publicada · 👁 ' + num(it.views) + ' vistas' + (it.bonusPct ? ' · 🎁 ' + num(it.claims) + ' reclamaron · ' + num(it.uses) + ' cargaron' : '') + '</span>' : '<span class="ci-who">🕒 programada</span>') + '</div>'; }).join('') +
+                '</div></details>';
+        });
+        const bs = j.bonusStories || [];
+        h += '<div style="font-weight:700;margin:.7rem 0 .3rem">🎁 Historias con bono: cómo respondió la gente</div>';
+        h += bs.length ? '<div style="overflow:auto"><table class="cron-tbl"><thead><tr><th>Publicada</th><th>Bono</th><th>Push enviada</th><th>Vieron la historia</th><th>Reclamaron</th><th>Usaron el bono (cargaron)</th><th>Ignoraron</th><th>$ cargado</th><th>Bono entregado</th></tr></thead><tbody>' +
+            bs.map((b) => { const ps = b.pushStats || {}; const sent = Number(ps.sent != null ? ps.sent : (ps.success != null ? ps.success : (ps.successCount != null ? ps.successCount : (ps.total != null ? ps.total : 0)))) || 0;
+                return '<tr><td>' + new Date(b.publishedAt).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</td><td>+' + b.bonusPct + '% · ' + b.bonusHours + ' h</td><td>' + (sent ? num(sent) : '—') + '</td><td>' + num(b.views) + '</td><td><b>' + num(b.bonusClaims) + '</b>' + (b.views ? ' <span style="color:#888">' + Math.round((b.bonusClaims || 0) / b.views * 100) + '%</span>' : '') + '</td><td><b>' + num(b.bonusUses) + '</b>' + (b.bonusClaims ? ' <span style="color:#888">' + Math.round((b.bonusUses || 0) / b.bonusClaims * 100) + '% de los que reclamaron</span>' : '') + '</td><td>' + num(Math.max(0, (b.views || 0) - (b.bonusClaims || 0))) + ' <span style="color:#888">vieron y no reclamaron</span></td><td>' + fmtARS(b.bonusDepositTotal) + '</td><td>' + fmtARS(b.bonusUsedTotal) + '</td></tr>'; }).join('') + '</tbody></table></div>'
+            : '<div style="color:#888">Todavía no salió ninguna (la primera sale el miércoles a las 19:00).</div>';
+        h += '<div style="color:#888;font-size:.72rem;margin-top:.4rem">Partidos: ' + escHtml((j.sources || {}).matches || '') + ' — equipos de primera línea (clásicos argentinos, Libertadores, Selección, grandes de Europa). El botón abre el casino directo en Deportes (1girox no permite abrir un partido puntual). Slot de la semana: el más jugado según ' + escHtml((j.sources || {}).slots || '') + '.</div>';
+        box.innerHTML = h;
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
+}
+window.loadStoriesAuto = loadStoriesAuto;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
 async function loadCronAutopilot() {

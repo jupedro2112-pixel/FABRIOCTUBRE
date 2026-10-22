@@ -1,0 +1,168 @@
+/**
+ * storyAutopilot — HISTORIAS AUTOMÁTICAS (#827, owner 2026-10-22).
+ *
+ * "Un plan de historias automáticas que funcione igual que el cronograma: 4-5 historias diarias, siempre del lado del servicio que
+ * ofrecemos; la idea es que conozcan todo nuestro servicio, entendiendo que siempre entra gente nueva a jugar; un poco de todo lo que
+ * ofrecemos y los mejores partidos de la semana con equipos de primera línea; lo de deportes que lleve directo a jugar".
+ *
+ * Este módulo sólo ARMA el contenido (no toca la base): server.js lo publica en sus horarios.
+ *  - THEMES: catálogo de historias de servicio (texto sobre color, botón a la sección de la app con `app:<sección>`).
+ *  - topMatches(dayKey): partidos del día (hora AR) de las ligas que sigue la gente en Argentina, puntuados por la importancia de los
+ *    equipos. Fuente: el scoreboard PÚBLICO de ESPN (la Partner API de 1girox no expone eventos y su sección de Deportes es un widget de
+ *    Digitain que sólo abre con un jugador logueado). Cache en memoria por día; si la fuente falla, el día sale sólo con historias de servicio.
+ */
+'use strict';
+
+// Equipos de "primera línea" (nombre EXACTO de ESPN → peso). Un partido entra si suma ≥ 12 y al menos uno pesa ≥ 8.
+const TEAM_W = {
+  // Argentina
+  'River Plate': 10, 'Boca Juniors': 10, 'Racing Club': 8, 'Independiente': 8, 'San Lorenzo': 7, 'Estudiantes de La Plata': 6,
+  'Vélez Sarsfield': 6, 'Rosario Central': 6, "Newell's Old Boys": 5, 'Talleres (Córdoba)': 5, 'Huracán': 4, 'Lanús': 4,
+  'Argentinos Juniors': 4, 'Belgrano (Córdoba)': 4, 'Argentina': 10,
+  // Sudamérica
+  'Flamengo': 8, 'Palmeiras': 8, 'Corinthians': 6, 'São Paulo': 6, 'Fluminense': 5, 'Botafogo': 5, 'Grêmio': 5, 'Internacional': 5,
+  'Atlético-MG': 5, 'Santos': 5, 'Peñarol': 5, 'Nacional': 5, 'Brazil': 8, 'Uruguay': 6, 'Colombia': 5, 'Chile': 5,
+  // Europa / MLS
+  'Real Madrid': 10, 'Barcelona': 10, 'Atlético Madrid': 7, 'Manchester City': 9, 'Liverpool': 9, 'Arsenal': 8, 'Manchester United': 8,
+  'Chelsea': 8, 'Tottenham Hotspur': 6, 'Bayern Munich': 8, 'Borussia Dortmund': 6, 'Paris Saint-Germain': 8, 'Juventus': 7,
+  'Internazionale': 7, 'AC Milan': 7, 'Napoli': 6, 'Inter Miami CF': 8
+};
+const LEAGUES = [
+  ['arg.1', 'Liga Profesional'], ['arg.copa', 'Copa Argentina'], ['conmebol.libertadores', 'Copa Libertadores'],
+  ['conmebol.sudamericana', 'Copa Sudamericana'], ['fifa.worldq.conmebol', 'Eliminatorias'], ['uefa.champions', 'Champions League'],
+  ['eng.1', 'Premier League'], ['esp.1', 'LaLiga'], ['ita.1', 'Serie A'], ['ger.1', 'Bundesliga'], ['fra.1', 'Ligue 1'], ['usa.1', 'MLS']
+];
+// Nombres cortos como los dice la gente.
+const SHORT = { 'River Plate': 'River', 'Boca Juniors': 'Boca', 'Racing Club': 'Racing', 'Vélez Sarsfield': 'Vélez', 'Estudiantes de La Plata': 'Estudiantes',
+  "Newell's Old Boys": "Newell's", 'Talleres (Córdoba)': 'Talleres', 'Belgrano (Córdoba)': 'Belgrano', 'Rosario Central': 'Central', 'Manchester City': 'Man. City',
+  'Manchester United': 'Man. United', 'Tottenham Hotspur': 'Tottenham', 'Paris Saint-Germain': 'PSG', 'Internazionale': 'Inter', 'Inter Miami CF': 'Inter Miami',
+  'Bayern Munich': 'Bayern', 'Borussia Dortmund': 'Dortmund', 'Atlético Madrid': 'Atlético', 'Brazil': 'Brasil' };
+const short = (n) => SHORT[n] || n;
+
+const _cache = new Map(); // dayKey → { at, matches }
+const _urlCache = new Map(); // url → { at, data } (1 h): un día ART usa dos fechas UTC y la segunda es la primera del día siguiente
+async function _fetchJson(url) {
+  const hit = _urlCache.get(url); if (hit && Date.now() - hit.at < 3600000) return hit.data;
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/json' } }); if (!r.ok) return null;
+    const data = await r.json(); _urlCache.set(url, { at: Date.now(), data }); if (_urlCache.size > 400) _urlCache.delete(_urlCache.keys().next().value);
+    return data;
+  } catch (_) { return null; } finally { clearTimeout(t); }
+}
+const _artKey = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(0, 10);
+const _artHM = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(11, 16);
+
+/** Partidos destacados del día ART `dayKey` (YYYY-MM-DD), de mayor a menor importancia. */
+async function topMatches(dayKey) {
+  const hit = _cache.get(dayKey);
+  if (hit && Date.now() - hit.at < 3 * 3600000) return hit.matches;
+  // Un día ART cruza dos fechas UTC (los partidos de la noche figuran al día siguiente en UTC).
+  const next = new Date(new Date(dayKey + 'T12:00:00Z').getTime() + 86400000).toISOString().slice(0, 10);
+  const dates = [dayKey.replace(/-/g, ''), next.replace(/-/g, '')];
+  const out = []; const seen = new Set();
+  const jobs = []; for (const [lg, lgName] of LEAGUES) for (const dt of dates) jobs.push([lg, lgName, dt]);
+  const res = await Promise.all(jobs.map(([lg, , dt]) => _fetchJson(`https://site.api.espn.com/apis/site/v2/sports/soccer/${lg}/scoreboard?dates=${dt}`)));
+  for (let k = 0; k < jobs.length; k++) {
+    const [lg, lgName] = jobs[k];
+    {
+      const j = res[k];
+      for (const e of (j && j.events) || []) {
+        if (seen.has(e.id) || _artKey(e.date) !== dayKey) continue;
+        const st = e.status && e.status.type && e.status.type.state; if (st === 'post') continue;
+        const c = (e.competitions || [])[0] || {}; const teams = (c.competitors || []).map((x) => x.team && x.team.displayName).filter(Boolean);
+        if (teams.length !== 2) continue;
+        const w = teams.map((n) => TEAM_W[n] || 0); const base = w[0] + w[1];
+        if (base < 12 || Math.max(w[0], w[1]) < 8) continue;
+        // Lo local pesa más para la gente de acá (clásicos argentinos, Copa Argentina, la Selección).
+        const score = base + (/^(arg\.|fifa\.worldq\.conmebol)/.test(lg) ? 3 : 0);
+        const home = (c.competitors || []).find((x) => x.homeAway === 'home'), away = (c.competitors || []).find((x) => x.homeAway === 'away');
+        seen.add(e.id);
+        out.push({ id: e.id, league: lgName, home: short(home ? home.team.displayName : teams[0]), away: short(away ? away.team.displayName : teams[1]), date: e.date, hour: _artHM(e.date), score });
+      }
+    }
+  }
+  out.sort((a, b) => b.score - a.score || new Date(a.date) - new Date(b.date));
+  _cache.set(dayKey, { at: Date.now(), matches: out });
+  if (_cache.size > 20) _cache.delete(_cache.keys().next().value);
+  return out;
+}
+
+// Catálogo de historias de SERVICIO (lo que ofrece la app). `{pct}` = bono de la primera carga vigente (Config, nunca fijo en el texto).
+const THEMES = [
+  { key: 'como', title: '🆕 ¿Sos nuevo? Así funciona', text: '1️⃣ Cargás con una transferencia y mandás la foto del comprobante.\n2️⃣ Jugás en 1Girox: casino y deportes.\n3️⃣ Retirás tus premios a tu cuenta. Todo desde la app.', link: 'app:cargar', label: 'Empezar ahora ›', bg: '#d23a4e' },
+  { key: 'carga', title: '⚡ Carga automática', text: 'Transferís, mandás la foto del comprobante y se acredita SOLA en minutos. Sin esperar a nadie, a cualquier hora.', link: 'app:cargar', label: 'Cargar ahora ›', bg: '#0f766e' },
+  { key: 'retiro', title: '💸 Retiros a tu cuenta', text: 'Pedís tu retiro desde la app y va directo a tu cuenta bancaria. Rápido, simple y seguro.', link: 'app:retirar', label: 'Ver cómo retirar ›', bg: '#1e3a8a' },
+  { key: 'reembolso', title: '🔁 Reembolso todos los días', text: 'En Pica Roja te devolvemos parte de lo que jugás. Entrá a Reembolso y reclamalo: se acredita al toque.', link: 'app:reembolso', label: 'Ver mi reembolso ›', bg: '#7c2d12' },
+  { key: 'soporte', title: '🛟 Soporte de verdad', text: 'Personas reales te responden todos los días desde el chat de Soporte de la app. Cualquier duda, escribinos.', link: 'app:soporte', label: 'Ir a Soporte ›', bg: '#111827' },
+  { key: 'misiones', title: '🎯 Misiones de la semana', text: 'Cada semana tenés misiones con premio. Completalas jugando y sumá extra automáticamente.', link: 'app:misiones', label: 'Ver mis misiones ›', bg: '#4c1d95' },
+  { key: 'vip', title: '💎 Niveles VIP', text: 'Cuanto más jugás, más subís de nivel. Cada nivel desbloquea beneficios y un regalo al subir.', link: 'app:vip', label: 'Ver niveles ›', bg: '#713f12' },
+  { key: 'referidos', title: '🤝 Jugá con tus amigos', text: 'Invitá a tus amigos con tu link y ganá una comisión por lo que juegan. Todos los días entra gente nueva a Pica Roja.', link: 'app:referidos', label: 'Mi link de referidos ›', bg: '#065f46' },
+  { key: 'juegos', title: '🎰 Los más jugados', text: "Joker's Jewels, Gates of Olympus, Sweet Bonanza, Sugar Rush y más: los favoritos de la comunidad te esperan en 1Girox.", link: 'app:juegos', label: 'Jugar ahora ›', bg: '#9d174d' },
+  { key: 'deportes', title: '⚽ Deportes en vivo', text: 'Fútbol argentino, Libertadores, Champions, Premier y mucho más. Apostá antes y durante el partido desde Deportes.', link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d' },
+  { key: 'app', title: '📲 Llevá Pica Roja en el celu', text: 'Instalá la app: entrás en un toque, te llegan los avisos de bonos y tenés todo a mano.', link: 'app:instalar', label: 'Instalar la app ›', bg: '#334155' },
+  { key: 'seguro', title: '🔒 Tu cuenta, segura', text: 'Verificación por SMS y retiros sólo a cuentas a tu nombre. Tu plata y tus datos, cuidados.', link: 'app:verificar', label: 'Verificar mi celular ›', bg: '#0c4a6e' },
+  { key: 'primera', title: '🎁 Bienvenida para los nuevos', text: 'Si es tu primera carga, te sumamos un {pct}% extra automático (con el tope de bonos). Todos los días se suman jugadores nuevos.', link: 'app:cargar', label: 'Hacer mi primera carga ›', bg: '#be123c' }
+];
+const SLOTS = ['10:00', '13:00', '16:00', '19:00', '21:30'];
+
+/** Slot (juego) favorito: el más jugado de 1girox (catálogo público ordenado por popularidad). La Partner API no da netwin por juego,
+ *  así que "favorito" = más partidas. Si hay una foto anterior de los conteos (prev: {gameKey: plays}) gana el que MÁS creció en la semana. */
+async function favoriteSlot(prev) {
+  const j = await _fetchJson('https://admin.1girox.com/api/games?sort=popular&per_page=24');
+  const games = ((j && j.games) || []).filter((g) => /slot/i.test(String(g.category || 'slots')) && g.aggregator_id && g.game_id);
+  if (!games.length) return null;
+  const key = (g) => g.aggregator_id + '/' + g.game_id;
+  let best = games[0], bestDelta = -1;
+  if (prev && typeof prev === 'object') for (const g of games) { const d = (Number(g.play_count) || 0) - (Number(prev[key(g)]) || 0); if (prev[key(g)] != null && d > bestDelta) { bestDelta = d; best = g; } }
+  const snapshot = {}; for (const g of games) snapshot[key(g)] = Number(g.play_count) || 0;
+  return { name: String(best.name || '').replace(/™/g, '').trim(), path: '/play/' + best.aggregator_id + '/' + best.game_id, plays: Number(best.play_count) || 0,
+    weekPlays: bestDelta >= 0 ? bestDelta : null, image: best.image_url || best.thumbnail || '', provider: best.provider_name || best.provider || '', snapshot };
+}
+
+/** Lo que sale cada horario del día `dayKey`. Determinístico para un mismo día y mismos partidos.
+ *  ctx: { firstPct, dow (0=dom), favorite (de favoriteSlot), weeklyBonus: { pct, hours } }
+ *  - Partidos: hasta 2 (3 si el tercero es muy fuerte), cada uno en el último horario que sale ≥ 1 h ANTES del partido.
+ *  - Lunes: "el slot de la semana" (foto del juego y botón directo a ese juego).
+ *  - Miércoles: la historia con BONO semanal (+pct% por `hours` h, con push a todos). */
+function planDay(dayKey, matches, ctx) {
+  ctx = ctx || {};
+  const dayN = Math.floor(new Date(dayKey + 'T12:00:00Z').getTime() / 86400000);
+  const pct = ctx.firstPct > 0 ? ctx.firstPct : 0;
+  const themes = THEMES.filter((t) => t.key !== 'primera' || pct > 0);
+  const toMin = (hm) => { const [h, m] = String(hm).split(':').map(Number); return h * 60 + m; };
+  const out = new Array(SLOTS.length).fill(null);
+  // 1) Partidos destacados en el horario previo al partido.
+  const ms = (matches || []).filter((m, i) => i < 2 || (i === 2 && m.score >= 16)).slice(0, 3);
+  for (const m of ms) {
+    let idx = 0; for (let i = 0; i < SLOTS.length; i++) if (toMin(SLOTS[i]) <= toMin(m.hour) - 60) idx = i;
+    while (idx >= 0 && out[idx]) idx--;
+    if (idx < 0) continue;
+    out[idx] = { kind: 'deporte', title: `⚽ HOY: ${m.home} vs ${m.away}`.slice(0, 60),
+      text: `${m.league} · ${m.hour} hs.\nViví el partido y apostá antes y durante el juego desde Deportes en Pica Roja 🔴`, link: 'app:deportes', label: 'Ir a Deportes ›', bg: '#14532d', match: m };
+  }
+  const freeSlot = (pref) => { for (const i of [pref, 2, 3, 1, 4, 0]) if (i >= 0 && i < SLOTS.length && !out[i]) return i; return -1; };
+  // 2) Lunes: el slot favorito de la semana.
+  if (ctx.dow === 1 && ctx.favorite) {
+    const f = ctx.favorite, i = freeSlot(2);
+    if (i >= 0) out[i] = { kind: 'slot', title: `🔥 El slot de la semana: ${f.name}`.slice(0, 60),
+      text: `Es el más jugado de Pica Roja${f.weekPlays ? ' esta semana' : ''}${f.provider ? ' (' + f.provider + ')' : ''}. Entrá directo y probá suerte 🍀`, link: 'app:play:' + f.path, label: 'Jugar ' + f.name.slice(0, 22) + ' ›', bg: '#9d174d', image: f.image, game: f };
+  }
+  // 3) Miércoles: historia con BONO semanal (con notificación a todos).
+  if (ctx.dow === 3 && ctx.weeklyBonus && ctx.weeklyBonus.pct > 0) {
+    const b = ctx.weeklyBonus, i = freeSlot(3);
+    if (i >= 0) out[i] = { kind: 'bono', title: `🎁 Bono de la semana: +${b.pct}%`, text: `Sólo por ${b.hours} horas: tocá "Reclamar ahora" y tu próxima carga lleva +${b.pct}% EXTRA automático (con el tope de bonos). ¡Gracias por elegir Pica Roja!`,
+      link: '', label: '', bg: '#be123c', bonusPct: b.pct, bonusHours: b.hours, notifyAll: true };
+  }
+  // 4) El resto, temas de servicio que rotan día a día (sin el genérico de deportes si ese día ya hay partidos).
+  let ti = (dayN * 3) % themes.length;
+  for (let i = 0; i < SLOTS.length; i++) {
+    if (out[i]) continue;
+    let t = themes[ti % themes.length]; ti++;
+    if (t.key === 'deportes' && ms.length) { t = themes[ti % themes.length]; ti++; }
+    out[i] = { kind: 'servicio', theme: t.key, title: t.title, text: t.text.replace('{pct}', String(pct)), link: t.link, label: t.label, bg: t.bg };
+  }
+  return out.map((x, i) => Object.assign({ slot: i, time: SLOTS[i] }, x));
+}
+
+module.exports = { topMatches, planDay, favoriteSlot, SLOTS, THEMES };

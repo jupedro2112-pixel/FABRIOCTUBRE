@@ -111,8 +111,15 @@
         const link = _el('storyLink');
         if (link) {
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
-            const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions() }; // #646: verificar (Perfil → teléfono) y soporte
+            const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions(),
+                // #827: historias automáticas — casino directo en Deportes / en los juegos, retirar y niveles VIP
+                deportes: () => { try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); },
+                juegos: () => VIP.home.openPlatform('girox', { embed: true }),
+                retirar: () => { try { VIP.home.casinoWithdraw(); } catch (_) { VIP.withdraw.openWithdrawModal(); } },
+                vip: () => VIP.home.openVipLevels() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
+            // #827: "app:play:/play/<agg>/<juego>" → casino directo en ESE juego (slot de la semana).
+            const playPath = /^app:play:(\/play\/[\w.\/-]+)$/i.exec(s.linkUrl || '');
             // #742 (owner): historia con BONO → botón "Reclamar ahora +X%": reclama, cierra y va directo a Girox (carga rápida).
             if (s.bonusActive && Number(s.bonusPct) > 0) {
                 link.href = '#'; link.style.display = ''; link.classList.add('st-bonus');
@@ -125,6 +132,9 @@
                 const k = appKey[1].toLowerCase();
                 try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
                 setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
+            else if (playPath) { link.href = '#'; link.textContent = s.linkLabel || 'Jugar ahora ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close();
+                let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
+                setTimeout(() => { try { VIP.ui._casinoGamePath = playPath[1]; VIP.home.openPlatform('girox', { embed: true }); } catch (e) { console.warn('[stories] play', e); } }, wait); }; }
             else if (s.linkUrl) { link.href = s.linkUrl; link.onclick = null; link.textContent = s.linkLabel || 'Ver más ›'; link.style.display = ''; }
             else link.style.display = 'none';
             if (!(s.bonusActive && Number(s.bonusPct) > 0)) link.classList.remove('st-bonus');

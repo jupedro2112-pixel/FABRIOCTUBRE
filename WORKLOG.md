@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-22
 
+### 827. 📖 HISTORIAS AUTOMÁTICAS: 5 por día del servicio + partidos fuertes + slot de la semana + bono semanal con push — SW v567, admin SW v160
+**Pedido (owner):** "un plan de historias automáticas abajo del cronograma, que funcione igual: 4-5 historias diarias del lado del servicio que
+ofrecemos (que conozcan todo, entendiendo que siempre entra gente nueva); un poco de todo y, con la API de Girox en deportes, los mejores partidos
+con equipos de primera línea, que lleven directo a jugar a ese partido; borrá y publicá historias nuevas; Historias (manual) al fondo con el otro
+soporte; si hay un slot favorito, lanzalo; y 1 bono semanal en historia automática con notificación, con el dato de cómo respondió la gente".
+- `src/services/storyAutopilot.js` arma el contenido: 13 temas de servicio que rotan día a día (cómo funciona para nuevos, carga automática,
+  retiros, reembolso, soporte, misiones, VIP, referidos, juegos, deportes, instalar, seguridad, bienvenida con `{pct}` = 1ª carga de Config);
+  `topMatches(día)` = partidos del día ART de 12 ligas (Liga Profesional, Copa Argentina, Libertadores, Sudamericana, Eliminatorias, Champions,
+  Premier, LaLiga, Serie A, Bundesliga, Ligue 1, MLS) puntuados por peso de equipos (≥12 y uno ≥8; +3 lo argentino); hasta 2 (3 si es muy fuerte),
+  cada uno en el horario ≥1 h antes del partido. **Fuente: scoreboard público de ESPN** — la Partner API de 1girox no expone eventos y su Deportes
+  es un widget de Digitain (SportFrame) con `currentPage:"Home"` fijo: NO se puede abrir un partido puntual; el botón abre el casino en `/sports`.
+  `favoriteSlot` = el más jugado del catálogo público de 1girox (`api/games?sort=popular`; la API no da netwin por juego), el lunes gana el que
+  más creció desde el lunes anterior (`Config['storyGamesSnapshot']`); botón `app:play:/play/<agg>/<juego>` directo a ese juego.
+- server.js: `_storyAutoTick` (cada 5 min) publica 10:00 · 13:00 · 16:00 · 19:00 · 21:30 (24 h c/u, `Story.autoKey` único `sa-YYYY-MM-DD-<slot>`).
+  Miércoles 19:00: historia con BONO +50% por 3 h (`STORY_AUTO_BONUS`) y push a todos (sólo si se publica a tiempo). Respuesta medida en la
+  historia: `views`, `bonusClaims`, NUEVOS `bonusUses` / `bonusUsedTotal` / `bonusDepositTotal` (settle en `claimStoryBonusPercent`) y `pushStats`.
+  `GET /api/admin/stories-autopilot` (hoy + 6 días; partidos sólo hoy y mañana). Siempre encendido (frena con `STORIES_AUTOPILOT_DISABLED=1`).
+- Migración `mig827StoriesReset`: borra TODAS las historias anteriores (pedido del owner); las automáticas arrancan solas (los horarios ya
+  pasados del día salen enseguida).
+- App: `APP_LINKS` + deportes / juegos / retirar / vip y `app:play:`; ui.js navega el casino también a `/sports` tras el SSO.
+- Panel: tarjeta "📖 Historias automáticas" en Cronograma (día por día con vistas/reclamos, y tabla de historias con bono: push enviada, vieron,
+  reclamaron, usaron el bono, ignoraron, $ cargado, bono entregado). "Historias (manual)" abajo en Interno.
+
 ### 826. 📲 iPhone: la app instalada entra con la sesión SÍ O SÍ + recordatorio de usuario y clave al instalar — SW v566
 **Pedido (owner):** "instalé la app desde la página y no quedó iniciada la sesión en iPhone; tiene que entrar sí o sí; cuando instalan desde el
 navegador decirles que vayan a la app de inicio y recordarles usuario y contraseña (el inicio es automático, pero por si falla)".

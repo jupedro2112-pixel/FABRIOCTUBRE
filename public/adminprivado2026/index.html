@@ -158,10 +158,6 @@ document.addEventListener('change', function (ev) {
 <span>🎰</span>
 <span>Ruleta diaria</span>
 </a>
-<a href="#" class="nav-item" data-section="stories">
-<span>📽️</span>
-<span>Historias</span>
-</a>
 <a href="#" class="nav-item" data-section="reviews">
 <span>⭐</span>
 <span>Reseñas</span>
@@ -262,6 +258,11 @@ document.addEventListener('change', function (ev) {
                 <a href="#" class="nav-item nav-legacy" data-section="notifications" title="Envíos manuales (la estrategia automática está en Cronograma)">
                     <span class="icon icon-bell"></span>
                     <span>Notificaciones (manual)</span>
+                </a>
+                <!-- #827 (owner): Historias manuales abajo (las automáticas corren solas, se ven en Cronograma) -->
+                <a href="#" class="nav-item nav-legacy" data-section="stories" title="Historias manuales (las automáticas están en Cronograma)">
+                    <span>📽️</span>
+                    <span>Historias (manual)</span>
                 </a>
                 <!-- #814: la columna Soporte quedó abajo (el soporte se responde desde Chats). -->
                 <a href="#" class="nav-item nav-legacy" data-section="support" title="Columna de soporte anterior (el soporte ahora se responde desde Chats)">
@@ -2664,6 +2665,15 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     </div>
                     <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">Todos los días sale una notificación a las 20:00, en 3 lotes, con un bono automático de 4 h en una carga (con el tope y el rollover de siempre). Los clientes con la app se reparten en grupos que rotan (máximo 8 por cliente en el mes) y los nuevos entran solos. Fin de mes +100% para todos, el día 5 más chico, viernes más fuerte, "te extrañamos" los miércoles y los feriados y fechas de Argentina con su mensaje. Los textos hablan del servicio (carga automática, retiros, soporte, juegos, misiones, VIP), nunca de sueldos ni de plata. Se programa sola mes a mes: no hay que lanzarla ni editarla.</div>
                     <div id="apMonths" style="margin-top:.8rem;font-size:.82rem"></div>
+                </div>
+                <!-- #827 (owner): HISTORIAS AUTOMÁTICAS abajo de la estrategia de notificaciones (fijas, corren solas) -->
+                <div class="card" style="margin-bottom:1rem" id="stAutoCard">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+                        <h3 style="margin:0;font-size:1rem">📖 Historias automáticas (5 por día, corren solas)</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadStoriesAuto()">🔄</button>
+                    </div>
+                    <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">A las 10:00 · 13:00 · 16:00 · 19:00 · 21:30 sale una historia (dura 24 h): lo que ofrece el servicio (cómo funciona para los nuevos, carga automática, retiros, reembolso, soporte, misiones, VIP, referidos, juegos, instalar la app), los partidos fuertes del día con botón directo a Deportes, los lunes el slot más jugado con botón directo a ese juego y los miércoles la historia con BONO de la semana (+50% por 3 h) con notificación a todos.</div>
+                    <div id="stAutoBody" style="font-size:.82rem">Cargando…</div>
                 </div>
                 <div class="card" style="margin-bottom:1rem">
                     <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.78rem;color:#a5b4fc;margin-bottom:.6rem">

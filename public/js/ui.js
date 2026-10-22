@@ -1406,7 +1406,7 @@ VIP.ui._showCasinoFrame = function() {
       clearTimeout(VIP.ui._casinoWatchdog);
       // #782: si se tocó la foto de un juego, después de que el SSO dejó la sesión iniciada se navega el recuadro DIRECTO a ese
       // juego (misma web, misma sesión). 1,5 s de margen para que el intercambio del código de un solo uso termine.
-      const gp = VIP.ui._casinoGamePath; if (gp && /^\/play\//.test(gp)) {
+      const gp = VIP.ui._casinoGamePath; if (gp && /^\/(play\/|sports$)/.test(gp)) { // #827: también Deportes
         VIP.ui._casinoGamePath = null;
         try { const origin = new URL(src, location.href).origin; setTimeout(function() { if (VIP.ui._casinoOpen) frame.src = origin + gp; }, 1500); } catch (_) {}
       }
