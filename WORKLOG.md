@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 837. 🚨 FIX retiros con SMS: "Error del servidor" al tocar Continuar (teléfono verificado y datos completos)
+**Pedido (owner, capturas):** "el retiro automático completando los datos no funciona teniendo el SMS y todo; por más que sea con confirmación
+tendría que aceptar el retiro" (Retirar Premio → Continuar → "Error del servidor" / "No se pudo enviar el SMS").
+Causa: #382 manda el código con `purpose:'withdraw'`, pero `OtpCode.purpose` es un enum SIN 'withdraw' ⇒ `OtpCode.create` tiraba
+ValidationError ⇒ `/api/withdrawal/send-otp` respondía 500 ANTES de mandar el SMS. Roto desde el 2026-10-18 cada vez que el código SMS del
+retiro está activo. Fix: 'withdraw' agregado al enum. Después del código el retiro sigue igual (≤ `payoutReview.minArs` se paga solo por
+hgcash; más, a Confirmación de pagos).
+⚠️ Trampa: un `purpose` nuevo de OTP va SIEMPRE también al enum de `src/models/OtpCode.js`.
+
 ### 836. 🎰 Al entrar a la app: SIEMPRE Girox directo, salvo que la persona haya elegido otro menú — SW v571
 **Pedido (owner):** "que siempre cuando la gente entra a la app entre al menú de Girox; si lo cambian, está ok que usen el que cambian".
 Antes (#733/#678): sin "Dejar fijo" se entraba siempre a Girox aunque la persona hubiera elegido otro menú, y a los 10 min en segundo plano se
