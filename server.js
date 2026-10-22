@@ -6231,18 +6231,32 @@ async function platformSessionHandler(req, res) {
     // historias) el /auth/sso de 1girox va con `?token=` (lo acepta su página: guarda la sesión al instante) en vez del código de un solo
     // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
     // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
-    let _redir = session.redirectUrl;
+    let _redir = session.redirectUrl, _gameReady = false;
     try {
       const game = String((req.body && req.body.game) || '');
-      if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game) && session.token) {
-        const u0 = new URL(session.redirectUrl); const u1 = new URL('/auth/sso', u0.origin);
-        u1.searchParams.set('token', String(session.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
-        _redir = u1.toString();
+      if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game)) {
+        // #855 (owner: "que use la misma API de cuando entrás con el menú de Girox y estás logueado"): MISMO ingreso que el botón de Girox
+        // (POST /players/{u}/session ⇒ código de un solo uso) pero el CANJE del código lo hacemos acá, contra la misma Partner API
+        // (`<GIROX_API_URL>/sso/exchange`, el endpoint que usa la web de 1girox). Así el recuadro abre `/auth/sso?token=<sesión de la web>`
+        // y la web guarda la sesión al instante: en el celular el canje tardaba y el salto al juego llegaba antes (abría deslogueado).
+        const u0 = new URL(session.redirectUrl); const code = u0.searchParams.get('code');
+        if (code) {
+          const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
+          try {
+            const rx = await fetch(girox.getBaseUrl() + '/sso/exchange', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ code }), signal: ctrl.signal });
+            const jx = await rx.json().catch(() => null);
+            if (rx.ok && jx && jx.token) {
+              const u1 = new URL('/auth/sso', u0.origin); u1.searchParams.set('token', String(jx.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
+              _redir = u1.toString(); _gameReady = true;
+            } else logger.warn(`[girox-sso] canje del código para juego falló (${rx.status}) ${user.username}: se usa el ingreso normal`);
+          } catch (e) { logger.warn(`[girox-sso] canje del código para juego: ${e.message} — ingreso normal`); } finally { clearTimeout(t); }
+        }
       }
-    } catch (_) { _redir = session.redirectUrl; }
+    } catch (_) { _redir = session.redirectUrl; _gameReady = false; }
     res.json({
       success: true,
       redirectUrl: _redir,
+      gameReady: _gameReady, // #855: la sesión de la web ya viene canjeada ⇒ el salto al juego puede ser corto
       platformUrl: girox.getPlayUrl()
     });
   } catch (error) {

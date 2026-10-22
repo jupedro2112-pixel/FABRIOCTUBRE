@@ -2542,3 +2542,13 @@ body:not(.home-play) #playBalTop { display: none; }
 #infoModal .im-terms { display: block; text-align: center; margin: 4px 0 8px; font: 700 12px var(--p-font); color: var(--p-muted); }
 @media (max-width: 340px) { #infoMsg.im-grid { grid-template-columns: 1fr; } }
 html[data-theme="dark"] #infoMsg .im-card { box-shadow: none; }
+
+/* #856 (owner): Info HORIZONTAL — tiras a lo ancho (no cuadrados): ícono + TÍTULO + "Ver más ›" a la derecha; al abrir se despliega el texto */
+#infoMsg.im-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+#infoMsg .im-card { flex-direction: row !important; align-items: center; border-radius: 16px !important; }
+#infoMsg .im-card:not(.open) .im-sec { flex: 1 1 auto; min-width: 0; -webkit-line-clamp: 1 !important; padding: 10px 6px 10px 12px !important; }
+#infoMsg .im-card:not(.open) .im-sec > b:first-child { margin: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px !important; }
+#infoMsg .im-card:not(.open) .im-more { flex: 0 0 auto; width: auto !important; margin: 0 !important; border-top: 0 !important; padding: 10px 14px !important; white-space: nowrap; font-size: 12px !important; }
+#infoMsg .im-card.open { flex-direction: column !important; align-items: stretch; }
+#infoMsg .im-card.open .im-sec > b:first-child { font-size: 14px !important; margin-bottom: 8px !important; }
+#infoMsg .im-card.open .im-more { border-top: 1px solid var(--p-border) !important; text-align: center; }

@@ -1117,11 +1117,11 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
         'Authorization': `Bearer ${VIP.state.currentToken}`
       },
       // Multi-plataforma (#219/#220): a qué casino entrar. Sin el campo el back usa girox.
-      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox' }), // #851: el MISMO ingreso que el botón de Girox (el SSO por token de #848 abría deslogueado)
+      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox', game: VIP.ui._casinoGamePath || undefined }), // #855: mismo ingreso que el botón de Girox; con juego, el server canjea el código
       signal: ctrl ? ctrl.signal : undefined
     });
     const data = await response.json().catch(function() { return {}; });
-    if (response.ok && data.success && data.redirectUrl) return { ok: true, url: data.redirectUrl };
+    if (response.ok && data.success && data.redirectUrl) { VIP.ui._casinoGameReady = !!data.gameReady; return { ok: true, url: data.redirectUrl }; } // #855
     // 5xx = plataforma demorada/saturada → vale reintentar. 4xx (bloqueado,
     // límite de intentos) no: reintentar no lo va a cambiar.
     // #695: `status` para que el error diga QUÉ pasó (un 502/503 del hosting mientras el servidor arranca o se
@@ -1429,7 +1429,8 @@ VIP.ui._showCasinoFrame = function() {
         try {
           const origin = new URL(src, location.href).origin;
           if (status) { status.style.display = ''; status.textContent = '🎰 Abriendo tu juego…'; }
-          setTimeout(function() { if (VIP.ui._casinoOpen) { VIP.ui._gameNavPending = true; frame.src = origin + gp; VIP.ui._gameNavSafety = setTimeout(function() { const st = document.getElementById('casinoFrameStatus'); if (st) { st.style.display = 'none'; st.textContent = '🎰 Entrando al casino…'; } frame.style.display = 'block'; }, 15000); } }, 5000);
+          const _wait = VIP.ui._casinoGameReady ? 3500 : 8000; VIP.ui._casinoGameReady = false; // #855: sesión ya canjeada ⇒ 3,5 s; si no, 8 s
+          setTimeout(function() { if (VIP.ui._casinoOpen) { VIP.ui._gameNavPending = true; frame.src = origin + gp; VIP.ui._gameNavSafety = setTimeout(function() { const st = document.getElementById('casinoFrameStatus'); if (st) { st.style.display = 'none'; st.textContent = '🎰 Entrando al casino…'; } frame.style.display = 'block'; }, 15000); } }, _wait);
         } catch (_) { if (status) status.style.display = 'none'; frame.style.display = 'block'; }
       }
     });

@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 856. 📇 Info en TIRAS HORIZONTALES (ícono + título + "Ver más ›") — SW v581
+**Pedido (owner, captura):** "la sección de Info hacela horizontal, recuadros a lo largo, no cuadrados (se pierde mucho); un título y ver más de
+lo que trae el título". CSS sobre #852: una columna; cerrada = tira (título en una línea + "Ver más ›" a la derecha); abierta = el texto completo.
+
+### 855. 🔐 Juegos y Deportes: el SERVER canjea el código del mismo ingreso de Girox — SW v581
+**Pedido (owner, 2 capturas en Render: el favorito abría Girox con "Iniciar sesión" y la verificación de edad):** "que use la misma API de cuando
+entrás con el menú de Girox y estás logueado". La verificación de edad de 1girox sólo sale si no hay `token` en su localStorage ⇒ el salto al juego
+llegaba antes de que la web terminara su canje (frontend-flags + `<partner_api>/sso/exchange` + datos del jugador).
+- `platformSessionHandler`: con `game` pide el MISMO `/session` (código) y canjea el código acá contra `<GIROX_API_URL>/sso/exchange` (el endpoint
+  público que usa la web; `partner_api_url` = https://api-1gx.com/api/v1, igual a la Partner API) ⇒ `/auth/sso?token=<sesión de la web>&embed=1`
+  (`gameReady:true`). Si el canje falla ⇒ el ingreso normal con código (`gameReady:false`).
+- ui.js manda `game` y salta al juego a los 3,5 s (sesión lista) u 8 s (ingreso normal), con el cartel tapando; red de seguridad 15 s.
+- No verificable desde acá con un jugador real: confirmar en Render (v581) tocando un favorito y la historia de Deportes.
+
 ### 854. ⚽ Deportes (y juegos) desde historias con el mismo ingreso que los favoritos — SW v580
 **Pedido (owner):** "lo de deportes de historias quiero que entre logueado de la misma forma que favoritos, cuando van a deportes, todos".
 - `VIP.ui.casinoGoTo(path)`: con el casino YA abierto (sesión en el recuadro) navega directo a `/sports` o `/play/…` sin otro ingreso.
