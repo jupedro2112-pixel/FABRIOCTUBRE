@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 838. 💸 Tilde "Pagar solos los menores al umbral" = TODO manual (también los reintentos)
+**Pedido (owner):** "lo de los $100.000: si le saco el tilde desde el admin, que sea todo manual, o como esté configurado". Ya existía
+(Panel → Confirmación de pagos: Umbral $ + "Pagar solos los menores al umbral"): sin el tilde `needsReview` = siempre. Hueco cerrado:
+`_payoutAutoRetryTick` seguía reintentando solos los automáticos que habían fallado ⇒ ahora no corre si `autoBelow` está apagado.
+**Revisión previa al deploy (owner: "revisá que no se haya roto nada desde /landing"):** sintaxis de todo lo cambiado desde v569, los 25 js
+de la app cargan, entrada logueada en 6 escenarios, menú al entrar, JS de las dos landings, recorrido completo de la landing simulado sobre
+la página real de Render (banner 100% + 50% EXTRA → alta → usuario/clave → respaldo → `?acceso=&ir=girox`), y Render (mismo código) responde
+/, /l/CODE, /landing, /ingreso, /CODE, /r/x, manifest, bundle v571, /api/landing/info. ⚠️ Render ya corrió la migración #833 en la base
+compartida: el reembolso diario 10% YA rige en producción.
+
 ### 837. 🚨 FIX retiros con SMS: "Error del servidor" al tocar Continuar (teléfono verificado y datos completos)
 **Pedido (owner, capturas):** "el retiro automático completando los datos no funciona teniendo el SMS y todo; por más que sea con confirmación
 tendría que aceptar el retiro" (Retirar Premio → Continuar → "Error del servidor" / "No se pudo enviar el SMS").
