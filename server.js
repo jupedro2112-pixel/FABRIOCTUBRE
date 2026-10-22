@@ -14334,7 +14334,14 @@ async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
   if (!user || !(Number(amount) > 0)) return none;
   // #509: cuenta marcada por multicuenta → sin bonos de bienvenida ni 2ª carga (sí ruleta/lotes, que ya ganó)
   const blockWelcome = opts.noWelcome || _isFlagged(user);
-  let c = await claimStoryBonusPercent(user, usedBy, amount); // #742: el bono de la historia manda (vence en horas)
+  // #832 (owner 2026-10-22): "en la primera carga el 100% automático, libre y con rollover ×5" ⇒ la PRIMERA carga real lleva SIEMPRE el
+  // bono de primera carga (antes un bono pendiente de ruleta/historia/lote lo reemplazaba). Esos otros quedan pendientes para la próxima carga.
+  let c = { claimed: false };
+  if (!blockWelcome) {
+    const fp0 = await getFirstDepositBonusPct();
+    if (fp0 > 0 && await _isFirstRealDeposit(user)) c = { pct: fp0, claimed: true, source: 'first_deposit', label: `bono de bienvenida de la primera carga (${fp0}%)`, revert: async () => {} };
+  }
+  if (!c.claimed) c = await claimStoryBonusPercent(user, usedBy, amount); // #742: el bono de la historia manda (vence en horas)
   if (!c.claimed && !blockWelcome) c = await claimInstallBonusPercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimWelcomeCodePercent(user, usedBy);
   if (!c.claimed && !blockWelcome) c = await claimSecondDepositPercent(user, usedBy); // #504

@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 832. 🎁 Landing: "100% EN TU PRIMERA CARGA · +50% EXTRA de regalo instalando la app" + la 1ª carga lleva SIEMPRE el 100%
+**Pedido (owner):** "en /landing poné el 100% y un 50% de regalo extra instalando la app, resumido; en la primera carga libre con rollover ×5,
+sólo ahí libre, el 100% automático y después el 50% ofrecer por instalar la app; configuralo automático".
+- Landing (`public/landing` y la de Vercel `landing/`): antes mostraba "150% · instalando la app · si no, 100%" (sumaba los dos). Ahora grande
+  el % de la 1ª carga (`welcome.pct`) y abajo, en rojo y más grande, "+{withApp−pct}% EXTRA de regalo instalando la app". La de Vercel es
+  texto fijo (`BONUS_NOTE`): hay que redeployarla en Vercel.
+- `resolveAutoBonus`: la PRIMERA carga real ahora toma el bono de 1ª carga ANTES que cualquier otro pendiente (historia/ruleta/lote/código lo
+  reemplazaban); esos quedan para la carga siguiente. Sin cambios en lo demás (ya estaba de #810/#812): 100% sin tope sólo en la 1ª carga,
+  rollover ×5 global, y tras la 1ª carga sin la app se ofrece el 50% por instalar (`installGift`: tope $20.000 de la carga, 7 días).
+
 ### 831. 🔐 La gente nueva ENTRA LOGUEADA sí o sí (registro por landing / entrada rápida / app instalada) — SW v569
 **Pedido (owner):** "no quiero que muestre el login, quiero que la gente nueva que se registre entre logueada; lo mismo si instala la app".
 - **Server (`/api/auth/access-link`):** los links de alta por LANDING (`acquisitionSource:'landing'`) y los de instalación dejan 30 min de
