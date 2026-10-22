@@ -1107,7 +1107,7 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
         'Authorization': `Bearer ${VIP.state.currentToken}`
       },
       // Multi-plataforma (#219/#220): a qué casino entrar. Sin el campo el back usa girox.
-      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox', game: VIP.ui._casinoGamePath || undefined }), // #848: juego puntual ⇒ SSO con token
+      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox' }), // #851: el MISMO ingreso que el botón de Girox (el SSO por token de #848 abría deslogueado)
       signal: ctrl ? ctrl.signal : undefined
     });
     const data = await response.json().catch(function() { return {}; });
@@ -1400,8 +1400,10 @@ VIP.ui._showCasinoFrame = function() {
       const src = frame.getAttribute('src');
       if (!src || src === 'about:blank') return;
       const status = document.getElementById('casinoFrameStatus');
-      if (status) status.style.display = 'none';
-      frame.style.display = 'block';
+      // #851: si se pidió un JUEGO, el primer load es el login (SSO): el cartel "Abriendo <juego>…" sigue tapando hasta que carga el juego.
+      const _gpNext = VIP.ui._casinoGamePath && /^\/(play\/|sports$)/.test(VIP.ui._casinoGamePath);
+      if (VIP.ui._gameNavPending) { VIP.ui._gameNavPending = false; clearTimeout(VIP.ui._gameNavSafety); }
+      if (!_gpNext) { if (status) { status.style.display = 'none'; status.textContent = '🎰 Entrando al casino…'; } frame.style.display = 'block'; }
       // Si el HTML del casino llegó, se cancela el vigilante: el aviso "¿no
       // termina de cargar?" aparecía ENCIMA del casino ya funcionando (reclamo
       // owner 2026-08-15). Para el caso raro de app colgada por cookies
@@ -1411,7 +1413,14 @@ VIP.ui._showCasinoFrame = function() {
       // juego (misma web, misma sesión). 1,5 s de margen para que el intercambio del código de un solo uso termine.
       const gp = VIP.ui._casinoGamePath; if (gp && /^\/(play\/|sports$)/.test(gp)) { // #827: también Deportes
         VIP.ui._casinoGamePath = null;
-        try { const origin = new URL(src, location.href).origin; setTimeout(function() { if (VIP.ui._casinoOpen) frame.src = origin + gp; }, 2200); } catch (_) {} // #848: con el SSO por token la sesión queda al instante; 2,2 s de margen
+        // #851 (owner: "que use el mismo ingreso de Girox de la app y entre al juego específico con el mismo menú"): mismo SSO que el botón
+        // de Girox; el login de 1girox (canje del código + datos del jugador) tarda unos segundos ⇒ recién a los 5 s se pasa al juego.
+        // Mientras, el cartel tapa el recuadro (no se ve el inicio de Girox). Red de seguridad: a los 15 s se muestra igual.
+        try {
+          const origin = new URL(src, location.href).origin;
+          if (status) { status.style.display = ''; status.textContent = '🎰 Abriendo tu juego…'; }
+          setTimeout(function() { if (VIP.ui._casinoOpen) { VIP.ui._gameNavPending = true; frame.src = origin + gp; VIP.ui._gameNavSafety = setTimeout(function() { const st = document.getElementById('casinoFrameStatus'); if (st) { st.style.display = 'none'; st.textContent = '🎰 Entrando al casino…'; } frame.style.display = 'block'; }, 15000); } }, 5000);
+        } catch (_) { if (status) status.style.display = 'none'; frame.style.display = 'block'; }
       }
     });
 

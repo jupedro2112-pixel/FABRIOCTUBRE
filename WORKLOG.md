@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 851. 🎰 Favoritos: el MISMO ingreso que el botón de Girox y después el juego — SW v578
+**Pedido (owner, captura: Joker abría el login de 1girox):** "que use el mismo ingreso de Girox de la app y entre al juego específico con el
+mismo menú de Girox". El SSO por `?token=` de #848 abría DESLOGUEADO (el token de `/session` no le sirve a la web para la sesión) ⇒ se
+volvió al código de un solo uso (exactamente el del botón de Girox; ui.js ya no manda `game`). Tras el primer load (login) el cartel
+"🎰 Abriendo tu juego…" sigue tapando el recuadro, a los 5 s se navega a `/play/…` y se muestra cuando carga el juego (red de seguridad 15 s).
+El server conserva el camino `game`→token (#848) pero nadie lo usa.
+- Historias: confirmado en vivo (picaroja.com /api/stories/public): las 5 de hoy con foto premium servida desde Render (#850).
+
 ### 850. 🖼️ Historias premium YA (aunque producción siga vieja): Render publica y sirve las fotos
 **Pedido (owner):** "borrá las historias desde ya y publicá la nueva estrategia" (picaroja.com seguía en v569 y publicaba historias de texto).
 - Render (comparte la base) vuelve a correr el motor de historias CON fotos (`_STORY_IMAGES_ON = true`) y las publica con URL ABSOLUTA a sí
