@@ -949,7 +949,7 @@
     // casino normal. Un juego nuevo: agregar acá el par. Se navega DESPUÉS del SSO (ui.js, `_casinoGamePath`).
     const GAME_PLAY = { 'jokers-jewels': '/play/2/vs5joker', 'gates-of-olympus-1000': '/play/2/vs20olympx', 'sugar-rush-1000': '/play/2/vs20sugarrushx', 'sweet-bonanza-2500': '/play/2/vs20swbon2500', 'jokers-jewels-hold-spin': '/play/2/vs5jokjewhs', 'mines': '/play/4/mines_prod2_100hp', 'zeus-rush-fever': '/play/4/zeusrushfeverdeluxe96_rubyplay', 'buffalo-king-untamed': '/play/2/vswaysbkingasc', 'big-bass-bonanza': '/play/2/vs10bbbonanza', 'starlight-princess-1000': '/play/2/vs20starlightx' };
     function playGame(id) {
-        try { VIP.ui._casinoGamePath = GAME_PLAY[id] || null; } catch (_) {}
+        try { VIP.ui._casinoGamePath = GAME_PLAY[id] || null; VIP.ui._casinoGameName = ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1]) || ''; } catch (_) {}
         try { VIP.ui.showToast(GAME_PLAY[id] ? '🎰 Abriendo ' + ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1] || 'el juego') + '…' : '🎰 Abriendo el casino…', 'info'); } catch (_) {}
         openPlatform('girox', { embed: true });
     }
@@ -1047,9 +1047,12 @@
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         // #848: con el casino YA abierto (sesión iniciada) se va directo al juego, sin otro login.
         try { if (VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/play/' + key)) { favClosePicker(); return; } } catch (_) {} // #854
-        try { VIP.ui._casinoGamePath = '/play/' + key; } catch (_) {}
+        try { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = (f && f.name) || ''; } catch (_) {} // #857: el nombre ayuda al server a encontrar el juego
         try { VIP.ui.showToast('🎰 Abriendo ' + ((f && f.name) || 'el juego') + '…', 'info'); } catch (_) {}
-        favClosePicker(); openPlatform('girox', { embed: true });
+        favClosePicker();
+        // #857: con Girox ya abierto se cierra y se vuelve a abrir con el juego pedido (el server lo lanza directo).
+        let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 400; } } catch (_) {}
+        setTimeout(() => { try { if (key) { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = (f && f.name) || ''; } } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
     }
     // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
     let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;

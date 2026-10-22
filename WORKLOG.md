@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 857. 🎰 Favoritos: el juego se lanza DIRECTO con la sesión del jugador (sin recargar la web de Girox) — SW v582
+**Pedido (owner):** "sigue sin loguear lo de favoritos". Diagnóstico: aun con la sesión canjeada (#855), RECARGAR el recuadro hacia `/play/…` abría
+deslogueado (verificación de edad = sin token en su localStorage): el navegador guarda aparte lo de una web metida en otra y la recarga la perdía.
+Con el botón de Girox no pasa porque la web cambia de página por dentro, sin recargar.
+- Server (`platformSessionHandler`, con `game` + `gameName`): mismo `/session` → canje del código (#855) → con esa sesión, LO MISMO que hace la
+  web de 1girox al tocar un juego: `GET https://admin.1girox.com/api/games/<game_id>?id&launcher_key&aggregator_id` (Bearer) ⇒ `launch_url` del
+  proveedor ⇒ `directGame:true` y el recuadro abre el juego. id/launcher_key salen del catálogo público (`_gameLaunchMeta`, cache; los 10 de
+  entrada verificados). `GIROX_SITE_API_URL` para cambiar el host.
+- Si algo falla (o es Deportes): se abre Girox YA LOGUEADO (token o código, sin recargar) + aviso "tocá DEPORTES arriba" / "buscá X con la lupa".
+- ui.js ya no salta después del ingreso; `casinoGoTo` desactivado (recargaba); favoritos con Girox abierto ⇒ cerrar y reabrir con el juego.
+- Probado con 1girox simulado (ok / launch falla / sin datos / Deportes / canje falla). Falta confirmarlo con un jugador real en Render (v582).
+
 ### 856. 📇 Info en TIRAS HORIZONTALES (ícono + título + "Ver más ›") — SW v581
 **Pedido (owner, captura):** "la sección de Info hacela horizontal, recuadros a lo largo, no cuadrados (se pierde mucho); un título y ver más de
 lo que trae el título". CSS sobre #852: una columna; cerrada = tira (título en una línea + "Ver más ›" a la derecha); abierta = el texto completo.

@@ -1099,6 +1099,9 @@ VIP.ui._casinoOpen = false;
 // #854: con el casino YA abierto (sesión iniciada en el recuadro), ir directo a una sección/juego de la plataforma sin otro ingreso.
 // Devuelve true si navegó. Lo usan favoritos e historias (Deportes, juegos).
 VIP.ui.casinoGoTo = function(path) {
+  // #857: DESACTIVADO — recargar el recuadro pierde la sesión de la web de 1girox. Los que la llaman caen al camino normal (cerrar y abrir
+  // con el juego pedido al server). Se deja la función para no romper a quien la use.
+  if (true) return false;
   try {
     if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/]+|sports)$/.test(String(path || ''))) return false;
     const fr = document.getElementById('casinoFrame'); const src = fr && fr.getAttribute('src');
@@ -1117,11 +1120,17 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
         'Authorization': `Bearer ${VIP.state.currentToken}`
       },
       // Multi-plataforma (#219/#220): a qué casino entrar. Sin el campo el back usa girox.
-      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox', game: VIP.ui._casinoGamePath || undefined }), // #855: mismo ingreso que el botón de Girox; con juego, el server canjea el código
+      body: JSON.stringify({ platform: VIP.ui._casinoPlatform || 'girox', game: VIP.ui._casinoGamePath || undefined, gameName: VIP.ui._casinoGameName || undefined }), // #855/#857
       signal: ctrl ? ctrl.signal : undefined
     });
     const data = await response.json().catch(function() { return {}; });
-    if (response.ok && data.success && data.redirectUrl) { VIP.ui._casinoGameReady = !!data.gameReady; return { ok: true, url: data.redirectUrl }; } // #855
+    if (response.ok && data.success && data.redirectUrl) {
+      // #857: recargar el recuadro para ir al juego/Deportes PIERDE la sesión de la web de 1girox ⇒ ya no se salta después del ingreso:
+      // o el server devolvió el juego directo (launch_url del proveedor), o se abre Girox logueado (como el botón) y se avisa dónde está.
+      const _gp = VIP.ui._casinoGamePath, _gn = VIP.ui._casinoGameName; VIP.ui._casinoGamePath = null; VIP.ui._casinoGameName = null; VIP.ui._casinoGameReady = false;
+      if (_gp && !data.directGame) setTimeout(function () { try { VIP.ui.showToast(_gp === '/sports' ? '⚽ Ya entraste a Girox: tocá DEPORTES en el menú de arriba de Girox' : ('🎰 Ya entraste a Girox: buscá ' + (_gn || 'el juego') + ' con la lupa'), 'info'); } catch (_) {} }, 4000);
+      return { ok: true, url: data.redirectUrl };
+    }
     // 5xx = plataforma demorada/saturada → vale reintentar. 4xx (bloqueado,
     // límite de intentos) no: reintentar no lo va a cambiar.
     // #695: `status` para que el error diga QUÉ pasó (un 502/503 del hosting mientras el servidor arranca o se

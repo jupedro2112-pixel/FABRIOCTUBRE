@@ -6231,7 +6231,7 @@ async function platformSessionHandler(req, res) {
     // historias) el /auth/sso de 1girox va con `?token=` (lo acepta su página: guarda la sesión al instante) en vez del código de un solo
     // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
     // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
-    let _redir = session.redirectUrl, _gameReady = false;
+    let _redir = session.redirectUrl, _gameReady = false, _directGame = false;
     try {
       const game = String((req.body && req.body.game) || '');
       if (/^\/(play\/[\w.\-\/]{1,120}|sports)$/.test(game)) {
@@ -6248,6 +6248,24 @@ async function platformSessionHandler(req, res) {
             if (rx.ok && jx && jx.token) {
               const u1 = new URL('/auth/sso', u0.origin); u1.searchParams.set('token', String(jx.token)); if (u0.searchParams.get('embed') === '1') u1.searchParams.set('embed', '1');
               _redir = u1.toString(); _gameReady = true;
+              // #857 (owner: "sigue sin loguear lo de favoritos"): recargar el recuadro para ir al juego pierde la sesión de la web (el navegador
+              // guarda aparte lo de una web metida en otra). Se hace lo MISMO que la web de 1girox al tocar un juego: con la sesión del jugador
+              // se pide `GET <api del sitio>/games/<juego>?id&launcher_key&aggregator_id` ⇒ `launch_url` del proveedor, y se abre directo.
+              const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
+              if (mm) {
+                const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
+                if (meta) {
+                  const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
+                  const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] });
+                  const c2 = new AbortController(); const t2 = setTimeout(() => c2.abort(), 10000);
+                  try {
+                    const rg = await fetch(`${site}/games/${encodeURIComponent(mm[2])}?${q}`, { headers: { Authorization: 'Bearer ' + jx.token, Accept: 'application/json' }, signal: c2.signal });
+                    const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
+                    if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; }
+                    else logger.warn(`[girox-sso] launch de ${game} para ${user.username} sin URL (${rg.status}): se abre Girox logueado`);
+                  } catch (e) { logger.warn(`[girox-sso] launch de ${game}: ${e.message} — se abre Girox logueado`); } finally { clearTimeout(t2); }
+                }
+              }
             } else logger.warn(`[girox-sso] canje del código para juego falló (${rx.status}) ${user.username}: se usa el ingreso normal`);
           } catch (e) { logger.warn(`[girox-sso] canje del código para juego: ${e.message} — ingreso normal`); } finally { clearTimeout(t); }
         }
@@ -6257,6 +6275,7 @@ async function platformSessionHandler(req, res) {
       success: true,
       redirectUrl: _redir,
       gameReady: _gameReady, // #855: la sesión de la web ya viene canjeada ⇒ el salto al juego puede ser corto
+      directGame: _directGame, // #857: redirectUrl ES el juego (launch_url del proveedor): no hay que saltar a nada
       platformUrl: girox.getPlayUrl()
     });
   } catch (error) {
@@ -24672,12 +24691,28 @@ async function _gameCatalog(q, page) {
     const j = await r.json();
     const games = ((j && j.games) || []).filter((g) => g && g.aggregator_id != null && g.game_id).map((g) => ({
       key: String(g.aggregator_id) + '/' + String(g.game_id), name: String(g.name || '').replace(/[™®]/g, '').trim().slice(0, 60),
-      img: String(g.image_url || g.thumbnail || ''), provider: String(g.provider_name || g.provider || '').slice(0, 40), category: String(g.category || '').slice(0, 30)
+      img: String(g.image_url || g.thumbnail || ''), provider: String(g.provider_name || g.provider || '').slice(0, 40), category: String(g.category || '').slice(0, 30),
+      gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40) // #857: lo que usa la web de 1girox para abrir el juego
     })).filter((g) => _FAV_KEY_RE.test(g.key) && g.name).map((g) => (_FAV_IMG_RE.test(g.img) ? g : Object.assign(g, { img: '' })));
     const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore };
     _gameCatalogCache.set(k, { at: Date.now(), data }); if (_gameCatalogCache.size > 300) _gameCatalogCache.delete(_gameCatalogCache.keys().next().value);
     return data;
   } catch (_) { return null; } finally { clearTimeout(t); }
+}
+// #857: id numérico + launcher_key de un juego (los pide la web de 1girox para lanzarlo). Se buscan en el catálogo público por nombre (o por el
+// id del juego) y se cachean.
+const _gameMetaCache = new Map();
+async function _gameLaunchMeta(agg, gameId, nameHint) {
+  const key = agg + '/' + gameId; if (_gameMetaCache.has(key)) return _gameMetaCache.get(key);
+  const fav = DEFAULT_FAV_GAMES.find((g) => g.key === key);
+  for (const q of [nameHint, fav && fav.name, gameId].filter(Boolean)) {
+    for (const qq of [...new Set([String(q).replace(/[™®]/g, '').slice(0, 40), String(q).split(/\s+/).slice(0, 2).join(' '), String(q).split(/\s+/)[0]])]) {
+      const d = await _gameCatalog(qq, 1);
+      const g = d && d.games.find((x) => x.key === key && x.gid != null && x.lk);
+      if (g) { const m = { gid: g.gid, lk: g.lk }; _gameMetaCache.set(key, m); return m; }
+    }
+  }
+  return null;
 }
 app.get('/api/games/catalog', authMiddleware, async (req, res) => {
   try {
