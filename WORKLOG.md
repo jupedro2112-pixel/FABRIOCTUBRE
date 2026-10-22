@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 863–864. 🎰 Favoritos sin pantalla negra · 📲 carteles de instalar ENCIMA de Girox — SW v586
+- **#863** (owner: "abre pero pantalla negra"): con #862 el juego directo SÍ salía (`launch_url` del proveedor), pero el proveedor no se deja
+  mostrar dentro de una página que no sea la de 1girox ⇒ pantalla negra. Juego directo APAGADO (`GIROX_DIRECT_GAME=1` lo reactiva): el favorito
+  abre Girox LOGUEADO con un solo ingreso (como el registro) + aviso "tocá la lupa 🔍 y buscá X".
+- **#864** (owner: "el instalar app se traba; el cartel aparece cuando volvés al menú; que se vea dentro del menú de Girox"): el cartel de
+  instalar (`.ios-install-modal`, z 10000) y los `.modal` de la app quedaban DETRÁS del casino (z 99999) ⇒ con `body.casino-open` van encima
+  (z 2147483250); la barra de instalar también. `deferredPrompt.prompt()` con try/catch (si ya se usó o falla ⇒ instrucciones) en ui.js e index.html.
+
 ### 862. 🚨 FIX (de verdad) favoritos deslogueados: el SEGUNDO ingreso anulaba al primero — SW v585
 **Pedido (owner):** "sigue igual sin el login; usá el login que ya usamos cuando la gente entra a registrarse de Girox; que los juegos sean sobre
 ese inicio". Causa en #861: se pedía un SEGUNDO `/players/{u}/session` (para el canje) DESPUÉS del que va al recuadro; cada `/session` nuevo

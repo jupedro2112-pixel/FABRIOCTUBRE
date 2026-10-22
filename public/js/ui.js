@@ -743,8 +743,10 @@ VIP.ui = (function () {
             return;
         }
 
-        window.deferredPrompt.prompt();
-        const { outcome } = await window.deferredPrompt.userChoice;
+        // #864: el instalador del navegador se usa una sola vez; si falla, instrucciones (antes quedaba trabado sin hacer nada).
+        let outcome = 'dismissed';
+        try { const dp = window.deferredPrompt; window.deferredPrompt = null; await dp.prompt(); outcome = (await dp.userChoice).outcome; }
+        catch (e) { console.warn('[PWA] prompt falló', e); showInstallInstructions(isIOS ? 'ios' : (isAndroid ? 'android' : 'generic')); return; }
 
         if (outcome === 'accepted') {
             showToast('✅ Instalando app...', 'success');
@@ -1128,7 +1130,7 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
       // #857: recargar el recuadro para ir al juego/Deportes PIERDE la sesión de la web de 1girox ⇒ ya no se salta después del ingreso:
       // o el server devolvió el juego directo (launch_url del proveedor), o se abre Girox logueado (como el botón) y se avisa dónde está.
       const _gp = VIP.ui._casinoGamePath, _gn = VIP.ui._casinoGameName; VIP.ui._casinoGamePath = null; VIP.ui._casinoGameName = null; VIP.ui._casinoGameReady = false;
-      if (_gp && !data.directGame) setTimeout(function () { try { VIP.ui.showToast((_gp === '/sports' ? '⚽ Ya entraste a Girox: tocá DEPORTES en el menú de arriba de Girox' : ('🎰 Ya entraste a Girox: buscá ' + (_gn || 'el juego') + ' con la lupa')) + (data.gameStep && _gp !== '/sports' ? ' · (' + data.gameStep + ')' : ''), 'info'); } catch (_) {} }, 4000); // #859: motivo visible
+      if (_gp && !data.directGame) setTimeout(function () { try { VIP.ui.showToast((_gp === '/sports' ? '⚽ Ya entraste a Girox: tocá DEPORTES en el menú de arriba de Girox' : ('🎰 Ya entraste a Girox con tu cuenta: tocá la lupa 🔍 y buscá ' + (_gn || 'el juego'))) + (data.gameStep && _gp !== '/sports' && !/abrí el juego/.test(data.gameStep) ? ' · (' + data.gameStep + ')' : ''), 'info'); } catch (_) {} }, 4000); // #859: motivo visible
       return { ok: true, url: data.redirectUrl };
     }
     // 5xx = plataforma demorada/saturada → vale reintentar. 4xx (bloqueado,

@@ -6238,7 +6238,11 @@ async function platformSessionHandler(req, res) {
     // con el ingreso intacto = exactamente lo mismo que el botón de Girox (que sí entra logueado). Nada de `?token=` (no probado).
     try {
       const game = String((req.body && req.body.game) || '');
-      const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
+      // #863 (owner: "abre pero pantalla negra"): el `launch_url` del proveedor NO se deja mostrar dentro de otra página que no sea la de 1girox
+      // ⇒ el juego directo queda APAGADO: el favorito abre Girox LOGUEADO (un solo ingreso, como el registro) + aviso "buscá X con la lupa".
+      // `GIROX_DIRECT_GAME=1` lo vuelve a probar.
+      const mm = process.env.GIROX_DIRECT_GAME === '1' ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
+      if (!mm && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
       if (mm) {
         _gameStep = 'canje';
         // #862: el ORDEN importa — cada /session nuevo ANULA el anterior (manual 2.7). Se canjea el ingreso que ya se pidió (para pedir el juego)

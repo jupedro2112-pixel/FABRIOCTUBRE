@@ -2569,3 +2569,9 @@ html[data-theme="dark"] #infoMsg .im-card { box-shadow: none; }
 #infoMsg .im-card-missions { border-color: var(--p-border) !important; }
 #infoModal .info-reviews-wrap { border-radius: 10px !important; box-shadow: none !important; }
 html[data-theme="dark"] #infoMsg .im-card .im-sec > b:first-child .im-ico { border-color: rgba(255,255,255,.14); }
+
+/* #864 (owner: "el instalar app se traba, no se abre el cartel"): el cartel de instalar (z 10000) quedaba DETRÁS del casino (z 99999) ⇒ encima de todo. */
+.ios-install-modal { z-index: 2147483300 !important; }
+.pwa-install-bar { z-index: 2147483100 !important; }
+/* #864: con Girox abierto, TODO cartel de la app (instalar, ayuda, extra por instalar, retiro…) se ve ENCIMA del casino, no detrás */
+body.casino-open .modal:not(.hidden), body.casino-open .ios-install-modal, body.casino-open #playNowCard.show { z-index: 2147483250 !important; }
