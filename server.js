@@ -1958,7 +1958,7 @@ async function _askReceiptResend(userId, username, why) {
     if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_unreadable', why: String(why || '').slice(0, 60), channel: 'support' }, push: { title: '📸 Reenviá tu comprobante', body: 'No se ven todos los datos. Mandalo de nuevo con monto, fecha, titular y N° de operación visibles.' } });
   } catch (e) { logger.warn(`[comprobante] pedido de reenvío: ${e.message}`); }
 }
-const RECEIPT_RECEIVED_DEFAULT = '✅ Recibimos tu comprobante{amount}. Estamos verificando la transferencia: en cuanto entra al banco se acredita sola (normalmente en pocos minutos). Te avisamos acá.';
+const RECEIPT_RECEIVED_DEFAULT = '✅ Recibimos tu comprobante{amount}. En breve tu carga será realizada: te avisamos acá apenas se acredite.'; // #811
 const RECEIPT_DUPLICATE_DEFAULT = '⚠️ Ese comprobante ya fue usado{amount}. Cada transferencia se acredita UNA sola vez. Si creés que es un error, contanos acá en Soporte y lo revisamos.';
 const DEPOSIT_PENDING_REVIEW_DEFAULT = '⏳ Tu carga{amount} sigue pendiente: un agente la está verificando ahora mismo. No hace falta que hagas nada, te avisamos acá en cuanto se acredite.';
 const DEPOSIT_REJECTED_DEFAULT = '❌ No pudimos acreditar tu carga{amount}: {motivo}. Si tenés dudas, escribinos acá en Soporte.';
@@ -2325,6 +2325,9 @@ async function hgcashHandleChargeFailure(movement, comprobante, errMsg, dataDesc
   const terminal = attempts >= HGCASH_MAX_CHARGE_ATTEMPTS;
   await BankMovement.updateOne({ movementId: movement.movementId }, { $set: { matchStatus: terminal ? 'error' : 'pending' } });
   await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'pending' } });
+  // #811 (owner): "si falla por la API, que entre en confirmación de forma manual" ⇒ agotados los reintentos, el comprobante pasa a
+  // "Esperando agente" en Cargas pendientes (el cliente recibe /sys_deposit_pending_review: "un agente la está verificando").
+  if (terminal && user) { try { await _depositReviewEscalate({ id: comprobante.id, userId: user.id, username: user.username, amount: Number(movement.amount) || comprobante.amount || 0 }, 'falló la acreditación en la plataforma'); } catch (_) {} }
   if (user) {
     const prefijo = terminal ? `Se agotaron los ${HGCASH_MAX_CHARGE_ATTEMPTS} intentos automáticos. ` : '';
     await _emitAdminOnlyChatNote(user.id, user.username,
@@ -12389,6 +12392,21 @@ async function initializeData() {
   } catch (e) { if (!e.skip) console.warn('[startup] tester lalodj:', e.message); }
   // #386 → #413: el seed del admin "iginte1000" se ELIMINÓ (ya corrió; el repo es público y no puede contener hashes).
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
+  // #811 (owner 2026-10-22): "las cargas y pagos quiero que sean automáticos". One-shot: carga automática en modo AUTO (acredita sola;
+  // antes podía estar en 'shadow' = sólo detecta), retiros por debajo del umbral se pagan solos (autoBelow) y el acuse del comprobante
+  // pasa a "en breve tu carga será realizada" (sólo si el texto guardado seguía siendo el viejo).
+  try {
+    if (!(await getConfig('mig811AllAuto', null))) {
+      const hg = (await getConfig('hgcash', null)) || {};
+      await Config.set('hgcash', Object.assign({}, typeof hg === 'object' ? hg : {}, { mode: 'auto' }), 'mig#811');
+      const pr = (await getConfig('payoutReview', null)) || {};
+      await Config.set('payoutReview', Object.assign({}, typeof pr === 'object' ? pr : {}, { autoBelow: true }), 'mig#811');
+      const rr = await Command.findOne({ name: '/sys_receipt_received' }).lean();
+      if (rr && /se acredita sola \(normalmente en pocos minutos\)/.test(String(rr.response || ''))) await Command.updateOne({ name: '/sys_receipt_received' }, { $set: { response: RECEIPT_RECEIVED_DEFAULT } });
+      await Config.set('mig811AllAuto', new Date().toISOString(), 'mig#811');
+      console.log('✅ #811: carga automática AUTO + retiros automáticos');
+    }
+  } catch (e) { console.warn('[startup-migration] #811:', e.message); }
   // #810 (owner 2026-10-22): "100% en la primera carga y regalo EXTRA de 50% instalando la app". One-shot (flag en Config): deja
   // firstDepositBonusPct = 100 e installGift activo al 50% (conserva tope y días guardados). Después se edita normal desde el panel.
   try {

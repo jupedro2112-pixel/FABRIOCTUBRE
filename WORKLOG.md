@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-18
 
+### 811. ⚙️ Cargas y pagos automáticos, con caída a manual si falla
+**Pedido (owner):** "las cargas y pagos quiero que sean automáticos: adjunta el comprobante y carga directo; si no carga, 'en breve su
+carga será realizada' y cuando se confirma le avisa; si falla leer el comprobante, que lo reenvíe con los datos completos; si falla por la
+API, que entre en confirmación de forma manual". Migración única (`Config['mig811AllAuto']`): `hgcash.mode = 'auto'` (acredita sola) y
+`payoutReview.autoBelow = true` (retiros bajo el umbral, $50.000 por defecto, se pagan solos; los mayores siguen a Confirmación de pagos).
+Acuse del comprobante (`/sys_receipt_received`): "En breve tu carga será realizada: te avisamos apenas se acredite" (la acreditación ya
+avisaba con `/sys_deposit`). Comprobante ilegible ⇒ pedido de reenvío (#808). Falla de la plataforma: tras los reintentos automáticos
+(`hgcashHandleChargeFailure`, terminal) el comprobante se escala solo a "Esperando agente" en Cargas pendientes y el cliente recibe
+`/sys_deposit_pending_review`. Retiro que falla en hgcash ⇒ queda `failed` en Confirmación de pagos para reintentar a mano (ya era así).
+
 ### 810. 🎁 Primera carga al 100% + regalo EXTRA de 50% por instalar la app
 **Pedido (owner):** "configurá un 100% en la primera carga y ofrezcamos regalo extra de 50% instalando la app". Migración única al
 arrancar (flag `Config['mig810FirstDeposit100']`): `firstDepositBonusPct = 100` e `installGift = {enabled:true, pct:50}` (conserva
