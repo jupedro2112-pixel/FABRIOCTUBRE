@@ -24942,6 +24942,9 @@ async function _storyResetOnce() {
 let _storyAutoRunning = false;
 async function _storyAutoTick() {
   if (process.env.STORIES_AUTOPILOT_DISABLED === '1' || _storyAutoRunning) return;
+  // #849: las historias las publica SÓLO producción. Render comparte la base (#779) y, con otra versión del código, publicaba historias sin
+  // foto (o con otro plan) en la base real. `STORY_IMAGES_ON_RENDER=1` lo vuelve a habilitar para probar.
+  if (!_STORY_IMAGES_ON) return;
   _storyAutoRunning = true;
   try {
     await _storyResetOnce(); // #845

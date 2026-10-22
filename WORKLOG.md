@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 849. 🤖 Revisión de las automatizaciones (historias y notificaciones) — Render ya no publica historias
+**Pedido (owner):** "¿publicaste de nuevo las historias con ese estilo? revisá que funcione bien la automatización de notificaciones y de
+historias, porque eso va automático sin confirmar desde el panel".
+- Historias: el reset + republicación premium (#845) corre cuando PRODUCCIÓN arranca con el código nuevo (picaroja.com seguía en v569).
+  Simulado el motor REAL (`_storyResetOnce` + `_storyAutoTick` + backfill de server.js) contra una base en memoria: producción borra las
+  viejas, apaga las manuales y publica los horarios ya pasados de hoy (partido a las 00:05 incluido) con foto premium; la 2ª pasada no
+  duplica. Encontrado: Render (comparte la base y ya corría el código nuevo) publicaba historias SIN foto en la base real ⇒ ahora
+  `_storyAutoTick` no corre donde no se arman fotos (Render); `STORY_IMAGES_ON_RENDER=1` lo habilita para probar.
+- Notificaciones (autopiloto `_autopilotTick` + cronograma `_schedTick`): sin cambios en esta sesión (0 líneas); cada tanda se toma con
+  `findOneAndUpdate` atómico (una sola instancia la manda aunque corran Render y producción), error ⇒ estado 'error' + alerta por Telegram.
+
 ### 848. 🎰 Los juegos (favoritos, historias) entran LOGUEADOS como desde el menú de Girox — SW v577
 **Pedido (owner, captura de favoritos):** "esos juegos quiero que entren logueados como si entraras del menú de Girox".
 Causa: el juego abría el SSO (`/auth/sso?code=…`) y a los 1,5 s se navegaba el recuadro a `/play/…`. La página SSO de 1girox (leída de su
