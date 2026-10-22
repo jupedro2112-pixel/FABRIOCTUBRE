@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 844. 🔒 Revisión de seguridad de todo lo nuevo antes del deploy (owner: "revisá seguridad y todo que publico")
+Revisado lo agregado desde v569 (#829–#843): sin claves/secretos en el diff; favoritos (key/img con regex en el server, nombres y links
+escapados en la app, máx. 30, con login); catálogo proxy (con login + límite general por IP); fotos SVG de historias (texto escapado, CSP sin
+scripts); link de resultados (sólo agregados, token secreto); gracia del link de acceso (sólo landing/instalación, 30 min, authLimiter);
+respaldo usuario+clave en sessionStorage (2 h, se borra al entrar). Ajustes:
+- `storyImage.fetchImageData` acepta sólo PNG/JPG/WEBP (antes también GIF y SVG externos).
+- `/api/public/campaign-stats/:token`: la respuesta entera se guarda 60 s por link + período (`_pubRangeCache`): un link público abierto en
+  muchas pantallas (o abusado) ya no martilla Mongo. Revocar el link corta a más tardar en 60 s.
+
 ### 843. 💳 Carga rápida más chica y abierta SÓLO al entrar por pauta — SW v575
 **Pedido (owner, captura):** "achicalo un poco más, que no tape toda la pantalla; que cuando la gente entre por pauta aparezca abierto,
 después ya cerrado, que lo abran ellos". Antes se abría sola cada vez mientras el cliente no tuviera cargas (`body.nodep`).

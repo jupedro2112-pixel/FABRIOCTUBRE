@@ -16508,6 +16508,7 @@ async function _publicCampaignStats(token) {
 // Período [from, to] en días ARGENTINOS (YYYY-MM-DD, hasta 92 días) con totales del período y el detalle día por día: clics, registros,
 // primeras cargas (FTD), clientes que cargaron, cargas y total cargado. Sólo números agregados (nunca usuarios ni retiros, #805).
 const _ART_DAY = (d) => new Date(new Date(d).getTime() - 3 * 3600000).toISOString().slice(0, 10);
+const _pubRangeCache = new Map();
 async function _publicCampaignRange(code, from, to) {
   const start = new Date(from + 'T00:00:00-03:00'), end = new Date(new Date(to + 'T00:00:00-03:00').getTime() + 86400000);
   const users = await User.find({ acquisitionCampaign: code }).select('username createdAt').lean();
@@ -16541,16 +16542,23 @@ async function _publicCampaignRange(code, from, to) {
 }
 app.get('/api/public/campaign-stats/:token', async (req, res) => {
   try {
-    const d = await _publicCampaignStats(req.params.token);
-    if (!d) return res.status(404).json({ error: 'Link inválido o revocado' });
+    const token = String(req.params.token || '');
+    if (!/^[A-Za-z0-9_-]{20,40}$/.test(token)) return res.status(404).json({ error: 'Link inválido o revocado' });
     const today = _ART_DAY(Date.now());
     const okDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && !isNaN(new Date(v + 'T00:00:00-03:00'));
     let from = okDay(req.query.from) ? String(req.query.from) : today, to = okDay(req.query.to) ? String(req.query.to) : from;
     if (to > today) to = today; if (from > to) from = to;
     const span = Math.round((new Date(to + 'T12:00:00Z') - new Date(from + 'T12:00:00Z')) / 86400000);
     if (span > 91) from = _ART_DAY(new Date(to + 'T12:00:00-03:00').getTime() - 91 * 86400000);
+    // #844 (seguridad): el link es público ⇒ la respuesta ENTERA se guarda 60 s por link + período (la página se refresca cada minuto y
+    // cada consulta agrega en Mongo). Un link revocado deja de andar a más tardar en 60 s.
+    const ck = token + '|' + from + '|' + to; const hit = _pubRangeCache.get(ck);
+    if (hit && Date.now() - hit.at < 60000) { res.set('Cache-Control', 'no-store'); return res.json(hit.data); }
+    const d = await _publicCampaignStats(token);
+    if (!d) return res.status(404).json({ error: 'Link inválido o revocado' });
     d.range = await _publicCampaignRange(d.campaign.code, from, to);
     d.since = d.campaign.since || null;
+    _pubRangeCache.set(ck, { at: Date.now(), data: d }); if (_pubRangeCache.size > 500) _pubRangeCache.delete(_pubRangeCache.keys().next().value);
     res.set('Cache-Control', 'no-store'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });

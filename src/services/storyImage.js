@@ -181,7 +181,7 @@ async function fetchImageData(url) {
   try {
     const r = await fetch(url, { signal: ctrl.signal }); if (!r.ok) return null;
     const type = String(r.headers.get('content-type') || 'image/png').split(';')[0];
-    if (!/^image\/(png|jpe?g|webp|gif|svg\+xml)$/i.test(type)) return null;
+    if (!/^image\/(png|jpe?g|webp)$/i.test(type)) return null; // #844 (seguridad): sólo mapas de bits (nada de SVG externo)
     const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 600 * 1024) return null;
     return `data:${type};base64,${buf.toString('base64')}`;
   } catch (_) { return null; } finally { clearTimeout(t); }
