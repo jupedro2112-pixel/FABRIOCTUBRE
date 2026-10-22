@@ -8172,7 +8172,11 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
     
     // #377: canal SOPORTE. Lo que escribe el cliente va siempre al soporte; el agente lo marca desde la columna
     // Soporte del panel (channel:'support') y entonces firma con el nombre rotativo (Martín / Sofía / Agustina).
-    const _spChannel = (!isAdminRole || (req.body && req.body.channel === 'support')) ? 'support' : null;
+    // #814 (owner 2026-10-22): "usemos el chat de abajo completo (Chats) como soporte": TODO lo que un agente le escribe a un
+    // cliente va al canal soporte (firmado con el nombre de turno), venga de la sección Chats o de la columna Soporte. El cliente
+    // sigue viendo exactamente lo mismo que antes (sólo canal soporte + sistema).
+    // El texto de un comando del agente ("/cbu") se guarda antes de procesarlo: ése NO va al canal (el cliente no lo ve).
+    const _spChannel = (isAdminRole && String(content || '').trim().startsWith('/')) ? null : 'support';
     const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
     const _spQuick = (!isAdminRole && req.body && SUPPORT_QUICK_KINDS.includes(String(req.body.quick || ''))) ? String(req.body.quick) : null; // #384
     const messageData = {
@@ -8293,6 +8297,8 @@ app.post('/api/messages/send', authMiddleware, async (req, res) => {
             receiverRole: 'user',
             content: command.response,
             type: 'system',
+            channel: isAdminRole ? 'support' : null, // #814: respuesta del comando visible para el cliente al recargar
+            metadata: isAdminRole ? { channel: 'support', agent: req.user.username } : null,
             timestamp: new Date(),
             read: false
           });
@@ -11133,6 +11139,9 @@ io.on('connection', (socket) => {
               receiverRole: 'user',
               content: command.response,
               type: 'system',
+              // #814: la respuesta de un comando del agente (/cbu, etc.) queda en el canal soporte: el cliente la sigue viendo al recargar.
+              channel: isAdminRole ? 'support' : null,
+              metadata: isAdminRole ? { channel: 'support', agent: socket.username } : null,
               timestamp: new Date(),
               read: false
             });
@@ -11195,7 +11204,7 @@ io.on('connection', (socket) => {
       
       // Si llegamos aquí, NO es un comando - guardar el mensaje normalmente
       // #377: canal SOPORTE (ver POST /api/messages/send).
-      const _spChannel = (!isAdminRole || data.channel === 'support') ? 'support' : null;
+      const _spChannel = 'support'; // #814: lo del agente desde Chats también le llega al cliente (ver POST /api/messages/send)
       const _spName = (isAdminRole && _spChannel) ? await getSupportAgentName() : null;
       const _spQuick = (!isAdminRole && SUPPORT_QUICK_KINDS.includes(String(data.quick || ''))) ? String(data.quick) : null; // #384
       const messageData = {
@@ -12394,6 +12403,22 @@ async function initializeData() {
   // La clave se rotó desde el panel (#413). En una base nueva el admin inicial sale de ADMIN_USERNAME/ADMIN_PASSWORD.
   // #812 (owner 2026-10-22): "el bono siempre rollover x5" ⇒ one-shot: rollover global de regalos en 5 (bonos de carga, fueguito, etc.).
   try { if (!(await getConfig('mig812Rollover5', null))) { await Config.set('bonusRolloverX', 5, 'mig#812'); await Config.set('fireRolloverMultiplier', 5, 'mig#812'); await Config.set('mig812Rollover5', new Date().toISOString(), 'mig#812'); console.log('✅ #812: rollover ×5'); } } catch (e) { console.warn('[startup-migration] #812:', e.message); }
+  // #814 (owner 2026-10-22): "pagos y retiros automáticos excepto mayores a $100.000, configuralo directo". One-shot: umbral de
+  // Confirmación de pagos en $100.000 (se revisa sólo lo que lo SUPERA), pago automático de los menores, carga automática en AUTO y la
+  // alerta automática de banco recién con 3 fallas seguidas (con 1 sola, un CBU mal cargado frenaba los retiros de todos).
+  try {
+    if (!(await getConfig('mig814Auto100k', null))) {
+      const pr = (await getConfig('payoutReview', null)) || {};
+      await Config.set('payoutReview', Object.assign({}, typeof pr === 'object' ? pr : {}, { minArs: 100000, autoBelow: true }), 'mig#814');
+      const hg = (await getConfig('hgcash', null)) || {};
+      if (hg && typeof hg === 'object' && hg.mode !== 'auto') await Config.set('hgcash', Object.assign({}, hg, { mode: 'auto' }), 'mig#814');
+      const bs = (await getConfig('bankOutageSettings', null)) || {};
+      const bsObj = typeof bs === 'object' ? bs : {};
+      if (!(parseInt(bsObj.failThreshold, 10) >= 3)) await Config.set('bankOutageSettings', Object.assign({}, bsObj, { failThreshold: 3 }), 'mig#814');
+      await Config.set('mig814Auto100k', new Date().toISOString(), 'mig#814');
+      console.log('✅ #814: retiros automáticos hasta $100.000, carga AUTO, alerta de banco con 3 fallas');
+    }
+  } catch (e) { console.warn('[startup-migration] #814:', e.message); }
   // #811 (owner 2026-10-22): "las cargas y pagos quiero que sean automáticos". One-shot: carga automática en modo AUTO (acredita sola;
   // antes podía estar en 'shadow' = sólo detecta), retiros por debajo del umbral se pagan solos (autoBelow) y el acuse del comprobante
   // pasa a "en breve tu carga será realizada" (sólo si el texto guardado seguía siendo el viejo).
@@ -13328,7 +13353,10 @@ async function _withdrawalRequestHandler(req, res) {
     const _outage = await getBankOutage();
     if (_outage.active) {
       _addBankOutageWaiter(req.user.userId, 'waiter').catch(() => {});
-      if ((await getBankSettings()).pauseWithdrawals) return res.status(503).json({ error: await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}), code: 'BANK_OUTAGE' });
+      // #814 (owner: "es un sistema automático, no podemos estar trabando a la gente"): la alerta AUTOMÁTICA (pagos que fallaron) ya
+      // no frena las solicitudes: se toman igual y el reintento automático (_payoutAutoRetryTick) las paga cuando el banco responde.
+      // Sólo la alerta puesta A MANO por un agente pausa los retiros.
+      if (_outage.mode !== 'auto' && (await getBankSettings()).pauseWithdrawals) return res.status(503).json({ error: await renderSystemCommand('/sys_bank_down', BANK_DOWN_DEFAULT, {}), code: 'BANK_OUTAGE' });
     }
 
     const amountNum = Number(amount);
@@ -13519,13 +13547,14 @@ async function _withdrawalRequestHandler(req, res) {
     // #566: ≥ umbral → queda en CONFIRMACIÓN DE PAGOS (una persona revisa); por debajo → se paga SOLO por hgcash, ya mismo.
     try {
       const prCfg = await getPayoutReviewConfig();
-      const needsReview = amountNum >= prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
+      // #814 (owner 2026-10-22): "pagos y retiros automáticos, excepto mayores a $100.000" ⇒ revisión sólo si SUPERA el umbral.
+      const needsReview = amountNum > prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
       await PendingPayout.updateOne({ userId: user.id, amount: amountNum, status: 'pending_review' }, { $set: { reviewRequired: needsReview, autoPay: !needsReview } });
       if (needsReview) {
         await _emitAdminOnlyChatNote(user.id, user.username, `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} (umbral $${prCfg.minArs.toLocaleString('es-AR')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`).catch(() => {});
       } else {
         const pp = await PendingPayout.findOne({ userId: user.id, amount: amountNum, status: 'pending_review' }).sort({ createdAt: -1 }).select('id').lean();
-        if (pp) setImmediate(() => { _payPendingPayout(pp.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl()).then((o) => { logger.info(`[pay-review] pago AUTOMÁTICO $${amountNum} ${user.username} → ${o.code} ${JSON.stringify(o.body).slice(0, 160)}`); }).catch((e) => logger.warn(`[pay-review] pago automático falló: ${e.message}`)); });
+        if (pp) setImmediate(() => { _payPendingPayout(pp.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl()).then((o) => { logger.info(`[pay-review] pago AUTOMÁTICO $${amountNum} ${user.username} → ${o.code} ${JSON.stringify(o.body).slice(0, 160)}`); _payoutAutoFailNote(pp.id, o).catch(() => {}); }).catch((e) => logger.warn(`[pay-review] pago automático falló: ${e.message}`)); });
       }
     } catch (e) { logger.warn(`[pay-review] no se pudo clasificar el retiro: ${e.message}`); }
 
@@ -13636,7 +13665,7 @@ const BANK_UP_DEFAULT = '✅ El banco ya se normalizó: podés volver a pedir tu
 const BANK_FAIL_CLIENT_DEFAULT = '⚠️ El banco está con fallas y tu retiro no pudo procesarse todavía. Quedó pendiente: apenas se normalice lo procesamos y te avisamos por acá. Disculpá las molestias.';
 const BANK_UP_PENDING_DEFAULT = '✅ El banco volvió a funcionar. Tu retiro pendiente se procesa ahora; si en un rato no lo ves acreditado, escribinos por Soporte. Disculpá las molestias.';
 // Config['bankOutageSettings']: todo editable desde Configuración → Banco con fallas.
-const BANK_SETTINGS_DEFAULT = { autoEnabled: true, failThreshold: 1, pauseWithdrawals: true, notifyFailedClient: true };
+const BANK_SETTINGS_DEFAULT = { autoEnabled: true, failThreshold: 3, pauseWithdrawals: true, notifyFailedClient: true };
 async function getBankSettings() {
   try {
     const v = await getConfig('bankOutageSettings', null);
@@ -13711,7 +13740,7 @@ async function _bankPayoutFailed(reason, payout) {
     const st = await getBankSettings();
     if (payout && payout.userId) {
       _addBankOutageWaiter(payout.userId, 'failed').catch(() => {});
-      if (st.notifyFailedClient) {
+      if (st.notifyFailedClient && !(Number(payout.autoRetries) > 0)) { // #814: en los reintentos automáticos no se le vuelve a avisar
         try {
           const u = await User.findOne({ id: payout.userId }).select('id username fcmTokens fcmTokenContext').lean();
           if (u) await _sendUserSystemMessage(u, await renderSystemCommand('/sys_bank_fail_client', BANK_FAIL_CLIENT_DEFAULT, { monto: '$' + Number(payout.amount || 0).toLocaleString('es-AR') }), { push: { title: 'Retiro demorado ⚠️', body: 'El banco está con fallas. Te avisamos apenas se normalice.' } });
@@ -21263,12 +21292,52 @@ async function _deductChipsAtConfirm(payout, agentUser) {
   return { ok: true, balanceAfter: after };
 }
 
+// #814 REINTENTO AUTOMÁTICO de retiros (owner 2026-10-22: "no podemos estar trabando a la gente"). Un retiro que salió solo
+// (autoPay) y falló por algo pasajero se vuelve a intentar cada 10 min, hasta PAYOUT_AUTO_RETRIES veces en 24 h. Sólo los casos
+// SEGUROS (nunca descuenta dos veces):
+//  - 'failed' con debitConfirmed === true: las fichas ya se descontaron y lo que falló fue el banco ⇒ se reintenta el cash-out
+//    (mismo externalID = hgcash no paga doble; _payPendingPayout tiene el guard de no volver a descontar).
+//  - 'failed' porque no se pudo LEER el saldo (no se descontó nada).
+//  - 'pending_review' que nunca se llegó a tomar (paidBy null: cuenta hgcash sin resolver, error de red…).
+// "Descuento no confirmado" NO se reintenta (puede haberse descontado): queda para una persona.
+const PAYOUT_AUTO_RETRIES = 6;
+async function _payoutAutoFailNote(id, o) {
+  if (o && o.code === 200 && o.body && o.body.success !== false) return;
+  const p = await PendingPayout.findOne({ id }).lean(); if (!p || p.status === 'paid' || p.status === 'paying') return;
+  const why = (o && o.body && (o.body.error || o.body.message)) || 'sin detalle';
+  const last = Number(p.autoRetries || 0) >= PAYOUT_AUTO_RETRIES;
+  await _emitAdminOnlyChatNote(p.userId, p.username, `💸 ⚠️ PAGO AUTOMÁTICO de $${Number(p.amount || 0).toLocaleString('es-AR')} no salió (${String(why).slice(0, 160)}). ` +
+    (last ? 'Se agotaron los reintentos automáticos: resolvelo en Panel → Confirmación de pagos.' : 'Se reintenta solo cada 10 min; si sigue fallando queda en Confirmación de pagos.')).catch(() => {});
+}
+async function _payoutAutoRetryTick() {
+  if (!hgcashPay.isEnabled()) return;
+  const now = Date.now();
+  const rows = await PendingPayout.find({
+    autoPay: true, status: { $in: ['failed', 'pending_review'] }, autoRetries: { $not: { $gte: PAYOUT_AUTO_RETRIES } },
+    createdAt: { $gte: new Date(now - 24 * 3600 * 1000) }, updatedAt: { $lt: new Date(now - 10 * 60 * 1000) }
+  }).select('id status debitConfirmed error paidBy autoRetries updatedAt').limit(20).lean();
+  for (const r of rows) {
+    const safe = r.status === 'pending_review' ? !r.paidBy
+      : (r.debitConfirmed === true || /^No se pudo leer el saldo/.test(String(r.error || '')));
+    if (!safe) continue;
+    // Claim multi-instancia: sólo la instancia que mueve updatedAt intenta.
+    const c = await PendingPayout.findOneAndUpdate({ id: r.id, status: r.status, updatedAt: r.updatedAt }, { $inc: { autoRetries: 1 } }, { new: true }).lean();
+    if (!c) continue;
+    try {
+      const o = await _payPendingPayout(r.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl());
+      logger.info(`[pay-retry] ${c.username} $${c.amount} intento ${c.autoRetries} → ${o.code} ${JSON.stringify(o.body).slice(0, 120)}`);
+      if (c.autoRetries >= PAYOUT_AUTO_RETRIES) await _payoutAutoFailNote(r.id, o);
+    } catch (e) { logger.warn(`[pay-retry] ${r.id}: ${e.message}`); }
+  }
+}
+setTimeout(() => { _payoutAutoRetryTick().catch(() => {}); setInterval(() => { _payoutAutoRetryTick().catch(() => {}); }, 5 * 60 * 1000); }, 3 * 60 * 1000);
+
 // El agente CONFIRMA el pago → se ejecuta el cash-out automático en hgcash.
 
 // ===== #566 CONFIRMACIÓN DE PAGOS (owner 2026-10-19): retiros ≥ umbral los revisa una persona (Panel → Confirmación de pagos) por
 // posible estafa; por debajo del umbral se pagan SOLOS por hgcash al solicitarlos (sin agente). Config['payoutReview'] =
 // { minArs: 50000, autoBelow: true }. Si hgcash no está configurado, todo queda en revisión como antes.
-const PAYOUT_REVIEW_DEFAULT = { minArs: 50000, autoBelow: true };
+const PAYOUT_REVIEW_DEFAULT = { minArs: 100000, autoBelow: true }; // #814: se revisa sólo lo que SUPERA el umbral
 async function getPayoutReviewConfig() {
   try {
     const raw = await getConfig('payoutReview', null); const r = raw && typeof raw === 'object' ? raw : {};

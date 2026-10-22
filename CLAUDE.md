@@ -236,8 +236,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **Soporte paralelo (#377, 2026-10-18):** el cliente ve el chat sólo desde `Config['supportChannelSince']` (el historial
   viejo queda para el panel). Respuestas desde la columna Soporte → `channel:'support'` y firmadas por la persona de turno
   (`/sys_support_names`, rota cada 8 h). No borres ese Config: volvería a mostrar todo el chat viejo a los clientes.
-  **#380:** el cliente ve SOLO canal support + mensajes de sistema; lo que un agente escribe desde la sección Chats NO le
-  llega (ni al recargar ni por socket). Responder soporte = columna 💬 Soporte del panel.
+  **#380 → #814:** el cliente ve SOLO canal support + mensajes de sistema. Desde #814 TODO lo que un agente le escribe (sección
+  "Chats · Soporte", la principal, o la columna vieja de Soporte, que quedó abajo en Interno) va con `channel:'support'` firmado con el
+  nombre de turno, salvo el texto de un comando ("/cbu"); las respuestas de comandos del agente también van al canal.
   **#459:** "Datos IA" (`src/services/datosIaService.js`, rutas `/api/admin/datos-ia/*`, medidor `POST /api/activity/ping` →
   `AppSession`). Todo por reglas sobre Transaction/User/AppSession/RefundClaim/DailyRouletteSpin/Message; sin IA externa.
   Gasto en pauta y números de la otra página viven en `Config['adSpend']` / `Config['otherPageStats']`; gasto total desde el
@@ -259,15 +260,17 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
   (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
   en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
-  **#566 CONFIRMACIÓN DE PAGOS:** retiros ≥ `Config['payoutReview'].minArs` ($50.000) esperan OK humano (Panel → Confirmación de pagos);
-  los menores se pagan SOLOS por hgcash al pedirlos vía `_payPendingPayout` (misma función que el botón Pagar: tocar el pago = tocar ahí).
+  **#566/#814 CONFIRMACIÓN DE PAGOS:** retiros MAYORES a `Config['payoutReview'].minArs` ($100.000) esperan OK humano (Panel → Confirmación
+  de pagos); el resto se paga SOLO por hgcash al pedirlo vía `_payPendingPayout` (misma función que el botón Pagar: tocar el pago = tocar ahí)
+  y, si falla por algo pasajero, `_payoutAutoRetryTick` lo reintenta cada 10 min (6 veces, sólo casos que no pueden descontar dos veces).
   **#562 WEBHOOKS SALIENTES** (`docs/ESPEC-WEBHOOKS-SALIENTES.md`): todo flujo NUEVO de registro o de carga acreditada llama
   `outboundWebhook.notify('registro'|'carga', user, {amount, firstDeposit, transactionId})` (y `'retiro'` al pagar un retiro). Secretos de los
   destinos cifrados con `JWT_SECRET` (rotarlo ⇒ recargarlos en Configuración → Webhooks salientes).
   **#532:** `executePayoutsForPeriod` RESERVA las comisiones (`status:'paying'`+`payingToken`) antes de acreditar: un flujo nuevo que pague
   comisiones debe pasar por ese servicio, nunca leer `calculated` y acreditar por su cuenta. Las rutas que leen netwin en vivo van con
   `referralLiveLimiter` (comparten los 60 req/min de 1girox con cargas y retiros).
-  **#442:** `Config['bankOutage']` (banco con fallas): si está activa, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`.
+  **#442:** `Config['bankOutage']` (banco con fallas): si está activa A MANO, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`
+  (#814: la alerta automática ya no frena solicitudes; se dispara con 3 fallas seguidas).
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
   **#421/#748:** `Config['registrationMode']` ('sms' | 'quick' | 'invite', Configuración → Registro de clientes). `'invite'` = SÓLO CON
   INVITACIÓN: `_inviteOnlyBlocks()` rechaza registros sin `referralCode` real ni `campaignCode` activo (texto `/sys_register_invite`); el

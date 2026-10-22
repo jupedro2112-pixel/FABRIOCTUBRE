@@ -6248,7 +6248,7 @@ async function payReviewSaveCfg() {
     try {
         const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow, delayMin }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
-        showToast('Regla guardada: desde ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' : ''), 'success');
+        showToast('Regla guardada: más de ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' : ''), 'success');
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function payReviewApprove(id) {

@@ -1270,6 +1270,12 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   `_batchImpact` agrega `before48h` (línea base de los mismos clientes) ⇒ `lift48h` en el reporte; el panel lo pinta por día y por lote.
   App: `.promo-live` (CARGAR AHORA + tarjeta de carga) desde `js/promobonus.js`.
 
+## #814 Soporte desde Chats + reintento de retiros automáticos
+- Todo mensaje de agente a cliente (REST y socket) lleva `channel:'support'` y firma de turno; excepción: el texto del comando en REST. Las
+  respuestas de comandos de agente van al canal. El filtro del cliente (`GET /api/messages`, socket.js) no cambió.
+- Retiros: `needsReview = amount > payoutReview.minArs` ($100.000). `_payoutAutoFailNote` (nota interna) y `_payoutAutoRetryTick`
+  (5 min; casos seguros; `PendingPayout.autoRetries`, tope 6/24 h). Alerta de banco automática: no pausa solicitudes, umbral 3.
+
 ## Datos IA (#459 → #477, 2026-10-18) — `src/services/datosIaService.js` + rutas `/api/admin/datos-ia/*`
 
 Análisis del negocio **por reglas, sin IA externa**, a partir de Transaction / User / AppSession / RefundClaim /

@@ -8,6 +8,28 @@
 
 ## Sesión 2026-10-22
 
+### 815. 📅 Cronograma arriba de todo en el menú del panel — admin SW v154
+**Pedido (owner):** "poné el cronograma en admin arriba de todo". El link pasó a ser el primero del menú (antes de ⚙️ Configuración).
+
+### 814. 💬 Chats = Soporte + 💸 retiros automáticos hasta $100.000 sin trabas
+**Pedido (owner):** "usemos el chat de abajo completo como soporte para el admin (ahí tenemos cargas, descargas, cambio de clave…); el
+de soporte lo bajamos; del lado cliente no tocar nada. Revisar si se solucionó lo de cargas y retiros automáticos: es un sistema automático,
+no podemos trabar a la gente; pagos y retiros automáticos excepto mayores a $100.000, configuralo directo".
+- **Soporte:** `POST /api/messages/send` y el socket `send_message` marcan TODO mensaje del agente con `channel:'support'` + firma de turno
+  (antes sólo desde la columna Soporte). El texto de un comando ("/cbu", REST lo guarda antes de procesarlo) NO va al canal; la RESPUESTA del
+  comando sí (`channel` + `metadata.channel`), así el cliente la sigue viendo al recargar. El cliente no cambió (sigue viendo canal soporte +
+  sistema). Panel: "Chats · Soporte" pasó arriba en Atención (sin el cartel "no lo ve el cliente"); "Soporte (columna vieja)" quedó abajo en Interno.
+- **Retiros:** revisión humana sólo si el monto SUPERA `payoutReview.minArs` (ahora `>`; migración `mig814Auto100k` lo deja en $100.000 con
+  pago automático, `hgcash.mode='auto'` y `bankOutageSettings.failThreshold=3`; defaults del código iguales).
+- **Trabas encontradas y arregladas:** (1) con el default `failThreshold:1`, UN pago fallido (p. ej. un CBU mal cargado) prendía "banco con
+  fallas" y `pauseWithdrawals` rechazaba los retiros de TODOS hasta que un agente la apagara ⇒ ahora la alerta AUTOMÁTICA no frena
+  solicitudes (sólo la manual) y necesita 3 fallas seguidas. (2) Un pago automático que fallaba quedaba en Confirmación de pagos sin aviso ⇒
+  nota interna en el chat + `_payoutAutoRetryTick` (cada 5 min, reintenta a los 10 min, hasta 6 veces en 24 h, `PendingPayout.autoRetries`)
+  sólo en los casos seguros: fichas ya descontadas y falló el banco (mismo externalID), falló la lectura del saldo, o nunca se llegó a tomar.
+  "Descuento no confirmado" queda para una persona. En los reintentos no se le vuelve a avisar al cliente.
+- **Cargas:** el flujo AUTO de #811 sigue. Verificar en el panel que hgcash esté HABILITADO (Banco automático) con token y CBU.
+- **Deploy:** Render se actualiza solo con el push; picaroja.com (AWS EB) NO — hay que desplegarlo aparte (#809).
+
 ### 813. 📲 Plan de RETENCIÓN para clientes con la app (8 por mes, bonos de 4 h) + impulso por día en el Cronograma — SW v563
 **Pedido (owner):** "plan estratégico de retención sobre el cronograma: clientes que instalan la app y aceptan notificaciones, repartidas
 en todo el mes, 8 de tope por cliente; un 50%, un 100%, un 20%, respetando los topes; que al entrar ya tengan el bono vigente en el botón
