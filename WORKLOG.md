@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-18
 
+### 808. 📸 Comprobante con TODOS los datos visibles: aviso en todos lados + pedido automático de reenvío — SW v562
+**Pedido (owner):** "avisar en todos lados que el comprobante tiene que ser enviado con los datos visibles, si no el pago será rechazado;
+si no lo detecta de forma automática, mandar ese mensaje diciendo que lo reenvíen de forma correcta". App: toast al tocar cualquier
+botón de adjuntar (`VIP.autoload.sendReceipt`), línea roja en el paso 2 de "Cargá acá", en el básico y bajo "Adjuntar comprobante" de la
+Carga rápida. Servidor (`analyzeComprobanteFromMessage`): si la IA falla, si la imagen no parece comprobante, o si lo es pero sin monto o
+sin titular ni N° de operación ⇒ `_askReceiptResend` manda `/sys_receipt_unreadable` (editable en COMANDOS, + push) — a lo sumo uno cada
+10 min. El comprobante incompleto igual queda en la cola de Cargas pendientes para que un agente lo revise.
+
 ### 807. 📈 Link de resultados en TODAS las campañas
 **Pedido (owner):** "en todos hacelo, lo del publicista". Al arrancar, toda campaña sin `statsToken` recibe uno (idempotente) y cada campaña
 nueva nace con el suyo. En Publicidad, cada campaña tiene el botón **📈 Copiar resultados** (copia `https://picaroja.com/r/<token>` para

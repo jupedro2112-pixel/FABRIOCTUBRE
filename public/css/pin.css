@@ -2428,3 +2428,7 @@ body.home-full .ev-svc::after { content: "Ver más ›"; display: block; margin:
 .pwreco p { margin: 0 0 6px; font: 600 13px/1.45 var(--p-font); color: var(--p-muted); }
 .pwreco-go { width: 100%; border: 0; border-radius: 999px; background: var(--p-red); color: #fff; font: 800 15px var(--p-font); padding: 13px; cursor: pointer; }
 .pwreco-later { width: 100%; border: 0; border-radius: 999px; background: var(--p-surface); color: var(--p-text); font: 800 14px var(--p-font); padding: 11px; cursor: pointer; }
+/* #808: aviso "comprobante con todos los datos visibles" */
+.rcpt-note { display: block; margin-top: 4px; font: 700 11.5px/1.35 var(--p-font); color: var(--p-red); }
+.rcpt-note b { color: var(--p-red); }
+.casino-load .cl-rcpt { text-align: center; margin: -2px 0 6px; font-size: 10.5px; }

@@ -131,6 +131,8 @@
     }
 
     function sendReceipt() {
+        // #808 (owner): aviso en TODOS los botones de adjuntar: el comprobante con todos los datos visibles o se rechaza.
+        try { VIP.ui.showToast('📸 Mandá el comprobante con TODOS los datos visibles (monto, fecha, quién envía y N° de operación). Si no se ven, la carga se rechaza.', 'info'); } catch (_) {}
         // Abre el selector de foto del chat: el comprobante viaja por el chat de
         // soporte y la auto-carga hgcash lo matchea.
         const a = _el('attachBtn');

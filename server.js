@@ -1948,6 +1948,16 @@ async function _sendUserSystemMessage(user, content, { metadata = null, senderUs
 //     /sys_receipt_duplicate ("ese comprobante ya fue usado").
 // Los retiros ya tenían su stand-by (PendingPayout.pending_review → sección Pagos → pagar / rechazar).
 // ============================================================
+// #808 (owner): comprobante que NO se pudo leer bien ⇒ pedirle al cliente que lo reenvíe con todos los datos visibles (editable en COMANDOS).
+const RECEIPT_UNREADABLE_DEFAULT = '⚠️ No pudimos leer bien tu comprobante. Reenvialo de forma correcta, con TODOS los datos visibles: monto, fecha y hora, nombre de quien envía, CBU/alias de destino y N° de operación.\n\n📸 Si los datos no se ven, el pago será rechazado.';
+async function _askReceiptResend(userId, username, why) {
+  try {
+    const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.kind': 'receipt_unreadable', timestamp: { $gte: new Date(Date.now() - 10 * 60 * 1000) } }).select('_id').lean();
+    if (recent) return; // a lo sumo uno cada 10 min
+    const txt = await renderSystemCommand('/sys_receipt_unreadable', RECEIPT_UNREADABLE_DEFAULT, {});
+    if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_unreadable', why: String(why || '').slice(0, 60), channel: 'support' }, push: { title: '📸 Reenviá tu comprobante', body: 'No se ven todos los datos. Mandalo de nuevo con monto, fecha, titular y N° de operación visibles.' } });
+  } catch (e) { logger.warn(`[comprobante] pedido de reenvío: ${e.message}`); }
+}
 const RECEIPT_RECEIVED_DEFAULT = '✅ Recibimos tu comprobante{amount}. Estamos verificando la transferencia: en cuanto entra al banco se acredita sola (normalmente en pocos minutos). Te avisamos acá.';
 const RECEIPT_DUPLICATE_DEFAULT = '⚠️ Ese comprobante ya fue usado{amount}. Cada transferencia se acredita UNA sola vez. Si creés que es un error, contanos acá en Soporte y lo revisamos.';
 const DEPOSIT_PENDING_REVIEW_DEFAULT = '⏳ Tu carga{amount} sigue pendiente: un agente la está verificando ahora mismo. No hace falta que hagas nada, te avisamos acá en cuanto se acredite.';
@@ -2034,6 +2044,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
           rawText: result.rawText || null, model: comprobanteAi.getModel(), createdAt: new Date()
         });
       } catch (_) {}
+      _askReceiptResend(userId, username, 'error'); // #808
       return;
     }
 
@@ -2047,6 +2058,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
           model: result.model, createdAt: new Date()
         });
       } catch (_) {}
+      _askReceiptResend(userId, username, 'not_comprobante'); // #808: si era un comprobante, que lo reenvíe bien
       return;
     }
 
@@ -2099,6 +2111,9 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
       dedupeKey, imageHash, model: result.model, createdAt: new Date()
     };
 
+    // #808: comprobante reconocido pero con datos clave ilegibles (sin monto, o sin titular y sin N° de operación) ⇒ pedir reenvío.
+    // Sigue el flujo igual (queda en la cola para revisión manual), así no se pierde si el agente lo puede leer.
+    if (!(Number(result.amount) > 0) || (!result.originHolder && !result.operationNumber)) _askReceiptResend(userId, username, 'incomplete');
     const montoStr = result.amount ? `$${Number(result.amount).toLocaleString('es-AR')}` : 's/monto';
     const opStr = result.operationNumber ? `op. N°${result.operationNumber}` : 's/N° operación';
     const dataDesc = `${opStr} · ${montoStr}${result.paymentDate ? ' · ' + result.paymentDate : ''}`;
@@ -12746,6 +12761,12 @@ async function initializeData() {
       description: 'Carga automática: acuse al cliente cuando manda un comprobante válido (se acredita sola). Variable: {amount} (" de $X" o vacío). Vacío = no se manda.',
       type: 'message',
       response: RECEIPT_RECEIVED_DEFAULT
+    },
+    {
+      name: '/sys_receipt_unreadable', // #808
+      description: 'Comprobante ilegible o incompleto (o una foto que no parece comprobante): se le pide reenviarlo con todos los datos visibles. Máx. 1 cada 10 min.',
+      type: 'message',
+      response: RECEIPT_UNREADABLE_DEFAULT
     },
     {
       name: '/sys_receipt_duplicate',
