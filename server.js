@@ -2608,6 +2608,22 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
     let _appMin = 0; try { _appMin = Number(await getMinDepositArs()) || 0; } catch (_) {}
     const minCharge = Math.max(Number(_minCfg.minChargeARS) > 0 ? Number(_minCfg.minChargeARS) : 2000, _appMin);
     if (Number(amount) < minCharge) {
+      // #803 (owner): "cuando se rechaza un pago por no llegar al mínimo no se carga y se le DEVUELVE la plata al cliente con el aviso
+      // de que la carga mínima es de $5.000, todo automático". Kill switch: BELOW_MIN_AUTO_REFUND=0. Si la devolución falla (sin CBU
+      // de origen, hgcash caído) sigue el camino de siempre: aviso de Soporte + movimiento en revisión para devolver a mano.
+      if (process.env.BELOW_MIN_AUTO_REFUND !== '0' && hgcashPay.isEnabled()) {
+        try {
+          const toCBU = String(movement.fromCBU || '').replace(/\D/g, '');
+          if (toCBU.length === 22) {
+            await BankMovement.updateOne({ movementId: movement.movementId }, { $set: { matchStatus: 'needs_review', matchedUserId: user.id, matchedUsername: user.username, matchedComprobanteId: comprobante.id, chargeError: `monto $${Number(amount)} menor al mínimo $${minCharge}` } });
+            await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'needs_review', matchedMovementId: movement.movementId } });
+            const mvNow = await BankMovement.findOne({ movementId: movement.movementId }).lean();
+            const rr = await _refundBelowMinMovement(mvNow, { by: 'auto', amount: Number(amount), minDep: minCharge, toCBU });
+            if (rr.ok) return;
+            logger.warn(`[hgcash] devolución automática bajo mínimo falló mov=${movement.movementId}: ${rr.error} — queda para devolver a mano`);
+          }
+        } catch (e) { logger.warn(`[hgcash] devolución automática bajo mínimo excepción: ${e.message}`); }
+      }
       // #686 (owner): avisarle AL CLIENTE automáticamente que contacte a Soporte (texto editable en COMANDOS: /sys_below_min)
       try {
         const txt = await renderSystemCommand('/sys_below_min', BELOW_MIN_DEFAULT, { monto: Number(amount).toLocaleString('es-AR'), min: minCharge.toLocaleString('es-AR') });
@@ -6172,6 +6188,38 @@ app.get('/api/admin/support/:userId/below-min', authMiddleware, async (req, res)
     res.json({ success: true, minDepositArs: minDep, items });
   } catch (e) { logger.warn(`[below-min] list: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #803: núcleo de la DEVOLUCIÓN de una transferencia menor al mínimo (lo usan el botón del panel y la devolución AUTOMÁTICA).
+// Idempotente: externalID 'refund-<movementId>' (hgcash responde duplicate) + reserva atómica del movimiento ('refunding').
+async function _refundBelowMinMovement(mv, { by, amount, minDep, toCBU }) {
+  const lock = await BankMovement.findOneAndUpdate({ movementId: mv.movementId, matchStatus: { $in: ['needs_review', 'no_match', 'pending', 'error'] } }, { $set: { matchStatus: 'refunding' } }, { new: true }).lean();
+  if (!lock) return { ok: false, error: 'El movimiento ya está siendo devuelto o fue procesado.' };
+  const release = (err) => BankMovement.updateOne({ movementId: mv.movementId, matchStatus: 'refunding' }, { $set: { matchStatus: mv.matchStatus || 'needs_review', refundError: String(err || '').slice(0, 300) } }).catch(() => {});
+  let accountId = await resolveHgcashAccountId();
+  if (!accountId) { await release('sin accountId'); return { ok: false, error: 'No se pudo determinar la cuenta hgcash a debitar (accountId).' }; }
+  const baseUrl = getPublicBaseUrl();
+  const build = (acct) => hgcashPay.createCashOut({ accountId: acct, amount, toCBU, toName: mv.fromName || undefined, toCUIT: mv.fromCUIT || undefined, concept: 'Devolucion carga menor al minimo - PICA ROJA', externalID: ('refund-' + mv.movementId).slice(0, 100), webhookUrl: `${baseUrl}/api/hgcash/webhook` });
+  let result = await build(accountId);
+  if (!result.ok && result.httpStatus === 403) { const fresh = await resolveHgcashAccountId({ force: true }); if (fresh && String(fresh) !== String(accountId)) { accountId = fresh; result = await build(accountId); } }
+  const dup = !result.ok && result.httpStatus === 409 && /duplicate/i.test(String(result.error));
+  if (!result.ok && !dup) { await release(result.error); _bankPayoutFailed(result.error, null).catch(() => {}); return { ok: false, error: 'hgcash rechazó la devolución: ' + result.error }; }
+  _bankPayoutOk().catch(() => {});
+  const hgId = dup ? null : (result.data && result.data.id) || null;
+  await BankMovement.updateOne({ movementId: mv.movementId }, { $set: { matchStatus: 'refunded', refundedAt: new Date(), refundHgId: hgId, refundBy: by, refundError: null, chargeError: `devuelta al origen ($${amount.toLocaleString('es-AR')} < mínimo $${minDep.toLocaleString('es-AR')})` } });
+  // #803 (owner): "notificalo donde siempre, como rechazado / pago rebotado" ⇒ en Cargas pendientes (pestaña resueltas) figura como
+  // REBOTADA y devuelta, y el panel se entera en vivo (deposit_review).
+  if (mv.matchedComprobanteId) { try { await Comprobante.updateOne({ id: mv.matchedComprobanteId }, { $set: { reviewStatus: 'rejected', reviewResolution: 'below_min_refund', reviewedBy: by, reviewedAt: new Date(), reviewNote: `Rebotada: $${amount.toLocaleString('es-AR')} es menor a la carga mínima de $${minDep.toLocaleString('es-AR')}. Devuelta al CBU de origen.` } }); } catch (_) {} }
+  try { if (mv.matchedUserId) _emitDepositReviewUpdate(mv.matchedUserId, { action: 'rejected', id: mv.matchedComprobanteId || null, reason: 'below_min_refund', amount }); } catch (_) {}
+  let user = null; if (mv.matchedUserId) user = await User.findOne({ id: mv.matchedUserId }).select('id username').lean();
+  if (user) {
+    try {
+      const txt = await renderSystemCommand('/sys_below_min_refunded', BELOW_MIN_REFUNDED_DEFAULT, { monto: amount.toLocaleString('es-AR'), min: minDep.toLocaleString('es-AR') });
+      if (txt) await _sendUserSystemMessage(user, txt, { metadata: { kind: 'below_min_refunded', movementId: mv.movementId, amount }, push: { title: '↩️ Te devolvimos tu transferencia', body: `Te devolvimos $${amount.toLocaleString('es-AR')}. La carga mínima es de $${minDep.toLocaleString('es-AR')}.` } });
+    } catch (e) { logger.warn(`[below-min] aviso al cliente falló: ${e.message}`); }
+    await _emitAdminOnlyChatNote(user.id, user.username, `↩️ DEVOLUCIÓN ${by === 'auto' ? 'AUTOMÁTICA' : 'hecha por ' + by}: $${amount.toLocaleString('es-AR')} al CBU de origen ${toCBU} (transferencia menor al mínimo de $${minDep.toLocaleString('es-AR')}). NO se cargó. hgcash id: ${hgId || 'ya existía'}.`);
+  }
+  logger.info(`[below-min] devuelta mov=${mv.movementId} $${amount} → ${toCBU} por ${by} hg=${hgId || 'dup'}`);
+  return { ok: true, hgId, dup };
+}
 app.post('/api/admin/hgcash/movements/:movementId/refund', authMiddleware, async (req, res) => {
   try {
     if (!['admin', 'depositor', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
@@ -6186,33 +6234,9 @@ app.post('/api/admin/hgcash/movements/:movementId/refund', authMiddleware, async
     if (!(amount > 0) || amount >= minDep) return res.status(400).json({ error: `Sólo se devuelven transferencias menores a la carga mínima ($${minDep.toLocaleString('es-AR')}). Esta es de $${amount.toLocaleString('es-AR')}.` });
     const toCBU = String(mv.fromCBU || '').replace(/\D/g, '');
     if (toCBU.length !== 22) return res.status(400).json({ error: 'El movimiento no tiene el CBU/CVU de origen (22 dígitos): hay que devolverlo a mano.' });
-    let accountId = await resolveHgcashAccountId();
-    if (!accountId) return res.status(400).json({ error: 'No se pudo determinar la cuenta hgcash a debitar (accountId).' });
-    const baseUrl = getPublicBaseUrl();
-    const build = (acct) => hgcashPay.createCashOut({ accountId: acct, amount, toCBU, toName: mv.fromName || undefined, toCUIT: mv.fromCUIT || undefined, concept: 'Devolucion carga menor al minimo - PICA ROJA', externalID: ('refund-' + mv.movementId).slice(0, 100), webhookUrl: `${baseUrl}/api/hgcash/webhook` });
-    let result = await build(accountId);
-    if (!result.ok && result.httpStatus === 403) { const fresh = await resolveHgcashAccountId({ force: true }); if (fresh && String(fresh) !== String(accountId)) { accountId = fresh; result = await build(accountId); } }
-    const dup = !result.ok && result.httpStatus === 409 && /duplicate/i.test(String(result.error));
-    if (!result.ok && !dup) {
-      await BankMovement.updateOne({ movementId: mv.movementId }, { $set: { refundError: String(result.error).slice(0, 300) } });
-      _bankPayoutFailed(result.error, null).catch(() => {});
-      return res.status(400).json({ error: 'hgcash rechazó la devolución: ' + result.error });
-    }
-    _bankPayoutOk().catch(() => {});
-    const hgId = dup ? null : (result.data && result.data.id) || null;
-    await BankMovement.updateOne({ movementId: mv.movementId }, { $set: { matchStatus: 'refunded', refundedAt: new Date(), refundHgId: hgId, refundBy: req.user.username, refundError: null, chargeError: `devuelta al origen ($${amount.toLocaleString('es-AR')} < mínimo $${minDep.toLocaleString('es-AR')})` } });
-    if (mv.matchedComprobanteId) { try { await Comprobante.updateOne({ id: mv.matchedComprobanteId }, { $set: { reviewStatus: 'rejected', reviewNote: 'Devuelta: transferencia menor a la carga mínima' } }); } catch (_) {} }
-    // aviso al cliente (editable: /sys_below_min_refunded) + nota interna
-    let user = null; if (mv.matchedUserId) user = await User.findOne({ id: mv.matchedUserId }).select('id username').lean();
-    if (user) {
-      try {
-        const txt = await renderSystemCommand('/sys_below_min_refunded', BELOW_MIN_REFUNDED_DEFAULT, { monto: amount.toLocaleString('es-AR'), min: minDep.toLocaleString('es-AR') });
-        if (txt) await _sendUserSystemMessage(user, txt, { metadata: { kind: 'below_min_refunded', movementId: mv.movementId, amount }, push: { title: '✅ Devolución hecha', body: `Te devolvimos $${amount.toLocaleString('es-AR')} a tu cuenta. Recordá: carga mínima $${minDep.toLocaleString('es-AR')}.`, data: { tag: 'below_min_refunded' } } });
-      } catch (e) { logger.warn(`[below-min] aviso al cliente falló: ${e.message}`); }
-      await _emitAdminOnlyChatNote(user.id, user.username, `↩️ DEVOLUCIÓN hecha por ${req.user.username}: $${amount.toLocaleString('es-AR')} al CBU de origen ${toCBU} (transferencia menor al mínimo). hgcash id: ${hgId || 'ya existía'}.`);
-    }
-    logger.info(`[below-min] devuelta mov=${mv.movementId} $${amount} → ${toCBU} por ${req.user.username} hg=${hgId || 'dup'}`);
-    res.json({ success: true, amount, hgId, dup });
+    const r = await _refundBelowMinMovement(mv, { by: req.user.username, amount, minDep, toCBU });
+    if (!r.ok) return res.status(400).json({ error: r.error });
+    res.json({ success: true, amount, hgId: r.hgId, dup: r.dup });
   } catch (e) { logger.error(`[below-min] refund: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/hgcash/movements/:movementId/platform', authMiddleware, depositorMiddleware, async (req, res) => {

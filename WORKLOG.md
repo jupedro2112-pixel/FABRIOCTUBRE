@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-18
 
+### 803. ↩️ Transferencia menor al mínimo: devolución AUTOMÁTICA + aviso + "Rebotada" en Cargas pendientes
+**Pedido (owner):** "cuando se rechaza un pago por no llegar al mínimo, no se carga y se le devuelve la plata al cliente con el aviso de
+que la carga mínima es de $5.000, de forma automática; notificalo donde siempre como rechazado / pago rebotado". En el chequeo de mínimo
+del flujo hgcash (comprobante verificado + movimiento bancario < `max(minChargeARS, minDepositArs)`): si hgcash está configurado y el
+movimiento trae CBU de origen (22 dígitos) se devuelve SOLO con `_refundBelowMinMovement` (núcleo extraído del botón del panel, mismo
+`externalID 'refund-<movementId>'` + reserva atómica `matchStatus:'refunding'` ⇒ sin doble pago entre instancias). El cliente recibe
+`/sys_below_min_refunded` (+ push), queda nota interna "DEVOLUCIÓN AUTOMÁTICA" y el comprobante pasa a `rejected` con
+`reviewResolution:'below_min_refund'` ⇒ en Cargas pendientes → resueltas se ve "↩️ Rebotada · menor al mínimo · devuelta
+automáticamente" (aviso en vivo al panel). Si la devolución no se puede (sin CBU, hgcash caído) sigue el camino viejo: aviso de Soporte +
+movimiento en revisión con el botón Devolver. Kill switch: `BELOW_MIN_AUTO_REFUND=0`.
+
 ### 802. 👤 Usuarios fáciles en la landing: pica + nombre + 2 números (3 si se repite)
 **Pedido (owner):** "los usuarios que se registran desde la landing, que sea fácil: pica y su nombre, terminación 2 números o 3 si se
 repite". `_deriveUniqueUsername` (lo usan la landing `/l/:code`, `/ingreso` y la entrada rápida vía `_landingSignupHandler`): primer
