@@ -2012,7 +2012,7 @@
         const bar = _el('casinoTopBar');
         if (bar && !_el('casinoQuickBtn')) {
             const row = bar.querySelector('.casino-topbar-row');
-            if (row) row.insertAdjacentHTML('beforeend', '<button type="button" id="casinoQuickBtn" class="casino-quick-btn" style="display:none" onclick="VIP.home.restoreCasinoQuick()">💳 Carga rápida</button>');
+            if (row) row.insertAdjacentHTML('beforeend', '<button type="button" id="casinoQuickBtn" class="casino-quick-btn" style="display:none" onclick="VIP.home.restoreCasinoQuick()" title="Carga rápida">💳<span class="cqb-txt"> Carga rápida</span></button>');
         }
         if (bubble) bubble.style.display = _quickDismissed ? 'none' : '';
         // #723: limpieza única de los estados viejos (posición arriba, mini) para que la burbuja vuelva a su lugar de siempre

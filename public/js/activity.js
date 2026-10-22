@@ -12,7 +12,7 @@
         if (document.hidden) return;
         const now = Date.now(); if (!force && now - _last < 50000) return; _last = now;
         try {
-            await fetch(VIP.config.API_URL + '/api/activity/ping', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ installed: _installed(), mode: _mode() }), keepalive: true });
+            await fetch(VIP.config.API_URL + '/api/activity/ping', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ installed: _installed(), mode: _mode(), device: window.VIP_DEVICE || null }) /* #823: qué teléfono usa */, keepalive: true });
         } catch (_) {}
     }
     function start() {

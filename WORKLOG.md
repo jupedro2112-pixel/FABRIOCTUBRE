@@ -8,6 +8,22 @@
 
 ## Sesión 2026-10-22
 
+### 823. 📱 Ajuste por teléfono: margen superior real + barra del casino compacta + detección del modelo — SW v564
+**Pedido (owner, captura de Android en Girox directo):** "esto pasa en varias apps: ver todos los teléfonos argentinos (Android comunes,
+iPhone) y ajustarlos en cada celular; detectar qué teléfono es cuando instalan así ven bien el formato; en un iPhone 17 también estaba
+desajustado". Causas: (1) franja vacía arriba: el recuadro del casino (`#casinoOverlay`) y su barra (`#casinoTopBar`) sumaban DOS veces el
+margen superior (iPhone con isla ⇒ ~120 px), y muchos Android informan `env(safe-area-inset-top)` > 0 aunque la barra de estado va aparte;
+(2) la barra del casino (Volver · Menú · PICA ROJA OFICIAL · Historias · Info · Perfil · Carga rápida) no entra en 360 px y se cortaba.
+- `index.html` (script antes de pintar): clases `dev-ios|dev-android|dev-other`, `is-app`, `scr-xs (≤340) | scr-s (≤375) | scr-m (≤414) | scr-l`
+  y `--sat` = margen superior REAL: iPhone instalado = el informado o 59/47/20 según isla/notch/clásico; Android instalado = 0 si la barra de
+  estado va aparte, el informado (o 24) si la app ocupa toda la pantalla; navegador = el informado. Todas las hojas (`chat/pin/header/responsive.css`)
+  usan `var(--sat, env(safe-area-inset-top…))` (37 lugares). `#casinoOverlay` ya no lleva padding arriba.
+- Barra del casino: ≤414 px sin "OFICIAL", ≤375 px sólo el logo y 💳 en lugar de "Carga rápida", ≤340 px sólo íconos. Botones de prueba de
+  los testers abajo a la izquierda (tapaban la barra).
+- `window.VIP_DEVICE` {os, model (iPhone por tamaño de pantalla; Android por user agent o client hints), w, h, dpr, app, sat} viaja en el ping
+  de actividad y queda en `User.lastDevice` (cuando cambia o una vez por día).
+- No probado en dispositivos reales (sólo sintaxis): confirmar en un Android de 360 px y en un iPhone con isla instalados.
+
 ### 822. 🧹 Chat de soporte sin Comunidad: Abiertos · Cerrados · Pagos — admin SW v158
 **Pedido (owner):** "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados". Se sacaron del chat del panel la pestaña Comunidad, el botón
 "Derivar a Comunidad" y las etiquetas rápidas Comunidad / NO Comunidad. Migración `mig822NoComunidad`: los chats que estaban en Comunidad pasan a

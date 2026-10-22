@@ -1308,7 +1308,9 @@ VIP.ui._showCasinoFrame = function() {
       // PWA instalada en iPhone (viewport-fit=cover): padding de safe-area arriba
       // y abajo → el casino no queda bajo el notch ni en la zona del home
       // indicator (barras oscuras discretas del color del overlay).
-      'padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);';
+      // #823: SIN padding arriba: la barra del casino (#casinoTopBar) ya deja el margen; con los dos se sumaba dos veces (franja vacía en
+      // iPhone con isla y en muchos Android).
+      'padding-bottom:env(safe-area-inset-bottom,0px);';
     // Diseño (owner 2026-08-16): el casino se ve TAL CUAL 1girox.com (iframe a
     // pantalla completa, sin barra propia arriba). Todo el "chrome" (soporte,
     // salir, abrir aparte) vive en una BURBUJA de soporte flotante abajo a la

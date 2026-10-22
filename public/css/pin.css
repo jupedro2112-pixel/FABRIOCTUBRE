@@ -1008,7 +1008,7 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #430 (owner): el inicio ocupa EXACTAMENTE una pantalla de teléfono (sin scroll); las opiniones toman el alto que sobra.
    Sin burbuja de Soporte en el inicio. ── */
 .login-screen:has(.lg-app) { height: 100dvh; min-height: 0 !important; overflow: hidden !important; padding: 0 !important; align-items: stretch !important; }
-.login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) 12px calc(6px + var(--sab, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
+.login-box.lg-app { height: 100dvh; max-height: 100dvh; margin: 0 auto !important; display: flex !important; flex-direction: column; gap: 4px !important; overflow: hidden; padding: calc(6px + var(--sat, env(safe-area-inset-top, 0px))) 12px calc(6px + var(--sab, 0px)) !important; box-sizing: border-box; border-radius: 0 !important; }
 .lg-app > * { flex: 0 0 auto; }
 .lg-quick input { padding: 8px 12px !important; font-size: 14px !important; } .lg-app .lg-quick-btn { padding: 9px !important; font-size: 14px !important; }
 .lg-play-box { padding: 6px 9px 7px; }
@@ -1030,7 +1030,7 @@ body.reg-quick #loginForm { display: none !important; }
 /* ── #433: "CARGAS Y PAGOS LAS 24 HS SIN LÍMITES" bajo el título ── */
 /* ── #434: fila prioritaria "Carga automática y atención personalizada" ── */
 /* ── #436 (owner): la parte superior baja un poco (misma separación arriba que abajo) ── */
-.login-box.lg-app { padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important; padding-bottom: calc(12px + var(--sab, 0px)) !important; }
+.login-box.lg-app { padding-top: calc(16px + var(--sat, env(safe-area-inset-top, 0px))) !important; padding-bottom: calc(12px + var(--sab, 0px)) !important; }
 .lg-app .lg-head { margin-top: 2px; }
 /* ── #438/#439 (owner): Info → el título recuadrado en su propia línea (separa "Girox"); sólo las plataformas en negrita ── */
 .info-msg #infoCardTwoPlats > b:first-child { display: inline-flex !important; margin-bottom: 8px !important; }
@@ -1574,7 +1574,7 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .lg-foot { font-size: 9px; margin: 0; }
 @media (max-height: 760px) { .lg-app .lg-sec-reviews { display: none !important; } }
 @media (max-height: 640px) { .lg-sys .lg-sy:nth-child(n+7) { display: none; } }
-.lg-regscreen { position: fixed; inset: 0; z-index: 2600; background: #fff; overflow-y: auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(16px + var(--sab, 0px)); display: flex; flex-direction: column; gap: 10px; --p-bg: #fff; --p-surface: #f3f3f3; --p-card: #fff; --p-text: #111; --p-muted: #6f6f6f; --p-border: #e2e2e2; }
+.lg-regscreen { position: fixed; inset: 0; z-index: 2600; background: #fff; overflow-y: auto; padding: calc(10px + var(--sat, env(safe-area-inset-top, 0px))) 14px calc(16px + var(--sab, 0px)); display: flex; flex-direction: column; gap: 10px; --p-bg: #fff; --p-surface: #f3f3f3; --p-card: #fff; --p-text: #111; --p-muted: #6f6f6f; --p-border: #e2e2e2; }
 .lg-regscreen[hidden] { display: none !important; }
 .lg-reg-head { display: flex; align-items: center; gap: 10px; max-width: 420px; width: 100%; margin: 0 auto; }
 .lg-reg-back { width: 38px; height: 38px; border-radius: 50%; border: 0; background: var(--p-surface); color: var(--p-text); font: 900 24px/1 var(--p-font); cursor: pointer; flex: 0 0 auto; }
@@ -1586,7 +1586,7 @@ body.reg-quick .lg-form:not(.lg-form-reg), body.reg-quick .lg-login-h, body.reg-
 .lg-regscreen .lg-form-reg { display: block !important; }
 /* ── #548 pantalla de registro "premium" estilo Pinterest (blanca, tarjeta con sombra, píldoras rojas, pasos) ── */
 #quickSmsBox[hidden], #quickOtpStep[hidden], #quickNextBtn[hidden], #quickEntryBtn[hidden], #regSteps[hidden] { display: none !important; }
-.lg-regscreen { gap: 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+.lg-regscreen { gap: 12px; padding-top: calc(14px + var(--sat, env(safe-area-inset-top, 0px))); }
 .lg-reg-head .lg-brand b { font-size: 19px; letter-spacing: .3px; } .lg-reg-head .lg-brand small { font-size: 10.5px; }
 .lg-reg-back { box-shadow: var(--p-shadow); background: #fff; }
 .lg-steps { display: flex; gap: 6px; max-width: 420px; width: 100%; margin: 0 auto; }
@@ -1635,7 +1635,7 @@ body.menu2 #homeFull, body.menu2 #easyView, body.menu2 #basicView, body.menu2 #e
 .ev-play-first .ev-tabs { margin: 0 !important; }
 #installGiftBar.ig-bar { position: static !important; left: auto !important; right: auto !important; bottom: auto !important; margin: 8px 12px 0; width: auto; z-index: auto; background: #111 !important; color: #fff !important; border-radius: 14px; box-shadow: var(--p-shadow); }
 #installGiftBar .ig-bar-k { background: var(--p-red); color: #fff; } #installGiftBar .ig-bar-t { color: #fff; } #installGiftBar .ig-bar-amt { color: #ffd166; }
-.play-now-card { inset: auto 10px auto 10px !important; top: calc(62px + env(safe-area-inset-top, 0px)) !important; bottom: auto !important; background: transparent !important; backdrop-filter: none !important; align-items: flex-start !important; padding: 0 !important; pointer-events: none !important; }
+.play-now-card { inset: auto 10px auto 10px !important; top: calc(62px + var(--sat, env(safe-area-inset-top, 0px))) !important; bottom: auto !important; background: transparent !important; backdrop-filter: none !important; align-items: flex-start !important; padding: 0 !important; pointer-events: none !important; }
 .play-now-card.show .pn-sheet { pointer-events: auto; }
 .play-now-card .pn-sheet { border-radius: 18px !important; box-shadow: 0 14px 40px rgba(0,0,0,.28) !important; padding: 12px 14px !important; border: 1px solid var(--p-border) !important; }
 body.menu2 .play-now-card { padding-bottom: 0 !important; }
@@ -1750,11 +1750,11 @@ body.home-mini:not(.sp-sent) #chatMessages { display: none !important; }
 .story-viewer .st-media .st-blur { display: none !important; }
 .story-viewer .st-media .st-textonly { height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 60px 26px; font: 900 26px/1.3 var(--p-font); color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.45); }
 .story-viewer::before { content: ""; position: absolute; top: 0; left: var(--st-l); right: var(--st-l); height: 120px; background: linear-gradient(180deg, rgba(0,0,0,.62), transparent); z-index: 3; pointer-events: none; }
-.story-viewer .st-bars { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)) !important; left: calc(var(--st-l) + 10px) !important; right: calc(var(--st-l) + 10px) !important; display: flex; gap: 4px !important; z-index: 6; }
+.story-viewer .st-bars { position: absolute; top: calc(10px + var(--sat, env(safe-area-inset-top, 0px))) !important; left: calc(var(--st-l) + 10px) !important; right: calc(var(--st-l) + 10px) !important; display: flex; gap: 4px !important; z-index: 6; }
 .story-viewer .st-bars i { flex: 1 1 0; height: 3px !important; border-radius: 999px !important; background: rgba(255,255,255,.35) !important; overflow: hidden; display: block; }
 .story-viewer .st-bars i b { display: block; height: 100%; width: 0; background: #fff !important; border-radius: 999px; }
 .story-viewer .st-bars i.done b { width: 100%; }
-.story-viewer .st-head { position: absolute !important; top: calc(22px + env(safe-area-inset-top, 0px)) !important; left: calc(var(--st-l) + 12px) !important; right: calc(var(--st-l) + 12px) !important; bottom: auto !important; padding: 0 !important; margin: 0; background: transparent !important; display: flex !important; align-items: center; justify-content: space-between !important; gap: 10px; z-index: 6; }
+.story-viewer .st-head { position: absolute !important; top: calc(22px + var(--sat, env(safe-area-inset-top, 0px))) !important; left: calc(var(--st-l) + 12px) !important; right: calc(var(--st-l) + 12px) !important; bottom: auto !important; padding: 0 !important; margin: 0; background: transparent !important; display: flex !important; align-items: center; justify-content: space-between !important; gap: 10px; z-index: 6; }
 .story-viewer .st-head .st-logo { display: flex !important; flex: 0 0 auto; }
 .story-viewer .st-head .st-logo img { width: 32px !important; height: 32px !important; border-radius: 50% !important; border: 2px solid #fff !important; background: #000; display: block; }
 .story-viewer .st-head .st-who { display: flex !important; flex-direction: row; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
@@ -1890,10 +1890,10 @@ body.menu2 #bottomNav .tn-home.tn-retro { padding: 6px 10px !important; min-heig
    los botones que van abajo no se muestran arriba. (2) Notch / Dynamic Island: la barra superior baja lo que mida el área segura;
    si el teléfono no la informa pero es un iPhone con notch en modo app (html.ios-notch), se bajan 44px. ===== */
 html.menu2-pre:not(.menu2-done) .header.topnav:not(.bottom-nav) #navAuto, html.menu2-pre:not(.menu2-done) .header.topnav:not(.bottom-nav) #navInicio, html.menu2-pre:not(.menu2-done) .header.topnav:not(.bottom-nav) #navPerfil { display: none !important; }
-.header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(4px, env(safe-area-inset-top, 0px)) !important; }
-html.ios-notch .header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
-html.ios-notch #casinoTopBar { padding-top: max(44px, env(safe-area-inset-top, 0px)) !important; }
-#casinoTopBar { padding-top: max(7px, env(safe-area-inset-top, 0px)) !important; }
+.header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(4px, var(--sat, env(safe-area-inset-top, 0px))) !important; }
+html.ios-notch .header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(44px, var(--sat, env(safe-area-inset-top, 0px))) !important; }
+html.ios-notch #casinoTopBar { padding-top: max(44px, var(--sat, env(safe-area-inset-top, 0px))) !important; }
+#casinoTopBar { padding-top: max(7px, var(--sat, env(safe-area-inset-top, 0px))) !important; }
 /* ===== #639 (owner 2026-10-20): "Copiar" bien diferenciado (botón rojo) en Carga auto / básico / carga rápida; Cambiar menú centrado arriba
    del Inicio; carga pendiente arriba de todo; cartel de pendiente/bono debajo sin tapar ===== */
 .al-copy, .bv-copy, .cl-copy, .pf-copy { background: var(--p-red) !important; color: #fff !important; border: 0 !important; border-radius: 999px !important; font: 900 10.5px var(--p-font) !important; letter-spacing: .3px; padding: 6px 12px !important; text-transform: uppercase; box-shadow: 0 3px 10px rgba(210, 58, 78, .25) !important; white-space: nowrap; flex: 0 0 auto; }
@@ -2099,7 +2099,7 @@ body.ms-off .min-strip, body.ms-off .ms-easy { display: none !important; }
 body.home-play .ev-play-first { display: none !important; }
 /* #700/#701 (owner): accesos en la barra del casino (Historias · Menú · Info · Perfil) con el MISMO formato de la barra principal,
    en una sola línea, y modales por encima del casino */
-.casino-topbar { padding-top: max(4px, env(safe-area-inset-top, 0px)) !important; padding-bottom: 3px !important; }
+.casino-topbar { padding-top: max(4px, var(--sat, env(safe-area-inset-top, 0px))) !important; padding-bottom: 3px !important; }
 .casino-topbar-row { gap: 6px !important; }
 .casino-topbar-sp { flex: 1 1 auto; }
 .casino-topbar .casino-back { padding: 5px 10px !important; font-size: 11px !important; }
@@ -2152,7 +2152,7 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 /* #708: botón flotante de carga de prueba (sólo body.is-tester; por encima del casino) */
 .test-dep-btn { position: fixed; left: 10px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 100000; border: 0; border-radius: 999px; padding: 8px 12px; background: #7c3aed; color: #fff; font: 900 11px var(--p-font); box-shadow: 0 6px 18px rgba(124, 58, 237, .35); cursor: pointer; }
 /* #712 (owner): cartel "¡Buena suerte!" al acreditarse una carga dentro del casino (5 s o ✕) */
-.luck-card { position: fixed; left: 12px; right: 12px; top: calc(64px + env(safe-area-inset-top, 0px)); z-index: 100002; background: var(--p-card); color: var(--p-text); border: 1px solid var(--p-border); border-left: 5px solid var(--p-green, var(--p-green)); border-radius: 14px; padding: 12px 36px 12px 14px; box-shadow: 0 14px 44px rgba(0, 0, 0, .25); animation: luckIn .25s ease-out; max-width: 520px; margin: 0 auto; }
+.luck-card { position: fixed; left: 12px; right: 12px; top: calc(64px + var(--sat, env(safe-area-inset-top, 0px))); z-index: 100002; background: var(--p-card); color: var(--p-text); border: 1px solid var(--p-border); border-left: 5px solid var(--p-green, var(--p-green)); border-radius: 14px; padding: 12px 36px 12px 14px; box-shadow: 0 14px 44px rgba(0, 0, 0, .25); animation: luckIn .25s ease-out; max-width: 520px; margin: 0 auto; }
 .luck-card.out { opacity: 0; transform: translateY(-8px); transition: opacity .25s, transform .25s; }
 .luck-t { font: 900 16px/1.2 var(--p-font); color: var(--p-green, var(--p-green)); }
 .luck-t small { display: block; font: 700 11px var(--p-font); color: var(--p-muted); margin-top: 2px; }
@@ -2170,7 +2170,7 @@ body.fewdep #loadHereBtn #loadHereMin { font-weight: 800 !important; opacity: 1 
 #casinoSupportBubble { padding: 6px 11px 6px 6px !important; gap: 6px !important; border-radius: 24px !important; }
 #casinoSupportBubble > img { width: 26px !important; height: 26px !important; padding: 2px !important; }
 #casinoSupportBubble > span:not(#casinoChatBadge) { font-size: 10.5px !important; letter-spacing: .3px !important; }
-body.casino-open .test-btns { bottom: auto; top: calc(70px + env(safe-area-inset-top, 0px)); }
+body.casino-open .test-btns { bottom: auto; top: calc(70px + var(--sat, env(safe-area-inset-top, 0px))); }
 body.casino-open .test-btns .test-dep-btn { padding: 5px 8px; font-size: 10px; }
 /* #724: la burbuja nunca se estira: alto automático, sin top/bottom simultáneos */
 #casinoSupportBubble { height: auto !important; max-height: 48px; }
@@ -2437,3 +2437,22 @@ body.home-full .ev-svc::after { content: "Ver más ›"; display: block; margin:
 .rcpt-note { display: block; margin-top: 4px; font: 700 11.5px/1.35 var(--p-font); color: var(--p-red); }
 .rcpt-note b { color: var(--p-red); }
 .casino-load .cl-rcpt { text-align: center; margin: -2px 0 6px; font-size: 10.5px; }
+
+/* ===== #823 (owner 2026-10-22): TODOS los teléfonos (Android comunes de 360 px, iPhone SE … iPhone 17 Pro Max). index.html detecta el
+   dispositivo (html.dev-ios / dev-android / is-app / scr-xs|s|m|l) y deja el margen superior REAL en --sat. ===== */
+/* Barra del casino: margen superior único (el recuadro ya no suma el suyo) */
+html.dev-ready #casinoTopBar { padding-top: max(6px, var(--sat, 0px)) !important; }
+html.dev-ready #casinoOverlay { padding-top: 0 !important; }
+html.dev-ready .header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { padding-top: max(4px, var(--sat, 0px)) !important; }
+/* Barra del casino en una línea sin cortarse: nada se encoge por debajo de su tamaño y lo que sobra se resigna en orden */
+.casino-topbar-row { flex-wrap: nowrap !important; min-width: 0; overflow: hidden; }
+.casino-topbar .casino-quick-btn { flex: 0 0 auto; white-space: nowrap; }
+html.scr-m .casino-brand .cb-txt small, html.scr-s .casino-brand .cb-txt small, html.scr-xs .casino-brand .cb-txt small { display: none; }
+html.scr-s .casino-brand .cb-txt, html.scr-xs .casino-brand .cb-txt { display: none; }          /* ≤375 px: sólo el logo */
+html.scr-s .casino-brand .cb-box, html.scr-xs .casino-brand .cb-box { padding: 2px; }
+html.scr-s .casino-topbar .cqb-txt, html.scr-xs .casino-topbar .cqb-txt { display: none; }       /* "Carga rápida" → 💳 */
+html.scr-s .casino-topbar .tn-btn, html.scr-xs .casino-topbar .tn-btn { min-width: 34px !important; padding: 2px 2px 3px !important; }
+html.scr-xs .casino-topbar .casino-back { padding: 5px 7px !important; }
+html.scr-xs .casino-topbar .tn-btn .tn-lbl { display: none !important; }                        /* ≤340 px: sólo íconos */
+/* Botones de prueba (testers): en el casino abajo a la izquierda, sin tapar la barra */
+body.casino-open .test-btns { top: auto !important; bottom: calc(90px + var(--sab, 0px)) !important; }

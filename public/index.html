@@ -394,6 +394,38 @@
         document.documentElement.appendChild(_pr); var _pb = parseFloat(getComputedStyle(_pr).paddingBottom) || 0; _pr.remove();
         if (_pb < 2) document.documentElement.classList.add('android-edge');
       } } catch (e) {}</script>
+    <!-- #823 (owner 2026-10-22): "esto pasa en varias apps: ver todos los teléfonos (Android comunes, iPhone) y ajustarlos; detectar qué
+         teléfono es al instalar". Antes de pintar: clases del dispositivo (dev-ios / dev-android, is-app, scr-xs/s/m/l) y el MARGEN SUPERIOR
+         REAL en --sat. Muchos Android informan env(safe-area-inset-top) > 0 aunque la barra de estado va APARTE (no encima de la app) ⇒
+         franja vacía arriba; y en iPhone con isla, el recuadro del casino y su barra sumaban el margen dos veces. Todas las hojas usan
+         var(--sat, env(...)). window.VIP_DEVICE = { os, model, w, h, dpr, app, sat } (lo manda activity.js para saber qué teléfonos usan). -->
+    <script>(function () { try {
+      var d = document.documentElement, ua = navigator.userAgent || '';
+      var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1), and = /Android/.test(ua);
+      var app = (window.navigator.standalone === true) || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+      var w = Math.min(screen.width, screen.height), h = Math.max(screen.width, screen.height), dpr = window.devicePixelRatio || 1;
+      var probe = function (side) { var e = document.createElement('div'); e.style.cssText = 'position:fixed;left:-9999px;top:0;padding-top:env(safe-area-inset-' + side + ',0px);'; d.appendChild(e); var v = parseFloat(getComputedStyle(e).paddingTop) || 0; e.remove(); return v; };
+      var envTop = probe('top'), sat = envTop, model = '';
+      if (ios) {
+        // iPhone por tamaño de pantalla (iOS no dice el modelo).
+        var M = { '320x568': 'iPhone SE (1ª)', '375x667': 'iPhone SE / 6-8', '414x736': 'iPhone 6-8 Plus', '375x812': 'iPhone X / 11 Pro / 12-13 mini', '414x896': 'iPhone XR / 11 / 11 Pro Max',
+          '390x844': 'iPhone 12-14', '428x926': 'iPhone 12-14 Pro Max / Plus', '393x852': 'iPhone 14 Pro-16', '430x932': 'iPhone 14 Pro Max-16 Plus', '402x874': 'iPhone 16 Pro / 17 / 17 Pro', '440x956': 'iPhone 16-17 Pro Max', '420x912': 'iPhone Air' };
+        model = M[w + 'x' + h] || ('iPhone ' + w + 'x' + h);
+        if (app && !(sat > 0)) sat = h >= 852 ? 59 : (h >= 812 ? 47 : 20); // isla / notch / clásico, si el teléfono no lo informa
+      } else if (and) {
+        var mm = /Android [\d.]+;\s*([^;)]+)\)/.exec(ua); model = mm && mm[1] && mm[1] !== 'K' ? mm[1].trim() : 'Android';
+        // ¿La app ocupa la pantalla de arriba a abajo (borde a borde)? Si NO, la barra de estado está aparte ⇒ sin margen.
+        var full = Math.abs(Math.max(screen.width, screen.height) - Math.max(window.innerWidth, window.innerHeight)) <= 2;
+        sat = app ? (full ? (envTop > 0 ? envTop : 24) : 0) : envTop;
+      }
+      sat = Math.max(0, Math.min(80, Math.round(sat)));
+      d.style.setProperty('--sat', sat + 'px');
+      d.classList.add(ios ? 'dev-ios' : (and ? 'dev-android' : 'dev-other'), w <= 340 ? 'scr-xs' : (w <= 375 ? 'scr-s' : (w <= 414 ? 'scr-m' : 'scr-l')), 'dev-ready');
+      if (app) d.classList.add('is-app');
+      window.VIP_DEVICE = { os: ios ? 'ios' : (and ? 'android' : 'otro'), model: model, w: w, h: h, dpr: dpr, app: app, sat: sat, envTop: envTop };
+      // Android moderno esconde el modelo en el user agent: Chrome lo da por client hints.
+      if (and && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) navigator.userAgentData.getHighEntropyValues(['model']).then(function (v) { if (v && v.model) window.VIP_DEVICE.model = v.model; }).catch(function () {});
+    } catch (e) {} })();</script>
     <div id="loginScreen" class="login-screen">
         <div class="login-box lg lg-app"><!-- #415: una sola pantalla, estilo registro de app -->
             <!-- #381 (owner): pantalla de ingreso con el estilo de la app: marca, promesa, chips con datos reales
@@ -835,7 +867,7 @@
                     animation:none; box-shadow:0 2px 10px rgba(0,0,0,0.5);
                     border-bottom:1px solid #d4af37;
                     display:flex; align-items:center; gap:4px;
-                    padding:8px; padding-top:max(8px, env(safe-area-inset-top, 8px));
+                    padding:8px; padding-top:max(8px, var(--sat, env(safe-area-inset-top, 8px)));
                 }
                 /* Layout en columna: el chat ocupa todo el alto disponible. */
                 .chat-section { margin:0 !important; }
@@ -2575,7 +2607,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v563</div>
+                    <div class="pf-build" id="appBuildTag">app v564</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2599,7 +2631,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v563</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v564</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>

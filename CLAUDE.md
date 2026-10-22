@@ -294,6 +294,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   en 1girox con la API key de ESE publicista (`Campaign.giroxApiKey`, resolver `girox.setKeyResolver` en server.js), no con la principal.
   Si a unos clientes les falla el casino/saldo y a otros no: mirar "Creado por" en 1girox y la key del publicista en el panel. Nunca
   responder 502/504 desde la app: Cloudflare los reemplaza por su página y el front no ve el mensaje (usar 503, #697).
+- **MARGEN SUPERIOR por teléfono (#823):** usar SIEMPRE `var(--sat, env(safe-area-inset-top, 0px))` (nunca `env(safe-area-inset-top)` solo):
+  `--sat` lo calcula index.html por dispositivo (muchos Android informan mal el env). Clases `dev-ios/dev-android/is-app/scr-xs|s|m|l` para ajustes por pantalla.
 - **iPHONE instalada CON SESIÓN (#673, 2026-10-20):** iOS no comparte storage entre Safari y la PWA instalada; la sesión viaja por el
   `start_url` del manifest: `GET /manifest.json?a=<token>&menu=…` (ruta dinámica ANTES de `express.static`) + `POST /api/auth/install-link`
   (token de acceso de un solo uso con `accessLinkPurpose:'install'`, no fuerza cambio de clave) + home.js `installManifestSync` + auth.js

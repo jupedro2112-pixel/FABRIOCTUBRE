@@ -345,6 +345,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // #823: último teléfono con el que entró (lo detecta index.html): { os, model, w, h, dpr, app, sat, at }.
+  lastDevice: { type: mongoose.Schema.Types.Mixed, default: null },
   // Último permiso de notificaciones reportado por el cliente: 'granted' / 'denied' / 'default'
   notifPermission: {
     type: String,
