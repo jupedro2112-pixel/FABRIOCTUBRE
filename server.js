@@ -24589,6 +24589,22 @@ app.post('/api/stories/:id/view', authMiddleware, async (req, res) => {
 // jugador adentro de 1girox), así que se marcan en NUESTRA app. Catálogo = el público de 1girox (admin.1girox.com/api/games, sin CORS ⇒ pasa
 // por acá, cache 10 min). El juego se abre con el SSO de siempre + `_casinoGamePath = '/play/<key>'`.
 const FAV_GAMES_MAX = 30;
+// #842 (owner): "dejalo así como favoritos y elegí 10 de los más jugados (Joker, Sweet Bonanza, Ezugi en vivo y otros); eliminá la lista de
+// abajo; si quieren editar, que saquen desde ahí". Los ve quien todavía no editó (`favoriteGamesCustom`); al primer cambio se copian a su
+// cuenta y sigue editando sobre esa lista. Fotos locales (/images/games) salvo Ezugi (catálogo de 1girox).
+const DEFAULT_FAV_GAMES = [
+  { key: '2/vs5joker', name: "Joker's Jewels", img: '/images/games/jokers-jewels.jpg', provider: 'Pragmatic Play' },
+  { key: '2/vs20swbon2500', name: 'Sweet Bonanza 2500', img: '/images/games/sweet-bonanza-2500.jpg', provider: 'Pragmatic Play' },
+  { key: '7/1630_ifg', name: 'Ezugi en vivo', img: 'https://admin.1girox.com/game-img/34181?v=1790171006', provider: 'Ezugi' },
+  { key: '2/vs20olympx', name: 'Gates of Olympus 1000', img: '/images/games/gates-of-olympus-1000.jpg', provider: 'Pragmatic Play' },
+  { key: '2/vs20sugarrushx', name: 'Sugar Rush 1000', img: '/images/games/sugar-rush-1000.jpg', provider: 'Pragmatic Play' },
+  { key: '2/vs5jokjewhs', name: "Joker's Jewels Hold & Spin", img: '/images/games/jokers-jewels-hold-spin.jpg', provider: 'Pragmatic Play' },
+  { key: '4/mines_prod2_100hp', name: 'Mines', img: '/images/games/mines.jpg', provider: '100HP' },
+  { key: '4/zeusrushfeverdeluxe96_rubyplay', name: 'Zeus Rush Fever Deluxe', img: '/images/games/zeus-rush-fever.jpg', provider: 'RubyPlay' },
+  { key: '2/vs10bbbonanza', name: 'Big Bass Bonanza', img: '/images/games/big-bass-bonanza.jpg', provider: 'Pragmatic Play' },
+  { key: '2/vs20starlightx', name: 'Starlight Princess 1000', img: '/images/games/starlight-princess-1000.jpg', provider: 'Pragmatic Play' }
+];
+const _favListOf = (u) => (u && u.favoriteGamesCustom === true) ? (u.favoriteGames || []) : DEFAULT_FAV_GAMES.map((g) => Object.assign({}, g));
 const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
 const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
 const _gameCatalogCache = new Map();
@@ -24620,28 +24636,30 @@ app.get('/api/games/catalog', authMiddleware, async (req, res) => {
 });
 app.get('/api/games/favorites', authMiddleware, async (req, res) => {
   try {
-    const u = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
-    res.set('Cache-Control', 'no-store'); res.json({ favorites: (u && u.favoriteGames) || [], max: FAV_GAMES_MAX });
+    const u = await User.findOne({ id: req.user.userId }).select('favoriteGames favoriteGamesCustom').lean();
+    res.set('Cache-Control', 'no-store'); res.json({ favorites: _favListOf(u), isDefault: !(u && u.favoriteGamesCustom === true), max: FAV_GAMES_MAX });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/games/favorites', authMiddleware, async (req, res) => {
   try {
     const b = req.body || {}; const key = String(b.key || '');
     if (!_FAV_KEY_RE.test(key)) return res.status(400).json({ error: 'Juego inválido.' });
+    // #842: primer cambio ⇒ los 10 de entrada pasan a ser SU lista (así sacar uno de entrada funciona igual que sacar uno propio).
+    await User.updateOne({ id: req.user.userId, favoriteGamesCustom: { $ne: true } }, { $set: { favoriteGamesCustom: true, favoriteGames: DEFAULT_FAV_GAMES.map((g) => Object.assign({ at: new Date() }, g)) } });
     if (b.on === false) {
       await User.updateOne({ id: req.user.userId }, { $pull: { favoriteGames: { key } } });
     } else {
       const img = String(b.img || ''); const name = String(b.name || '').replace(/[<>]/g, '').trim().slice(0, 60);
       if (!name || (img && !_FAV_IMG_RE.test(img))) return res.status(400).json({ error: 'Juego inválido.' });
-      const u = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
-      const list = (u && u.favoriteGames) || [];
+      const u = await User.findOne({ id: req.user.userId }).select('favoriteGames favoriteGamesCustom').lean();
+      const list = _favListOf(u);
       if (!list.some((f) => f.key === key)) {
         if (list.length >= FAV_GAMES_MAX) return res.status(400).json({ error: `Podés tener hasta ${FAV_GAMES_MAX} favoritos. Sacá alguno para agregar otro.` });
         await User.updateOne({ id: req.user.userId, 'favoriteGames.key': { $ne: key } }, { $push: { favoriteGames: { key, name, img, provider: String(b.provider || '').slice(0, 40), at: new Date() } } });
       }
     }
-    const u2 = await User.findOne({ id: req.user.userId }).select('favoriteGames').lean();
-    res.json({ success: true, favorites: (u2 && u2.favoriteGames) || [] });
+    const u2 = await User.findOne({ id: req.user.userId }).select('favoriteGames favoriteGamesCustom').lean();
+    res.json({ success: true, favorites: _favListOf(u2), isDefault: false });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // #834: foto de una historia automática (SVG 1080×1920 con el estilo de las historias de PICA ROJA).

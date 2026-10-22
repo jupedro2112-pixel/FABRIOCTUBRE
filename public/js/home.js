@@ -975,7 +975,7 @@
             if (!_el('evGamesH')) { const hd = document.createElement('div'); hd.id = 'evGamesH'; hd.className = 'ev-games-h'; hd.innerHTML = '<span>🔥 Top juegos · jugá desde acá</span><small><i></i>jugando ahora</small>'; /* #786 · #787 */ tr.parentNode.insertBefore(hd, tr); }
             if (!_el('evFavs')) { const fv = document.createElement('div'); fv.id = 'evFavs'; fv.className = 'ev-favs'; _el('evGamesH').parentNode.insertBefore(fv, _el('evGamesH')); } // #840
             tr.innerHTML = ENTRY_GAMES.map(([id, name], i) => '<div class="ev-game" data-g="' + id + '" role="button" onclick="VIP.home.playGame(\'' + id + '\')"><img src="' + _slideUrl('/images/games/' + id + '.jpg') + '" alt="' + _esc(name) + '" loading="' + (i < 2 ? 'eager' : 'lazy') + '" decoding="async" draggable="false"><span class="gp"><i></i><b>' + _gameN(id) + '</b> jugando</span><span class="ev-play">👆 Jugar ahora</span>' + (GAME_PLAY[id] ? '<button type="button" class="fav-star" data-k="' + _esc(GAME_PLAY[id].slice(6)) + '" onclick="event.stopPropagation();VIP.home.favToggleTop(\'' + id + '\')" aria-label="Favorito">☆</button>' : '') + '</div>').join(''); // #785: manito + "Jugar ahora" · #840: ⭐
-            _favLoad();
+            tr.hidden = true; try { _el('evGamesH').hidden = true; } catch (_) {} _favPaint(); _favLoad(); // #842: sin parpadeo de Top juegos
             if (dots) dots.innerHTML = '';
             const pause = () => { _slPausedUntil = Date.now() + 5000; };
             ['touchstart', 'pointerdown', 'wheel'].forEach((ev) => tr.addEventListener(ev, pause, { passive: true }));
@@ -1011,12 +1011,17 @@
         const box = _el('evFavs');
         if (box) {
             const list = _favs || [];
-            box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos</span><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button></div>' +
-                (list.length
+            // #842 (owner): arriba "elegí tus favoritos" + botón Agregar; de entrada vienen 10 (los elige el server) y se editan desde acá.
+            box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos<small class="fav-sub">Elegí tus favoritos · tocá ★ para sacar uno</small></span><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button></div>' +
+                (_favs === null ? '<div class="fav-loading">Cargando tus juegos…</div>' : list.length
                     ? '<div class="fav-row">' + list.map((f) => '<div class="fav-card" role="button" onclick="VIP.home.favPlay(\'' + _esc(f.key) + '\')"><img src="' + _esc(_favImg(f)) + '" alt="' + _esc(f.name) + '" loading="lazy" decoding="async" draggable="false"><b>' + _esc(f.name) + '</b><button type="button" class="fav-star on" onclick="event.stopPropagation();VIP.home.favToggle(\'' + _esc(f.key) + '\')" aria-label="Sacar de favoritos">★</button></div>').join('') + '</div>'
                     : '<button type="button" class="fav-empty" onclick="VIP.home.favOpenPicker()"><b>⭐ Agregá tus juegos favoritos para que aparezcan acá</b><small>Tocá la ☆ de cualquier juego o buscalos en Girox · entrás directo con un toque</small><span>⭐ Agregar mis juegos favoritos ›</span></button>');
         }
         document.querySelectorAll('.fav-star[data-k]').forEach((b) => { const on = _favHas(b.dataset.k); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; });
+        // #842 (owner): "eliminá la lista de abajo" ⇒ los Top juegos ya no se muestran: quedan sólo los favoritos (10 de entrada).
+        const tr = _el('entrySlidesTrack'), hd = _el('evGamesH');
+        if (tr && tr.classList.contains('games')) tr.hidden = true;
+        if (hd) hd.hidden = true;
     }
     async function _favSet(g, on) {
         const tok = VIP.state && VIP.state.currentToken; if (!tok) return;

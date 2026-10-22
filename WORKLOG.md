@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 842. ⭐ Inicio: SÓLO "Mis juegos favoritos" (10 de entrada, editables) — sin la lista de Top juegos — SW v574
+**Pedido (owner, captura):** "si agrega juegos, que desaparezcan los preseleccionados" + "dejalo así como favoritos y elegí 10 de los más
+jugados: Joker, Sweet Bonanza, Ezugi en vivo y otros; eliminá la lista de abajo; si quieren editar, que saquen desde ahí eligiendo; arriba el
+detalle de elegí tu favorito y el botón de agregar está perfecto".
+- `DEFAULT_FAV_GAMES` (server.js): Joker's Jewels, Sweet Bonanza 2500, Ezugi en vivo (`7/1630_ifg`, foto del catálogo), Gates of Olympus 1000,
+  Sugar Rush 1000, Joker's Jewels Hold & Spin, Mines, Zeus Rush Fever Deluxe, Big Bass Bonanza, Starlight Princess 1000. Los ve quien no editó
+  (`User.favoriteGamesCustom` false); el PRIMER cambio copia esos 10 a su cuenta y sigue sobre esa lista (sacar uno de entrada funciona).
+- La fila "🔥 Top juegos" ya no se muestra (queda oculta; `ENTRY_GAMES`/`GAME_PLAY` siguen para `playGame`). Encabezado "⭐ Mis juegos
+  favoritos · Elegí tus favoritos · tocá ★ para sacar uno" + "＋ Agregar" (buscador #840).
+
 ### 840. ⭐ JUEGOS FAVORITOS en el Inicio con buscador y link directo — SW v573
 **Pedido (owner):** "que los juegos favoritos de Girox aparezcan en el Inicio con el link directo al juego; si no eligió, los de siempre; un
 botón para agregar sus juegos" + "con un buscador: que aparezcan los juegos buscando y sólo los favoritos, para no mostrar toda la página".

@@ -2498,3 +2498,7 @@ body.fewdep .casino-load .cl-btn.cl-attach { animation-name: fgPulseIn !importan
 .ev-game { position: relative; }
 @media (max-width: 340px) { .fav-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fav-card { flex-basis: 100px; } }
 .fav-msg.fav-msg-h { padding: 4px 4px 8px; text-align: left; color: var(--p-text); font-size: 12.5px; } /* #840 */
+#entrySlidesTrack.games[hidden], #evGamesH[hidden] { display: none !important; } /* #841: con favoritos no se muestran los Top juegos */
+.ev-favs .fav-h span { display: flex; flex-direction: column; } .ev-favs .fav-sub { font: 600 11px var(--p-font); color: var(--p-muted); margin-top: 1px; } /* #842 */
+.fav-loading { padding: 18px 8px; text-align: center; font: 700 12.5px var(--p-font); color: var(--p-muted); }
+.fav-card { flex-basis: 34%; max-width: 150px; } @media (min-width: 480px) { .fav-card { flex-basis: 24%; } }
