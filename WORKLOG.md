@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-18
 
+### 804. 💬 Entrar a Soporte ya no crea la charla en el panel
+**Pedido (owner, captura del panel):** "cuando la gente entra a Soporte, si no aprieta ningún botón que no vaya a Soporte el mensaje;
+recién cuando aprieta un botón sí". La app pedía `POST /api/messages/welcome` al abrir el chat y eso creaba un mensaje de sistema
+("¡Hola! Ya te respondemos en breve…") ⇒ la charla aparecía en la columna Soporte sin que el cliente hiciera nada. Ahora la ruta
+responde `skipped` (flag `SUPPORT_WELCOME_ON_OPEN=1` para volver atrás): la conversación nace con el primer botón de tema o mensaje del
+cliente, que ya recibe su respuesta automática del tema. La presentación del soporte sigue viéndose (la pinta la app).
+
 ### 803. ↩️ Transferencia menor al mínimo: devolución AUTOMÁTICA + aviso + "Rebotada" en Cargas pendientes
 **Pedido (owner):** "cuando se rechaza un pago por no llegar al mínimo, no se carga y se le devuelve la plata al cliente con el aviso de
 que la carga mínima es de $5.000, de forma automática; notificalo donde siempre como rechazado / pago rebotado". En el chequeo de mínimo

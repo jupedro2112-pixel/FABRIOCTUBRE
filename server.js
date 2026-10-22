@@ -7157,6 +7157,11 @@ app.post('/api/messages/welcome', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
     const username = req.user.username || 'Usuario';
+    // #804 (owner, captura del panel con "¡Hola! Ya te respondemos en breve…" de un cliente que no tocó nada): entrar a Soporte NO
+    // manda mensaje ni crea la charla en el panel. La conversación aparece recién cuando el cliente toca un botón de tema o escribe
+    // (ahí responde la auto-respuesta del tema, #784). La presentación del soporte la pinta la app localmente (#supportIntro).
+    // SUPPORT_WELCOME_ON_OPEN=1 vuelve al comportamiento viejo.
+    if (process.env.SUPPORT_WELCOME_ON_OPEN !== '1') return res.json({ success: true, skipped: true });
 
     // Throttle: ¿ya hubo bienvenida en las últimas 24h?
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
