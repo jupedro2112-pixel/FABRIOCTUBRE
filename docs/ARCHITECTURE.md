@@ -1198,6 +1198,9 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
   por-instancia.
 - **USERS_LIST_FIELDS** (`GET /api/admin/users`) y la proyección de
   `AUTH_USER_FIELDS` (authMiddleware): campo nuevo consumido ⇒ sumarlo al select.
+- **#829 — UN error en un js de la PWA tumba TODA la app:** se sirven concatenados en un solo `/js/bundle.js`, así que un throw al cargar
+  (ej. `VIP.ui.x = …` DENTRO del IIFE que define `VIP.ui`, cuando todavía es undefined) corta todo lo que viene después (app.js incluido:
+  queda colgado "Entrando a tu cuenta…"). Exportar siempre en el `return` del módulo.
 - **onclick inline** en panel y PWA dependen de `window.*` — no renombrar exports sin
   actualizar los strings. En `renderUsers` las comillas SIMPLES del onclick con JSON
   son a propósito.

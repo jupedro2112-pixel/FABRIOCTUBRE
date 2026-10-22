@@ -769,7 +769,6 @@ VIP.ui = (function () {
             (pw ? '' : '<p style="margin:6px 0 0;font-size:11.5px;color:var(--p-muted,#777)">¿No la recordás? Cambiala ahora en Perfil → 🔑 Clave antes de instalar.</p>') +
             '</div>';
     }
-    VIP.ui.installCredsHtml = installCredsHtml;
     function showInstalledReminder() {
         const box = installCredsHtml(); if (!box) return;
         // Si ya hay un aviso de instalación abierto (Android: "Un paso más"), se suma ahí en vez de abrir otro encima.
@@ -781,7 +780,6 @@ VIP.ui = (function () {
             '<button onclick="this.closest(\'.ios-install-modal\').remove()" class="btn btn-primary" style="margin-top:15px;">Entendido</button></div>';
         document.body.appendChild(modal);
     }
-    VIP.ui.showInstalledReminder = showInstalledReminder;
 
     function showInstallInstructions(platform) {
         try { if (VIP.home && VIP.home.installManifestSync) VIP.home.installManifestSync(); } catch (_) {} // #826: token fresco antes de "Agregar a inicio"
@@ -939,7 +937,8 @@ VIP.ui = (function () {
         installApp,
         showInstallInstructions,
         isAppInstalled,
-        isAppStandalone
+        isAppStandalone,
+        installCredsHtml, showInstalledReminder // #829: exportados en el return (asignarlos a VIP.ui DENTRO de este IIFE tiraba error: VIP.ui aún no existe y frenaba TODO el bundle)
     };
 
 })();

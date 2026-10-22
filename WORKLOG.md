@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 829. 🚨 FIX: la app no cargaba ("Entrando a tu cuenta…" colgado tras crear usuario en la landing) — SW v568
+**Pedido (owner):** "no me funciona la página /landing, creo usuarios y queda cargando; de la última actualización a la anterior se rompió algo".
+Causa (#826): en `ui.js` se hacía `VIP.ui.installCredsHtml = …` / `VIP.ui.showInstalledReminder = …` DENTRO del IIFE que crea `VIP.ui`
+(todavía undefined) ⇒ TypeError que, al ir todo en UN solo `bundle.js`, cortaba el resto del bundle: nunca corría app.js, no se canjeaba el
+`?acceso=` y el cartel quedaba para siempre. Afectaba a TODA la app (no sólo la landing).
+- Las dos funciones ahora se exportan en el `return` de `VIP.ui`.
+- `app.js`: si el link de acceso no se puede canjear (usado, 429 del authLimiter, red) y no hay sesión ⇒ `showLoginScreen()` (saca el cartel).
+- ⚠️ Trampa: NUNCA asignar `VIP.<mod>.x = …` dentro del IIFE que define `VIP.<mod> = (function(){…})()`; exportar en el return.
+  Verificado cargando los 25 js de index.html en orden en un DOM simulado (antes: error en ui.js; después: OK).
+
 ### 828. 🗑️ Historias automáticas: se puede BORRAR una — admin SW v161
 **Pedido (owner):** "el cronograma de historias siempre automático, pero que si quiero borrar una porque la veo mal se pueda". Botón 🗑️ Borrar
 en cada historia del día/próximos días (Cronograma → Historias automáticas). `POST /api/admin/stories-autopilot/remove {day, slot}`: publicada ⇒

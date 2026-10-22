@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // login normal (incluido el recuadro obligatorio de crear contraseña).
     const _accessLinkPromise = (VIP.auth && VIP.auth.tryAccessLink)
         ? VIP.auth.tryAccessLink() : Promise.resolve(false);
+    // #829: si el link no se pudo canjear y no hay sesión, se saca el cartel "Entrando a tu cuenta…" y queda el login (antes quedaba colgado).
+    const _accessFailed = () => { try { if (document.documentElement.classList.contains('access-pending')) VIP.ui.showLoginScreen(); } catch (_) {} };
     _accessLinkPromise.then((viaLink) => {
-        if (viaLink || VIP.state.currentToken) VIP.auth.verifyToken();
+        if (viaLink || VIP.state.currentToken) VIP.auth.verifyToken(); else _accessFailed();
     }).catch(() => {
-        if (VIP.state.currentToken) VIP.auth.verifyToken();
+        if (VIP.state.currentToken) VIP.auth.verifyToken(); else _accessFailed();
     });
     setupEventListeners();
 
