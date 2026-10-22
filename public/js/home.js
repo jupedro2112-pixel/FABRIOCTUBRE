@@ -1100,16 +1100,29 @@
         const path = GAME_PLAY[id]; if (!path) return; const name = ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1]) || 'Juego';
         const key = path.slice(6); _favSet({ key, name, img: '/images/games/' + id + '.jpg', provider: '' }, !_favHas(key));
     }
-    function favPlay(key) {
+    // #866 (owner: "que entre logueado al juego que se seleccionó" + "está lenta cuando entrás de favoritos"): el proveedor del juego no se deja
+    // mostrar dentro del recuadro (pantalla negra) ⇒ el juego se abre en PANTALLA COMPLETA (ventana propia), logueado y directo al slot:
+    // la ventana se abre YA en el toque (si no, el navegador la bloquea) y se le pone la dirección del juego cuando llega del server.
+    // Si 1girox no da el juego, se cierra esa ventana y se abre Girox logueado en el recuadro, como siempre.
+    async function favPlay(key) {
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
-        // #848: con el casino YA abierto (sesión iniciada) se va directo al juego, sin otro login.
-        try { if (VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/play/' + key)) { favClosePicker(); return; } } catch (_) {} // #854
-        try { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = (f && f.name) || ''; } catch (_) {} // #857: el nombre ayuda al server a encontrar el juego
-        try { VIP.ui.showToast('🎰 Abriendo ' + ((f && f.name) || 'el juego') + '…', 'info'); } catch (_) {}
+        const name = (f && f.name) || 'el juego';
         favClosePicker();
-        // #857: con Girox ya abierto se cierra y se vuelve a abrir con el juego pedido (el server lo lanza directo).
-        let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 400; } } catch (_) {}
-        setTimeout(() => { try { if (key) { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = (f && f.name) || ''; } } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
+        let win = null; try { win = window.open('about:blank', '_blank'); } catch (_) { win = null; }
+        try { if (win && win.document) { win.document.title = name; win.document.body.style.cssText = 'margin:0;background:#0b0b10;color:#fff;font:700 16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh'; win.document.body.textContent = '🎰 Abriendo ' + name + '…'; } } catch (_) {}
+        try { VIP.ui.showToast('🎰 Abriendo ' + name + '…', 'info'); } catch (_) {}
+        let url = null;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: '/play/' + key, gameName: name, direct: true }) });
+            const d = await r.json().catch(() => ({}));
+            if (r.ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
+        } catch (_) {}
+        if (url && win && !win.closed) { try { win.location.href = url; return; } catch (_) {} }
+        if (url && !win) { try { location.href = url; return; } catch (_) {} } // sin ventanas (algunas apps instaladas): en la misma pantalla
+        try { if (win && !win.closed) win.close(); } catch (_) {}
+        // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
+        let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
+        setTimeout(() => { try { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
     }
     // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
     let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;

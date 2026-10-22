@@ -6241,7 +6241,8 @@ async function platformSessionHandler(req, res) {
       // #863 (owner: "abre pero pantalla negra"): el `launch_url` del proveedor NO se deja mostrar dentro de otra página que no sea la de 1girox
       // ⇒ el juego directo queda APAGADO: el favorito abre Girox LOGUEADO (un solo ingreso, como el registro) + aviso "buscá X con la lupa".
       // `GIROX_DIRECT_GAME=1` lo vuelve a probar.
-      const mm = process.env.GIROX_DIRECT_GAME === '1' ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
+      // #866: la app pide el juego directo (`direct:true`) para abrirlo en PANTALLA COMPLETA (fuera del recuadro, donde el proveedor sí se ve).
+      const mm = (process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true)) ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
       if (!mm && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
       if (mm) {
         _gameStep = 'canje';

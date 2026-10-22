@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 866. 🎰 Favoritos: el juego elegido en PANTALLA COMPLETA, logueado — SW v588
+**Pedido (owner):** "ajustá la velocidad, está lenta cuando entrás de favoritos; que entre logueado al juego que se seleccionó".
+- `favPlay`: abre una ventana YA en el toque (si no, el navegador la bloquea), pide `/api/platform/session` con `direct:true` y, si el server
+  devuelve `directGame` (`launch_url` del proveedor, #857), lleva esa ventana al juego: logueado y directo al slot (fuera del recuadro, donde el
+  proveedor sí se deja ver; adentro daba pantalla negra). Sin ventanas posibles ⇒ misma pantalla. Si 1girox no da el juego ⇒ se cierra la
+  ventana y abre Girox logueado en el recuadro (ingreso nuevo = el último) + aviso de la lupa.
+- Server: el juego directo se intenta cuando la app lo pide (`direct:true`) o con `GIROX_DIRECT_GAME=1`.
+- Velocidad: el camino normal ya no espera nada (un solo ingreso, sin saltos); en Render el servidor de prueba es más lento que AWS.
+
 ### 865. 📱 "Ajustá la pantalla a tu teléfono" (modelo con buscador) + Info sin lo borroso — SW v587
 **Pedido (owner):** "en iPhone en la app se corta la parte de arriba: que se pueda ajustar o elegir el modelo como opción cuando abrís la app, con
 buscador, para que la pantalla se ajuste al teléfono; en Info sacá la parte que se ve medio borrosa; lo de ajustar teléfono dejalo abajo del saldo".
