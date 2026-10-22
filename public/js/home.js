@@ -324,6 +324,8 @@
     // #626 (owner): el aviso de PRIMERA CARGA (+pct% · +pctApp% con la app) va RESUMIDO adentro de cada lugar donde se adjunta el
     // comprobante (básico, inicio completo, carga rápida del casino), sólo mientras no hizo la primera carga. Antes era una franja arriba (#608).
     let _fdJ = null;
+    const _FD_NOTE_INNER = (pct, extra) => '<span class="fd-l1">🎁 <b>Primera carga: +<span class="fd-pct">' + pct + '%</span> automático</b></span>' +
+        '<span class="fd-app"' + (extra ? '' : ' hidden') + '>📲 Después, <b>+<span class="fd-pct-app">' + extra + '%</span> EXTRA</b> instalando la app y activando las notificaciones</span>';
     function _fdNotesPaint() {
         _fdPromoLoad().then((j) => {
             _fdJ = j || null;
@@ -332,7 +334,7 @@
             document.querySelectorAll('.fd-note').forEach((el) => {
                 el.hidden = !show; if (!show) return;
                 el.querySelectorAll('.fd-pct').forEach((x) => { x.textContent = j.pct + '%'; });
-                el.querySelectorAll('.fd-pct-app').forEach((x) => { x.textContent = (Number(j.pct) + extra) + '%'; });
+                el.querySelectorAll('.fd-pct-app').forEach((x) => { x.textContent = extra + '%'; }); // #839: el EXTRA, no la suma
                 el.querySelectorAll('.fd-app').forEach((x) => { x.hidden = !extra; });
             });
         }).catch(() => {});
@@ -355,7 +357,9 @@
     function _fdNoteHtml() {
         const j = _fdJ; if (!(j && j.show && Number(j.pct) > 0)) return '<p class="fd-note" hidden></p>';
         const extra = Number(j.extra) > 0 ? Number(j.extra) : 0;
-        return '<p class="fd-note">🎁 <b>Primera carga: +<span class="fd-pct">' + j.pct + '%</span></b>' + (extra ? '<span class="fd-app"> · +<span class="fd-pct-app">' + (Number(j.pct) + extra) + '%</span> si instalás la app</span>' : '') + '<small>Elegís cuál al terminar la carga.</small></p>';
+        // #839 (owner): "no es 150% si instalás: es 100% por la primera carga y el 50% EXTRA después de la carga, instalando la app y activando
+        // las notificaciones (que exija esos 2 pasos)". Dos líneas claras; nunca la suma.
+        return '<p class="fd-note">' + _FD_NOTE_INNER(j.pct, extra) + '</p>';
     }
     async function maybeFirstDepositPopup() {
         if (_fdShown) return; try { if (sessionStorage.getItem('vip_fd_seen')) return; } catch (_) {}
@@ -365,7 +369,7 @@
             const j = await _fdPromoLoad();
             if (!j || !j.show) return;
             const p = _el('fdPct'), pa = _el('fdPctApp'), ap = _el('fdApp'), tx = _el('fdTxt');
-            if (p) p.textContent = j.pct + '%'; if (pa) pa.textContent = j.pctApp + '%'; if (ap) ap.style.display = j.installGiftEnabled ? '' : 'none'; if (tx) tx.textContent = j.text || '';
+            if (p) p.textContent = j.pct + '%'; if (pa) pa.textContent = '+' + (Number(j.extra) || 0) + '% EXTRA'; // #839 if (ap) ap.style.display = j.installGiftEnabled ? '' : 'none'; if (tx) tx.textContent = j.text || '';
             try { sessionStorage.setItem('vip_fd_seen', '1'); } catch (_) {}
             VIP.ui.showModal('fdModal');
         } catch (_) {}
@@ -1340,14 +1344,17 @@
     // #722: botón de instalar dentro de la Carga rápida (abajo de "Ir a Soporte"), sólo sin app instalada: con extra pendiente muestra el
     // monto; si todavía no cargó, el % extra de la primera carga. Si ya cargó y no hay extra pendiente, no se muestra.
     function _igQuickBtnHtml() {
-        if (_isStandalone()) return '';
         // #726/#731 (owner): instalar vive en la barra de la base; acá SÓLO el recordatorio del extra PENDIENTE (eligió "lo cargo después").
+        // #839 (owner): "que le quede pendiente el instalar la app y la plata pendiente para reclamar": se ve SIEMPRE mientras esté pendiente;
+        // en el navegador = instalar + activar notificaciones; ya en la app instalada = botón para cobrarlo.
         if (!_igPending()) return '';
         const pct = _igPct(_ig);
-        return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.installGiftOpen()">🎁 Pendiente: <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ' de tu última carga)' : '') + ' por instalar la app · <u>Instalar</u></button>';
+        if (_isStandalone()) return '<button type="button" class="cl-btn cl-ig cl-ig-claim" onclick="VIP.home.installGiftClaim()">🎁 Cobrar mi extra pendiente: <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ')' : '') + '</button>';
+        return '<button type="button" class="cl-btn cl-ig" onclick="VIP.home.installGiftOpen()">🎁 Pendiente: <b>+' + _igFmt(_ig.amount) + '</b>' + (pct ? ' (' + pct + ' de tu carga)' : '') + ' · instalá la app y activá las notificaciones · <u>Instalar</u></button>';
     }
     function _igPaintBar() {
         try { _igPaintCasinoBar(); } catch (_) {} // #719
+        try { if (_quickOpen) toggleCasinoLoad(true); } catch (_) {} // #839: la Carga rápida abierta muestra al toque el extra pendiente
         const bar = _el('installGiftBar'); if (!bar) return;
         const pending = _igPending();
         // #731 (owner): "en el completo y básico en la parte superior": en el básico el botón se mueve al tope de #basicView; en el resto
@@ -2112,6 +2119,7 @@
         const qb = _el('casinoQuickBtn'); if (qb) qb.style.display = 'none';
         toggleCasinoLoad(true);
     }
+    let _cqCbuTries = 0;
     function toggleCasinoLoad(force) {
         const ov = _el('casinoOverlay'); if (!ov) return;
         let p = _el('casinoLoadPanel');
@@ -2131,7 +2139,7 @@
         p.innerHTML =
             // #711 (owner): "–" minimiza (queda sólo el logo de PICA ROJA como burbuja movible); "✕" cierra y la burbuja vuelve a logo + texto.
             '<div class="cl-head"><span>💳 Carga rápida</span><button type="button" class="cl-close" onclick="VIP.home.casinoQuickClose()" title="Cerrar">✕</button></div>' + // #723: sólo ✕
-            (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : '<div class="cl-meta">cargando datos…</div>') +
+            (cbu ? row('Alias', cbu.alias) + row('CBU', cbu.number) + row('Titular', cbu.titular) : (_cqCbuTries >= 3 ? '<div class="cl-meta">No pudimos traer los datos de la cuenta. Tocá "Ir a Soporte" y te los pasamos.</div>' : '<div class="cl-meta">cargando datos…</div>')) +
             // (#631: si los datos todavía no llegaron, se vuelve a pintar en 1,5 s)
             _fdNoteHtml() + // #626
             // #684 (owner): carga mínima clara también acá
@@ -2145,7 +2153,9 @@
             _igQuickBtnHtml(); // #722 (owner): "instalar después" vive acá, abajo de Soporte
         p.style.display = '';
         _fdNotesPaint();
-        if (!cbu) setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, 1500); // #631
+        // #839: sin datos ⇒ se PIDEN (antes sólo se re-pintaba esperando que otra pantalla los cargara); hasta 3 intentos.
+        if (!cbu && _cqCbuTries < 3) { _cqCbuTries++; Promise.resolve(VIP.autoload && VIP.autoload.ensureCbu ? VIP.autoload.ensureCbu() : null).then((c) => setTimeout(() => { if (_quickOpen) toggleCasinoLoad(true); }, c ? 0 : 1500)).catch(() => {}); }
+        if (cbu) _cqCbuTries = 0;
     }
     // ---------------- CASINO: barra superior con las plataformas (#222) ----------------
     // El owner: "cuando entra, en una barra superior que diga 'elegí cuál plataforma jugar',

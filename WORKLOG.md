@@ -8,6 +8,27 @@
 
 ## Sesión 2026-10-22
 
+### 839. 🎁 El bono de la carga LLEGA de verdad + textos "100% · después +50% instalando la app y activando notificaciones" — SW v572
+**Pedido (owner, capturas):** "el bono está mal: la app dice $15.000 instalando la app y en el panel de Girox figura sólo una carga de $10.000;
+que funcione y cargue el bono de forma real" + "no es 150% si instalás: es 100% por la primera carga y el 50% EXTRA después de su carga
+por instalar la app y activar notificaciones, que exija esos 2 pasos" + "acomodá la Carga rápida y dejá ahí el pendiente de instalar la app".
+- **`_depositWithBonus(adapter, …, bonus)`** (server.js; la usan la carga automática hgcash y `_agentDepositHandler`): bono adjunto como
+  siempre; si 1girox rechaza la carga POR EL BONO (422 `bonus_out_of_range`: el 100% sin tope de la 1ª carga puede pasar `bonus.fixed_max`)
+  se repite SIN bono con la misma reference y `no_bonus:true` (antes FALLABA LA CARGA ENTERA); si la carga entró y el bono no (rechazo o
+  `bonus.status:'failed'`), el bono va APARTE por `creditGift` (rollover de siempre, ref `<ref>-bono`). Antes el bono se perdía en silencio.
+  `giroxService.depositToUser` acepta `wagering.noBonus`. Probado con plataforma simulada (ok / tope / bono fallido / caída / sin bono).
+- **Primera carga sin bono por anti-estafa** (cuenta con `fraudFlags`, p. ej. CBU ya usado por otra cuenta — típico al probar con cuentas
+  propias): ahora deja nota interna en el chat "⚠️ PRIMERA CARGA SIN BONO DE BIENVENIDA: motivo" (antes no había rastro visible).
+- **Textos:** la nota de primera carga (Carga rápida, básico, completo) y el cartel de entrada dicen "🎁 Primera carga: +100% automático" y
+  "📲 Después, +50% EXTRA instalando la app y activando las notificaciones" (antes "+150% si instalás la app · Elegís cuál al terminar").
+  `/sys_first_deposit_popup` nuevo default (migración `mig839FdPopup` si seguía el viejo). El cobro del 50% ya exigía app instalada + token
+  de notificaciones (`_rouletteHasAppInstalled` = token FCM standalone); la app pide el permiso si falta.
+- **Carga rápida:** pide sola los datos de la cuenta (`VIP.autoload.ensureCbu`; en Girox directo quedaba "cargando datos…" para siempre;
+  tras 3 intentos fallidos manda a Soporte); el botón Adjuntar late sin salirse del recuadro; el extra PENDIENTE se ve siempre (navegador:
+  "instalá la app y activá las notificaciones · Instalar"; app instalada: "Cobrar mi extra pendiente") y se repinta al posponerlo.
+- El "$15.000" de la captura no sale de la configuración actual (extra 50% con tope $20.000 ⇒ máx. $10.000): pedirle al owner la captura
+  exacta si vuelve a aparecer.
+
 ### 838. 💸 Tilde "Pagar solos los menores al umbral" = TODO manual (también los reintentos)
 **Pedido (owner):** "lo de los $100.000: si le saco el tilde desde el admin, que sea todo manual, o como esté configurado". Ya existía
 (Panel → Confirmación de pagos: Umbral $ + "Pagar solos los menores al umbral"): sin el tilde `needsReview` = siempre. Hueco cerrado:

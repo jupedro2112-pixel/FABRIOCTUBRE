@@ -2456,3 +2456,13 @@ html.scr-xs .casino-topbar .casino-back { padding: 5px 7px !important; }
 html.scr-xs .casino-topbar .tn-btn .tn-lbl { display: none !important; }                        /* ≤340 px: sólo íconos */
 /* Botones de prueba (testers): en el casino abajo a la izquierda, sin tapar la barra */
 body.casino-open .test-btns { top: auto !important; bottom: calc(90px + var(--sab, 0px)) !important; }
+
+/* #839: nota de PRIMERA CARGA en dos líneas (100% automático · después +50% EXTRA instalando la app y activando notificaciones) */
+.fd-note .fd-l1, .fd-note .fd-app { flex: 1 0 100%; }
+.fd-note .fd-app { font-weight: 700; color: var(--p-text); }
+.fd-note .fd-app b { color: var(--p-red); }
+/* #839: en la Carga rápida el botón late sin salirse del recuadro (antes scale 1.035 lo sacaba del borde) */
+@keyframes fgPulseIn { 0%, 100% { transform: scale(1); } 60% { transform: scale(1.012); } }
+.casino-load .cl-btn { max-width: 100%; box-sizing: border-box; }
+body.fewdep .casino-load .cl-btn.cl-attach { animation-name: fgPulseIn !important; }
+.casino-load .cl-btn.cl-ig.cl-ig-claim { background: var(--p-load) !important; color: #fff !important; border: 0 !important; }

@@ -1201,6 +1201,8 @@ El backfill de `usernameLower` corre en CADA arranque (idempotente) y setea
 - **#831 — entrar logueado tras el registro:** `/api/auth/access-link` tiene 30 min de gracia para links de landing/instalación
   (`accessLinkGraceHash`); la PWA reintenta el canje y `verifyToken` (nunca borrar `userToken` por un corte: sólo con 401/403) y, si
   todo falla, `_loginWithSignupCreds` usa `sessionStorage.vip_signup_creds` que deja la landing del mismo dominio.
+- **#839 — carga con bono:** usar SIEMPRE `_depositWithBonus` (nunca `depositToUser` con bonusAmount directo): maneja el 422 por el bono
+  (repite sin bono con `no_bonus`) y el bono fallido (lo acredita aparte con `creditGift`).
 - **#837 — OTP:** un `purpose` nuevo de `generateAndSendOTP` va también al enum de `src/models/OtpCode.js` (si no, ValidationError ⇒ 500 sin SMS).
 - **#829 — UN error en un js de la PWA tumba TODA la app:** se sirven concatenados en un solo `/js/bundle.js`, así que un throw al cargar
   (ej. `VIP.ui.x = …` DENTRO del IIFE que define `VIP.ui`, cuando todavía es undefined) corta todo lo que viene después (app.js incluido:

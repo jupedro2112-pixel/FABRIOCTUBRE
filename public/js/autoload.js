@@ -242,5 +242,13 @@
     try { getPassword(); } catch (_) {}
 
     function getCbu() { return _cbu; }
-    VIP.autoload = { init, refresh, getCbu, togglePassword, saveManualPassword, copy, sendReceipt, saveCapture, hidePreview, rememberPassword, forgetPassword, getPassword, appLink };
+    // #839: la Carga rápida del casino (Girox directo) pide los datos SOLA; antes esperaba a que el Inicio completo los cargara y en
+    // Girox directo quedaba "cargando datos…" para siempre.
+    function ensureCbu() {
+        if (_cbu) return Promise.resolve(_cbu);
+        if (!VIP.state || !VIP.state.currentToken) return Promise.resolve(null);
+        if (!_loading) _loading = _loadCbu().finally(() => { _loading = null; });
+        return _loading.then((c) => { if (c) _cbu = c; return _cbu; });
+    }
+    VIP.autoload = { init, refresh, getCbu, ensureCbu, togglePassword, saveManualPassword, copy, sendReceipt, saveCapture, hidePreview, rememberPassword, forgetPassword, getPassword, appLink };
 })();

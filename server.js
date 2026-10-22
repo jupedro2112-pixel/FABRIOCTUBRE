@@ -2784,6 +2784,39 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
 // Multiplicador del bono adjunto a la carga, según la plataforma. Para girox sale
 // de su GET /config (getGiroxBonusMultiplier); otras plataformas: 0 hasta que su
 // adaptador exponga algo mejor (el adaptador ignora `wagering` si no lo soporta).
+// #839 (owner: "el bono está mal: en Girox figura sólo la carga; que funcione y cargue el bono de forma real"). Carga + bono en UNA
+// función para la carga automática y la manual:
+//  1) Va como siempre (bono adjunto a la carga, mismo `reference`).
+//  2) Si 1girox rechaza la carga POR EL BONO (422 bonus_out_of_range: el 100% sin tope de la 1ª carga puede pasar `bonus.fixed_max`), se
+//     repite la carga SIN bono con la MISMA reference (en un 422 la plataforma no movió plata) y `no_bonus` (que no herede reglas del panel):
+//     antes la carga entera fallaba y el cliente que transfirió se quedaba sin fichas.
+//  3) Si la carga entró pero el bono no (rechazo o `bonus.status:'failed'`), el bono se acredita APARTE con `creditGift` y el rollover de la
+//     carga (reference `<ref>-bono`, idempotente): llega como Bono o, si la plataforma no lo deja, como carga con rollover. Antes se perdía.
+//  Devuelve el resultado de la carga + `bonusFailed` (sólo si NO llegó por ningún camino) y `bonusVia` ('attached' | 'separate').
+async function _depositWithBonus(adapter, username, amount, description, reference, bonusAmount) {
+  const bonus = Math.round(Number(bonusAmount) || 0);
+  if (!(bonus > 0)) return adapter.depositToUser(username, amount, description, reference, null);
+  const mult = await _bonusMultiplierFor(adapter);
+  let r = await adapter.depositToUser(username, amount, description, reference, { bonusAmount: bonus, bonusMultiplier: mult });
+  let needSeparate = false;
+  if (!r.success && (r.code === 'bonus_out_of_range' || (r.httpStatus === 422 && /bon(o|us)/i.test(String(r.error || ''))))) {
+    logger.warn(`[auto-bonus] ${username}: 1girox rechazó la carga por el bono $${bonus} (${r.code || r.error}) ⇒ carga sin bono + bono aparte`);
+    r = await adapter.depositToUser(username, amount, description, reference, { noBonus: true });
+    needSeparate = !!r.success;
+  } else if (r.success && r.bonusFailed) needSeparate = true;
+  if (r.success && !needSeparate) { r.bonusVia = 'attached'; return r; }
+  if (needSeparate) {
+    r.bonusFailed = true;
+    if (typeof adapter.creditGift === 'function') {
+      try {
+        const g = await adapter.creditGift(username, bonus, { description: `Bono de la carga de $${Number(amount).toLocaleString('es-AR')}`, reference: `${reference}-bono`, rolloverX: mult });
+        if (g && g.success) { r.bonusFailed = false; r.bonusVia = 'separate'; r.bonusCreditedAs = g.creditedAs || null; logger.info(`[auto-bonus] ${username}: bono $${bonus} acreditado APARTE (${g.creditedAs || 'ok'})`); }
+        else logger.error(`[auto-bonus] ${username}: el bono $${bonus} tampoco entró aparte: ${g && g.error}`);
+      } catch (e) { logger.error(`[auto-bonus] ${username}: bono aparte excepción: ${e.message}`); }
+    }
+  }
+  return r;
+}
 async function _bonusMultiplierFor(adapter) {
   if (!adapter || adapter.id === 'girox' || adapter === girox) return getGiroxBonusMultiplier();
   return 0;
@@ -3034,8 +3067,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     // BONO AUTOMÁTICO (#210): el bono en % pendiente entra junto con la carga.
     const _reuse = await _cbuReuseCheck(user, movement); // #509
     const _auto = await resolveAutoBonus(user, Number(amount), 'auto-hgcash', { noWelcome: !!_reuse });
-    const result = await adapter.depositToUser(user.username, Number(amount), 'Carga automática (hgcash)', _ref,
-      _auto.bonus > 0 ? { bonusAmount: _auto.bonus, bonusMultiplier: await _bonusMultiplierFor(adapter) } : null);
+    const result = await _depositWithBonus(adapter, user.username, Number(amount), 'Carga automática (hgcash)', _ref, _auto.bonus); // #839
     if (!result.success) {
       if (_auto.claimed) await _auto.revert();
       if (chargeLocked) { try { await HgcashCharge.deleteOne({ chargeKey }); } catch (_) {} }
@@ -10272,12 +10304,9 @@ async function _agentDepositHandler(req, res, body) {
     const bonusRequested = _effectiveBonus > 0;
     const _depTxId = uuidv4();
     // bonusMultiplier OBLIGATORIO cuando va bonus_amount (lo exige la API).
-    const result = await _adapter.depositToUser(
-      user.username, parseFloat(amount), description, (body && body._reference) || `vip-dep-${_depTxId}`, // #820: confirm de un comprobante con movimiento ⇒ misma reference que la carga automática
-      bonusRequested
-        ? { bonusAmount: _effectiveBonus, bonusMultiplier: await _bonusMultiplierFor(_adapter) }
-        : null
-    );
+    const result = await _depositWithBonus(_adapter, user.username, parseFloat(amount), description,
+      (body && body._reference) || `vip-dep-${_depTxId}`, // #820: confirm de un comprobante con movimiento ⇒ misma reference que la carga automática
+      bonusRequested ? _effectiveBonus : 0); // #839: si el bono no entra pegado a la carga, va aparte
     // Si la carga (o el bono adjunto) no entró, el bono pendiente vuelve a
     // estar disponible para la próxima carga.
     if (_auto.claimed && (!result.success || result.bonusFailed)) await _auto.revert();
@@ -12509,6 +12538,7 @@ async function initializeData() {
   // historias automáticas publica las del día (los horarios ya pasados de hoy salen enseguida).
   try { if (!(await getConfig('mig827StoriesReset', null))) { const r = await Story.deleteMany({ autoKey: { $in: [null, undefined] } }); await Config.set('mig827StoriesReset', new Date().toISOString(), 'mig#827'); console.log(`✅ #827: ${r.deletedCount || 0} historias viejas borradas (arrancan las automáticas)`); } } catch (e) { console.warn('[startup-migration] #827:', e.message); }
   // #825: el texto del pedido de reenvío pasa a listar los datos (titular, CUIT, fecha y hora, monto…) si seguía el de #808 sin editar.
+  try { if (!(await getConfig('mig839FdPopup', null))) { await Command.updateOne({ name: '/sys_first_deposit_popup', response: FIRST_DEPOSIT_POPUP_OLD }, { $set: { response: FIRST_DEPOSIT_POPUP_DEFAULT } }); await Config.set('mig839FdPopup', new Date().toISOString(), 'mig#839'); } } catch (e) { console.warn('[startup-migration] #839:', e.message); }
   try { if (!(await getConfig('mig825ReceiptText', null))) { await Command.updateOne({ name: '/sys_receipt_unreadable', response: RECEIPT_UNREADABLE_OLD_808 }, { $set: { response: RECEIPT_UNREADABLE_DEFAULT } }); await Config.set('mig825ReceiptText', new Date().toISOString(), 'mig#825'); } } catch (e) { console.warn('[startup-migration] #825:', e.message); }
   // #822 (owner 2026-10-22): "limpiá de soporte comunidad, dejá pagos, abiertos y cerrados": los chats que estaban en Comunidad vuelven a
   // Abiertos (si no, quedaban escondidos: la pestaña ya no existe).
@@ -14351,6 +14381,15 @@ async function resolveAutoBonus(user, amount, usedBy, opts = {}) {
   if (!blockWelcome) {
     const fp0 = await getFirstDepositBonusPct();
     if (fp0 > 0 && await _isFirstRealDeposit(user)) c = { pct: fp0, claimed: true, source: 'first_deposit', label: `bono de bienvenida de la primera carga (${fp0}%)`, revert: async () => {} };
+  } else {
+    // #839: que se SEPA por qué una primera carga entró sin el bono de bienvenida (antes no quedaba rastro visible para el agente).
+    try {
+      if ((await getFirstDepositBonusPct()) > 0 && await _isFirstRealDeposit(user)) {
+        const why = (Array.isArray(user.fraudFlags) && user.fraudFlags.length) ? `la cuenta está marcada por anti-estafa (${user.fraudFlags.join(', ')})` : 'cargó desde un CBU que ya usó otra cuenta';
+        _emitAdminOnlyChatNote(user.id, user.username, `⚠️ PRIMERA CARGA SIN BONO DE BIENVENIDA: ${why}. Si es un cliente legítimo, cargale el bono a mano desde Bonificación.`).catch(() => {});
+        logger.warn(`[auto-bonus] ${user.username}: primera carga sin bono de bienvenida — ${why}`);
+      }
+    } catch (_) {}
   }
   if (!c.claimed) c = await claimStoryBonusPercent(user, usedBy, amount); // #742: el bono de la historia manda (vence en horas)
   if (!c.claimed && !blockWelcome) c = await claimInstallBonusPercent(user, usedBy);
@@ -14608,13 +14647,16 @@ app.post('/api/install-bonus/claim', authMiddleware, async (req, res) => {
 // ============================================
 // #488 (owner): cartel al entrar "BONO DE PRIMERA CARGA: X% · Y% instalando la app" para quien todavía no hizo su primera carga real.
 // X = Config['firstDepositBonusPct']; Y = X + % extra por instalar (Config['installGift'], si está activo). Texto editable: /sys_first_deposit_popup.
+// #839 (owner): 100% automático en la 1ª carga y DESPUÉS +50% EXTRA instalando la app y activando las notificaciones (no "150% con la app").
+const FIRST_DEPOSIT_POPUP_OLD = 'Tu primera carga viene con {pct}% de regalo. Si la hacés desde la app instalada, {pctApp}%.';
+const FIRST_DEPOSIT_POPUP_DEFAULT = 'Tu primera carga lleva {pct}% de regalo automático. Después, instalando la app y activando las notificaciones, te sumamos +{extra}% EXTRA sobre esa carga.';
 app.get('/api/first-deposit-promo', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
     const n = await Transaction.countDocuments({ userId, type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } });
     const pct = await getFirstDepositBonusPct(); const ig = await getInstallGiftConfig();
     const extra = ig && ig.enabled ? (Number(ig.pct) || 0) : 0; const pctApp = pct + extra;
-    const text = await renderSystemCommand('/sys_first_deposit_popup', 'Tu primera carga viene con {pct}% de regalo. Si la hacés desde la app instalada, {pctApp}%.', { pct, pctApp, extra });
+    const text = await renderSystemCommand('/sys_first_deposit_popup', FIRST_DEPOSIT_POPUP_DEFAULT, { pct, pctApp, extra }); // #839
     res.set('Cache-Control', 'no-store');
     res.json({ show: n === 0 && pct > 0, noDeposits: n === 0, depositsCount: n, pct, pctApp, extra, installGiftEnabled: extra > 0, text }); // #675: noDeposits para la guía · #690: depositsCount (la franja de carga mínima se muestra hasta la 3ª carga)
   } catch (e) { res.json({ show: false }); }

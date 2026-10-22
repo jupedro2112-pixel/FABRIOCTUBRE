@@ -890,6 +890,7 @@ async function depositToUser(username, amount, description = '', reference = nul
     if (wagering.bonusPercent != null) body.bonus_percent = Number(wagering.bonusPercent);
     if (wagering.bonusAmount != null) body.bonus_amount = Number(wagering.bonusAmount);
     if (wagering.bonusMultiplier != null) body.bonus_multiplier = Number(wagering.bonusMultiplier);
+    if (wagering.noBonus) body.no_bonus = true; // #839: que la carga NO herede reglas automáticas de bono del panel de 1girox
   }
 
   let r = await _request({
