@@ -6241,9 +6241,10 @@ async function platformSessionHandler(req, res) {
       const mm = /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game);
       if (mm) {
         _gameStep = 'canje';
-        const s2 = await girox.createSession(user.username); // ingreso APARTE sólo para pedir el juego
-        const code = s2 && s2.success ? new URL(s2.redirectUrl).searchParams.get('code') : null;
-        if (!code) _gameStep = 'no se pudo pedir un segundo ingreso';
+        // #862: el ORDEN importa — cada /session nuevo ANULA el anterior (manual 2.7). Se canjea el ingreso que ya se pidió (para pedir el juego)
+        // y, si no sale directo, se pide UNO NUEVO al final para el recuadro: el último ingreso es siempre el que abre Girox (como el botón).
+        const code = new URL(session.redirectUrl).searchParams.get('code');
+        if (!code) _gameStep = 'sin código en el ingreso';
         else {
           const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 8000);
           let siteToken = null;
@@ -6269,7 +6270,12 @@ async function platformSessionHandler(req, res) {
             }
           }
         }
-        if (!_directGame) logger.warn(`[girox-sso] ${user.username} ${game}: sin juego directo (${_gameStep}) ⇒ Girox logueado con el ingreso normal`);
+        if (!_directGame) {
+          // El código de `session` ya se canjeó (o se intentó) ⇒ ingreso NUEVO para el recuadro = exactamente el del botón de Girox.
+          const fresh = await girox.createSession(user.username);
+          _redir = fresh && fresh.success && fresh.redirectUrl ? fresh.redirectUrl : session.redirectUrl;
+          logger.warn(`[girox-sso] ${user.username} ${game}: sin juego directo (${_gameStep}) ⇒ Girox logueado con un ingreso nuevo`);
+        }
       }
     } catch (e) { _directGame = false; _redir = session.redirectUrl; _gameStep = 'error: ' + String(e.message).slice(0, 60); }
     res.json({

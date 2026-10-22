@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 862. 🚨 FIX (de verdad) favoritos deslogueados: el SEGUNDO ingreso anulaba al primero — SW v585
+**Pedido (owner):** "sigue igual sin el login; usá el login que ya usamos cuando la gente entra a registrarse de Girox; que los juegos sean sobre
+ese inicio". Causa en #861: se pedía un SEGUNDO `/players/{u}/session` (para el canje) DESPUÉS del que va al recuadro; cada `/session` nuevo
+reemplaza al anterior (manual 2.7: un token/código por contexto) ⇒ el código del recuadro quedaba anulado ⇒ deslogueado. El registro y el botón
+de Girox piden UN solo ingreso (por eso sí entran).
+- Orden correcto: se canjea el ingreso ya pedido (para `launch_url`); si no sale el juego directo, se pide UNO NUEVO al final y ése va al recuadro.
+  Regla: el ÚLTIMO `/session` pedido es siempre el que abre el recuadro. Probado (simulado): en todos los casos el recuadro recibe el último.
+- ⚠️ Trampa: no pedir otro `/session` para el mismo jugador después del que se le da al recuadro.
+
 ### 861. 🚨 FIX favoritos/Deportes deslogueados: se reusaba un código de ingreso YA CANJEADO — SW v584
 **Pedido (owner):** "revisá de punta a punta qué pasa con el login, hace 1 h estamos con lo mismo; usá el ingreso de autologin del menú de Girox".
 Causa (bug mío de #855/#857): el server canjeaba el código de ESE ingreso (`/sso/exchange`) y, si no salía el juego directo, le pasaba al recuadro
