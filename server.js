@@ -3269,6 +3269,16 @@ async function _loadGiroxCredentials() {
   } catch (e) { logger.warn(`[girox] no se pudieron leer las credenciales del panel: ${e.message}`); }
 }
 setTimeout(() => { _loadGiroxCredentials(); }, 6 * 1000);
+// #807 (owner: "en todos hacelo, lo del publicista"): toda campaña sin link de resultados recibe uno al arrancar. Idempotente (sólo las
+// que tienen statsToken null; desactivar uno a mano lo deja en null y vuelve a crearse en el próximo arranque ⇒ para cortarle el acceso a
+// un publicista usar "Generar uno nuevo", que invalida el anterior).
+setTimeout(async () => {
+  try {
+    const list = await Campaign.find({ $or: [{ statsToken: null }, { statsToken: { $exists: false } }] }).select('code').lean();
+    for (const c of list) await Campaign.updateOne({ code: c.code, $or: [{ statsToken: null }, { statsToken: { $exists: false } }] }, { $set: { statsToken: crypto.randomBytes(18).toString('base64url') } });
+    if (list.length) logger.info(`[stats-link] ${list.length} campañas recibieron su link de resultados`);
+  } catch (e) { logger.warn('[stats-link] alta masiva: ' + e.message); }
+}, 15 * 1000);
 setInterval(() => { _loadGiroxCredentials(); }, 60 * 1000);
 // #351: % de comisión de referidos desde el panel (Config['referralCommissionPct']); mismo ritmo.
 setTimeout(() => { require('./src/utils/referralRate').refreshFromConfig().catch(() => {}); }, 7 * 1000);
@@ -15869,6 +15879,7 @@ app.post('/api/admin/campaigns', authMiddleware, adminMiddleware, async (req, re
 
     const created = await Campaign.create({
       id: uuidv4(),
+      statsToken: crypto.randomBytes(18).toString('base64url'), // #807: link de resultados desde el día uno
       code: normalizedCode,
       publisher: String(publisher).trim().slice(0, 100),
       name: String(name).trim().slice(0, 200),

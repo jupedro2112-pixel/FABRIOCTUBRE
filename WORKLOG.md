@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-18
 
+### 807. 📈 Link de resultados en TODAS las campañas
+**Pedido (owner):** "en todos hacelo, lo del publicista". Al arrancar, toda campaña sin `statsToken` recibe uno (idempotente) y cada campaña
+nueva nace con el suyo. En Publicidad, cada campaña tiene el botón **📈 Copiar resultados** (copia `https://picaroja.com/r/<token>` para
+mandárselo al publicista). Para cortarle el acceso a alguien: "Generar uno nuevo" en el detalle (el viejo deja de andar).
+
 ### 806. 🔒 Recomendación de cambiar la clave inicial al entrar — SW v561
 **Pedido (owner):** "agregá el cambio de clave de la app apenas entren, que se lo pida como recomendación y quede guardado así en
 Perfil, formato Pinterest". Si la clave guardada en el dispositivo es la inicial (`asd123`), 6 s después de entrar (y cuando no hay otro

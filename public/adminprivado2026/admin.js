@@ -10660,6 +10660,7 @@ function renderCampaigns() {
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
                 <button onclick="copyCampaignLink('${escapeHtml(c.code)}')" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.4);color:#00ff88;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">📋 Copiar link</button>
                 <button onclick="viewCampaignStats('${escapeHtml(c.code)}')" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;color:#d4af37;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">📊 Ver detalle</button>
+                ${c.statsToken ? `<button onclick="copyStatsLink('${escapeHtml(c.code)}','${escapeHtml(c.statsToken)}')" style="background:rgba(111,191,147,0.12);border:1px solid #6fbf93;color:#6fbf93;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;" title="Link para que el publicista vea sus resultados">📈 Copiar resultados</button>` : ''}
                 <button onclick="editCampaign('${escapeHtml(c.code)}')" style="background:rgba(99,102,241,0.1);border:1px solid #6366f1;color:#a5b4fc;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">✏️ Editar</button>
                 ${c.isActive ? `<button onclick="deactivateCampaign('${escapeHtml(c.code)}')" style="background:rgba(255,80,80,0.1);border:1px solid #ff5050;color:#ff8888;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">🛑 Desactivar</button>` : `<button onclick="reactivateCampaign('${escapeHtml(c.code)}')" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.4);color:#00ff88;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">✅ Reactivar</button>`}
                 <button onclick="deleteCampaignPermanent('${escapeHtml(c.code)}')" style="background:rgba(180,40,40,0.18);border:1px solid #b42828;color:#ff6b6b;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">🗑️ Borrar definitivamente</button>
@@ -10674,7 +10675,7 @@ function copyStatsLink(code, token) {
     navigator.clipboard.writeText(link).then(() => showToast('Link de resultados copiado', 'success'), () => showToast(link, 'info'));
 }
 async function statsLinkAction(code, revoke) {
-    if (revoke && !window.confirm('¿Desactivar el link de resultados? El publicista deja de ver los números.')) return;
+    if (revoke && !window.confirm('¿Desactivar el link de resultados? El publicista deja de ver los números (al reiniciar el servidor se le crea uno NUEVO; el viejo no vuelve a andar).')) return;
     try {
         const r = await authFetch('/api/admin/campaigns/' + encodeURIComponent(code) + '/stats-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ revoke: !!revoke }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
