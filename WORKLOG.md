@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-22
 
+### 906. 📎 "Comprobante no válido": pide TODOS los datos completos y visibles en la foto
+**Pedido (owner):** "en el comprobante no válido que diga que se vean los datos completos en la foto". Nuevo default de `/sys_sq_comprobante`
+(titular, CUIT, monto, fecha y hora y N° de operación, sin recortar); `mig906SqComp` lo actualiza si Render ya había guardado el anterior y nadie lo editó.
+
 ### 905. 💬 Respuestas rápidas de Soporte (mandan la explicación y cierran la charla) + respuestas propias guardadas — SW v603, admin SW v183
 **Pedidos (owner):** "botones en Soporte para mandar de forma automática las explicaciones (rollover, etc.), resumidas, y que al enviar se cierre
 la conversación; comprobante no válido: que lo vuelva a adjuntar con un botón 'Cargá el comprobante aquí'" · "respuestas ya armadas y que se
