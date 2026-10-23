@@ -2800,14 +2800,20 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
 //  Devuelve el resultado de la carga + `bonusFailed` (sólo si NO llegó por ningún camino) y `bonusVia` ('attached' | 'separate').
 async function _depositWithBonus(adapter, username, amount, description, reference, bonusAmount) {
   const bonus = Math.round(Number(bonusAmount) || 0);
-  if (!(bonus > 0)) return adapter.depositToUser(username, amount, description, reference, null);
-  const mult = await _bonusMultiplierFor(adapter);
-  // #882 (owner): "que no puedan reclamar el bono y después retirar la plata": la CARGA que lleva bono queda con rollover
-  // ×depositRolloverX (3) y el bono con el global (×5). Si 1girox rechaza el multiplicador de la carga (422 en 'multiplier'), se repite
-  // SIN él con la MISMA reference (en un 422 no movió plata): la carga nunca se pierde por esto.
+  // #882/#883 (owner): "carga común de plata ×3 rollover, sin bono; la de bono ×5": TODA carga real (hgcash y manual del panel) queda con
+  // rollover ×depositRolloverX (3) y el bono con el global (×5). Si 1girox rechaza el multiplicador de la carga (422 en 'multiplier') se
+  // prueba ×2 y después sin rollover propio, con la MISMA reference (en un 422 no movió plata): la carga nunca se pierde por esto.
+  // (Las devoluciones de retiro rechazado NO pasan por acá: vuelven libres.)
   let depMult = await _depositRolloverXFor(adapter);
   const _wg = (extra) => Object.assign(depMult > 0 ? { multiplier: depMult } : {}, extra);
   const _multRejected = (x) => !x.success && x.httpStatus === 422 && /multiplier|multiplicador/i.test(String(x.code || '') + ' ' + String(x.error || '')) && !/bonus_multiplier/i.test(String(x.error || ''));
+  if (!(bonus > 0)) {
+    let r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true }));
+    for (const fb of [2, 0]) { if (!(_multRejected(r0) && depMult > 0 && depMult !== fb)) break; logger.warn(`[deposit] ${username}: 1girox rechazó el rollover ×${depMult} de la carga ⇒ pruebo ×${fb}`); depMult = fb; r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
+    if (r0.success) r0.depositRolloverX = depMult;
+    return r0;
+  }
+  const mult = await _bonusMultiplierFor(adapter);
   let r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult }));
   // si rechaza el ×N de la carga: se prueba ×2 (siempre aceptado) y recién después sin rollover propio — misma reference, un 422 no movió plata
   for (const fb of [2, 0]) { if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; logger.warn(`[auto-bonus] ${username}: 1girox rechazó el rollover ×${depMult} de la carga (${r.code || r.error}) ⇒ pruebo ×${fb}`); depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult })); }
@@ -12668,6 +12674,7 @@ async function initializeData() {
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
+  try { if (!(await getConfig('mig883BonoText', null))) { await Command.updateOne({ name: '/sys_support_topic_bono', response: SUPPORT_BONO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_BONO_DEFAULT } }); await Config.set('mig883BonoText', new Date().toISOString(), 'mig#883'); } } catch (e) { console.warn('[startup-migration] #883:', e.message); }
   try { if (!(await getConfig('mig882DepositRoll', null))) { if ((await getConfig('depositRolloverX', null)) == null) await Config.set('depositRolloverX', 3, 'mig#882'); await Config.set('mig882DepositRoll', new Date().toISOString(), 'mig#882'); } } catch (e) { console.warn('[startup-migration] #882:', e.message); }
   try { if (!(await getConfig('mig879NoWithdrawOtp', null))) { await Config.set('withdrawOtpRequired', false, 'mig#879'); await Config.set('mig879NoWithdrawOtp', new Date().toISOString(), 'mig#879'); console.log('✅ #879: retiro sin SMS por retiro (teléfono verificado una vez)'); } } catch (e) { console.warn('[startup-migration] #879:', e.message); }
   try { if (!(await getConfig('mig878ShortSupport', null))) { for (const [name, [oldTxt, nu]] of Object.entries(SUPPORT_TEXTS_OLD_878)) await Command.updateOne({ name, response: oldTxt }, { $set: { response: nu() } }); await Config.set('mig878ShortSupport', new Date().toISOString(), 'mig#878'); } } catch (e) { console.warn('[startup-migration] #878:', e.message); }
@@ -14152,7 +14159,7 @@ const SUPPORT_TOPIC_REEMBOLSO_DEFAULT = '🎁 La info del reembolso está en el 
 const SUPPORT_TOPIC_OTRO_DEFAULT = '❓ Contanos qué pasó, cuándo y con qué monto, y te respondemos.';
 const SUPPORT_DETAIL_DEFAULT = '📝 ¿Otra consulta? Escribila acá y te respondemos.';
 // #715 (owner): "Problema con el bono" → explicar bien el rollover ×{rollover}: qué es, cómo se desbloquea para retirar.
-const SUPPORT_TOPIC_BONO_DEFAULT = '🎁 Todo regalo entra como BONO con rollover ×{rollover}: para retirarlo hay que APOSTAR {rollover} veces el bono (ej.: $2.000 ⇒ $10.000 jugados). Cuenta lo que jugás, no lo que cargás. Tu plata cargada se retira siempre; sólo el bono queda bloqueado hasta cumplirlo. Referidos: sin rollover. ¿Dudas? Pasanos el monto del bono.';
+const SUPPORT_TOPIC_BONO_DEFAULT = '🎁 Todo regalo entra como BONO con rollover ×{rollover}: para retirarlo hay que APOSTAR {rollover} veces el bono (ej.: $2.000 ⇒ $10.000 jugados). Y cada carga se juega ×{carga} antes de retirarla. Cuenta lo que jugás, no lo que cargás. Referidos: sin rollover. En Retirar premio ves cuánto te falta apostar.';
 // #878 (owner): "en las respuestas resumí un poco": textos viejos (si en COMANDOS siguen iguales se pasan a los nuevos, cortos).
 const SUPPORT_TEXTS_OLD_878 = {
   '/sys_support_topic_carga': ['💳 Antes que nada: la carga mínima es {min}. Con {min} o más se acredita sola en minutos. Si cargaste MENOS de {min}, mandanos acá la captura de tu transferencia para revisar el reintegro.', () => SUPPORT_TOPIC_CARGA_DEFAULT],
@@ -14163,6 +14170,7 @@ const SUPPORT_TEXTS_OLD_878 = {
   '/sys_receipt_unreadable': ['⚠️ No pudimos leer bien tu comprobante. Mandalo de nuevo con TODOS estos datos bien visibles:\n\n👤 Nombre del titular que envía\n🪪 CUIT/CUIL\n🕒 Fecha y hora de la transferencia\n💵 Monto\n🏦 CBU/alias de destino\n🔢 N° de operación\n\n📸 Captura entera, sin recortar. Si no se ven los datos, la carga no se puede acreditar.', () => RECEIPT_UNREADABLE_DEFAULT],
   '/sys_support_topic_bono': ['🎁 Así funciona el BONO y el ROLLOVER ×{rollover}:\n\n1️⃣ Qué es: todo regalo (bono de carga, fueguito, ruleta, misiones, reembolsos, código de bienvenida, nivel VIP) entra a tu cuenta como BONO. Para poder retirarlo tiene un rollover ×{rollover}: hay que APOSTAR (jugar) {rollover} veces el monto del bono. Ejemplo: un bono de $2.000 se desbloquea apostando $10.000 en total en la plataforma.\n\n2️⃣ Apostar NO es cargar: cuenta lo que jugás (cada apuesta suma, ganes o pierdas), no lo que transferís.\n\n3️⃣ Mientras tanto: tu plata cargada se puede retirar siempre; lo que queda bloqueado es sólo la parte del bono hasta cumplir el rollover. En la plataforma ves el progreso en tu perfil (saldo retirable / bono pendiente).\n\n4️⃣ Cuando completás las apuestas, el bono y lo que ganaste con él pasan a saldo retirable y lo sacás desde "Retirar premio".\n\nÚnica excepción: las comisiones de REFERIDOS se retiran sin apostar. Si pediste un retiro y te dice que hay un objetivo de apuestas pendiente, es esto: te falta completar el rollover. Contanos acá el monto del bono y cuánto jugaste y lo revisamos.', () => SUPPORT_TOPIC_BONO_DEFAULT],
 };
+const SUPPORT_BONO_OLD_878 = '🎁 Todo regalo entra como BONO con rollover ×{rollover}: para retirarlo hay que APOSTAR {rollover} veces el bono (ej.: $2.000 ⇒ $10.000 jugados). Cuenta lo que jugás, no lo que cargás. Tu plata cargada se retira siempre; sólo el bono queda bloqueado hasta cumplirlo. Referidos: sin rollover. ¿Dudas? Pasanos el monto del bono.'; // #883: texto anterior (decía que la carga se retira siempre)
 const SUPPORT_TERMS_BTN = { kind: 'go_section', target: 'terms', label: '📄 Bases y condiciones', channel: 'support', small: true }; // #878: botón chico
 function _supportTopicFromText(text) {
   const t = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -14205,7 +14213,7 @@ async function _supportQuickReply(userId, username, quick, text) {
       const recent = await Message.findOne({ receiverId: userId, type: 'system', 'metadata.topic': topic, timestamp: { $gte: new Date(Date.now() - 2 * 3600 * 1000) } }).select('_id').lean();
       if (recent) return;
     }
-    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), rollover: String(await _giftRolloverX()) };
+    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), rollover: String(await _giftRolloverX()), carga: String(await getDepositRolloverX()) }; // #883: {carga}
     if (topic === 'otro') {
       const t = await renderSystemCommand('/sys_support_topic_otro', SUPPORT_TOPIC_OTRO_DEFAULT, vars);
       if (t) await _sendUserSystemMessage(u, t, { metadata: Object.assign({}, SUPPORT_TERMS_BTN, { topic }) });

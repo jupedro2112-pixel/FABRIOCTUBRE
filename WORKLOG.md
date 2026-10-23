@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 883. 🛡️ TODA carga real con rollover ×3 (con o sin bono); el bono ×5 — corrige #882 — SW v596, admin SW v170
+**Pedido (owner):** "no, carga con bono es ×5 rollover pero carga común de plata ×3 rollover, sin bono". `_depositWithBonus` aplica el
+`multiplier` de `getDepositRolloverX()` (3) también a las cargas SIN bono (hgcash y carga manual del panel; mismo respaldo ×2 → sin rollover si
+1girox lo rechaza, misma reference). El bono sigue con el global ×5. NO llevan rollover: devoluciones de retiro rechazado (`vip-payoutref-*`),
+`/api/movements/deposit` (staff) ni los regalos (tienen su propio ×5). Panel: "Rollover de toda carga ×". Textos: `/sys_support_topic_bono`
+ahora dice que cada carga se juega ×{carga} (var nueva; `mig883BonoText` pasa el texto de #878 si no se editó) y las Bases (terminos.html):
+carga ×3, teléfono verificado una vez sin código por retiro (#879), confirmación manual para montos altos y cuentas nuevas (#881; ya no "$50.000").
+
 ### 882. 🛡️ La CARGA que lleva bono queda con rollover ×3 (el bono ×5) — anti "cobro el bono y retiro la carga" — admin SW v169
 **Pedido (owner):** "exigí bien el rollover después de la carga para que no puedan estafar reclamando el bono y después retirando la plata: que
 exija rollover ×3 y que el bono no sea retirable por el rollover ×5; hacé todo para que no se rompa". `_depositWithBonus` manda `multiplier`
