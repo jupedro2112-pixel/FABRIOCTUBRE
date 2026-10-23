@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 918. JUGAYGANA con el formato 100% de jugaygana.io + "Instalar app" ya no tapa el menú de Ganamos — SW v614
+**Pedido (owner, con capturas de jugaygana.io):** "respetá el formato de JUGAYGANA 100% (el orden de los juegos después lo damos), el sorteo nuevo
+arriba (también en Ganamos y PICA ROJA), sacá el Cargar de arriba, el menú como Ganamos, y que la barra Instalar app no tape lo de abajo".
+- Barra de categorías del inicio (componente `CategoryNav` de su bundle): INICIO · TORNEOS · NUEVO · DESTACADOS · RULETAS · JACKPOTS · MEGAWAYS ·
+  JUEGOS DE MESA · BINGO · COMPRA DE BONOS · HABILIDAD con SUS íconos SVG (en `data/jugaygana-home.json` → `catnav`), fija al subir. Igual que en
+  su página: TORNEOS ⇒ nuestro sorteo; NUEVO ⇒ catálogo de 1girox `sort=newest` (nuevo parámetro `sort` en `/api/games/catalog`); DESTACADOS ⇒
+  populares; el resto ⇒ su misma búsqueda (roulette, jackpot, megaways, blackjack, bingo, bonus, crash) sobre Girox.
+- Tarjetas como `home-game-card` (nombre abajo con degradé), flechas ‹‹ ›› por fila, "Mostrar Todo" en degradé #1a1a1a→#f2ce00, la colección
+  de Halloween con su fondo y su arte (`io/hw-bg.webp`, `io/hw-art.webp`, achicados de 4,5 MB a 50 KB), hamburguesa amarilla (abre Mi cuenta),
+  botón amarillo de volver arriba. Orden final: sorteo · carrusel · buscador + Proveedores · categorías · Eventos deportivos · colecciones ·
+  Casino en Vivo · portadas.
+- `body.has-install-bar .prl, .rf { bottom: 64px }`: con la barra "Instalar app" visible, las páginas y el sorteo terminan encima de ella.
+- (La fila "$0 · Cargar" de PICA ROJA / Ganamos de las capturas ya no existe desde #917.)
+
 ### 917. 🏆 SORTEO MENSUAL por puntos (transparente) + Gran Sorteo "próximamente" + soporte de entrega de premios; menú con el nombre de la plataforma — SW v613, admin SW v186
 **Pedido (owner):** sorteo mensual con ranking (nombres tapados) para los clientes ACTIVOS de la app: 1° auto valorado en $10.000.000, 2° iPhone 18
 Pro Max, 3° $500.000; puntos: 100 cada $100.000 apostados SÓLO con plata real (no bonos), datos de Girox; ganador el día 1 en el menú completo;

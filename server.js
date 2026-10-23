@@ -25369,11 +25369,12 @@ const _favListOf = (u) => (u && u.favoriteGamesCustom === true) ? (u.favoriteGam
 const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
 const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
 const _gameCatalogCache = new Map();
-async function _gameCatalog(q, page, providerId) {
+async function _gameCatalog(q, page, providerId, sortArg) {
   const pid = Number(providerId) > 0 ? Math.round(Number(providerId)) : null; // #907: filtro por proveedor (lo acepta el catálogo de 1girox)
-  const k = q + '|' + page + '|' + (pid || ''); const hit = _gameCatalogCache.get(k);
+  const sort = sortArg === 'newest' ? 'newest' : 'popular'; // #918: NUEVO de JUGAYGANA = los últimos agregados en 1girox
+  const k = q + '|' + page + '|' + (pid || '') + '|' + sort; const hit = _gameCatalogCache.get(k);
   if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
-  const url = 'https://admin.1girox.com/api/games?sort=popular&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '') + (pid ? '&provider_id=' + pid : '');
+  const url = 'https://admin.1girox.com/api/games?sort=' + sort + '&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '') + (pid ? '&provider_id=' + pid : '');
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
   try {
     const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
@@ -25427,7 +25428,7 @@ app.get('/api/games/img', async (req, res) => {
 app.get('/api/games/catalog', authMiddleware, async (req, res) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(400, parseInt(req.query.page, 10) || 1)); // #907: hasta el final del catálogo
-    const d = await _gameCatalog(q, page, req.query.provider);
+    const d = await _gameCatalog(q, page, req.query.provider, req.query.sort);
     if (!d) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
     res.set('Cache-Control', 'private, max-age=300'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }

@@ -50,7 +50,8 @@ VIP.lobby = (function () {
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
             '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: 'VIP.home.casinoFullMenu()', logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
-            (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button></header>' : '') +
+            (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
+                (sk.layout === 'jugaygana' ? '<button type="button" class="jg-burger" onclick="VIP.lobby.menu()" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>' : '') + '</header>' : '') +
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
@@ -176,14 +177,26 @@ VIP.lobby = (function () {
     // · Eventos deportivos · colecciones (en su orden, 2 filas deslizables, tarjetas cuadradas) · Casino en Vivo (4) · portadas Casino / Casino en
     // Vivo / Eventos deportivos. Sin barra de abajo (su página no la tiene). Datos: /data/jugaygana-home.json (juegos cruzados con Girox por
     // nombre y proveedor; lo que Girox no tiene no aparece).
-    let _jgHomeData = null, _jgTimer = null, _jgSlide = 0;
+    let _jgHomeData = null, _jgTimer = null, _jgSlide = 0, _allCat = null;
     async function _jgData() {
         if (_jgHomeData) return _jgHomeData;
         try { const r = await fetch('/data/jugaygana-home.json', { cache: 'no-cache' }); if (r.ok) _jgHomeData = await r.json(); } catch (_) {}
         return _jgHomeData;
     }
-    function _jgCard(g) {
-        return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<i>' + esc(g.name) + '</i></span></button>';
+    function _jgCard(g) { // #918: como su tarjeta: imagen cuadrada, el nombre abajo sobre un degradé
+        return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<em><b>' + esc(g.name) + '</b></em></span></button>';
+    }
+    function jgArrow(btn, dir) { const row = btn.parentNode && btn.parentNode.querySelector('.jg-row'); if (row) { try { row.scrollBy({ left: dir * row.clientWidth * 0.9, behavior: 'smooth' }); } catch (_) { row.scrollLeft += dir * row.clientWidth * 0.9; } } }
+    // #918: barra de categorías (sus íconos y su orden). TORNEOS = el sorteo; el resto = catálogo de Girox (búsqueda u orden).
+    function jgCat(key) {
+        const it = ((_jgHomeData && _jgHomeData.catnav) || []).find((x) => x.key === key); if (!it) return;
+        if (it.home) { go('inicio'); return; }
+        if (it.raffle) { try { VIP.raffle.open('jugaygana'); } catch (_) {} return; }
+        _allProv = null; _allCat = { label: it.label, q: it.q || '', sort: it.sort || '', key }; _view = 'all'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0;
+    }
+    function _jgCatnav(active) {
+        const items = (_jgHomeData && _jgHomeData.catnav) || []; if (!items.length) return '';
+        return '<nav class="jg-catnav" aria-label="Categorías"><div class="jg-catnav-s">' + items.map((it) => '<button type="button" class="jg-catnav-i' + (it.key === active ? ' on' : '') + '" onclick="VIP.lobby.jgCat(\'' + it.key + '\')"><span class="jg-catnav-ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none">' + it.svg + '</svg></span><span class="jg-catnav-l">' + esc(it.label) + '</span></button>').join('') + '</div><div class="jg-catnav-t"><i></i></div></nav>';
     }
     function _jgHome() {
         const d = _jgHomeData || {};
@@ -192,13 +205,14 @@ VIP.lobby = (function () {
         const cols = (d.collections || []).map((c) => {
             const games = c.games || []; const n = Math.min(5, Math.max(1, Number(c.rows) || 1)); const per = Math.ceil(games.length / n); const rows = [];
             for (let i = 0; i < n; i++) { const part = games.slice(i * per, (i + 1) * per); if (part.length) rows.push(part); }
-            return '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'slots\')">Mostrar Todo</button></div>' +
-                rows.map((r) => '<div class="jg-row">' + r.map(_jgCard).join('') + '</div>').join('') + '</section>';
+            return '<section class="jg-sec' + (c.bg ? ' jg-sec-bg' : '') + '">' + (c.bg ? '<img class="jg-sec-bgi" src="' + esc(c.bg) + '" alt="" loading="lazy">' + (c.art ? '<img class="jg-sec-art" src="' + esc(c.art) + '" alt="" loading="lazy">' : '') : '') +
+                '<div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'slots\')">Mostrar Todo</button></div>' +
+                '<div class="jg-rows">' + rows.map((r) => '<div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹‹</button><div class="jg-row">' + r.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div>').join('') + '</div></section>';
         }).join('');
         return _rfStrip() + (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
                 '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
-            '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div><div id="prlRes"></div>' +
+            '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' +
             '<section class="jg-sec">' + t('Eventos deportivos') + '<div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
             cols +
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
@@ -233,6 +247,11 @@ VIP.lobby = (function () {
             return;
         }
         if (_view === 'slots' || _view === 'all') {
+            if (_view === 'slots' || _allProv) _allCat = null;
+            if (_allCat && SK().layout === 'jugaygana') { // #918: categoría de la barra de JUGAYGANA (su barra sigue arriba)
+                m.innerHTML = '<div class="jg-wrap">' + _jgCatnav(_allCat.key) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(_allCat.label) + '</h2><span class="jg-line"></span></div></div></div><div class="prl-grid jg-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
+                _allPage = 0; _allMore = true; _moreAll(); return;
+            }
             const t = _allProv ? _allProv.name : 'Slots · todos los juegos';
             m.innerHTML = '<div class="prl-sh"><span class="prl-st">' + ico('slots') + '<h3>' + esc(t) + '</h3></span>' + (_allProv ? '<button type="button" class="prl-back" onclick="VIP.lobby.all(null)">Ver todos</button>' : '') + '</div>' +
                 (_allProv ? '' : _search()) + '<div class="prl-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
@@ -249,10 +268,10 @@ VIP.lobby = (function () {
         if (_loadingAll || !_allMore) return; _loadingAll = true;
         try {
             _allPage++;
-            const r = await fetch(VIP.config.API_URL + '/api/games/catalog?page=' + _allPage + (_allProv ? '&provider=' + _allProv.id : ''), { headers: auth() });
+            const r = await fetch(VIP.config.API_URL + '/api/games/catalog?page=' + _allPage + (_allProv ? '&provider=' + _allProv.id : '') + (_allCat && _allCat.q ? '&q=' + encodeURIComponent(_allCat.q) : '') + (_allCat && _allCat.sort ? '&sort=' + _allCat.sort : ''), { headers: auth() });
             const d = await r.json().catch(() => ({}));
             const box = $('prlAll'); if (!box) return;
-            if (r.ok) { box.insertAdjacentHTML('beforeend', (d.games || []).map(_card).join('')); _allMore = !!d.hasMore; }
+            if (r.ok) { box.insertAdjacentHTML('beforeend', (d.games || []).map(SK().layout === 'jugaygana' ? _jgCard : _card).join('')); _allMore = !!d.hasMore; }
             else _allMore = false;
             const more = $('prlAllMore'); if (more) more.textContent = _allMore ? 'Cargando más…' : 'Llegaste al final ✔';
         } catch (_) { _allMore = false; } finally { _loadingAll = false; }
@@ -283,7 +302,7 @@ VIP.lobby = (function () {
         const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer);
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) document.body.classList.remove('casino-open'); const p = $('casinoLoadPanel'); if (p && el && el.contains(p)) p.style.display = 'none'; if (VIP.home.casinoQuickClose && el && el.contains(p)) VIP.home.casinoQuickClose(); } catch (_) {}
     }
-    function go(view) { if (view === 'slots') _allProv = null; _view = view; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
+    function go(view) { if (view === 'slots') _allProv = null; if (view !== 'all') _allCat = null; _view = view; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
     function all(providerId, name) { _allProv = providerId ? { id: providerId, name: name || 'Proveedor' } : null; go(providerId ? 'all' : 'slots'); }
     function provToggle() { _provOpen = !_provOpen; _render(); }
     function search(v) {
@@ -347,5 +366,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, skin: () => _skin };
 })();
