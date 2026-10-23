@@ -17366,22 +17366,38 @@ async function inicioChangePin() {
     const r = await authFetch('/api/admin/inicio-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: p1, current: cur }) }); const j = await r.json();
     if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } sessionStorage.setItem('inicio_pin', p1); showToast('🔑 Clave cambiada', 'success');
 }
+// #880 (owner): "dejá todo recuadrado con los datos en 0 si no tenemos datos": los recuadros se dibujan SIEMPRE (en 0 mientras carga,
+// sin clave o si falla) y después se llenan con los números reales.
+function _inicioEmpty(day) {
+    const z = { users: 0, n: 0, total: 0 }; const today = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
+    return { day: day || today, isToday: !day || day === today, generatedAt: new Date().toISOString(), app: { activeNow: 0, enteredToday: 0, enteredRetention: 0, enteredRetentionAds: 0, enteredNew72: 0 },
+        registrations: { total: 0, fromAds: 0, organic: 0, firstDepositSameDay: 0 }, deposits: { all: z, first: z, retention: z, new72: z, avg: 0 },
+        withdrawals: { requested: { n: 0, total: 0 }, paid: { n: 0, total: 0 } }, net: 0, adoption: { totalUsers: 0, withApp: 0, withNotif: 0, appPct: 0, notifPct: 0 } };
+}
 async function loadInicio() {
     const box = document.getElementById('inBody'); if (!box) return;
     clearTimeout(_inTimer);
     const day = (document.getElementById('inDay') || {}).value || '';
+    const note = (t) => '<div class="in-note">' + t + '</div>';
+    _renderInicio(box, _inicioEmpty(day), note('⏳ Cargando datos…'));
     try {
         let r = await _inicioFetch('/api/admin/inicio/stats' + (day ? '?day=' + day : ''));
-        if (r.status === 428) { box.innerHTML = '<div class="card">🔑 Todavía no hay clave de INICIO.</div>'; if (await inicioCreatePin()) return loadInicio(); return; }
-        if (r.status === 423) { const pin = window.prompt('🔒 Clave de INICIO:', ''); if (!pin) { box.innerHTML = '<div class="card">🔒 Protegido con clave.</div>'; return; } sessionStorage.setItem('inicio_pin', pin); r = await _inicioFetch('/api/admin/inicio/stats' + (day ? '?day=' + day : '')); if (r.status === 423) { sessionStorage.removeItem('inicio_pin'); box.innerHTML = '<div class="card" style="color:#f87171">Clave incorrecta.</div>'; return; } }
+        if (r.status === 428) { _renderInicio(box, _inicioEmpty(day), note('🔑 Todavía no hay clave de INICIO: creala para ver los números.')); if (await inicioCreatePin()) return loadInicio(); return; }
+        if (r.status === 423) { const pin = window.prompt('🔒 Clave de INICIO:', ''); if (!pin) { _renderInicio(box, _inicioEmpty(day), note('🔒 Protegido con clave: tocá 🔄 para ingresarla.')); return; } sessionStorage.setItem('inicio_pin', pin); r = await _inicioFetch('/api/admin/inicio/stats' + (day ? '?day=' + day : '')); if (r.status === 423) { sessionStorage.removeItem('inicio_pin'); _renderInicio(box, _inicioEmpty(day), note('❌ Clave incorrecta: tocá 🔄 para probar de nuevo.')); return; } }
         const d = await r.json(); if (!r.ok) throw new Error(d.error || 'error');
+        _renderInicio(box, d, '');
+        if (d.isToday) _inTimer = setTimeout(() => { if (document.getElementById('inicioSection') && document.getElementById('inicioSection').classList.contains('active')) loadInicio(); }, 60000);
+    } catch (e) { _renderInicio(box, _inicioEmpty(day), note('⚠️ No se pudo cargar (' + escHtml(e.message) + '). Tocá 🔄.')); }
+}
+function _renderInicio(box, d, notice) {
+    {
         const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const n = (x) => x == null ? '—' : Number(x).toLocaleString('es-AR');
         const box1 = (ico, label, val, sub, col) => '<div class="in-box" style="border-top:3px solid ' + (col || '#6366f1') + '"><div class="in-l">' + ico + ' ' + label + '</div><div class="in-v">' + val + '</div>' + (sub ? '<div class="in-s">' + sub + '</div>' : '') + '</div>';
         const grp = (t, inner) => '<h3 class="in-h">' + t + '</h3><div class="in-grid">' + inner + '</div>';
         const lbl = new Date(d.day + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-        box.innerHTML = '<div style="color:#a5b4fc;font-size:.85rem;margin-bottom:.4rem;text-transform:capitalize">' + (d.isToday ? 'Hoy · ' : '') + lbl + ' · actualizado ' + new Date(d.generatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+        box.innerHTML = (notice || '') + '<div style="color:#a5b4fc;font-size:.85rem;margin-bottom:.4rem;text-transform:capitalize">' + (d.isToday ? 'Hoy · ' : '') + lbl + ' · actualizado ' + new Date(d.generatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
             grp('📱 Gente en la app',
-                (d.isToday ? box1('🟢', 'Activos ahora', n(d.app.activeNow), 'con la app abierta en los últimos 3 min', '#22c55e') : '') +
+                box1('🟢', 'Activos ahora', d.isToday ? n(d.app.activeNow || 0) : '—', d.isToday ? 'con la app abierta en los últimos 3 min' : 'sólo para hoy', '#22c55e') +
                 box1('👥', 'Entraron en el día', n(d.app.enteredToday), 'personas distintas', '#6366f1') +
                 box1('🔁', 'Retención (cuentas de +72 h)', n(d.app.enteredRetention), 'de esos, ' + n(d.app.enteredRetentionAds) + ' vinieron alguna vez por publicidad', '#0ea5e9') +
                 box1('🆕', 'Nuevos (−72 h) que entraron', n(d.app.enteredNew72), 'cuentas creadas en los últimos 3 días', '#a855f7')) +
@@ -17403,6 +17419,5 @@ async function loadInicio() {
                 box1('👤', 'Registrados', n(d.adoption.totalUsers), 'clientes en total', '#6366f1') +
                 box1('📲', 'Instalaron la app', n(d.adoption.withApp), d.adoption.appPct + '% del total', '#0ea5e9') +
                 box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% del total', '#f59e0b'));
-        if (d.isToday) _inTimer = setTimeout(() => { if (document.getElementById('inicioSection') && document.getElementById('inicioSection').classList.contains('active')) loadInicio(); }, 60000);
-    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
+    }
 }

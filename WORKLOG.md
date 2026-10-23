@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 880. 🏠 INICIO: recuadros SIEMPRE dibujados (en 0 si no hay datos) — admin SW v167
+**Pedido (owner):** "en INICIO dejá todo recuadrado con los datos en 0 si no tenemos datos, dejamos todo plantado para ir viendo".
+`_renderInicio(box, d, notice)` + `_inicioEmpty(day)`: los 18 recuadros se dibujan mientras carga, sin clave, con clave incorrecta o si falla
+(aviso arriba, `.in-note`), y después se llenan. "Activos ahora" queda fijo (— en días pasados).
+
 ### 879. 💸 Retiro: teléfono verificado UNA vez y después se retira sin código — SW v594
 **Pedido (owner, captura del modal "Código de verificación"):** "verificar el teléfono por única vez y después retirar sin problemas; si está
 verificado tiene que dejar retirar, no hace falta otro código, eso se confirma desde el admin". Migración `mig879NoWithdrawOtp` pone
