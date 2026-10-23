@@ -101,6 +101,7 @@ VIP.chat = (function () {
                 : t === 'terms' ? "VIP.home.openTerms()"
                 : "VIP.home.setHomeMode('full')";
             const label = escapeHtml(String(md.label || (t === 'withdraw' ? '💸 Ir a Retirar premio' : '⚡ Ir a Carga automática')));
+            if (t === 'terms') return `<button type="button" class="chat-terms-mini" onclick="${act}">📄 Bases y condiciones</button>`; // #878: chico, no molesta
             return `<div class="plat-choice"><button type="button" class="plat-btn plat-play-now${t === 'terms' ? ' plat-terms' : ''}" onclick="${act}">${label}</button></div>`;
         }
         if (md.kind === 'deposit_rejected') return '<div class="dep-pill dep-rej">❌ Carga no acreditada</div>';

@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 878. 💬 Soporte: respuestas automáticas más cortas y "Bases y condiciones" chico — SW v593
+**Pedido (owner, captura del chat):** "en las respuestas resumí un poco, y el Bases y condiciones dejalo fijo pero más resumido y más chico el botón".
+Se acortaron los defaults de /sys_support_topic_{carga,retiro,reembolso,otro,bono}, /sys_support_detail y /sys_receipt_unreadable; la migración
+`mig878ShortSupport` pasa a los nuevos SÓLO los comandos que seguían con el texto viejo (si el owner los editó, se respetan). El botón de Bases
+(target 'terms') se dibuja como pastilla chica `.chat-terms-mini` (también en los mensajes viejos), sigue en cada respuesta.
+
 ### 877. 🚨 Alertas de estafa sobre el JUEGO y el CELULAR (no IP, no "retiró más de lo que cargó")
 **Pedido (owner):** "miralo sobre el juego: cargar 5.000 y retirar 30.000 es apuesta; la IP se repite mucho, miralo sobre el teléfono; que no se
 haga lenta la página de juego". `fraudRadar.scan` recibe `deps.stats` (stats batch de 1girox, SÓLO para quienes pidieron retirar, máx. 100 ⇒ un

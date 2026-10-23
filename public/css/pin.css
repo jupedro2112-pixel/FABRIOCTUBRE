@@ -2612,3 +2612,6 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 #fitModal .fit-stretch { padding: 7px; font-size: 12px; margin-bottom: 6px; }
 #fitModal .fit-list { gap: 4px; } #fitModal .fit-item { padding: 8px 10px; } #fitModal .fit-item b { font-size: 12.5px; } #fitModal .fit-item small { font-size: 10.5px; }
 #fitModal .fav-done { margin-top: 8px; padding: 10px; }
+
+/* #878: Bases y condiciones chico dentro del chat */
+.chat-terms-mini { display: inline-block; margin: 4px 0 0; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--p-border); background: var(--p-surface); color: var(--p-muted); font: 700 11px var(--p-font); cursor: pointer; }
