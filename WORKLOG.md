@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-22
 
+### 887. 🧭 Panel: arriba de todo "⚡ Día a día" = Chats · Retiros pendientes · Cargas automáticas · Alertas de estafa — admin SW v173
+**Pedido (owner):** "poné en la parte superior chat, retiros, cargas automáticas, alerta estafa". Se MOVIERON esos 4 `nav-item` (mismos
+`data-section` e ids de contadores `unreadBadge`/`payReviewBadge`) al principio del menú, antes de INICIO; el resto de Atención queda igual.
+
 ### 886. 🎁 Bono para clientes NUEVOS el día 5, 15 y 30 desde el registro (historia + push SÓLO a ellos) + informe mensual — admin SW v172
 **Pedido (owner):** "a los clientes nuevos, que lo vean sólo los nuevos: notificación + bono de 50% con el mismo rollover, en historias
 ('telegram'), día 5, 15 y 30 desde que se registró, el resto no lo ve; 'tenés un 50% activo dentro de 2 hs para reclamar de forma automática';
