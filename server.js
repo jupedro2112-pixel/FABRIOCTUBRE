@@ -13188,6 +13188,7 @@ async function initializeData() {
       type: 'message',
       response: SUPPORT_TOPIC_REEMBOLSO_DEFAULT
     },
+    ...SUPPORT_QUICK_REPLIES.map((q) => ({ name: '/sys_sq_' + q.key, description: 'Soporte · respuesta rápida "' + q.label + '" (botón del panel; al enviarla se cierra la charla). Variables: {min}, {retiro_min}, {carga}, {rollover}.', type: 'message', response: q.text })), // #905
     {
       name: '/sys_support_topic_bono',
       description: 'Soporte: respuesta automática cuando el tema es EL BONO (explica el rollover ×{rollover}: qué es, apostar no es cargar, cómo se desbloquea para retirar). Variables: {rollover}, {min}, {retiro_min}. Vacío = no se manda.',
@@ -21725,6 +21726,76 @@ app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 // #602 (owner): CERRAR LA CHARLA desde el panel: para el cliente el chat vuelve al selector de problema (como el cierre automático #401).
+// #905 (owner): RESPUESTAS RÁPIDAS de Soporte — "botones para mandar de forma automática las explicaciones (rollover, etc.), resumidas, y
+// que al enviarse se cierre la conversación; comprobante no válido: que lo vuelva a adjuntar con un botón 'Cargá el comprobante aquí'".
+// Textos editables en COMANDOS (/sys_sq_<key>). Variables: {min} carga mínima, {retiro_min}, {carga} rollover de la carga, {rollover} del bono.
+// `btn` = botón en el mensaje (chat.js: go_section → withdraw / refund / full / receipt).
+const SUPPORT_QUICK_REPLIES = [
+  { key: 'comprobante', label: '📎 Comprobante no válido', text: '📎 Tu comprobante no es válido o no se pudo leer. Volvé a adjuntarlo ENTERO (que se vean titular, monto, fecha y N° de operación) tocando el botón de abajo y tu carga se genera sola.', btn: { target: 'receipt', label: '📎 Cargá el comprobante aquí' } },
+  { key: 'rollover', label: '🎯 Rollover', text: '🎯 Rollover: es lo que tenés que APOSTAR jugando antes de retirar; no es plata que ponés ni que perdés. Carga ×{carga} · bono ×{rollover}. Ej.: cargás $5.000 ⇒ sumás $15.000 en apuestas (cada apuesta cuenta, ganes o pierdas). Si llegás y tu saldo quedó en $10.000, retirás $10.000. En "Retirar premio" ves cuánto te falta.', btn: { target: 'withdraw', label: '💸 Ver Retirar premio' } },
+  { key: 'carga', label: '💳 Cómo cargar', text: '💳 Para cargar: transferí (mínimo {min}) al CBU que figura en la app y mandá el comprobante entero. Se acredita sola en minutos, con tu bono.', btn: { target: 'full', label: '⚡ Ir a cargar' } },
+  { key: 'minimo', label: '⚠️ Carga menor al mínimo', text: '⚠️ La carga mínima es {min}. Con menos no se acredita sola: la devolvemos a tu cuenta de origen o se completa con otra transferencia.' },
+  { key: 'retiro', label: '💸 Cómo retirar', text: '💸 Para retirar: entrá a "Retirar premio" (mínimo {retiro_min}, a un CBU a tu nombre). Ahí ves cuánto podés retirar hoy y el pago sale solo a tu cuenta.', btn: { target: 'withdraw', label: '💸 Retirar premio' } },
+  { key: 'procesado', label: '✅ Retiro en proceso', text: '✅ Tu retiro ya está procesado y lo estamos verificando. En breve lo vas a ver en tu cuenta; te avisamos por acá.' },
+  { key: 'bono', label: '🎁 Bonos', text: '🎁 Los bonos se aplican solos al cargar: 1ª carga 100% y +50% extra instalando la app y activando las notificaciones. Se juegan ×{rollover} antes de retirarlos.' },
+  { key: 'reembolso', label: '📉 Reembolso', text: '📉 El reembolso diario se calcula sobre lo que perdiste ayer y lo reclamás vos desde la app. Tocá el botón para ver el tuyo.', btn: { target: 'refund', label: '📉 Ver mi reembolso' } },
+  { key: 'clave', label: '🔑 Recuperar clave', text: '🔑 Para recuperar tu clave tocá "Recuperar contraseña" en la pantalla de ingreso y seguí los pasos con tu celular.' },
+  { key: 'sms', label: '📱 No llega el SMS', text: '📱 Escribí tu número todo junto: código de área sin 0 y número sin 15 (ej.: 1155551234). Si no llega en 1 minuto, tocá "Reenviar código".' }
+];
+// #905 (owner): "que se puedan agregar respuestas y guardar": las PROPIAS viven en Config['supportQuickCustom'] (para todo el equipo).
+const _SQ_BTNS = { withdraw: '💸 Retirar premio', full: '⚡ Ir a cargar', receipt: '📎 Cargá el comprobante aquí', refund: '📉 Ver mi reembolso' };
+async function _sqCustom() { try { const v = await getConfig('supportQuickCustom', null); return Array.isArray(v) ? v.filter((x) => x && x.key && x.label && x.text) : []; } catch (_) { return []; } }
+async function _sqAll() { return SUPPORT_QUICK_REPLIES.map((q) => Object.assign({ builtin: true }, q)).concat((await _sqCustom()).map((q) => Object.assign({ builtin: false }, q, q.btnTarget && _SQ_BTNS[q.btnTarget] ? { btn: { target: q.btnTarget, label: _SQ_BTNS[q.btnTarget] } } : {}))); }
+app.get('/api/admin/support/quick-replies', authMiddleware, async (req, res) => {
+  if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+  res.json({ items: (await _sqAll()).map((q) => ({ key: q.key, label: q.label, builtin: q.builtin, preview: String(q.text || '').slice(0, 160) })), buttons: _SQ_BTNS });
+});
+app.post('/api/admin/support/quick-replies', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const b = req.body || {};
+    const label = String(b.label || '').replace(/[<>]/g, '').trim().slice(0, 40), text = String(b.text || '').trim().slice(0, 600);
+    if (label.length < 2 || text.length < 5) return res.status(400).json({ error: 'Poné un título y el texto de la respuesta.' });
+    const btnTarget = _SQ_BTNS[b.btnTarget] ? b.btnTarget : null;
+    const cur = await _sqCustom(); if (cur.length >= 40) return res.status(400).json({ error: 'Llegaste al máximo de 40 respuestas propias: borrá alguna.' });
+    cur.push({ key: 'c' + Date.now().toString(36), label, text, btnTarget, by: req.user.username, at: new Date().toISOString() });
+    await Config.set('supportQuickCustom', cur, req.user.username);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.delete('/api/admin/support/quick-replies/:key', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const cur = await _sqCustom(); const next = cur.filter((x) => x.key !== String(req.params.key));
+    if (next.length === cur.length) return res.status(404).json({ error: 'Esa respuesta no existe (las armadas se editan en COMANDOS).' });
+    await Config.set('supportQuickCustom', next, req.user.username); res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Manda la respuesta y CIERRA la charla. Orden: primero el corte (supportSessionSince = ahora) y DESPUÉS el mensaje, así el cliente lo ve
+// (lo anterior al corte se le oculta) y en el panel queda cerrada (no escribió nada después).
+app.post('/api/admin/support/:userId/quick', authMiddleware, async (req, res) => {
+  try {
+    if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
+    const q = (await _sqAll()).find((x) => x.key === String((req.body && req.body.key) || ''));
+    if (!q) return res.status(400).json({ error: 'Respuesta desconocida' });
+    const u = await User.findOne({ id: String(req.params.userId) }).select('id username fcmToken fcmTokens fcmTokenContext').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+    const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), carga: String(await getDepositRolloverX().catch(() => 3)), rollover: String(await _giftRolloverX().catch(() => 5)) };
+    const text = q.builtin ? await renderSystemCommand('/sys_sq_' + q.key, q.text, vars) : String(q.text).replace(/\{(min|retiro_min|carga|rollover)\}/g, (m0, k) => vars[k]);
+    if (!text) return res.status(400).json({ error: 'Esa respuesta está vacía en COMANDOS' });
+    const now = new Date();
+    await User.updateOne({ id: u.id }, { $set: { supportSessionSince: now } });
+    try { io.to('user_' + u.id).emit('support_session_reset', { since: now.toISOString() }); } catch (_) {}
+    await new Promise((r) => setTimeout(r, 40));
+    const agentName = (await getSupportAgentName().catch(() => null)) || 'Soporte';
+    const meta = Object.assign({ channel: 'support', quickReply: q.key, agentName }, q.btn ? { kind: 'go_section', target: q.btn.target, label: q.btn.label } : { kind: 'support_quick' });
+    await _sendUserSystemMessage(u, text, { metadata: meta, senderUsername: agentName, push: { title: '💬 Te respondió Soporte', body: text.slice(0, 110) } });
+    await _emitAdminOnlyChatNote(u.id, u.username, `💬 Respuesta rápida "${q.label}" enviada por ${req.user.username}; charla cerrada.`).catch(() => {});
+    try { await delayClockResolve(u.id, { responded: true, agentId: req.user.userId, agentUsername: req.user.username, via: 'quick' }); } catch (_) {}
+    res.json({ success: true });
+  } catch (e) { logger.error('[support-quick] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/support/:userId/close', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
@@ -21762,6 +21833,7 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
         _id: '$convUserId',
         lastMessage: { $first: '$content' }, lastType: { $first: '$type' }, lastAt: { $first: '$timestamp' }, lastRole: { $first: '$senderRole' },
         unread: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0] } },
+        lastUserAt: { $max: { $cond: [{ $eq: ['$senderRole', 'user'] }, '$timestamp', null] } }, // #905
         // #898 (owner): "en Soporte que se vean sólo los chats de la gente que se queja": cuenta los TEXTOS que escribió el cliente
         // #900: los temas rápidos (chips "Con un retiro"…) ya tienen respuesta automática: no cuentan como queja
         userTexts: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$type', 'text'] }, { $not: [{ $ifNull: ['$metadata.quick', false] }] }] }, 1, 0] } },
@@ -21783,7 +21855,7 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
         status: { $ifNull: [{ $arrayElemAt: ['$cs.status', 0] }, 'open'] },
         // #747 (owner): CERRADA = el agente cerró la charla (User.supportSessionSince) después del último mensaje; si el cliente
         // vuelve a escribir, pasa sola a PENDIENTE.
-        closed: { $gt: [{ $ifNull: ['$user.supportSessionSince', new Date(0)] }, '$lastAt'] }
+        closed: { $gt: [{ $ifNull: ['$user.supportSessionSince', new Date(0)] }, { $ifNull: ['$lastUserAt', '$lastAt'] }] } // #905: cerrada si el CLIENTE no escribió después del corte
       } }
     ]);
     // #900 (owner): "si quieren retirar y no pueden, no hace falta respuesta": si TODO lo que escribió es la consulta de no poder retirar /

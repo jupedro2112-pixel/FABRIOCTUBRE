@@ -341,3 +341,17 @@ tr.fin td { opacity: .92; }
 
 /* #901 grupo fijado arriba: "Manejo · Atención automática" (queda visible al bajar por el menú) */
 .nav-pinned { position: sticky; top: -6px; z-index: 3; background: var(--p-card); display: flex; flex-direction: column; gap: 5px; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--p-border); }
+
+/* #905 respuestas rápidas de Soporte */
+.sp-quick { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 10px 8px; border-top: 1px solid var(--p-border, rgba(255,255,255,.1)); }
+.sp-quick:empty { display: none; }
+.sp-quick-h { flex-basis: 100%; font-size: 11px; color: var(--p-muted, #9ca3af); font-weight: 700; }
+.sp-quick-b { border: 1px solid var(--p-border, rgba(255,255,255,.15)); background: var(--p-surface, rgba(255,255,255,.04)); color: var(--p-text, #fff); font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; cursor: pointer; }
+.sp-quick-b:hover { border-color: var(--p-red, #e60023); color: var(--p-red, #e60023); }
+.sp-quick-b:disabled { opacity: .5; cursor: default; }
+
+.sp-quick-w { display: inline-flex; align-items: center; }
+.sp-quick-x { border: 0; background: none; color: var(--p-muted, #9ca3af); cursor: pointer; font-size: 11px; padding: 0 4px; }
+.sp-quick-add { border-style: dashed; }
+.sp-quick-form { flex-basis: 100%; display: grid; gap: 6px; margin-top: 4px; }
+.sp-quick-form input, .sp-quick-form textarea, .sp-quick-form select { width: 100%; }

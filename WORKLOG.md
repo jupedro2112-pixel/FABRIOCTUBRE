@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 905. 💬 Respuestas rápidas de Soporte (mandan la explicación y cierran la charla) + respuestas propias guardadas — SW v603, admin SW v183
+**Pedidos (owner):** "botones en Soporte para mandar de forma automática las explicaciones (rollover, etc.), resumidas, y que al enviar se cierre
+la conversación; comprobante no válido: que lo vuelva a adjuntar con un botón 'Cargá el comprobante aquí'" · "respuestas ya armadas y que se
+puedan agregar y guardar".
+- `SUPPORT_QUICK_REPLIES` (10 armadas: comprobante no válido · rollover · cómo cargar · menor al mínimo · cómo retirar · retiro en proceso ·
+  bonos · reembolso · recuperar clave · SMS), editables en COMANDOS `/sys_sq_<key>` ({min} {retiro_min} {carga} {rollover}). Propias en
+  `Config['supportQuickCustom']` (máx. 40, todo el equipo; `POST/DELETE /api/admin/support/quick-replies`), con botón opcional.
+- `POST /api/admin/support/:userId/quick`: PRIMERO el corte (`supportSessionSince`) y DESPUÉS el mensaje (system, `metadata.channel:'support'`,
+  firmado con el nombre de turno, push) ⇒ el cliente lo ve y la charla queda cerrada. "Cerrada" en el listado = el CLIENTE no escribió después
+  del corte (`lastUserAt`), antes era cualquier mensaje.
+- App: `go_section` con `target:'receipt'` ⇒ `VIP.autoload.sendReceipt()` (abre el adjuntar comprobante).
+- Panel → Soporte: fila "Respuesta rápida (manda y cierra)" debajo del chat + "➕ Nueva respuesta" (título, texto, botón) y ✕ en las propias.
+Probado en Mongo en memoria (lista, alta, envío con botón y variables, corte antes del mensaje, borrar).
+
 ### 904. 🏦 Fondeos de la cuenta de pagos como INGRESO del cierre · botón "Pagado por banco externo" en Pagos a confirmar — admin SW v182
 **Pedido (owner):** "se stockeó para pagos $1.650.000, tenelo en cuenta para el cierre de mañana (mañana cargo), tomalo como ingreso; y en
 pagos pendientes, aceptar el pago descontando fichas pero que diga que se pagó de banco externo".

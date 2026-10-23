@@ -96,7 +96,7 @@ VIP.chat = (function () {
         // #384: respuesta automática de Soporte con botón al sector (carga automática / retirar premio).
         if (md.kind === 'go_section' || (md.target === 'terms' && md.label)) { // #702: + refund (info de reembolso) y terms (Bases y condiciones, dentro de la app)
             const t = String(md.target || 'full');
-            const act = t === 'withdraw' ? "VIP.withdraw.openWithdrawModal()"
+            const act = t === 'receipt' ? "VIP.autoload.sendReceipt()" /* #905: comprobante no válido ⇒ adjuntarlo de nuevo */ : t === 'withdraw' ? "VIP.withdraw.openWithdrawModal()"
                 : t === 'refund' ? "VIP.home.svcRefund()"
                 : t === 'terms' ? "VIP.home.openTerms()"
                 : "VIP.home.setHomeMode('full')";

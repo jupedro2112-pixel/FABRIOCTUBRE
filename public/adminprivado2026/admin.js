@@ -16774,6 +16774,7 @@ async function spSelect(userId, username) {
     await spLoadMessages(userId, false);
     spBelowMinBanner(userId); // #693
     spLoadPending(userId); // #898
+    spQuickPaint(); // #905
     try { await authFetch('/api/messages/read/' + encodeURIComponent(userId), { method: 'POST' }); } catch (_) {}
     const c = _spConvs.find(function (x) { return x.userId === userId; }); if (c) { c.unread = 0; _spRenderList(); _spSetBadge(_spConvs.reduce(function (s, x) { return s + (x.unread || 0); }, 0)); }
 }
@@ -17619,3 +17620,55 @@ async function spPendImg(id) {
     } catch (_) { showToast('No se pudo abrir la foto', 'error'); }
 }
 window.spOpenAction = spOpenAction; window.spLoadPending = spLoadPending; window.spPendConfirm = spPendConfirm; window.spPendImg = spPendImg;
+
+// ===== #905 respuestas rápidas de Soporte: un toque manda la explicación (firmada con el nombre de turno) y cierra la charla =====
+let _spQuickItems = null;
+async function spQuickPaint() {
+    const box = document.getElementById('spQuick'); if (!box) return;
+    if (!_spSelected || _spSelected.guest) { box.innerHTML = ''; return; }
+    try {
+        if (!_spQuickItems) { const r = await authFetch('/api/admin/support/quick-replies'); const j = await r.json(); _spQuickItems = (r.ok && j.items) || []; }
+        box.innerHTML = '<span class="sp-quick-h">Respuesta rápida (manda y cierra):</span>' + _spQuickItems.map(function (q) {
+            return '<span class="sp-quick-w"><button type="button" class="sp-quick-b" title="' + escapeHtml(q.preview || '') + '" onclick="spQuickSend(\'' + escapeHtml(q.key) + '\', this)">' + escapeHtml(q.label) + '</button>' + (q.builtin ? '' : '<button type="button" class="sp-quick-x" title="Borrar esta respuesta" onclick="spQuickDel(\'' + escapeHtml(q.key) + '\')">✕</button>') + '</span>';
+        }).join('') + '<button type="button" class="sp-quick-b sp-quick-add" onclick="spQuickNew()">➕ Nueva respuesta</button><div id="spQuickForm" class="sp-quick-form" hidden></div>';
+    } catch (_) { box.innerHTML = ''; }
+}
+async function spQuickSend(key, btn) {
+    if (!_spSelected || _spSelected.guest) return;
+    const uid = _spSelected.userId;
+    document.querySelectorAll('.sp-quick-b').forEach(function (b) { b.disabled = true; });
+    try {
+        const r = await authFetch('/api/admin/support/' + encodeURIComponent(uid) + '/quick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: key }) });
+        const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) { showToast(j.error || 'No se pudo enviar', 'error'); return; }
+        showToast('✅ Respuesta enviada y charla cerrada', 'success');
+        spLoadMessages(uid, false); loadSupport();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+    finally { document.querySelectorAll('.sp-quick-b').forEach(function (b) { b.disabled = false; }); }
+}
+window.spQuickSend = spQuickSend; window.spQuickPaint = spQuickPaint;
+
+function spQuickNew() {
+    const f = document.getElementById('spQuickForm'); if (!f) return;
+    if (!f.hidden) { f.hidden = true; return; }
+    f.innerHTML = '<input id="sqLabel" maxlength="40" placeholder="Título del botón (ej.: 🕐 Horario de pagos)">'
+        + '<textarea id="sqText" rows="3" maxlength="600" placeholder="Texto que le llega al cliente. Podés usar {min}, {retiro_min}, {carga} y {rollover}."></textarea>'
+        + '<select id="sqBtn"><option value="">Sin botón</option><option value="withdraw">💸 Botón a Retirar premio</option><option value="full">⚡ Botón a Cargar</option><option value="receipt">📎 Botón a Cargá el comprobante aquí</option><option value="refund">📉 Botón a Ver mi reembolso</option></select>'
+        + '<div style="display:flex;gap:6px"><button type="button" class="btn-primary btn-small" onclick="spQuickSave()">💾 Guardar</button><button type="button" class="btn-secondary btn-small" onclick="spQuickNew()">Cancelar</button></div>';
+    f.hidden = false; const l = document.getElementById('sqLabel'); if (l) l.focus();
+}
+async function spQuickSave() {
+    const g = (id) => (document.getElementById(id) || {}).value || '';
+    const body = { label: g('sqLabel').trim(), text: g('sqText').trim(), btnTarget: g('sqBtn') || null };
+    if (body.label.length < 2 || body.text.length < 5) { showToast('Poné un título y el texto', 'error'); return; }
+    try {
+        const r = await authFetch('/api/admin/support/quick-replies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(function () { return {}; });
+        if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
+        showToast('💾 Respuesta guardada para todo el equipo', 'success'); _spQuickItems = null; spQuickPaint();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+async function spQuickDel(key) {
+    if (!confirm('¿Borrar esta respuesta rápida? (se borra para todo el equipo)')) return;
+    try { const r = await authFetch('/api/admin/support/quick-replies/' + encodeURIComponent(key), { method: 'DELETE' }); const j = await r.json().catch(function () { return {}; }); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } _spQuickItems = null; spQuickPaint(); } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.spQuickNew = spQuickNew; window.spQuickSave = spQuickSave; window.spQuickDel = spQuickDel;
