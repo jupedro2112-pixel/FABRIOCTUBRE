@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 915. Ganamos con el ORDEN EXACTO de sus juegos y cada juego con su proveedor — SW v611
+**Pedido (owner):** "respetá el orden de cada uno; cada proveedor tiene que tener su juego correspondiente, si no me puede traer problemas".
+- El inicio de Ganamos arma sus filas con LISTAS FIJAS en el bundle (Gz Primicias, Oz Rubyplay, Vz Amusnet, Zz Pragmatic, Nz Amigo, jz XPG,
+  Dz/Yz/Lz Destacadas/Joker/Clásicas —versión del usuario común, no RGS—, Bz Pragmatic Live, DF los 3 juegos grandes). Se extrajeron en orden y
+  se buscó cada juego en el catálogo público de 1girox: entra sólo si coincide NOMBRE y PROVEEDOR (se acepta únicamente el sufijo de RTP,
+  "Volcano Rising SE" = "Volcano Rising SE 96" de RubyPlay). Nunca se reemplaza por otro juego. Resultado en `public/data/ganamos-home.json`
+  (61 juegos): Rubyplay 9/9, Amusnet 8/11, Pragmatic 11/11, Destacadas 9/21, Joker 9/14, Clásicas 13/19, Pragmatic Live 2/10, juegos grandes 1/3
+  (Gana Volcano). Sin equivalente en Girox (filas que NO aparecen): Primicias (Mascot/Winfinity/RubyPlay nuevos), Amigo Gaming, XPG, 123slots,
+  Exclusivo de Ganamos, AI Generated. "Especialmente para vos" en Ganamos es personal (su API): acá = los más jugados de Girox.
+- Para regenerar si Ganamos cambia sus listas: scripts del scratchpad (gnx.py + gnmap.js) — extraer con el bundle nuevo y volver a cruzar.
+- JUGAYGANA: jugaygana44.bet no sirve sus archivos (CloudFront "Error", pantalla en blanco para todos): no se pudo leer su orden.
+
 ### 914. 🟣 Página GANAMOS (picaroja.com/ganamosoficial) + barra de Girox y Carga rápida en las tres páginas — SW v610, admin SW v185
 **Pedido (owner):** Ganamos (marca propia, ganandoargentina.com) "idéntica de punta a punta" con los juegos y la cuenta de Girox por ahora;
 sorteos "Próximamente" hasta tener la API; link /ganamosoficial; en TODAS las páginas la barra de arriba de Girox (Volver · Menú · marca ·

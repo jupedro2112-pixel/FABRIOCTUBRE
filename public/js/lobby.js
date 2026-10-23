@@ -134,34 +134,37 @@ VIP.lobby = (function () {
         [...bars.children].forEach((b, k) => b.classList.toggle('on', k === i));
     }
     const _provId = (re) => { const p = ((_data && _data.providers) || []).find((x) => re.test(x.name)); return p ? p : null; };
-    const GN_ROWS = [['Rubyplay', /ruby/i], ['Amusnet', /amusnet|egt/i], ['Pragmatic Slots', /^pragmatic play$/i], ['Amigo Gaming', /amigo/i], ['XPG', /^xpg/i], ['__dest'], ['Tragamonedas Del Joker', 'joker'], ['Tragamonedas Clásicas', 'hot'], ['Pragmatic Live', /pragmatic.*live/i]];
+    // #915 (owner: "cada proveedor con su juego correspondiente, en el mismo orden"): las filas salen de /data/ganamos-home.json = las listas
+    // FIJAS del inicio de Ganamos, en su orden, con los juegos de Girox que coinciden en nombre y proveedor (lo que Girox no tiene NO se
+    // reemplaza: la fila queda más corta o no aparece). "Especialmente para vos" en Ganamos es personal (su API): acá van los más jugados de Girox.
+    const GN_MORE = { 'Rubyplay': /ruby/i, 'Amusnet': /amusnet|egt/i, 'Pragmatic Slots': /^pragmatic play$/i, 'Pragmatic Live': /pragmatic.*live/i };
+    let _gnHomeData = null;
+    async function _gnData() {
+        if (_gnHomeData) return _gnHomeData;
+        try { const r = await fetch('/data/ganamos-home.json', { cache: 'no-cache' }); if (r.ok) _gnHomeData = await r.json(); } catch (_) {}
+        return _gnHomeData || { tiles: [], rows: [] };
+    }
     function _gnHome() {
         const pop = (_data && _data.popular) || [];
-        const tiles = pop.slice(0, 3);
+        const tiles = (_gnHomeData && _gnHomeData.tiles) || [];
         return _gnPromos(false) +
             '<div class="gn-links"><button type="button" class="gn-link" onclick="VIP.lobby.go(\'slots\')"><img src="' + SK().dir + 'casino-original.webp" alt=""><b>Casino</b><span>Diversión sin límites ›</span></button>' +
             '<button type="button" class="gn-link" onclick="VIP.lobby.go(\'vivo\')"><img src="' + SK().dir + 'livecasino-original.webp" alt=""><b>Casino en vivo</b><span>Jugá con crupieres en vivo ›</span></button></div>' +
-            '<div class="gn-tiles">' + tiles.map((g) => '<button type="button" class="gn-tile" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' + (g.img ? '<img src="' + esc(img(g.img)) + '" alt="">' : '<i>' + esc(g.name) + '</i>') + '</button>').join('') + '</div>' +
+            (tiles.length ? '<div class="gn-tiles">' + tiles.map((g) => '<button type="button" class="gn-tile" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' + (g.img ? '<img src="' + esc(img(g.img)) + '" alt="">' : '<i>' + esc(g.name) + '</i>') + '</button>').join('') + '</div>' : '') +
             '<button type="button" class="gn-sport" onclick="VIP.lobby.go(\'deportes\')">⚽ Deportes</button>' +
             '<div class="gn-pay"><button type="button" onclick="VIP.lobby.load()">💳 Depósito</button><button type="button" onclick="VIP.lobby.withdraw()">💸 Retiro de dinero</button></div>' +
             '<button type="button" class="gn-chat" onclick="VIP.lobby.support()">💬 Chat</button>' +
             _gcar('Especialmente para vos', pop, 'VIP.lobby.go(\'slots\')') +
-            _gcar('Primicias Ganamos', (_data.nuevos && _data.nuevos.length ? _data.nuevos : pop.slice(12)), 'VIP.lobby.go(\'slots\')') +
-            '<div id="gnRows"></div>';
+            '<div id="gnRows">' + _gnRowsHtml() + '</div>';
+    }
+    function _gnRowsHtml() {
+        if (!_gnHomeData) return '';
+        return (_gnHomeData.rows || []).map((r) => { const re = GN_MORE[r.title]; const pv = re ? _provId(re) : null; return _gcar(r.title, r.games, pv ? 'VIP.lobby.all(' + Number(pv.id) + ', \'' + esc(r.title) + '\')' : 'VIP.lobby.go(\'slots\')'); }).join('');
     }
     async function _gnFillRows() {
-        const box = $('gnRows'); if (!box) return;
-        const pop = (_data && _data.popular) || [];
-        const jobs = GN_ROWS.map(async (r) => {
-            if (r[0] === '__dest') return _gcar('Tragamonedas Destacadas', pop.slice(8), 'VIP.lobby.go(\'slots\')');
-            try {
-                const isQ = typeof r[1] === 'string'; const pv = isQ ? null : _provId(r[1]); if (!isQ && !pv) return '';
-                const res = await fetch(VIP.config.API_URL + '/api/games/catalog?' + (isQ ? 'q=' + encodeURIComponent(r[1]) : 'provider=' + pv.id), { headers: auth() });
-                const d = await res.json().catch(() => ({})); if (!res.ok) return '';
-                return _gcar(r[0], d.games || [], pv ? 'VIP.lobby.all(' + Number(pv.id) + ', \'' + esc(r[0]) + '\')' : 'VIP.lobby.go(\'slots\')');
-            } catch (_) { return ''; }
-        });
-        const html = await Promise.all(jobs); const b2 = $('gnRows'); if (b2 && _skin === 'ganamos' && _view === 'inicio') b2.innerHTML = html.join('');
+        if (_gnHomeData) return;
+        await _gnData(); const b = $('gnRows');
+        if (b && _skin === 'ganamos' && _view === 'inicio') { _gcN = 100; b.innerHTML = _gnRowsHtml(); const m = $('prlMain'); if (m && (_gnHomeData.tiles || []).length && !m.querySelector('.gn-tiles')) _render(); }
     }
     function _render() {
         const m = $('prlMain'); if (!m) return; _secN = 0;
