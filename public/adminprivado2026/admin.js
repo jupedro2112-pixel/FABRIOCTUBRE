@@ -5011,6 +5011,7 @@ function switchSection(section) {
     if (section === 'datos') { datosIaGate('Datos').then(function (ok) { if (ok) loadDatos(); }); } // #743 clave
     if (section === 'datosIa') { datosIaGate('Datos IA').then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
     if (section === 'menuLayout') { loadMenuLayout(); loadMenusEnabled(); } // #480 · #635
+    if (section === 'raffle') { raffleLoad(); } // #917
     if (section === 'cierres') { datosIaGate('Cierres').then(function (ok) { if (ok) cierresLoad(); }); } // #500 · #745 clave
     if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
     if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
@@ -17690,3 +17691,41 @@ async function spQuickDel(key) {
     try { const r = await authFetch('/api/admin/support/quick-replies/' + encodeURIComponent(key), { method: 'DELETE' }); const j = await r.json().catch(function () { return {}; }); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } _spQuickItems = null; spQuickPaint(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.spQuickNew = spQuickNew; window.spQuickSave = spQuickSave; window.spQuickDel = spQuickDel;
+
+
+// ===== #917 SORTEO MENSUAL (panel): ranking real, ganadores y entrega, premios =====
+async function raffleLoad() {
+    const box = document.getElementById('raffleBody'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/raffle'); const d = await r.json();
+        if (!r.ok) { box.innerHTML = '<div class="cfg-sub">' + escapeHtml(d.error || 'Error') + '</div>'; return; }
+        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const f = (x) => x ? new Date(x).toLocaleString('es-AR') : '—';
+        const pz = (k, i) => { const p = ((d.config[k] || {}).prizes || [])[i] || {}; return '<div style="display:flex;gap:6px;margin:4px 0"><b style="width:28px">' + (i + 1) + '°</b><input class="rf-in" data-k="' + k + '" data-i="' + i + '" data-f="title" value="' + escapeHtml(p.title || '') + '" style="flex:1"><input class="rf-in" data-k="' + k + '" data-i="' + i + '" data-f="detail" value="' + escapeHtml(p.detail || '') + '" style="flex:1.4"></div>'; };
+        box.innerHTML =
+            '<div class="dia-card"><div class="dia-card-h"><b>📊 ' + escapeHtml(d.monthLabel) + ' · en curso</b><small>Actualizado: ' + f(d.updatedAt) + ' · <button class="btn btn-secondary btn-sm" onclick="raffleRecalc()">Recalcular ahora</button></small></div>' +
+            (d.top.length ? '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Apostado válido</th><th>Apostado</th><th>Cargas</th><th>Bonos</th></tr></thead><tbody>' +
+                d.top.map((t) => '<tr><td>' + t.pos + '</td><td>' + escapeHtml(t.username) + '</td><td><b>' + t.points.toLocaleString('es-AR') + '</b></td><td>' + m(t.validWagered) + '</td><td>' + m(t.wagered) + '</td><td>' + m(t.deposits) + '</td><td>' + m(t.bonusGranted) + '</td></tr>').join('') + '</tbody></table></div>' : '<div class="cfg-sub">Todavía nadie suma puntos este mes.</div>') + '</div>' +
+            '<div class="dia-card"><div class="dia-card-h"><b>🏅 Ganadores y entrega</b><small>El ganador escribe con "Coordinar la entrega" (le llega a Soporte con 🏆).</small></div>' +
+            (d.months.length ? d.months.map((mo) => '<div style="margin:8px 0"><b>' + escapeHtml(mo.monthLabel) + '</b> · ' + mo.participants + ' participantes · cerrado ' + f(mo.closedAt) + '<table class="data-table"><tbody>' +
+                (mo.winners || []).map((w) => '<tr><td>' + w.pos + '°</td><td>' + escapeHtml(w.username) + '</td><td>' + escapeHtml(w.prize) + '</td><td>' + w.points.toLocaleString('es-AR') + ' pts</td><td>' + (w.contactAt ? '📩 escribió ' + f(w.contactAt) : 'sin contacto') + '</td><td>' +
+                    (w.deliveredAt ? '✅ ' + f(w.deliveredAt) + ' · ' + escapeHtml(w.deliveredBy || '') + (w.deliveryNote ? ' · ' + escapeHtml(w.deliveryNote) : '') : '<button class="btn btn-primary btn-sm" onclick="raffleDelivered(\'' + mo.monthKey + '\',' + w.pos + ')">Marcar entregado</button>') + '</td></tr>').join('') + '</tbody></table></div>').join('') : '<div class="cfg-sub">Todavía no cerró ningún mes.</div>') + '</div>' +
+            '<div class="dia-card"><div class="dia-card-h"><b>🎁 Premios</b><small>Lo que ven los clientes. Todos se pueden cobrar en efectivo.</small></div>' +
+            '<div><b>Sorteo mensual</b> <input class="rf-in" data-k="active" data-f="ttl" value="' + escapeHtml(d.config.active.title) + '">' + [0, 1, 2].map((i) => pz('active', i)).join('') + '</div>' +
+            '<div style="margin-top:10px"><b>Próximamente</b> <input class="rf-in" data-k="upcoming" data-f="ttl" value="' + escapeHtml(d.config.upcoming.title) + '">' + [0, 1, 2].map((i) => pz('upcoming', i)).join('') + '</div>' +
+            '<div style="margin-top:10px">Días hábiles para entregar: <input id="rfDays" type="number" min="1" max="60" value="' + Number(d.config.deliveryBusinessDays || 10) + '" style="width:70px"></div>' +
+            '<button class="btn btn-primary" style="margin-top:10px" onclick="raffleSaveConfig()">Guardar premios</button></div>';
+    } catch (e) { box.innerHTML = '<div class="cfg-sub">Error de conexión</div>'; }
+}
+async function raffleRecalc() {
+    try { const r = await authFetch('/api/admin/raffle/recalc', { method: 'POST' }); const d = await r.json(); showToast(r.ok ? (d.skipped ? 'No se calculó: ' + d.skipped : 'Recalculado: ' + ((d.current && d.current.participants) || 0) + ' participantes') : (d.error || 'Error'), r.ok ? 'success' : 'error'); raffleLoad(); } catch (e) { showToast('Error de conexión', 'error'); }
+}
+async function raffleDelivered(mk, pos) {
+    const note = prompt('Nota de la entrega (cómo y a quién se entregó, opcional):', ''); if (note === null) return;
+    try { const r = await authFetch('/api/admin/raffle/' + encodeURIComponent(mk) + '/delivered', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pos, note }) }); const d = await r.json(); showToast(r.ok ? '✅ Marcado como entregado' : (d.error || 'Error'), r.ok ? 'success' : 'error'); raffleLoad(); } catch (e) { showToast('Error de conexión', 'error'); }
+}
+async function raffleSaveConfig() {
+    const cfg = { active: { prizes: [{}, {}, {}] }, upcoming: { prizes: [{}, {}, {}] }, deliveryBusinessDays: Number((document.getElementById('rfDays') || {}).value) || 10 };
+    document.querySelectorAll('#raffleBody .rf-in').forEach((el) => { const k = el.dataset.k; if (el.dataset.f === 'ttl') cfg[k].title = el.value; else cfg[k].prizes[Number(el.dataset.i)][el.dataset.f] = el.value; });
+    try { const r = await authFetch('/api/admin/raffle/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) }); const d = await r.json(); showToast(r.ok ? '✅ Premios guardados' : (d.error || 'Error'), r.ok ? 'success' : 'error'); } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.raffleLoad = raffleLoad; window.raffleRecalc = raffleRecalc; window.raffleDelivered = raffleDelivered; window.raffleSaveConfig = raffleSaveConfig;

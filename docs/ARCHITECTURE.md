@@ -1395,3 +1395,15 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.
 - **Casino (#695):** `ui.js enterCasino` espera 4×30 s y el error dice el motivo (`_fetchCasinoSession` devuelve `status`/`timedOut`);
   en Render el arranque en frío (~50 s) y los redeploys son la causa típica del "No pudimos abrirte el casino".
+
+
+## Sorteo mensual (#917, 2026-10-23)
+- **Qué:** ranking mensual por puntos entre los clientes de la app con carga real en el mes; 1°, 2° y 3° se llevan los premios de
+  `Config['raffleconfig']` (panel → 🏆 Sorteo mensual). Ganadores congelados el día 1 (ART) en `RaffleMonth.winners`.
+- **Puntos:** `raffleService.computeMonth` → por cliente: cargas reales del mes (Transaction deposit completed, sin PRUEBA ni regalos),
+  `getPlayersStatsBatch` (apostado y bonos del mes, de a 100) ⇒ válido = apostado × cargas ÷ (cargas + bonos) ⇒ puntos = válido / 1.000. Se guarda
+  con `$set` en `RaffleScore` (único mes+cliente).
+- **Cron:** `_raffleTick` cada 20 min con candado `RaffleMonth{monthKey:'lock'}` (una instancia a la vez). El día 1 `closeMonth(mesAnterior)` (sólo si
+  todos los batch salieron bien; idempotente). Con `girox.isSimulated()` no hace nada.
+- **Cliente:** `GET /api/raffle` (ranking top 20 con `mask()`, mi puesto, faltantes, bases); ganador ⇒ `POST /api/raffle/contact` deja un mensaje 🏆 en
+  Soporte (canal support, `metadata.kind:'prize'`) y `winners.$.contactAt`. Entrega: panel → "Marcar entregado" (`deliveredAt/By/Note`).

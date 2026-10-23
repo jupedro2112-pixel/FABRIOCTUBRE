@@ -68,6 +68,9 @@ const Campaign = require('./src/models/Campaign');
 const CampaignClick = require('./src/models/CampaignClick');
 const InfluencerStory = require('./src/models/InfluencerStory');
 const Story = require('./src/models/Story'); // #361: historias de la app (las publica el admin)
+const RaffleScore = require('./src/models/RaffleScore'); // #917: sorteo mensual por puntos
+const RaffleMonth = require('./src/models/RaffleMonth');
+const raffleService = require('./src/services/raffleService');
 const ChatDelay = require('./src/models/ChatDelay');
 const Comprobante = require('./src/models/Comprobante');
 const comprobanteAi = require('./src/services/comprobanteAiService');
@@ -25790,6 +25793,75 @@ async function _storyAutoTick() {
   } catch (e) { logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; }
 }
 setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyAutoTick().catch(() => {}); }, 5 * 60 * 1000); }, 2 * 60 * 1000);
+
+// ===== #917 (owner 2026-10-23): SORTEO MENSUAL POR PUNTOS (src/services/raffleService.js) =====
+// 100 puntos cada $100.000 apostados con plata real (proporción cargas / (cargas + bonos) del mes, datos de 1girox). Participan sólo los
+// clientes de la app con carga real en el mes. Cierra el último día 23:59 (ART); el día 1 congela ganadores 1-2-3. Cron cada 20 min con
+// candado entre instancias; nunca corre con el casino simulado (Render comparte la base con producción).
+const _raffleDeps = () => ({ models: { User, Transaction, RaffleScore, RaffleMonth, Config }, girox, logger });
+async function _raffleTick() {
+  try { const r = await raffleService.tick(_raffleDeps()); if (r && (r.close || (r.current && r.current.errors))) logger.info('[sorteo] ' + JSON.stringify(r)); }
+  catch (e) { logger.warn('[sorteo] tick: ' + e.message); }
+}
+setTimeout(() => { _raffleTick(); setInterval(_raffleTick, 20 * 60 * 1000); }, 3 * 60 * 1000);
+app.get('/api/raffle', authMiddleware, async (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); res.json(await raffleService.publicStatus(_raffleDeps(), req.user.userId)); }
+  catch (e) { logger.warn('[sorteo] status: ' + e.message); res.status(503).json({ error: 'No pudimos cargar el sorteo. Probá de nuevo.' }); }
+});
+// SOPORTE DE ENTREGA DE PREMIOS: el ganador toca "Coordinar la entrega" ⇒ mensaje al Soporte (charla abierta, se ve como queja/pedido) y
+// queda registrado en el sorteo (contactAt). Sólo los ganadores reales del último mes cerrado.
+app.post('/api/raffle/contact', authMiddleware, async (req, res) => {
+  try {
+    const last = await RaffleMonth.findOne({ status: 'closed' }).sort({ monthKey: -1 }).lean();
+    const w = last && (last.winners || []).find((x) => x.userId === req.user.userId);
+    if (!w) return res.status(403).json({ error: 'Esta opción es sólo para los ganadores del sorteo.' });
+    const u = await User.findOne({ id: req.user.userId }).select('id username').lean();
+    const txt = `🏆 ¡Gané el sorteo de ${raffleService.monthLabel(last.monthKey)}! Puesto ${w.pos} (${w.prize}). Quiero coordinar la entrega del premio.`;
+    await Message.create({ id: uuidv4(), senderId: u.id, senderUsername: u.username, senderRole: 'user', receiverId: 'admin', receiverRole: 'admin', content: txt, type: 'text', timestamp: new Date(), read: false, channel: 'support', metadata: { kind: 'prize', monthKey: last.monthKey, pos: w.pos } });
+    await ChatStatus.updateOne({ userId: u.id }, { $set: { status: 'open', username: u.username, closedAt: null } }, { upsert: true }).catch(() => {});
+    if (!w.contactAt) await RaffleMonth.updateOne({ monthKey: last.monthKey, 'winners.userId': u.id }, { $set: { 'winners.$.contactAt': new Date() } });
+    try { notifyAdmins('new_message', { message: { content: txt, senderUsername: u.username }, userId: u.id, username: u.username }); } catch (_) {}
+    res.json({ success: true });
+  } catch (e) { logger.warn('[sorteo] contacto: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Panel: ranking SIN tapar, meses cerrados con ganadores y entrega; editar premios; recalcular a mano.
+app.get('/api/admin/raffle', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
+    const mk = raffleService.monthKeyOf(new Date());
+    const top = await raffleService.ranking(_raffleDeps(), mk, 100);
+    const months = await RaffleMonth.find({ status: 'closed' }).sort({ monthKey: -1 }).limit(12).lean();
+    const cur = await RaffleMonth.findOne({ monthKey: mk }).lean();
+    res.json({ monthKey: mk, monthLabel: raffleService.monthLabel(mk), updatedAt: cur && cur.lastRunAt, config: await raffleService.getConfig(_raffleDeps()),
+      top: top.map((s, i) => ({ pos: i + 1, username: s.username, points: s.points, validWagered: s.validWagered, wagered: s.wagered, deposits: s.deposits, bonusGranted: s.bonusGranted })),
+      months: months.map((m) => ({ monthKey: m.monthKey, monthLabel: raffleService.monthLabel(m.monthKey), participants: m.participants, closedAt: m.closedAt, winners: m.winners })) });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/raffle/:mk/delivered', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
+    const pos = Number(req.body && req.body.pos); const note = String((req.body && req.body.note) || '').slice(0, 300);
+    const r = await RaffleMonth.updateOne({ monthKey: String(req.params.mk), status: 'closed', 'winners.pos': pos }, { $set: { 'winners.$.deliveredAt': new Date(), 'winners.$.deliveredBy': req.user.username, 'winners.$.deliveryNote': note } });
+    if (!r.matchedCount) return res.status(404).json({ error: 'No encontrado' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/raffle/config', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
+    const b = req.body || {}; const clean = (p) => (Array.isArray(p) ? p.slice(0, 3).map((x, i) => ({ pos: i + 1, title: String((x && x.title) || '').slice(0, 60), detail: String((x && x.detail) || '').slice(0, 80) })) : undefined);
+    const cur = await raffleService.getConfig(_raffleDeps());
+    const next = { active: { title: String((b.active && b.active.title) || cur.active.title).slice(0, 60), prizes: clean(b.active && b.active.prizes) || cur.active.prizes },
+      upcoming: { title: String((b.upcoming && b.upcoming.title) || cur.upcoming.title).slice(0, 60), prizes: clean(b.upcoming && b.upcoming.prizes) || cur.upcoming.prizes },
+      deliveryBusinessDays: Math.max(1, Math.min(60, Number(b.deliveryBusinessDays) || cur.deliveryBusinessDays)), cashOption: b.cashOption !== false };
+    await Config.updateOne({ key: 'raffleconfig' }, { $set: { value: next } }, { upsert: true });
+    res.json({ success: true, config: next });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/raffle/recalc', authMiddleware, adminMiddleware, async (req, res) => {
+  try { if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' }); res.json(await raffleService.tick(_raffleDeps())); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ===== #886 BONO DE BIENVENIDA POR DÍAS (owner 2026-10-23): "a los clientes nuevos, que lo vean sólo los nuevos: notificación + bono de 50%
 // con el mismo rollover, en historias, el día 5, el 15 y el 30 desde que se registró; el resto no lo ve. 'Tenés un 50% activo, 2 hs para

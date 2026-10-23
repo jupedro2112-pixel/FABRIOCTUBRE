@@ -8,6 +8,28 @@
 
 ## Sesión 2026-10-22
 
+### 917. 🏆 SORTEO MENSUAL por puntos (transparente) + Gran Sorteo "próximamente" + soporte de entrega de premios; menú con el nombre de la plataforma — SW v613, admin SW v186
+**Pedido (owner):** sorteo mensual con ranking (nombres tapados) para los clientes ACTIVOS de la app: 1° auto valorado en $10.000.000, 2° iPhone 18
+Pro Max, 3° $500.000; puntos: 100 cada $100.000 apostados SÓLO con plata real (no bonos), datos de Girox; ganador el día 1 en el menú completo;
+botón en el Inicio para ver el puesto y cuánto falta para el 1°; todo detallado (hasta cuándo suma, cuándo se entrega); premios cobrables en
+efectivo con un soporte exclusivo de entrega; otro sorteo "próximamente" (auto $30.000.000, viaje al Caribe para 2 todo incluido 5 días, USD 2.000);
+banners modernos con el estilo de cada página, arriba (como Ganamos); en Ganamos sólo esos dos sorteos. Además: "Menú <plataforma> directo",
+sin "Próximamente" en las plataformas, sin la fila de saldo/Cargar arriba de las páginas.
+- **Regla de puntos** (`src/services/raffleService.js`): 1girox informa apostado total y bonos recibidos, no con qué saldo se apostó ⇒
+  válido = apostado × cargas reales ÷ (cargas reales + bonos) del mes; puntos = válido / 1.000. Participan clientes (role user, no bloqueados, sin
+  cuentas de prueba) con carga real `completed` en el mes (sin "PRUEBA" ni regalos). Suma del día 1 00:00 al último día 23:59:59 ART. Empate: más
+  válido, después quien llegó antes (updatedAt sólo cambia si cambian los puntos). Probado con Mongo en memoria (`scratchpad/mdb/raffle.js`).
+- Modelos `RaffleScore` (mes+cliente, $set idempotente) y `RaffleMonth` (open/closed, ganadores congelados, contacto y entrega; 'lock' = candado
+  entre instancias). Cron `_raffleTick` cada 20 min: el día 1 cierra el mes anterior (idempotente) y recalcula el actual; NO corre con el casino
+  simulado (Render comparte la base). Rutas: `GET /api/raffle`, `POST /api/raffle/contact` (sólo ganadores: mensaje 🏆 a Soporte + contactAt),
+  `GET /api/admin/raffle`, `POST /api/admin/raffle/:mk/delivered`, `POST /api/admin/raffle/config` (Config 'raffleconfig'), `POST /api/admin/raffle/recalc`.
+- App: `public/js/raffle.js` (pantalla del sorteo con el estilo de la marca: cuenta regresiva, mi puesto/puntos/válido + la cuenta explicada,
+  premios, ranking top 20 tapado, ganadores, soporte de entrega, bases, Gran Sorteo próximamente); botón "🏆 Sorteo mensual" arriba en los menús
+  completo, intermedio y básico (con "Vas N° · X pts · te faltan Y"); banners `public/images/sorteo/<marca>-active|upcoming.svg` arriba de las 3
+  páginas; Ganamos sin las promos de torneos; pestaña Sorteos ⇒ el sorteo. Panel: sección 🏆 Sorteo mensual (ranking real, ganadores, entrega, premios).
+- Menú: "Menú <plataforma> directo" (`_brandName`/`_paintBrandLabels`); JUGAYGANA y Ganamos ya no figuran "Pronto" en ningún lado; páginas sin la
+  fila de saldo/Cargar (JUGAYGANA y Ganamos mantienen su barra con el logo). Girox queda como está (el owner integra su página).
+
 ### 916. 🟡 JUGAYGANA igual a jugaygana.io (marca propia): banners, orden de colecciones y juegos por proveedor — SW v612
 **Pedido (owner):** "copiá todo de jugaygana.io, que es mía también" (jugaygana44.bet está caída). jugaygana.io es una app Vue (Laravel) cuyo
 API público `admin.jugaygana.io/api/` da: `sliders?page=home` (11 banners, 16:9 en el celular), `games/collections` (7 colecciones en orden:

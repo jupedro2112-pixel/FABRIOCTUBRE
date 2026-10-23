@@ -417,7 +417,7 @@
         const b = _el('menuPinBtn'), t = _el('menuPinTxt'); if (!b || !t) return;
         const on = isMenuFixed() && getMenuPref() === _prefOfMode();
         b.classList.toggle('on', on);
-        const nm = _homeMode === 'basic' ? 'básico' : (_homeMode === 'easy' ? 'intermedio' : (_curPref === 'girox' ? 'Girox directo' : 'completo')); // #670
+        const nm = _homeMode === 'basic' ? 'básico' : (_homeMode === 'easy' ? 'intermedio' : (_curPref === 'girox' ? (_brandName() + ' directo') : 'completo')); // #670 · #917: con el nombre de la plataforma elegida
         t.textContent = on ? ('✓ Menú ' + nm + ' fijo para el ingreso · tocá para deshacer') : ('Dejar fijo el menú ' + nm + ' para el ingreso');
     }
     function toggleMenuPin() {
@@ -783,8 +783,8 @@
     // webs públicas; después se re-renderiza con la lista real (misma URL ⇒ no se recarga el iframe).
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
-        { id: 'ganamos', name: 'Ganamos', playUrl: 'https://www.ganamosvip.me', connected: false, logoUrl: '/images/ganamos-net.png' },
-        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: false, logoUrl: '/images/jugaygana.png' } // #378
+        { id: 'ganamos', name: 'Ganamos', playUrl: '', connected: true, door: true, logoUrl: '/images/ganamos-net.png' }, // #917: ya se juega (página propia)
+        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana.png' } // #378 · #917
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
@@ -2126,6 +2126,12 @@
             _brand = id; return true;
         } catch (_) { try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {} return false; }
     }
+    // #917 (owner): "si elijo Ganamos, que el menú diga MENÚ GANAMOS DIRECTO" (y así con cada una): nombre de la plataforma elegida.
+    function _brandName() { const id = (_platforms && _platforms.preferredPlatform) || _localBrand() || 'girox'; const p = ((_platforms && _platforms.platforms) || []).find((x) => x.id === id); return (p && p.name) || (DOORS[id] && DOORS[id].name) || 'Girox'; }
+    function _paintBrandLabels() {
+        const n = _brandName();
+        try { document.querySelectorAll('.mc-brand').forEach((e) => { e.textContent = n; }); document.querySelectorAll('.mc-brand-up').forEach((e) => { e.textContent = n.toUpperCase(); }); } catch (_) {}
+    }
     function _injectPR() {
         if (!_platforms) return;
         const list = Array.isArray(_platforms.platforms) ? _platforms.platforms : (_platforms.platforms = []);
@@ -2139,6 +2145,7 @@
         else list.push({ id: 'ganamos', name: 'Ganamos', emoji: '🟣', connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl });
         const lb = _localBrand();
         if (_isDoor(lb)) { _platforms.preferredPlatform = lb; _platforms.defaultPlatform = lb; }
+        setTimeout(_paintBrandLabels, 0); // #917
     }
     async function loadPlatforms(force) {
         if (!force && _platforms && (Date.now() - _platformsAt) < 60000) return _platforms;
@@ -2189,6 +2196,7 @@
         if (_isDoor(platformId)) { // #912: PICA ROJA o JUGAYGANA → al server va 'girox' (misma cuenta)
             try { await fetch(VIP.config.API_URL + '/api/platforms/preferred', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox' }) }); } catch (_) {}
             if (_platforms) { _platforms.preferredPlatform = platformId; _platforms.defaultPlatform = platformId; }
+            try { _paintBrandLabels(); } catch (_) {} // #917
             try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
             return;
         }

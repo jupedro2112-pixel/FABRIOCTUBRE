@@ -49,10 +49,8 @@ VIP.lobby = (function () {
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
             '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: 'VIP.home.casinoFullMenu()', logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
-            '<header class="prl-top"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio">' +
-            (sk.wordmark ? '<img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark">' : '<img src="' + sk.logo + '" alt="" class="prl-logo"><span class="prl-brand"><b>' + sk.name + '</b><small>' + sk.sub + '</small></span>') + '</button>' +
-            '<div class="prl-wallet"><span class="prl-bal" id="prlBal">—</span><button type="button" class="prl-load" onclick="VIP.lobby.load()">Cargar</button></div>' +
-            '<button type="button" class="prl-x" onclick="VIP.lobby.menu()" aria-label="Menú y perfil">' + ico('menu') + '</button></header>' +
+            // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
+            (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button></header>' : '') +
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
@@ -69,8 +67,9 @@ VIP.lobby = (function () {
             '</div>');
         return $('prLobby');
     }
+    function _balText() { try { const src = $('userBalance'); return src && src.textContent ? src.textContent.replace(/^\s*Saldo:?\s*/i, '') : '—'; } catch (_) { return '—'; } }
     function _paintBal() {
-        try { const src = $('userBalance'); const b = $('prlBal'); if (src && b && src.textContent) b.textContent = src.textContent.replace(/^\s*Saldo:?\s*/i, ''); } catch (_) {}
+        try { const b = $('prlBal'); if (b) b.textContent = _balText(); } catch (_) {}
     }
     function _card(g) {
         return '<button type="button" class="prl-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" title="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' +
@@ -118,8 +117,13 @@ VIP.lobby = (function () {
     // Depósito · Retiro · Chat, y filas deslizantes de a 4: Especialmente para vos, Primicias, Rubyplay, Amusnet, Pragmatic, Amigo Gaming,
     // XPG, Destacadas, Del Joker, Clásicas, Pragmatic Live). Lo que en su página es exclusivo de su sistema (juegos propios, torneos,
     // sorteos) acá queda como "PRÓXIMAMENTE" hasta tener su API.
+    // #917 (owner): arriba de cada página, los DOS sorteos (el mensual activo y el Gran Sorteo "próximamente"), con el estilo de la marca.
+    function _rfStrip() {
+        return '<div class="rf-strip">' + ['active', 'upcoming'].map((k) => '<button type="button" class="rf-ban" onclick="VIP.raffle.open(\'' + _skin + '\')" aria-label="' + (k === 'active' ? 'Sorteo mensual: auto 0 km valorado en $10.000.000' : 'Gran Sorteo próximamente: auto 0 km valorado en $30.000.000') + '"><img src="/images/sorteo/' + _skin + '-' + k + '.svg" alt="" decoding="async"></button>').join('') + '</div>';
+    }
     const GN_PROMOS = [['promo-betrace.webp', 'Torneo de Betrace'], ['promo-endorphina.webp', 'Los tesoros de Endorphina'], ['promo-ruby.webp', 'Rubyplay'], ['promo-winspinity.webp', 'El camino de la fortuna']];
     function _gnPromos(big) {
+        if (!big) return _rfStrip(); // #917: en el inicio de Ganamos van sólo los dos sorteos (las promos de torneos se sacaron)
         return '<div class="gn-promos' + (big ? ' big' : '') + '">' + GN_PROMOS.map((p) => '<button type="button" class="gn-promo" onclick="VIP.lobby.go(\'sorteos\')" aria-label="' + p[1] + ' · próximamente"><img src="' + SK().dir + p[0] + '" alt=""><em>PRÓXIMAMENTE</em></button>').join('') + '</div>';
     }
     let _gcN = 0;
@@ -191,7 +195,7 @@ VIP.lobby = (function () {
             return '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'slots\')">Mostrar Todo</button></div>' +
                 rows.map((r) => '<div class="jg-row">' + r.map(_jgCard).join('') + '</div>').join('') + '</section>';
         }).join('');
-        return (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
+        return _rfStrip() + (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
                 '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
             '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div><div id="prlRes"></div>' +
@@ -212,10 +216,7 @@ VIP.lobby = (function () {
     function _render() {
         const m = $('prlMain'); if (!m) return; _secN = 0;
         document.querySelectorAll('.prl-nav [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === _view || (_view === 'all' && b.dataset.v === 'slots')));
-        if (_view === 'sorteos') { // #914: sorteos y torneos — PRÓXIMAMENTE (se activan con la API)
-            m.innerHTML = '<div class="gn-sh gn-h1"><span>🎁 Sorteos y torneos</span></div><p class="prl-note">Muy pronto vas a poder participar de los sorteos y torneos desde acá. Te avisamos apenas estén activos.</p>' + _gnPromos(true);
-            return;
-        }
+        if (_view === 'sorteos') { _view = 'inicio'; try { VIP.raffle.open(_skin); } catch (_) {} } // #917: la pestaña Sorteos abre el sorteo mensual
         if (!_data) { m.innerHTML = (SK().layout === 'ganamos' ? _gnPromos(false) : _hero()) + '<div class="prl-note">Cargando los juegos…</div>'; return; }
         if (SK().layout === 'ganamos' && _view === 'inicio') { _gcN = 0; m.innerHTML = _gnHome(); _gnFillRows(); return; }
         if (SK().layout === 'jugaygana' && _view === 'inicio') {
@@ -237,7 +238,7 @@ VIP.lobby = (function () {
                 (_allProv ? '' : _search()) + '<div class="prl-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
             _allPage = 0; _allMore = true; _moreAll(); if (_q && !_allProv) search(_q); return;
         }
-        m.innerHTML = _hero() + _providers(_data.providers) + _search() +
+        m.innerHTML = _rfStrip() + _hero() + _providers(_data.providers) + _search() +
             _row('fire', 'Populares', _data.popular) + _row('star', 'Nuevos', _data.nuevos) +
             (_data.live && _data.live[0] ? _row('live', 'En vivo · ' + _data.live[0].title, _data.live[0].games, _data.live[0].providerId) : '') +
             (_data.sections || []).map((s) => _row('slots', s.title, s.games, s.providerId)).join('') +
@@ -327,7 +328,7 @@ VIP.lobby = (function () {
         const item = (k, t, fn) => '<button type="button" class="prl-mi" onclick="' + fn + '">' + ico(k) + '<span>' + t + '</span><b class="prl-chev">›</b></button>';
         b.innerHTML =
             '<div class="prl-dr-head"><img src="' + SK().home + '" alt="" class="prl-logo"><div><b>' + esc(u.username || 'Mi cuenta') + '</b><small>' + SK().name + (SK().sub ? ' · ' + SK().sub : '') + '</small></div><button type="button" class="prl-x" onclick="VIP.lobby.menu(false)" aria-label="Cerrar">✕</button></div>' +
-            '<div class="prl-dr-card"><small>Saldo</small><b class="prl-dr-bal">' + esc(($('prlBal') || {}).textContent || '—') + '</b>' +
+            '<div class="prl-dr-card"><small>Saldo</small><b class="prl-dr-bal">' + esc(_balText()) + '</b>' +
             '<div class="prl-dr-btns"><button type="button" class="prl-load" onclick="VIP.lobby.load()">Cargar</button><button type="button" class="prl-ghost" onclick="VIP.lobby.withdraw()">Retirar</button></div></div>' +
             '<div class="prl-dr-card"><small>Nivel y rango</small>' +
             (lv ? '<b class="prl-dr-lvl">' + esc(lv.emoji || '') + ' ' + esc(lv.name) + '</b>' : '<b class="prl-dr-lvl">Jugador</b><span class="prl-dr-sub">Todavía sin nivel</span>') +
@@ -346,5 +347,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, skin: () => _skin };
 })();

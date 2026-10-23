@@ -224,6 +224,10 @@ document.addEventListener('change', function (ev) {
 <span>SMS Masivo 🔒</span>
 </a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🗂️ Administrativo</div>
+<a href="#" class="nav-item" data-section="raffle">
+<span>🏆</span>
+<span>Sorteo mensual</span>
+</a>
 <a href="#" class="nav-item" data-section="cierres">
 <span>🧾</span>
 <span>Cierres 🔒</span>
@@ -1411,6 +1415,14 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
 
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
+            <!-- #917: SORTEO MENSUAL — ranking real (sin tapar), ganadores y entrega, premios editables -->
+            <section id="raffleSection" class="section">
+                <div class="panel-header cfg-head">
+                    <div><h2>🏆 Sorteo mensual</h2><div class="cfg-sub">100 puntos cada $100.000 apostados con plata real (proporción cargas ÷ (cargas + bonos) del mes, datos de 1girox). Participan sólo clientes de la app con carga real en el mes. Se recalcula cada 20 min; el día 1 se congelan los 3 ganadores del mes anterior. Los clientes ven el ranking con los nombres tapados.</div></div>
+                    <button class="refresh-btn" onclick="raffleLoad()" title="Actualizar">🔄</button>
+                </div>
+                <div id="raffleBody"><div class="cfg-sub">Cargando…</div></div>
+            </section>
             <section id="cierresSection" class="section dia">
                 <div class="panel-header cfg-head">
                     <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Se cierran solos cada día con los datos del sistema y del banco (sin esperar confirmación; USDT es opcional). Si un día no da 0, tocá <b>Ver detalle</b>: te marca qué fue automático, qué se confirmó a mano y de dónde puede venir la diferencia.</div></div>
