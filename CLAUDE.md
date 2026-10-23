@@ -196,6 +196,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   cuenta de 1girox: nunca mostrar un saldo distinto del real ni trabar un retiro por esto.
   **#912:** JUGAYGANA también es una PUERTA a Girox en la app (`DOORS` en home.js, página `/jugaygana`). Si se conecta la API REAL de
   JUGAYGANA, sacarla de `DOORS` primero.
+  **#914:** Ganamos también es puerta a Girox (`/ganamosoficial`, diseño leído de ganandoargentina.com). Las páginas de marca van en z-index
+  99990 (debajo del casino 99999) y usan `casinoBarHtml` + `toggleCasinoLoad` (la Carga rápida de siempre).
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
   CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra SIEMPRE a Girox directo salvo que la persona haya elegido otro menú (`localStorage vip_menu_user='1'` +

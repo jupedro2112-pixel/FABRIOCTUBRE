@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-22
 
+### 914. 🟣 Página GANAMOS (picaroja.com/ganamosoficial) + barra de Girox y Carga rápida en las tres páginas — SW v610, admin SW v185
+**Pedido (owner):** Ganamos (marca propia, ganandoargentina.com) "idéntica de punta a punta" con los juegos y la cuenta de Girox por ahora;
+sorteos "Próximamente" hasta tener la API; link /ganamosoficial; en TODAS las páginas la barra de arriba de Girox (Volver · Menú · marca ·
+Historias · Info · Perfil) y la Carga rápida (mismo CBU, cargas y retiros) con el logo de cada marca; Soporte = el de PICA ROJA; Ganamos de la
+app (menú completo, básico, Inicio) abre esta página.
+- Leído de su bundle (ganandoargentina.com/assets): orden del inicio mobile (`home-mobile`), barra de abajo (`main-mobile-menu`: Deporte ·
+  Polymarket · [mascota = Inicio] · Casino · Casino en vivo), textos ("Diversión sin límites", "Especialmente para vos", "Primicias Ganamos",
+  "Tragamonedas Destacadas/Del Joker/Clásicas"…), colores (#130227, degradé #320548→#1f073a, #8B00C9) y las imágenes (logo, mascota, Casino,
+  Casino en vivo, halos, 4 portadas de torneos) ⇒ `public/images/ganamos/`.
+- Lo que en su página es de SU sistema (juegos exclusivos, AI Generated, Polymarket, torneos/sorteos, widget de eventos) acá NO se inventa: las
+  portadas de torneos van con "PRÓXIMAMENTE" y la vista Sorteos lo explica; Polymarket ⇒ "Sorteos" en la barra. Las filas por proveedor se
+  arman con el catálogo de Girox (RubyPlay, Amusnet, Pragmatic, Amigo Gaming, XPG, Pragmatic Live; Joker/Clásicas por búsqueda) en carrusel de a 4.
+- `home.js`: `casinoBarHtml(o)` (la barra del casino, misma salida que antes — verificado byte a byte) la usan las páginas; `toggleCasinoLoad`
+  se abre sobre la página si no hay juego abierto; DOORS/BRANDS + 'ganamos' (deja de mandar a ganamosvip.me).
+- `lobby.js`: z-index de la página 99990 (DEBAJO del casino 99999: el juego abre arriba y "Volver" vuelve a la página; los toasts 100002 se
+  ven), `body.casino-open` mientras está abierta (modales arriba). **Bug arreglado:** `close()` buscaba `#prlLobby` (no existe) ⇒ "Volver a la
+  app" nunca cerraba la página desde #907.
+- Server: `/ganamosoficial` ⇒ `/?gn=1`; `_BRANDS`/`User.activeBrand` + 'ganamos'; botón 🏷️ del panel con opción 4.
+
 ### 913. 🏷️ Panel → Usuarios: botón para cambiar la MARCA activa de un cliente (sin tocar el saldo) — admin SW v184
 **Pedido (owner):** "sacale el saldo a PICA ROJA porque no puedo ver JUGAYGANA" (diego651917). No hace falta mover fichas: es la misma cuenta.
 `POST /api/admin/users/:id/brand` (sólo admin general; queda en `brandHistory` y en el log) + botón 🏷️ en la fila del cliente (`adminSetBrand`).

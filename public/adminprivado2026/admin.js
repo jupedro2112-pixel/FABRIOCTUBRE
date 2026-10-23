@@ -4374,7 +4374,7 @@ function renderUsers(users) {
 
         // #913: cambiar la MARCA activa del cliente (PICA ROJA / Girox / JUGAYGANA) sin tocar su saldo (es la misma cuenta de Girox).
         const brandBtn = adminRole === 'admin' && !isAdminUser
-            ? `<button class="action-btn-small" title="Cambiar marca (PICA ROJA / Girox / JUGAYGANA)" onclick='adminSetBrand(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)})'>🏷️</button>`
+            ? `<button class="action-btn-small" title="Cambiar marca (PICA ROJA / Girox / JUGAYGANA / Ganamos)" onclick='adminSetBrand(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)})'>🏷️</button>`
             : '';
         let blockBtn = '';
         if (canBlock) {
@@ -4870,8 +4870,8 @@ window.handleBlockUser = handleBlockUser;
 window.handleUnblockUser = handleUnblockUser;
 // #913: marca activa del cliente (el bloqueo por saldo es para el cliente; el admin la cambia igual, sin mover fichas).
 async function adminSetBrand(userId, username) {
-    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana' };
-    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n\nEscribí el número:');
+    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana', '4': 'ganamos' };
+    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n4 = Ganamos\n\nEscribí el número:');
     if (pick == null) return;
     const brand = opts[String(pick).trim()]; if (!brand) { showToast('Opción inválida', 'error'); return; }
     try {

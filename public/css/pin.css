@@ -2659,7 +2659,7 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 /* ===== #907/#909 PÁGINA EXCLUSIVA PICA ROJA — estilo Stake (azul noche, recuadros sobrios), orden de juegos como Girox.
    Paleta propia y fija (no sigue el modo claro/oscuro de la app: la página es siempre oscura). ===== */
 .prl { --prl-bg: #1a2c38; --prl-deep: #0f212e; --prl-card: #213743; --prl-line: #2f4553; --prl-tx: #ffffff; --prl-mut: #b1bad3; --prl-acc: #e6002a; --prl-ok: #1fff20;
-  position: fixed; inset: 0; z-index: 2147483200; background: var(--prl-bg); color: var(--prl-tx); display: flex; flex-direction: column; font-family: var(--p-font); }
+  position: fixed; inset: 0; z-index: 99990; background: var(--prl-bg); color: var(--prl-tx); display: flex; flex-direction: column; font-family: var(--p-font); }
 .prl[hidden] { display: none !important; }
 body.prl-open { overflow: hidden; }
 .prl-ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
@@ -2785,3 +2785,63 @@ span.prl-st { cursor: default; }
 .prl-jyg .prl-nav .prl-home img { padding: 0; background: none; }
 .prl-jyg .prl-bar i { background: var(--prl-acc); }
 .prl-jyg .prl-pvb { border: 1px solid #2e2e2e; }
+/* #914: barra de Girox arriba de las páginas de las marcas + burbuja de Carga rápida con el logo de la marca */
+.prl .prl-cbar { flex: 0 0 auto; padding-top: max(4px, var(--sat, env(safe-area-inset-top, 0px))) !important; }
+.prl .prl-top { padding-top: 8px; }
+.prl-ql { position: absolute; z-index: 4; right: 12px; bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 82px); display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border: 0; border-radius: 28px; background: linear-gradient(135deg, #128c4a, #25d366); color: #fff; font: 800 12px var(--p-font); letter-spacing: .4px; box-shadow: 0 6px 20px rgba(0,0,0,.5); cursor: pointer; }
+.prl-ql img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: #0d0d1a; }
+.prl .prl-top-btn { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 132px); }
+.prl .casino-load { bottom: calc(132px + var(--sab, env(safe-area-inset-bottom, 0px))) !important; z-index: 9; }
+/* ===== #914 GANAMOS: colores y formato de su página (fondo negro con halos violetas, tarjetas en degradé violeta, acento #8B00C9) ===== */
+.prl.prl-gn { --prl-bg: #000000; --prl-deep: #130227; --prl-card: #1f073a; --prl-line: #320548; --prl-mut: #b9a3c9; --prl-acc: #8b00c9; font-family: Roboto, Arial, sans-serif; }
+.prl-gn .prl-main { background: no-repeat top 0 left / 50% url(/images/ganamos/leftEllipseBG.webp), no-repeat top 0 right / 50% url(/images/ganamos/rightEllipseBG.webp), #000; padding-top: 10px; }
+.prl-gn .prl-top { background: #130227; box-shadow: none; }
+.prl-gn .prl-wordmark { height: 26px; }
+.prl-gn .prl-wallet { background: #8b00c9; border-radius: 5px; }
+.prl-gn .prl-load { background: #c457da; }
+.prl-gn .prl-nav { background: linear-gradient(180deg, #320548, #1f073a); box-shadow: none; }
+.prl-gn .prl-nav button { color: #ededed; font-weight: 800; font-size: 10px; }
+.prl-gn .prl-nav button.on { background: rgba(255,255,255,.08); }
+.prl-gn .prl-nav button.on .prl-ic { color: #fff; }
+.prl-gn .prl-nav .prl-dog { margin-top: -34px; }
+.prl-gn .prl-nav .prl-dog img { width: 74px; height: 84px; padding: 0; border-radius: 0; background: none; box-shadow: none; object-fit: contain; }
+.prl-gn .prl-nav .prl-dog.on img { box-shadow: none; }
+.gn-promos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 2.78vw 10px; }
+.gn-promos.big { grid-template-columns: 1fr; padding: 0 14px; }
+.gn-promo { position: relative; border: 0; padding: 0; height: 38px; border-radius: 10px; overflow: hidden; background: #1a0224; cursor: pointer; }
+.gn-promos.big .gn-promo { height: auto; aspect-ratio: 3.2 / 1; }
+.gn-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gn-promo em { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font: 900 9px Roboto, Arial, sans-serif; font-style: normal; letter-spacing: .6px; color: #fff; background: #8b00c9; padding: 3px 6px; border-radius: 6px; box-shadow: 0 0 10px rgba(139,0,201,.8); }
+.gn-promos.big .gn-promo em { font-size: 13px; padding: 6px 10px; right: 10px; }
+.gn-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 14px 4px; }
+.gn-link { position: relative; text-align: left; border: 2px solid transparent; border-radius: 15px; aspect-ratio: 1.66; padding: 10px 8px 10px 12px; color: #ededed; cursor: pointer; overflow: visible; display: flex; flex-direction: column; justify-content: space-between;
+  background: url(/images/ganamos/casino-bg.png) center / 100% 100% no-repeat, linear-gradient(180deg, #320548, #1f073a) padding-box, linear-gradient(279deg, rgba(196,87,218,0) 28%, #c457da 102%) border-box; }
+.gn-link img { position: absolute; width: 80px; height: 80px; top: -20px; right: -6px; filter: drop-shadow(0 6px 12px rgba(140,50,207,.6)); }
+.gn-link b { font: 800 17.5px/1 Roboto, Arial, sans-serif; max-width: 74px; }
+.gn-link span { font: 400 13px/1.1 Roboto, Arial, sans-serif; }
+.gn-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 14px 0; }
+.gn-tile { border: 0; padding: 0; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #320548, #1f073a); cursor: pointer; }
+.gn-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gn-tile i { color: #ededed; font: 700 12px Roboto, Arial; font-style: normal; }
+.gn-sport { margin: 10px 14px 0; width: calc(100% - 28px); height: 46px; border: 1px solid #8c32cf; border-radius: 12px; background: linear-gradient(90deg, #1f073a, #320548); color: #fff; font: 900 15px Roboto, Arial; font-style: italic; cursor: pointer; }
+.gn-pay { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 14px 0; }
+.gn-pay button, .gn-chat { height: 40px; border: 0; border-radius: 500px; background: #8b00c9; color: #ededed; font: 700 13px Roboto, Arial; cursor: pointer; }
+.gn-chat { margin: 10px 14px 4px; width: calc(100% - 28px); }
+.gn-sec { padding: 10px 0 4px; }
+.gn-sh { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 10px; }
+.gn-sh span { font: 700 16px Roboto, Arial; color: #fff; }
+.gn-sh button { border: 0; padding: 4px 8px 4px 10px; border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; font: 700 12px Roboto, Arial; cursor: pointer; }
+.gn-h1 { padding-top: 6px; }
+.gn-car { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 32px - 3 * 10px) / 4); gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 16px; scrollbar-width: none; scroll-padding: 0 16px; }
+.gn-car::-webkit-scrollbar { display: none; }
+.gn-g { border: 0; padding: 0; background: none; cursor: pointer; scroll-snap-align: start; }
+.gn-g:nth-child(4n+1) { scroll-snap-align: start; }
+.gn-g span { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1.13; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #320548, #1f073a); }
+.gn-g img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gn-g i { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 4px; text-align: center; color: #ededed; font: 700 10px Roboto, Arial; font-style: normal; }
+.gn-bars { display: flex; gap: 10px; padding: 10px 16px 0; }
+.gn-bars i { flex: 1; height: 2px; border-radius: 10px; background: rgba(255,255,255,.25); }
+.gn-bars i.on { background: rgba(255,255,255,.9); }
+.prl-gn .prl-sh h3, .prl-gn .prl-st h3 { font-family: Roboto, Arial, sans-serif; }
+.prl-gn .prl-gi { border-radius: 12px; background: linear-gradient(180deg, #320548, #1f073a); }
+.prl-gn .prl-search { background: #130227; border-color: #320548; }

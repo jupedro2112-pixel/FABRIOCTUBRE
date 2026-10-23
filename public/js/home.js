@@ -2104,8 +2104,8 @@
     const PR_OFF_KEY = 'vip_pr_off';
     // #912: JUGAYGANA también es una PUERTA de la app a la misma cuenta de Girox (página propia /jugaygana). DOORS = puertas; BRANDS = las que
     // tienen saldo "propio" a ojos del cliente (bloqueo #908). localStorage vip_brand = la marca activa en este teléfono.
-    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana.png' } };
-    const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1 };
+    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana.png' }, ganamos: { name: 'Ganamos', emoji: '🟣', logoUrl: '/images/ganamos-net.png' } }; // #914: Ganamos (owner: marca propia) también
+    const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1, ganamos: 1 };
     const _isDoor = (id) => !!DOORS[id];
     function _localBrand() { try { const b = localStorage.getItem('vip_brand'); if (BRANDS[b]) return b; return localStorage.getItem(PR_OFF_KEY) === '1' ? 'girox' : 'picaroja'; } catch (_) { return 'picaroja'; } }
     function _setLocalBrand(b) { try { localStorage.setItem('vip_brand', b); if (b === 'girox') localStorage.setItem(PR_OFF_KEY, '1'); else localStorage.removeItem(PR_OFF_KEY); } catch (_) {} }
@@ -2134,6 +2134,9 @@
         const jg = list.find((p) => p.id === 'jugaygana');
         if (jg) Object.assign(jg, { connected: true, door: true, logoUrl: jg.logoUrl || DOORS.jugaygana.logoUrl, name: 'JUGAYGANA' });
         else list.push({ id: 'jugaygana', name: 'JUGAYGANA', emoji: '🟡', connected: true, door: true, logoUrl: DOORS.jugaygana.logoUrl });
+        const gn = list.find((p) => p.id === 'ganamos'); // #914: Ganamos = página /ganamosoficial con los juegos y la cuenta de Girox
+        if (gn) Object.assign(gn, { connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl, name: 'Ganamos', playUrl: '', externalUrl: '' });
+        else list.push({ id: 'ganamos', name: 'Ganamos', emoji: '🟣', connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl });
         const lb = _localBrand();
         if (_isDoor(lb)) { _platforms.preferredPlatform = lb; _platforms.defaultPlatform = lb; }
     }
@@ -2318,7 +2321,7 @@
     }
     // #670: Retirar desde la Carga rápida del casino. El modal de retiro vive en la página; CSS lo pone por encima del casino.
     // #687: salir del casino y abrir el chat de Soporte (modo mini)
-    function casinoSupport() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { setHomeMode('mini'); } catch (_) {} }, 80); }
+    function casinoSupport() { try { if (VIP.lobby) VIP.lobby.close(); } catch (_) {} try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { setHomeMode('mini'); } catch (_) {} }, 80); }
     function casinoWithdraw() { try { if (VIP.withdraw && VIP.withdraw.openWithdrawModal) VIP.withdraw.openWithdrawModal(); else VIP.ui.showToast('Retiros no disponibles ahora', 'error'); } catch (_) {} }
 
     // ---- Carga rápida DENTRO del casino (#261): formato CARGA (no chat), descartable como el soporte ----
@@ -2470,12 +2473,14 @@
     }
     let _cqCbuTries = 0;
     function toggleCasinoLoad(force) {
-        const ov = _el('casinoOverlay'); if (!ov) return;
+        // #914: también sobre la página de la marca (PICA ROJA / JUGAYGANA / Ganamos) cuando no hay un juego abierto encima.
+        const _co = _el('casinoOverlay'); const _lob = _el('prLobby');
+        const ov = (_lob && !_lob.hidden && !(VIP.ui && VIP.ui._casinoOpen)) ? _lob : _co; if (!ov) return;
         let p = _el('casinoLoadPanel');
         if (!p) {
             ov.insertAdjacentHTML('beforeend', '<div id="casinoLoadPanel" class="casino-load" style="display:none"></div>');
             p = _el('casinoLoadPanel');
-        }
+        } else if (p.parentNode !== ov) ov.appendChild(p);
         _quickOpen = typeof force === 'boolean' ? force : !_quickOpen;
         // #737 (owner): la burbuja CARGA RÁPIDA sigue visible abajo aunque el panel esté abierto (sólo se esconde si la sacó con la ✕ chica).
         try { const bb = _el('casinoSupportBubble'); if (bb) bb.style.display = _quickDismissed ? 'none' : ''; } catch (_) {}
@@ -2512,24 +2517,29 @@
     // Se inyecta en el overlay del casino (VIP.ui._showCasinoFrame) sin tocar su HTML.
     // #633 (owner 2026-10-20): ADENTRO del casino NO se cambia de plataforma ("si elige Girox, que aparezca Girox; para cambiar, saliendo").
     // La barra de arriba queda con "‹ Volver" y el nombre de la plataforma en la que está; las pestañas (#222) se eliminaron.
+    // #914: la barra de arriba del casino (Volver · Menú · marca · Historias · Info · Perfil) también la usan las páginas de las marcas
+    // (lobby.js): o = { back, menu, logo, name, idSuffix }.
+    function casinoBarHtml(o) {
+        o = o || {};
+        return                   '<div class="casino-topbar-row">' +
+                    '<button type="button" class="casino-back" onclick="' + (o.back || 'VIP.ui.closeCasinoFrame()') + '">‹ Volver</button>' +
+                    // #700/#701 (owner): accesos en UNA sola línea con el mismo formato de la barra principal (ícono + etiqueta chica):
+                    // Historias · Menú · Info · Perfil. Sin el texto "Estás en Girox · para cambiar, salí" (#701: le sacaba lugar al juego).
+                    // #703/#707 (owner): orden Volver · Menú · [PICA ROJA OFICIAL con el logo, bien centrado] · Historias · Info · Perfil
+                    '<button type="button" class="tn-btn" onclick="' + (o.menu || 'VIP.home.casinoFullMenu()') + '" title="Elegir menú"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tn-lbl">Menú</span></button>' +
+                    '<span class="casino-brand" aria-label="' + _esc(o.name || 'PICA ROJA') + ' oficial"><span class="cb-box"><img src="' + _esc(o.logo || '/icons/icon-192x192.png') + '" alt=""><span class="cb-txt"><b>' + _esc(o.name || 'PICA ROJA') + '</b><small>OFICIAL</small></span></span></span>' +
+                    '<button type="button" class="tn-btn tn-stories" ' + (o.idSuffix ? '' : 'id="ctStories"') + ' onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" ' + (o.idSuffix ? '' : 'id="ctStoriesBadge"') + ' style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
+                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span></button>' +
+                    '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>' +
+                  '</div>';
+    }
     function renderCasinoTabs() {
         const overlay = _el('casinoOverlay');
         if (!overlay) return;
         let bar = _el('casinoTopBar');
         if (!bar) {
             overlay.insertAdjacentHTML('afterbegin',
-                '<div id="casinoTopBar" class="casino-topbar">' +
-                  '<div class="casino-topbar-row">' +
-                    '<button type="button" class="casino-back" onclick="VIP.ui.closeCasinoFrame()">‹ Volver</button>' +
-                    // #700/#701 (owner): accesos en UNA sola línea con el mismo formato de la barra principal (ícono + etiqueta chica):
-                    // Historias · Menú · Info · Perfil. Sin el texto "Estás en Girox · para cambiar, salí" (#701: le sacaba lugar al juego).
-                    // #703/#707 (owner): orden Volver · Menú · [PICA ROJA OFICIAL con el logo, bien centrado] · Historias · Info · Perfil
-                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoFullMenu()" title="Elegir menú"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="tn-lbl">Menú</span></button>' +
-                    '<span class="casino-brand" aria-label="PICA ROJA oficial"><span class="cb-box"><img src="/icons/icon-192x192.png" alt=""><span class="cb-txt"><b>PICA ROJA</b><small>OFICIAL</small></span></span></span>' +
-                    '<button type="button" class="tn-btn tn-stories" id="ctStories" onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" id="ctStoriesBadge" style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
-                    '<button type="button" class="tn-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span></button>' +
-                    '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>' +
-                  '</div>' +
+                '<div id="casinoTopBar" class="casino-topbar">' + casinoBarHtml({}) +
                 '</div>');
             bar = _el('casinoTopBar');
         }
@@ -2555,7 +2565,7 @@
         const _origCloseFrame = VIP.ui && VIP.ui.closeCasinoFrame;
         if (typeof _origCloseFrame === 'function') {
             VIP.ui.closeCasinoFrame = function () {
-                try { document.body.classList.remove('casino-open'); } catch (_) {}
+                try { if (!document.body.classList.contains('prl-open')) document.body.classList.remove('casino-open'); } catch (_) {} // #914: la página de la marca sigue abierta debajo
                 return _origCloseFrame.apply(this, arguments);
             };
         }
@@ -2563,7 +2573,7 @@
     // #700 (owner): accesos desde la barra del casino. "Menú completo" cierra el casino y pasa al menú completo (sin quedar fijo
     // si la persona entró por Girox directo: #678 sigue valiendo, se guarda 'full' como cualquier otra elección del selector).
     // #704 (owner): "que de ahí pueda elegir desde Menú el menú correspondiente" → cierra el casino y abre el SELECTOR de menús.
-    function casinoFullMenu() { try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { openMenuChooser(); } catch (_) {} }, 120); }
+    function casinoFullMenu() { try { if (VIP.lobby) VIP.lobby.close(); } catch (_) {} try { VIP.ui.closeCasinoFrame(); } catch (_) {} setTimeout(() => { try { openMenuChooser(); } catch (_) {} }, 120); }
     // #708 (owner): carga de PRUEBA (sólo testers, sólo entorno de prueba): POST /api/test/deposit → mismo camino que una carga manual.
     async function testDeposit() {
         let amt = prompt('Monto de la carga de prueba (pesos):', '5000'); if (amt == null) return;
@@ -2821,6 +2831,7 @@
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        casinoBarHtml, // #914
         gamePlay: favPlay, // #907
         notifCtaGo: notifCtaGo, notifCtaClose: notifCtaClose, // #892
         get platformsData() { return _platforms; } };
