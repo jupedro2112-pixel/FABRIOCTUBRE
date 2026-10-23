@@ -653,6 +653,8 @@ const userSchema = new mongoose.Schema({
   // #514 misiones por NIVEL: `promo` = niveles ganados por completar todas las misiones de una semana (baja si pasa 2 semanas sin cumplir ninguna)
   missionTier: { promo: { type: Number, default: 0 }, updatedWeek: { type: String, default: null }, promotedWeek: { type: String, default: null }, lastTierId: { type: String, default: null } },
   fraudNotes: { type: [{ at: Date, note: String }], default: [] },
+  // #873 revisión de una ALERTA DE ESTAFA: 'legit' (revisado, no se vuelve a mostrar) | 'watch' (en observación). by/at/note de quién lo revisó.
+  fraudReview: { status: { type: String, default: null }, by: { type: String, default: null }, at: { type: Date, default: null }, note: { type: String, default: null } },
   dailyRoulettePendingPct: { type: Number, default: 0 },
   dailyRoulettePendingLabel: { type: String, default: null },
   // #742: bono reclamado desde una HISTORIA (se consume en la próxima carga antes que cualquier otro bono; vence con la historia)

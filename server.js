@@ -19064,6 +19064,43 @@ app.post('/api/admin/change-own-password', authMiddleware, async (req, res) => {
 // BLOQUEO / DESBLOQUEO DE USUARIOS
 // ============================================
 
+// ===== #873 ALERTAS DE ESTAFA (src/services/fraudRadar.js) — reglas + puntaje + caso completo; bloquear usa /api/admin/users/:id/block.
+const fraudRadar = require('./src/services/fraudRadar');
+let _fraudCache = { at: 0, days: 0, data: null };
+app.get('/api/admin/fraud/alerts', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!['admin', 'depositor', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const days = Math.max(1, Math.min(180, parseInt(req.query.days, 10) || 30));
+    if (!req.query.fresh && _fraudCache.data && _fraudCache.days === days && Date.now() - _fraudCache.at < 2 * 60 * 1000) return res.json(Object.assign({ cached: true }, _fraudCache.data));
+    const PendingPayout = require('./src/models/PendingPayout'); const BankMovement = require('./src/models/BankMovement');
+    const data = await fraudRadar.scan({ User, Transaction, PendingPayout, BankMovement }, { days });
+    data.rules = fraudRadar.RULES; data.generatedAt = new Date().toISOString();
+    _fraudCache = { at: Date.now(), days, data };
+    res.json(data);
+  } catch (e) { logger.error('[fraude] alerts: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/fraud/case/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!['admin', 'depositor', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const PendingPayout = require('./src/models/PendingPayout'); const BankMovement = require('./src/models/BankMovement');
+    const c = await fraudRadar.caseFile({ User, Transaction, PendingPayout, BankMovement }, String(req.params.id));
+    if (!c) return res.status(404).json({ error: 'Cliente no encontrado' });
+    res.json(c);
+  } catch (e) { logger.error('[fraude] caso: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/fraud/review/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!['admin', 'depositor', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
+    const st = String((req.body && req.body.status) || ''); if (!['legit', 'watch', 'clear'].includes(st)) return res.status(400).json({ error: 'Estado inválido.' });
+    const note = String((req.body && req.body.note) || '').slice(0, 300);
+    const set = st === 'clear' ? { fraudReview: { status: null, by: req.user.username, at: new Date(), note } } : { fraudReview: { status: st, by: req.user.username, at: new Date(), note } };
+    const r = await User.updateOne({ id: String(req.params.id) }, { $set: set, $push: { fraudNotes: { at: new Date(), note: `[${req.user.username}] ${st === 'legit' ? 'revisado: legítimo' : (st === 'watch' ? 'en observación' : 'revisión borrada')}${note ? ' — ' + note : ''}` } } });
+    if (!(r.matchedCount || r.n)) return res.status(404).json({ error: 'Cliente no encontrado' });
+    _fraudCache = { at: 0, days: 0, data: null };
+    logger.info(`[fraude] ${req.user.username} marcó ${req.params.id} como ${st}`);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/users/:id/block', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { id } = req.params;

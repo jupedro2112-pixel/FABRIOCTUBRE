@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-22
 
+### 873. 🚨 ALERTAS DE ESTAFA en el panel (reglas + puntaje + caso completo + bloquear) — admin SW v165
+**Pedido (owner):** "armá una sección en admin de alertas de usuarios que quieren estafar; detectá clientes posibles de querer estafar para verificar
+el caso, que dé datos de lo que hizo para verificar y poder bloquearle la cuenta; como usan las plataformas de primera línea, lo más completo".
+- `src/services/fraudRadar.js` `scan()`: clientes con movimiento en el período (7/30/90 días) + marcados; agregaciones de Mongo sobre User,
+  Transaction, PendingPayout, BankMovement. Reglas con puntos y EVIDENCIA: CBU de carga compartido (30), CBU de retiro compartido (35), mismo
+  celular/token de avisos (25), ≥4 cuentas misma IP de alta (15), ≥3 titulares distintos le cargan (20), retira a otra persona que la que carga
+  (titular REAL del CBU `lookupName` vs `fromName`, 30), abuso de bonos (regalos ≥ 80% de lo cargado y pide retirar, 25), retira > 3× lo cargado
+  (20), cuenta ≤3 días con retiro ≥ $50.000 (15), carga y retira < 2 h montos parecidos (15), ≥2 referidos con su IP/celular (25), fraudFlags (20),
+  sin teléfono (5). ≥60 = alto, 30–59 = medio. `fraudReview.status='legit'` no se vuelve a mostrar. `caseFile()`: quién le cargó (titular, CUIT,
+  CBU), a quién retira (titular puesto vs real), movimientos, cuentas vinculadas por celular / IP / CBU / referidos, notas, navegador del alta.
+- Rutas `GET /api/admin/fraud/alerts?days=` (cache 2 min, `fresh=1`), `GET /api/admin/fraud/case/:id`, `POST /api/admin/fraud/review/:id`
+  (legit/watch/clear, queda en fraudNotes). Bloquear = `/api/admin/users/:id/block` de siempre (cierra la sesión: tokenVersion++).
+- Panel: "🚨 Alertas de estafa" (grupo Atención): resumen, filtros (período, alto/medio/observación/bloqueados), tarjeta por cliente con
+  motivos + evidencia y botones Ver caso / Bloquear / Observar / Es legítimo; modal con el caso completo. NADA se bloquea solo.
+- Probado con MongoDB en memoria y los modelos reales: multicuenta (90 pts), mula de terceros (70), abuso de bonos (60), granja de referidos (40);
+  el cliente normal no aparece; "legítimo" lo saca de la lista.
+
 ### 871–872. 🤖 Panel: "Automático (no tocar)" con Cronograma notis y Cronograma historias separados + 📋 "Mañana sale" · 🔒 registro sólo con invitación — admin SW v164
 - **#871** (owner: "sacá historias de adentro de notificaciones, otra sección, ambos 'automatizado (no tocar)'; siempre lo que se va a publicar el
   otro día, en detalle"; "cronograma notis y otro cronograma telegram" = historias, no hay cronograma de Telegram): menú con grupo

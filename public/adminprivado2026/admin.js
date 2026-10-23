@@ -4987,6 +4987,7 @@ function switchSection(section) {
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
     if (section === 'cronohist') loadStoriesAuto(); // #871
+    if (section === 'fraud') loadFraud(); // #873
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
@@ -17263,3 +17264,87 @@ async function diaSaveNote() {
 }
 window.diaSaveNote = diaSaveNote;
 window.diaInit = diaInit; window.diaTab = diaTab; window.diaPreset = diaPreset; window.diaRun = diaRun; window.diaSaveSpend = diaSaveSpend; window.diaDelSpend = diaDelSpend; window.diaSaveOther = diaSaveOther; window.diaDeleteOther = diaDeleteOther; window.diaCompare = diaCompare; window.diaProject = diaProject; window.diaLoadHistory = diaLoadHistory; window.diaShowSnap = diaShowSnap; window.diaReview = diaReview; window.diaCalibrate = diaCalibrate;
+
+// ===== #873 ALERTAS DE ESTAFA =====
+let _frData = null;
+async function loadFraud(fresh) {
+    const box = document.getElementById('frList'); if (!box) return;
+    box.innerHTML = 'Revisando clientes…';
+    const days = (document.getElementById('frDays') || {}).value || 30;
+    try {
+        const r = await authFetch('/api/admin/fraud/alerts?days=' + days + (fresh ? '&fresh=1' : '')); const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'error');
+        _frData = j; renderFraud();
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
+}
+function _frMoney(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+function renderFraud() {
+    const box = document.getElementById('frList'); if (!box || !_frData) return;
+    const lv = (document.getElementById('frLevel') || {}).value || '';
+    let list = _frData.alerts || [];
+    if (lv === 'alto' || lv === 'medio') list = list.filter((a) => a.level === lv && !a.isBlocked);
+    else if (lv === 'watch') list = list.filter((a) => a.review && a.review.status === 'watch');
+    else if (lv === 'blocked') list = list.filter((a) => a.isBlocked);
+    const all = _frData.alerts || [];
+    const sm = document.getElementById('frSummary');
+    if (sm) sm.innerHTML = '🔎 ' + (_frData.scanned || 0) + ' clientes revisados · <b style="color:#f87171">' + all.filter((a) => a.level === 'alto' && !a.isBlocked).length + ' riesgo alto</b> · <b style="color:#f59e0b">' + all.filter((a) => a.level === 'medio' && !a.isBlocked).length + ' medio</b> · ' + all.filter((a) => a.isBlocked).length + ' ya bloqueados' + (_frData.cached ? ' <span style="color:#666">(hace instantes)</span>' : '');
+    if (!list.length) { box.innerHTML = '<div class="card" style="color:#22c55e">✅ No hay alertas con este filtro.</div>'; return; }
+    box.innerHTML = list.map((a) => {
+        const col = a.isBlocked ? '#6b7280' : (a.level === 'alto' ? '#ef4444' : '#f59e0b');
+        return '<div class="card" style="margin-bottom:.6rem;border-left:4px solid ' + col + '">' +
+            '<div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center">' +
+              '<div><b style="font-size:1rem">' + escHtml(a.username) + '</b> <span style="background:' + col + ';color:#fff;border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:800">' + (a.isBlocked ? 'BLOQUEADO' : 'RIESGO ' + a.level.toUpperCase()) + ' · ' + a.score + ' pts</span>' +
+                (a.review && a.review.status === 'watch' ? ' <span style="color:#a5b4fc;font-size:.75rem">👁 en observación (' + escHtml(a.review.by || '') + ')</span>' : '') +
+                '<div style="color:#888;font-size:.75rem;margin-top:2px">Cuenta de ' + a.ageDays + ' días · ' + (a.phoneVerified ? '📱 verificado' : '📵 sin verificar') + (a.campaign ? ' · vino por ' + escHtml(a.campaign) : '') +
+                ' · cargó ' + _frMoney(a.deposits.total) + ' (' + a.deposits.n + ') · regalos ' + _frMoney(a.gifts.total) + ' · pidió retirar ' + _frMoney(a.withdrawals.askedTotal) + (a.withdrawals.pending ? ' · <b style="color:#f59e0b">' + a.withdrawals.pending + ' retiro(s) pendiente(s)</b>' : '') + '</div></div>' +
+              '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                '<button class="btn btn-secondary btn-sm" onclick="openFraudCase(\'' + escHtml(a.userId) + '\')">🔍 Ver caso</button>' +
+                (a.isBlocked ? '<button class="btn btn-secondary btn-sm" onclick="fraudUnblock(\'' + escHtml(a.userId) + '\',\'' + escHtml(a.username) + '\')">🔓 Desbloquear</button>'
+                  : '<button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="fraudBlock(\'' + escHtml(a.userId) + '\',\'' + escHtml(a.username) + '\')">⛔ Bloquear</button>') +
+                '<button class="btn btn-secondary btn-sm" onclick="fraudReview(\'' + escHtml(a.userId) + '\',\'watch\')">👁 Observar</button>' +
+                '<button class="btn btn-secondary btn-sm" onclick="fraudReview(\'' + escHtml(a.userId) + '\',\'legit\')">✅ Es legítimo</button>' +
+              '</div></div>' +
+            '<ul style="margin:.5rem 0 0 1rem;padding:0;font-size:.8rem">' + a.reasons.map((r) => '<li style="margin:2px 0"><b>+' + r.pts + '</b> ' + escHtml(r.label) + '<div style="color:#9ca3af;font-size:.75rem">' + escHtml(r.evidence || '') + '</div></li>').join('') + '</ul></div>';
+    }).join('');
+}
+async function openFraudCase(userId) {
+    const m = document.getElementById('frCaseModal'), b = document.getElementById('frCaseBody'); if (!m || !b) return;
+    m.classList.remove('hidden'); b.innerHTML = 'Cargando el caso…';
+    try {
+        const r = await authFetch('/api/admin/fraud/case/' + encodeURIComponent(userId)); const c = await r.json(); if (!r.ok) throw new Error(c.error || 'error');
+        const u = c.user; const fd = (d) => d ? new Date(d).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+        const al = ((_frData && _frData.alerts) || []).find((x) => x.userId === userId);
+        const tbl = (head, rows) => rows.length ? '<div style="overflow:auto"><table class="cron-tbl" style="width:100%;font-size:.76rem"><thead><tr>' + head.map((x) => '<th>' + x + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table></div>' : '<div style="color:#888;font-size:.78rem">Sin datos.</div>';
+        const users = (arr) => arr && arr.length ? arr.map((x) => '<span style="display:inline-block;margin:2px;padding:1px 8px;border-radius:999px;background:' + (x.isBlocked ? '#7f1d1d' : '#1f2937') + '">' + escHtml(x.username || x) + (x.isBlocked ? ' ⛔' : '') + '</span>').join('') : '<span style="color:#888">ninguna</span>';
+        b.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap"><h2 style="margin:0">🔍 Caso: ' + escHtml(u.username) + '</h2><button class="btn btn-secondary" onclick="document.getElementById(\'frCaseModal\').classList.add(\'hidden\')">Cerrar</button></div>' +
+            (al ? '<div style="margin:.5rem 0;padding:.5rem .7rem;border-radius:8px;background:#7f1d1d33;font-size:.82rem"><b>Riesgo ' + al.level + ' · ' + al.score + ' pts</b><ul style="margin:.3rem 0 0 1rem;padding:0">' + al.reasons.map((r) => '<li>' + escHtml(r.label) + ' — <span style="color:#d1d5db">' + escHtml(r.evidence || '') + '</span></li>').join('') + '</ul></div>' : '') +
+            '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.4rem;font-size:.8rem;margin:.5rem 0">' +
+              '<div>🆔 Creada: <b>' + fd(u.createdAt) + '</b></div><div>🕒 Último ingreso: <b>' + fd(u.lastLogin) + '</b></div><div>📱 Teléfono: <b>' + (u.phoneVerified ? 'verificado ' + escHtml(u.phone || '') : 'sin verificar') + '</b></div>' +
+              '<div>🌐 IP de alta: <b>' + escHtml(u.registrationIp || '—') + '</b></div><div>📲 Celulares (avisos): <b>' + u.devices + '</b></div><div>📣 Origen: <b>' + escHtml((u.source || '') + (u.campaign ? ' · ' + u.campaign : '')) + '</b></div>' +
+              (u.savedAccount ? '<div>🏦 Cuenta guardada: <b>' + escHtml(u.savedAccount.titular || '') + ' ' + escHtml(u.savedAccount.cbu || '') + '</b></div>' : '') +
+              (u.isBlocked ? '<div style="color:#f87171">⛔ Bloqueado ' + fd(u.blockedAt) + ' por ' + escHtml(u.blockedBy || '') + ': ' + escHtml(u.blockReason || '') + '</div>' : '') +
+            '</div>' +
+            '<div style="font-size:.75rem;color:#9ca3af;margin-bottom:.5rem">Navegador del alta: ' + escHtml(u.registrationUserAgent || '—') + '</div>' +
+            '<h3 style="font-size:.9rem;margin:.6rem 0 .3rem">🔗 Cuentas vinculadas</h3><div style="font-size:.8rem">Mismo celular: ' + users(c.linked.sameDevice) + '<br>Misma IP de alta: ' + users(c.linked.sameIp) + '<br>Mismo CBU (carga o retiro): ' + users(c.linked.sameBank) + '<br>Referidos que trajo: ' + users(c.linked.referrals) + '</div>' +
+            '<h3 style="font-size:.9rem;margin:.8rem 0 .3rem">💵 Quién le cargó (transferencias del banco)</h3>' + tbl(['Fecha', 'Monto', 'Titular que transfirió', 'CUIT', 'CBU'], c.deposits.map((x) => '<tr><td>' + fd(x.at) + '</td><td>' + _frMoney(x.amount) + '</td><td>' + escHtml(x.payer || '') + '</td><td>' + escHtml(x.cuit || '') + '</td><td>' + escHtml(x.cbu || '') + '</td></tr>')) +
+            '<h3 style="font-size:.9rem;margin:.8rem 0 .3rem">🏧 A quién retira</h3>' + tbl(['Fecha', 'Monto', 'Estado', 'Titular que puso', 'Titular REAL del CBU', 'CBU / alias'], c.withdrawals.map((x) => '<tr><td>' + fd(x.at) + '</td><td>' + _frMoney(x.amount) + '</td><td>' + escHtml(x.status || '') + '</td><td>' + escHtml(x.titular || '') + '</td><td>' + escHtml(x.realHolder || '—') + '</td><td>' + escHtml((x.cbu || '') + (x.alias ? ' · ' + x.alias : '')) + '</td></tr>')) +
+            '<h3 style="font-size:.9rem;margin:.8rem 0 .3rem">📒 Movimientos en la app (últimos 80)</h3>' + tbl(['Fecha', 'Tipo', 'Monto', 'Bono', 'Detalle'], c.transactions.map((x) => '<tr><td>' + fd(x.at) + '</td><td>' + escHtml(x.type || '') + '</td><td>' + _frMoney(x.amount) + '</td><td>' + (x.bonus ? _frMoney(x.bonus) : '') + '</td><td>' + escHtml(x.description || x.source || '') + '</td></tr>')) +
+            (u.fraudNotes && u.fraudNotes.length ? '<h3 style="font-size:.9rem;margin:.8rem 0 .3rem">📝 Notas</h3><ul style="font-size:.78rem;margin:0 0 0 1rem;padding:0">' + u.fraudNotes.map((n) => '<li>' + fd(n.at) + ' — ' + escHtml(n.note || '') + '</li>').join('') + '</ul>' : '') +
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem">' + (u.isBlocked ? '<button class="btn btn-secondary" onclick="fraudUnblock(\'' + escHtml(u.id) + '\',\'' + escHtml(u.username) + '\')">🔓 Desbloquear</button>' : '<button class="btn" style="background:#dc2626;color:#fff" onclick="fraudBlock(\'' + escHtml(u.id) + '\',\'' + escHtml(u.username) + '\')">⛔ Bloquear la cuenta</button>') +
+              '<button class="btn btn-secondary" onclick="fraudReview(\'' + escHtml(u.id) + '\',\'watch\')">👁 Dejar en observación</button><button class="btn btn-secondary" onclick="fraudReview(\'' + escHtml(u.id) + '\',\'legit\')">✅ Es legítimo</button></div>';
+    } catch (e) { b.innerHTML = '<span style="color:#f87171">No se pudo cargar el caso: ' + escHtml(e.message) + '</span>'; }
+}
+async function fraudBlock(userId, username) {
+    const reason = window.prompt('Motivo del bloqueo de ' + username + ' (queda registrado):', 'Posible estafa: ');
+    if (!reason || reason.trim().length < 5) return;
+    try { const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/block', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason.trim() }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('⛔ ' + username + ' bloqueado (se le cerró la sesión)', 'success'); try { document.getElementById('frCaseModal').classList.add('hidden'); } catch (_) {} loadFraud(true); } catch (e) { showToast('No se pudo bloquear: ' + e.message, 'error'); }
+}
+async function fraudUnblock(userId, username) {
+    if (!window.confirm('¿Desbloquear a ' + username + '?')) return;
+    try { const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/unblock', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('🔓 ' + username + ' desbloqueado', 'success'); loadFraud(true); } catch (e) { showToast('No se pudo: ' + e.message, 'error'); }
+}
+async function fraudReview(userId, status) {
+    const note = window.prompt(status === 'legit' ? 'Nota (opcional): ¿por qué es legítimo?' : 'Nota (opcional): ¿qué hay que vigilar?', '') ;
+    if (note === null) return;
+    try { const r = await authFetch('/api/admin/fraud/review/' + encodeURIComponent(userId), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast(status === 'legit' ? '✅ Marcado como legítimo (no se vuelve a mostrar)' : '👁 En observación', 'success'); loadFraud(true); } catch (e) { showToast('No se pudo: ' + e.message, 'error'); }
+}
