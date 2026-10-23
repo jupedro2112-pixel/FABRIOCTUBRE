@@ -23,52 +23,53 @@ VIP.raffle = (function () {
         el.className = 'rf rf-' + _brand;
         return el;
     }
+    // #919 (owner): trofeos dibujados (oro, plata, bronce) — también los usa la tira de arriba de las páginas.
+    const TRO = { 1: ['#ffd76a', '#c9971c'], 2: ['#e9edf3', '#9aa3ad'], 3: ['#f0b27a', '#a8642c'] };
+    const trophy = (n) => '<svg class="rf-tro-svg" viewBox="-52 -50 104 100" aria-hidden="true"><path d="M-30 -44 H30 V-14 C30 6 16 20 0 22 C-16 20 -30 6 -30 -14 Z" fill="' + TRO[n][0] + '" stroke="' + TRO[n][1] + '" stroke-width="3"/><path d="M-30 -36 C-50 -36 -50 -8 -28 -4 M30 -36 C50 -36 50 -8 28 -4" fill="none" stroke="' + TRO[n][1] + '" stroke-width="5"/><rect x="-6" y="22" width="12" height="14" fill="' + TRO[n][1] + '"/><rect x="-22" y="36" width="44" height="10" rx="3" fill="' + TRO[n][0] + '" stroke="' + TRO[n][1] + '" stroke-width="2"/><text x="0" y="-6" text-anchor="middle" font-family="Arial" font-size="30" font-weight="900" fill="' + TRO[n][1] + '">' + n + '</text></svg>';
+    const DEF = {
+        prizes: [{ title: 'iPhone 18 Pro Max', detail: 'Nuevo, en caja sellada' }, { title: 'Orden de compra $1.000.000', detail: 'Para usar en supermercado' }, { title: '$500.000 para jugar', detail: 'En la plataforma que quieras' }],
+        upcoming: { title: 'Gran Sorteo', prizes: [{ title: 'Auto 0 km', detail: 'Valorado en $30.000.000' }, { title: 'Viaje al Caribe para 2', detail: 'Todo incluido · 5 días' }, { title: 'USD 2.000', detail: 'En efectivo' }] }
+    };
+    function _left(iso) { const ms = Math.max(0, new Date(iso).getTime() - Date.now()); return { d: Math.floor(ms / 86400000), h: Math.floor(ms / 3600000) % 24, m: Math.floor(ms / 60000) % 60, s: Math.floor(ms / 1000) % 60, ms }; }
     function _countdown() {
-        const box = $('rfCount'); if (!box || !_d) return;
-        const ms = new Date(_d.closesAt).getTime() - Date.now();
-        if (ms <= 0) { box.innerHTML = '<b>Cerrado</b><small>Los ganadores se publican el ' + esc(fdate(_d.announceAt, true)) + ' h</small>'; return; }
-        const d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
-        const cell = (v, l) => '<span><b>' + String(v).padStart(2, '0') + '</b><small>' + l + '</small></span>';
-        box.innerHTML = cell(d, 'días') + cell(h, 'horas') + cell(m, 'min') + cell(s, 'seg');
+        document.querySelectorAll('.js-rf-count').forEach((box) => {
+            const target = box.dataset.to; if (!target) return; const t = _left(target);
+            const cell = (v, l) => '<span><b>' + String(v).padStart(2, '0') + '</b><small>' + l + '</small></span>';
+            box.innerHTML = t.ms <= 0 ? '<span class="rf-done">¡Ya empezó!</span>' : cell(t.d, 'días') + cell(t.h, 'hs') + cell(t.m, 'min') + cell(t.s, 'seg');
+        });
     }
-    function _prizes(list, soon) {
-        return '<div class="rf-prizes">' + (list || []).map((p, i) => '<div class="rf-prize rf-p' + (i + 1) + '"><em>' + MEDAL[i] + ' ' + (i + 1) + '° puesto</em><b>' + esc(p.title) + '</b><small>' + esc(p.detail || '') + '</small></div>').join('') + '</div>' +
-            (soon ? '' : '<p class="rf-cash">Todos los premios se pueden cobrar en <b>efectivo</b> si el ganador lo prefiere.</p>');
+    function _trophies(list) {
+        return '<div class="rf-tros">' + [0, 1, 2].map((i) => { const p = (list || [])[i] || {}; return '<div class="rf-tro rf-tro' + (i + 1) + '">' + trophy(i + 1) + '<b>' + esc(p.title || '') + '</b><small>' + esc(p.detail || '') + '</small></div>'; }).join('') + '</div>';
+    }
+    // Recuadro compacto (arriba de las páginas y en el Inicio): título, cuenta regresiva y los 3 trofeos.
+    function stripHtml(brand) {
+        const d = _d || {}; const ns = d.notStarted !== false; const to = ns ? (d.startsAt || '2026-11-01T03:00:00.000Z') : d.closesAt;
+        return '<div class="rf-strip rf-sb-' + esc(brand || 'picaroja') + '">' +
+            '<button type="button" class="rf-box" onclick="VIP.raffle.open(\'' + esc(brand || '') + '\')"><div class="rf-box-h"><b>🏆 Sorteo mensual</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span></div><div class="rf-count js-rf-count" data-to="' + esc(to || '') + '"></div>' + _trophies(d.prizes || DEF.prizes) + '<em class="rf-box-go">Ver ranking ›</em></button>' +
+            '<button type="button" class="rf-box rf-box-soon" onclick="VIP.raffle.open(\'' + esc(brand || '') + '\')"><div class="rf-box-h"><b>🚀 ' + esc((d.upcoming && d.upcoming.title) || DEF.upcoming.title) + '</b><span>Próximamente</span></div>' + _trophies((d.upcoming && d.upcoming.prizes) || DEF.upcoming.prizes) + '</button></div>';
     }
     function _render() {
         const m = $('rfMain'); if (!m) return;
         if (!_d) { m.innerHTML = '<div class="rf-note">Cargando el sorteo…</div>'; return; }
-        const me = _d.me || {}; const pos = me.position;
-        const upd = _d.updatedAt ? 'Actualizado ' + fdate(_d.updatedAt, true) + ' h · se recalcula cada 20 minutos' : 'Los puntos se actualizan cada 20 minutos';
-        const win = _d.myWin;
+        const me = _d.me || {}; const pos = me.position; const ns = !!_d.notStarted; const win = _d.myWin;
         m.innerHTML =
-            '<section class="rf-hero"><img src="/images/sorteo/' + _brand + '-active.svg" alt="Sorteo mensual: auto 0 km, iPhone 18 Pro Max y $500.000"></section>' +
-            '<section class="rf-card rf-cd"><small>Cierra el ' + esc(fdate(_d.closesAt, true)) + ' h · ' + esc(_d.monthLabel) + '</small><div class="rf-count" id="rfCount"></div></section>' +
-            (win ? '<section class="rf-card rf-win"><b>🎉 ¡Ganaste el sorteo de ' + esc(win.monthLabel) + '!</b><p>Puesto ' + win.pos + ' · <b>' + esc(win.prize) + '</b></p>' +
-                (win.delivered ? '<p class="rf-ok">✅ Premio entregado.</p>' : '<p>' + (win.contactAt ? 'Ya nos escribiste: el Soporte de entrega de premios te está contactando.' : 'Escribile a nuestro Soporte exclusivo de entrega de premios para coordinar la entrega.') + '</p><button type="button" class="rf-btn" onclick="VIP.raffle.contact()">🏆 Coordinar la entrega</button>') + '</section>' : '') +
-            '<section class="rf-card rf-me"><div class="rf-me-h"><span>Tu posición</span><b>' + (pos ? pos + '°' : '—') + '</b></div>' +
-            '<div class="rf-stats"><div><small>Puntos</small><b>' + num(me.points) + '</b></div><div><small>Apostado válido</small><b>' + money(me.validWagered) + '</b></div></div>' +
-            (pos === 1 ? '<p class="rf-lead">🥇 ¡Vas primero! Seguí sumando para no perder el puesto.</p>' : (pos ? '<p class="rf-lead">Te faltan <b>' + num(me.toFirst) + ' puntos</b> (≈ ' + money(me.toFirst * 1000) + ' apostados) para el 1° puesto' + (me.toPodium > 0 ? ' y <b>' + num(me.toPodium) + '</b> para entrar al podio' : '') + '.</p>' : '<p class="rf-lead">Todavía no sumaste puntos este mes. Con una carga y tus jugadas entrás al ranking: <b>cada $100.000 apostados = 100 puntos</b>.</p>')) +
-            '<details class="rf-calc"><summary>¿Cómo se calcula lo mío?</summary><div>' +
-            '<p>Apostado en el mes: <b>' + money(me.wagered) + '</b></p><p>Tus cargas reales del mes: <b>' + money(me.deposits) + '</b> · Bonos recibidos: <b>' + money(me.bonusGranted) + '</b></p>' +
-            '<p>Sólo cuenta lo apostado con plata real: <b>' + money(me.wagered) + ' × ' + money(me.deposits) + ' ÷ ' + money((me.deposits || 0) + (me.bonusGranted || 0)) + ' = ' + money(me.validWagered) + '</b> ⇒ <b>' + num(me.points) + ' puntos</b>.</p></div></details>' +
-            '<small class="rf-upd">' + esc(upd) + '</small></section>' +
-            '<section class="rf-sec"><h3>🎁 Premios de ' + esc(_d.monthLabel) + '</h3>' + _prizes(_d.prizes) + '</section>' +
-            '<section class="rf-sec"><h3>📊 Ranking del mes <small>' + num(_d.participants) + ' participando</small></h3>' +
-            ((_d.top || []).length ? '<ol class="rf-rank">' + _d.top.map((t) => '<li class="' + (t.me ? 'me' : '') + (t.pos <= 3 ? ' top' : '') + '"><span class="rf-pos">' + (t.pos <= 3 ? MEDAL[t.pos - 1] : t.pos + '°') + '</span><span class="rf-name">' + esc(t.name) + (t.me ? ' (vos)' : '') + '</span><b>' + num(t.points) + ' pts</b></li>').join('') + '</ol>' : '<div class="rf-note">Todavía nadie sumó puntos este mes. ¡Sé el primero!</div>') +
-            '<small class="rf-upd">Los nombres se muestran tapados para cuidar la privacidad de cada jugador.</small></section>' +
-            (_d.lastWinners ? '<section class="rf-sec"><h3>🏅 Ganadores de ' + esc(_d.lastWinners.monthLabel) + '</h3><ol class="rf-rank">' + _d.lastWinners.winners.map((w) => '<li class="top"><span class="rf-pos">' + MEDAL[w.pos - 1] + '</span><span class="rf-name">' + esc(w.name) + ' · ' + esc(w.prize) + '</span><b>' + (w.delivered ? '✅ Entregado' : 'En entrega') + '</b></li>').join('') + '</ol></section>' : '') +
-            '<section class="rf-sec rf-support"><h3>🤝 Soporte exclusivo de entrega de premios</h3><p>Cuando ganás, te escribimos por la app y también podés escribirnos vos con el botón <b>“Coordinar la entrega”</b> que aparece arriba en esta pantalla. Una persona del equipo te acompaña hasta que tengas tu premio: verificamos tu identidad, acordamos día y lugar (o la transferencia si elegís efectivo) y te confirmamos cada paso.</p></section>' +
-            '<section class="rf-sec"><h3>📜 Bases y condiciones</h3><ul class="rf-rules">' +
-            '<li><b>Quiénes participan:</b> clientes registrados en la app de PICA ROJA que hagan al menos una carga real en el mes. Se juega en PICA ROJA, JUGAYGANA, Ganamos o Girox: es la misma cuenta y todo suma.</li>' +
-            '<li><b>Cómo se suman puntos:</b> cada $100.000 apostados con plata real = 100 puntos (1 punto cada $1.000). Los datos salen de la plataforma de juego, del 1° al último día del mes.</li>' +
-            '<li><b>Los bonos no suman:</b> sólo cuenta lo apostado con tu plata. La plataforma informa el total apostado y los bonos recibidos; por eso se toma la parte proporcional a tus cargas reales (ej.: si cargaste $100.000 y recibiste $50.000 de bono, cuenta 2/3 de lo apostado).</li>' +
-            '<li><b>Hasta cuándo suma:</b> hasta el ' + esc(fdate(_d.closesAt, true)) + ' h (hora argentina). Lo que se juegue después suma para el mes siguiente.</li>' +
-            '<li><b>Ganadores:</b> los 3 primeros del ranking. Se publican el ' + esc(fdate(_d.announceAt, true)) + ' h en el menú completo de la app, con los nombres tapados. Empate: gana quien tenga más apostado válido y, si sigue igual, quien llegó antes a ese puntaje.</li>' +
-            '<li><b>Entrega:</b> dentro de los ' + num(_d.deliveryBusinessDays) + ' días hábiles siguientes a la publicación, coordinada por el Soporte exclusivo de entrega de premios. El premio se entrega al titular de la cuenta, presentando su DNI.' + (_d.cashOption ? ' Cada premio puede cobrarse en efectivo por su valor.' : '') + '</li>' +
-            '<li><b>Transparencia:</b> cada jugador ve sus puntos, su apostado válido y su puesto en todo momento. Una persona = una cuenta: las cuentas duplicadas o con jugadas irregulares quedan fuera.</li>' +
-            '</ul></section>' +
-            '<section class="rf-sec rf-soon"><h3>🚀 Próximamente · ' + esc((_d.upcoming && _d.upcoming.title) || 'Gran Sorteo') + '</h3><div class="rf-hero"><img src="/images/sorteo/' + _brand + '-upcoming.svg" alt="Gran Sorteo próximamente"></div>' + _prizes(_d.upcoming && _d.upcoming.prizes, true) + '<p class="rf-cash">Muy pronto vas a poder participar. Te avisamos apenas arranque. Los premios también se podrán cobrar en efectivo.</p></section>';
+            '<section class="rf-box rf-box-big"><div class="rf-box-h"><b>' + (ns ? 'Empieza el 1 de ' + esc(_d.monthLabel.split(' ')[0]) : 'Termina el ' + esc(fdate(_d.closesAt, true)) + ' h') + '</b><span>' + (ns ? 'Faltan' : 'Quedan') + '</span></div><div class="rf-count js-rf-count" data-to="' + esc(ns ? _d.startsAt : _d.closesAt) + '"></div>' + _trophies(_d.prizes) + '</section>' +
+            (win ? '<section class="rf-card rf-win"><b>🎉 ¡Ganaste el ' + win.pos + '° puesto de ' + esc(win.monthLabel) + '!</b><p>' + esc(win.prize) + '</p>' + (win.delivered ? '<p class="rf-ok">✅ Premio entregado.</p>' : '<button type="button" class="rf-btn" onclick="VIP.raffle.contact()">🏆 Coordinar la entrega</button>') + '</section>' : '') +
+            (!ns ? '<section class="rf-mine">' + (pos ? '<b>' + pos + '°</b><span>' + num(me.points) + ' pts' + (pos > 1 ? ' · te faltan <b>' + num(me.toFirst) + '</b> para el 1°' : ' · ¡vas primero!') + '</span>' : '<span>Todavía no sumaste puntos este mes · cada $100.000 apostados = 100 pts</span>') + '</section>' : '') +
+            '<section class="rf-sec"><h3>📊 Ranking' + (ns ? '' : ' <small>' + num(_d.participants) + ' participando</small>') + '</h3>' +
+            (ns ? '<div class="rf-note">El ranking arranca el 1 de ' + esc(_d.monthLabel.split(' ')[0]) + '. Cada $100.000 apostados = 100 puntos.</div>' :
+                ((_d.top || []).length ? '<ol class="rf-rank">' + _d.top.map((t) => '<li class="' + (t.me ? 'me' : '') + (t.pos <= 3 ? ' top' : '') + '"><span class="rf-pos">' + (t.pos <= 3 ? trophy(t.pos) : t.pos + '°') + '</span><span class="rf-name">' + esc(t.name) + (t.me ? ' (vos)' : '') + '</span><b>' + num(t.points) + ' pts</b></li>').join('') + '</ol>' : '<div class="rf-note">Todavía nadie sumó puntos. ¡Sé el primero!</div>')) + '</section>' +
+            '<section class="rf-box rf-box-soon"><div class="rf-box-h"><b>🚀 ' + esc((_d.upcoming && _d.upcoming.title) || 'Gran Sorteo') + '</b><span>Próximamente</span></div>' + _trophies(_d.upcoming && _d.upcoming.prizes) + '</section>' +
+            '<details class="rf-bases"><summary>📜 Bases y condiciones</summary><ul class="rf-rules">' +
+            '<li><b>Empieza:</b> el 1 de noviembre de 2026. Lo jugado antes no suma.</li>' +
+            '<li><b>Participan:</b> clientes registrados en la app de PICA ROJA con al menos una carga real en el mes. Suma lo jugado en PICA ROJA, JUGAYGANA, Ganamos o Girox (misma cuenta).</li>' +
+            '<li><b>Puntos:</b> cada $100.000 apostados con plata real = 100 puntos. Los bonos no suman: se toma la parte de lo apostado proporcional a tus cargas reales del mes (ej.: cargaste $100.000 y recibiste $50.000 de bono ⇒ cuenta 2/3 de lo apostado).' + (!ns && me.wagered ? ' Lo tuyo: ' + money(me.wagered) + ' apostado × ' + money(me.deposits) + ' ÷ ' + money((me.deposits || 0) + (me.bonusGranted || 0)) + ' = ' + money(me.validWagered) + ' ⇒ ' + num(me.points) + ' pts.' : '') + '</li>' +
+            '<li><b>Hasta cuándo suma:</b> hasta el ' + esc(fdate(_d.closesAt, true)) + ' h (hora argentina). Se actualiza cada 20 minutos.</li>' +
+            '<li><b>Ganadores:</b> los 3 primeros del ranking, publicados el ' + esc(fdate(_d.announceAt, true)) + ' h en el menú completo, con nombres tapados. Empate: más apostado válido; si sigue igual, quien llegó antes.</li>' +
+            '<li><b>Entrega:</b> dentro de los ' + num(_d.deliveryBusinessDays) + ' días hábiles, con nuestro Soporte exclusivo de entrega de premios, al titular de la cuenta con su DNI.' + (_d.cashOption ? ' Cada premio puede cobrarse en efectivo.' : '') + '</li>' +
+            '<li><b>Transparencia:</b> cada jugador ve su puesto y sus puntos en todo momento. Una persona = una cuenta; las cuentas duplicadas o con jugadas irregulares quedan fuera.</li>' +
+            (_d.lastWinners ? '<li><b>Últimos ganadores (' + esc(_d.lastWinners.monthLabel) + '):</b> ' + _d.lastWinners.winners.map((w) => w.pos + '° ' + esc(w.name) + ' · ' + esc(w.prize) + (w.delivered ? ' ✅' : '')).join(' · ') + '</li>' : '') +
+            '</ul></details>';
         _countdown();
     }
     async function _load() {
@@ -82,7 +83,7 @@ VIP.raffle = (function () {
         _brand = ['picaroja', 'jugaygana', 'ganamos'].includes(brand) ? brand : ((VIP.lobby && VIP.lobby.skin && VIP.lobby.skin()) || 'picaroja');
         if (!['picaroja', 'jugaygana', 'ganamos'].includes(_brand)) _brand = 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('rf-open'); _render(); _load();
-        clearInterval(_timer); _timer = setInterval(_countdown, 1000);
+        _countdown();
     }
     function close() { const el = $('rfPage'); if (el) el.hidden = true; document.body.classList.remove('rf-open'); clearInterval(_timer); }
     async function contact() {
@@ -101,10 +102,11 @@ VIP.raffle = (function () {
         try {
             const r = await fetch(VIP.config.API_URL + '/api/raffle', { headers: { Authorization: 'Bearer ' + VIP.state.currentToken } }); if (!r.ok) return;
             const d = await r.json(); _d = _d || d; const me = d.me || {};
-            const t = d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste el ' + d.myWin.pos + '° puesto! Tocá para coordinar la entrega' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' + (me.position > 1 ? ' · te faltan ' + num(me.toFirst) + ' para el 1°' : ' · ¡vas primero!') : 'Sumá puntos jugando: cada $100.000 = 100 pts');
+            const lf = _left(d.startsAt); const t = d.notStarted ? 'Empieza en ' + lf.d + ' días y ' + lf.h + ' h · iPhone 18 Pro Max y más' : d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste el ' + d.myWin.pos + '° puesto! Tocá para coordinar la entrega' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' + (me.position > 1 ? ' · te faltan ' + num(me.toFirst) + ' para el 1°' : ' · ¡vas primero!') : 'Sumá puntos jugando: cada $100.000 = 100 pts');
             document.querySelectorAll('.js-rf-pos').forEach((e) => { e.textContent = t; });
         } catch (_) {}
     }
     try { setTimeout(function loop() { paintEntries(); setTimeout(loop, 60 * 1000); }, 4000); } catch (_) {}
-    return { open, close, contact, paintEntries };
+    try { setInterval(() => { if (document.querySelector('.js-rf-count')) _countdown(); }, 1000); } catch (_) {} // cuentas regresivas visibles (páginas, Inicio, sorteo)
+    return { open, close, contact, paintEntries, stripHtml, tick: _countdown };
 })();

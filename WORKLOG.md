@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 919. Sorteo: premios nuevos, compacto con 3 trofeos, bases desplegables y arranca en NOVIEMBRE — SW v615
+**Pedido (owner):** sorteo 1 = 1° iPhone 18 Pro Max · 2° orden de compra $1.000.000 en supermercado · 3° $500.000 para jugar en la plataforma que
+quieras; más chico y con recuadro; al abrir, poco texto: ranking y premios con 3 trofeos; bases abajo para desplegar; empieza en noviembre (octubre
+no vale) con "empieza en" y la cuenta regresiva.
+- `raffleService`: premios nuevos en DEFAULT_CONFIG y `startMonth: '2026-11'`; antes de esa fecha el cron no calcula ni cierra nada y
+  `publicStatus` devuelve el mes de inicio con `notStarted` + `startsAt`. Probado (Mongo en memoria): octubre ⇒ skipped; noviembre suma; 1/12 cierra.
+- `raffle.js`: recuadro compacto `stripHtml(brand)` (cuenta regresiva + 3 trofeos dibujados oro/plata/bronce, colores de la marca) arriba de las
+  3 páginas (reemplaza las imágenes anchas, que en el celular se leían en 9 px); pantalla: Empieza en / Termina en + trofeos · mi puesto en una
+  línea · ranking · Gran Sorteo · "📜 Bases y condiciones" plegado. Botón del Inicio: "Empieza en N días y H h". Cuenta regresiva global (1 s).
+- Las imágenes `images/sorteo/*.svg` quedan como piezas para redes (ya no las usa la app).
+
 ### 918. JUGAYGANA con el formato 100% de jugaygana.io + "Instalar app" ya no tapa el menú de Ganamos — SW v614
 **Pedido (owner, con capturas de jugaygana.io):** "respetá el formato de JUGAYGANA 100% (el orden de los juegos después lo damos), el sorteo nuevo
 arriba (también en Ganamos y PICA ROJA), sacá el Cargar de arriba, el menú como Ganamos, y que la barra Instalar app no tape lo de abajo".

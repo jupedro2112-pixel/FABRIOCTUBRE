@@ -119,8 +119,8 @@ VIP.lobby = (function () {
     // XPG, Destacadas, Del Joker, Clásicas, Pragmatic Live). Lo que en su página es exclusivo de su sistema (juegos propios, torneos,
     // sorteos) acá queda como "PRÓXIMAMENTE" hasta tener su API.
     // #917 (owner): arriba de cada página, los DOS sorteos (el mensual activo y el Gran Sorteo "próximamente"), con el estilo de la marca.
-    function _rfStrip() {
-        return '<div class="rf-strip">' + ['active', 'upcoming'].map((k) => '<button type="button" class="rf-ban" onclick="VIP.raffle.open(\'' + _skin + '\')" aria-label="' + (k === 'active' ? 'Sorteo mensual: auto 0 km valorado en $10.000.000' : 'Gran Sorteo próximamente: auto 0 km valorado en $30.000.000') + '"><img src="/images/sorteo/' + _skin + '-' + k + '.svg" alt="" decoding="async"></button>').join('') + '</div>';
+    function _rfStrip() { // #919: recuadro chico con cuenta regresiva y 3 trofeos (VIP.raffle.stripHtml), con los colores de la marca
+        try { return VIP.raffle.stripHtml(_skin); } catch (_) { return ''; }
     }
     const GN_PROMOS = [['promo-betrace.webp', 'Torneo de Betrace'], ['promo-endorphina.webp', 'Los tesoros de Endorphina'], ['promo-ruby.webp', 'Rubyplay'], ['promo-winspinity.webp', 'El camino de la fortuna']];
     function _gnPromos(big) {
@@ -293,7 +293,7 @@ VIP.lobby = (function () {
     function open(view, skin) {
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); // #914: modales (Perfil, Info, Retiro…) arriba de la página
-        _view = view || 'inicio'; _render(); _paintBal();
+        _view = view || 'inicio'; _render(); _paintBal(); setTimeout(() => { try { VIP.raffle.tick(); } catch (_) {} }, 0); // #919: cuenta regresiva del sorteo al toque
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();

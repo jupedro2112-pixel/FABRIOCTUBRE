@@ -2995,3 +2995,36 @@ span.prl-st { cursor: default; }
 .prl-jio .prl-top-btn { background: #f2ce00; color: #111; width: 50px; height: 50px; border-radius: 50%; box-shadow: 0 6px 18px rgba(242,206,0,.4); }
 body.has-install-bar .prl, body.has-install-bar .rf { bottom: calc(64px + var(--sab, 0px)); }
 body.has-install-bar .prl-nav { padding-bottom: 6px; }
+/* #919 sorteo compacto: recuadros con cuenta regresiva y 3 trofeos (arriba de las páginas y en la pantalla del sorteo) */
+.rf-strip { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 10px 12px 4px; --rfb-bg: linear-gradient(135deg, #0f212e, #1a2c38); --rfb-acc: #e6002a; --rfb-tx: #fff; --rfb-mut: #b1bad3; }
+.rf-sb-jugaygana { --rfb-bg: linear-gradient(135deg, #0b0b0b, #1c1c1c); --rfb-acc: #f2ce00; --rfb-mut: #cfcfcf; }
+.rf-sb-ganamos { --rfb-bg: linear-gradient(135deg, #1f073a, #320548); --rfb-acc: #c457da; --rfb-mut: #d9c6e6; }
+.rf.rf-picaroja { --rfb-bg: linear-gradient(135deg, #0f212e, #1a2c38); --rfb-acc: #e6002a; --rfb-tx: #fff; --rfb-mut: #b1bad3; }
+.rf.rf-jugaygana { --rfb-bg: linear-gradient(135deg, #0b0b0b, #1c1c1c); --rfb-acc: #f2ce00; --rfb-tx: #fff; --rfb-mut: #cfcfcf; }
+.rf.rf-ganamos { --rfb-bg: linear-gradient(135deg, #1f073a, #320548); --rfb-acc: #c457da; --rfb-tx: #fff; --rfb-mut: #d9c6e6; }
+.prl-gn .rf-strip { padding: 0 2.78vw 6px; }
+.rf-box { display: block; width: 100%; text-align: left; border: 2px solid var(--rfb-acc); border-radius: 14px; background: var(--rfb-bg); color: var(--rfb-tx, #fff); padding: 10px 12px; cursor: pointer; font-family: inherit; }
+.rf-box-soon { border-style: dashed; opacity: .95; }
+.rf-box-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rf-box-h b { font-size: 14px; font-weight: 900; } .rf-box-h span { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--rfb-acc); }
+.rf-box .rf-count { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
+.rf-box .rf-count span { background: rgba(0,0,0,.35); border-radius: 8px; padding: 4px 2px; text-align: center; border: 1px solid rgba(255,255,255,.08); }
+.rf-box .rf-count b { display: block; font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.rf-box .rf-count small { font-size: 9.5px; color: var(--rfb-mut); text-transform: uppercase; letter-spacing: .5px; }
+.rf-done { grid-column: 1 / -1; text-align: center; font-weight: 900; color: var(--rfb-acc); }
+.rf-tros { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.rf-tro { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; min-width: 0; }
+.rf-tro-svg { width: 34px; height: 34px; flex: none; }
+.rf-tro b { font-size: 11.5px; font-weight: 900; line-height: 1.15; }
+.rf-tro small { font-size: 10px; color: var(--rfb-mut); line-height: 1.15; }
+.rf-tro1 .rf-tro-svg { width: 40px; height: 40px; }
+.rf-box-go { display: block; margin-top: 6px; text-align: right; font-style: normal; font-size: 12px; font-weight: 800; color: var(--rfb-acc); }
+.rf-box-big { cursor: default; margin-bottom: 4px; }
+.rf-box-big .rf-count b { font-size: 24px; }
+.rf-mine { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--rf-card); border: 1px solid var(--rf-line); font-size: 13px; }
+.rf-mine > b { font-size: 26px; font-weight: 900; color: var(--rfb-acc); }
+.rf-rank .rf-pos .rf-tro-svg { width: 26px; height: 26px; }
+.rf .rf-box-soon { margin-top: 14px; cursor: default; }
+.rf-bases { margin-top: 16px; border-radius: 12px; background: var(--rf-card); border: 1px solid var(--rf-line); padding: 10px 12px; }
+.rf-bases summary { cursor: pointer; font-weight: 800; font-size: 14px; }
+.rf-bases .rf-rules { margin-top: 10px; }

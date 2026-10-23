@@ -18,9 +18,9 @@ const DEFAULT_CONFIG = {
   active: {
     title: 'Sorteo mensual',
     prizes: [
-      { pos: 1, title: 'Auto 0 km', detail: 'Valorado en $10.000.000' },
-      { pos: 2, title: 'iPhone 18 Pro Max', detail: 'Nuevo, en caja sellada' },
-      { pos: 3, title: '$500.000', detail: 'En efectivo' }
+      { pos: 1, title: 'iPhone 18 Pro Max', detail: 'Nuevo, en caja sellada' },
+      { pos: 2, title: 'Orden de compra $1.000.000', detail: 'Para usar en supermercado' },
+      { pos: 3, title: '$500.000 para jugar', detail: 'En la plataforma que quieras' }
     ]
   },
   upcoming: {
@@ -32,7 +32,8 @@ const DEFAULT_CONFIG = {
     ]
   },
   deliveryBusinessDays: 10,
-  cashOption: true
+  cashOption: true,
+  startMonth: '2026-11' // #919 (owner): el sorteo arranca en noviembre; octubre no vale
 };
 
 function monthKeyOf(date) {
@@ -152,9 +153,11 @@ async function tick(deps, opts = {}) {
   if (!(await _lease(deps, 15 * 60 * 1000))) return { skipped: 'otra instancia' };
   const now = opts.now ? new Date(opts.now) : new Date();
   const mk = monthKeyOf(now); const out = {};
+  const start = (await getConfig(deps)).startMonth || DEFAULT_CONFIG.startMonth;
+  if (mk < start) { await deps.models.RaffleMonth.updateOne({ monthKey: 'lock' }, { $set: { lockUntil: null } }).catch(() => {}); return { skipped: 'empieza en ' + start }; }
   const pk = prevMonthKey(mk);
   const pm = await deps.models.RaffleMonth.findOne({ monthKey: pk }).lean();
-  const hasPrev = pm ? pm.status !== 'closed' : (await deps.models.RaffleScore.countDocuments({ monthKey: pk })) > 0;
+  const hasPrev = pk >= start && (pm ? pm.status !== 'closed' : (await deps.models.RaffleScore.countDocuments({ monthKey: pk })) > 0);
   if (hasPrev) out.close = await closeMonth(deps, pk);
   out.current = await computeMonth(deps, mk, { now });
   await deps.models.RaffleMonth.updateOne({ monthKey: mk }, { $set: { lastRunAt: new Date(), participants: out.current.participants }, $setOnInsert: { status: 'open' } }, { upsert: true }).catch(() => {});
@@ -165,8 +168,10 @@ async function tick(deps, opts = {}) {
 // Lo que ve el cliente (todo con nombres tapados, salvo él mismo).
 async function publicStatus(deps, userId, opts = {}) {
   const now = opts.now ? new Date(opts.now) : new Date();
-  const mk = monthKeyOf(now); const { to, nextMk } = monthRange(mk);
   const cfg = await getConfig(deps);
+  const start = cfg.startMonth || DEFAULT_CONFIG.startMonth;
+  const mk0 = monthKeyOf(now); const notStarted = mk0 < start; const mk = notStarted ? start : mk0;
+  const { from, to, nextMk } = monthRange(mk);
   const all = await ranking(deps, mk);
   const myIdx = all.findIndex((s) => s.userId === userId);
   const mine = myIdx >= 0 ? all[myIdx] : await deps.models.RaffleScore.findOne({ monthKey: mk, userId }).lean();
@@ -176,7 +181,7 @@ async function publicStatus(deps, userId, opts = {}) {
   const last = await deps.models.RaffleMonth.findOne({ status: 'closed' }).sort({ monthKey: -1 }).lean();
   const myWin = last && (last.winners || []).find((w) => w.userId === userId);
   return {
-    monthKey: mk, monthLabel: monthLabel(mk),
+    monthKey: mk, monthLabel: monthLabel(mk), notStarted, startsAt: from.toISOString(),
     closesAt: to.toISOString(), announceAt: new Date(`${nextMk}-01T12:00:00${TZ_OFFSET}`).toISOString(),
     updatedAt: month && month.lastRunAt ? month.lastRunAt : null,
     participants: all.length,
