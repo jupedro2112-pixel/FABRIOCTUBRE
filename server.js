@@ -10228,6 +10228,28 @@ app.get('/api/balance', authMiddleware, async (req, res) => {
   }
 });
 
+// #881 (owner): "en el pago detectá desde Girox el monto retirable; si tiene rollover no puede retirar eso: explicale que el bono todavía no
+// es retirable, que le falta apostar, y detallá". Resumen de los objetivos de apuesta (Partner API: wagering.requirements, con target /
+// progress / remaining / pct) en pesos, para la app y para el error del retiro.
+function _rolloverSummary(r) {
+  const w = (r && r.wagering) || {}; const reqs = Array.isArray(w.requirements) ? w.requirements : [];
+  const num = (v) => Math.max(0, Math.round(Number(v) || 0));
+  const items = reqs.map((q) => { const target = num(q.target), progress = Math.min(target, num(q.progress)); const remaining = q.remaining != null ? num(q.remaining) : Math.max(0, target - progress);
+    return { kind: q.kind === 'bonus' ? 'bonus' : (q.kind === 'deposit' ? 'deposit' : String(q.kind || 'otro')), locked: num(q.locked), target, progress, remaining, pct: q.pct != null ? Math.min(100, num(q.pct)) : (target ? Math.min(100, Math.round(progress * 100 / target)) : 0) }; })
+    .filter((x) => x.remaining > 0 || x.locked > 0);
+  const balance = num(r && r.balance), available = Math.min(balance, num(r && r.available != null ? r.available : balance));
+  return { balance, available, locked: Math.max(num(r && r.locked), balance - available), bonusLocked: num(r && r.bonusLocked), claimable: num(r && r.claimableTotal),
+    remainingToBet: items.reduce((m, x) => Math.max(m, x.remaining), 0), items };
+}
+function _rolloverText(sum, amount) {
+  const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+  let t = `Hoy podés retirar ${m(sum.available)}`;
+  if (sum.locked > 0) t += ` de tus ${m(sum.balance)}: ${m(sum.locked)} ${sum.bonusLocked > 0 ? `(${m(sum.bonusLocked)} de bono)` : ''} todavía no es retirable porque tiene rollover.`.replace('  ', ' ');
+  if (sum.remainingToBet > 0) t += ` Te falta apostar ${m(sum.remainingToBet)} para liberarlo (cuenta lo que jugás, no lo que cargás).`;
+  if (sum.claimable > 0) t += ` Además tenés ${m(sum.claimable)} para reclamar en el regalito de la plataforma.`;
+  if (amount && sum.available >= amount) return null;
+  return t;
+}
 app.get('/api/balance/live', authMiddleware, async (req, res) => {
   try {
     const username = req.user.username;
@@ -10244,6 +10266,7 @@ app.get('/api/balance/live', authMiddleware, async (req, res) => {
         available: result.available,
         locked: result.locked,
         claimableTotal: result.claimableTotal,
+        rollover: _rolloverSummary(result), // #881
         username: result.username,
         updatedAt: new Date().toISOString()
       });
@@ -13678,12 +13701,16 @@ async function _withdrawalRequestHandler(req, res) {
     // en el panel y un cliente esperando plata que nunca iba a poder sacar.
     const available = Number(balanceResult.available != null ? balanceResult.available : balanceResult.balance) || 0;
     if (available < amountNum) {
+      // #881: si la diferencia es por rollover, se explica cuánto es bono y cuánto falta apostar.
+      const _rs = _rolloverSummary(balanceResult);
+      const _rt = _rs.locked > 0 ? _rolloverText(_rs, amountNum) : null;
       return res.status(400).json({
-        error: available <= 0
+        error: _rt ? `🔒 ${_rt}`
+          : available <= 0
           ? 'No tenés saldo disponible para retirar.'
           : `Saldo insuficiente. Tu saldo disponible es $${available.toLocaleString('es-AR')}.`,
-        code: 'INSUFFICIENT_BALANCE',
-        balance: available
+        code: _rt ? 'ROLLOVER_LOCKED' : 'INSUFFICIENT_BALANCE',
+        balance: available, rollover: _rs
       });
     }
 
@@ -13808,11 +13835,16 @@ async function _withdrawalRequestHandler(req, res) {
     try {
       const prCfg = await getPayoutReviewConfig();
       // #814 (owner 2026-10-22): "pagos y retiros automáticos, excepto mayores a $100.000" ⇒ revisión sólo si SUPERA el umbral.
-      const needsReview = amountNum > prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
+      let needsReview = amountNum > prCfg.minArs || !prCfg.autoBelow || !hgcashPay.isEnabled();
+      // #881: además, sólo clientes de CONFIANZA cobran solos (se puede apagar en Confirmación de pagos → Regla).
+      let trustWhy = null;
+      if (!needsReview && prCfg.trustedOnly) { const t = await _payoutTrust(user.id, prCfg); if (!t.trusted) { needsReview = true; trustWhy = t.why; } }
       // #820: por id (antes por usuario+monto: podía marcar un retiro VIEJO del mismo monto).
-      await PendingPayout.updateOne({ id: _newPayoutId }, { $set: { reviewRequired: needsReview, autoPay: !needsReview } });
+      await PendingPayout.updateOne({ id: _newPayoutId }, { $set: Object.assign({ reviewRequired: needsReview, autoPay: !needsReview }, trustWhy ? { reviewReason: 'no es cliente de confianza: ' + trustWhy.join(' · ') } : {}) });
       if (needsReview) {
-        await _emitAdminOnlyChatNote(user.id, user.username, `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} (umbral $${prCfg.minArs.toLocaleString('es-AR')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`).catch(() => {});
+        await _emitAdminOnlyChatNote(user.id, user.username, trustWhy
+          ? `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} — no sale solo porque todavía no es cliente de confianza (${trustWhy.join(' · ')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`
+          : `🔎 RETIRO EN REVISIÓN: $${amountNum.toLocaleString('es-AR')} (umbral $${prCfg.minArs.toLocaleString('es-AR')}). Confirmalo o rechazalo en Panel → Confirmación de pagos.`).catch(() => {});
       } else {
         const pp = { id: _newPayoutId };
         if (pp) setImmediate(() => { _payPendingPayout(pp.id, PAYOUT_AUTO_ACTOR, getPublicBaseUrl()).then((o) => { logger.info(`[pay-review] pago AUTOMÁTICO $${amountNum} ${user.username} → ${o.code} ${JSON.stringify(o.body).slice(0, 160)}`); _payoutAutoFailNote(pp.id, o).catch(() => {}); }).catch((e) => logger.warn(`[pay-review] pago automático falló: ${e.message}`)); });
@@ -21889,10 +21921,38 @@ setTimeout(() => { _payoutAutoRetryTick().catch(() => {}); setInterval(() => { _
 // posible estafa; por debajo del umbral se pagan SOLOS por hgcash al solicitarlos (sin agente). Config['payoutReview'] =
 // { minArs: 50000, autoBelow: true }. Si hgcash no está configurado, todo queda en revisión como antes.
 const PAYOUT_REVIEW_DEFAULT = { minArs: 100000, autoBelow: true }; // #814: se revisa sólo lo que SUPERA el umbral
+// #881 (owner): "que los pagos automáticos salgan para clientes activos de hace 1 semana, habituales y buenos; que se pueda activar y
+// desactivar". `trustedOnly` (default ON): el pago sale solo si el cliente es de CONFIANZA; si no, va a Confirmación de pagos con el motivo.
+// Confianza = cuenta de +trustedDays días · trustedMinDeposits+ cargas reales · cargó o usó la app en los últimos 7 días · sin marcas de
+// fraude ni "en observación" (Alertas de estafa) · ningún retiro suyo rechazado en 30 días.
+async function _payoutTrust(userId, cfg) {
+  const why = [];
+  try {
+    const u = await User.findOne({ id: userId }).select('createdAt fraudFlags fraudReview').lean();
+    if (!u) return { trusted: false, why: ['cliente no encontrado'] };
+    const days = u.createdAt ? (Date.now() - new Date(u.createdAt).getTime()) / 86400000 : 0;
+    if (days < cfg.trustedDays) why.push(`cuenta de ${Math.floor(days)} días (pide ${cfg.trustedDays})`);
+    if ((u.fraudFlags || []).length) why.push('marcado por fraude');
+    if (u.fraudReview && u.fraudReview.status === 'watch') why.push('en observación (Alertas de estafa)');
+    const REAL = { userId: String(userId), type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } };
+    const since7 = new Date(Date.now() - 7 * 86400000);
+    const [nDep, recentDep, recentApp, rejected] = await Promise.all([
+      Transaction.countDocuments(REAL),
+      Transaction.exists(Object.assign({}, REAL, { timestamp: { $gte: since7 } })),
+      AppSession.exists({ userId: String(userId), lastPingAt: { $gte: since7 } }),
+      PendingPayout.exists({ userId: String(userId), status: 'cancelled', error: /^Rechazado/, updatedAt: { $gte: new Date(Date.now() - 30 * 86400000) } })
+    ]);
+    if (nDep < cfg.trustedMinDeposits) why.push(`${nDep} cargas (pide ${cfg.trustedMinDeposits})`);
+    if (!recentDep && !recentApp) why.push('sin actividad en los últimos 7 días');
+    if (rejected) why.push('tuvo un retiro rechazado en los últimos 30 días');
+  } catch (e) { return { trusted: false, why: ['no se pudo evaluar: ' + e.message] }; }
+  return { trusted: why.length === 0, why };
+}
 async function getPayoutReviewConfig() {
   try {
     const raw = await getConfig('payoutReview', null); const r = raw && typeof raw === 'object' ? raw : {};
-    const min = Number(r.minArs); return { minArs: Number.isFinite(min) && min >= 0 ? Math.round(min) : PAYOUT_REVIEW_DEFAULT.minArs, autoBelow: r.autoBelow !== false, delayMin: Number(r.delayMin) > 0 ? Math.round(Number(r.delayMin)) : 30 };
+    const min = Number(r.minArs); return { minArs: Number.isFinite(min) && min >= 0 ? Math.round(min) : PAYOUT_REVIEW_DEFAULT.minArs, autoBelow: r.autoBelow !== false, delayMin: Number(r.delayMin) > 0 ? Math.round(Number(r.delayMin)) : 30,
+      trustedOnly: r.trustedOnly !== false, trustedDays: Number(r.trustedDays) > 0 ? Math.round(Number(r.trustedDays)) : 7, trustedMinDeposits: Number(r.trustedMinDeposits) >= 0 && r.trustedMinDeposits != null ? Math.round(Number(r.trustedMinDeposits)) : 3 }; // #881
   } catch (_) { return Object.assign({}, PAYOUT_REVIEW_DEFAULT); }
 }
 const PAYOUT_AUTO_ACTOR = { userId: 'system', username: 'auto-retiros', role: 'system' };
@@ -21964,9 +22024,10 @@ app.post('/api/admin/payouts/review-config', authMiddleware, adminMiddleware, as
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const b = req.body || {}; const min = Number(b.minArs);
     if (!Number.isFinite(min) || min < 0 || min > 100000000) return res.status(400).json({ error: 'Umbral inválido' });
-    const next = { minArs: Math.round(min), autoBelow: b.autoBelow !== false, delayMin: Number(b.delayMin) > 0 ? Math.round(Number(b.delayMin)) : 30 }; // #593 demora
+    const next = { minArs: Math.round(min), autoBelow: b.autoBelow !== false, delayMin: Number(b.delayMin) > 0 ? Math.round(Number(b.delayMin)) : 30, // #593 demora
+      trustedOnly: b.trustedOnly !== false, trustedDays: Math.min(365, Math.max(1, Math.round(Number(b.trustedDays) || 7))), trustedMinDeposits: Math.min(100, Math.max(0, Math.round(Number(b.trustedMinDeposits != null ? b.trustedMinDeposits : 3)))) }; // #881
     await Config.set('payoutReview', next, req.user.username);
-    logger.info(`[pay-review] umbral ${next.minArs} auto=${next.autoBelow} por ${req.user.username}`);
+    logger.info(`[pay-review] umbral ${next.minArs} auto=${next.autoBelow} confianza=${next.trustedOnly}(${next.trustedDays}d/${next.trustedMinDeposits}c) por ${req.user.username}`);
     res.json({ success: true, config: next });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });

@@ -6224,6 +6224,8 @@ async function loadPayReview() {
         const min = document.getElementById('prMinArs'), auto = document.getElementById('prAutoBelow'), st = document.getElementById('prState'), sb = document.getElementById('prSaveBtn');
         if (min) { min.value = j.config.minArs; min.disabled = !j.canEditConfig; } if (auto) { auto.checked = j.config.autoBelow !== false; auto.disabled = !j.canEditConfig; } if (sb) sb.style.display = j.canEditConfig ? '' : 'none';
         const dmi = document.getElementById('prDelayMin'); if (dmi) { dmi.value = j.config.delayMin || 30; dmi.disabled = !j.canEditConfig; } // #593
+        const pto = document.getElementById('prTrustedOnly'), ptd = document.getElementById('prTrustedDays'), ptm = document.getElementById('prTrustedMinDep'); // #881
+        if (pto) { pto.checked = j.config.trustedOnly !== false; pto.disabled = !j.canEditConfig; } if (ptd) { ptd.value = j.config.trustedDays || 7; ptd.disabled = !j.canEditConfig; } if (ptm) { ptm.value = j.config.trustedMinDeposits != null ? j.config.trustedMinDeposits : 3; ptm.disabled = !j.canEditConfig; }
         try { loadPayHistory(); } catch (_) {} // #593
         if (st) st.textContent = j.hgcashEnabled ? '' : '⚠️ Banco no configurado: todo queda en revisión y se paga a mano.';
         const review = _prItems.filter(function (p) { return p.reviewRequired || p.status === 'failed'; });
@@ -6234,6 +6236,7 @@ async function loadPayReview() {
             const color = warn.length >= 2 ? '#ff5050' : (warn.length ? '#ffb347' : '#66ff99');
             return '<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.04);border-left:4px solid ' + color + ';font-size:12.5px;line-height:1.6;">' +
                 '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;"><div><b style="font-size:16px;">' + fmtARS(p.amount) + '</b> · <b>' + escapeHtml(p.username) + '</b> · ' + escapeHtml(p.platform || 'girox') + (p.status === 'failed' ? ' · <span style="color:#ff8080;">FALLÓ: ' + escapeHtml(p.error || '') + '</span>' : (p.reviewRequired ? ' · <span style="color:#ffb347;">en revisión</span>' : ' · <span style="color:#aaa;">pago automático pendiente</span>')) + '</div><div style="color:#888;font-size:11px;">' + fmtFechaHoraAR(p.createdAt) + '</div></div>' +
+                (p.reviewReason ? '<div style="color:#ffb347;">🛡️ ' + escapeHtml(p.reviewReason) + '</div>' : '') + // #881
                 '<div style="color:#aaa;">CBU/alias: <code>' + escapeHtml(p.cbu || p.alias || '—') + '</code> · titular: ' + escapeHtml(p.titular || '—') + ' · saldo al pedir: ' + fmtARS(p.balanceBefore || 0) + '</div>' +
                 '<div style="color:#aaa;">Cliente: ' + (rk.daysOld !== null && rk.daysOld !== undefined ? rk.daysOld + ' días' : '—') + ' · cargó ' + rk.deposits + ' veces (' + fmtARS(rk.depositsTotal) + ') · retiró ' + rk.withdrawalsPaid + ' veces (' + fmtARS(rk.withdrawalsTotal) + ') · celular ' + (rk.phoneVerified ? '✅' : '❌') + (rk.acquisitionSource ? ' · origen ' + escapeHtml(rk.acquisitionSource) : '') + '</div>' +
                 (warn.length ? '<div style="color:' + color + ';font-weight:700;">⚠️ ' + warn.map(escapeHtml).join(' · ') + '</div>' : '<div style="color:#66ff99;">✅ Sin señales de alerta</div>') +
@@ -6248,10 +6251,11 @@ async function loadPayReview() {
 }
 async function payReviewSaveCfg() {
     const minArs = Number(document.getElementById('prMinArs').value), autoBelow = document.getElementById('prAutoBelow').checked, delayMin = Number((document.getElementById('prDelayMin') || {}).value) || 30;
+    const trustedOnly = !!(document.getElementById('prTrustedOnly') || {}).checked, trustedDays = Number((document.getElementById('prTrustedDays') || {}).value) || 7, trustedMinDeposits = Number((document.getElementById('prTrustedMinDep') || {}).value); // #881
     try {
-        const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow, delayMin }) });
+        const r = await authFetch('/api/admin/payouts/review-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ minArs, autoBelow, delayMin, trustedOnly, trustedDays, trustedMinDeposits: Number.isFinite(trustedMinDeposits) ? trustedMinDeposits : 3 }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
-        showToast('Regla guardada: más de ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' : ''), 'success');
+        showToast('Regla guardada: más de ' + fmtARS(j.config.minArs) + ' se revisa' + (j.config.autoBelow ? '; los menores salen solos' + (j.config.trustedOnly ? ' sólo a clientes de confianza (+' + j.config.trustedDays + ' días, ' + j.config.trustedMinDeposits + '+ cargas)' : ' para todos') : ''), 'success');
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function payReviewApprove(id) {

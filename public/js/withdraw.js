@@ -94,6 +94,25 @@ VIP.withdraw = (function () {
         await _loadAccountAndBalance();
     }
 
+    // #881: detalle del rollover arriba del formulario: saldo total, cuánto es retirable, cuánto está bloqueado y cuánto falta apostar.
+    let _rolloverShown = false;
+    function _paintRollover(r) {
+        _rolloverShown = false;
+        let box = _el('withdrawRollover');
+        if (!box) { const anchor = _el('withdrawNoBalance'); if (!anchor || !anchor.parentNode) return; box = document.createElement('div'); box.id = 'withdrawRollover'; box.className = 'wd-roll'; anchor.parentNode.insertBefore(box, anchor); }
+        if (!r || !(r.locked > 0)) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        const items = (r.items || []).filter((x) => x.remaining > 0).map((x) => '<div class="wd-roll-it"><div class="wd-roll-row"><span>' + (x.kind === 'bonus' ? '🎁 Bono' : x.kind === 'deposit' ? '💵 Carga' : '🎯 Objetivo') + ' ' + m(x.locked) + '</span><b>falta apostar ' + m(x.remaining) + '</b></div><div class="wd-roll-bar"><i style="width:' + Math.max(2, Math.min(100, x.pct || 0)) + '%"></i></div><small>Apostaste ' + m(x.progress) + ' de ' + m(x.target) + ' (' + (x.pct || 0) + '%)</small></div>').join('');
+        box.innerHTML = '<div class="wd-roll-h">🔒 Parte de tu saldo todavía no es retirable</div>'
+            + '<div class="wd-roll-sum"><span>Saldo total <b>' + m(r.balance) + '</b></span><span>Retirable hoy <b class="ok">' + m(r.available) + '</b></span><span>Bloqueado <b>' + m(r.locked) + '</b></span></div>'
+            + items
+            + '<p class="wd-roll-p">El bono tiene rollover: para liberarlo hay que <b>apostar</b> (jugar) el monto que falta. Cuenta lo que jugás, ganes o pierdas, no lo que cargás.' + (r.claimable > 0 ? ' 🎁 Tenés ' + m(r.claimable) + ' para reclamar en el regalito de la plataforma.' : '') + '</p>';
+        box.style.display = '';
+        _rolloverShown = true;
+        const wMin = _withdrawMin();
+        if (r.available < wMin) { const form = _el('withdrawForm'); if (form) form.style.display = 'none'; box.innerHTML += '<p class="wd-roll-p"><b>Cuando lo retirable llegue a ' + m(wMin) + ' vas a poder pedir tu retiro.</b></p>'; }
+    }
+
     async function _loadAccountAndBalance() {
         // 1. Datos bancarios guardados + estado del teléfono.
         try {
@@ -121,7 +140,9 @@ VIP.withdraw = (function () {
             });
             if (res.ok) {
                 const data = await res.json();
-                _balance = Number(data.balance) || 0;
+                // #881: se puede retirar sólo lo RETIRABLE (lo que dice 1girox), no el saldo total con el bono adentro.
+                _balance = Number(data.available != null ? data.available : data.balance) || 0;
+                _paintRollover(data.rollover || null);
             } else {
                 _balance = Number(VIP.state.currentUser && VIP.state.currentUser.balance) || 0;
             }
@@ -135,7 +156,7 @@ VIP.withdraw = (function () {
         // Saldo por debajo del mínimo de retiro (Config, #379: $10.000 por defecto) → bloquear el formulario y avisar.
         const _wMin = _withdrawMin();
         try { document.querySelectorAll('.wd-min').forEach((el) => { el.textContent = '$' + _wMin.toLocaleString('es-AR'); }); const ai = _el('withdrawAmount'); if (ai) { ai.min = String(_wMin); ai.placeholder = 'Ej: ' + _wMin.toLocaleString('es-AR'); } } catch (_) {}
-        if (_balance < _wMin) {
+        if (_balance < _wMin && !_rolloverShown) {
             const noBalance = _el('withdrawNoBalance');
             const form = _el('withdrawForm');
             if (noBalance) noBalance.style.display = '';
@@ -162,7 +183,7 @@ VIP.withdraw = (function () {
             return;
         }
         if (amount > _balance) {
-            _showError('withdrawError', `No podés retirar más que tu saldo disponible ($${_balance.toLocaleString('es-AR')}).`);
+            _showError('withdrawError', _rolloverShown ? `Hoy podés retirar hasta $${_balance.toLocaleString('es-AR')}: el resto es bono que todavía tiene rollover (arriba ves cuánto te falta apostar).` : `No podés retirar más que tu saldo disponible ($${_balance.toLocaleString('es-AR')}).`); // #881
             return;
         }
 
@@ -362,7 +383,8 @@ VIP.withdraw = (function () {
                 _showStep('otp-phone');
                 _showError('withdrawOtpPhoneError', data.error || 'Verificá tu teléfono para poder retirar.');
             } else {
-                _showError(errorTarget, data.error || 'No se pudo procesar el retiro.');
+                if (data.code === 'ROLLOVER_LOCKED' && data.rollover) { _showStep('form'); _paintRollover(data.rollover); _balance = Number(data.rollover.available) || 0; const be = _el('withdrawBalanceAmount'); if (be) be.textContent = '$' + _balance.toLocaleString('es-AR'); } // #881
+                _showError(data.code === 'ROLLOVER_LOCKED' ? 'withdrawError' : errorTarget, data.error || 'No se pudo procesar el retiro.');
             }
         } catch (err) {
             _showError(errorTarget, 'Error de conexión.');

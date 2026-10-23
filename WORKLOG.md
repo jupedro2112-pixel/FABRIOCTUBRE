@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-22
 
+### 881. 💸 Retiro: sólo lo RETIRABLE de 1girox + detalle del rollover · pago automático sólo a clientes de CONFIANZA (activable) — SW v595, admin SW v168
+**Pedido (owner):** "en el pago detectá desde Girox el monto retirable; si tiene rollover no puede retirar eso, explicale que el bono todavía no es
+retirable, que le falta apostar, y detallá; después que los pagos automáticos salgan para clientes activos de hace 1 semana, habituales y buenos,
+y que se pueda activar y desactivar".
+- **Bug arreglado:** el modal mostraba como "Saldo disponible" el saldo TOTAL (con el bono adentro); ahora usa `available` (lo retirable que dice
+  1girox). El server ya validaba contra `available`.
+- `_rolloverSummary(balanceResult)` (de `wagering.requirements`: target/progress/remaining/pct) va en `GET /api/balance/live` (`rollover`) y en el
+  400 del retiro (`code:'ROLLOVER_LOCKED'` + texto de `_rolloverText`: "Hoy podés retirar $X de tus $Y: $Z de bono todavía no es retirable…
+  te falta apostar $W"). App: cartel `#withdrawRollover` (total / retirable / bloqueado, cada objetivo con barra y "falta apostar"); si lo
+  retirable no llega al mínimo, esconde el formulario y lo explica. El encabezado ya no dice "confirmación por SMS" (#879).
+- **Clientes de confianza** (`Config['payoutReview']`: `trustedOnly` default ON, `trustedDays` 7, `trustedMinDeposits` 3; panel → Confirmación de
+  pagos → Regla): `_payoutTrust` = cuenta de +7 días · 3+ cargas reales · cargó o usó la app en 7 días · sin fraudFlags ni "en observación" · sin
+  retiros rechazados en 30 días. Si no cumple, el retiro queda en revisión con `PendingPayout.reviewReason` (se ve en la tarjeta) y nota interna.
+  Apagado = como antes (los menores al umbral salen solos para todos).
+Probado: 7 perfiles en Mongo en memoria (habitual y "sólo usa la app" salen solos; nuevo, 1 carga, inactivo, en observación y rechazado van a
+revisión con el motivo) y el modal en jsdom (retirable $10.000 de $25.000, falta apostar $45.000, formulario oculto si no llega al mínimo).
+
 ### 880. 🏠 INICIO: recuadros SIEMPRE dibujados (en 0 si no hay datos) — admin SW v167
 **Pedido (owner):** "en INICIO dejá todo recuadrado con los datos en 0 si no tenemos datos, dejamos todo plantado para ir viendo".
 `_renderInicio(box, d, notice)` + `_inicioEmpty(day)`: los 18 recuadros se dibujan mientras carga, sin clave, con clave incorrecta o si falla

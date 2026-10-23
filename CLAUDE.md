@@ -260,6 +260,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#529 REFERIDOS 2.0:** para PAGAR o MOSTRAR un % de referidos usar SIEMPRE `referralTierService.resolveReferralRate(user)`
   (override > niveles > plano). `utils/referralRate` es sólo el % plano (fuente única `Config['referralCommissionPct']`). Nada de premios
   en plata por cantidad de referidos (estafable). Pago automático el día 1 (`_runMonthlyReferralPayout`); niveles apagados por defecto.
+  **#881:** el pago automático (menores al umbral) sale SÓLO a clientes de confianza (`_payoutTrust`, `payoutReview.trustedOnly`, activable en el
+  panel); el modal de retiro usa `available` y muestra el rollover (`_rolloverSummary`). Nunca mostrar/validar contra `balance`.
   **#879 RETIRO:** el teléfono se verifica por SMS UNA vez; después no hay código por retiro (`Config['withdrawOtpRequired']=false`, owner).
   **#566/#814 CONFIRMACIÓN DE PAGOS:** retiros MAYORES a `Config['payoutReview'].minArs` ($100.000) esperan OK humano (Panel → Confirmación
   de pagos); el resto se paga SOLO por hgcash al pedirlo vía `_payPendingPayout` (misma función que el botón Pagar: tocar el pago = tocar ahí)
