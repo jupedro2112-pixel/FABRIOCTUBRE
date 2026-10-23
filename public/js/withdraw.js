@@ -244,6 +244,10 @@ VIP.withdraw = (function () {
                 _clearError('withdrawOtpCodeError');
                 _showStep('otp-code');
                 setTimeout(() => _el('withdrawOtpCode').focus(), 50);
+            } else if (data && data.code === 'PHONE_ALREADY_OWN') {
+                // #879: ya estaba verificado (la app no se había enterado): sigue el retiro sin volver a verificar.
+                if (VIP.state.currentUser) { VIP.state.currentUser.phone = fullPhone; VIP.state.currentUser.phoneVerified = true; }
+                if (_otpRequired()) { _showStep('form'); await sendWithdrawConfirmOtp(); } else { _showStep('form'); await _doWithdraw(); }
             } else {
                 _showError('withdrawOtpPhoneError', data.error || 'No se pudo enviar el SMS. Intentá de nuevo.');
             }

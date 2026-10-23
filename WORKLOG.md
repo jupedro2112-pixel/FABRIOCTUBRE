@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 879. 💸 Retiro: teléfono verificado UNA vez y después se retira sin código — SW v594
+**Pedido (owner, captura del modal "Código de verificación"):** "verificar el teléfono por única vez y después retirar sin problemas; si está
+verificado tiene que dejar retirar, no hace falta otro código, eso se confirma desde el admin". Migración `mig879NoWithdrawOtp` pone
+`Config['withdrawOtpRequired']=false` (una vez; el tilde sigue en Configuración). Sigue OBLIGATORIO el teléfono verificado por SMS para
+retirar (`PHONE_VERIFICATION_REQUIRED`) y los retiros grandes siguen esperando el OK del panel (#566). Front: si al verificar el server
+responde `PHONE_ALREADY_OWN` (ya estaba verificado y la app no lo sabía) sigue el retiro en vez de trabarse. Probado (jsdom): verificado ⇒
+retira directo; sin verificar ⇒ SMS una vez ⇒ retira; desfasado ⇒ retira; ningún SMS de confirmación.
+
 ### 878. 💬 Soporte: respuestas automáticas más cortas y "Bases y condiciones" chico — SW v593
 **Pedido (owner, captura del chat):** "en las respuestas resumí un poco, y el Bases y condiciones dejalo fijo pero más resumido y más chico el botón".
 Se acortaron los defaults de /sys_support_topic_{carga,retiro,reembolso,otro,bono}, /sys_support_detail y /sys_receipt_unreadable; la migración

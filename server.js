@@ -12619,6 +12619,9 @@ async function initializeData() {
   // sólo se registra quien trae link de referido real o de una campaña ACTIVA (las landings de pauta siguen creando cuentas). Una sola vez;
   // después se cambia en Configuración → Registro de clientes.
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
+  // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
+  // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
+  try { if (!(await getConfig('mig879NoWithdrawOtp', null))) { await Config.set('withdrawOtpRequired', false, 'mig#879'); await Config.set('mig879NoWithdrawOtp', new Date().toISOString(), 'mig#879'); console.log('✅ #879: retiro sin SMS por retiro (teléfono verificado una vez)'); } } catch (e) { console.warn('[startup-migration] #879:', e.message); }
   try { if (!(await getConfig('mig878ShortSupport', null))) { for (const [name, [oldTxt, nu]] of Object.entries(SUPPORT_TEXTS_OLD_878)) await Command.updateOne({ name, response: oldTxt }, { $set: { response: nu() } }); await Config.set('mig878ShortSupport', new Date().toISOString(), 'mig#878'); } } catch (e) { console.warn('[startup-migration] #878:', e.message); }
   try { if (!(await getConfig('mig839FdPopup', null))) { await Command.updateOne({ name: '/sys_first_deposit_popup', response: FIRST_DEPOSIT_POPUP_OLD }, { $set: { response: FIRST_DEPOSIT_POPUP_DEFAULT } }); await Config.set('mig839FdPopup', new Date().toISOString(), 'mig#839'); } } catch (e) { console.warn('[startup-migration] #839:', e.message); }
   try { if (!(await getConfig('mig825ReceiptText', null))) { await Command.updateOne({ name: '/sys_receipt_unreadable', response: RECEIPT_UNREADABLE_OLD_808 }, { $set: { response: RECEIPT_UNREADABLE_DEFAULT } }); await Config.set('mig825ReceiptText', new Date().toISOString(), 'mig#825'); } } catch (e) { console.warn('[startup-migration] #825:', e.message); }
@@ -14028,7 +14031,7 @@ const BELOW_MIN_DEFAULT = '⚠️ Recibimos tu transferencia de ${monto}, pero l
 const LOAD_BTN_SUB_DEFAULT = 'carga mínima {min} · se acredita solo';
 const WITHDRAW_BTN_DEFAULT = 'Retirar premio';
 const WITHDRAW_BTN_SUB_DEFAULT = 'Mínimo {retiro_min} · pago automático'; // #391: corto y legible
-// #382 (owner 2026-10-18): código SMS en CADA retiro (anti-estafa). Config['withdrawOtpRequired'], default true.
+// #382 (owner 2026-10-18): código SMS en CADA retiro (anti-estafa). Config['withdrawOtpRequired'], default true. #879: la migración lo apaga (verificación única).
 async function getWithdrawOtpRequired() {
   try { const v = await getConfig('withdrawOtpRequired', null); if (v === false || v === 'false' || v === 0) return false; } catch (_) {}
   return true;
