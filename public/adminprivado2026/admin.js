@@ -651,7 +651,7 @@ function setupRoleBasedUI() {
     // #889 (owner): los agentes de PAGOS y CARGAS ven sólo: Soporte, Cargas pendientes, Retiros pendientes, Cargas automáticas, Ruleta
     // diaria, Referidos, Usuarios y Transacciones. (Los permisos reales los pone el servidor; esto ordena lo que ven.)
     if (role === 'depositor' || role === 'withdrawer') {
-        const AGENT_SECTIONS = ['chats', 'depositReviews', 'payReview', 'cargasAuto', 'roulette', 'referrals', 'users', 'transactions'];
+        const AGENT_SECTIONS = ['support', 'chats', 'depositReviews', 'payReview', 'cargasAuto', 'roulette', 'referrals', 'users', 'transactions']; // #898: + Soporte
         document.querySelectorAll('.sidebar-nav .nav-item').forEach((it) => { if (!AGENT_SECTIONS.includes(it.dataset.section)) it.style.display = 'none'; else it.style.display = ''; });
         document.querySelectorAll('.sidebar-nav .nav-group-title').forEach((t) => {
             let n = t.nextElementSibling, any = false;
@@ -16751,9 +16751,10 @@ async function spSelect(userId, username) {
     _spSelected = { userId: userId, username: username };
     _spRenderList(); try { _gsRenderList(); } catch (_) {} // #414
     const h = document.getElementById('spHead');
-    if (h) h.innerHTML = '<button type="button" class="btn-secondary btn-small" onclick="spClose()" title="Cierra la charla: el cliente vuelve al selector de problema" style="margin-left:auto;order:9;color:#ff8080;">✅ Cerrar charla</button><b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span><button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
+    if (h) h.innerHTML = '<button type="button" class="btn-secondary btn-small" onclick="spClose()" title="Cierra la charla: el cliente vuelve al selector de problema" style="margin-left:auto;order:9;color:#ff8080;">✅ Cerrar charla</button><b>@' + escapeHtml(username) + '</b><span style="color:#9ab;font-size:11.5px;">respondés como <b style="color:#fff;">' + escapeHtml((_spAgent && _spAgent.name) || 'Soporte') + '</b></span>' + _spActionBtns() + '<button type="button" class="btn-secondary btn-small" style="margin-left:auto;" onclick="drvOpenChat(\'' + escapeHtml(userId) + '\',\'' + escapeHtml(username) + '\')">Ver chat completo</button>';
     await spLoadMessages(userId, false);
     spBelowMinBanner(userId); // #693
+    spLoadPending(userId); // #898
     try { await authFetch('/api/messages/read/' + encodeURIComponent(userId), { method: 'POST' }); } catch (_) {}
     const c = _spConvs.find(function (x) { return x.userId === userId; }); if (c) { c.unread = 0; _spRenderList(); _spSetBadge(_spConvs.reduce(function (s, x) { return s + (x.unread || 0); }, 0)); }
 }
@@ -17527,3 +17528,74 @@ async function hgDiagRun() {
     } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo revisar: ' + escapeHtml(e.message) + '</span>'; }
 }
 window.hgDiagRun = hgDiagRun;
+
+// ===== #898 (owner): SOPORTE con cargar / retirar (los mismos de "Chat completo") y la franja de cargas trabadas del cliente =====
+// Los modales de carga y retiro trabajan sobre `selectedUserId` (el cliente del chat completo). Desde Soporte se apunta al cliente de Soporte
+// SÓLO mientras el modal está abierto y al cerrarse vuelve el que estaba: así un mensaje del chat completo nunca le llega a otro cliente.
+function _spActionBtns() {
+    const role = currentAdmin && currentAdmin.role;
+    let h = '';
+    if (['admin', 'depositor'].includes(role)) h += '<button type="button" class="btn-secondary btn-small" onclick="spOpenAction(\'deposit\')" title="Cargar fichas a este cliente">💰 Cargar</button>';
+    if (['admin', 'withdrawer'].includes(role)) h += '<button type="button" class="btn-secondary btn-small" onclick="spOpenAction(\'withdraw\')" title="Retiro manual de fichas">💸 Retiro</button>';
+    return h;
+}
+function spOpenAction(kind) {
+    if (!_spSelected || !_spSelected.userId) return;
+    const prev = { id: selectedUserId, name: selectedUsername };
+    selectedUserId = _spSelected.userId; selectedUsername = _spSelected.username;
+    const modalId = kind === 'deposit' ? 'depositModal' : 'withdrawModal';
+    const btn = kind === 'deposit' ? elements.btnDeposit : elements.btnWithdraw;
+    if (btn) btn.click(); else showModal(modalId);
+    const m = document.getElementById(modalId); if (!m) return;
+    const obs = new MutationObserver(() => {
+        if (!m.classList.contains('hidden')) return;
+        obs.disconnect(); selectedUserId = prev.id; selectedUsername = prev.name;
+        try { if (_spSelected) { spLoadMessages(_spSelected.userId, true); spLoadPending(_spSelected.userId); } } catch (_) {}
+    });
+    obs.observe(m, { attributes: true, attributeFilter: ['class'] });
+}
+async function spLoadPending(userId) {
+    const box = document.getElementById('spPending'); if (!box) return;
+    box.hidden = true; box.innerHTML = '';
+    if (!currentAdmin || !['admin', 'depositor'].includes(currentAdmin.role)) return;
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews?status=pending&limit=10&userId=' + encodeURIComponent(userId)); const j = await r.json();
+        if (!r.ok || !_spSelected || _spSelected.userId !== userId) return;
+        const esc = Number(j.escalateMinutes) || 15;
+        const items = (j.items || []).filter((c) => c.status !== 'duplicate');
+        if (!items.length) return;
+        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+        box.innerHTML = '<div class="sp-pend-h">🧾 Carga trabada de este cliente</div>' + items.map((c) => {
+            const stuck = !!c.escalatedAt || c.waitingMin >= esc || !(Number(c.amount) > 0);
+            const why = c.escalateReason || (!(Number(c.amount) > 0) ? 'no se pudo leer el monto del comprobante' : (stuck ? 'la transferencia no se encontró en el banco en ' + esc + ' min' : 'esperando que entre la transferencia al banco'));
+            return '<div class="sp-pend-row" data-id="' + escapeHtml(c.id) + '">'
+                + (c.imageUrl ? '<button type="button" class="btn-secondary btn-small" onclick="spPendImg(\'' + escapeHtml(c.id) + '\')">🖼️ Ver foto</button>' : '')
+                + '<span class="sp-pend-why"><b>' + (Number(c.amount) > 0 ? m(c.amount) : 'sin monto') + '</b> · ' + escapeHtml(why) + ' · hace ' + c.waitingMin + ' min' + (c.originHolder ? ' · ' + escapeHtml(c.originHolder) : '') + '</span>'
+                + (stuck ? '<input type="number" class="sp-pend-amt" min="1" step="1" value="' + (Number(c.amount) > 0 ? Math.round(c.amount) : '') + '" placeholder="Monto" aria-label="Monto a cargar">'
+                    + '<button type="button" class="btn-primary btn-small" onclick="spPendConfirm(\'' + escapeHtml(c.id) + '\', this)">✅ Confirmar carga</button>'
+                    : '<span class="sp-pend-wait">entra sola cuando llega al banco</span>')
+                + '</div>';
+        }).join('') + '<div class="sp-pend-foot">El cliente ya recibió el aviso del problema: no hace falta responderle. Para rechazar, usá Cargas pendientes.</div>';
+        box.hidden = false;
+    } catch (_) {}
+}
+async function spPendConfirm(id, btn) {
+    const row = btn.closest('.sp-pend-row'); const amount = Number((row.querySelector('.sp-pend-amt') || {}).value) || 0;
+    if (!(amount > 0)) { showToast('Ingresá el monto que figura en el comprobante', 'error'); return; }
+    if (!confirm('¿Confirmar y CARGAR $' + amount.toLocaleString('es-AR') + ' a este cliente?\n\nSe aplican los bonos y el rollover de siempre y el cliente la ve como carga automática.')) return;
+    btn.disabled = true;
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/' + encodeURIComponent(id) + '/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo cargar', 'error'); btn.disabled = false; return; }
+        showToast('✅ Carga acreditada', 'success');
+        if (_spSelected) { spLoadPending(_spSelected.userId); spLoadMessages(_spSelected.userId, true); }
+    } catch (_) { showToast('Error de conexión', 'error'); btn.disabled = false; }
+}
+async function spPendImg(id) {
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/' + encodeURIComponent(id) + '/image'); if (!r.ok) { showToast('No se pudo abrir la foto', 'error'); return; }
+        const url = URL.createObjectURL(await r.blob()); const w = window.open(url, '_blank'); if (!w) { const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.click(); }
+    } catch (_) { showToast('No se pudo abrir la foto', 'error'); }
+}
+window.spOpenAction = spOpenAction; window.spLoadPending = spLoadPending; window.spPendConfirm = spPendConfirm; window.spPendImg = spPendImg;

@@ -120,11 +120,11 @@ document.addEventListener('change', function (ev) {
                 <!-- #743 (owner 2026-10-21): MENÚ REORGANIZADO — Configuración · Atención · App · Administrativo · Publicidad (+ Interno abajo). Todo lo que es DATOS (Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app) y SMS masivo piden la clave (Configuración → Clave de Datos). -->
 <!-- #887 (owner): arriba de todo lo de todos los días: Chat · Retiros · Cargas automáticas · Alertas de estafa -->
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">⚡ Día a día</div>
-<!-- #814 (owner 2026-10-22): el chat completo (cargas, retiros, cambio de clave…) ES el soporte: lo que se escribe acá le llega al cliente. -->
-<a href="#" class="nav-item active" data-section="chats" title="Soporte: lo que escribas le llega al cliente (firmado con el nombre de turno)">
-<span class="icon icon-comments"></span>
-<span>Chats · Soporte</span>
-<span id="unreadBadge" class="badge hidden">0</span>
+<!-- #898 (owner): Soporte ARRIBA de todo (con cargar y retirar); el chat completo pasó a Atención -->
+<a href="#" class="nav-item" data-section="support" title="Soporte: lo que escribas le llega al cliente; desde acá también cargás y retirás">
+<span>💬</span>
+<span>Soporte</span>
+<span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
 </a>
 <a href="#" class="nav-item" data-section="payReview">
 <span>💸</span>
@@ -161,6 +161,12 @@ document.addEventListener('change', function (ev) {
 <span>Configuración</span>
 </a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">💬 Atención</div>
+<!-- #814 (owner 2026-10-22): el chat completo (cargas, retiros, cambio de clave…) ES el soporte: lo que se escribe acá le llega al cliente. -->
+<a href="#" class="nav-item active" data-section="chats" title="Soporte: lo que escribas le llega al cliente (firmado con el nombre de turno)">
+<span class="icon icon-comments"></span>
+<span>Chat completo</span>
+<span id="unreadBadge" class="badge hidden">0</span>
+</a>
 <a href="#" class="nav-item" data-section="depositReviews">
 <span>⏳</span>
 <span>Cargas pendientes</span>
@@ -280,12 +286,6 @@ document.addEventListener('change', function (ev) {
                 <a href="#" class="nav-item nav-legacy" data-section="stories" title="Historias manuales (las automáticas están en Cronograma)">
                     <span>📽️</span>
                     <span>Historias (manual)</span>
-                </a>
-                <!-- #814: la columna Soporte quedó abajo (el soporte se responde desde Chats). -->
-                <a href="#" class="nav-item nav-legacy" data-section="support" title="Columna de soporte anterior (el soporte ahora se responde desde Chats)">
-                    <span>💬</span>
-                    <span>Soporte (columna vieja)</span>
-                    <span id="supportBadge" style="display:none;background:#ff5050;color:#fff;font-size:9px;font-weight:900;padding:1px 6px;border-radius:8px;margin-left:6px;">0</span>
                 </a>
             </nav>
             <div class="sidebar-footer">
@@ -3047,6 +3047,8 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
                         <div id="spHead" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.1);font-weight:800;color:#fff;display:flex;gap:10px;align-items:center;">Elegí una conversación</div>
                         <div id="spMessages" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;max-height:55vh;"></div>
+                        <!-- #898 (owner): cargas trabadas de ESTE cliente (no se detectó el comprobante) con su motivo y el botón para acreditar -->
+                        <div id="spPending" class="sp-pending" hidden></div>
                         <div style="display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,0.1);">
                             <textarea id="spInput" rows="2" placeholder="Escribí como Soporte…" style="flex:1;resize:none;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:10px;padding:9px 11px;font-size:13px;"></textarea>
                             <button type="button" class="btn-primary" id="spSendBtn" onclick="spSend()" style="align-self:flex-end;">Enviar</button>

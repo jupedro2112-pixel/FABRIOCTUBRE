@@ -330,3 +330,11 @@ tr.fin td { opacity: .92; }
 .in-box .in-v { font-size: 1.6rem; font-weight: 900; margin: .2rem 0; color: var(--p-text, #fff); font-variant-numeric: tabular-nums; }
 .in-box .in-s { font-size: .72rem; color: var(--p-muted, #9ca3af); }
 .in-note { margin: 0 0 .6rem; padding: .5rem .7rem; border-radius: 10px; background: var(--p-surface, rgba(255,255,255,.06)); font-size: .82rem; }
+
+/* #898 franja de cargas trabadas en Soporte */
+.sp-pending { border-top: 1px solid var(--p-border, rgba(255,255,255,.1)); padding: 8px 10px; display: grid; gap: 6px; background: var(--p-surface, rgba(255,255,255,.03)); }
+.sp-pend-h { font-weight: 800; font-size: 12.5px; }
+.sp-pend-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; }
+.sp-pend-why { flex: 1 1 220px; min-width: 0; }
+.sp-pend-amt { width: 110px; }
+.sp-pend-wait, .sp-pend-foot { color: var(--p-muted, #9ca3af); font-size: 11.5px; }

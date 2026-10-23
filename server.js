@@ -20486,6 +20486,7 @@ app.get('/api/admin/deposit-reviews', authMiddleware, depositorMiddleware, async
     const tab = req.query.status === 'resolved' ? 'resolved' : 'pending';
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
     const q = tab === 'pending' ? { reviewStatus: 'pending', autoCharged: { $ne: true } } : { reviewStatus: { $in: ['confirmed', 'rejected'] } };
+    if (req.query.userId) q.userId = String(req.query.userId).slice(0, 80); // #898: la franja de Soporte pide sólo las del cliente abierto
     const items = await Comprobante.find(q).sort(tab === 'pending' ? { createdAt: 1 } : { reviewedAt: -1 }).limit(limit).lean();
     const since = new Date(Date.now() - 24 * 3600 * 1000);
     const amounts = [...new Set(items.map((c) => Number(c.amount)).filter((n) => n > 0))];
@@ -21690,8 +21691,13 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
       { $group: {
         _id: '$convUserId',
         lastMessage: { $first: '$content' }, lastType: { $first: '$type' }, lastAt: { $first: '$timestamp' }, lastRole: { $first: '$senderRole' },
-        unread: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0] } }
+        unread: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0] } },
+        // #898 (owner): "en Soporte que se vean sólo los chats de la gente que se queja": cuenta los TEXTOS que escribió el cliente
+        userTexts: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$type', 'text'] }] }, 1, 0] } }
       } },
+      // Sólo conversaciones donde el cliente ESCRIBIÓ algo: los avisos automáticos (comprobante ilegible, retiro procesado…) y las fotos de
+      // comprobantes solas los resuelve el sistema (y Cargas pendientes) y no ocupan Soporte.
+      { $match: { userTexts: { $gt: 0 } } },
       { $sort: { lastAt: -1 } },
       { $limit: 200 },
       { $lookup: { from: 'users', localField: '_id', foreignField: 'id', as: 'user' } },

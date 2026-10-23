@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-22
 
+### 898. 💬 Panel: SOPORTE arriba (sólo quien escribió), con Cargar / Retiro y la franja de cargas trabadas para confirmar — admin SW v178
+**Pedidos (owner):** "dejá el chat en otro lado, que suba el de Soporte y en Soporte agregamos carga y retiro como en el chat completo" ·
+"un botón de confirmación abajo del chat para los que se traban porque no detecta el comprobante (los duplicados ya fueron avisados, ahí no);
+no hay que responder, todo agilizado para el servicio automático" · "en Soporte que se vean sólo los chats de la gente que se queja".
+- Menú: **Soporte** primero en "Día a día" (sin "columna vieja"); el chat completo pasó a Atención como "Chat completo". Agentes: + 'support'.
+- En la cabecera de Soporte: **💰 Cargar** (admin/depositor) y **💸 Retiro** (admin/withdrawer) = los mismos modales del chat completo;
+  `spOpenAction` apunta `selectedUserId` al cliente de Soporte SÓLO mientras el modal está abierto (MutationObserver) y después vuelve el que
+  estaba (si no, un mensaje del chat completo podía irle a otro cliente).
+- `#spPending` (debajo del chat): las cargas pendientes de ESE cliente (`GET /api/admin/deposit-reviews?userId=`), sin las duplicadas, con
+  foto, monto y motivo; si está trabada (escalada, sin monto o más de `escalateMinutes` sin banco) ⇒ monto editable + **✅ Confirmar carga**
+  (`/deposit-reviews/:id/confirm`, mismo flujo que Cargas pendientes); si todavía espera al banco ⇒ "entra sola". Rechazar sigue en Cargas pendientes.
+- `GET /api/admin/support/conversations` sólo lista conversaciones con TEXTO del cliente (`userTexts > 0`): los avisos automáticos y las fotos
+  de comprobantes solas no ocupan Soporte.
+Probado en jsdom (franja con 3 casos, confirmar, el modal vuelve al cliente anterior, botones por rol).
+
 ### 897. 💵 Carga mínima $2.000 en toda la página — SW v601
 **Pedido (owner):** "configurá todo con carga mínima $2.000 para toda la página y configuraciones". `mig897MinDep2000` pone
 `Config['minDepositArs']=2000` (una vez; después se cambia en el panel) y baja `hgcash.minChargeARS` a 2000 si era mayor (el chequeo de "menor al
