@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 891. 🔒 Revisión de punta a punta: el cambio de clave propia vuelve a exigir la clave actual (bug de #889)
+En #889 se agregó una ruta `POST /api/admin/change-own-password` NUEVA con el mismo path que la que ya existía (Perfil → cambiar mi clave):
+la nueva, registrada antes, TAPABA a la vieja y no pedía la clave actual (con una sesión robada se podía cambiar la clave). Se dejó UNA sola
+ruta: con `panelMustChangePassword` (clave temporal recién usada) no pide la actual pero exige 8+ caracteres y distinta de la temporal, apaga
+el flag y corta sesiones; en cualquier otro caso exige la clave actual, como siempre. Además lleva `authLimiter` (antes no tenía límite de
+intentos). Probado: sin actual ⇒ 400, actual mal ⇒ 400, actual bien ⇒ ok; con clave temporal el resto de las rutas da 403
+MUST_CHANGE_PASSWORD (también /api/admin/me ⇒ al recargar vuelve al ingreso y ahí se pide el cambio). Batería completa OK (app, 6 accesos,
+menús, landing Render/Vercel, 401 botones, retiro ×3 casos y rollover, Info/fueguito, panel por rol, plata en 1girox ×9, INICIO, confianza,
+bienvenida por días, cierre vs 1girox, alertas de estafa).
+
 ### 890. 💸 Pago fallido SIN fricción para el cliente: "aguardá un poco más, hay muchos pagos" y el agente confirma — admin SW v175
 **Pedido (owner):** "no generar fricción con la gente: si falla, que un agente confirme y listo, no pasó nada; si falla dejar un mensaje que
 aguarde un poco más por muchos pagos". Antes el cliente recibía "⚠️ el banco está con fallas…" al primer fallo, "está demorado, lo revisa un
