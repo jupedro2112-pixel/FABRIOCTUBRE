@@ -698,6 +698,33 @@
         const el = _el('supportIntro'); if (!el) return;
         if (document.body.classList.contains('sp-sent')) el.classList.toggle('sp-open');
     }
+    // #933 (owner): "Cómo funciona todo" se abría y no se podía cerrar ⇒ hoja de abajo: se cierra deslizando hacia abajo (desde arriba del
+    // texto), con la ✕, tocando afuera, con "Volver al chat" o con el gesto/botón de volver (swipeBack).
+    function supportFaq(open) {
+        const sh = _el('spFaqSheet'); if (!sh) return;
+        if (sh.parentNode !== document.body) document.body.appendChild(sh); // fuera de #supportIntro (su click pliega la presentación)
+        const card = sh.querySelector('.sp-faq-card');
+        if (open) {
+            sh.hidden = false; if (card) { card.style.transform = ''; const sc = card.querySelector('.sp-faq-scroll'); if (sc) sc.scrollTop = 0; }
+            _faqSwipeInit(sh, card); requestAnimationFrame(() => sh.classList.add('open'));
+        } else {
+            sh.classList.remove('open'); if (card) card.style.transform = '';
+            setTimeout(() => { if (!sh.classList.contains('open')) sh.hidden = true; }, 230);
+        }
+    }
+    function _faqSwipeInit(sh, card) {
+        if (!card || card._swipe) return; card._swipe = true;
+        const sc = card.querySelector('.sp-faq-scroll');
+        let y0 = 0, dy = 0, drag = false;
+        card.addEventListener('touchstart', (e) => { if (sc && sc.contains(e.target) && sc.scrollTop > 0) { drag = false; return; } y0 = e.touches[0].clientY; dy = 0; drag = true; }, { passive: true });
+        card.addEventListener('touchmove', (e) => {
+            if (!drag) return; dy = e.touches[0].clientY - y0;
+            if (dy <= 0) { card.style.transform = ''; card.classList.remove('dragging'); return; }
+            card.classList.add('dragging'); card.style.transform = 'translateY(' + dy + 'px)'; if (e.cancelable) e.preventDefault();
+        }, { passive: false });
+        const end = () => { if (!drag) return; drag = false; card.classList.remove('dragging'); if (dy > 80) supportFaq(false); else card.style.transform = ''; dy = 0; };
+        card.addEventListener('touchend', end); card.addEventListener('touchcancel', end);
+    }
     // #372: aviso "promoción hasta diciembre" de los reembolsos → todos los .refund-promo (Info, modales, Menú fácil, home).
     function _paintRefundPromo(text) {
         const t = (text == null) ? '' : String(text).trim();
@@ -2898,7 +2925,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { supportFaq, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
@@ -2919,6 +2946,7 @@
         try {
             const mods = Array.from(document.querySelectorAll('.modal:not(.hidden)')).filter((m) => m.offsetParent !== null || getComputedStyle(m).display !== 'none');
             if (mods.length) { const m = mods[mods.length - 1]; if (m.id && VIP.ui && VIP.ui.hideModal) VIP.ui.hideModal(m.id); else m.classList.add('hidden'); return true; }
+            const fq = document.getElementById('spFaqSheet'); if (fq && !fq.hidden) { supportFaq(false); return true; } // #933
             const sv = document.getElementById('storyViewer'); if (sv && (sv.classList.contains('open') || sv.getAttribute('aria-hidden') === 'false') && VIP.stories && VIP.stories.close) { VIP.stories.close(); return true; }
             const ios = document.querySelector('.ios-install-modal'); if (ios) { ios.remove(); return true; }
             if (VIP.ui && VIP.ui._casinoOpen && VIP.ui.closeCasinoFrame) { VIP.ui.closeCasinoFrame(); return true; }

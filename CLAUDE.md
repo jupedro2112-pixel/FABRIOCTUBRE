@@ -314,6 +314,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   Partidos de ESPN (1girox no expone eventos; su Deportes es Digitain sin deep link). Textos de SERVICIO, nunca "ruleta" ni plata/sueldos.
   **#834:** con FOTO (`src/services/storyImage.js`, SVG con el estilo de las manuales, `GET /api/stories/:id/auto.svg`); partidos a las 00:05
   (slots `m0..m2`). En Render no se arman fotos (comparte la base: producción se las agrega).
+- **PARTIDOS EN HISTORIAS APAGADOS (#934, owner 2026-10-23):** `Config['storyMatchesEnabled']` (default false; tilde en Cronograma). Primero van
+  historias que EXPLICAN la app; no prender los partidos sin que el owner lo pida.
+- **COMPROBANTES REPETIDOS (#932):** el mismo comprobante enviado varias veces = UNA ficha en Cargas pendientes (`_receiptCollapseDups`, `Comprobante.dupOf`).
 - **HISTORIAS PERSONALES (#886):** `Story.audienceUserId` = sólo la ve ese cliente (bono de bienvenida día 5/15/30, `_newbieOffersTick`,
   `Config['newbieOffers']`). Toda consulta NUEVA de historias para clientes o públicas tiene que filtrar `audienceUserId: null` (o el propio id).
 - **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca

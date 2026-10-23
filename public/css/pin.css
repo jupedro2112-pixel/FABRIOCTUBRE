@@ -2655,6 +2655,23 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 .sp-faq[open] summary { border-bottom: 1px solid var(--p-border); }
 .sp-faq ul { margin: 0; padding: 8px 12px 10px 26px; display: grid; gap: 6px; font: 500 12.5px/1.4 var(--p-font); color: var(--p-muted); }
 .sp-faq li b { color: var(--p-text); }
+/* #933 "Cómo funciona todo" como hoja que se desliza para cerrar */
+.sp-faq-btn { display: block; width: 100%; margin: 8px 0 2px; text-align: left; border: 1px solid var(--p-border); border-radius: 12px; background: var(--p-surface); color: var(--p-text); padding: 9px 11px; font: 800 12.5px var(--p-font); cursor: pointer; }
+.sp-faq-btn small { font-weight: 600; color: var(--p-muted); }
+body.sp-sent .sp-intro:not(.sp-open) .sp-faq-btn { width: auto; flex: 0 1 auto; margin: 0; padding: 6px 9px; font-size: 11.5px; } /* chico, al lado del nombre */
+body.sp-sent .sp-intro:not(.sp-open) .sp-faq-btn small { display: none; }
+.sp-faq-sheet { position: fixed; inset: 0; z-index: 100005; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity .2s ease; }
+.sp-faq-sheet.open { opacity: 1; }
+.sp-faq-card { width: 100%; max-width: 560px; max-height: 82vh; display: flex; flex-direction: column; background: var(--p-bg, #fff); color: var(--p-text); border-radius: 20px 20px 0 0; padding: 6px 14px calc(12px + var(--sab, env(safe-area-inset-bottom, 0px))); box-shadow: 0 -12px 40px rgba(0,0,0,.25); transform: translateY(100%); transition: transform .22s ease; touch-action: pan-y; }
+.sp-faq-sheet.open .sp-faq-card { transform: translateY(0); }
+.sp-faq-card.dragging { transition: none; }
+.sp-faq-grab { width: 44px; height: 5px; border-radius: 99px; background: var(--p-border-hi, #ccc); margin: 6px auto 8px; }
+.sp-faq-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--p-border); font: 900 15px var(--p-font); }
+.sp-faq-x { border: 0; background: var(--p-surface); color: var(--p-text); width: 32px; height: 32px; border-radius: 50%; font-size: 15px; cursor: pointer; }
+.sp-faq-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; flex: 1 1 auto; }
+.sp-faq-list { margin: 0; padding: 10px 4px 10px 22px; display: grid; gap: 8px; font: 500 13.5px/1.45 var(--p-font); color: var(--p-muted); }
+.sp-faq-list li b { color: var(--p-text); }
+.sp-faq-back { margin-top: 8px; width: 100%; border: 0; border-radius: 999px; padding: 12px; background: var(--p-red, #e60023); color: #fff; font: 800 14.5px var(--p-font); cursor: pointer; }
 
 /* ===== #907/#909 PÁGINA EXCLUSIVA PICA ROJA — estilo Stake (azul noche, recuadros sobrios), orden de juegos como Girox.
    Paleta propia y fija (no sigue el modo claro/oscuro de la app: la página es siempre oscura). ===== */

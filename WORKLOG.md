@@ -8,6 +8,32 @@
 
 ## Sesión 2026-10-22
 
+### 934. Historias automáticas: SIN partidos de fútbol (interruptor en el panel) + 3 historias nuevas que explican la app — admin SW v189
+**Pedido (owner):** "mañana tenemos un partido, pero no vamos a publicar aún los partidos de fútbol; quiero ir primero con publicaciones explicando la app".
+- `Config['storyMatchesEnabled']` (default **false**): sin él `_storyAutoPlan` no pide partidos a ESPN (no salen los de las 00:05). Panel → Cronograma →
+  Historias automáticas: tilde "⚽ Publicar partidos de fútbol" (`POST /api/admin/stories-autopilot/config`, sólo admin; al apagar se ocultan los de hoy).
+- Temas nuevos en `storyAutopilot.THEMES`: 🧾 Cómo mandar tu comprobante · 🔒 ¿Por qué no puedo retirar todo? (rollover carga ×{dx} = `depositRolloverX`,
+  bono ×{rx}) · ⚡ Cargá sin salir del juego (Carga rápida). `{dx}` nuevo en `fill` (ctx.depositX). La historia de Retiros ya no dice "código por SMS" (#879).
+- Siguen: 5 por día rotando, slot de la semana (lunes) y bono de la semana (miércoles).
+- (Info ya decía "cada carga tiene rollover ×3" desde #885: tarjeta "Cargas y retiros (antifraude)" y en "¿Por qué elegir…?".)
+
+### 933. Soporte: "Cómo funciona todo" se abría y no se podía cerrar ⇒ hoja que se cierra deslizando — SW v628
+**Pedido (owner, capturas):** "cuando abrís no se puede cerrar; quiero que se pueda abrir, deslizar para abajo y cerrar, volver al chat de soporte".
+- El `<details class="sp-faq">` dentro de `#supportIntro` (con el chat ya empezado la presentación queda en fila) se desplegaba ocupando todo y trababa.
+  Ahora es el botón `.sp-faq-btn` + hoja `#spFaqSheet` (se mueve al `<body>` al abrir; z-index 100005): se cierra deslizando hacia abajo, con la ✕,
+  tocando afuera, con "‹ Volver al chat de Soporte" o con el gesto de volver (`swipeBack`). `VIP.home.supportFaq(open)`. Mismos textos y clases de valores.
+
+### 932. Cargas pendientes: el MISMO comprobante mandado varias veces va en UNA ficha ("lo mandó N veces") — admin SW v189
+**Pedido (owner):** un cliente mandó 4 veces el mismo comprobante y aparecieron 3 fichas en Cargas pendientes; que salga una sola y diga cuántas veces lo mandó.
+- Causa: las fotos llegan juntas y el chequeo de duplicado (#376) corre en paralelo ⇒ todas pasan como "únicas".
+- `_receiptCollapseDups(userId?)` (server.js, junto a `_depositReviewTick`): agrupa las pendientes del mismo cliente por huella (`dedupeKey`, si no
+  `imageHash`, si no monto + fecha CON hora + titular; sin huella no se agrupa). Queda la más vieja (o la ya acreditada); las otras pasan a
+  `reviewStatus:'rejected'`, `reviewResolution:'duplicate'`, `dupOf` = la que queda (sin mensaje al cliente; rechazar no mueve plata y el banco
+  automático nunca carga una rechazada). Corre 4 s después de encolar, en cada tick y al listar.
+- `GET /api/admin/deposit-reviews` devuelve `copies` / `sentCount`; la ficha muestra "🔁 Mandó este mismo comprobante N veces" y, al tocar, cada
+  envío con su foto. En "Resueltas" no se listan las copias. Modelo: `Comprobante.dupOf`.
+- (El botón "🏦 Pagado por banco externo" en Pagos a confirmar ya existe desde #904; lo ven admin y agentes de retiro.)
+
 ### 931. Historias en la página PICA ROJA: aro/contador en la barra y botones que abren ARRIBA de la página — SW v627
 **Pedido (owner):** "el sistema de historias no está funcionando en PICA ROJA; quiero historias nuevas todos los días automático".
 - **Diagnóstico:** el motor automático (#827, `_storyAutoTick`) SÍ publica en producción: 5 por día (10:00 · 13:00 · 16:00 · 19:00 · 21:30 ART,

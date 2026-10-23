@@ -1396,6 +1396,11 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   desde `stories._paintButton` vía `.casino-topbar .tn-stories` (aro + badge; `VIP.stories.paint()` al abrir `lobby.open`). Los links `app:*`
   con `body.prl-open`: lo que no es modal (soporte, ruleta, VIP…) cierra la página antes (si no, queda DETRÁS: lobby z-index 99990); `cargar` =
   Carga rápida de la página. Una sección nueva enlazable desde historias que no sea `.modal` ⇒ sumarla a ese criterio.
+- **Comprobantes repetidos (#932):** `_receiptCollapseDups` deja UNA ficha pendiente por huella (dedupeKey > imageHash > monto+fecha con hora+titular);
+  las copias quedan `rejected`/`duplicate` con `dupOf`. Un flujo nuevo que encole comprobantes debe llamarlo (o dejar que lo haga el tick).
+- **Historias automáticas (#934):** partidos sólo con `Config['storyMatchesEnabled']` (default false, tilde en Cronograma). Variables de texto:
+  `{pct}` 1ª carga, `{rx}` rollover de bonos, `{dx}` rollover de la carga.
+- **"Cómo funciona todo" de Soporte (#933):** hoja `#spFaqSheet` (home.js `supportFaq`), no `<details>`; se cierra deslizando.
 - **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.
 - **Casino (#695):** `ui.js enterCasino` espera 4×30 s y el error dice el motivo (`_fetchCasinoSession` devuelve `status`/`timedOut`);
   en Render el arranque en frío (~50 s) y los redeploys son la causa típica del "No pudimos abrirte el casino".

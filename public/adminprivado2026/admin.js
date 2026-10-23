@@ -16123,7 +16123,9 @@ async function loadStoriesAuto() {
         const num = (n) => Number(n || 0).toLocaleString('es-AR');
         const KIND = { servicio: ['🧭', '#6366f1'], deporte: ['⚽', '#16a34a'], slot: ['🎰', '#db2777'], bono: ['🎁', '#dc2626'] };
         const dayLbl = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-        let h = '';
+        let h = '<label style="display:flex;gap:8px;align-items:center;margin:.2rem 0 .5rem;padding:6px 9px;border:1px solid var(--p-border,rgba(255,255,255,.15));border-radius:8px;cursor:pointer">' + // #934
+            '<input type="checkbox" ' + (j.matchesEnabled ? 'checked' : '') + ' onchange="storiesAutoMatches(this.checked)"> <span>⚽ <b>Publicar partidos de fútbol</b> (00:05, los destacados del día). ' +
+            (j.matchesEnabled ? '<span style="color:#22c55e">Prendido</span>' : '<span style="color:#f59e0b">Apagado: sólo historias que explican la app</span>') + '</span></label>';
         (j.days || []).forEach((d, di) => {
             h += '<details' + (di <= 1 ? ' open' : '') + ' style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b style="text-transform:capitalize">' + (di === 0 ? 'Hoy · ' : (di === 1 ? 'Mañana · ' : '')) + escHtml(dayLbl(d.day)) + '</b> · ' +
                 d.items.map((it) => (KIND[it.kind] || ['•'])[0]).join(' ') + (d.matchesKnown ? '' : ' <span style="color:#888;font-size:.74rem">(los partidos se definen ese día)</span>') + '</summary>' +
@@ -16156,6 +16158,16 @@ async function storiesAutoRemove(day, slot) {
         showToast('Historia borrada', 'success'); loadStoriesAuto();
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
+// #934: prender / apagar los partidos en las historias automáticas
+async function storiesAutoMatches(on) {
+    try {
+        const r = await authFetch('/api/admin/stories-autopilot/config', { method: 'POST', body: JSON.stringify({ matchesEnabled: !!on }) }); const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo guardar', 'error'); }
+        else showToast(on ? '⚽ Partidos prendidos' : 'Partidos apagados: sólo historias de la app', 'success');
+    } catch (e) { showToast('Error de conexión', 'error'); }
+    loadStoriesAuto();
+}
+window.storiesAutoMatches = storiesAutoMatches;
 window.loadStoriesAuto = loadStoriesAuto; window.storiesAutoRemove = storiesAutoRemove;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
@@ -16690,10 +16702,23 @@ function _drvCard(c, plats) {
                 '<span style="color:#888;font-size:11px;margin-left:auto;">' + _drvAgo(c.createdAt) + (pend ? ' · esperando ' + (c.waitingMin || 0) + ' min' : '') + '</span>' +
             '</div>' +
             '<div style="font-size:11.5px;color:#bbb;margin-top:4px;">' + [c.bank ? '🏛 ' + escapeHtml(c.bank) : '', c.originHolder ? '👤 ' + escapeHtml(c.originHolder) : '', c.operationNumber ? 'N° ' + escapeHtml(c.operationNumber) : '', c.paymentDate ? '📅 ' + escapeHtml(c.paymentDate) : ''].filter(Boolean).join(' · ') + '</div>' +
+            _drvCopiesHtml(c) +
             '<div style="margin-top:6px;">' + cands + '</div>' +
             actions +
             '<div style="margin-top:6px;"><button type="button" class="btn-secondary btn-small" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')">💬 Abrir chat</button></div>' +
         '</div></div>';
+}
+// #932 (owner): el MISMO comprobante enviado varias veces va en UNA ficha: "lo mandó N veces" y, al tocarlo, cada envío con su foto.
+// Las copias ya quedaron cerradas como repetidas (no se cargan); se confirma o rechaza sólo esta ficha.
+function _drvCopiesHtml(c) {
+    const cp = c.copies || []; if (!cp.length) return '';
+    const n = cp.length + 1;
+    return '<details style="margin-top:6px;background:rgba(255,170,0,0.10);border:1px solid rgba(255,170,0,0.45);border-radius:8px;padding:5px 8px;">' +
+        '<summary style="cursor:pointer;font-size:12px;color:#ffcf6b;font-weight:800;">🔁 Mandó este mismo comprobante ' + n + ' veces · tocá para ver cada envío</summary>' +
+        '<div style="font-size:11.5px;color:#ddd;margin-top:5px;">1) ' + _drvAgo(c.createdAt) + ' — <b>esta ficha</b> (la que vale)</div>' +
+        cp.map(function (x, i) { return '<div style="font-size:11.5px;color:#bbb;margin-top:3px;">' + (i + 2) + ') ' + _drvAgo(x.createdAt) + ' — repetido, no se carga' +
+            (x.imageUrl ? ' · <a href="' + escapeHtml(x.imageUrl) + '" target="_blank" rel="noopener" style="color:#8fd3ff;">ver foto</a>' : '') + '</div>'; }).join('') +
+        '</details>';
 }
 async function drvConfirm(id, btn) {
     const card = btn.closest('.drv-card');
