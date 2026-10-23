@@ -9846,6 +9846,17 @@ app.post('/api/me/brand', authMiddleware, async (req, res) => {
     res.json({ success: true, brand: want });
   } catch (e) { logger.error('[brand] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #913: el ADMIN cambia la marca activa de un cliente sin el bloqueo por saldo (no mueve fichas: es la misma cuenta). Queda en el historial.
+app.post('/api/admin/users/:id/brand', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
+    const want = req.body && _BRANDS[req.body.brand] ? req.body.brand : null; if (!want) return res.status(400).json({ error: 'Marca inválida' });
+    const r = await User.updateOne({ id: req.params.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+    if (!r.matchedCount) return res.status(404).json({ error: 'Usuario no encontrado' });
+    logger.info(`[brand] ${req.user.username} pasó a ${req.params.id} a ${want}`);
+    res.json({ success: true, brand: want, brandName: _BRANDS[want] });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // Mis cargas (perfil): las cargas reales del cliente, sólo las de la plataforma activa (según en cuál estaba al momento de cada carga).
 app.get('/api/me/deposits', authMiddleware, async (req, res) => {
   try {

@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 913. 🏷️ Panel → Usuarios: botón para cambiar la MARCA activa de un cliente (sin tocar el saldo) — admin SW v184
+**Pedido (owner):** "sacale el saldo a PICA ROJA porque no puedo ver JUGAYGANA" (diego651917). No hace falta mover fichas: es la misma cuenta.
+`POST /api/admin/users/:id/brand` (sólo admin general; queda en `brandHistory` y en el log) + botón 🏷️ en la fila del cliente (`adminSetBrand`).
+El bloqueo por saldo sigue para el cliente; el admin lo saltea. La app lo toma al recargar las plataformas (cerrar y abrir).
+
 ### 912. 🟡 Página JUGAYGANA (picaroja.com/jugaygana) — misma página que PICA ROJA, juegos y cuenta de Girox, estilo negro/amarillo — SW v609
 **Pedido (owner):** "replicá lo mismo con el link /jugaygana, al estilo de jugaygana44.bet (es mía), idéntica: logo, orden, proveedores, menú,
 portadas y deslizante; usá todo de Girox, igual que la última". jugaygana44.bet es una app React que a cualquier pedido automático le devuelve

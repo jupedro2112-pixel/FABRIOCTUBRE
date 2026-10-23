@@ -4372,6 +4372,10 @@ function renderUsers(users) {
             ? `<button class="action-btn-small" title="Cambiar contraseña" onclick='openUserPasswordModal(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)}, ${JSON.stringify(user.role)})'><span class="icon icon-key"></span></button>`
             : '';
 
+        // #913: cambiar la MARCA activa del cliente (PICA ROJA / Girox / JUGAYGANA) sin tocar su saldo (es la misma cuenta de Girox).
+        const brandBtn = adminRole === 'admin' && !isAdminUser
+            ? `<button class="action-btn-small" title="Cambiar marca (PICA ROJA / Girox / JUGAYGANA)" onclick='adminSetBrand(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)})'>🏷️</button>`
+            : '';
         let blockBtn = '';
         if (canBlock) {
             if (user.isBlocked) {
@@ -4440,7 +4444,7 @@ function renderUsers(users) {
                     <span class="icon icon-comment"></span>
                 </button>
                 ${pwdBtn}
-                ${blockBtn}
+                ${blockBtn}${brandBtn}
                 ${accessLinkBtn}
             </td>
         </tr>
@@ -4864,6 +4868,20 @@ window.toggleFraudDetail = toggleFraudDetail;
 window.blockFromFraud = blockFromFraud;
 window.handleBlockUser = handleBlockUser;
 window.handleUnblockUser = handleUnblockUser;
+// #913: marca activa del cliente (el bloqueo por saldo es para el cliente; el admin la cambia igual, sin mover fichas).
+async function adminSetBrand(userId, username) {
+    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana' };
+    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n\nEscribí el número:');
+    if (pick == null) return;
+    const brand = opts[String(pick).trim()]; if (!brand) { showToast('Opción inválida', 'error'); return; }
+    try {
+        const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/brand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) { showToast(d.error || 'No se pudo cambiar la marca', 'error'); return; }
+        showToast('✅ ' + username + ' ahora está en ' + d.brandName + ' (que cierre y abra la app)', 'success');
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.adminSetBrand = adminSetBrand;
 window.handleToggleVerifyPhone = handleToggleVerifyPhone;
 window.handleToggleLoginNoPwd = handleToggleLoginNoPwd;
 
