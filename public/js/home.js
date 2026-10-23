@@ -2290,8 +2290,44 @@
     }
     // #712 (owner): "cuando la gente carga dentro de la app rápida de Girox que le salte un cartel: ¡Buena suerte! Recordá que tenemos
     // muchos beneficios para vos dentro de nuestro menú completo, ¡no te lo pierdas! — 5 segundos o se puede sacar, en las primeras 5 cargas".
+    // #892 (owner): "a la gente que no tiene la app, a la segunda carga un cartel de activá notificaciones para recibir beneficios exclusivos".
+    // Desde la 2ª carga acreditada, sin la app instalada y sin notificaciones activas; si dice "ahora no", vuelve en otra carga cada 3 días.
+    // iPhone sin la app: Safari no tiene notificaciones ⇒ el botón lleva a instalar la app.
+    const NOTIF_CTA_KEY = 'vip_notif_cta_at';
+    async function _notifCtaAfterDeposit() {
+        try {
+            if (_isStandalone()) return;
+            const hasNotif = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+            if (hasNotif) return;
+            try { const at = Number(localStorage.getItem(NOTIF_CTA_KEY) || 0); if (at && Date.now() - at < 3 * 86400000) return; } catch (_) {}
+            const r = await fetch(VIP.config.API_URL + '/api/first-deposit-promo', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const j = await r.json().catch(() => ({}));
+            if (!(Number(j && j.depositsCount) >= 2)) return;
+            if (document.getElementById('notifCtaOverlay')) return;
+            try { localStorage.setItem(NOTIF_CTA_KEY, String(Date.now())); } catch (_) {}
+            const ios = _isIOS(); const noApi = typeof Notification === 'undefined';
+            const ov = document.createElement('div'); ov.id = 'notifCtaOverlay'; ov.className = 'ncta-ov';
+            ov.innerHTML = '<div class="ncta-card" role="dialog" aria-label="Activá las notificaciones"><div class="ncta-ico">🔔</div><h3>Activá las notificaciones</h3>'
+                + '<p>Recibí <b>beneficios exclusivos</b>: bonos que sólo llegan por notificación y avisos al instante de tus cargas y retiros.</p>'
+                + ((ios || noApi) ? '<p class="ncta-s">En tu celular las notificaciones llegan con la app instalada.</p>' : '')
+                + '<button type="button" class="ncta-go" onclick="VIP.home.notifCtaGo()">' + ((ios || noApi) ? '📲 Instalar la app' : '🔔 Activar ahora') + '</button>'
+                + '<button type="button" class="ncta-no" onclick="VIP.home.notifCtaClose()">Ahora no</button></div>';
+            ov.addEventListener('click', (e) => { if (e.target === ov) notifCtaClose(); });
+            document.body.appendChild(ov);
+        } catch (_) {}
+    }
+    function notifCtaClose() { const o = document.getElementById('notifCtaOverlay'); if (o) o.remove(); }
+    async function notifCtaGo() {
+        notifCtaClose();
+        try {
+            if (_isIOS() || typeof Notification === 'undefined') { if (VIP.ui && VIP.ui.installApp) VIP.ui.installApp(); return; }
+            if (Notification.permission === 'denied') { VIP.ui && VIP.ui.showToast && VIP.ui.showToast('Las notificaciones están bloqueadas: habilitalas en la configuración del navegador (candado al lado de la dirección).', 'info'); return; }
+            if (typeof window.enableNotifications === 'function') await window.enableNotifications(); else await Notification.requestPermission();
+            if (Notification.permission === 'granted' && VIP.ui && VIP.ui.showToast) VIP.ui.showToast('✅ Listo: te vamos a avisar de los beneficios exclusivos', 'success');
+        } catch (_) {}
+    }
     async function onDepositCredited(d) {
-        try { setTimeout(function () { if (VIP.reviews && VIP.reviews.maybeOffer) VIP.reviews.maybeOffer('deposit'); }, 7000); } catch (_) {} // #875: después de la carga, si ya es la 5ª+
+        try { setTimeout(_notifCtaAfterDeposit, 4500); } catch (_) {} // #892        try { setTimeout(function () { if (VIP.reviews && VIP.reviews.maybeOffer) VIP.reviews.maybeOffer('deposit'); }, 7000); } catch (_) {} // #875: después de la carga, si ya es la 5ª+
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
         try { setTimeout(storyBonusRefresh, 1500); } catch (_) {} // #742: el bono de la historia se consumió con esta carga
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }
@@ -2717,6 +2753,7 @@
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        notifCtaGo: notifCtaGo, notifCtaClose: notifCtaClose, // #892
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
     Object.assign(VIP.home, { favOpenPicker, favClosePicker, favSearch, favMore, favToggle, favToggleTop, favPlay }); // #840

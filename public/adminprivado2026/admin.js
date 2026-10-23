@@ -416,7 +416,7 @@ async function handleLogin(e) {
             
             // Verificar si necesita cambiar contraseña
             if (data.user.needsPasswordChange) {
-                await _forceOwnPasswordChange(); // #889: clave temporal ⇒ elegir la propia antes de entrar
+                showPasswordChangeModal();
                 return;
             }
             
@@ -3575,8 +3575,7 @@ async function handlePasswordChange() {
             },
             body: JSON.stringify({
                 userId: selectedUserId,
-                newPassword,
-                forceChange: !!(document.getElementById('pwForceChange') || {}).checked // #889
+                newPassword
             })
         });
         
@@ -4520,8 +4519,6 @@ function copyAccessLink() {
 function openUserPasswordModal(userId, username, userRole) {
     selectedUserId = userId;
     selectedUserRole = userRole;
-    // #889: "clave temporal" sólo para cuentas del panel y sólo si quien cambia es el admin general
-    try { const fw = document.getElementById('pwForceWrap'), fc = document.getElementById('pwForceChange'); if (fc) fc.checked = false; if (fw) fw.style.display = (userRole && userRole !== 'user' && currentAdmin && currentAdmin.role === 'admin') ? '' : 'none'; } catch (_) {}
     // Update modal title to show which user's password is being changed
     const modalHeader = document.querySelector('#passwordModal .modal-header h3');
     if (modalHeader) {
@@ -17504,19 +17501,3 @@ async function cierresGiroxSave(dk) {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.cierresGiroxSave = cierresGiroxSave;
-
-// ===== #889: clave temporal del panel ⇒ la cuenta elige la suya al entrar =====
-async function _forceOwnPasswordChange() {
-    for (let i = 0; i < 5; i++) {
-        const p1 = window.prompt('🔑 Entraste con una clave temporal. Elegí tu clave nueva (mínimo 8 caracteres):', ''); if (p1 === null) break;
-        const p2 = window.prompt('Repetí la clave nueva:', ''); if (p2 === null) break;
-        if (p1 !== p2) { alert('Las claves no coinciden. Probá de nuevo.'); continue; }
-        try {
-            const r = await authFetch('/api/admin/change-own-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newPassword: p1 }) });
-            const j = await r.json().catch(() => ({}));
-            if (!r.ok) { alert(j.error || 'No se pudo cambiar la clave.'); continue; }
-            alert('✅ Clave cambiada. Entrá de nuevo con tu clave nueva.'); location.reload(); return;
-        } catch (_) { alert('Error de conexión. Probá de nuevo.'); }
-    }
-    alert('Tenés que cambiar la clave para usar el panel. Volvé a entrar.'); location.reload();
-}

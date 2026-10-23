@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-22
 
+### 893. 📱 Verificación de teléfono: el número queda siempre todo junto y con 10 dígitos (que no falle el SMS) — SW v600
+**Pedido (owner, captura de "Verificá tu teléfono"):** "que tome el dato como lo determina el país, todos juntos los números, que no falle el
+SMS por un espacio". Antes se sacaban espacios/guiones/0/un 9 repetido, pero un "15" ("11 15 5555-1234") o el número pegado con "+54 9"
+armaban un número inválido y el SMS no llegaba. `VIP.auth.phoneFix(prefix, raw)` (auth.js; lo usan "Verificá tu teléfono" y la verificación
+del retiro): sólo dígitos, saca +54/549 pegados, el 0, el 9 repetido y el 15 después del código de área (11 ⇒ 2 dígitos; si no, 3/4); AR tiene
+que dar 10 dígitos ⇒ `+549XXXXXXXXXX`, si no avisa "falta/sobra algún número" sin mandar el SMS. Server: `/api/auth/verify-phone/send-otp`
+rechaza +54 que no sea `+549` + 10 dígitos (`AR_PHONE_FORMAT`). Probado con 14 formas de escribir el mismo número.
+
+### 892. 🔔 Cartel "Activá las notificaciones para recibir beneficios exclusivos" desde la 2ª carga (sin la app) · ↩️ se REVIERTE la clave temporal — SW v599, admin SW v176
+- **Pedido (owner):** "a la gente que no tiene la app, a la segunda carga un cartel de activá notificaciones para recibir beneficios
+  exclusivos". `home._notifCtaAfterDeposit` (4,5 s después de cada carga acreditada): sin la app instalada (`_isStandalone`), sin permiso de
+  notificaciones y con `depositsCount ≥ 2` (`/api/first-deposit-promo`) ⇒ `#notifCtaOverlay` (encima del casino). "Activar ahora" usa
+  `window.enableNotifications`; iPhone sin app (Safari no tiene push) ⇒ "Instalar la app" (`VIP.ui.installApp`); permiso bloqueado ⇒ cómo
+  habilitarlo. "Ahora no" ⇒ vuelve en una carga siguiente cada 3 días (`localStorage vip_notif_cta_at`). La oferta de reseña no se le pone encima.
+- **Revertido (owner: "sacá el ingreso temporal si se puede llegar a romper algo"):** todo lo de la clave temporal de #889/#891
+  (`User.panelMustChangePassword`, bloqueo en `authMiddleware`, `needsPasswordChange`, casilla del modal, `forceChange`,
+  `_forceOwnPasswordChange`) — la ruta `change-own-password`, `change-password`, el login y el middleware quedaron IDÉNTICOS al código previo a
+  #889 (comparado bloque por bloque). Se queda el menú reducido de agentes (#889, parte 1).
+
 ### 891. 🔒 Revisión de punta a punta: el cambio de clave propia vuelve a exigir la clave actual (bug de #889)
 En #889 se agregó una ruta `POST /api/admin/change-own-password` NUEVA con el mismo path que la que ya existía (Perfil → cambiar mi clave):
 la nueva, registrada antes, TAPABA a la vieja y no pedía la clave actual (con una sesión robada se podía cambiar la clave). Se dejó UNA sola

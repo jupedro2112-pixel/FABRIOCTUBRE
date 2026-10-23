@@ -267,7 +267,7 @@
             const d = await r.json().catch(() => ({}));
             if (!d || !d.eligible) return;
             _offer = { amount: d.amount, pct: d.pct };
-            if (document.querySelector('.modal:not(.hidden), #reviewModalOverlay')) return; // no tapar otro cartel
+            if (document.querySelector('.modal:not(.hidden), #reviewModalOverlay, #notifCtaOverlay')) return; // no tapar otro cartel
             openModal();
         } catch (_) {}
     }

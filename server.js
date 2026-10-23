@@ -3882,7 +3882,7 @@ const authMiddleware = async (req, res, next) => {
     // Solo los campos que este middleware usa (corre en CADA request; hidratar
     // el doc completo con fcmTokens/tagHistory/etc. era costo puro).
     // ⚠️ Si un chequeo futuro necesita otro campo del user: agregarlo acá.
-    const AUTH_USER_FIELDS = 'id username role isActive isBlocked blockReason tokenVersion mustChangePassword panelMustChangePassword'; // #889
+    const AUTH_USER_FIELDS = 'id username role isActive isBlocked blockReason tokenVersion mustChangePassword';
     let user = await User.findOne({ id: decoded.userId }).select(AUTH_USER_FIELDS);
 
     if (!user) {
@@ -3942,13 +3942,6 @@ const authMiddleware = async (req, res, next) => {
     // login default-password detection, or admin reset), only the allow-listed
     // endpoints are reachable. Any other authenticated request returns 403 so
     // the SPA can re-open the mandatory change modal — even after a reload.
-    // #889: cuenta del panel con clave temporal ⇒ sólo puede cambiarla (y salir) hasta hacerlo.
-    if (user.panelMustChangePassword === true && isAdminRole(user.role)) {
-      const p = req.path || '';
-      if (!['/api/admin/change-own-password', '/api/auth/logout', '/api/auth/admin-logout', '/api/auth/verify', '/api/health'].includes(p)) {
-        return res.status(403).json({ error: 'Tenés que cambiar tu clave antes de seguir.', code: 'MUST_CHANGE_PASSWORD' });
-      }
-    }
     if (user.mustChangePassword === true) {
       if (isAdminRole(user.role)) {
         // Self-heal: admins must NEVER carry the mustChangePassword flag.
@@ -5353,7 +5346,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     // que setea mustChangePassword:true sobre una contraseña nueva — ese flag se
     // respeta más abajo a través de user.mustChangePassword.
     const isDefaultPassword = password === 'asd123';
-    const needsPasswordChange = isAdminRole(user.role) && user.panelMustChangePassword === true; // #889
+    const needsPasswordChange = false;
     
     let isValidPassword = false;
 
@@ -6929,6 +6922,10 @@ app.post('/api/auth/verify-phone/send-otp', authMiddleware, sensitiveLimiter, sm
     const normalizedPhone = phone.trim();
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido. Usá formato internacional (ej: +5491155551234)' });
+    }
+    // #893: celular de Argentina = +54 9 + 10 números (código de área sin 0 + número sin 15). Si no, el SMS no llega: se avisa antes de mandarlo.
+    if (/^\+54/.test(normalizedPhone) && !/^\+549\d{10}$/.test(normalizedPhone)) {
+      return res.status(400).json({ error: 'Revisá el número: tiene que ser el código de área (sin 0) y tu número (sin 15), 10 números en total. Ej.: 1155551234', code: 'AR_PHONE_FORMAT' });
     }
 
     // Si el usuario está intentando verificar su PROPIO número ya verificado,
@@ -19102,8 +19099,6 @@ app.post('/api/admin/change-password', authMiddleware, adminMiddleware, async (r
 
     user.password = newPassword;
     user.passwordChangedAt = new Date();
-    // #889: el admin general puede pedir que una cuenta del panel cambie la clave al entrar (clave temporal).
-    if (user.role !== 'user') user.panelMustChangePassword = adminRole === 'admin' && req.body && req.body.forceChange === true;
     // Corta las sesiones vivas del target: sin esto, una cuenta comprometida
     // seguía operando con su JWT viejo (30-90 días) pese al cambio de clave.
     user.tokenVersion = (user.tokenVersion || 0) + 1;
@@ -19150,7 +19145,7 @@ app.post('/api/admin/change-password', authMiddleware, adminMiddleware, async (r
 });
 
 // Cambiar contraseña propia del admin logueado (sin tocar JUGAYGANA)
-app.post('/api/admin/change-own-password', authMiddleware, authLimiter, async (req, res) => { // #889: + límite de intentos
+app.post('/api/admin/change-own-password', authMiddleware, async (req, res) => {
   // Cualquier rol staff (admin / depositor / withdrawer / publisher_admin) puede
   // cambiar SU propia contraseña con este endpoint. No se usa adminMiddleware
   // porque ése rechaza publisher_admin — y publisher_admin también necesita
@@ -19163,32 +19158,24 @@ app.post('/api/admin/change-own-password', authMiddleware, authLimiter, async (r
     const { currentPassword, newPassword } = req.body;
     const adminUserId = req.user.userId;
 
+    if (!currentPassword || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Datos inválidos. La contraseña debe tener al menos 6 caracteres.' });
+    }
+
     const admin = await User.findOne({ id: adminUserId });
     if (!admin) {
       return res.status(404).json({ error: 'Admin no encontrado' });
     }
-    // #889: con CLAVE TEMPORAL (recién entró con ella) no se pide la actual, pero la nueva tiene que ser de 8+ y distinta; en
-    // cualquier otro caso se exige la clave actual (una sesión robada no alcanza para cambiarla).
-    const temp = admin.panelMustChangePassword === true;
-    const np = typeof newPassword === 'string' ? newPassword : '';
-    if (temp) {
-      if (np.length < 8 || /^\s|\s$/.test(np)) return res.status(400).json({ error: 'La clave nueva tiene que tener al menos 8 caracteres (sin espacios al principio ni al final).' });
-      if (await bcrypt.compare(np, admin.password)) return res.status(400).json({ error: 'Elegí una clave distinta a la temporal.' });
-    } else {
-      if (!currentPassword || np.length < 6) {
-        return res.status(400).json({ error: 'Datos inválidos. La contraseña debe tener al menos 6 caracteres.' });
-      }
-      // Verificar contraseña actual
-      const isMatch = await bcrypt.compare(currentPassword, admin.password);
-      if (!isMatch) {
-        return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
-      }
+
+    // Verificar contraseña actual
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'La contraseña actual es incorrecta' });
     }
 
-    admin.password = np;
+    admin.password = newPassword;
     admin.passwordChangedAt = new Date();
     admin.mustChangePassword = false;
-    if (temp) { admin.panelMustChangePassword = false; admin.tokenVersion = (admin.tokenVersion || 0) + 1; } // #889: entra de nuevo con la suya
     await admin.save();
 
     logger.info(`Admin ${admin.username} cambió su propia contraseña`);

@@ -1656,6 +1656,20 @@ VIP.auth = (function () {
     // ============================================
     // VERIFICACIÓN DE TELÉFONO (opcional, post-registro)
     // ============================================
+    // #893 (owner): "que el número quede todo junto como lo determina el país, que no falle el SMS por un espacio". Argentina: +54 9 +
+    // código de área (sin 0) + número (sin 15) = 10 dígitos. Saca espacios, guiones, puntos, +54 / 549 pegados, el 0, un 9 repetido y el 15
+    // después del código de área. Otros países: sólo dígitos y sin 0 inicial. Devuelve { phone } o { error }.
+    function phoneFix(prefix, raw) {
+        let d = String(raw || '').replace(/\D/g, '');
+        const ar = prefix === '+549' || prefix === '+54';
+        if (!ar) { d = d.replace(/^0+/, ''); return d.length >= 7 ? { phone: prefix + d } : { error: 'Ingresá un número válido (mínimo 7 dígitos)' }; }
+        if (d.startsWith('549') && d.length >= 12) d = d.slice(3); else if (d.startsWith('54') && d.length >= 11) d = d.slice(2);
+        d = d.replace(/^0+/, '');
+        if (d.length === 11 && d[0] === '9') d = d.slice(1);
+        if (d.length === 12) { for (const a of (d.startsWith('11') ? [2] : [3, 4, 2])) { if (d.substr(a, 2) === '15') { d = d.slice(0, a) + d.slice(a + 2); break; } } }
+        if (d.length !== 10) return { error: d.length < 10 ? 'Falta algún número: tiene que ser el código de área (sin 0) y tu número (sin 15), 10 números en total. Ej.: 1155551234' : 'Sobran números: escribí el código de área sin 0 y tu número sin 15, 10 números en total. Ej.: 1155551234' };
+        return { phone: '+549' + d };
+    }
     async function handleVerifyPhoneSend() {
         const prefix = document.getElementById('verifyPhonePrefix').value;
         const number = document.getElementById('verifyPhoneInput').value.trim();
@@ -1664,16 +1678,15 @@ VIP.auth = (function () {
 
         errorDiv.classList.remove('show');
 
-        if (!number || number.replace(/\D/g, '').length < 7) {
-            errorDiv.textContent = 'Ingresá un número válido (mínimo 7 dígitos)';
+        // #647 → #893: el +54 9 va fijo; el número queda todo junto y con 10 dígitos (sin 0, sin 15, sin espacios) antes de mandar el SMS.
+        const _fx = phoneFix(prefix, number);
+        if (_fx.error) {
+            errorDiv.textContent = _fx.error;
             errorDiv.classList.add('show'); try { if (VIP.home && VIP.home.vpHelpOpen) VIP.home.vpHelpOpen(); } catch (_) {} // #648
             return;
         }
-
-        // #647 (owner): el +54 9 va fijo; si la persona escribe el 0 del área o repite el 9, se sacan solos.
-        let digits = number.replace(/[\s\-().]/g, '');
-        if (prefix === '+549') digits = digits.replace(/^0+/, '').replace(/^9(?=\d{9,})/, '');
-        const fullPhone = prefix + digits;
+        const fullPhone = _fx.phone;
+        try { document.getElementById('verifyPhoneInput').value = fullPhone.replace(/^\+549/, ''); } catch (_) {} // se ve cómo quedó
         if (btn) { btn.textContent = 'Enviando...'; btn.disabled = true; }
 
         try {
@@ -1767,6 +1780,7 @@ VIP.auth = (function () {
     }
 
     return {
+        phoneFix, // #893
         checkUsernameAvailability,
         handleRegister,
         handleRegisterDirect,

@@ -265,7 +265,10 @@ VIP.withdraw = (function () {
             _showError('withdrawOtpPhoneError', 'Ingresá un número válido (mínimo 7 dígitos).');
             return;
         }
-        const fullPhone = prefix + number.replace(/[\s\-().]/g, '').replace(/^0+/, '');
+        // #893: mismo armado que "Verificá tu teléfono" (todo junto, sin 0 ni 15; Argentina = +549 + 10 números)
+        let fullPhone;
+        try { const fx = VIP.auth.phoneFix(prefix, number); if (fx.error) { _showError('withdrawOtpPhoneError', fx.error); return; } fullPhone = fx.phone; }
+        catch (_) { fullPhone = prefix + number.replace(/[\s\-().]/g, '').replace(/^0+/, ''); }
 
         if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
         try {
