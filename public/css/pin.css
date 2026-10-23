@@ -2906,7 +2906,7 @@ span.prl-st { cursor: default; }
 .jg-provlist small { color: #f2ce00; }
 /* ===== #917 SORTEO MENSUAL: pantalla (estilo de la marca), tira de banners arriba de las páginas y botón del Inicio ===== */
 .rf { --rf-bg: #0f212e; --rf-card: #1a2c38; --rf-line: #2f4553; --rf-tx: #fff; --rf-mut: #b1bad3; --rf-acc: #e6002a; --rf-acc-tx: #fff;
-  position: fixed; inset: 0; z-index: 99995; display: flex; flex-direction: column; background: var(--rf-bg); color: var(--rf-tx); font-family: var(--p-font); }
+  position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column; background: var(--rf-bg); color: var(--rf-tx); font-family: var(--p-font); }
 .rf[hidden] { display: none !important; }
 .rf.rf-jugaygana { --rf-bg: #101010; --rf-card: #1c1c1c; --rf-line: #2b2b2b; --rf-mut: #c9c9c9; --rf-acc: #f2ce00; --rf-acc-tx: #111; font-family: "Exo 2", Arial, sans-serif; }
 .rf.rf-ganamos { --rf-bg: #000; --rf-card: #1f073a; --rf-line: #320548; --rf-mut: #d9c6e6; --rf-acc: #8b00c9; --rf-acc-tx: #fff; font-family: Roboto, Arial, sans-serif; }
@@ -2993,7 +2993,7 @@ span.prl-st { cursor: default; }
 .jg-grid { grid-template-columns: repeat(3, 1fr) !important; }
 .jg-grid .jg-card { width: auto; }
 .prl-jio .prl-top-btn { background: #f2ce00; color: #111; width: 50px; height: 50px; border-radius: 50%; box-shadow: 0 6px 18px rgba(242,206,0,.4); }
-body.has-install-bar .prl, body.has-install-bar .rf { bottom: calc(64px + var(--sab, 0px)); }
+body.has-install-bar .prl, body.has-install-bar .rf { bottom: 0; padding-bottom: calc(64px + var(--sab, 0px)); box-sizing: border-box; } /* #920: sin hueco entre el menú y la barra */
 body.has-install-bar .prl-nav { padding-bottom: 6px; }
 /* #919 sorteo compacto: recuadros con cuenta regresiva y 3 trofeos (arriba de las páginas y en la pantalla del sorteo) */
 .rf-strip { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 10px 12px 4px; --rfb-bg: linear-gradient(135deg, #0f212e, #1a2c38); --rfb-acc: #e6002a; --rfb-tx: #fff; --rfb-mut: #b1bad3; }
@@ -3028,3 +3028,93 @@ body.has-install-bar .prl-nav { padding-bottom: 6px; }
 .rf-bases { margin-top: 16px; border-radius: 12px; background: var(--rf-card); border: 1px solid var(--rf-line); padding: 10px 12px; }
 .rf-bases summary { cursor: pointer; font-weight: 800; font-size: 14px; }
 .rf-bases .rf-rules { margin-top: 10px; }
+/* ===== #920 SELECTOR DE PLATAFORMA (menú completo y básico): cada marca con SUS colores, el nombre entero adentro del recuadro.
+   PICA ROJA rojo y blanco · Girox negro y verde · Ganamos violeta · JUGAYGANA negro y amarillo. Más específico que las reglas viejas. ===== */
+html body .plat-play-btn.plat-picaroja, html body .bv-chip.plat-picaroja { --pb-bg: #ffffff; --pb-bd: #e6002a; --pb-tx: #e6002a; --pb-sub: #9f1239; --pb-on: linear-gradient(135deg, #e6002a, #b0001f); --pb-ontx: #fff; }
+html body .plat-play-btn.plat-girox, html body .bv-chip.plat-girox { --pb-bg: #0b0f0c; --pb-bd: #16a34a; --pb-tx: #22c55e; --pb-sub: #86efac; --pb-on: linear-gradient(135deg, #052e16, #15803d); --pb-ontx: #fff; }
+html body .plat-play-btn.plat-ganamos, html body .bv-chip.plat-ganamos { --pb-bg: linear-gradient(135deg, #3b0a6e, #8b00c9); --pb-bd: #c457da; --pb-tx: #fff; --pb-sub: #e9d5ff; --pb-on: linear-gradient(135deg, #5b13a8, #b14dff); --pb-ontx: #fff; }
+html body .plat-play-btn.plat-jugaygana, html body .bv-chip.plat-jugaygana { --pb-bg: #0b0b0b; --pb-bd: #f2ce00; --pb-tx: #f2ce00; --pb-sub: #fde68a; --pb-on: linear-gradient(135deg, #111, #2a2400); --pb-ontx: #f2ce00; }
+html body .plat-play-btn.plat-picaroja, html body .plat-play-btn.plat-girox, html body .plat-play-btn.plat-ganamos, html body .plat-play-btn.plat-jugaygana,
+html body .bv-chip.plat-picaroja, html body .bv-chip.plat-girox, html body .bv-chip.plat-ganamos, html body .bv-chip.plat-jugaygana {
+  background: var(--pb-bg) !important; border: 2px solid var(--pb-bd) !important; color: var(--pb-tx) !important; box-shadow: 0 4px 12px rgba(0,0,0,.12) !important; }
+html body .plat-play-btn.is-pref.plat-picaroja, html body .plat-play-btn.is-pref.plat-girox, html body .plat-play-btn.is-pref.plat-ganamos, html body .plat-play-btn.is-pref.plat-jugaygana,
+html body .bv-chip.on.plat-picaroja, html body .bv-chip.on.plat-girox, html body .bv-chip.on.plat-ganamos, html body .bv-chip.on.plat-jugaygana {
+  background: var(--pb-on) !important; color: var(--pb-ontx) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--pb-bd) 35%, transparent), 0 6px 16px rgba(0,0,0,.2) !important; }
+html body .plat-play-btn[class*="plat-"] .plat-play-name, html body .bv-chip[class*="plat-"] b {
+  color: inherit !important; font-size: 12px !important; font-weight: 900 !important; letter-spacing: .2px !important; line-height: 1.1 !important;
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; text-align: center !important; word-break: normal !important; }
+html body .plat-play-btn[class*="plat-"] .plat-play-sub { color: var(--pb-sub) !important; opacity: .9; font-size: 10px !important; white-space: normal !important; }
+html body .plat-play-btn.is-pref[class*="plat-"] .plat-play-sub { color: inherit !important; }
+html body .plat-play-btn[class*="plat-"] .plat-logo, html body .bv-chip[class*="plat-"] img { width: 34px !important; height: 34px !important; border-radius: 50% !important; object-fit: cover !important; background: #000 !important; border: 2px solid var(--pb-bd) !important; }
+html body .plat-play-btn.plat-jugaygana .plat-logo, html body .bv-chip.plat-jugaygana img { width: 64px !important; border-radius: 10px !important; object-fit: contain !important; padding: 2px 4px !important; }
+html body .plat-play-btn.plat-picaroja .plat-logo, html body .bv-chip.plat-picaroja img { background: #fff !important; }
+html body .plat-play-btn[class*="plat-"] .plat-check { border-color: currentColor !important; color: inherit !important; }
+html body .plat-play-btn.plat-girox .plat-reco { background: #16a34a !important; color: #fff !important; }
+/* #920 JUGÁ AQUÍ: el logo de la plataforma elegida con su color (JUGAYGANA es un logo ancho: contain sobre negro) */
+#navPlat #navPlatLogo { border-radius: 8px; object-fit: cover; }
+#navPlat[data-plat="jugaygana"] #navPlatLogo { object-fit: contain; background: #0b0b0b; padding: 2px; box-shadow: 0 0 0 2px #f2ce00; }
+#navPlat[data-plat="ganamos"] #navPlatLogo { box-shadow: 0 0 0 2px #8b00c9; }
+#navPlat[data-plat="picaroja"] #navPlatLogo { box-shadow: 0 0 0 2px #e6002a; }
+#navPlat[data-plat="girox"] #navPlatLogo { box-shadow: 0 0 0 2px #16a34a; }
+
+/* ===== #920 ===== */
+/* Sorteo: recuadro minimizable, fotos premium de los premios, podio, botones del Inicio, sorteo en Girox */
+.rf-sb-girox { --rfb-bg: linear-gradient(135deg, #050a07, #0f2418); --rfb-acc: #22c55e; --rfb-mut: #bbf7d0; }
+.casino-rf { flex: 0 0 auto; background: #0b0d14; }
+.casino-rf .rf-strip { padding: 6px 8px; }
+.casino-rf .rf-box-soon { display: none; }
+.rf-box-h { position: relative; }
+.rf-minbtn { margin-left: 6px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.3); color: #fff; font: 900 16px/1 inherit; cursor: pointer; flex: none; }
+.rf-mini { display: flex; align-items: center; gap: 10px; width: 100%; border: 2px solid var(--rfb-acc); border-radius: 12px; background: var(--rfb-bg); color: #fff; padding: 6px 10px; cursor: pointer; text-align: left; font-family: inherit; }
+.rf-mini img { width: 34px; height: 34px; }
+.rf-mini span { flex: 1; display: flex; flex-direction: column; min-width: 0; } .rf-mini b { font-size: 13px; font-weight: 900; } .rf-mini small { font-size: 12px; color: var(--rfb-mut); font-weight: 700; }
+.rf-mini em { font-style: normal; font-size: 11.5px; font-weight: 900; color: var(--rfb-acc); }
+.rf-tro-pic { position: relative; display: block; width: 64px; height: 64px; }
+.rf-tro-pic img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(0,0,0,.45)); }
+.rf-tro-pic .rf-tro-svg { position: absolute; right: -8px; bottom: -4px; width: 26px !important; height: 26px !important; }
+.rf-tro1 .rf-tro-pic { width: 74px; height: 74px; }
+.rf-podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; }
+.rf-pod { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+.rf-pod .rf-tro-svg { width: 40px; height: 40px; } .rf-pod1 .rf-tro-svg { width: 52px; height: 52px; }
+.rf-pod b { font-size: 12.5px; font-weight: 900; font-family: ui-monospace, monospace; } .rf-pod small { font-size: 11px; color: var(--rf-mut); min-height: 28px; }
+.rf-pod-base { display: block; width: 100%; border-radius: 10px 10px 4px 4px; background: var(--rf-card); border: 1px solid var(--rf-line); font-size: 22px; font-weight: 900; color: var(--rfb-acc); padding: 6px 0; }
+.rf-pod2 .rf-pod-base { height: 46px; } .rf-pod1 .rf-pod-base { height: 66px; border-color: var(--rfb-acc); } .rf-pod3 .rf-pod-base { height: 34px; }
+.rf-pod-txt { margin: 8px 0 0; font-size: 12.5px; color: var(--rf-mut); line-height: 1.4; }
+.rf-entries { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 8px 12px; }
+.rf-entries .rf-entry { margin: 0; width: 100%; }
+.rf-entry-img { width: 38px; height: 38px; flex: none; filter: drop-shadow(0 3px 6px rgba(0,0,0,.4)); }
+.rf-entry-gran { background: linear-gradient(135deg, #0b0b0b, #3a0010 60%, #b0001f); }
+/* El sorteo con el estilo de la app de PICA ROJA (colores, letra y tarjetas de la app; sigue el modo claro/oscuro) */
+.rf.rf-picaroja { --rf-bg: var(--p-bg); --rf-card: var(--p-card); --rf-line: var(--p-border); --rf-tx: var(--p-text); --rf-mut: var(--p-muted); --rf-acc: var(--p-red, #e60023); --rf-acc-tx: #fff;
+  --rfb-bg: linear-gradient(135deg, #1a0006, #7a0018 60%, #e60023); --rfb-acc: #ffd76a; --rfb-mut: #ffd2da; font-family: var(--p-font); }
+.rf.rf-picaroja .rf-box { color: #fff; }
+/* Páginas: saldo como en cada original, barra Volver, Casino lobby */
+.prl-hbal { margin-left: auto; display: flex; align-items: center; }
+.prl-hbal b { font-variant-numeric: tabular-nums; }
+.prl-gn .prl-hbal b { background: #8b00c9; color: #fff; border-radius: 5px; padding: 7px 12px; font: 700 14px Roboto, Arial, sans-serif; }
+.prl-jio .prl-hbal b { border: 1px solid #f2ce00; color: #fff; border-radius: 8px; padding: 7px 12px; font: 700 14px inherit; font-family: inherit; }
+.prl-gn .prl-top-logo, .prl-jio .prl-top-logo { justify-content: space-between; padding: 0 12px; }
+.prl-pr-bal { padding: 8px 12px 0; } .prl-pr-bal:empty { display: none; }
+.prl-backbar { padding: 8px 12px 0; }
+.prl-backbtn { border: 0; border-radius: 999px; padding: 8px 14px; font: 800 13px inherit; font-family: inherit; cursor: pointer; background: var(--prl-line); color: var(--prl-tx); }
+.prl-jio .prl-backbtn { background: #212121; color: #fff; } .prl-gn .prl-backbtn { background: #8b00c9; color: #fff; }
+/* Ganamos: la burbuja arriba del menú (no lo pisa) y "Casino en vivo" en una línea */
+.prl-gn .prl-ql { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 104px); }
+.prl-gn .prl-nav button span { white-space: nowrap; font-size: 9.5px; letter-spacing: -.1px; }
+/* PICA ROJA (página oficial): estilo Stake pero con los colores, letra e íconos de la app (sigue el modo claro/oscuro) */
+.prl:not(.prl-jyg):not(.prl-gn) { --prl-bg: var(--p-bg); --prl-deep: var(--p-surface); --prl-card: var(--p-card); --prl-line: var(--p-border); --prl-tx: var(--p-text); --prl-mut: var(--p-muted); --prl-acc: var(--p-red, #e60023); font-family: var(--p-font); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-nav { background: var(--p-card); border-top: 1px solid var(--p-border); box-shadow: 0 -4px 14px rgba(0,0,0,.08); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-nav button.on { color: var(--p-red, #e60023); background: color-mix(in srgb, var(--p-red, #e60023) 10%, transparent); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-nav .prl-home img { background: var(--p-red, #e60023); box-shadow: 0 6px 16px rgba(230,0,35,.35), 0 0 0 4px var(--p-card); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-pvb { background: var(--p-surface); border: 1px solid var(--p-border); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-pvb b { color: var(--p-text); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-pvb img { filter: none; opacity: 1; }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-search { background: var(--p-surface); border-color: var(--p-border); color: var(--p-muted); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-gi { background: var(--p-surface); box-shadow: 0 4px 12px rgba(0,0,0,.12); border-radius: 12px; }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-gi i { color: var(--p-muted); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-st .prl-ic { color: var(--p-red, #e60023); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-more button { color: var(--p-red, #e60023); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-more::before, .prl:not(.prl-jyg):not(.prl-gn) .prl-more::after { background: var(--p-border); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-back { background: var(--p-red, #e60023); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-chev:hover, .prl:not(.prl-jyg):not(.prl-gn) .prl-st:hover .prl-chev { color: var(--p-red, #e60023); }
+.prl:not(.prl-jyg):not(.prl-gn) .prl-top-btn { background: var(--p-red, #e60023); }

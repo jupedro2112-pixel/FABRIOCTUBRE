@@ -25450,10 +25450,12 @@ app.get('/api/games/lobby', authMiddleware, async (req, res) => {
     const live = provs.filter((p) => _LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 6);
     const top = provs.filter((p) => !_LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 8);
     const fetchProv = async (p) => { const d = await _gameCatalog('', 1, p.id); return d && d.games.length ? { title: p.name, providerId: p.id, games: d.games.slice(0, 24) } : null; };
-    const [topSecs, liveSecs] = await Promise.all([Promise.all(top.map(fetchProv)), Promise.all(live.map(fetchProv))]);
+    const [topSecs, liveSecs, lob1, lob2] = await Promise.all([Promise.all(top.map(fetchProv)), Promise.all(live.map(fetchProv)), _gameCatalog('lobby', 1), _gameCatalog('lobby', 2)]);
+    // #920 (owner): "Casino lobby" = los lobbies que tiene Girox (Live Casino Lobby, Blackjack Lobby, Evolution, Ezugi, VivoGaming…).
+    const lobbies = [...((lob1 && lob1.games) || []), ...((lob2 && lob2.games) || [])].filter((g, i, a) => /lobby/i.test(g.name) && a.findIndex((x) => x.key === g.key) === i).slice(0, 24);
     const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
     const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
-      sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean),
+      sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean), lobbies,
       sports: [{ path: '/sports', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { path: '/sports-new', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] };
     _lobbyCache = { at: Date.now(), data }; res.json(data);
   } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }

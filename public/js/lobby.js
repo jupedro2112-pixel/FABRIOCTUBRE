@@ -51,18 +51,19 @@ VIP.lobby = (function () {
             '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: 'VIP.home.casinoFullMenu()', logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
             (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
-                (sk.layout === 'jugaygana' ? '<button type="button" class="jg-burger" onclick="VIP.lobby.menu()" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>' : '') + '</header>' : '') +
+                '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span></header>' : '') + // #920 (owner): el saldo como figura en cada página; sin Cargar ni perfil
+            (sk.wordmark ? '' : '<div class="prl-pr-bal" id="prlPrBal"></div>') + // #920: PICA ROJA = la misma tira de saldo del Inicio de la app
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
-            '<button type="button" class="prl-ql" onclick="VIP.home.toggleCasinoLoad()" title="Carga rápida"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>' +
+            '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>' +
             (sk.layout === 'jugaygana' ? '' : sk.layout === 'ganamos'
                 ? '<nav class="prl-nav" aria-label="Menú">' + nb('deportes', 'sport', 'Deporte') + nb('sorteos', 'star', 'Sorteos') +
                   '<button type="button" data-v="inicio" class="prl-home prl-dog" onclick="VIP.lobby.go(\'inicio\')"><img src="' + sk.home + '" alt=""><span>Inicio</span></button>' +
                   nb('slots', 'slots', 'Casino') + nb('vivo', 'live', 'Casino en vivo') + '</nav>'
                 : '<nav class="prl-nav" aria-label="Menú">' + nb('slots', 'slots', 'Slots') + nb('vivo', 'live', 'En vivo') +
                   '<button type="button" data-v="inicio" class="prl-home" onclick="VIP.lobby.go(\'inicio\')"><img src="' + sk.home + '" alt=""><span>Inicio</span></button>' +
-                  nb('deportes', 'sport', 'Deportes') + '<button type="button" data-v="menu" onclick="VIP.lobby.menu()">' + ico('menu') + '<span>Menú</span></button>' +
+                  nb('deportes', 'sport', 'Deportes') + nb('lobbies', 'grid', 'Lobby') + // #920: sin perfil en las páginas; Casino lobby
                   '</nav>') +
             '<div class="prl-drawer" id="prlDrawer" hidden onclick="if(event.target===this)VIP.lobby.menu(false)"><aside class="prl-dr" role="dialog" aria-label="Mi cuenta"><div id="prlDrBody"></div></aside></div>' +
             '</div>');
@@ -70,7 +71,11 @@ VIP.lobby = (function () {
     }
     function _balText() { try { const src = $('userBalance'); return src && src.textContent ? src.textContent.replace(/^\s*Saldo:?\s*/i, '') : '—'; } catch (_) { return '—'; } }
     function _paintBal() {
-        try { const b = $('prlBal'); if (b) b.textContent = _balText(); } catch (_) {}
+        try { const t = _balText(); document.querySelectorAll('.js-prl-bal').forEach((e) => { e.textContent = t; }); } catch (_) {}
+        try { // #920: PICA ROJA copia la tira de saldo del Inicio de la app (mismo diseño), sin el botón de instalar
+            const box = $('prlPrBal'); const src = document.querySelector('#homeFull .balance-strip');
+            if (box && src) { const c = src.cloneNode(true); c.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id')); c.querySelectorAll('.bs-install, button').forEach((e) => e.remove()); box.innerHTML = ''; box.appendChild(c); }
+        } catch (_) {}
     }
     function _card(g) {
         return '<button type="button" class="prl-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" title="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' +
@@ -111,6 +116,10 @@ VIP.lobby = (function () {
         return '<section class="prl-sec">' + _title('tag', 'Proveedores', null) + '<div class="prl-pvs' + (_provOpen ? ' open' : '') + '">' + shown.map(_provTile).join('') + '</div>' +
             (ps.length > 8 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.provToggle()">' + (_provOpen ? 'Ver menos' : 'Ver más (' + ps.length + ')') + '</button></div>' : '') + '</section>';
     }
+    // #920 (owner): "en todas, una sección Casino lobby con los mismos lobbies que tiene Girox". Salen del catálogo de 1girox (búsqueda "lobby").
+    function _lobbies() { return ((_data && _data.lobbies) || []); }
+    function _backBar() { return '<div class="prl-backbar"><button type="button" class="prl-backbtn" onclick="VIP.lobby.back()">‹ Volver</button></div>'; }
+    function back() { if (_view === 'all' && (_allProv || _allCat) && !_allCat) { go('slots'); return; } go('inicio'); }
     function _search() {
         return '<label class="prl-search">' + ico('search') + '<input type="search" id="prlQ" placeholder="Buscar juegos" autocomplete="off" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label><div id="prlRes"></div>';
     }
@@ -161,6 +170,7 @@ VIP.lobby = (function () {
             '<button type="button" class="gn-sport" onclick="VIP.lobby.go(\'deportes\')">⚽ Deportes</button>' +
             '<div class="gn-pay"><button type="button" onclick="VIP.lobby.load()">💳 Depósito</button><button type="button" onclick="VIP.lobby.withdraw()">💸 Retiro de dinero</button></div>' +
             '<button type="button" class="gn-chat" onclick="VIP.lobby.support()">💬 Chat</button>' +
+            _gcar('Casino lobby', _lobbies(), 'VIP.lobby.go(\'lobbies\')') + // #920
             _gcar('Especialmente para vos', pop, 'VIP.lobby.go(\'slots\')') +
             '<div id="gnRows">' + _gnRowsHtml() + '</div>';
     }
@@ -214,6 +224,7 @@ VIP.lobby = (function () {
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
             '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' +
             '<section class="jg-sec">' + t('Eventos deportivos') + '<div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
+            (_lobbies().length ? '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">Casino lobby</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'lobbies\')">Mostrar Todo</button></div><div class="jg-rows"><div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹‹</button><div class="jg-row">' + _lobbies().map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div></div></section>' : '') + // #920
             cols +
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
             ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
@@ -237,27 +248,28 @@ VIP.lobby = (function () {
             if (!_jgHomeData) { m.innerHTML = '<div class="prl-note">Cargando…</div>'; _jgData().then(() => { if (_skin === 'jugaygana' && _view === 'inicio') _render(); }); return; }
             m.innerHTML = _jgHome(); _jgSlide = 0; _jgAuto(); if (_q) search(_q); return;
         }
+        if (_view === 'lobbies') { m.innerHTML = _backBar() + (_lobbies().length ? (SK().layout === 'ganamos' ? _gcar('Casino lobby', _lobbies(), null) : _row('grid', 'Casino lobby', _lobbies())) : '<div class="prl-note">No hay lobbies para mostrar ahora.</div>'); return; }
         if (_view === 'deportes') {
-            m.innerHTML = _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + (SK().layout === 'ganamos' ? SK().dir + 'casino-bg.png' : SK().dir + 'b3.svg') + '" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
+            m.innerHTML = _backBar() + _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + (SK().layout === 'ganamos' ? SK().dir + 'casino-bg.png' : SK().layout === 'jugaygana' ? '/images/jugaygana/io/sports_cover_m.webp' : SK().dir + 'b3.svg') + '" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
             return;
         }
         if (_view === 'vivo') {
-            m.innerHTML = _title('live', 'Casino en vivo', null) + ((_data.live || []).map((s) => _row('live', s.title, s.games, s.providerId)).join('') || '<div class="prl-note">No hay mesas en vivo para mostrar ahora.</div>') +
+            m.innerHTML = _backBar() + _title('live', 'Casino en vivo', null) + ((_data.live || []).map((s) => _row('live', s.title, s.games, s.providerId)).join('') || '<div class="prl-note">No hay mesas en vivo para mostrar ahora.</div>') +
                 _providers((_data.providers || []).filter((p) => p.live));
             return;
         }
         if (_view === 'slots' || _view === 'all') {
             if (_view === 'slots' || _allProv) _allCat = null;
             if (_allCat && SK().layout === 'jugaygana') { // #918: categoría de la barra de JUGAYGANA (su barra sigue arriba)
-                m.innerHTML = '<div class="jg-wrap">' + _jgCatnav(_allCat.key) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(_allCat.label) + '</h2><span class="jg-line"></span></div></div></div><div class="prl-grid jg-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
+                m.innerHTML = _backBar() + '<div class="jg-wrap">' + _jgCatnav(_allCat.key) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(_allCat.label) + '</h2><span class="jg-line"></span></div></div></div><div class="prl-grid jg-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
                 _allPage = 0; _allMore = true; _moreAll(); return;
             }
             const t = _allProv ? _allProv.name : 'Slots · todos los juegos';
-            m.innerHTML = '<div class="prl-sh"><span class="prl-st">' + ico('slots') + '<h3>' + esc(t) + '</h3></span>' + (_allProv ? '<button type="button" class="prl-back" onclick="VIP.lobby.all(null)">Ver todos</button>' : '') + '</div>' +
+            m.innerHTML = _backBar() + '<div class="prl-sh"><span class="prl-st">' + ico('slots') + '<h3>' + esc(t) + '</h3></span>' + (_allProv ? '<button type="button" class="prl-back" onclick="VIP.lobby.all(null)">Ver todos</button>' : '') + '</div>' +
                 (_allProv ? '' : _search()) + '<div class="prl-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
             _allPage = 0; _allMore = true; _moreAll(); if (_q && !_allProv) search(_q); return;
         }
-        m.innerHTML = _rfStrip() + _hero() + _providers(_data.providers) + _search() +
+        m.innerHTML = _rfStrip() + _hero() + _row('grid', 'Casino lobby', _lobbies()) + _providers(_data.providers) + _search() +
             _row('fire', 'Populares', _data.popular) + _row('star', 'Nuevos', _data.nuevos) +
             (_data.live && _data.live[0] ? _row('live', 'En vivo · ' + _data.live[0].title, _data.live[0].games, _data.live[0].providerId) : '') +
             (_data.sections || []).map((s) => _row('slots', s.title, s.games, s.providerId)).join('') +
@@ -290,6 +302,21 @@ VIP.lobby = (function () {
             else { const m = $('prlMain'); if (m) m.innerHTML = _hero() + '<div class="prl-note">' + esc(d.error || 'No pudimos traer los juegos. Probá de nuevo.') + '</div>'; }
         } catch (_) { const m = $('prlMain'); if (m) m.innerHTML = _hero() + '<div class="prl-note">Sin conexión. Probá de nuevo.</div>'; }
     }
+    let _qlDragged = false;
+    function ql() { if (_qlDragged) return; try { VIP.home.toggleCasinoLoad(); } catch (_) {} }
+    function _dragQl() { // #920 (owner): la burbuja se mueve como la de Girox; queda donde la dejás (posición recordada)
+        const b = $('prlQl'); if (!b || b._drag || !window.PointerEvent) return; b._drag = true; b.style.touchAction = 'none';
+        try { const pos = JSON.parse(localStorage.getItem('vip_prl_ql_pos') || 'null'); if (pos && pos.left >= 0 && pos.top >= 0 && pos.left < window.innerWidth - 60 && pos.top < window.innerHeight - 40) { b.style.left = pos.left + 'px'; b.style.top = pos.top + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto'; } } catch (_) {}
+        let sx = 0, sy = 0, r0 = null, dr = false;
+        b.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; r0 = b.getBoundingClientRect(); dr = false; try { b.setPointerCapture(e.pointerId); } catch (_) {} });
+        b.addEventListener('pointermove', (e) => {
+            if (!r0) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (!dr && Math.abs(dx) + Math.abs(dy) < 8) return; dr = true;
+            const host = b.offsetParent ? b.offsetParent.getBoundingClientRect() : { left: 0, top: 0 };
+            b.style.left = Math.min(Math.max(4, r0.left + dx), window.innerWidth - r0.width - 4) - host.left + 'px'; b.style.top = Math.min(Math.max(10, r0.top + dy), window.innerHeight - r0.height - 10) - host.top + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto';
+        });
+        const end = () => { if (r0 && dr) { try { localStorage.setItem('vip_prl_ql_pos', JSON.stringify({ left: parseInt(b.style.left, 10), top: parseInt(b.style.top, 10) })); } catch (_) {} _qlDragged = true; setTimeout(() => { _qlDragged = false; }, 400); } r0 = null; dr = false; };
+        b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
+    }
     function open(view, skin) {
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); // #914: modales (Perfil, Info, Retiro…) arriba de la página
@@ -297,6 +324,8 @@ VIP.lobby = (function () {
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
+        try { _dragQl(); } catch (_) {}
+        try { VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } catch (_) {} // #920: aviso en cada entrada
     }
     function close() {
         const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer);
@@ -366,5 +395,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, back, ql, skin: () => _skin };
 })();

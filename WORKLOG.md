@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-22
 
+### 920. Casino lobby, Volver, saldo y sin perfil en las páginas; sorteo minimizable (también en Girox) con fotos y podio; plataformas con sus colores; JUGÁ AQUÍ abre la elegida; burbuja movible — SW v616
+**Pedido (owner, varios mensajes):** sección "Casino lobby" con los lobbies de Girox en todas; "Volver" en cada sección; logo de JUGAYGANA (el de su
+barra) en los logos chicos; selector de plataforma (completo y básico) prolijo con los colores de cada una (Ganamos violeta, JUGAYGANA negro y
+amarillo, PICA ROJA rojo y blanco, Girox negro y verde); sorteos arriba en completo y básico (uno con el iPhone, otro con el auto, ambos desde
+noviembre); el detalle de ganadores con el estilo de la app; fotos premium de los premios; PICA ROJA oficial = Stake pero con colores/letra/íconos
+de la app; ninguna página con perfil, sólo juegos; el saldo como figura en cada original (PICA ROJA = la tira de saldo del Inicio); el sorteo abierto
+pero minimizable (minimizado = el puesto); el sorteo también en Girox; la burbuja de Carga rápida movible como en Girox, avisando al entrar; JUGÁ AQUÍ
+con el logo de la elegida y abriendo esa; en Ganamos, la burbuja y la barra Instalar app no tapan el menú.
+- Server: `/api/games/lobby` suma `lobbies` (búsqueda "lobby" en el catálogo de 1girox: 12 hoy — Live Casino/Blackjack/Baccarat Lobby de
+  Pragmatic, Ezugi, VivoGaming, Evolution…). Verificado contra el catálogo real que los 97 juegos de Ganamos/JUGAYGANA resuelven id + launcher para
+  abrirse directo (`_gameLaunchMeta`), igual que los de Girox.
+- `lobby.js`: Casino lobby (PICA ROJA fila, Ganamos carrusel, JUGAYGANA colección); vista `lobbies`; `_backBar()` en Slots/Todos/categorías/En
+  vivo/Deportes/Lobby; sin menú de cuenta (PICA ROJA: 5° botón = Lobby; JUGAYGANA sin hamburguesa); saldo en la barra (Ganamos caja violeta,
+  JUGAYGANA pastilla amarilla) y en PICA ROJA un clon de `#homeFull .balance-strip`; burbuja `#prlQl` arrastrable (posición en
+  `vip_prl_ql_pos`, mismo código que la de Girox) + toast "se puede mover" en cada entrada.
+- `raffle.js`: recuadro con botón "–" (minimizado: "Vas N° · X pts" / "Empieza en…", `localStorage vip_rf_min`), ilustraciones propias de los
+  premios (`images/sorteo/premios/*.svg`: iphone, orden, fichas, auto, viaje, usd), podio 2°·1°·3°, Gran Sorteo con "Empieza en"; sorteo con el
+  estilo de la app (tokens --p-*). `#casinoRf` en el casino de Girox. z-index del sorteo 100000 (arriba del casino 99999).
+- home.js: `platTap` abre la elegida; `_paintPlatNav` en cada cambio (`data-plat` ⇒ borde con el color); logo de JUGAYGANA `io/logo.webp`.
+- CSS: tarjetas de plataforma por marca (variables --pb-*), PICA ROJA oficial con tokens de la app, instalar app = padding (sin hueco).
+- Limpieza: borradas las portadas provisorias de JUGAYGANA (`b1-b3.svg`, `logo.svg`, sin referencias).
+- ⚠️ Pendiente del owner: cómo se gana el Gran Sorteo (período y forma). Hoy se muestra "Empieza en noviembre · bases se publican antes".
+
 ### 919. Sorteo: premios nuevos, compacto con 3 trofeos, bases desplegables y arranca en NOVIEMBRE — SW v615
 **Pedido (owner):** sorteo 1 = 1° iPhone 18 Pro Max · 2° orden de compra $1.000.000 en supermercado · 3° $500.000 para jugar en la plataforma que
 quieras; más chico y con recuadro; al abrir, poco texto: ranking y premios con 3 trofeos; bases abajo para desplegar; empieza en noviembre (octubre

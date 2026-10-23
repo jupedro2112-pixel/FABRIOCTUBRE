@@ -229,7 +229,7 @@
         const box = _el('basicPlats'); if (!box) return;
         const defId = (_platforms && _platforms.defaultPlatform) || 'girox'; const pref = (_platforms && _platforms.preferredPlatform) || null;
         const soon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox';
-        box.innerHTML = _entryList().map((p) => { const on = pref ? pref === p.id : p.id === defId; return '<button type="button" class="bv-chip plat-' + _esc(p.id) + (on ? ' on' : '') + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.basicPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(/^jugaygana$/i.test(p.name || '') ? 'Jugaygana' : (p.name || p.id)) + '</b>' + (soon(p) ? '<small>Pronto</small>' : (on ? '<small>✓</small>' : '')) + '</button>'; }).join('');
+        box.innerHTML = _entryList().map((p) => { const on = pref ? pref === p.id : p.id === defId; return '<button type="button" class="bv-chip plat-' + _esc(p.id) + (on ? ' on' : '') + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.basicPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name || p.id) + '</b>' + (soon(p) ? '<small>Pronto</small>' : (on ? '<small>✓</small>' : '')) + '</button>'; }).join('');
     }
     async function basicPick(id, isSoon) {
         if (isSoon) { try { VIP.ui.showToast('Pronto: esta plataforma se habilita en breve', 'info'); } catch (_) {} return; }
@@ -281,10 +281,16 @@
         const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : ''))));
         if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
         if (lbl) lbl.textContent = 'JUGÁ AQUÍ'; // #623 (owner): dice JUGÁ AQUÍ; el logo muestra la elegida
-        b.title = 'Elegí dónde jugar con tu saldo';
+        b.title = p ? ('Jugá en ' + p.name) : 'Elegí dónde jugar con tu saldo';
+        b.dataset.plat = (p && p.id) || ''; // #920: el CSS le da el color de la marca al logo
     }
-    // #623 (owner): al tocar JUGÁ AQUÍ siempre abre el selector de plataformas (Girox · Ganamos · Jugaygana) para que elija.
-    function platTap() { easyPlay(); }
+    // #623: JUGÁ AQUÍ con el logo de la elegida · #920 (owner): "si cambio a Ganamos, que figure su logo y abra Ganamos; lo mismo con PICA ROJA,
+    // sin mezclar": abre DIRECTO la plataforma elegida (su página); sin ninguna elegida, el selector.
+    function platTap() {
+        const p = (_platforms && _platforms.preferredPlatform) ? _platChosen() : null;
+        if (p && p.id) { openPlatform(p.id, { embed: true }); return; }
+        easyPlay();
+    }
     // #504: ESTRATEGIA — bono de segunda carga vigente + misiones de la semana (progreso real). Se consulta al pintar el Inicio (cache 90 s).
     let _stAt = 0, _stData = null;
     const _m$ = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
@@ -784,7 +790,7 @@
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
         { id: 'ganamos', name: 'Ganamos', playUrl: '', connected: true, door: true, logoUrl: '/images/ganamos-net.png' }, // #917: ya se juega (página propia)
-        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana.png' } // #378 · #917
+        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana/io/logo.webp' } // #378 · #917 · #920
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
@@ -2104,7 +2110,7 @@
     const PR_OFF_KEY = 'vip_pr_off';
     // #912: JUGAYGANA también es una PUERTA de la app a la misma cuenta de Girox (página propia /jugaygana). DOORS = puertas; BRANDS = las que
     // tienen saldo "propio" a ojos del cliente (bloqueo #908). localStorage vip_brand = la marca activa en este teléfono.
-    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana.png' }, ganamos: { name: 'Ganamos', emoji: '🟣', logoUrl: '/images/ganamos-net.png' } }; // #914: Ganamos (owner: marca propia) también
+    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana/io/logo.webp' }, ganamos: { name: 'Ganamos', emoji: '🟣', logoUrl: '/images/ganamos-net.png' } }; // #914: Ganamos (owner: marca propia) también
     const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1, ganamos: 1 };
     const _isDoor = (id) => !!DOORS[id];
     function _localBrand() { try { const b = localStorage.getItem('vip_brand'); if (BRANDS[b]) return b; return localStorage.getItem(PR_OFF_KEY) === '1' ? 'girox' : 'picaroja'; } catch (_) { return 'picaroja'; } }
@@ -2138,7 +2144,7 @@
         if (!list.some((p) => p.id === 'picaroja')) list.unshift({ id: 'picaroja', name: 'PICA ROJA', emoji: '♦️', connected: true, logoUrl: '/icons/icon-96x96.png', exclusive: true });
         // #912: JUGAYGANA = puerta a Girox (aunque el server la tenga sin API): siempre disponible y abre su página.
         const jg = list.find((p) => p.id === 'jugaygana');
-        if (jg) Object.assign(jg, { connected: true, door: true, logoUrl: jg.logoUrl || DOORS.jugaygana.logoUrl, name: 'JUGAYGANA' });
+        if (jg) Object.assign(jg, { connected: true, door: true, logoUrl: DOORS.jugaygana.logoUrl, name: 'JUGAYGANA' }); // #920: logo de su barra
         else list.push({ id: 'jugaygana', name: 'JUGAYGANA', emoji: '🟡', connected: true, door: true, logoUrl: DOORS.jugaygana.logoUrl });
         const gn = list.find((p) => p.id === 'ganamos'); // #914: Ganamos = página /ganamosoficial con los juegos y la cuenta de Girox
         if (gn) Object.assign(gn, { connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl, name: 'Ganamos', playUrl: '', externalUrl: '' });
@@ -2197,6 +2203,7 @@
             try { await fetch(VIP.config.API_URL + '/api/platforms/preferred', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox' }) }); } catch (_) {}
             if (_platforms) { _platforms.preferredPlatform = platformId; _platforms.defaultPlatform = platformId; }
             try { _paintBrandLabels(); } catch (_) {} // #917
+            try { _paintPlatNav(); } catch (_) {} // #920
             try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
             return;
         }
@@ -2215,6 +2222,7 @@
     }
 
     function renderPlatforms() {
+        try { _paintPlatNav(); } catch (_) {} // #920: JUGÁ AQUÍ con el logo de la elegida, siempre al día
         const box = _el('platformsButtons');
         if (!box) return;
         const list = (_platforms && _platforms.platforms) || [];
@@ -2551,6 +2559,8 @@
                 '</div>');
             bar = _el('casinoTopBar');
         }
+        // #920 (owner): el sorteo también en Girox (debajo de la barra; se minimiza igual que en las otras páginas).
+        try { let rf = _el('casinoRf'); if (!rf) { bar.insertAdjacentHTML('afterend', '<div id="casinoRf" class="casino-rf"></div>'); rf = _el('casinoRf'); } if (VIP.raffle && VIP.raffle.stripHtml) { rf.innerHTML = VIP.raffle.stripHtml('girox'); VIP.raffle.tick(); } } catch (_) {}
         // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
         try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-active', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
         document.body.classList.add('casino-open'); // #700: los modales (Info, Perfil, historias…) van por encima del casino
