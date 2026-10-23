@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 896. 🩺 Diagnóstico del banco automático (por qué no entran las cargas solas) — admin SW v177
+**Pedido (owner, captura de Cargas automáticas: 0 automáticas, 22 a mano, 0 movimientos del banco):** "revisemos por qué no funciona así lo
+arreglamos". Con 0 movimientos guardados el aviso del banco no llega o se rechaza en la puerta (firma inválida / sin secreto), pero no había
+registro de eso. Ahora: `_hgWebhookDiag(result)` anota CADA aviso (ok / ok_pago / firma_invalida / sin_secreto / sin_id) en la colección
+`hgcash_webhook_diag` (un doc por día ART, nunca frena el webhook). `GET /api/admin/hgcash/diagnostico` (sólo admin, sólo lectura): activado,
+modo, clave de API, secreto, CBU de la app vs la cuenta del banco (últimos 6), avisos de hoy y ayer y por qué se rechazaron, movimientos
+guardados, y lo que la API del banco tiene hoy (`listMovements`) ⇒ `causas` ordenadas (si el banco tiene transferencias y no nos llegó ningún
+aviso: el webhook de la cuenta hgcash no apunta a picaroja.com/api/hgcash/webhook). Panel → Cargas automáticas → "🩺 Revisar ahora".
+Probado en Mongo en memoria (secreto equivocado, sano, apagado + CBU distinto).
+
 ### 895. 💬 Chats: lo que resuelve el sistema solo queda CERRADO; se abre sólo cuando el cliente escribe
 **Pedido (owner):** "todo lo que es duplicado y problema de la gente que hace mal la cosa y que se informa en el chat, que quede cerrado; si
 la gente abre Soporte, que sí se abra el chat". Antes el comprobante (imagen del chat) reabría el chat y quedaba abierto aunque el sistema lo

@@ -3622,6 +3622,15 @@ function _fanoutSendOne(url, rawBody, headers) {
   });
 }
 
+// #896 (owner: "revisemos por qué no funciona la carga automática"): registro de CADA aviso del banco (llegó / aceptado / rechazado y por
+// qué), un documento por día ART en la colección `hgcash_webhook_diag`, para el diagnóstico del panel. Nunca frena el webhook.
+function _hgWebhookDiag(result, req, extra) {
+  try {
+    const dk = _schedArtKey(new Date());
+    const inc = { total: 1 }; inc['r.' + result] = 1;
+    mongoose.connection.collection('hgcash_webhook_diag').updateOne({ _id: dk }, { $inc: inc, $set: Object.assign({ lastAt: new Date(), lastResult: result, lastIp: String(req.ip || '').slice(0, 60), lastFwdBy: String(req.get('X-Forwarded-By') || '').slice(0, 80) || null }, result === 'ok' ? { lastOkAt: new Date() } : { lastBadAt: new Date(), lastBadResult: result }, extra || {}) }, { upsert: true }).catch(() => {});
+  } catch (_) {}
+}
 app.post('/api/hgcash/webhook', async (req, res) => {
   try {
     const secrets = _hgcashWebhookSecrets(); // #320: panel y/o SSM
@@ -3638,6 +3647,7 @@ app.post('/api/hgcash/webhook', async (req, res) => {
           const b = req.body || {};
           logger.warn(`[hgcash] webhook con firma inválida — rechazado (ip=${req.ip} fwdBy=${req.get('X-Forwarded-By') || '-'} ua=${String(req.get('User-Agent') || '-').slice(0, 40)} id=${b.id || b.movementId || '-'} amount=${b.amount != null ? b.amount : '-'} type=${b.type || b.eventType || b.topic || '-'} sig=${provided ? 'sí' : 'NO'})`);
         } catch (_) { logger.warn('[hgcash] webhook con firma inválida — rechazado'); }
+        _hgWebhookDiag('firma_invalida', req);
         return res.status(401).json({ error: 'firma inválida' });
       }
     } else {
@@ -3645,6 +3655,7 @@ app.post('/api/hgcash/webhook', async (req, res) => {
       // procesa el webhook (evita inyección de movimientos/cargas falsas). En dev se permite.
       // #413 (seguridad): fail-closed SIEMPRE (antes sólo con NODE_ENV=production): sin secreto no se acredita nada.
       logger.error('[hgcash] webhook RECHAZADO: falta el secreto (panel → Banco automático, o HGCASH_WEBHOOK_SECRET en SSM)');
+      _hgWebhookDiag('sin_secreto', req);
       return res.status(503).json({ error: 'webhook no configurado' });
     }
 
@@ -3655,7 +3666,8 @@ app.post('/api/hgcash/webhook', async (req, res) => {
     _fanoutHgcashWebhook(req);
 
     const p = req.body || {};
-    if (!p.id) return res.status(400).json({ error: 'payload sin id' });
+    if (!p.id) { _hgWebhookDiag('sin_id', req); return res.status(400).json({ error: 'payload sin id' }); }
+    _hgWebhookDiag(String(p.topic || '').toUpperCase() === 'TRANSACTION_REQUEST' ? 'ok_pago' : 'ok', req, String(p.direction || '') === 'Inbound' ? { lastInboundAt: new Date() } : {});
 
     // Webhook de ESTADO de un PAGO saliente (cash-out): topic TRANSACTION_REQUEST.
     // Lo manejamos aparte (no es un movimiento entrante).
@@ -20360,6 +20372,56 @@ app.delete('/api/admin/hgcash/fanout', authMiddleware, adminMiddleware, async (r
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 
+// #896: DIAGNÓSTICO del banco automático (sólo lectura): configuración, CBU de la app vs cuenta conectada, avisos del banco de hoy (y por
+// qué se rechazaron), movimientos guardados y lo que dice la API del banco del día. Devuelve `causas` en orden de probabilidad.
+app.get('/api/admin/hgcash/diagnostico', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const hgSvc = require('./src/services/hgcashService');
+    const cfg = await getHgcashConfig(); const appCbu = (await getConfig('cbu', null)) || {};
+    const dk = _schedArtKey(new Date()); const d0 = new Date(dk + 'T00:00:00-03:00');
+    const dig = (x) => String(x || '').replace(/\D/g, '');
+    const [diag, diagY, movHoy, movIn, lastMov, lastIn] = await Promise.all([
+      mongoose.connection.collection('hgcash_webhook_diag').findOne({ _id: dk }).catch(() => null),
+      mongoose.connection.collection('hgcash_webhook_diag').findOne({ _id: _schedArtKey(new Date(Date.now() - 86400000)) }).catch(() => null),
+      BankMovement.countDocuments({ createdAt: { $gte: d0 } }), BankMovement.countDocuments({ createdAt: { $gte: d0 }, direction: { $regex: /^inbound$/i } }),
+      BankMovement.findOne({}).sort({ createdAt: -1 }).select('createdAt direction amount matchStatus').lean(),
+      BankMovement.findOne({ direction: { $regex: /^inbound$/i } }).sort({ createdAt: -1 }).select('createdAt amount matchStatus').lean()
+    ]);
+    let api = { ok: false, error: 'no consultado' }, cuentaCbu = null;
+    try {
+      if (hgSvc.isEnabled()) {
+        const acc = await hgSvc.getAccounts();
+        if (acc.ok && (acc.data || []).length) {
+          const a = acc.data.find((x) => !x.currency || /ARS/i.test(String(x.currency))) || acc.data[0];
+          cuentaCbu = a.cbu || a.cvu || a.accountNumber || (a.raw && (a.raw.cbu || a.raw.cvu)) || null;
+          const lm = await hgSvc.listMovements({ accountId: a.id, from: d0, to: new Date() });
+          api = lm.ok ? { ok: true, hoy: lm.items.length, entrantes: lm.items.filter((m) => m.direction === 'in').length, ultima: (lm.items.map((m) => m.date).filter(Boolean).sort((x, y) => y - x)[0]) || null } : { ok: false, error: lm.error };
+        } else api = { ok: false, error: acc.error || 'la API del banco no devolvió cuentas' };
+      } else api = { ok: false, error: 'sin clave de la API del banco' };
+    } catch (e) { api = { ok: false, error: e.message }; }
+    const secretOk = _hgcashWebhookSecrets().length > 0;
+    const w = diag || {}; const r = w.r || {};
+    const cbuCfg = dig(cfg.cbu), cbuApp = dig(appCbu.number), cbuCuenta = dig(cuentaCbu);
+    const causas = [];
+    if (!cfg.enabled) causas.push({ sev: 'alta', t: 'El banco automático está APAGADO', fix: 'Comandos → Banco automático: activarlo.' });
+    if (cfg.mode !== 'auto') causas.push({ sev: 'alta', t: 'El banco automático está en modo "' + cfg.mode + '" (sólo mira, no carga)', fix: 'Ponerlo en modo auto.' });
+    if (!hgSvc.isEnabled()) causas.push({ sev: 'alta', t: 'Falta la clave (token) de la API del banco', fix: 'Cargarla en Comandos → Banco automático.' });
+    if (!secretOk) causas.push({ sev: 'alta', t: 'Falta el secreto del webhook: el sistema rechaza todos los avisos del banco', fix: 'Cargar el secreto del webhook (el mismo que figura en la cuenta del banco).' });
+    if ((r.firma_invalida || 0) > 0 && !(r.ok || 0)) causas.push({ sev: 'alta', t: 'Llegan avisos del banco pero con FIRMA INVÁLIDA (' + r.firma_invalida + ' hoy): el secreto cargado no es el de la cuenta', fix: 'Copiar de nuevo el secreto del webhook de la cuenta hgcash y cargarlo en el panel.' });
+    if (api.ok && api.entrantes > 0 && movIn === 0) causas.push({ sev: 'alta', t: 'El banco tiene ' + api.entrantes + ' transferencias entrantes hoy pero a nosotros no nos llegó ningún aviso', fix: 'En la cuenta hgcash, el webhook tiene que apuntar a https://picaroja.com/api/hgcash/webhook (o la otra página tiene que reenviarlo acá).' });
+    if (!w.total && !(api.ok && api.entrantes > 0)) causas.push({ sev: 'media', t: 'Hoy no llegó ningún aviso del banco', fix: 'Si hubo transferencias, revisar la dirección del webhook en la cuenta hgcash.' });
+    if (cbuApp && cbuCuenta && cbuApp !== cbuCuenta) causas.push({ sev: 'alta', t: 'El CBU que ve el cliente en la app NO es el de la cuenta conectada al banco automático', fix: 'Poner en la app el CBU de la cuenta hgcash (o conectar la cuenta correcta).' });
+    if (cbuApp && cbuCfg && cbuApp !== cbuCfg) causas.push({ sev: 'media', t: 'El CBU de la app es distinto del configurado en el banco automático', fix: 'Que coincidan.' });
+    if (!causas.length) causas.push({ sev: 'ok', t: 'No se ve ningún problema de configuración', fix: 'Hacé una transferencia chica de prueba y volvé a revisar.' });
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, dia: dk,
+      config: { activado: !!cfg.enabled, modo: cfg.mode, claveApi: hgSvc.isEnabled(), secretoWebhook: secretOk, cbuConfig: cbuCfg ? '…' + cbuCfg.slice(-6) : null, cbuApp: cbuApp ? '…' + cbuApp.slice(-6) : null, cbuCuenta: cbuCuenta ? '…' + cbuCuenta.slice(-6) : null },
+      avisos: { hoy: w.total || 0, aceptados: (r.ok || 0) + (r.ok_pago || 0), entrantes: r.ok || 0, firmaInvalida: r.firma_invalida || 0, sinSecreto: r.sin_secreto || 0, sinId: r.sin_id || 0, ultimo: w.lastAt || null, ultimoResultado: w.lastResult || null, ultimoOk: w.lastOkAt || null, ultimoRechazo: w.lastBadAt || null, ayer: (diagY && diagY.total) || 0, reenviadoPor: w.lastFwdBy || null },
+      movimientos: { hoy: movHoy, entrantesHoy: movIn, ultimo: lastMov ? lastMov.createdAt : null, ultimoEntrante: lastIn ? lastIn.createdAt : null },
+      bancoApi: api, causas });
+  } catch (e) { logger.error('[hgcash] diagnóstico: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/admin/hgcash/config', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });

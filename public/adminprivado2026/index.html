@@ -3061,6 +3061,11 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <h2>⚡ Cargas automáticas</h2>
                     <button class="refresh-btn" onclick="loadCargasAuto()" title="Refrescar">🔄</button>
                 </div>
+                <!-- #896: diagnóstico del banco automático (sólo lectura) -->
+                <div class="dia-card" id="hgDiagCard"><div class="dia-card-h"><b>🩺 Diagnóstico del banco automático</b><small>Revisa si el banco automático está bien configurado, si llegan los avisos del banco y si coinciden con las transferencias que tiene el banco hoy. No cambia nada.</small></div>
+                    <button class="btn-primary btn-small" onclick="hgDiagRun()">🩺 Revisar ahora</button>
+                    <div id="hgDiag" style="margin-top:10px"></div>
+                </div>
                 <div class="dia-card"><div class="dia-card-h"><b>📈 Cómo va la carga automática</b><small>Cargas acreditadas solas por el banco vs a mano, cuántos clientes, bonos entregados y plata que entró al banco sin acreditarse (para verificar que esté todo OK).</small></div>
                     <div id="caResumen" class="ca-grid"></div>
                 </div>

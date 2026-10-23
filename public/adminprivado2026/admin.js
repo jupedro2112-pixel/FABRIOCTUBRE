@@ -17501,3 +17501,29 @@ async function cierresGiroxSave(dk) {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.cierresGiroxSave = cierresGiroxSave;
+
+// ===== #896: diagnóstico del banco automático =====
+async function hgDiagRun() {
+    const box = document.getElementById('hgDiag'); if (!box) return;
+    box.innerHTML = '<div class="dia-note">Revisando configuración, avisos del banco y la cuenta…</div>';
+    try {
+        const r = await authFetch('/api/admin/hgcash/diagnostico'); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        const yn = (v) => v ? '<b style="color:var(--p-green,#16a34a)">Sí</b>' : '<b style="color:var(--p-red,#e60023)">No</b>';
+        const t = (d) => d ? escapeHtml(fmtFechaHoraAR(d)) : '—';
+        const c = j.config, a = j.avisos, m = j.movimientos, b = j.bancoApi;
+        const col = { alta: 'var(--p-red,#e60023)', media: '#d97706', ok: 'var(--p-green,#16a34a)' };
+        box.innerHTML =
+            '<div style="display:grid;gap:4px;margin-bottom:10px">' + (j.causas || []).map((x) => '<div style="border-left:4px solid ' + (col[x.sev] || '#888') + ';padding:6px 10px;background:var(--p-surface,rgba(255,255,255,.04));border-radius:0 8px 8px 0"><b>' + (x.sev === 'ok' ? '✅ ' : '⚠️ ') + escapeHtml(x.t) + '</b><div style="font-size:12px;color:var(--p-muted,#9ca3af)">' + escapeHtml(x.fix) + '</div></div>').join('') + '</div>' +
+            '<div class="tw" style="overflow-x:auto"><table class="data-table" style="font-size:12.5px"><tbody>' +
+            '<tr><td>Activado</td><td>' + yn(c.activado) + '</td><td>Modo</td><td><b>' + escapeHtml(c.modo || '—') + '</b></td></tr>' +
+            '<tr><td>Clave de la API</td><td>' + yn(c.claveApi) + '</td><td>Secreto del webhook</td><td>' + yn(c.secretoWebhook) + '</td></tr>' +
+            '<tr><td>CBU en la app</td><td>' + escapeHtml(c.cbuApp || '—') + '</td><td>CBU de la cuenta del banco</td><td>' + escapeHtml(c.cbuCuenta || c.cbuConfig || '—') + '</td></tr>' +
+            '<tr><td>Avisos del banco hoy</td><td><b>' + a.hoy + '</b> (aceptados ' + a.aceptados + ')</td><td>Rechazados</td><td>firma inválida ' + a.firmaInvalida + ' · sin secreto ' + a.sinSecreto + '</td></tr>' +
+            '<tr><td>Último aviso</td><td>' + t(a.ultimo) + ' (' + escapeHtml(a.ultimoResultado || '—') + ')</td><td>Avisos ayer</td><td>' + a.ayer + '</td></tr>' +
+            '<tr><td>Movimientos guardados hoy</td><td>' + m.hoy + ' (entrantes ' + m.entrantesHoy + ')</td><td>Último entrante guardado</td><td>' + t(m.ultimoEntrante) + '</td></tr>' +
+            '<tr><td>Según la API del banco, hoy</td><td colspan="3">' + (b.ok ? '<b>' + b.entrantes + '</b> transferencias entrantes (' + b.hoy + ' movimientos) · última ' + t(b.ultima) : '<span style="color:#d97706">' + escapeHtml(b.error || 'no se pudo consultar') + '</span>') + '</td></tr>' +
+            '</tbody></table></div>' +
+            '<div style="font-size:11.5px;color:var(--p-muted,#9ca3af);margin-top:6px">Los avisos se cuentan desde que se subió esta versión. Si después de una transferencia de prueba sigue en 0, el aviso del banco no llega a picaroja.com.</div>';
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo revisar: ' + escapeHtml(e.message) + '</span>'; }
+}
+window.hgDiagRun = hgDiagRun;
