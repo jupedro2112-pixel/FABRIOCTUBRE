@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-22
 
+### 942. JUGAYGANA COMPLETA "de punta a punta": 35 proveedores (3.282 juegos) y las categorías de la barra con SUS portadas — SW v633
+**Pedido (owner):** "subí todo completo de punta a punta". Se leyeron las portadas de TODOS los proveedores de jugaygana44 que existen en Girox
+(proceso #937: ayudantes leen el título contra la lista exacta de nombres de Girox del proveedor; ante duda, afuera) y se revisaron a mano los
+casos dudosos que informaron (afuera: versiones distintas como Buy Bonus / Fusion Reels / Megaways cuando la portada es el juego base, títulos
+tapados por la franja, mesas sin número/letra). Muestras al azar revisadas a ojo (30 + 36): todas correctas.
+- **Proveedores (juegos que entran / portadas en jugaygana44):** KA Gaming 950/1036, Pragmatic 569/673, 1Spin4Win 192/221, BGaming 190/284,
+  SpinOro 160/211, RubyPlay 159/193, Amigo 130/157, 77 Gaming 113/124, Mancala 85/117, NetEnt 81/101, Playson 66/108, GamZix 59/81,
+  Microgaming 57/479, KingMidas 57/102, Pragmatic Live 45/81, Ezugi 45/76, Evolution 43/73, ICONIC21 39/57, Rival 36/189, Live Vegas 32/41,
+  DreamPlay 32/42, Hacksaw 27/78, 100HP 24/29, Amatic 19/32, 3 Oaks 16/60, Red Rake 13/188, Greentube 11/14, Betsoft 8/251, Play'n GO 8/56,
+  TV Bet 7/13, Vivo 3/27, Push 2/8, Evoplay 2/311, Elbet 1/8, Aviatrix 1/5. (Pocos = Girox tiene pocos de ese proveedor.) Red Tiger, Spribe,
+  Shacks y Universal Race: 0 ⇒ no aparecen. 53 proveedores de jugaygana44 NO están en Girox (TaDa, PGSoft, Spinomenal, Endorphina, 7777…).
+- **Categorías (`cats`):** cada portada de categoría hereda el juego de la portada CASI IDÉNTICA de un proveedor leído (distancia < 3,0; se
+  revisaron 20 pares entre 2,0 y 3,0: todos correctos) y ninguna parecida (< 4) con otro nombre: Ruletas 51/265, Juegos de mesa 80/546,
+  Habilidad 54/519, Megaways 31/64, Nuevo 19/146, Destacados 5/23. Jackpots, Bingo y Compra de bonos = 0 (proveedores sin Girox) ⇒ siguen
+  con la búsqueda en el catálogo de Girox (`jgCat` cae ahí si la lista está vacía).
+- 3.282 portadas en `images/jugaygana/g/` (≈20 MB, webp de 111 px). Los recortes/lecturas quedaron en el scratchpad de la sesión (se pierden al reiniciar).
+
 ### 941. JUGAYGANA: inicio IDÉNTICO a jugaygana44 (orden, filas, TODOS) + Amigo Gaming (SÍ está en Girox) — SW v632
 **Owner:** "faltan juegos en cada sección; el formato es distinto: en unas dice TODOS y en otras deslizante con flechas; revisá todo" + captura de
 1girox.com con Amigo Gaming.
