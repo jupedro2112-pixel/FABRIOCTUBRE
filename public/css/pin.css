@@ -3214,3 +3214,5 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 .bl-play { background: var(--p-red, #e60023); color: #fff; } .bl-wd { background: var(--p-green, #16a34a); color: #fff; }
 .bl-ok { margin-top: 8px; width: 100%; background: var(--p-surface); color: var(--p-text); border: 1px solid var(--p-border) !important; }
 .bl-note { margin: 6px 2px 0; font: 600 11px/1.35 var(--p-font); color: var(--p-muted); text-align: center; }
+/* #924 servicios del inicio del completo = las 4 tarjetas del básico */
+.ev-quick { margin: 4px 12px 10px; }

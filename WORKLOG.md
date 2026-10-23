@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 924. Inicio del menú completo: los servicios con el formato de 4 del básico — SW v621
+**Pedido (owner, captura):** "este formato de 4 del básico replicalo en el inicio del completo, ocupa mucho". `#entryServices` (las 4 tarjetas grandes
+`ev-svc`) se reemplazó por una copia de `.bv-quick` del básico (Misiones · Reembolsos · Referidos · Ruleta diaria, mismas funciones). Ningún JS usaba
+las clases viejas. (Se rechazó armar una quiniela/lotería propia con compra de números: sería una lotería sin licencia.)
+
 ### 923. Revisión de punta a punta + deportes DIRECTO (sin la página de Girox) + carga con el logo de cada marca + cartel claro de cambio de plataforma + fotos propias de JUGAYGANA + seguridad — SW v620
 **Pedido (owner):** revisar todo; avisar claro que no se puede cambiar de plataforma con saldo (jugar o retirar); revisar seguridad; juegos y deportes
 que entren logueados como los favoritos de PICA ROJA y sin que se vea Girox ("100% independientes"); en Ganamos las fotos de Girox, en JUGAYGANA las

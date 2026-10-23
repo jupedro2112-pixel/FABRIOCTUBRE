@@ -1195,20 +1195,12 @@
                      home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
                 <!-- #751 (owner): "dale predominancia al servicio: Todo lo que ofrecemos 100% para vos; que se entienda que se puede expandir" -->
                 <div class="ev-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div>
-                <div class="ev-services" id="entryServices">
-                    <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
-                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso</b><small id="evSvcRefund">de tu NETWIN</small>
-                    </button>
-                    <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
-                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b><small>con <b class="rl-min">$10.000</b> cargados en el día</small>
-                    </button>
-                    <!-- #524: Misiones en la misma fila -->
-                    <button type="button" class="ev-svc svc-missions" onclick="VIP.home.openMissions()" title="Misiones de la semana">
-                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones</b><small id="evSvcMissions">de la semana</small>
-                    </button>
-                    <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
-                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b><small>cobrá todos los meses</small>
-                    </button>
+                <!-- #924 (owner): en el completo, el mismo formato de 4 del básico (ocupaba mucho) --><div class="bv-quick ev-quick" id="entryServices">
+                    <!-- #765 (owner): íconos de línea estilo Pinterest (los mismos del Inicio completo) -->
+                    <button type="button" onclick="VIP.home.openMissions()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></i>Misiones<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.svcRefund()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolsos<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.ui.openReferralModal()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 18c.3-2.3 1.6-3.8 3.5-4.3 1.6.4 2.5 1.6 2.5 3.3"/></svg></i>Referidos<small>Ver más ›</small></button>
+                    <button type="button" onclick="VIP.home.svcRoulette()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3v4M21 12h-4M12 21v-4M3 12h4"/></svg></i>Ruleta diaria<small>Ver más ›</small></button>
                 </div>
                 <!-- #276 (owner): aclarar en una línea que es ilustrativo y que para cargar se usa la barra de arriba. -->
                 <!-- #316 (owner): la línea "Vista ilustrativa…" se sacó (la leyenda vive en el carrusel y el botón grande lleva a cargar). -->
@@ -2634,7 +2626,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v620</div>
+                    <div class="pf-build" id="appBuildTag">app v621</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2658,7 +2650,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v620</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v621</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
