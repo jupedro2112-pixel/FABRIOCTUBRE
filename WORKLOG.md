@@ -8,6 +8,24 @@
 
 ## Sesión 2026-10-22
 
+### 907. ♦️ PÁGINA EXCLUSIVA PICA ROJA (picaroja.com/paginaoficial): lobby propio con TODOS los juegos de Girox — SW v604
+**Pedido (owner):** "agregar donde está Jugaygana la plataforma PICA ROJA armada en base a Girox, con todos los juegos de Girox de punta a punta
+(abre el link de cada juego y entra logueado), fotos de PICA ROJA, 'página exclusiva', deslizantes, premium y sencilla; en deportes los dos de
+Girox entrando como Girox; predeterminada en el menú completo, básico e Inicio; un link /paginaoficial; barra abajo: Inicio, En vivo,
+Deportes, Soporte". NO se copió el diseño ni la marca de Girox (ni de ganamos.net: se le explicó al owner que confundiría al cliente).
+- Server: `_gameCatalog(q, page, providerId)` (el catálogo público de 1girox acepta `provider_id`; trae `providers`); `GET /api/games/lobby`
+  (populares 36, nuevos, 8 proveedores principales y los de EN VIVO —slug evolution/live/ezugi…— 24 c/u, y los 2 deportes de Girox `/sports`
+  y `/sports-new` — salen del bundle de 1girox.com: "Deportes" y el otro), cacheado 10 min, sin gastar la Partner API. `/api/games/catalog`
+  acepta `provider` y hasta la página 400. `GET /paginaoficial` ⇒ `/?pr=1` (antes del vanity `/:code`). Probado contra el catálogo real
+  (8.137 juegos; KA Gaming, Pragmatic, Hotdog, Amusnet, Spinoro, Amatic, BGaming, 1Spin4Win; en vivo Evolution).
+- App: `public/js/lobby.js` (`VIP.lobby`): cabecera (logo, "Página exclusiva", saldo), 3 portadas propias (CSS), buscador, deslizantes,
+  "Todos los juegos" con carga al bajar y por proveedor, En vivo, Deportes (`casinoGoTo` / `_casinoGamePath` ⇒ Girox logueado; ui.js acepta
+  `/sports-new`), barra de abajo Inicio · En vivo · Deportes · Cargar · Soporte. Cada juego = `VIP.home.gamePlay` (= favPlay con nombre ⇒
+  `/api/platform/session` direct ⇒ el juego en pantalla completa logueado).
+- Plataforma "PICA ROJA" SÓLO en la app (`_injectPR` en loadPlatforms): primera y predeterminada (salvo `localStorage vip_pr_off='1'` si
+  eligen otra); `setPreferred('picaroja')` le guarda 'girox' al server ⇒ cargas, retiros, bonos y cierres SIN cambios. `openPlatform('picaroja')`,
+  la pestaña del Inicio y "Girox directo" abren la página.
+
 ### 906. 📎 "Comprobante no válido": pide TODOS los datos completos y visibles en la foto
 **Pedido (owner):** "en el comprobante no válido que diga que se vean los datos completos en la foto". Nuevo default de `/sys_sq_comprobante`
 (titular, CUIT, monto, fecha y hora y N° de operación, sin recortar); `mig906SqComp` lo actualiza si Render ya había guardado el anterior y nadie lo editó.

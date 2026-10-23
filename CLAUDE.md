@@ -189,6 +189,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El
   cartel dorado y las tarjetas del modal Info se ELIMINARON de la PWA. `/sys_install_app` es neutro
   (sin regalo) y una migración al boot pisa el texto viejo con "$5.000".
+- **PÁGINA EXCLUSIVA PICA ROJA (#907):** `public/js/lobby.js` + `GET /api/games/lobby` (catálogo público de 1girox) + `/paginaoficial`. La
+  plataforma 'picaroja' existe SÓLO en la app (`_injectPR`): al server SIEMPRE se le manda 'girox' (no agregarla al registro de plataformas
+  del server sin revisar cargas/retiros/cierres).
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
   CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra SIEMPRE a Girox directo salvo que la persona haya elegido otro menú (`localStorage vip_menu_user='1'` +

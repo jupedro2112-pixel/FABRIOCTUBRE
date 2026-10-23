@@ -1105,7 +1105,7 @@ VIP.ui.casinoGoTo = function(path) {
   // con el juego pedido al server). Se deja la función para no romper a quien la use.
   if (true) return false;
   try {
-    if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/]+|sports)$/.test(String(path || ''))) return false;
+    if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/]+|sports(?:-new)?)$/.test(String(path || ''))) return false;
     const fr = document.getElementById('casinoFrame'); const src = fr && fr.getAttribute('src');
     if (!src || src === 'about:blank') return false;
     fr.src = new URL(src, location.href).origin + path; return true;
@@ -1424,7 +1424,7 @@ VIP.ui._showCasinoFrame = function() {
       if (!src || src === 'about:blank') return;
       const status = document.getElementById('casinoFrameStatus');
       // #851: si se pidió un JUEGO, el primer load es el login (SSO): el cartel "Abriendo <juego>…" sigue tapando hasta que carga el juego.
-      const _gpNext = VIP.ui._casinoGamePath && /^\/(play\/|sports$)/.test(VIP.ui._casinoGamePath);
+      const _gpNext = VIP.ui._casinoGamePath && /^\/(play\/|sports(?:-new)?$)/.test(VIP.ui._casinoGamePath);
       if (VIP.ui._gameNavPending) { VIP.ui._gameNavPending = false; clearTimeout(VIP.ui._gameNavSafety); }
       if (!_gpNext) { if (status) { status.style.display = 'none'; status.textContent = '🎰 Entrando al casino…'; } frame.style.display = 'block'; }
       // Si el HTML del casino llegó, se cancela el vigilante: el aviso "¿no
@@ -1434,7 +1434,7 @@ VIP.ui._showCasinoFrame = function() {
       clearTimeout(VIP.ui._casinoWatchdog);
       // #782: si se tocó la foto de un juego, después de que el SSO dejó la sesión iniciada se navega el recuadro DIRECTO a ese
       // juego (misma web, misma sesión). 1,5 s de margen para que el intercambio del código de un solo uso termine.
-      const gp = VIP.ui._casinoGamePath; if (gp && /^\/(play\/|sports$)/.test(gp)) { // #827: también Deportes
+      const gp = VIP.ui._casinoGamePath; if (gp && /^\/(play\/|sports(?:-new)?$)/.test(gp)) { // #827: también Deportes
         VIP.ui._casinoGamePath = null;
         // #851 (owner: "que use el mismo ingreso de Girox de la app y entre al juego específico con el mismo menú"): mismo SSO que el botón
         // de Girox; el login de 1girox (canje del código + datos del jugador) tarda unos segundos ⇒ recién a los 5 s se pasa al juego.

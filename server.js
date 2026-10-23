@@ -1256,6 +1256,8 @@ app.get('/linkreferido', (req, res) => {
   const ref = String(req.query.ref || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase();
   res.redirect(302, '/?ref=' + encodeURIComponent(ref));
 });
+// #907: picaroja.com/paginaoficial = la app con la Página exclusiva PICA ROJA abierta (antes del vanity /:code, así una campaña no la tapa).
+app.get(['/paginaoficial', '/paginaoficial/'], (req, res) => res.redirect(302, '/?pr=1'));
 app.get('/:code', async (req, res, next) => {
   const candidate = req.params.code || '';
   // Sólo procesar si parece un código/slug válido: 3-40 chars, letras/números/_/-
@@ -25317,10 +25319,11 @@ const _favListOf = (u) => (u && u.favoriteGamesCustom === true) ? (u.favoriteGam
 const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
 const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
 const _gameCatalogCache = new Map();
-async function _gameCatalog(q, page) {
-  const k = q + '|' + page; const hit = _gameCatalogCache.get(k);
+async function _gameCatalog(q, page, providerId) {
+  const pid = Number(providerId) > 0 ? Math.round(Number(providerId)) : null; // #907: filtro por proveedor (lo acepta el catálogo de 1girox)
+  const k = q + '|' + page + '|' + (pid || ''); const hit = _gameCatalogCache.get(k);
   if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
-  const url = 'https://admin.1girox.com/api/games?sort=popular&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '');
+  const url = 'https://admin.1girox.com/api/games?sort=popular&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '') + (pid ? '&provider_id=' + pid : '');
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
   try {
     const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
@@ -25329,9 +25332,11 @@ async function _gameCatalog(q, page) {
     const games = ((j && j.games) || []).filter((g) => g && g.aggregator_id != null && g.game_id).map((g) => ({
       key: String(g.aggregator_id) + '/' + String(g.game_id), name: String(g.name || '').replace(/[™®]/g, '').trim().slice(0, 60),
       img: String(g.image_url || g.thumbnail || ''), provider: String(g.provider_name || g.provider || '').slice(0, 40), category: String(g.category || '').slice(0, 30),
-      gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40) // #857: lo que usa la web de 1girox para abrir el juego
+      gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40), // #857: lo que usa la web de 1girox para abrir el juego
+      isNew: !!g.is_new, isJackpot: !!g.is_jackpot
     })).filter((g) => _FAV_KEY_RE.test(g.key) && g.name).map((g) => (_FAV_IMG_RE.test(g.img) ? g : Object.assign(g, { img: '' })));
-    const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore };
+    const providers = Array.isArray(j.providers) ? j.providers.filter((p) => p && p.id).map((p) => ({ id: Number(p.id), name: String(p.alias || p.name || '').slice(0, 40), slug: String(p.slug || '').slice(0, 40), count: Number(p.games_count) || 0 })) : [];
+    const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore, providers };
     _gameCatalogCache.set(k, { at: Date.now(), data }); if (_gameCatalogCache.size > 300) _gameCatalogCache.delete(_gameCatalogCache.keys().next().value);
     return data;
   } catch (_) { return null; } finally { clearTimeout(t); }
@@ -25371,11 +25376,36 @@ app.get('/api/games/img', async (req, res) => {
 });
 app.get('/api/games/catalog', authMiddleware, async (req, res) => {
   try {
-    const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(50, parseInt(req.query.page, 10) || 1));
-    const d = await _gameCatalog(q, page);
+    const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(400, parseInt(req.query.page, 10) || 1)); // #907: hasta el final del catálogo
+    const d = await _gameCatalog(q, page, req.query.provider);
     if (!d) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
     res.set('Cache-Control', 'private, max-age=300'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// ===== #907 (owner): PÁGINA EXCLUSIVA PICA ROJA (picaroja.com/paginaoficial) — lobby propio con TODOS los juegos de Girox (misma cuenta y
+// saldo: es otra puerta a Girox, no otra plataforma). Secciones armadas desde el catálogo público de 1girox (sin la Partner API: no gasta el
+// cupo de 60/min); guardadas 10 min. Abrir un juego = el mismo ingreso logueado de los favoritos (/api/platform/session con direct).
+let _lobbyCache = { at: 0, data: null };
+const _LIVE_SLUG = /evolution|live|ezugi|vivo|playtech-live|xpg|vivogaming|tvbet/i;
+app.get('/api/games/lobby', authMiddleware, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'private, max-age=300');
+    if (_lobbyCache.data && Date.now() - _lobbyCache.at < 10 * 60 * 1000) return res.json(_lobbyCache.data);
+    const [p1, p2] = await Promise.all([_gameCatalog('', 1), _gameCatalog('', 2)]);
+    if (!p1) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
+    const bySlug = new Map();
+    for (const p of (p1.providers || [])) { const cur = bySlug.get(p.slug); if (!cur || p.count > cur.count) bySlug.set(p.slug, p); }
+    const provs = [...bySlug.values()].sort((a, b) => b.count - a.count);
+    const live = provs.filter((p) => _LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 6);
+    const top = provs.filter((p) => !_LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 8);
+    const fetchProv = async (p) => { const d = await _gameCatalog('', 1, p.id); return d && d.games.length ? { title: p.name, providerId: p.id, games: d.games.slice(0, 24) } : null; };
+    const [topSecs, liveSecs] = await Promise.all([Promise.all(top.map(fetchProv)), Promise.all(live.map(fetchProv))]);
+    const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
+    const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
+      sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean),
+      sports: [{ path: '/sports', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { path: '/sports-new', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] };
+    _lobbyCache = { at: Date.now(), data }; res.json(data);
+  } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }
 });
 app.get('/api/games/favorites', authMiddleware, async (req, res) => {
   try {

@@ -937,7 +937,7 @@
             '</button>';
         }).join('');
     }
-    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); } // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
+    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); if (id === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} } } // #907 // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
     // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
@@ -1144,9 +1144,9 @@
     // mostrar dentro del recuadro (pantalla negra) ⇒ el juego se abre en PANTALLA COMPLETA (ventana propia), logueado y directo al slot:
     // la ventana se abre YA en el toque (si no, el navegador la bloquea) y se le pone la dirección del juego cuando llega del server.
     // Si 1girox no da el juego, se cierra esa ventana y se abre Girox logueado en el recuadro, como siempre.
-    async function favPlay(key) {
+    async function favPlay(key, nameArg) { // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
-        const name = (f && f.name) || 'el juego';
+        const name = nameArg || (f && f.name) || 'el juego';
         favClosePicker();
         let win = null; try { win = window.open('about:blank', '_blank'); } catch (_) { win = null; }
         try { if (win && win.document) { win.document.title = name; win.document.body.style.cssText = 'margin:0;background:#0b0b10;color:#fff;font:700 16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh'; win.document.body.textContent = '🎰 Abriendo ' + name + '…'; } } catch (_) {}
@@ -1264,7 +1264,7 @@
         const f = _el('entryFrame'); if (!f) return;
         const p = _entryList().find((x) => x.id === _entryPlat) || {};
         // #312: Girox = carrusel de fotos (no se carga su web); las demás siguen embebidas.
-        if ((p.id || _entryPlat) === 'girox') {
+        if ((p.id || _entryPlat) === 'girox' || (p.id || _entryPlat) === 'picaroja') { // #907: PICA ROJA = mismas fotos (la página se abre aparte)
             clearTimeout(_entryTimer); _entryStatus(null);
             if (f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank';
             f.style.display = 'none'; _entryUrl = null;
@@ -2084,6 +2084,17 @@
     }
 
     // ---------------- PLATAFORMAS ----------------
+    // #907 (owner): "PICA ROJA" = Página exclusiva con los juegos de Girox. Es una PUERTA de la app a la misma cuenta de Girox: el server no
+    // la conoce (las cargas/retiros/bonos siguen yendo a 'girox'). Va primera y es la predeterminada salvo que la persona elija otra
+    // (localStorage vip_pr_off = '1'); al elegirla, al server se le guarda 'girox'.
+    const PR_OFF_KEY = 'vip_pr_off';
+    function _prOn() { try { return localStorage.getItem(PR_OFF_KEY) !== '1'; } catch (_) { return true; } }
+    function _injectPR() {
+        if (!_platforms) return;
+        const list = Array.isArray(_platforms.platforms) ? _platforms.platforms : (_platforms.platforms = []);
+        if (!list.some((p) => p.id === 'picaroja')) list.unshift({ id: 'picaroja', name: 'PICA ROJA', emoji: '♦️', connected: true, logoUrl: '/icons/icon-96x96.png', exclusive: true });
+        if (_prOn()) { _platforms.preferredPlatform = 'picaroja'; _platforms.defaultPlatform = 'picaroja'; }
+    }
     async function loadPlatforms(force) {
         if (!force && _platforms && (Date.now() - _platformsAt) < 60000) return _platforms;
         if (!VIP.state || !VIP.state.currentToken) return null;
@@ -2091,6 +2102,7 @@
             const r = await fetch(VIP.config.API_URL + '/api/platforms', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
             if (!r.ok) return _platforms;
             _platforms = await r.json();
+            try { _injectPR(); } catch (_) {} // #907
             try { _paintPlatNav(); } catch (_) {} // #620
             _platformsAt = Date.now();
         } catch (_) {}
@@ -2125,6 +2137,15 @@
     }
 
     async function setPreferred(platformId) {
+        // #907: PICA ROJA se guarda en el teléfono; al server va 'girox' (misma cuenta). Elegir otra apaga la predeterminada PICA ROJA.
+        try { if (platformId === 'picaroja') localStorage.removeItem(PR_OFF_KEY); else localStorage.setItem(PR_OFF_KEY, '1'); } catch (_) {}
+        if (platformId === 'picaroja') {
+            try { await fetch(VIP.config.API_URL + '/api/platforms/preferred', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox' }) }); } catch (_) {}
+            if (_platforms) { _platforms.preferredPlatform = 'picaroja'; _platforms.defaultPlatform = 'picaroja'; }
+            try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
+            return;
+        }
+        if (_platforms && _platforms.defaultPlatform === 'picaroja') _platforms.defaultPlatform = 'girox';
         try {
             const r = await fetch(VIP.config.API_URL + '/api/platforms/preferred', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken },
@@ -2197,6 +2218,7 @@
         try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (_) { return false; }
     }
     function openPlatform(platformId, opts) {
+        if (platformId === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} return; } // #907: Página exclusiva
         const test = !!(opts && opts.test);
         // #695 (owner): "en Entrar a la página no figura el chat de carga rápida" → el casino con sesión se abre SIEMPRE ADENTRO
         // (overlay con Carga rápida, Retirar e Ir a Soporte), también en navegador. La pestaña aparte (/jugar.html) queda sólo
@@ -2753,6 +2775,7 @@
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        gamePlay: favPlay, // #907
         notifCtaGo: notifCtaGo, notifCtaClose: notifCtaClose, // #892
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
