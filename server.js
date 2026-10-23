@@ -24777,7 +24777,7 @@ app.get('/api/games/img', async (req, res) => {
     if (!_GAME_IMG_HOST.test(u) || u.length > 400) return res.status(400).end();
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
     try {
-      const r = await fetch(u, { signal: ctrl.signal, headers: { Accept: 'image/avif,image/webp,image/*' } });
+      const r = await fetch(u, { signal: ctrl.signal, redirect: 'error', headers: { Accept: 'image/avif,image/webp,image/*' } }); // sin redirecciones (no seguir a otro host)
       const type = String(r.headers.get('content-type') || '').split(';')[0];
       if (!r.ok || !/^image\/(png|jpe?g|webp|gif|avif)$/i.test(type)) return res.status(404).end();
       const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 1024 * 1024) return res.status(413).end();
