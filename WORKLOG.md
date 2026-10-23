@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-22
 
+### 925. PICA ROJA: Proveedores arriba y sin "Ver más (60)" — SW v622
+**Pedido (owner, captura):** subir Proveedores y sacar lo último ("Ver más (60)"). Ahora va después de las portadas y antes de Casino lobby, como fila
+deslizable con todos (`_providers(list, true)`). Recorrido de botones: 401 tocados, 0 errores.
+
 ### 924. Inicio del menú completo: los servicios con el formato de 4 del básico — SW v621
 **Pedido (owner, captura):** "este formato de 4 del básico replicalo en el inicio del completo, ocupa mucho". `#entryServices` (las 4 tarjetas grandes
 `ev-svc`) se reemplazó por una copia de `.bv-quick` del básico (Misiones · Reembolsos · Referidos · Ruleta diaria, mismas funciones). Ningún JS usaba

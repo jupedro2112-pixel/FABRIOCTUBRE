@@ -119,8 +119,9 @@ VIP.lobby = (function () {
             '<span class="prl-pvb">' + (p.logo ? '<img loading="lazy" src="/api/games/img?u=' + encodeURIComponent(p.logo) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(p.name) + '</b></span>' +
             '<small><i class="prl-dot"></i>' + Number(p.count || 0).toLocaleString('es-AR') + ' juegos</small></button>';
     }
-    function _providers(list) {
+    function _providers(list, noMore) {
         const ps = (list || []).filter((p) => p.count > 0); if (!ps.length) return '';
+        if (noMore) return '<section class="prl-sec">' + _title('tag', 'Proveedores', null) + '<div class="prl-pvs">' + ps.map(_provTile).join('') + '</div></section>'; // #925: fila deslizable, todos
         const shown = _provOpen ? ps : ps.slice(0, 8);
         return '<section class="prl-sec">' + _title('tag', 'Proveedores', null) + '<div class="prl-pvs' + (_provOpen ? ' open' : '') + '">' + shown.map(_provTile).join('') + '</div>' +
             (ps.length > 8 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.provToggle()">' + (_provOpen ? 'Ver menos' : 'Ver más (' + ps.length + ')') + '</button></div>' : '') + '</section>';
@@ -293,7 +294,7 @@ VIP.lobby = (function () {
                 (_allProv ? '' : _search()) + '<div class="prl-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
             _allPage = 0; _allMore = true; _moreAll(); if (_q && !_allProv) search(_q); return;
         }
-        m.innerHTML = _rfStrip() + _hero() + _row('grid', 'Casino lobby', _lobbies()) + _providers(_data.providers) + _search() +
+        m.innerHTML = _rfStrip() + _hero() + _providers(_data.providers, true) + _row('grid', 'Casino lobby', _lobbies()) + _search() + // #925: Proveedores arriba, sin "Ver más (60)"
             _row('fire', 'Populares', _data.popular) + _row('star', 'Nuevos', _data.nuevos) +
             (_data.live && _data.live[0] ? _row('live', 'En vivo · ' + _data.live[0].title, _data.live[0].games, _data.live[0].providerId) : '') +
             (_data.sections || []).map((s) => _row('slots', s.title, s.games, s.providerId)).join('') +
