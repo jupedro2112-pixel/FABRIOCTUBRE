@@ -2845,3 +2845,61 @@ span.prl-st { cursor: default; }
 .prl-gn .prl-sh h3, .prl-gn .prl-st h3 { font-family: Roboto, Arial, sans-serif; }
 .prl-gn .prl-gi { border-radius: 12px; background: linear-gradient(180deg, #320548, #1f073a); }
 .prl-gn .prl-search { background: #130227; border-color: #320548; }
+/* ===== #916 JUGAYGANA (jugaygana.io): fondo #101010, acento #f2ce00, cabecera #121212, letra Exo 2; tarjetas cuadradas de 110 px, 2 filas ===== */
+.prl.prl-jio { --prl-bg: #101010; --prl-deep: #121212; --prl-card: #1a1a2e; --prl-line: #292929; --prl-mut: #bdbdbd; --prl-acc: #f2ce00; font-family: "Exo 2", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.prl-jio .prl-top { background: #121212; border-bottom: 0; box-shadow: none; height: 50px; padding-top: 0; padding-bottom: 0; }
+.prl-jio .prl-wordmark { height: 25px; }
+.prl-jio .prl-main { padding: 0 0 24px; background: #101010; }
+.prl-jio .prl-ql { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 18px); }
+.prl-jio .prl-top-btn { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 70px); }
+.prl-jio .casino-load { bottom: calc(70px + var(--sab, env(safe-area-inset-bottom, 0px))) !important; }
+.jg-slider { position: relative; }
+.jg-slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.jg-slides::-webkit-scrollbar { display: none; }
+.jg-slide { flex: 0 0 100%; scroll-snap-align: start; aspect-ratio: 16 / 9; background: #000; }
+.jg-slide img { width: 100%; height: 100%; display: block; }
+.jg-dots { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 6px; }
+.jg-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.45); }
+.jg-dots i.on { background: #f2ce00; width: 18px; border-radius: 4px; }
+.jg-wrap { padding: 0 12px; }
+.jg-searchrow { display: flex; gap: 5px; padding: 5px 12px; margin: 0 -12px 8px; background: #292929; }
+.jg-search, .jg-provbtn { flex: 1 1 50%; min-width: 0; height: 34px; border-radius: 5px; background: #212121; border: 0; }
+.jg-search { display: flex; align-items: center; gap: 10px; padding: 0 12px; color: #bdbdbd; }
+.jg-search svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.jg-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: #fff; font: 400 13px inherit; font-family: inherit; }
+.jg-search input::placeholder { color: #9a9a9a; }
+.jg-provbtn { display: flex; align-items: center; justify-content: center; gap: 10px; color: #fff; font: 600 15px inherit; font-family: inherit; cursor: pointer; }
+.jg-provbtn svg { width: 22px; height: 22px; }
+.jg-sec { margin-top: 24px; }
+.jg-t, .jg-st { position: relative; margin: 0; font-size: 21px; font-weight: 600; color: #fff; line-height: 1.2; letter-spacing: .2px; }
+.jg-t { margin-bottom: 18px; padding-bottom: 12px; }
+.jg-t:after { content: ""; position: absolute; left: 0; bottom: 0; width: 100px; height: 4px; border-radius: 2px; background: #f2ce00; }
+.jg-sec-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.jg-st { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jg-line { display: block; width: 75px; height: 3px; background: #f2ce00; margin: 10px 0 14px; }
+.jg-all { flex: 0 0 auto; border: 0; border-radius: 6px; background: #212121; color: #fff; font: 600 12px inherit; font-family: inherit; padding: 7px 12px; cursor: pointer; }
+.jg-row { display: flex; gap: 10px; overflow-x: auto; padding: 4px 12px 8px; margin: 0 -12px; scrollbar-width: none; }
+.jg-row::-webkit-scrollbar { display: none; }
+.jg-row + .jg-row { margin-top: 2px; }
+.jg-card { flex: 0 0 110px; width: 110px; border: 0; padding: 0; background: none; cursor: pointer; }
+.jg-card span { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #1a1a2e; }
+.jg-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; z-index: 1; }
+.jg-card i { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 6px; text-align: center; color: #bdbdbd; font: 700 11px inherit; font-family: inherit; font-style: normal; }
+.jg-sports { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.jg-sports button { border: 1px solid #6e5c00; border-radius: 10px; background: #1a1a1a; color: #fff; text-align: left; padding: 14px 12px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; font-family: inherit; }
+.jg-sports b { font-size: 16px; } .jg-sports small { color: #bdbdbd; font-size: 11.5px; }
+.jg-live { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.jg-live button { border: 0; padding: 0; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: #222; cursor: pointer; }
+.jg-live img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.jg-covers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.jg-cover { position: relative; border: 0; padding: 0; aspect-ratio: 1 / 2; border-radius: 10px; overflow: hidden; background: #222; cursor: pointer; }
+.jg-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.jg-cover span { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: 92%; padding: 11px 12px; border-radius: 8px; background: #f2ce00; color: #111; font: 700 11px inherit; font-family: inherit; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jg-provsheet { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.6); }
+.jg-provsheet[hidden] { display: none; }
+.jg-provmodal { position: absolute; inset: 0; display: flex; flex-direction: column; background: #222; color: #fff; }
+.jg-provtop { display: flex; justify-content: flex-end; height: 42px; padding: 5px; padding-top: max(5px, var(--sat, env(safe-area-inset-top, 0px))); }
+.jg-provtop button { height: 32px; padding: 0 10px; border: 0; border-radius: 4px; background: #020f1d; color: #fff; font-size: 12px; font-weight: 500; letter-spacing: .3px; cursor: pointer; }
+.jg-provlist { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 10px; background: #333; overflow-y: auto; }
+.jg-provlist button { display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 5px; background: #222; color: #fff; padding: 12px; font: 600 14px inherit; font-family: inherit; cursor: pointer; }
+.jg-provlist small { color: #f2ce00; }

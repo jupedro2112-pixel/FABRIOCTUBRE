@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 916. 🟡 JUGAYGANA igual a jugaygana.io (marca propia): banners, orden de colecciones y juegos por proveedor — SW v612
+**Pedido (owner):** "copiá todo de jugaygana.io, que es mía también" (jugaygana44.bet está caída). jugaygana.io es una app Vue (Laravel) cuyo
+API público `admin.jugaygana.io/api/` da: `sliders?page=home` (11 banners, 16:9 en el celular), `games/collections` (7 colecciones en orden:
+Juegos más populares, Juegos De Halloween, Seleccionados, RubyPlay, Nuevo, Crash, Casino; 2 filas c/u) y `frontend-flags` (sin barra de abajo).
+El componente Home (chunk Home-DAyU_Uf0) fija el orden en el celular: carrusel · buscador + Proveedores · Eventos deportivos · colecciones ·
+Casino en Vivo (4 imágenes) · portadas Casino / Casino en Vivo / Eventos deportivos. Colores: #101010, #121212, acento #f2ce00, Exo 2.
+- Imágenes en `public/images/jugaygana/slides/` (s1..s11 en su orden) e `io/` (logo, Casino en Vivo, portadas).
+- Juegos: cruzados con el catálogo público de Girox por NOMBRE y PROVEEDOR (sólo puede cambiar el sufijo de RTP: "Volcano Rising 88" =
+  "Volcano Rising 96", mismo juego de RubyPlay con otra versión de pago). `public/data/jugaygana-home.json`: populares 11/21, Halloween 9/11,
+  RubyPlay 18/20, Nuevo 6/20, Crash 19/20, Casino 1/15; Seleccionados 0/20 (todo Amigo Gaming) NO aparece. Sin equivalente en Girox: Amigo Gaming,
+  Pascal, Dreamplay, Mancala, Spinmatic, TaDa, 7777, Pop Ok, Red Tiger, IGT. Script: `scripts/jugaygana/map-to-girox.js`.
+- `lobby.js`: layout 'jugaygana' (`_jgHome`, carrusel cada 5 s, hoja de Proveedores con los de Girox). Las portadas provisorias #912 ya no se usan.
+
 ### 915. Ganamos con el ORDEN EXACTO de sus juegos y cada juego con su proveedor — SW v611
 **Pedido (owner):** "respetá el orden de cada uno; cada proveedor tiene que tener su juego correspondiente, si no me puede traer problemas".
 - El inicio de Ganamos arma sus filas con LISTAS FIJAS en el bundle (Gz Primicias, Oz Rubyplay, Vz Amusnet, Zz Pragmatic, Nz Amigo, jz XPG,

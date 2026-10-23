@@ -32,7 +32,8 @@ VIP.lobby = (function () {
     // #912: la misma página con otro estilo por marca (todas son puertas a la MISMA cuenta de Girox).
     const SKINS = {
         picaroja: { name: 'PICA ROJA', sub: 'Página exclusiva', logo: '/images/picaroja/logo-mono.svg', home: '/images/picaroja/logo-mono.svg', bar: '/icons/icon-192x192.png', cls: '', dir: '/images/picaroja/' },
-        jugaygana: { name: 'JUGAYGANA', sub: '', logo: '/images/jugaygana/logo.svg', home: '/images/jugaygana/icon.svg', bar: '/images/jugaygana/icon.svg', cls: 'prl-jyg', dir: '/images/jugaygana/', wordmark: true },
+        // #916 (owner: marca propia, jugaygana.io): diseño, banners y orden de colecciones de su inicio, con los juegos y la cuenta de Girox.
+        jugaygana: { name: 'JUGAYGANA', sub: '', logo: '/images/jugaygana/io/logo.webp', home: '/images/jugaygana/icon.svg', bar: '/images/jugaygana/icon.svg', cls: 'prl-jyg prl-jio', dir: '/images/jugaygana/', wordmark: true, layout: 'jugaygana' },
         // #914 (owner: marca propia, ganandoargentina.com): diseño y orden de su página, con los juegos y la cuenta de Girox.
         ganamos: { name: 'Ganamos', sub: '', logo: '/images/ganamos/logo.webp', home: '/images/ganamos/ganamosDogIcon.webp', bar: '/images/ganamos/app-icon.png', cls: 'prl-gn', dir: '/images/ganamos/', wordmark: true, layout: 'ganamos' }
     };
@@ -56,7 +57,7 @@ VIP.lobby = (function () {
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
             '<button type="button" class="prl-ql" onclick="VIP.home.toggleCasinoLoad()" title="Carga rápida"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>' +
-            (sk.layout === 'ganamos'
+            (sk.layout === 'jugaygana' ? '' : sk.layout === 'ganamos'
                 ? '<nav class="prl-nav" aria-label="Menú">' + nb('deportes', 'sport', 'Deporte') + nb('sorteos', 'star', 'Sorteos') +
                   '<button type="button" data-v="inicio" class="prl-home prl-dog" onclick="VIP.lobby.go(\'inicio\')"><img src="' + sk.home + '" alt=""><span>Inicio</span></button>' +
                   nb('slots', 'slots', 'Casino') + nb('vivo', 'live', 'Casino en vivo') + '</nav>'
@@ -94,6 +95,7 @@ VIP.lobby = (function () {
     }
     function _hero() {
         if (SK().layout === 'ganamos') return _gnPromos(false);
+        if (SK().layout === 'jugaygana') return '';
         return '<div class="prl-hero" id="prlHero">' + BANNERS_OF().map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="' + SK().name + '" decoding="async"></button>').join('') + '</div>';
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
@@ -166,6 +168,47 @@ VIP.lobby = (function () {
         await _gnData(); const b = $('gnRows');
         if (b && _skin === 'ganamos' && _view === 'inicio') { _gcN = 100; b.innerHTML = _gnRowsHtml(); const m = $('prlMain'); if (m && (_gnHomeData.tiles || []).length && !m.querySelector('.gn-tiles')) _render(); }
     }
+    // ===== #916 JUGAYGANA (jugaygana.io): mismo orden que su inicio en el celular — carrusel (11 banners, cada 5 s) · buscador + Proveedores
+    // · Eventos deportivos · colecciones (en su orden, 2 filas deslizables, tarjetas cuadradas) · Casino en Vivo (4) · portadas Casino / Casino en
+    // Vivo / Eventos deportivos. Sin barra de abajo (su página no la tiene). Datos: /data/jugaygana-home.json (juegos cruzados con Girox por
+    // nombre y proveedor; lo que Girox no tiene no aparece).
+    let _jgHomeData = null, _jgTimer = null, _jgSlide = 0;
+    async function _jgData() {
+        if (_jgHomeData) return _jgHomeData;
+        try { const r = await fetch('/data/jugaygana-home.json', { cache: 'no-cache' }); if (r.ok) _jgHomeData = await r.json(); } catch (_) {}
+        return _jgHomeData;
+    }
+    function _jgCard(g) {
+        return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<i>' + esc(g.name) + '</i></span></button>';
+    }
+    function _jgHome() {
+        const d = _jgHomeData || {};
+        const slides = d.slides || [];
+        const t = (x) => '<h2 class="jg-t">' + esc(x) + '</h2>';
+        const cols = (d.collections || []).map((c) => {
+            const games = c.games || []; const n = Math.min(5, Math.max(1, Number(c.rows) || 1)); const per = Math.ceil(games.length / n); const rows = [];
+            for (let i = 0; i < n; i++) { const part = games.slice(i * per, (i + 1) * per); if (part.length) rows.push(part); }
+            return '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'slots\')">Mostrar Todo</button></div>' +
+                rows.map((r) => '<div class="jg-row">' + r.map(_jgCard).join('') + '</div>').join('') + '</section>';
+        }).join('');
+        return (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
+                '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
+            '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
+            '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div><div id="prlRes"></div>' +
+            '<section class="jg-sec">' + t('Eventos deportivos') + '<div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
+            cols +
+            ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
+            ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
+            '</div>' +
+            '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist">' +
+            ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + esc(p.name).replace(/'/g, '') + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('') + '</div></div></div>';
+    }
+    function jgSlideScroll(el) { const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); _jgSlide = i; const d = $('jgDots'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i)); }
+    function _jgAuto() {
+        clearInterval(_jgTimer);
+        _jgTimer = setInterval(() => { const el = $('jgSlides'); if (!el || !el.isConnected) { clearInterval(_jgTimer); return; } const n = el.children.length; if (!n) return; _jgSlide = (_jgSlide + 1) % n; try { el.scrollTo({ left: _jgSlide * el.clientWidth, behavior: 'smooth' }); } catch (_) { el.scrollLeft = _jgSlide * el.clientWidth; } }, 5000);
+    }
+    function jgProv(show) { const s2 = $('jgProv'); if (s2) s2.hidden = !show; }
     function _render() {
         const m = $('prlMain'); if (!m) return; _secN = 0;
         document.querySelectorAll('.prl-nav [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === _view || (_view === 'all' && b.dataset.v === 'slots')));
@@ -175,6 +218,10 @@ VIP.lobby = (function () {
         }
         if (!_data) { m.innerHTML = (SK().layout === 'ganamos' ? _gnPromos(false) : _hero()) + '<div class="prl-note">Cargando los juegos…</div>'; return; }
         if (SK().layout === 'ganamos' && _view === 'inicio') { _gcN = 0; m.innerHTML = _gnHome(); _gnFillRows(); return; }
+        if (SK().layout === 'jugaygana' && _view === 'inicio') {
+            if (!_jgHomeData) { m.innerHTML = '<div class="prl-note">Cargando…</div>'; _jgData().then(() => { if (_skin === 'jugaygana' && _view === 'inicio') _render(); }); return; }
+            m.innerHTML = _jgHome(); _jgSlide = 0; _jgAuto(); if (_q) search(_q); return;
+        }
         if (_view === 'deportes') {
             m.innerHTML = _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + (SK().layout === 'ganamos' ? SK().dir + 'casino-bg.png' : SK().dir + 'b3.svg') + '" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
             return;
@@ -232,7 +279,7 @@ VIP.lobby = (function () {
         if (!_data) _load();
     }
     function close() {
-        const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer);
+        const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer);
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) document.body.classList.remove('casino-open'); const p = $('casinoLoadPanel'); if (p && el && el.contains(p)) p.style.display = 'none'; if (VIP.home.casinoQuickClose && el && el.contains(p)) VIP.home.casinoQuickClose(); } catch (_) {}
     }
     function go(view) { if (view === 'slots') _allProv = null; _view = view; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
@@ -299,5 +346,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv };
 })();
