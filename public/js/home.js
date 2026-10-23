@@ -1180,6 +1180,10 @@
             '<div style="width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:' + k.sp + ';animation:s .8s linear infinite"></div><div style="opacity:.85">Abriendo ' + _esc(name) + '…</div>';
     }
     let _lastStep = '';
+    // #927: marca desde donde se abre un juego (página abierta, o la elegida); Girox = la de siempre.
+    function _openingBrand() { try { const lob = _el('prLobby'); if (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) return VIP.lobby.skin(); } catch (_) {} const b = _localBrand(); return _isDoor(b) ? b : null; }
+    const _BRAND_BAR = { picaroja: { name: 'PICA ROJA', logo: '/icons/icon-192x192.png' }, ganamos: { name: 'Ganamos', logo: '/images/ganamos/app-icon.png' }, jugaygana: { name: 'JUGAYGANA', logo: '/images/jugaygana/icon.svg' } };
+    function brandOf(id) { return _BRAND_BAR[id] || null; }
     async function favPlay(key, nameArg) { // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         const name = nameArg || (f && f.name) || 'el juego';
@@ -1198,8 +1202,8 @@
         if (url && !win) { try { location.href = url; return; } catch (_) {} } // sin ventanas (algunas apps instaladas): en la misma pantalla
         try { if (win && !win.closed) win.close(); } catch (_) {}
         // #926 (owner: "desde las plataformas aparece Girox"): se avisa POR QUÉ no abrió directo (para corregirlo juego por juego).
-        try { VIP.ui.showToast('ℹ️ ' + name + ' no abrió directo (' + String(_lastStep || '').slice(0, 80) + '): entrás por Girox con tu sesión.', 'info'); } catch (_) {}
-        try { console.warn('[juego directo]', key, _lastStep); } catch (_) {}
+        try { console.warn('[juego directo]', key, _lastStep); } catch (_) {} // #927 (owner): el motivo NO se muestra al cliente
+        try { VIP.ui._openBrand = _openingBrand(); } catch (_) {} // #927: la pantalla del casino muestra la marca desde donde se abrió
         // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
         let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
         setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? (key === 'sport/gr8' ? '/sports' : '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
@@ -2605,6 +2609,8 @@
                 '</div>');
             bar = _el('casinoTopBar');
         }
+        // #927 (owner): si el juego se abrió desde una página (PICA ROJA / Ganamos / JUGAYGANA), arriba va ESA marca (logo y nombre)
+        try { const bb = brandOf(VIP.ui._openBrand) || brandOf('picaroja'); const box = bar.querySelector('.casino-brand'); if (box) { const im = box.querySelector('img'); const nb = box.querySelector('.cb-txt b'); if (im) im.src = bb.logo; if (nb) nb.textContent = bb.name; box.setAttribute('aria-label', bb.name + ' oficial'); } } catch (_) {}
         // #920 (owner): el sorteo también en Girox (debajo de la barra; se minimiza igual que en las otras páginas).
         try { let rf = _el('casinoRf'); if (!rf) { bar.insertAdjacentHTML('afterend', '<div id="casinoRf" class="casino-rf"></div>'); rf = _el('casinoRf'); } if (VIP.raffle && VIP.raffle.stripHtml) { rf.innerHTML = VIP.raffle.stripHtml('girox'); VIP.raffle.tick(); } } catch (_) {}
         // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
@@ -2630,6 +2636,7 @@
         if (typeof _origCloseFrame === 'function') {
             VIP.ui.closeCasinoFrame = function () {
                 try { if (!document.body.classList.contains('prl-open')) document.body.classList.remove('casino-open'); } catch (_) {} // #914: la página de la marca sigue abierta debajo
+                try { VIP.ui._openBrand = null; } catch (_) {} // #927
                 return _origCloseFrame.apply(this, arguments);
             };
         }
@@ -2895,6 +2902,7 @@
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
+        brandOf, // #927
         casinoBarHtml, // #914
         gamePlay: favPlay, // #907
         notifCtaGo: notifCtaGo, notifCtaClose: notifCtaClose, // #892

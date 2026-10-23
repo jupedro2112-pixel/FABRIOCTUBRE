@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 927. Si un juego cae en Girox, la pantalla muestra la MARCA que lo abrió (sin el motivo técnico) — SW v624
+**Pedido (owner):** ocultar el aviso del motivo (#926) y que, al cargar, en vez de "Girox" se vea la plataforma desde donde se abrió (hasta configurar las APIs).
+- `favPlay`: el motivo queda sólo en consola; `VIP.ui._openBrand = _openingBrand()` (página abierta o la elegida) antes de caer en Girox.
+- `renderCasinoTabs`: la caja de marca de la barra del casino toma logo/nombre de `brandOf(_openBrand)` (PICA ROJA / Ganamos / JUGAYGANA); se limpia al cerrar.
+- ui.js: "Ya entraste a <marca> con tu cuenta…" (antes "Girox" + gameStep); burbuja sin "1GIROX".
+- Revisión completa: sintaxis de todo, login (6 casos), menús, 484 handlers del index, panel (3 roles), retiros (3), bloqueo por saldo,
+  sorteo y Gran Sorteo (Mongo en memoria), landing, 401 botones de las 3 páginas + caída en Girox con su marca, 109/109 juegos contra el
+  catálogo real. Todo OK. (La apertura real de juegos/deportes necesita sesión de 1girox: la prueba el owner.)
+
 ### 926. Diagnóstico: aviso con el motivo cuando un juego no abre directo — SW v623
 **Owner:** desde los favoritos el juego abre directo (pestaña aparte con la cruz, sin Girox) pero "desde las plataformas aparece Girox". Las claves y el
 pedido son idénticos (mismo favPlay, mismo /api/platform/session, sin filtro de juegos) ⇒ depende del juego (p. ej. lobbies). `favPlay` ahora muestra

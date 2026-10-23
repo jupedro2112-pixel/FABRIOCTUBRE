@@ -1130,7 +1130,7 @@ VIP.ui._fetchCasinoSession = async function(timeoutMs) {
       // #857: recargar el recuadro para ir al juego/Deportes PIERDE la sesión de la web de 1girox ⇒ ya no se salta después del ingreso:
       // o el server devolvió el juego directo (launch_url del proveedor), o se abre Girox logueado (como el botón) y se avisa dónde está.
       const _gp = VIP.ui._casinoGamePath, _gn = VIP.ui._casinoGameName; VIP.ui._casinoGamePath = null; VIP.ui._casinoGameName = null; VIP.ui._casinoGameReady = false;
-      if (_gp && !data.directGame) setTimeout(function () { try { VIP.ui.showToast((_gp === '/sports' ? '⚽ Ya entraste a Girox: tocá DEPORTES en el menú de arriba de Girox' : ('🎰 Ya entraste a Girox con tu cuenta: tocá la lupa 🔍 y buscá ' + (_gn || 'el juego'))) + (data.gameStep && _gp !== '/sports' && !/abrí el juego/.test(data.gameStep) ? ' · (' + data.gameStep + ')' : ''), 'info'); } catch (_) {} }, 4000); // #859: motivo visible
+      if (_gp && !data.directGame) setTimeout(function () { try { (function () { const _bn = ((VIP.home && VIP.home.brandOf && VIP.home.brandOf(VIP.ui._openBrand)) || {}).name || 'Girox'; VIP.ui.showToast(/^\/sports/.test(_gp) ? '⚽ Ya entraste a los deportes de ' + _bn + ' con tu cuenta' : ('🎰 Ya entraste a ' + _bn + ' con tu cuenta: tocá la lupa 🔍 y buscá ' + (_gn || 'el juego')), 'info'); })(); /* #927: con la marca que abrió; sin el motivo técnico */ } catch (_) {} }, 4000); // #859: motivo visible
       return { ok: true, url: data.redirectUrl };
     }
     // 5xx = plataforma demorada/saturada → vale reintentar. 4xx (bloqueado,
@@ -1395,7 +1395,7 @@ VIP.ui._showCasinoFrame = function() {
       // el soporte propio de la página del casino. Con el logo de la app y
       // "CARGA RÁPIDA" a la vista queda claro que es NUESTRO chat de cargas.
       '<button type="button" id="casinoSupportBubble" onclick="VIP.ui.toggleCasinoChat()" ' +
-        'title="Carga rápida 1GIROX — arrastrame si te tapa el juego" style="position:absolute;z-index:6;right:16px;' +
+        'title="Carga rápida — arrastrame si te tapa el juego" style="position:absolute;z-index:6;right:16px;' +
         'bottom:calc(18px + env(safe-area-inset-bottom,0px));border-radius:28px;' +
         'background:linear-gradient(135deg,#128c4a,#25d366);color:#fff;border:none;' +
         'box-shadow:0 6px 20px rgba(0,0,0,0.55);cursor:pointer;' +
