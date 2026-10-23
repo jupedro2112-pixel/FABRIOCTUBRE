@@ -8,16 +8,6 @@
 
 ## Sesión 2026-10-22
 
-### 894. 📘 Guías del equipo en picaroja.com/soporte y picaroja.com/encargados (con buscador y temas) — admin SW v177
-**Pedido (owner):** "armalo tipo Bases y condiciones, con un buscador de palabras y un listado para elegir el tema; una barra /soporte y otra
-/encargados". Página propia (`src/utils/guiaPage.html`, servida por `_guiaPage` en `GET /soporte` y `GET /encargados`, ANTES del vanity
-`/:code`) con buscador (sin tildes/mayúsculas, resalta), desplegable de temas y atajos. El CONTENIDO no es público: vive en
-`src/utils/guiaPanel.js` y lo manda `GET /api/admin/guia` sólo con la sesión del panel (cookie `admin_api_session`); el manual del encargado
-(reglas de pago, señales de fraude, configuración) sólo al rol admin (403 al resto). Sin sesión, la página pide entrar al panel. Accesos en el
-panel (grupo Día a día): "📘 Guía de soporte" y "📗 Manual del encargado" (este último oculto a los agentes). Arreglo: los agentes de cargas y
-pagos no podían abrir **Usuarios** (el panel lo bloqueaba aunque el server lo permite). Si cambia una regla (montos, rollover, plazos),
-actualizar el texto en `guiaPanel.js`.
-
 ### 893. 📱 Verificación de teléfono: el número queda siempre todo junto y con 10 dígitos (que no falle el SMS) — SW v600
 **Pedido (owner, captura de "Verificá tu teléfono"):** "que tome el dato como lo determina el país, todos juntos los números, que no falle el
 SMS por un espacio". Antes se sacaban espacios/guiones/0/un 9 repetido, pero un "15" ("11 15 5555-1234") o el número pegado con "+54 9"

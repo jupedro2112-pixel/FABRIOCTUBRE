@@ -1256,9 +1256,6 @@ app.get('/linkreferido', (req, res) => {
   const ref = String(req.query.ref || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase();
   res.redirect(302, '/?ref=' + encodeURIComponent(ref));
 });
-// #894: guías internas ANTES del vanity /:code (una campaña o un publicista llamado "soporte" no las tapa). _guiaPage está más abajo.
-app.get(['/soporte', '/soporte/'], (req, res) => _guiaPage(res, 'soporte'));
-app.get(['/encargados', '/encargados/', '/encargado'], (req, res) => _guiaPage(res, 'encargado'));
 app.get('/:code', async (req, res, next) => {
   const candidate = req.params.code || '';
   // Sólo procesar si parece un código/slug válido: 3-40 chars, letras/números/_/-
@@ -16771,23 +16768,6 @@ app.get('/api/public/campaign-stats/:token', async (req, res) => {
     _pubRangeCache.set(ck, { at: Date.now(), data: d }); if (_pubRangeCache.size > 500) _pubRangeCache.delete(_pubRangeCache.keys().next().value);
     res.set('Cache-Control', 'no-store'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-// ===== #894 (owner): GUÍAS INTERNAS en /soporte (todo el equipo del panel) y /encargados (sólo admin general). La página no trae el
-// contenido: lo pide a /api/admin/guia con la sesión del panel (cookie admin_api_session), así las reglas de pago y de fraude no quedan
-// públicas. Contenido en src/utils/guiaPanel.js.
-const guiaPanel = require('./src/utils/guiaPanel');
-let _guiaPageTpl = null;
-function _guiaPage(res, guide) {
-  try { if (!_guiaPageTpl) _guiaPageTpl = require('fs').readFileSync(path.join(__dirname, 'src', 'utils', 'guiaPage.html'), 'utf8'); } catch (e) { return res.status(500).send('Guía no disponible'); }
-  res.set('Cache-Control', 'no-store'); res.set('X-Robots-Tag', 'noindex, nofollow');
-  res.type('html').send(_guiaPageTpl.replace('__GUIDE__', guide).replace('__TITLE__', guide === 'encargado' ? 'Manual del encargado' : 'Guía de soporte'));
-}
-app.get('/api/admin/guia', authMiddleware, adminMiddleware, (req, res) => {
-  const canEncargado = req.user.role === 'admin';
-  const g = req.query.g === 'encargado' ? 'encargado' : 'soporte';
-  if (g === 'encargado' && !canEncargado) return res.status(403).json({ error: 'Sólo el administrador general.' });
-  res.set('Cache-Control', 'no-store');
-  res.json({ success: true, canEncargado, sections: guiaPanel.SECTIONS.filter((x) => x.g === 'soporte' || canEncargado), chips: guiaPanel.CHIPS });
 });
 app.get('/r/:token', (req, res) => {
   // #805 página pública de resultados del publicista · #835: períodos (Hoy/Ayer/7/30/Total), rango de fechas y detalle día por día.
