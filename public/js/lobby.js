@@ -10,6 +10,9 @@ VIP.lobby = (function () {
     let _data = null, _view = 'inicio', _q = '', _qTimer = null, _allPage = 0, _allMore = true, _allProv = null, _loadingAll = false, _balTimer = null;
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    // #923 seguridad: texto que va DENTRO de un onclick='…' (nombres de proveedores que vienen de 1girox): se sacan comillas, barras y < > & ANTES
+    // de escapar (si no, &#39; vuelve a ser comilla al ejecutarse y un nombre armado podría inyectar código).
+    const jsq = (x) => esc(String(x == null ? '' : x).replace(/[\\'"`<>&\r\n]/g, ''));
     const img = (u) => (u ? (/^\/images\//.test(u) ? u : '/api/games/img?u=' + encodeURIComponent(u)) : '');
     const auth = () => ({ Authorization: 'Bearer ' + ((VIP.state && VIP.state.currentToken) || '') });
 
@@ -95,7 +98,7 @@ VIP.lobby = (function () {
     function _row(icon, title, games, providerId) {
         if (!games || !games.length) return '';
         const id = 'prlS' + (++_secN);
-        return '<section class="prl-sec">' + _title(icon, title, providerId ? 'VIP.lobby.all(' + Number(providerId) + ', \'' + esc(title).replace(/'/g, '') + '\')' : null) +
+        return '<section class="prl-sec">' + _title(icon, title, providerId ? 'VIP.lobby.all(' + Number(providerId) + ', \'' + jsq(title) + '\')' : null) +
             '<div class="prl-grid prl-g3" id="' + id + '" data-show="8">' + games.map((g, i) => _card(g).replace('class="prl-g"', 'class="prl-g' + (i >= 8 ? ' prl-hid' : '') + '"')).join('') + '</div>' +
             (games.length > 8 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.more(\'' + id + '\', this)">Ver más</button></div>' : '') + '</section>';
     }
@@ -112,7 +115,7 @@ VIP.lobby = (function () {
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
     function _provTile(p) {
         // #910: los logos de Girox son casi todos íconos (sin el nombre): ícono chico en gris + NOMBRE en texto, para que se entienda.
-        return '<button type="button" class="prl-pv" onclick="VIP.lobby.all(' + Number(p.id) + ', \'' + esc(p.name).replace(/'/g, '') + '\')" aria-label="' + esc(p.name) + '">' +
+        return '<button type="button" class="prl-pv" onclick="VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')" aria-label="' + esc(p.name) + '">' +
             '<span class="prl-pvb">' + (p.logo ? '<img loading="lazy" src="/api/games/img?u=' + encodeURIComponent(p.logo) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(p.name) + '</b></span>' +
             '<small><i class="prl-dot"></i>' + Number(p.count || 0).toLocaleString('es-AR') + ' juegos</small></button>';
     }
@@ -191,12 +194,13 @@ VIP.lobby = (function () {
             // #922 (owner): en Ganamos sin Deportes / Depósito / Retiro / Chat (se carga con la burbuja; deportes en la barra de abajo)
 
             _gcar('Casino lobby', _lobbies(), 'VIP.lobby.go(\'lobbies\')') + // #920
-            _gcar('Especialmente para vos', pop, 'VIP.lobby.go(\'slots\')') +
+            // #923 (owner): "los juegos especiales de Girox no van" ⇒ sin "Especialmente para vos" (eran los más jugados de Girox, no la lista de Ganamos)
+
             '<div id="gnRows">' + _gnRowsHtml() + '</div>';
     }
     function _gnRowsHtml() {
         if (!_gnHomeData) return '';
-        return (_gnHomeData.rows || []).map((r) => { const re = GN_MORE[r.title]; const pv = re ? _provId(re) : null; return _gcar(r.title, r.games, pv ? 'VIP.lobby.all(' + Number(pv.id) + ', \'' + esc(r.title) + '\')' : 'VIP.lobby.go(\'slots\')'); }).join('');
+        return (_gnHomeData.rows || []).map((r) => { const re = GN_MORE[r.title]; const pv = re ? _provId(re) : null; return _gcar(r.title, r.games, pv ? 'VIP.lobby.all(' + Number(pv.id) + ', \'' + jsq(r.title) + '\')' : 'VIP.lobby.go(\'slots\')'); }).join('');
     }
     async function _gnFillRows() {
         if (_gnHomeData) return;
@@ -250,7 +254,7 @@ VIP.lobby = (function () {
             ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
             '</div>' +
             '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist">' +
-            ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + esc(p.name).replace(/'/g, '') + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('') + '</div></div></div>';
+            ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('') + '</div></div></div>';
     }
     function jgSlideScroll(el) { const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); _jgSlide = i; const d = $('jgDots'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i)); }
     function _jgAuto() {
@@ -374,6 +378,9 @@ VIP.lobby = (function () {
         if (VIP.home && VIP.home.gamePlay) VIP.home.gamePlay(key, name);
     }
     function sport(path) {
+        // #923: deportes DIRECTO (Onyx / GR8 a pantalla completa, como un juego, sin la página de Girox); si 1girox no lo da, Girox logueado.
+        const sp = ((_data && _data.sports) || []).find((x) => x.path === path || x.key === path);
+        if (sp && sp.key && VIP.home && VIP.home.gamePlay) { VIP.home.gamePlay(sp.key, sp.title); return; }
         try { if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo(path)) return; } catch (_) {}
         try { VIP.ui._casinoGamePath = path; } catch (_) {}
         try { VIP.home.openPlatform('girox', { embed: true }); } catch (_) {}

@@ -6367,9 +6367,13 @@ async function platformSessionHandler(req, res) {
       // ⇒ el juego directo queda APAGADO: el favorito abre Girox LOGUEADO (un solo ingreso, como el registro) + aviso "buscá X con la lupa".
       // `GIROX_DIRECT_GAME=1` lo vuelve a probar.
       // #866: la app pide el juego directo (`direct:true`) para abrirlo en PANTALLA COMPLETA (fuera del recuadro, donde el proveedor sí se ve).
-      const mm = (process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true)) ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
-      if (!mm && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
-      if (mm) {
+      const _directOn = process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true);
+      const mm = _directOn ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
+      // #923 (owner: "deportes 100% independientes, sin que se vea Girox"): los sportsbooks de 1girox se piden DIRECTO igual que un juego —
+      // Onyx = su juego 1140 (launcher onyx, el que abre su /sports-new) y GR8 = player/sports/gr8/launch (su /sports-2). Mismo canje de sesión.
+      const ms = _directOn ? /^\/sport\/(onyx|gr8)$/.exec(game) : null;
+      if (!mm && !ms && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
+      if (mm || ms) {
         _gameStep = 'canje';
         // #862: el ORDEN importa — cada /session nuevo ANULA el anterior (manual 2.7). Se canjea el ingreso que ya se pidió (para pedir el juego)
         // y, si no sale directo, se pide UNO NUEVO al final para el recuadro: el último ingreso es siempre el que abre Girox (como el botón).
@@ -6384,7 +6388,17 @@ async function platformSessionHandler(req, res) {
             siteToken = (jx && (jx.token || (jx.data && jx.data.token))) || null;
             _gameStep = rx.ok && siteToken ? 'canje ok' : `canje rechazado (HTTP ${rx.status}${jx && jx.error ? ': ' + String(jx.error.code || jx.error.message || '').slice(0, 40) : ''})`;
           } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); } finally { clearTimeout(t); }
-          if (siteToken) {
+          if (siteToken && ms) {
+            const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
+            const url = ms[1] === 'onyx' ? `${site}/games/1140?launcher_key=onyx` : `${site}/player/sports/gr8/launch`;
+            const c3 = new AbortController(); const t3 = setTimeout(() => c3.abort(), 10000);
+            try {
+              const rg = await fetch(url, { headers: { Authorization: 'Bearer ' + siteToken, Accept: 'application/json' }, signal: c3.signal });
+              const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
+              if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'deportes directo'; }
+              else _gameStep = `1girox no dio deportes (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`;
+            } catch (e) { _gameStep = 'pedir deportes: ' + e.message.slice(0, 60); } finally { clearTimeout(t3); }
+          } else if (siteToken) {
             const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
             if (!meta) _gameStep = 'juego no encontrado en el catálogo';
             else {
@@ -9845,7 +9859,7 @@ app.post('/api/me/brand', authMiddleware, async (req, res) => {
     const b = await girox.getUserBalance(u.username).catch(() => null);
     if (!b || !b.success) return res.status(503).json({ error: 'No pudimos ver tu saldo ahora. Probá de nuevo en un momento.' });
     const bal = Math.round(Number(b.balance) || 0);
-    if (bal >= BRAND_LOCK_ARS) return res.status(409).json({ locked: true, brand: cur, balance: bal, error: `Tenés $${bal.toLocaleString('es-AR')} en ${_BRANDS[cur]}. Para jugar en ${_BRANDS[want]}, usá ese saldo o retiralo primero.` });
+    if (bal >= BRAND_LOCK_ARS) return res.status(409).json({ locked: true, brand: cur, want, balance: bal, error: `No podés cambiar de plataforma: tenés $${bal.toLocaleString('es-AR')} en ${_BRANDS[cur]}. Para pasar a ${_BRANDS[want]}, primero jugá ese saldo o retiralo; con tu saldo en $0 podés cambiar.` });
     await User.updateOne({ id: u.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
     res.json({ success: true, brand: want });
   } catch (e) { logger.error('[brand] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
@@ -25456,7 +25470,7 @@ app.get('/api/games/lobby', authMiddleware, async (req, res) => {
     const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
     const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
       sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean), lobbies,
-      sports: [{ path: '/sports', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { path: '/sports-new', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] };
+      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] }; // #923: key = apertura directa
     _lobbyCache = { at: Date.now(), data }; res.json(data);
   } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }
 });

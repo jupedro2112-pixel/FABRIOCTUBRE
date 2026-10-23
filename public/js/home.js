@@ -1164,16 +1164,31 @@
     // mostrar dentro del recuadro (pantalla negra) ⇒ el juego se abre en PANTALLA COMPLETA (ventana propia), logueado y directo al slot:
     // la ventana se abre YA en el toque (si no, el navegador la bloquea) y se le pone la dirección del juego cuando llega del server.
     // Si 1girox no da el juego, se cierra esa ventana y se abre Girox logueado en el recuadro, como siempre.
+    // #923 (owner): "cuando carga un juego, que cargue con el logo de la plataforma: Ganamos como Ganamos, PICA ROJA como PICA ROJA".
+    const _LOAD_SKIN = {
+        picaroja: { bg: 'radial-gradient(circle at 50% 35%, #3a0010 0, #0f212e 60%)', logo: '/icons/icon-192x192.png', h: 84, sp: '#e6002a', tx: '#fff', name: 'PICA ROJA' },
+        ganamos: { bg: 'radial-gradient(circle at 50% 35%, #5b13a8 0, #130227 65%)', logo: '/images/ganamos/logo.webp', h: 46, sp: '#c457da', tx: '#ededed', name: 'Ganamos' },
+        jugaygana: { bg: '#0d1117', logo: '/images/jugaygana/io/logo.webp', h: 40, sp: '#f2ce00', tx: '#fff', name: 'JUGAYGANA' },
+        girox: { bg: '#0b0b10', logo: '/images/soporte-1girox.png', h: 70, sp: '#22c55e', tx: '#fff', name: 'Girox' }
+    };
+    function _gameLoadingScreen(win, name) {
+        let b = 'girox'; try { const lob = _el('prLobby'); b = (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) ? VIP.lobby.skin() : (_localBrand() || 'girox'); } catch (_) {}
+        const k = _LOAD_SKIN[b] || _LOAD_SKIN.girox; const o = location.origin;
+        win.document.title = name + ' · ' + k.name;
+        win.document.body.style.cssText = 'margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:' + k.bg + ';color:' + k.tx + ';font:700 15px system-ui,Arial,sans-serif';
+        win.document.body.innerHTML = '<style>@keyframes s{to{transform:rotate(360deg)}}</style><img src="' + o + k.logo + '" alt="" style="max-width:220px;height:' + k.h + 'px;object-fit:contain">' +
+            '<div style="width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:' + k.sp + ';animation:s .8s linear infinite"></div><div style="opacity:.85">Abriendo ' + _esc(name) + '…</div>';
+    }
     async function favPlay(key, nameArg) { // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         const name = nameArg || (f && f.name) || 'el juego';
         favClosePicker();
         let win = null; try { win = window.open('about:blank', '_blank'); } catch (_) { win = null; }
-        try { if (win && win.document) { win.document.title = name; win.document.body.style.cssText = 'margin:0;background:#0b0b10;color:#fff;font:700 16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh'; win.document.body.textContent = '🎰 Abriendo ' + name + '…'; } } catch (_) {}
+        try { if (win && win.document) _gameLoadingScreen(win, name); } catch (_) {} // #923: pantalla de carga con el logo de la plataforma
         try { VIP.ui.showToast('🎰 Abriendo ' + name + '…', 'info'); } catch (_) {}
         let url = null;
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: '/play/' + key, gameName: name, direct: true }) });
+            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true }) }); // #923: deportes directo
             const d = await r.json().catch(() => ({}));
             if (r.ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
         } catch (_) {}
@@ -1182,7 +1197,7 @@
         try { if (win && !win.closed) win.close(); } catch (_) {}
         // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
         let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
-        setTimeout(() => { try { VIP.ui._casinoGamePath = '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
+        setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? (key === 'sport/gr8' ? '/sports' : '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
     }
     // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
     let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;
@@ -2128,7 +2143,8 @@
         try {
             const r = await fetch(VIP.config.API_URL + '/api/me/brand', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ brand: id }) });
             const d = await r.json().catch(() => ({}));
-            if (!r.ok) { try { VIP.ui.showToast((r.status === 409 ? '🔒 ' : '') + (d.error || 'No se pudo cambiar de plataforma'), r.status === 409 ? 'info' : 'error'); } catch (_) {} return false; }
+            if (r.status === 409) { _brandLockModal(d, id); return false; } // #923: cartel claro (no un toast que se va)
+            if (!r.ok) { try { VIP.ui.showToast(d.error || 'No se pudo cambiar de plataforma', 'error'); } catch (_) {} return false; }
             _brand = id; return true;
         } catch (_) { try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {} return false; }
     }
@@ -2137,6 +2153,21 @@
     function _paintBrandLabels() {
         const n = _brandName();
         try { document.querySelectorAll('.mc-brand').forEach((e) => { e.textContent = n; }); document.querySelectorAll('.mc-brand-up').forEach((e) => { e.textContent = n.toUpperCase(); }); } catch (_) {}
+    }
+    // #923 (owner): "avisar bien en claro que no pueden cambiar de plataforma si tienen saldo en otra: que jueguen o retiren para poder cambiar".
+    const _BRAND_NAMES = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos' };
+    function _brandLockModal(d, want) {
+        const cur = _BRAND_NAMES[(d && d.brand) || _brand || 'picaroja'] || 'tu plataforma'; const nx = _BRAND_NAMES[want] || 'la otra plataforma';
+        const bal = d && d.balance != null ? '$' + Math.round(Number(d.balance) || 0).toLocaleString('es-AR') : 'saldo';
+        let m = _el('brandLockModal');
+        if (!m) { document.body.insertAdjacentHTML('beforeend', '<div id="brandLockModal" class="modal hidden" onclick="if(event.target===this)this.classList.add(\'hidden\')"><div class="modal-content bl-box" onclick="event.stopPropagation()"><div id="blBody"></div></div></div>'); m = _el('brandLockModal'); }
+        _el('blBody').innerHTML = '<div class="bl-ic">🔒</div><h3>Todavía no podés cambiar a ' + _esc(nx) + '</h3>' +
+            '<p>Tenés <b>' + _esc(bal) + '</b> en <b>' + _esc(cur) + '</b>. Cada plataforma tiene su saldo: para pasar a ' + _esc(nx) + ' primero <b>jugá ese saldo</b> o <b>retiralo</b>.</p>' +
+            '<p class="bl-sub">Cuando tu saldo quede en $0 vas a poder elegir otra plataforma al instante.</p>' +
+            '<div class="bl-btns"><button type="button" class="bl-play" onclick="document.getElementById(\'brandLockModal\').classList.add(\'hidden\');VIP.home.openPlatform(\'' + _esc((d && d.brand) || _brand || 'picaroja') + '\',{embed:true})">🎰 Ir a jugar en ' + _esc(cur) + '</button>' +
+            '<button type="button" class="bl-wd" onclick="document.getElementById(\'brandLockModal\').classList.add(\'hidden\');VIP.withdraw.openWithdrawModal()">💸 Retirar mi saldo</button></div>' +
+            '<button type="button" class="bl-ok" onclick="document.getElementById(\'brandLockModal\').classList.add(\'hidden\')">Entendido</button>';
+        m.classList.remove('hidden');
     }
     function _injectPR() {
         if (!_platforms) return;

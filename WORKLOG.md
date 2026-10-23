@@ -8,6 +8,25 @@
 
 ## Sesión 2026-10-22
 
+### 923. Revisión de punta a punta + deportes DIRECTO (sin la página de Girox) + carga con el logo de cada marca + cartel claro de cambio de plataforma + fotos propias de JUGAYGANA + seguridad — SW v620
+**Pedido (owner):** revisar todo; avisar claro que no se puede cambiar de plataforma con saldo (jugar o retirar); revisar seguridad; juegos y deportes
+que entren logueados como los favoritos de PICA ROJA y sin que se vea Girox ("100% independientes"); en Ganamos las fotos de Girox, en JUGAYGANA las
+suyas; sacar los "juegos especiales de Girox"; que al cargar un juego aparezca el logo de la plataforma. Mañana manda zips de fotos y una 5ª: Buffalo.
+- **Deportes directo:** la web de 1girox abre /sports y /sports-new como el juego `1140` (launcher `onyx`) y /sports-2 con `player/sports/gr8/launch`.
+  `/api/platform/session` acepta `game: '/sport/onyx' | '/sport/gr8'` (con `direct:true`): mismo canje de sesión que los slots y pide esa URL ⇒
+  `directGame` (pantalla completa, sin Girox). Si 1girox no la da, cae en Girox logueado (/sports-new o /sports). Lobby: `sports[].key`; `sport()` usa
+  `VIP.home.gamePlay` (= favPlay). (Digitain se arma con un script externo de bookiewiseapi: no se usa.) NO probado con sesión real (no hay acceso).
+- **Juegos:** las 3 páginas abren con `VIP.home.gamePlay` = `favPlay` (lo mismo que los favoritos). Verificado contra el catálogo real: los 109 juegos
+  y lobbies de las páginas resuelven id + launcher. Recorrido automático: 398 botones tocados en las 3 páginas (todas las secciones) + sorteo, 0 errores.
+- **Carga con el logo:** `_gameLoadingScreen` (ventana del juego) con logo, colores y spinner de la marca abierta (PICA ROJA / Ganamos / JUGAYGANA / Girox).
+- **Cambio de plataforma:** `_brandLockModal` (cartel: cuánto saldo y dónde, "Ir a jugar" / "Retirar mi saldo" / "Entendido") en vez de un toast;
+  nota fija "🔒 para cambiar, tu saldo tiene que estar en $0" debajo de los selectores (básico y completo); texto del 409 más claro.
+- **JUGAYGANA con sus fotos:** `images/jugaygana/games/` (57 archivos, su `custom_image` o miniatura, guardadas acá con la extensión real).
+- **Ganamos:** sin "Especialmente para vos" (eran los más jugados de Girox).
+- **Seguridad:** nombres de proveedores (vienen de 1girox) dentro de `onclick`: `esc(x).replace(/'/g,'')` no servía (el &#39; vuelve a ser comilla al
+  ejecutarse) ⇒ `jsq()` saca comillas/barras/<>& antes. Revisadas las rutas nuevas (auth/admin, validación de marca, sorteo sólo ganadores, proxy de
+  imágenes con host fijo). Las claves de juego que llegan al server ya se validan con `_FAV_KEY_RE`.
+
 ### 922. Sorteos minimizables (1ª vez abiertos), plataforma elegida al instante, saldo arriba en el básico, Ganamos con la barra real de ganamos.net y Deportes como selector chico — SW v619
 **Pedido (owner, capturas):** minimizar el sorteo y ver el puesto; la primera vez abierto y después minimizado ("Ver más"); fichas del básico como las del
 completo, que se vea la elegida y que el menú cambie al toque; subir el saldo del básico (había espacio de más); sacar de Ganamos Deportes/Depósito/

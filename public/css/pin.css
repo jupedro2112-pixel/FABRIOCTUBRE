@@ -3203,3 +3203,14 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 .prl-gn .prl-gnm .gnm__ganamos-dog { border: 0; background: none; padding: 0; cursor: pointer; }
 .prl-gn .prl-ql { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 120px); }
 .prl-gnm .gnm__menu-item[data-v].on .gnm__menu-active { opacity: 1; }
+/* #923 cartel "no podés cambiar de plataforma con saldo" + nota fija debajo de los selectores */
+.bl-box { max-width: 380px; text-align: center; padding: 22px 18px 16px !important; }
+.bl-ic { font-size: 38px; }
+.bl-box h3 { margin: 6px 0 8px; font: 900 17px var(--p-font); color: var(--p-text); }
+.bl-box p { margin: 0 0 8px; font: 600 13.5px/1.45 var(--p-font); color: var(--p-text); }
+.bl-box .bl-sub { color: var(--p-muted); font-size: 12.5px; }
+.bl-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.bl-btns button, .bl-ok { border: 0; border-radius: 999px; padding: 12px 8px; font: 900 13px var(--p-font); cursor: pointer; }
+.bl-play { background: var(--p-red, #e60023); color: #fff; } .bl-wd { background: var(--p-green, #16a34a); color: #fff; }
+.bl-ok { margin-top: 8px; width: 100%; background: var(--p-surface); color: var(--p-text); border: 1px solid var(--p-border) !important; }
+.bl-note { margin: 6px 2px 0; font: 600 11px/1.35 var(--p-font); color: var(--p-muted); text-align: center; }
