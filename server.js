@@ -24727,6 +24727,24 @@ async function _gameLaunchMeta(agg, gameId, nameHint) {
   }
   return null;
 }
+// #869 (owner: "en el buscador las fotos de los juegos aparecen falladas"): las fotos del catálogo de 1girox se sirven POR ACÁ (mismo sitio que
+// la app ⇒ ningún teléfono/navegador las bloquea por venir de otro dominio). Sólo los hosts de fotos de 1girox; cache 1 día (Cloudflare la guarda).
+const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/)/;
+app.get('/api/games/img', async (req, res) => {
+  try {
+    const u = String(req.query.u || '');
+    if (!_GAME_IMG_HOST.test(u) || u.length > 400) return res.status(400).end();
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const r = await fetch(u, { signal: ctrl.signal, headers: { Accept: 'image/avif,image/webp,image/*' } });
+      const type = String(r.headers.get('content-type') || '').split(';')[0];
+      if (!r.ok || !/^image\/(png|jpe?g|webp|gif|avif)$/i.test(type)) return res.status(404).end();
+      const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 1024 * 1024) return res.status(413).end();
+      res.set('Content-Type', type); res.set('Cache-Control', 'public, max-age=86400, immutable'); res.set('X-Content-Type-Options', 'nosniff');
+      res.send(buf);
+    } finally { clearTimeout(t); }
+  } catch (e) { res.status(503).end(); } // nunca 502/504 (Cloudflare los reemplaza, #697)
+});
 app.get('/api/games/catalog', authMiddleware, async (req, res) => {
   try {
     const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(50, parseInt(req.query.page, 10) || 1));

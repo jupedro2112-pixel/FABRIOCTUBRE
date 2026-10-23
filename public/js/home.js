@@ -1045,8 +1045,8 @@
         let m = _el('fitModal');
         if (!m) {
             document.body.insertAdjacentHTML('beforeend', '<div id="fitModal" class="modal hidden fav-modal" onclick="if(event.target===this)VIP.home.closeFitPhone()"><div class="modal-content fav-pick fit-pick" onclick="event.stopPropagation()">' +
-                '<div class="fav-pick-h"><b>📱 Ajustá la pantalla a tu teléfono</b><button type="button" class="fav-x" onclick="VIP.home.closeFitPhone()" aria-label="Cerrar">✕</button></div>' +
-                '<p class="fav-pick-sub">Si arriba se corta algo, elegí tu modelo. Después podés subir o bajar un poco con ▲ ▼.</p>' +
+                '<div class="fav-pick-h"><b>📱 Ajustar pantalla</b><button type="button" class="fav-x" onclick="VIP.home.closeFitPhone()" aria-label="Cerrar">✕</button></div>' +
+                '<p class="fav-pick-sub">Sólo si algo se corta: elegí tu teléfono o movelo con − +.</p>' +
                 '<input type="search" id="fitSearch" class="fav-search" placeholder="Buscá tu modelo (ej. iPhone 13, Galaxy, Moto)" autocomplete="off" oninput="VIP.home.fitFilter(this.value)">' +
                 '<div class="fit-tune"><span>⬆️ Arriba <b id="fitTopV"></b></span><button type="button" onclick="VIP.home.fitNudge(-4)" aria-label="Menos espacio arriba">−</button><button type="button" onclick="VIP.home.fitNudge(4)" aria-label="Más espacio arriba">+</button></div>' +
                 '<div class="fit-tune"><span>⬇️ Abajo <b id="fitBotV"></b></span><button type="button" onclick="VIP.home.fitNudgeBottom(-4)" aria-label="Menos espacio abajo">−</button><button type="button" onclick="VIP.home.fitNudgeBottom(4)" aria-label="Más espacio abajo">+</button><button type="button" onclick="VIP.home.fitBottomAuto()">auto</button></div>' +
@@ -1076,7 +1076,9 @@
     }
     // 1 vez: iPhone con la app instalada que nunca eligió.
     function _fitMaybeAsk() { try { if (!document.documentElement.classList.contains('dev-ios') || !document.documentElement.classList.contains('is-app')) return; if (localStorage.getItem('vip_fit_asked') === '1') return; setTimeout(openFitPhone, 2500); } catch (_) {} }
-    try { setTimeout(_fitMaybeAsk, 1200); } catch (_) {}
+    // #870 (owner: "cuando instalan, que aparezca completa; si quiere ajustar a mano que vaya a la app… no le cargues tanto"): ya NO se abre solo
+    // al entrar (la app arranca en Automático, a pantalla completa); el ajuste queda en el link de abajo del saldo.
+    void _fitMaybeAsk;
     // ---------------- #840 JUEGOS FAVORITOS ----------------
     // El cliente marca ⭐ en los Top juegos o en el catálogo de Girox (buscador) y sus favoritos aparecen arriba del Inicio con link directo
     // al juego. Se guardan en su cuenta (GET/POST /api/games/favorites). Sin favoritos: aviso + botón para agregarlos (quedan los Top juegos).
@@ -1092,7 +1094,9 @@
             .catch(() => { if (!_favs) _favs = []; _favPaint(); return _favs; }).finally(() => { _favLoading = null; });
         return _favLoading;
     }
-    function _favImg(f) { return f.img ? (/^\/images\//.test(f.img) ? _slideUrl(f.img) : f.img) : '/icons/icon-192x192.png'; }
+    // #869: las fotos de 1girox pasan por nuestro server (/api/games/img) ⇒ se ven en todos los teléfonos; si alguna falla, el logo.
+    function _favImg(f) { return f.img ? (/^\/images\//.test(f.img) ? _slideUrl(f.img) : (/^https:\/\//.test(f.img) ? '/api/games/img?u=' + encodeURIComponent(f.img) : f.img)) : '/icons/icon-192x192.png'; }
+    const _IMG_FALLBACK = ' onerror="this.onerror=null;this.src=\'/icons/icon-192x192.png\'"';
     function _favPaint() {
         const box = _el('evFavs');
         if (box) {
@@ -1100,7 +1104,7 @@
             // #842 (owner): arriba "elegí tus favoritos" + botón Agregar; de entrada vienen 10 (los elige el server) y se editan desde acá.
             box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos<small class="fav-sub">Elegí tus favoritos · tocá ★ para sacar uno</small></span><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button></div>' +
                 (_favs === null ? '<div class="fav-loading">Cargando tus juegos…</div>' : list.length
-                    ? '<div class="fav-row">' + list.map((f) => '<div class="fav-card" role="button" onclick="VIP.home.favPlay(\'' + _esc(f.key) + '\')"><img src="' + _esc(_favImg(f)) + '" alt="' + _esc(f.name) + '" loading="lazy" decoding="async" draggable="false"><b>' + _esc(f.name) + '</b><button type="button" class="fav-star on" onclick="event.stopPropagation();VIP.home.favToggle(\'' + _esc(f.key) + '\')" aria-label="Sacar de favoritos">★</button></div>').join('') + '</div>'
+                    ? '<div class="fav-row">' + list.map((f) => '<div class="fav-card" role="button" onclick="VIP.home.favPlay(\'' + _esc(f.key) + '\')"><img src="' + _esc(_favImg(f)) + '" alt="' + _esc(f.name) + '" loading="lazy" decoding="async" draggable="false"' + _IMG_FALLBACK + '><b>' + _esc(f.name) + '</b><button type="button" class="fav-star on" onclick="event.stopPropagation();VIP.home.favToggle(\'' + _esc(f.key) + '\')" aria-label="Sacar de favoritos">★</button></div>').join('') + '</div>'
                     : '<button type="button" class="fav-empty" onclick="VIP.home.favOpenPicker()"><b>⭐ Agregá tus juegos favoritos para que aparezcan acá</b><small>Tocá la ☆ de cualquier juego o buscalos en Girox · entrás directo con un toque</small><span>⭐ Agregar mis juegos favoritos ›</span></button>');
         }
         document.querySelectorAll('.fav-star[data-k]').forEach((b) => { const on = _favHas(b.dataset.k); b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; });
@@ -1193,10 +1197,10 @@
         if (_favQ.length < 2) { // sin búsqueda: sólo los favoritos
             const list = _favs || [];
             grid.innerHTML = '<div class="fav-msg fav-msg-h">' + (list.length ? '⭐ Tus favoritos (' + list.length + ') · tocá la ★ para sacarlo' : '🔎 Escribí el nombre de un juego arriba para buscarlo y agregarlo') + '</div>' +
-                list.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">★</span></div>').join('');
+                list.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"' + _IMG_FALLBACK + '><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">★</span></div>').join('');
             if (more) more.hidden = true; _favPickerPaintStars(); return;
         }
-        grid.innerHTML = _favCat.length ? _favCat.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">☆</span></div>').join('') : '<div class="fav-msg">No encontramos juegos con ese nombre.</div>';
+        grid.innerHTML = _favCat.length ? _favCat.map((g) => '<div class="fav-item" role="button" onclick="VIP.home.favToggle(\'' + _esc(g.key) + '\')"><img src="' + _esc(_favImg(g)) + '" alt="" loading="lazy" decoding="async"' + _IMG_FALLBACK + '><b>' + _esc(g.name) + '</b><small>' + _esc(g.provider || '') + '</small><span class="fav-star" data-k="' + _esc(g.key) + '">☆</span></div>').join('') : '<div class="fav-msg">No encontramos juegos con ese nombre.</div>';
         if (more) more.hidden = !_favMore;
         _favPickerPaintStars();
     }

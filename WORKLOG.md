@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-22
 
+### 869–870. 🖼️ Fotos del buscador de juegos por nuestro server · 📱 ajuste de pantalla compacto — SW v591
+- **#869** (owner: "en el buscador las fotos aparecen falladas"): `GET /api/games/img?u=` sirve las fotos del catálogo de 1girox desde nuestro
+  dominio (sólo admin.1girox.com/game-img y img-girox.red777.win, ≤1 MB, cache 1 día) ⇒ ningún navegador las bloquea; `_favImg` las usa y todas
+  las fotos de favoritos/buscador tienen `onerror` ⇒ logo de PICA ROJA si alguna falla.
+- **#870** (owner: "cuando instalan que aparezca completa; si quiere ajustar a mano que vaya a la app, más achicado y centrado, que se entienda,
+  no le cargues tanto"): el selector ya NO se abre solo al entrar (arranca en Automático); recuadro de 340 px centrado, textos cortos.
+
 ### 868. 👈 Deslizar desde el costado para VOLVER + ⤢ Estirar pantalla — SW v590
 **Pedido (owner):** "que se pueda estirar también; en los menús, cuando entrás, que puedas volver deslizando del lado izquierdo o derecho, como
 para volver al menú anterior".
