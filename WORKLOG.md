@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 909. 🎨 Página exclusiva PICA ROJA con estilo Stake (azul noche, sobria) y orden de juegos de Girox · menú de cuenta — SW v606
+**Pedido (owner, con capturas de Stake):** fondo, títulos y recuadros "tipo Stake", orden de juegos de Girox, logo de PICA ROJA sin color,
+creativos propios sobrios, proveedores con su logo en gris (se despliegan y llevan a sus juegos), barra de abajo estilo Stake con INICIO al
+centro, más grande y con una pica; un MENÚ con el perfil (saldo, nivel y rango) y Soporte adentro (salió de la barra).
+Se tomó el ESTILO visual (colores, recuadros, títulos con ícono y ›, "Ver más" con línea), sin logos ni nombre de Stake.
+- Creativos: `public/images/picaroja/b1-b3.svg` (Página exclusiva / En vivo / Deportes, 1200×560) y `logo-mono.svg` (pica blanca).
+- Server: el catálogo trae `logo` de cada proveedor (`https://1girox.com/img/providers/<x>.webp`); `/api/games/img` acepta esa ruta exacta
+  (`_GAME_IMG_HOST`). Los logos se ven en blanco con `filter` (CSS).
+- `lobby.js`: cabecera (pica + PICA ROJA, saldo + Cargar, botón ☰), portadas, franja de Proveedores (8 + "Ver más"), buscador, secciones de a 3
+  (6 visibles + "Ver más" de a 6; título con › abre el proveedor), vistas Slots (todos, carga al bajar), En vivo, Deportes; barra Slots · En vivo ·
+  [♠ Inicio] · Deportes · Menú; menú lateral: usuario, saldo (Cargar/Retirar), nivel y rango con barra de progreso (`/api/vip/status`),
+  Soporte, Mi perfil, Volver a la app; botón "volver arriba". Paleta fija `--prl-*` en `.prl` (la página es siempre oscura).
+
 ### 908. 🔒 Plataforma ACTIVA (PICA ROJA o Girox): con saldo en una, la otra bloqueada · "Mis cargas" del perfil por plataforma — SW v605
 **Pedido (owner):** "si eligen Girox, saldo Girox y la otra anulada hasta gastar el saldo; lo mismo con PICA ROJA; usa el mismo panel pero que
 la gente no lo vea; en el perfil, las cargas de PICA ROJA, no todas". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es

@@ -25369,7 +25369,7 @@ async function _gameCatalog(q, page, providerId) {
       gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40), // #857: lo que usa la web de 1girox para abrir el juego
       isNew: !!g.is_new, isJackpot: !!g.is_jackpot
     })).filter((g) => _FAV_KEY_RE.test(g.key) && g.name).map((g) => (_FAV_IMG_RE.test(g.img) ? g : Object.assign(g, { img: '' })));
-    const providers = Array.isArray(j.providers) ? j.providers.filter((p) => p && p.id).map((p) => ({ id: Number(p.id), name: String(p.alias || p.name || '').slice(0, 40), slug: String(p.slug || '').slice(0, 40), count: Number(p.games_count) || 0 })) : [];
+    const providers = Array.isArray(j.providers) ? j.providers.filter((p) => p && p.id).map((p) => ({ id: Number(p.id), name: String(p.alias || p.name || '').slice(0, 40), slug: String(p.slug || '').slice(0, 40), count: Number(p.games_count) || 0, logo: /^\/img\/providers\/[\w.\-]{1,60}$/.test(String(p.logo || '')) ? 'https://1girox.com' + p.logo : '' })) : [];
     const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore, providers };
     _gameCatalogCache.set(k, { at: Date.now(), data }); if (_gameCatalogCache.size > 300) _gameCatalogCache.delete(_gameCatalogCache.keys().next().value);
     return data;
@@ -25392,7 +25392,7 @@ async function _gameLaunchMeta(agg, gameId, nameHint) {
 }
 // #869 (owner: "en el buscador las fotos de los juegos aparecen falladas"): las fotos del catálogo de 1girox se sirven POR ACÁ (mismo sitio que
 // la app ⇒ ningún teléfono/navegador las bloquea por venir de otro dominio). Sólo los hosts de fotos de 1girox; cache 1 día (Cloudflare la guarda).
-const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/)/;
+const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/|1girox\.com\/img\/providers\/[\w.\-]+$)/; // #909: + logos de proveedores
 app.get('/api/games/img', async (req, res) => {
   try {
     const u = String(req.query.u || '');
@@ -25435,7 +25435,7 @@ app.get('/api/games/lobby', authMiddleware, async (req, res) => {
     const fetchProv = async (p) => { const d = await _gameCatalog('', 1, p.id); return d && d.games.length ? { title: p.name, providerId: p.id, games: d.games.slice(0, 24) } : null; };
     const [topSecs, liveSecs] = await Promise.all([Promise.all(top.map(fetchProv)), Promise.all(live.map(fetchProv))]);
     const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
-    const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
+    const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
       sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean),
       sports: [{ path: '/sports', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { path: '/sports-new', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] };
     _lobbyCache = { at: Date.now(), data }; res.json(data);
