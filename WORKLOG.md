@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 928. Sorteo: PREMIO EXTRA ($100.000 en 10 ganadores cada 100 clientes con 2+ cargas) + "el formato cambia mes a mes" — SW v625, admin SW v188
+**Pedido (owner):** en los requisitos del sorteo: todos los que participan entran en $100.000 repartidos en 10 ganadores por cada 100 clientes con al
+menos 2 cargas en el mes; el formato del sorteo cambia mes a mes.
+- `raffleService`: `cfg.extra` {pool 100000, winnersPerGroup 10, groupSize 100, minDeposits 2}; `eligibleExtra` (clientes con ≥ 2 cargas reales del mes, sin
+  pruebas/regalos/bloqueados/staff); al cerrar el mes: k = floor(califican/100)×10 ganadores de $10.000 con `drawExtra` = verificable: sha256(mes:id),
+  ganan los valores más bajos (recalculable con la lista). Se guarda en `RaffleMonth.extra` (eligible, perWinner, winners con nombre tapado).
+- `publicStatus.extra`: califican hoy, premios que habría, mis cargas del mes / si ya entro, ganadores del último mes (tapados; "¡Vos ganaste!").
+- Pantalla: recuadro "🎁 Premio extra" + bases (regla con ejemplo 250 ⇒ 20) + "El formato del sorteo cambia mes a mes". Panel: ganadores del extra
+  por mes (para pagarlos). Probado con Mongo en memoria (`scratchpad/mdb/extra.js`): 250 califican ⇒ 20, sin la de 1 carga ni la de prueba, recalculable.
+
 ### 927. Si un juego cae en Girox, la pantalla muestra la MARCA que lo abrió (sin el motivo técnico) — SW v624
 **Pedido (owner):** ocultar el aviso del motivo (#926) y que, al cargar, en vez de "Girox" se vea la plataforma desde donde se abrió (hasta configurar las APIs).
 - `favPlay`: el motivo queda sólo en consola; `VIP.ui._openBrand = _openingBrand()` (página abierta o la elegida) antes de caer en Girox.

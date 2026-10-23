@@ -12,6 +12,7 @@ const schema = new mongoose.Schema({
   closedAt: { type: Date, default: null },
   participants: { type: Number, default: 0 },
   winners: { type: [winner], default: [] },
+  extra: { type: mongoose.Schema.Types.Mixed, default: null }, // #928: premio extra ($100.000 en 10 ganadores cada 100 clientes con ≥ 2 cargas)
   lastRunAt: { type: Date, default: null },
   lockUntil: { type: Date, default: null }
 });

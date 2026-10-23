@@ -74,6 +74,14 @@ VIP.raffle = (function () {
             '<div class="rf-box" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🏆 Sorteo mensual</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span><button type="button" class="rf-minbtn" onclick="VIP.raffle.toggleMin(event)" aria-label="Minimizar">–</button></div><div class="rf-count js-rf-count" data-to="' + esc(to || '') + '"></div>' + _trophies(d.prizes || DEF.prizes, 'active') + '<em class="rf-box-go">Ver ranking ›</em></div>' +
             '<div class="rf-box rf-box-soon" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🚗 ' + esc((d.upcoming && d.upcoming.title) || DEF.upcoming.title) + '</b><span>Empieza en</span></div><div class="rf-count js-rf-count" data-to="' + esc(st) + '"></div>' + _trophies((d.upcoming && d.upcoming.prizes) || DEF.upcoming.prizes, 'upcoming') + '</div></div>';
     }
+    // #928 (owner): premio extra — $100.000 en 10 ganadores de $10.000 por cada 100 clientes con al menos 2 cargas en el mes.
+    function _extraHtml(x, ns) {
+        if (!x) return '';
+        return '<section class="rf-card rf-extra"><b>🎁 Premio extra: ' + money(x.pool) + ' en ' + num(x.winnersPerGroup) + ' ganadores de ' + money(x.perWinner) + '</b>' +
+            '<p>Por cada ' + num(x.groupSize) + ' clientes con al menos ' + num(x.minDeposits) + ' cargas en el mes se sortean ' + num(x.winnersPerGroup) + ' premios de ' + money(x.perWinner) + '. Participan todos los que cumplan, sin importar el ranking.</p>' +
+            (ns ? '' : '<p class="rf-extra-me">' + (x.imIn ? '✅ Ya estás participando (' + num(x.myDeposits) + ' cargas este mes).' : '⏳ Te falta' + (x.minDeposits - x.myDeposits === 1 ? ' 1 carga' : 'n ' + num(Math.max(0, x.minDeposits - x.myDeposits)) + ' cargas') + ' este mes para participar.') + ' Hoy califican ' + num(x.eligibleNow) + ' clientes ⇒ ' + num(x.winnersNow) + ' premios.</p>') +
+            (x.last ? '<p class="rf-extra-last">Ganadores de ' + esc(x.last.monthLabel) + ': ' + x.last.winners.map(esc).join(' · ') + (x.last.meWon ? ' · 🎉 ¡Vos ganaste!' : '') + '</p>' : '') + '</section>';
+    }
     // #921 GRAN SORTEO: también por puntos + extras por actividad (días con carga) y por misiones semanales.
     function _granHtml(g, up) {
         if (!g) return '';
@@ -91,6 +99,7 @@ VIP.raffle = (function () {
         const me = _d.me || {}; const pos = me.position; const ns = !!_d.notStarted; const win = _d.myWin;
         m.innerHTML =
             '<section class="rf-box rf-box-big"><div class="rf-box-h"><b>' + (ns ? 'Empieza el 1 de ' + esc(_d.monthLabel.split(' ')[0]) : 'Termina el ' + esc(fdate(_d.closesAt, true)) + ' h') + '</b><span>' + (ns ? 'Faltan' : 'Quedan') + '</span></div><div class="rf-count js-rf-count" data-to="' + esc(ns ? _d.startsAt : _d.closesAt) + '"></div>' + _trophies(_d.prizes, 'active') + '</section>' +
+            _extraHtml(_d.extra, ns) +
             (win ? '<section class="rf-card rf-win"><b>🎉 ¡Ganaste el ' + win.pos + '° puesto de ' + esc(win.monthLabel) + '!</b><p>' + esc(win.prize) + '</p>' + (win.delivered ? '<p class="rf-ok">✅ Premio entregado.</p>' : '<button type="button" class="rf-btn" onclick="VIP.raffle.contact()">🏆 Coordinar la entrega</button>') + '</section>' : '') +
             (!ns ? '<section class="rf-mine">' + (pos ? '<b>' + pos + '°</b><span>' + num(me.points) + ' pts' + (pos > 1 ? ' · te faltan <b>' + num(me.toFirst) + '</b> para el 1°' : ' · ¡vas primero!') + '</span>' : '<span>Todavía no sumaste puntos este mes · cada $100.000 apostados = 100 pts</span>') + '</section>' : '') +
             '<section class="rf-sec"><h3>📊 Ranking' + (ns ? '' : ' <small>' + num(_d.participants) + ' participando</small>') + '</h3>' +
@@ -107,6 +116,8 @@ VIP.raffle = (function () {
             '<li><b>Hasta cuándo suma:</b> hasta el ' + esc(fdate(_d.closesAt, true)) + ' h (hora argentina). Se actualiza cada 20 minutos.</li>' +
             '<li><b>Ganadores:</b> los 3 primeros del ranking, publicados el ' + esc(fdate(_d.announceAt, true)) + ' h en el menú completo, con nombres tapados. Empate: más apostado válido; si sigue igual, quien llegó antes.</li>' +
             '<li><b>Entrega:</b> dentro de los ' + num(_d.deliveryBusinessDays) + ' días hábiles, con nuestro Soporte exclusivo de entrega de premios, al titular de la cuenta con su DNI.' + (_d.cashOption ? ' Cada premio puede cobrarse en efectivo.' : '') + '</li>' +
+            (_d.extra ? '<li><b>Premio extra:</b> además del ranking, todos los clientes con al menos ' + num(_d.extra.minDeposits) + ' cargas reales en el mes participan de ' + money(_d.extra.pool) + ' repartidos en ' + num(_d.extra.winnersPerGroup) + ' ganadores de ' + money(_d.extra.perWinner) + ' por cada ' + num(_d.extra.groupSize) + ' clientes que cumplan (ej.: 250 clientes ⇒ 20 ganadores). Se sortea el día del cierre con un método verificable y los ganadores se publican con el nombre tapado.</li>' : '') +
+            '<li><b>El formato del sorteo cambia mes a mes:</b> premios, extras y reglas de cada mes se publican acá antes de que empiece; lo que vale es lo publicado para ese mes.</li>' +
             '<li><b>Transparencia:</b> cada jugador ve su puesto y sus puntos en todo momento. Una persona = una cuenta; las cuentas duplicadas o con jugadas irregulares quedan fuera.</li>' +
             (_d.gran ? '<li><b>Gran Sorteo (' + esc(_d.gran.title || '') + '):</b> del ' + esc(fdate(_d.gran.startsAt)) + ' al ' + esc(fdate(_d.gran.endsAt)) + ' (hora argentina). Suma: 100 puntos cada $100.000 apostados con plata real (misma regla que el mensual) + ' + num(_d.gran.dailyPoints) + ' puntos por cada día con cargas reales que sumen $' + num(_d.gran.dailyMinArs) + ' o más + ' + num(_d.gran.missionPct) + '% de los puntos de cada semana (lunes a domingo) en la que completes misiones semanales. Ganan los 3 con más puntos al cierre; se publican al día siguiente y se entregan igual que el mensual (también en efectivo).</li>' : '') +
             (_d.lastWinners ? '<li><b>Últimos ganadores (' + esc(_d.lastWinners.monthLabel) + '):</b> ' + _d.lastWinners.winners.map((w) => w.pos + '° ' + esc(w.name) + ' · ' + esc(w.prize) + (w.delivered ? ' ✅' : '')).join(' · ') + '</li>' : '') +

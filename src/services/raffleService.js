@@ -35,6 +35,9 @@ const DEFAULT_CONFIG = {
     ]
   },
   deliveryBusinessDays: 10,
+  // #928 (owner): además, todos los participantes entran en un sorteo de $100.000 repartidos en 10 ganadores por cada 100 clientes con al menos
+  // 2 cargas reales en el mes ($10.000 c/u). Se sortea al cierre, con un método verificable (hash del mes + cada cliente).
+  extra: { enabled: true, pool: 100000, winnersPerGroup: 10, groupSize: 100, minDeposits: 2 },
   cashOption: true,
   startMonth: '2026-11' // #919 (owner): el sorteo arranca en noviembre; octubre no vale
 };
@@ -76,6 +79,20 @@ async function getConfig(deps) {
 }
 
 // Cargas reales del mes por cliente (sin pruebas ni regalos).
+// #928: clientes con al menos `min` cargas reales en el rango (mismas reglas que el sorteo: sin pruebas ni regalos, sólo clientes activos).
+async function eligibleExtra(deps, from, to, min) {
+  const rows = await deps.models.Transaction.aggregate([
+    { $match: { type: 'deposit', status: 'completed', timestamp: { $gte: from, $lte: to }, description: { $not: /PRUEBA/i }, 'metadata.source': { $nin: GIFT_SOURCES } } },
+    { $group: { _id: '$userId', n: { $sum: 1 } } }, { $match: { n: { $gte: min } } }
+  ]);
+  const users = await deps.models.User.find({ id: { $in: rows.map((r) => r._id) }, role: 'user', isBlocked: { $ne: true } }).select('id username').lean();
+  return users.filter((u) => u.username && !/^prueba|test/i.test(u.username));
+}
+// Sorteo verificable: cada cliente recibe sha256(mes + ':' + id); ganan los `k` valores más bajos. Con la lista de participantes cualquiera puede recalcularlo.
+function drawExtra(mk, users, k) {
+  const crypto = require('crypto');
+  return users.map((u) => ({ u, h: crypto.createHash('sha256').update(mk + ':' + u.id).digest('hex') })).sort((a, b) => (a.h < b.h ? -1 : 1)).slice(0, k).map((x) => x.u);
+}
 async function depositsByUser(deps, from, to) {
   const rows = await deps.models.Transaction.aggregate([
     { $match: { type: 'deposit', status: 'completed', timestamp: { $gte: from, $lte: to }, description: { $not: /PRUEBA/i }, 'metadata.source': { $nin: GIFT_SOURCES } } },
@@ -132,7 +149,16 @@ async function closeMonth(deps, mk) {
   const cfg = await getConfig(deps);
   const top = await ranking(deps, mk, 3);
   const winners = top.map((s, i) => ({ pos: i + 1, userId: s.userId, username: s.username, masked: mask(s.username), points: s.points, validWagered: s.validWagered, prize: ((cfg.active.prizes || [])[i] || {}).title || '' }));
-  const r = await RaffleMonth.updateOne({ monthKey: mk, status: { $ne: 'closed' } }, { $set: { status: 'closed', closedAt: new Date(), winners, participants: c.participants } }, { upsert: true }).catch((e) => (e && e.code === 11000 ? { modifiedCount: 0 } : Promise.reject(e)));
+  let extra = null; // #928: premio extra por cada 100 clientes con ≥ 2 cargas
+  try {
+    const ex = cfg.extra || {}; if (ex.enabled !== false) {
+      const { from, to } = monthRange(mk); const el = await eligibleExtra(deps, from, to, Number(ex.minDeposits) || 2);
+      const groups = Math.floor(el.length / (Number(ex.groupSize) || 100)); const k = groups * (Number(ex.winnersPerGroup) || 10);
+      const per = Math.round((Number(ex.pool) || 100000) / (Number(ex.winnersPerGroup) || 10));
+      extra = { eligible: el.length, groups, perWinner: per, method: 'sha256(mes:id) más bajos', winners: drawExtra(mk, el, k).map((u) => ({ userId: u.id, username: u.username, masked: mask(u.username), deliveredAt: null })) };
+    }
+  } catch (e) { extra = { error: e.message }; }
+  const r = await RaffleMonth.updateOne({ monthKey: mk, status: { $ne: 'closed' } }, { $set: { status: 'closed', closedAt: new Date(), winners, participants: c.participants, extra } }, { upsert: true }).catch((e) => (e && e.code === 11000 ? { modifiedCount: 0 } : Promise.reject(e)));
   return { closed: !!(r && (r.modifiedCount || r.upsertedCount)), winners };
 }
 
@@ -265,6 +291,17 @@ async function publicStatus(deps, userId, opts = {}) {
       toPodium: myIdx >= 0 && myIdx < 3 ? 0 : Math.max(0, thirdPts - (mine ? mine.points : 0) + 1)
     },
     lastWinners: last ? { monthKey: last.monthKey, monthLabel: monthLabel(last.monthKey), winners: (last.winners || []).map((w) => ({ pos: w.pos, name: w.userId === userId ? w.username : w.masked, points: w.points, prize: w.prize, delivered: !!w.deliveredAt })) } : null,
+    extra: await (async () => {
+      const ex = cfg.extra || {}; if (ex.enabled === false) return null;
+      const { from: ef, to: et } = monthRange(mk); const min = Number(ex.minDeposits) || 2;
+      const el = notStarted ? [] : await eligibleExtra(deps, ef, et, min);
+      const myN = notStarted ? 0 : await deps.models.Transaction.countDocuments({ userId, type: 'deposit', status: 'completed', timestamp: { $gte: ef, $lte: et }, description: { $not: /PRUEBA/i }, 'metadata.source': { $nin: GIFT_SOURCES } });
+      const size = Number(ex.groupSize) || 100; const wpg = Number(ex.winnersPerGroup) || 10;
+      const lx = last && last.extra && Array.isArray(last.extra.winners) ? last.extra : null;
+      return { pool: Number(ex.pool) || 100000, winnersPerGroup: wpg, groupSize: size, minDeposits: min, perWinner: Math.round((Number(ex.pool) || 100000) / wpg),
+        eligibleNow: el.length, winnersNow: Math.floor(el.length / size) * wpg, myDeposits: myN, imIn: myN >= min,
+        last: lx ? { monthLabel: monthLabel(last.monthKey), eligible: lx.eligible, perWinner: lx.perWinner, winners: lx.winners.map((w) => (w.userId === userId ? w.username : w.masked)), meWon: lx.winners.some((w) => w.userId === userId) } : null };
+    })(),
     gran: await (async () => {
       const g = cfg.upcoming || {}; if (!g.start || !g.end) return null; const { from: gf, to: gt } = granRange(g); const GK = 'G:' + (g.key || 'gran-1');
       const all2 = now < gf ? [] : await ranking(deps, GK); const i2 = all2.findIndex((x) => x.userId === userId); const m2 = i2 >= 0 ? all2[i2] : null;
@@ -279,4 +316,4 @@ async function publicStatus(deps, userId, opts = {}) {
   };
 }
 
-module.exports = { computeGran, granRange, DEFAULT_CONFIG, monthKeyOf, monthRange, prevMonthKey, monthLabel, mask, pointsFor, validWageredFor, getConfig, computeMonth, ranking, closeMonth, tick, publicStatus };
+module.exports = { drawExtra, eligibleExtra, computeGran, granRange, DEFAULT_CONFIG, monthKeyOf, monthRange, prevMonthKey, monthLabel, mask, pointsFor, validWageredFor, getConfig, computeMonth, ranking, closeMonth, tick, publicStatus };
