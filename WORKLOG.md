@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-22
 
+### 910. Proveedores de la Página PICA ROJA con el NOMBRE legible — SW v607
+**Pedido (owner):** "en los logos de proveedores que se vea el texto, se tiene que entender". Los logos que da 1girox son casi todos ÍCONOS
+(sin el nombre); en blanco quedaban manchas. Ahora: ícono chico en gris + nombre del proveedor en texto blanco (hasta 2 líneas).
+
 ### 909. 🎨 Página exclusiva PICA ROJA con estilo Stake (azul noche, sobria) y orden de juegos de Girox · menú de cuenta — SW v606
 **Pedido (owner, con capturas de Stake):** fondo, títulos y recuadros "tipo Stake", orden de juegos de Girox, logo de PICA ROJA sin color,
 creativos propios sobrios, proveedores con su logo en gris (se despliegan y llevan a sus juegos), barra de abajo estilo Stake con INICIO al

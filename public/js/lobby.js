@@ -78,8 +78,9 @@ VIP.lobby = (function () {
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
     function _provTile(p) {
+        // #910: los logos de Girox son casi todos íconos (sin el nombre): ícono chico en gris + NOMBRE en texto, para que se entienda.
         return '<button type="button" class="prl-pv" onclick="VIP.lobby.all(' + Number(p.id) + ', \'' + esc(p.name).replace(/'/g, '') + '\')" aria-label="' + esc(p.name) + '">' +
-            '<span class="prl-pvb">' + (p.logo ? '<img loading="lazy" src="/api/games/img?u=' + encodeURIComponent(p.logo) + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'b\'),{textContent:this.closest(\'.prl-pv\').getAttribute(\'aria-label\')}))">' : '<b>' + esc(p.name) + '</b>') + '</span>' +
+            '<span class="prl-pvb">' + (p.logo ? '<img loading="lazy" src="/api/games/img?u=' + encodeURIComponent(p.logo) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(p.name) + '</b></span>' +
             '<small><i class="prl-dot"></i>' + Number(p.count || 0).toLocaleString('es-AR') + ' juegos</small></button>';
     }
     function _providers(list) {
