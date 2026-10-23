@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 868. 👈 Deslizar desde el costado para VOLVER + ⤢ Estirar pantalla — SW v590
+**Pedido (owner):** "que se pueda estirar también; en los menús, cuando entrás, que puedas volver deslizando del lado izquierdo o derecho, como
+para volver al menú anterior".
+- home.js `swipeBack` + `_swipeInit`: gesto desde el borde (≤ 22 px) izq. o der., ≥ 70 px horizontal (más horizontal que vertical, < 0,9 s) ⇒ cierra
+  lo de arriba de todo, de a un paso: cartel (.modal) → historia → cartel de instalar → casino → (Carga / Soporte) vuelve al Inicio del menú.
+  Sobre el casino, dos franjas invisibles de 14 px en los bordes (`.swipe-edge`, ui.js) porque el iframe de Girox se come los toques.
+- Ajuste de pantalla: botón "⤢ Estirar a toda la pantalla" (abajo 0; en Android también arriba 0).
+
 ### 866. 🎰 Favoritos: el juego elegido en PANTALLA COMPLETA, logueado — SW v588
 **Pedido (owner):** "ajustá la velocidad, está lenta cuando entrás de favoritos; que entre logueado al juego que se seleccionó".
 - `favPlay`: abre una ventana YA en el toque (si no, el navegador la bloquea), pide `/api/platform/session` con `direct:true` y, si el server

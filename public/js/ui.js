@@ -1386,6 +1386,8 @@ VIP.ui._showCasinoFrame = function() {
         'align-items:center;justify-content:center;color:#d4af37;font-size:16px;font-weight:700;' +
         'text-align:center;padding:20px;">🎰 Entrando al casino…</div>' +
       // `allow` habilita pantalla completa y sonido dentro de los juegos.
+      // #868: franjas finas en los bordes para el gesto de "volver" (el iframe del casino se come los toques)
+      '<div class="swipe-edge swipe-edge-l" aria-hidden="true"></div><div class="swipe-edge swipe-edge-r" aria-hidden="true"></div>' +
       '<iframe id="casinoFrame" title="Casino" style="flex:1;width:100%;border:0;display:none;" ' +
         'allow="autoplay; fullscreen; payment"></iframe>' +
       // BURBUJA de soporte flotante (abajo a la derecha) — abre el chat de acciones.

@@ -1033,6 +1033,14 @@
         _fitBotApply(Math.max(0, Math.min(60, v + delta)));
     }
     function fitBottomAuto() { _fitBotApply(null); }
+    // #868 (owner: "que se pueda estirar también"): sin espacio abajo y arriba lo mínimo que deja ver la hora del teléfono.
+    function fitStretch() {
+        _fitBotApply(0);
+        const ios = document.documentElement.classList.contains('dev-ios');
+        let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || 'estirado'; } catch (_) {}
+        if (!ios) _fitApply(0, lb);
+        try { VIP.ui.showToast('⤢ Pantalla estirada. Si algo queda tapado, usá + arriba o abajo.', 'success'); } catch (_) {}
+    }
     function openFitPhone() {
         let m = _el('fitModal');
         if (!m) {
@@ -1042,6 +1050,7 @@
                 '<input type="search" id="fitSearch" class="fav-search" placeholder="Buscá tu modelo (ej. iPhone 13, Galaxy, Moto)" autocomplete="off" oninput="VIP.home.fitFilter(this.value)">' +
                 '<div class="fit-tune"><span>⬆️ Arriba <b id="fitTopV"></b></span><button type="button" onclick="VIP.home.fitNudge(-4)" aria-label="Menos espacio arriba">−</button><button type="button" onclick="VIP.home.fitNudge(4)" aria-label="Más espacio arriba">+</button></div>' +
                 '<div class="fit-tune"><span>⬇️ Abajo <b id="fitBotV"></b></span><button type="button" onclick="VIP.home.fitNudgeBottom(-4)" aria-label="Menos espacio abajo">−</button><button type="button" onclick="VIP.home.fitNudgeBottom(4)" aria-label="Más espacio abajo">+</button><button type="button" onclick="VIP.home.fitBottomAuto()">auto</button></div>' +
+                '<button type="button" class="fit-stretch" onclick="VIP.home.fitStretch()">⤢ Estirar a toda la pantalla</button>' +
                 '<p class="fit-cur" id="fitCur"></p>' +
                 '<div id="fitList" class="fit-list"></div>' +
                 '<button type="button" class="btn btn-primary fav-done" onclick="VIP.home.closeFitPhone()">Listo</button></div></div>');
@@ -2698,5 +2707,32 @@
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
     Object.assign(VIP.home, { favOpenPicker, favClosePicker, favSearch, favMore, favToggle, favToggleTop, favPlay }); // #840
-    Object.assign(VIP.home, { openFitPhone, closeFitPhone, fitFilter, fitPick, fitNudge, fitNudgeBottom, fitBottomAuto }); // #865/#867
+    Object.assign(VIP.home, { openFitPhone, closeFitPhone, fitFilter, fitPick, fitNudge, fitNudgeBottom, fitBottomAuto, fitStretch }); // #865/#867/#868
+    // ---------------- #868 DESLIZAR DESDE EL COSTADO PARA VOLVER ----------------
+    // Owner: "en los menús, cuando entrás, que puedas volver deslizando del lado izquierdo o derecho, como para volver al menú anterior".
+    // Gesto desde el borde (≤ 22 px) izquierdo o derecho, horizontal ≥ 70 px y más horizontal que vertical ⇒ "volver": cierra lo de arriba de
+    // todo (cartel → historia → casino) o vuelve al Inicio del menú elegido. Sobre el casino hay dos franjas finas en los bordes (el recuadro de
+    // Girox se come los toques).
+    function swipeBack() {
+        try {
+            const mods = Array.from(document.querySelectorAll('.modal:not(.hidden)')).filter((m) => m.offsetParent !== null || getComputedStyle(m).display !== 'none');
+            if (mods.length) { const m = mods[mods.length - 1]; if (m.id && VIP.ui && VIP.ui.hideModal) VIP.ui.hideModal(m.id); else m.classList.add('hidden'); return true; }
+            const sv = document.getElementById('storyViewer'); if (sv && (sv.classList.contains('open') || sv.getAttribute('aria-hidden') === 'false') && VIP.stories && VIP.stories.close) { VIP.stories.close(); return true; }
+            const ios = document.querySelector('.ios-install-modal'); if (ios) { ios.remove(); return true; }
+            if (VIP.ui && VIP.ui._casinoOpen && VIP.ui.closeCasinoFrame) { VIP.ui.closeCasinoFrame(); return true; }
+            if (_homeMode === 'full' || _homeMode === 'mini') { goHome(); return true; }
+        } catch (_) {}
+        return false;
+    }
+    (function _swipeInit() {
+        let sx = 0, sy = 0, edge = false, t0 = 0;
+        const EDGE = 22;
+        document.addEventListener('touchstart', (e) => { const t = e.touches && e.touches[0]; if (!t) return; sx = t.clientX; sy = t.clientY; t0 = Date.now(); edge = sx <= EDGE || sx >= (window.innerWidth - EDGE) || !!(e.target && e.target.classList && e.target.classList.contains('swipe-edge')); }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (!edge) return; edge = false; const t = e.changedTouches && e.changedTouches[0]; if (!t) return;
+            const dx = t.clientX - sx, dy = t.clientY - sy;
+            if (Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy) * 1.5 && Date.now() - t0 < 900) swipeBack();
+        }, { passive: true });
+    })();
+    VIP.home.swipeBack = swipeBack;
 })();

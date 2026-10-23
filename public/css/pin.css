@@ -2596,3 +2596,8 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 .fit-pick .fit-tune b { color: var(--p-text); margin-left: 4px; }
 .fit-pick .fit-tune button { min-width: 38px; }
 .fit-pick .fit-cur { margin: 0 0 8px; font: 700 11.5px var(--p-font); color: var(--p-muted); }
+
+/* #868 franjas invisibles del gesto "volver" sobre el casino + botón Estirar del ajuste */
+.swipe-edge { position: absolute; top: 120px; bottom: 120px; width: 14px; z-index: 6; background: transparent; touch-action: pan-y; }
+.swipe-edge-l { left: 0; } .swipe-edge-r { right: 0; }
+.fit-pick .fit-stretch { width: 100%; margin: 0 0 8px; border: 1px dashed var(--p-border); background: var(--p-surface); color: var(--p-text); border-radius: 10px; padding: 9px; font: 800 12.5px var(--p-font); cursor: pointer; }
