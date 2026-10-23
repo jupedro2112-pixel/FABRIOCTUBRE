@@ -256,6 +256,21 @@
 
     // ---------- Reseñas dentro del pantallazo de pauta (adServiceModal) ----------
 
+    // #875 (owner): después de la 5ª carga se invita a opinar con +20% de regalo sobre su carga (no antes). La oferta la decide el server
+    // (/api/reviews/offer). `offer` = { amount, pct } ⇒ el cartel lo muestra; el premio se acredita al enviar, con cualquier puntaje.
+    let _offer = null;
+    async function maybeOffer(reason) {
+        try {
+            if (!VIP.state || !VIP.state.currentToken || _myReview) return;
+            if (reason === 'open') { try { const k = 'vip_rv_offer_' + new Date().toISOString().slice(0, 10); if (localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (_) {} }
+            const r = await fetch(VIP.config.API_URL + '/api/reviews/offer', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
+            const d = await r.json().catch(() => ({}));
+            if (!d || !d.eligible) return;
+            _offer = { amount: d.amount, pct: d.pct };
+            if (document.querySelector('.modal:not(.hidden), #reviewModalOverlay')) return; // no tapar otro cartel
+            openModal();
+        } catch (_) {}
+    }
     function openModal() {
         closeModal();
         _selectedStars = 5;
@@ -265,8 +280,8 @@
         ov.className = 'rvm-overlay';
         ov.onclick = function (e) { if (e.target === ov) closeModal(); };
         ov.innerHTML = '<div class="rvm-card">'
-            + '<h2 class="rvm-t">Tu opinión</h2>'
-            + '<p class="rvm-s">Contanos cómo la estás pasando. Se envía una sola vez.</p>'
+            + '<h2 class="rvm-t">' + (_offer ? '⭐ Tu opinión vale +' + _offer.pct + '%' : 'Tu opinión') + '</h2>'
+            + '<p class="rvm-s">' + (_offer ? 'Ya hiciste varias cargas: contanos cómo la estás pasando y te regalamos <b>$' + Number(_offer.amount).toLocaleString('es-AR') + '</b> (' + _offer.pct + '% de tu última carga). Sea cual sea tu opinión.' : 'Contanos cómo la estás pasando. Se envía una sola vez.') + '</p>'
             + '<div id="reviewModalStars" class="rvm-stars"></div>'
             + '<textarea id="reviewModalComment" class="rvm-ta" maxlength="100" placeholder="Escribí tu comentario (opcional)"></textarea>'
             + '<div id="reviewModalMsg" class="rvm-msg"></div>'
@@ -324,8 +339,10 @@
                 return;
             }
             _myReview = { stars: _selectedStars, comment: comment };
-            if (msg) { msg.style.color = '#66ff66'; msg.textContent = '✅ ¡Gracias! Tu opinión quedó enviada.'; }
-            if (VIP.ui && VIP.ui.showToast) VIP.ui.showToast('✅ ¡Gracias por tu opinión!', 'success');
+            const _g = d && d.gift; _offer = null;
+            if (msg) { msg.style.color = '#66ff66'; msg.textContent = _g ? '✅ ¡Gracias! Te cargamos $' + Number(_g.amount).toLocaleString('es-AR') + ' de regalo.' : '✅ ¡Gracias! Tu opinión quedó enviada.'; }
+            if (VIP.ui && VIP.ui.showToast) VIP.ui.showToast(_g ? '🎁 ¡Gracias! Te cargamos $' + Number(_g.amount).toLocaleString('es-AR') + ' (' + _g.pct + '%) por tu opinión' : '✅ ¡Gracias por tu opinión!', 'success');
+            try { if (_g && VIP.ui && VIP.ui.syncBalance) setTimeout(VIP.ui.syncBalance, 2500); } catch (_) {}
             setTimeout(function () { closeModal(); _renderHomeCard(); renderInfoSection(); _pubCache = null; renderEntrySlider(); }, 1600);
         } catch (e) {
             if (msg) { msg.style.color = '#ff8080'; msg.textContent = 'Error de conexión'; }
@@ -333,7 +350,8 @@
         }
     }
 
-    VIP.reviews = { initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection, renderEntrySlider: renderEntrySlider };
+    VIP.reviews = { initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection, renderEntrySlider: renderEntrySlider, maybeOffer: maybeOffer }; // #875
+    try { setTimeout(function () { maybeOffer('open'); }, 9000); } catch (_) {}
 
     document.addEventListener('DOMContentLoaded', function () {
         initLogin();

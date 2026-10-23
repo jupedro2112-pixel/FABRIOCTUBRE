@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-22
 
+### 875–876. ⭐ Reseña con regalo tras la 5ª carga · 🏠 INICIO del panel con los números del día (clave propia) — SW v592, admin SW v166
+- **#875** (owner: "armá lo de las reseñas después de la 5ª carga, que puedan reclamar un 20% después de su carga; que aparezca después, no
+  antes"): `GET /api/reviews/offer` (5+ cargas reales, sin opinión ni regalo previo) y `POST /api/reviews` acredita REVIEW_GIFT_PCT=20% de la
+  ÚLTIMA carga (tope de la carga $20.000) con `creditGift` + rollover global, ref `vip-review-<userId>`, Transaction `review_gift` (enum +
+  CASHBACK_GIFT_TX_TYPES + fraudRadar). Con CUALQUIER puntaje (premiar sólo las buenas sería comprar reseñas; siguen pasando por moderación).
+  App: `VIP.reviews.maybeOffer` 7 s después de cada carga acreditada y 1 vez por día al abrir; el cartel dice "Tu opinión vale +20% · $X".
+- **#876** (owner: "en el panel una sección INICIO: gente activa en la app, cuántos entraron en el día, cuántos de retención (sólo clientes de
+  +72 h) sin los de publicidad, clientes nuevos registrados, cargas (1ª carga, retención +72 h), aceptación de la app (instalaron, notificaciones,
+  total registrados), en recuadros y con clave 909090"): `GET /api/admin/inicio/stats?day=` (gate `app.use('/api/admin/inicio')` con
+  `Config['inicioPinHash']`, header `x-inicio-pin`; sin clave ⇒ 428 y el panel pide crearla — la clave NO va en el código, el repo es público;
+  el owner la crea desde el panel). Recuadros: activos ahora (ping < 3 min), entraron, retención +72 h (y cuántos vinieron por publicidad),
+  nuevos −72 h; registros (publicidad / orgánicos / registraron y cargaron); cargas (total, 1ª carga, retención +72 h, nuevos −72 h no 1ª,
+  promedio); retiros pedidos / pagados y neto; aceptación (registrados, con app instalada, con notificaciones, %). Se refresca cada minuto.
+  Probado con MongoDB en memoria: todos los números coinciden con los datos armados.
+
 ### 874. ⭐ Reseñas: usuario tapado menos los últimos 3 caracteres ("*********123")
 **Pedido (owner):** "en las opiniones pongamos 1000 reseñas más usando lo que dice la gente; el usuario con el estilo del registro y tapado todo menos
 los últimos 3 números". `_reviewMaskUsername` ⇒ todo tapado menos los últimos 3 (las del registro terminan en 3 números). NO se cargaron reseñas

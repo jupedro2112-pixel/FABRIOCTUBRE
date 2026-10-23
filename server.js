@@ -9362,7 +9362,7 @@ async function _cashbackPaidBetween(userId, fromDate, toDate) {
 // reembolsos por período ('refund'), el rakeback, el nivel VIP, la ruleta, el
 // fueguito, las comisiones y TODO 'bonus' (incluido el propio reembolso
 // acumulativo, metadata.source 'instant_cashback' — §3.2).
-const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette', 'install_gift', 'mission']; // install_gift (#283): carga gratis por instalar la app
+const CASHBACK_GIFT_TX_TYPES = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'referral_commission', 'roulette', 'install_gift', 'mission', 'review_gift']; // review_gift (#875) // install_gift (#283): carga gratis por instalar la app
 
 /**
  * Estado del reembolso acumulativo de un jugador. `opts.fresh` → netwin sin
@@ -20542,6 +20542,74 @@ app.post('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req
     await Config.set('usdtRate', { rate, updatedAt: new Date().toISOString(), source: 'manual (' + req.user.username + ')' }, req.user.username); res.json({ success: true, rate });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
+// ===== #876 INICIO del panel (owner 2026-10-23): "una sección INICIO con la gente activa en la app, cuántos entraron hoy, cuántos de retención
+// (sólo clientes de más de 72 h: lo demás no sirve), clientes nuevos registrados, cargas (1ª carga, retención +72 h), aceptación de la app
+// (instalaron, notificaciones, total registrados), todo en recuadros y con clave". CLAVE propia en Config['inicioPinHash'] (sha256; NUNCA en
+// el código: el repo es público). Sin clave creada ⇒ 428 y el panel pide crearla. Header `x-inicio-pin`.
+let _inicioPinCache = { at: 0, hash: undefined };
+async function _inicioPinHash() { if (_inicioPinCache.hash !== undefined && Date.now() - _inicioPinCache.at < 60000) return _inicioPinCache.hash; let h = null; try { h = await getConfig('inicioPinHash', null); } catch (_) {} _inicioPinCache = { at: Date.now(), hash: h || null }; return _inicioPinCache.hash; }
+app.get('/api/admin/inicio-pin', authMiddleware, adminMiddleware, async (req, res) => { res.json({ enabled: !!(await _inicioPinHash()), canEdit: req.user.role === 'admin' }); });
+app.post('/api/admin/inicio-pin', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const pin = String((req.body && req.body.pin) || '').trim(), cur = String((req.body && req.body.current) || '').trim();
+    if (!/^\S{4,32}$/.test(pin)) return res.status(400).json({ error: 'La clave tiene que tener entre 4 y 32 caracteres, sin espacios.' });
+    const h = await _inicioPinHash(); if (h && _sha(cur) !== h) return res.status(403).json({ error: 'La clave actual no coincide.' });
+    await Config.set('inicioPinHash', _sha(pin), req.user.username); _inicioPinCache = { at: 0, hash: undefined };
+    logger.info(`[inicio] clave ${h ? 'cambiada' : 'creada'} por ${req.user.username}`);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.use('/api/admin/inicio', authMiddleware, adminMiddleware, async (req, res, next) => {
+  try {
+    const h = await _inicioPinHash(); if (!h) return res.status(428).json({ error: 'Creá la clave de INICIO.', code: 'PIN_SETUP' });
+    const pin = String(req.get('x-inicio-pin') || ''); if (pin && _sha(pin) === h) return next();
+    return res.status(423).json({ error: 'INICIO está protegido con clave.', code: 'PIN_REQUIRED' });
+  } catch (_) { return res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.get('/api/admin/inicio/stats', async (req, res) => {
+  try {
+    const PendingPayout = require('./src/models/PendingPayout');
+    const today = _schedArtKey(new Date());
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.day || '')) && String(req.query.day) <= today ? String(req.query.day) : today;
+    const start = new Date(day + 'T00:00:00-03:00'), end = new Date(start.getTime() + 86400000);
+    const ref = new Date(Math.min(Date.now(), end.getTime())); const cut72 = new Date(ref.getTime() - 72 * 3600000); // retención = cuenta de +72 h
+    const isAd = (u) => !!(u && (u.acquisitionSource === 'landing' || (u.acquisitionCampaign && u.acquisitionCampaign !== 'INGRESO')));
+    const REAL = { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } };
+    const [activeNow, enteredIds, regs, depAgg, wd, totalUsers, withApp, withNotif] = await Promise.all([
+      day === today ? AppSession.distinct('userId', { lastPingAt: { $gte: new Date(Date.now() - 3 * 60000) } }) : Promise.resolve(null),
+      AppSession.distinct('userId', { dateKey: day }),
+      User.find({ role: 'user', createdAt: { $gte: start, $lt: end } }).select('id acquisitionSource acquisitionCampaign').lean(),
+      Transaction.aggregate([{ $match: Object.assign({ timestamp: { $gte: start, $lt: end } }, REAL) }, { $group: { _id: '$userId', total: { $sum: '$amount' }, n: { $sum: 1 } } }]),
+      PendingPayout.aggregate([{ $match: { createdAt: { $gte: start, $lt: end } } }, { $group: { _id: '$status', n: { $sum: 1 }, total: { $sum: '$amount' } } }]),
+      User.countDocuments({ role: 'user' }),
+      User.countDocuments({ role: 'user', $or: [{ fcmTokenContext: 'standalone' }, { 'fcmTokens.context': 'standalone' }] }),
+      User.countDocuments({ role: 'user', $or: [{ fcmToken: { $nin: [null, ''] } }, { 'fcmTokens.0': { $exists: true } }] })
+    ]);
+    // Quiénes entraron / cargaron: edad de la cuenta y si vinieron por publicidad.
+    const depIds = depAgg.map((d) => d._id).filter(Boolean);
+    const people = await User.find({ id: { $in: [...new Set([...enteredIds, ...depIds])] } }).select('id createdAt acquisitionSource acquisitionCampaign').lean();
+    const P = new Map(people.map((u) => [u.id, u])); const old = (id) => { const u = P.get(id); return !!(u && u.createdAt && new Date(u.createdAt) < cut72); };
+    const enteredRet = enteredIds.filter(old);
+    // Primera carga de la vida en este día.
+    const firsts = depIds.length ? await Transaction.aggregate([{ $match: Object.assign({ userId: { $in: depIds } }, REAL) }, { $group: { _id: '$userId', first: { $min: '$timestamp' } } }, { $match: { first: { $gte: start, $lt: end } } }]) : [];
+    const firstSet = new Set(firsts.map((f) => f._id));
+    const sum = (arr) => ({ users: arr.length, n: arr.reduce((a, d) => a + d.n, 0), total: Math.round(arr.reduce((a, d) => a + (d.total || 0), 0)) });
+    const depAll = sum(depAgg), depFirst = sum(depAgg.filter((d) => firstSet.has(d._id))), depRet = sum(depAgg.filter((d) => old(d._id) && !firstSet.has(d._id))), depNew = sum(depAgg.filter((d) => !old(d._id) && !firstSet.has(d._id)));
+    const wdAll = wd.reduce((a, x) => ({ n: a.n + x.n, total: a.total + (x.total || 0) }), { n: 0, total: 0 }); const wdPaid = wd.filter((x) => x._id === 'paid').reduce((a, x) => ({ n: a.n + x.n, total: a.total + (x.total || 0) }), { n: 0, total: 0 });
+    const regAd = regs.filter(isAd).length;
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      day, isToday: day === today, generatedAt: new Date().toISOString(),
+      app: { activeNow: activeNow ? activeNow.length : null, enteredToday: enteredIds.length, enteredRetention: enteredRet.length, enteredRetentionAds: enteredRet.filter((id) => isAd(P.get(id))).length, enteredNew72: enteredIds.length - enteredRet.length },
+      registrations: { total: regs.length, fromAds: regAd, organic: regs.length - regAd, firstDepositSameDay: regs.filter((u) => firstSet.has(u.id)).length },
+      deposits: { all: depAll, first: depFirst, retention: depRet, new72: depNew, avg: depAll.n ? Math.round(depAll.total / depAll.n) : 0 },
+      withdrawals: { requested: { n: wdAll.n, total: Math.round(wdAll.total) }, paid: { n: wdPaid.n, total: Math.round(wdPaid.total) } },
+      net: Math.round(depAll.total - wdPaid.total),
+      adoption: { totalUsers, withApp, withNotif, appPct: totalUsers ? Math.round(withApp * 1000 / totalUsers) / 10 : 0, notifPct: totalUsers ? Math.round(withNotif * 1000 / totalUsers) / 10 : 0 }
+    });
+  } catch (e) { logger.error('[inicio] stats: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #477: base "desde el inicio" = desde la primera carga real registrada (tope 400 días)
 async function _diaFirstDepositDate() {
   try { const d = await Transaction.findOne({ type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'payout_refund'] } }).sort({ timestamp: 1 }).select('timestamp').lean(); return d ? new Date(d.timestamp) : null; } catch (_) { return null; }
@@ -24608,6 +24676,29 @@ function _reviewBucketOf(stars) {
 }
 
 // POST /api/reviews — el user crea su reseña (1 sola vez, no editable).
+// #875 (owner): "las reseñas, después de la 5ª carga, y que puedan reclamar un 20% después de su carga; que aparezca después, no antes".
+// Oferta = ya tiene 5+ cargas reales y todavía no opinó. Al enviar su opinión (CUALQUIER puntaje: premiar sólo las buenas sería comprar
+// reseñas) se le acredita REVIEW_GIFT_PCT% de su ÚLTIMA carga (tope de la carga REVIEW_GIFT_CAP_BASE), con el rollover global, una sola vez
+// (reference `vip-review-<userId>`). Un tipo de regalo nuevo ⇒ CASHBACK_GIFT_TX_TYPES (está).
+const REVIEW_GIFT_PCT = 20, REVIEW_GIFT_MIN_DEPOSITS = 5, REVIEW_GIFT_CAP_BASE = 20000;
+const _REAL_DEP_Q = (userId) => ({ userId, type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } });
+async function _reviewGiftCalc(userId) {
+  const n = await Transaction.countDocuments(_REAL_DEP_Q(userId));
+  const last = n >= REVIEW_GIFT_MIN_DEPOSITS ? await Transaction.findOne(_REAL_DEP_Q(userId)).sort({ createdAt: -1 }).select('amount').lean() : null;
+  const base = Math.min(REVIEW_GIFT_CAP_BASE, Math.round(Number(last && last.amount) || 0));
+  return { deposits: n, base, amount: Math.round(base * REVIEW_GIFT_PCT / 100) };
+}
+async function _reviewGiftOffer(userId) {
+  const c = await _reviewGiftCalc(userId);
+  if (c.deposits < REVIEW_GIFT_MIN_DEPOSITS) return { eligible: false, deposits: c.deposits };
+  if (await Review.exists({ userId })) return { eligible: false, deposits: c.deposits, reviewed: true };
+  if (await Transaction.exists({ userId, type: 'review_gift' })) return { eligible: false, deposits: c.deposits, rewarded: true };
+  return { eligible: c.amount > 0, deposits: c.deposits, pct: REVIEW_GIFT_PCT, base: c.base, amount: c.amount };
+}
+app.get('/api/reviews/offer', authMiddleware, async (req, res) => {
+  try { res.set('Cache-Control', 'no-store'); res.json(Object.assign({ pct: REVIEW_GIFT_PCT, minDeposits: REVIEW_GIFT_MIN_DEPOSITS }, await _reviewGiftOffer(req.user.userId))); }
+  catch (e) { res.json({ eligible: false }); }
+});
 app.post('/api/reviews', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -24635,7 +24726,21 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
       }
       throw e;
     }
-    res.json({ success: true, review: { stars, comment, updatedAt: now } });
+    // #875: premio por opinar (si ya hizo 5+ cargas). Si el crédito falla, la reseña queda igual (se loguea).
+    let gift = null;
+    try {
+      const c = await _reviewGiftCalc(userId);
+      if (c.deposits >= REVIEW_GIFT_MIN_DEPOSITS && c.amount > 0 && !(await Transaction.exists({ userId, type: 'review_gift' }))) {
+        const reference = `vip-review-${userId}`;
+        const cr = await girox.creditGift(username, c.amount, { description: `${REVIEW_GIFT_PCT}% de regalo por dejar tu opinión`, reference, rolloverX: await _giftRolloverX() });
+        if (cr && cr.success) {
+          await Transaction.create({ id: uuidv4(), type: 'review_gift', amount: c.amount, username, userId, description: `${REVIEW_GIFT_PCT}% de regalo por opinar (tras ${c.deposits} cargas)`, adminUsername: 'auto-reseñas', adminRole: 'system', metadata: { source: 'review_gift', reference, creditedAs: cr.creditedAs || null }, timestamp: new Date() });
+          gift = { amount: c.amount, pct: REVIEW_GIFT_PCT };
+          logger.info(`[reseñas] regalo $${c.amount} a ${username} por opinar (${c.deposits} cargas)`);
+        } else logger.warn(`[reseñas] el regalo de ${username} no entró: ${cr && cr.error}`);
+      }
+    } catch (ge) { logger.warn(`[reseñas] regalo: ${ge.message}`); }
+    res.json({ success: true, review: { stars, comment, updatedAt: now }, gift });
   } catch (err) {
     logger.error(`POST /api/reviews: ${err.message}`);
     res.status(500).json({ error: 'Error del servidor' });

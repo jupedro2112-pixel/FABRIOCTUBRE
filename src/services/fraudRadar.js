@@ -14,7 +14,7 @@
 'use strict';
 
 // Regalos = CASHBACK_GIFT_TX_TYPES de server.js sin las comisiones de referidos (no son bono).
-const GIFT_TX = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'roulette', 'install_gift', 'mission'];
+const GIFT_TX = ['bonus', 'fire_reward', 'refund', 'rakeback', 'vip_levelup', 'roulette', 'install_gift', 'mission', 'review_gift'];
 const DEP_EXCLUDE = ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'];
 const tail = (s, n = 10) => String(s || '').replace(/\D/g, '').slice(-n);
 const normName = (s) => String(s || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ').trim();

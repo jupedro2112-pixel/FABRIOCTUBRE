@@ -321,3 +321,11 @@ tr.fin td { opacity: .92; }
 .gs-form label { display: flex; flex-direction: column; gap: 3px; font: 700 11px var(--p-font); color: var(--p-muted); } .gs-form input { width: 100%; }
 .gs-form .gs-chk { flex-direction: row; align-items: center; gap: 6px; font: 800 12px var(--p-font); color: var(--p-text); cursor: pointer; }
 .gs-form .gs-actions { display: flex; align-items: center; gap: 10px; grid-column: 1 / -1; }
+
+/* #876 INICIO: recuadros */
+.in-h { font-size: .95rem; margin: 1rem 0 .5rem; }
+.in-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .6rem; }
+.in-box { background: var(--p-card, #111827); border: 1px solid var(--p-border, rgba(255,255,255,.1)); border-radius: 12px; padding: .7rem .8rem; }
+.in-box .in-l { font-size: .78rem; color: var(--p-muted, #9ca3af); font-weight: 700; }
+.in-box .in-v { font-size: 1.6rem; font-weight: 900; margin: .2rem 0; color: var(--p-text, #fff); font-variant-numeric: tabular-nums; }
+.in-box .in-s { font-size: .72rem; color: var(--p-muted, #9ca3af); }

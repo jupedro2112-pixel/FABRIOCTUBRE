@@ -118,6 +118,11 @@ document.addEventListener('change', function (ev) {
             </div>
             <nav class="sidebar-nav">
                 <!-- #743 (owner 2026-10-21): MENÚ REORGANIZADO — Configuración · Atención · App · Administrativo · Publicidad (+ Interno abajo). Todo lo que es DATOS (Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app) y SMS masivo piden la clave (Configuración → Clave de Datos). -->
+<!-- #876 (owner): INICIO (números del día, con clave propia) -->
+<a href="#" class="nav-item" data-section="inicio">
+<span>🏠</span>
+<span>INICIO</span>
+</a>
 <!-- #815 (owner 2026-10-22): Cronograma arriba de todo · #871 (owner): separado en dos, bajo "Automático (no tocar)" -->
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🤖 Automático (no tocar)</div>
 <a href="#" class="nav-item" data-section="cronograma">
@@ -2767,6 +2772,11 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 </div>
             </section>
             <!-- #873 (owner): ALERTAS DE ESTAFA — reglas + puntaje (src/services/fraudRadar.js); bloquear usa /api/admin/users/:id/block -->
+            <!-- #876 INICIO: números del día en recuadros (clave propia: Config inicioPinHash) -->
+            <section id="inicioSection" class="section">
+                <div class="panel-header"><h2>🏠 INICIO</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="inDay" class="form-input" style="width:auto" onchange="loadInicio()"><button class="btn btn-secondary" onclick="document.getElementById('inDay').value='';loadInicio()">Hoy</button><button class="btn btn-secondary" onclick="loadInicio()">🔄</button><button class="btn btn-secondary" onclick="inicioChangePin()">🔑 Clave</button></div></div>
+                <div id="inBody">Cargando…</div>
+            </section>
             <section id="fraudSection" class="section">
                 <div class="panel-header">
                     <h2>🚨 Alertas de estafa</h2>

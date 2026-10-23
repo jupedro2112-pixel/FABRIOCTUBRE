@@ -2284,6 +2284,7 @@
     // #712 (owner): "cuando la gente carga dentro de la app rápida de Girox que le salte un cartel: ¡Buena suerte! Recordá que tenemos
     // muchos beneficios para vos dentro de nuestro menú completo, ¡no te lo pierdas! — 5 segundos o se puede sacar, en las primeras 5 cargas".
     async function onDepositCredited(d) {
+        try { setTimeout(function () { if (VIP.reviews && VIP.reviews.maybeOffer) VIP.reviews.maybeOffer('deposit'); }, 7000); } catch (_) {} // #875: después de la carga, si ya es la 5ª+
         try { _fdPromoP = null; _fdNotesPaint(); } catch (_) {} // refresca contador de cargas / guía
         try { setTimeout(storyBonusRefresh, 1500); } catch (_) {} // #742: el bono de la historia se consumió con esta carga
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) return; } catch (_) { return; }

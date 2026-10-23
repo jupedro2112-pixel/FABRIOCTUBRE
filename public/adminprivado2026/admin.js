@@ -4988,6 +4988,7 @@ function switchSection(section) {
     if (section === 'cronograma') loadCronograma(); // #190
     if (section === 'cronohist') loadStoriesAuto(); // #871
     if (section === 'fraud') loadFraud(); // #873
+    if (section === 'inicio') loadInicio(); // #876
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
@@ -17347,4 +17348,61 @@ async function fraudReview(userId, status) {
     const note = window.prompt(status === 'legit' ? 'Nota (opcional): ¿por qué es legítimo?' : 'Nota (opcional): ¿qué hay que vigilar?', '') ;
     if (note === null) return;
     try { const r = await authFetch('/api/admin/fraud/review/' + encodeURIComponent(userId), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, note }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast(status === 'legit' ? '✅ Marcado como legítimo (no se vuelve a mostrar)' : '👁 En observación', 'success'); loadFraud(true); } catch (e) { showToast('No se pudo: ' + e.message, 'error'); }
+}
+
+// ===== #876 INICIO =====
+let _inTimer = null;
+async function _inicioFetch(path, opts) { const pin = sessionStorage.getItem('inicio_pin') || ''; const o = Object.assign({}, opts || {}); o.headers = Object.assign({ 'x-inicio-pin': pin }, o.headers || {}); return authFetch(path, o); }
+async function inicioCreatePin() {
+    const p1 = window.prompt('Creá la clave de INICIO (4 a 32 caracteres):', ''); if (!p1) return false;
+    const p2 = window.prompt('Repetí la clave:', ''); if (p1 !== p2) { showToast('Las claves no coinciden', 'error'); return false; }
+    const r = await authFetch('/api/admin/inicio-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: p1 }) }); const j = await r.json();
+    if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return false; }
+    sessionStorage.setItem('inicio_pin', p1); showToast('🔑 Clave de INICIO creada', 'success'); return true;
+}
+async function inicioChangePin() {
+    const cur = window.prompt('Clave actual de INICIO:', ''); if (cur === null) return;
+    const p1 = window.prompt('Clave nueva:', ''); if (!p1) return; const p2 = window.prompt('Repetí la clave nueva:', ''); if (p1 !== p2) { showToast('Las claves no coinciden', 'error'); return; }
+    const r = await authFetch('/api/admin/inicio-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: p1, current: cur }) }); const j = await r.json();
+    if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } sessionStorage.setItem('inicio_pin', p1); showToast('🔑 Clave cambiada', 'success');
+}
+async function loadInicio() {
+    const box = document.getElementById('inBody'); if (!box) return;
+    clearTimeout(_inTimer);
+    const day = (document.getElementById('inDay') || {}).value || '';
+    try {
+        let r = await _inicioFetch('/api/admin/inicio/stats' + (day ? '?day=' + day : ''));
+        if (r.status === 428) { box.innerHTML = '<div class="card">🔑 Todavía no hay clave de INICIO.</div>'; if (await inicioCreatePin()) return loadInicio(); return; }
+        if (r.status === 423) { const pin = window.prompt('🔒 Clave de INICIO:', ''); if (!pin) { box.innerHTML = '<div class="card">🔒 Protegido con clave.</div>'; return; } sessionStorage.setItem('inicio_pin', pin); r = await _inicioFetch('/api/admin/inicio/stats' + (day ? '?day=' + day : '')); if (r.status === 423) { sessionStorage.removeItem('inicio_pin'); box.innerHTML = '<div class="card" style="color:#f87171">Clave incorrecta.</div>'; return; } }
+        const d = await r.json(); if (!r.ok) throw new Error(d.error || 'error');
+        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const n = (x) => x == null ? '—' : Number(x).toLocaleString('es-AR');
+        const box1 = (ico, label, val, sub, col) => '<div class="in-box" style="border-top:3px solid ' + (col || '#6366f1') + '"><div class="in-l">' + ico + ' ' + label + '</div><div class="in-v">' + val + '</div>' + (sub ? '<div class="in-s">' + sub + '</div>' : '') + '</div>';
+        const grp = (t, inner) => '<h3 class="in-h">' + t + '</h3><div class="in-grid">' + inner + '</div>';
+        const lbl = new Date(d.day + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+        box.innerHTML = '<div style="color:#a5b4fc;font-size:.85rem;margin-bottom:.4rem;text-transform:capitalize">' + (d.isToday ? 'Hoy · ' : '') + lbl + ' · actualizado ' + new Date(d.generatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+            grp('📱 Gente en la app',
+                (d.isToday ? box1('🟢', 'Activos ahora', n(d.app.activeNow), 'con la app abierta en los últimos 3 min', '#22c55e') : '') +
+                box1('👥', 'Entraron en el día', n(d.app.enteredToday), 'personas distintas', '#6366f1') +
+                box1('🔁', 'Retención (cuentas de +72 h)', n(d.app.enteredRetention), 'de esos, ' + n(d.app.enteredRetentionAds) + ' vinieron alguna vez por publicidad', '#0ea5e9') +
+                box1('🆕', 'Nuevos (−72 h) que entraron', n(d.app.enteredNew72), 'cuentas creadas en los últimos 3 días', '#a855f7')) +
+            grp('📝 Registros del día',
+                box1('🆕', 'Clientes nuevos', n(d.registrations.total), 'usuarios creados en el día', '#a855f7') +
+                box1('📣', 'Por publicidad', n(d.registrations.fromAds), 'landing / campaña', '#f59e0b') +
+                box1('🌱', 'Orgánicos', n(d.registrations.organic), 'sin campaña', '#22c55e') +
+                box1('⚡', 'Registraron y cargaron', n(d.registrations.firstDepositSameDay), d.registrations.total ? Math.round(d.registrations.firstDepositSameDay * 100 / d.registrations.total) + '% de los nuevos' : '', '#16a34a')) +
+            grp('💵 Cargas del día',
+                box1('💰', 'Total cargado', m(d.deposits.all.total), n(d.deposits.all.n) + ' cargas · ' + n(d.deposits.all.users) + ' clientes · promedio ' + m(d.deposits.avg), '#16a34a') +
+                box1('🥇', 'Primeras cargas', m(d.deposits.first.total), n(d.deposits.first.users) + ' clientes cargaron por primera vez', '#f59e0b') +
+                box1('🔁', 'Retención (+72 h)', m(d.deposits.retention.total), n(d.deposits.retention.n) + ' cargas · ' + n(d.deposits.retention.users) + ' clientes', '#0ea5e9') +
+                box1('🆕', 'Nuevos (−72 h, no 1ª)', m(d.deposits.new72.total), n(d.deposits.new72.n) + ' cargas · ' + n(d.deposits.new72.users) + ' clientes', '#a855f7')) +
+            grp('🏧 Retiros y neto',
+                box1('📤', 'Retiros pedidos', m(d.withdrawals.requested.total), n(d.withdrawals.requested.n) + ' pedidos', '#ef4444') +
+                box1('✅', 'Retiros pagados', m(d.withdrawals.paid.total), n(d.withdrawals.paid.n) + ' pagos', '#ef4444') +
+                box1('📊', 'Neto (cargas − pagados)', m(d.net), 'no incluye bonos', d.net >= 0 ? '#16a34a' : '#ef4444')) +
+            grp('📲 Aceptación de la app (todos los clientes)',
+                box1('👤', 'Registrados', n(d.adoption.totalUsers), 'clientes en total', '#6366f1') +
+                box1('📲', 'Instalaron la app', n(d.adoption.withApp), d.adoption.appPct + '% del total', '#0ea5e9') +
+                box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% del total', '#f59e0b'));
+        if (d.isToday) _inTimer = setTimeout(() => { if (document.getElementById('inicioSection') && document.getElementById('inicioSection').classList.contains('active')) loadInicio(); }, 60000);
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
 }
