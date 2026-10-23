@@ -137,9 +137,9 @@ VIP.raffle = (function () {
             const r = await fetch(VIP.config.API_URL + '/api/raffle', { headers: { Authorization: 'Bearer ' + VIP.state.currentToken } }); if (!r.ok) return;
             const d = await r.json(); _d = d; const me = d.me || {};
             document.querySelectorAll('.rf-strip[data-brand]').forEach((el) => { el.outerHTML = stripHtml(el.dataset.brand); }); // #920: con los datos reales (puesto)
-            const lf = _left(d.startsAt); const t = d.notStarted ? 'Empieza en ' + lf.d + ' días y ' + lf.h + ' h · iPhone 18 Pro Max y más' : d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste el ' + d.myWin.pos + '° puesto! Tocá para coordinar la entrega' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' + (me.position > 1 ? ' · te faltan ' + num(me.toFirst) + ' para el 1°' : ' · ¡vas primero!') : 'Sumá puntos jugando: cada $100.000 = 100 pts');
+            const lf = _left(d.startsAt); const t = d.notStarted ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste! Tocá acá' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' : 'Sumá puntos jugando');
             document.querySelectorAll('.js-rf-pos').forEach((e) => { e.textContent = t; });
-            const t2 = d.notStarted ? 'Empieza en ' + lf.d + ' días y ' + lf.h + ' h · $30.000.000 y más' : 'Valorado en $30.000.000 · 2° viaje al Caribe · 3° USD 2.000';
+            const g2 = d.gran || {}; const t2 = (g2.notStarted !== false) ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : (g2.me && g2.me.position ? 'Vas ' + g2.me.position + '° · ' + num(g2.me.points) + ' pts' : 'Sumá puntos jugando');
             document.querySelectorAll('.js-rf-gran').forEach((e) => { e.textContent = t2; });
         } catch (_) {}
     }

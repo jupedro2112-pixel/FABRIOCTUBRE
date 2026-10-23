@@ -21,6 +21,9 @@ botones del sorteo del Inicio (se salían por la derecha).
 - `publicStatus.gran` + pantalla: cuenta regresiva, trofeos, cómo sumar (3 líneas), mi puesto/puntos con desglose, top 10 tapado, bases detalladas.
 - Los extras van SÓLO en el Gran Sorteo; el mensual sigue sólo por lo apostado.
 - CSS: `.rf-entries` con border-box y textos con "…" (no se salen del ancho).
+- (owner, capturas): los dos sorteos van UNO AL LADO DEL OTRO, chicos (recuadro individual, texto adentro), en el INICIO del menú completo
+  (`#entryView`, salieron de `#homeFull` = cargas), del básico y del intermedio. Las 4 plataformas en UNA línea, cuadradas y más chicas
+  (`#basicPlats` y `#platformsButtons`, grid de 4). SW v618.
 
 ### 920. Casino lobby, Volver, saldo y sin perfil en las páginas; sorteo minimizable (también en Girox) con fotos y podio; plataformas con sus colores; JUGÁ AQUÍ abre la elegida; burbuja movible — SW v616
 **Pedido (owner, varios mensajes):** sección "Casino lobby" con los lobbies de Girox en todas; "Volver" en cada sección; logo de JUGAYGANA (el de su

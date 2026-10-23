@@ -3135,3 +3135,28 @@ html body .plat-play-btn.plat-girox .plat-reco { background: #16a34a !important;
 .rf-gran-me b { font-size: 20px; font-weight: 900; }
 .rf-gran .rf-rank { margin-top: 8px; } .rf-gran .rf-rank li { background: rgba(0,0,0,.28); color: #fff; }
 .rf-gran .rf-pod-txt { color: var(--rfb-mut); }
+/* #921 (owner): los dos sorteos uno al lado del otro, chicos, cada uno en su recuadro, el texto adentro */
+.rf-entries { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 12px; overflow: visible; }
+.rf-entries .rf-entry { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border-radius: 12px; min-height: 0; box-shadow: 0 4px 12px rgba(230,0,35,.2); }
+.rf-entries .rf-entry-img { width: 30px; height: 30px; flex: 0 0 30px; }
+.rf-entries .rf-entry-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rf-entries .rf-entry-t b { font-size: 12px; font-weight: 900; line-height: 1.15; }
+.rf-entries .rf-entry-t i { font-style: normal; font-size: 11px; font-weight: 700; line-height: 1.15; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-entries .rf-entry-t small { font-size: 10px; font-weight: 700; line-height: 1.15; opacity: .85; }
+.rf-entries .rf-entry-c { display: none; }
+/* #921 (owner): las 4 plataformas en UNA línea, cuadradas y más chicas (básico y completo) */
+#basicPlats { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; }
+#basicPlats .bv-chip { aspect-ratio: 1 / 1; min-width: 0 !important; width: auto !important; padding: 6px 3px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important; border-radius: 12px !important; }
+html body #basicPlats .bv-chip[class*="plat-"] img { width: 26px !important; height: 26px !important; }
+html body #basicPlats .bv-chip.plat-jugaygana img { width: 44px !important; height: 20px !important; border-radius: 6px !important; }
+html body #basicPlats .bv-chip[class*="plat-"] b { font-size: 9.5px !important; letter-spacing: 0 !important; }
+#basicPlats .bv-chip small { font-size: 9px !important; line-height: 1 !important; }
+#platformsButtons { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; }
+#platformsButtons .plat-play-wrap { min-width: 0 !important; width: auto !important; }
+html body #platformsButtons .plat-play-btn[class*="plat-"] { aspect-ratio: 1 / 1; width: 100% !important; min-width: 0 !important; padding: 6px 3px !important; gap: 3px !important; border-radius: 12px !important; justify-content: center !important; }
+html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-logo { width: 26px !important; height: 26px !important; }
+html body #platformsButtons .plat-play-btn.plat-jugaygana .plat-logo { width: 44px !important; height: 20px !important; border-radius: 6px !important; }
+html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-play-name { font-size: 9.5px !important; }
+html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-play-sub { display: none !important; }
+html body #platformsButtons .plat-play-btn.plat-girox .plat-reco { font-size: 7.5px !important; padding: 1px 4px !important; }
+html body #platformsButtons .plat-check { width: 14px !important; height: 14px !important; font-size: 9px !important; top: 4px !important; right: 4px !important; }
