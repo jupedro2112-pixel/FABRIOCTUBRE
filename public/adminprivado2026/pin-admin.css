@@ -338,3 +338,6 @@ tr.fin td { opacity: .92; }
 .sp-pend-why { flex: 1 1 220px; min-width: 0; }
 .sp-pend-amt { width: 110px; }
 .sp-pend-wait, .sp-pend-foot { color: var(--p-muted, #9ca3af); font-size: 11.5px; }
+
+/* #901 grupo fijado arriba: "Manejo · Atención automática" (queda visible al bajar por el menú) */
+.nav-pinned { position: sticky; top: -6px; z-index: 3; background: var(--p-card); display: flex; flex-direction: column; gap: 5px; padding-bottom: 6px; margin-bottom: 4px; border-bottom: 1px solid var(--p-border); }

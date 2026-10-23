@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 901. 📌 Panel: "🎯 Manejo · Atención automática" FIJADO arriba (cargas / retiros / soporte); el resto abajo — admin SW v180
+**Pedido (owner):** "dejá todo lo nuevo de chat, pagos, retiros del lado de cargas / retiro / soporte y bajá el resto; dejá fijado arriba
+Manejo · Atención automática". `.nav-pinned` (sticky dentro del `.sidebar-nav`, que es el que scrollea) con Soporte · Comprobantes a verificar ·
+Pagos a confirmar · Cargas automáticas · Chat completo; debajo, igual que antes: Automático (INICIO, Alertas, Cronogramas), Configuración,
+Atención (Gastos), App, Administrativo, Publicidad, Interno. Mismos `data-section` (36, verificado) y menú de agentes igual.
+
 ### 900. ⚡ Todo automático: menú del panel por "lo que necesita una persona" · Soporte sólo con quejas reales · resumen en la app — SW v602, admin SW v179
 **Pedidos (owner):** "todo automático, no hay gente para nada, sólo Soporte; personas sólo para comprobantes a verificar (lo duplicado se
 rechaza) y cuando falla el banco, a confirmar" · "armá el menú admin de esa manera" · "si quieren retirar y no pueden no hace falta respuesta;
