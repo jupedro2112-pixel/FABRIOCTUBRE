@@ -84,9 +84,12 @@ VIP.fire = (function () {
             // #654: la regla es por ROLLOVER (apostado), escalando por hito; vuelve a 0 al cobrar o al pasar al hito siguiente
             const _msL = (VIP.state.fireStatus.milestones || []).filter((m) => Number(m.rollover) > 0);
             const _esc = _msL.map((m) => 'día ' + m.day + ' → ' + _fA(m.rollover)).join(' · ');
-            activityConditionEl.innerHTML = _msL.length
+            // #885: plazo por hito (días para llegar a los fueguitos y completar las apuestas)
+            const _pzL = (VIP.state.fireStatus.milestones || []).filter((m) => Number(m.depositDays) > 0).map((m) => m.day + ' 🔥 en ' + m.depositDays + ' días').join(' · ');
+            const _pzTxt = _pzL ? '<br>⏳ <strong>Plazo de cada racha:</strong> ' + _pzL + '. En ese plazo tenés que llegar a los fueguitos <strong>y</strong> completar las apuestas del premio. <strong>No es plata que perdés:</strong> es lo que apostás jugando en la plataforma, ganes o pierdas (si ganás, la plata es tuya). Si se vence el plazo, ese premio se pierde y arrancás un tramo nuevo.' : '';
+            activityConditionEl.innerHTML = _pzTxt.replace(/^<br>/, '') + (_pzTxt ? '<br>' : '') + (_msL.length
                 ? '📋 <strong>Condición:</strong> cada premio pide un <strong>rollover</strong> que va subiendo: ' + _esc + '. <strong>Rollover = apostar en la plataforma, no cargar</strong>: lo que cargás no suma, suma lo que jugás. Al llegar al hito sólo te falta completar el rollover (no hacen falta más fueguitos). Al cobrar, o si una racha llega a un hito nuevo, el contador vuelve a <strong>0</strong>.'
-                : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.';
+                : '📋 <strong>Condición:</strong> reclamá tu fueguito cada día; el premio de cada racha se acredita al llegar al día.');
         }
 
         const pendingBonusEl = document.getElementById('firePendingBonus');
@@ -99,6 +102,8 @@ VIP.fire = (function () {
             }
         }
 
+        // #885: aviso (una vez) si un premio pendiente se venció por plazo
+        try { const px = VIP.state.fireStatus.plazoExpired; if (px && px.day && VIP.ui && VIP.ui.showToast) VIP.ui.showToast('⏳ Se venció el plazo de ' + px.days + ' días del premio del día ' + px.day + '. Arrancás un tramo nuevo: seguí sumando fueguitos 🔥', 'info'); } catch (_) {}
         // Mostrar botón de reclamo de premio en efectivo si hay uno pendiente
         let claimRewardBtn = document.getElementById('claimFireRewardBtn');
         const pendingCash = VIP.state.fireStatus.pendingCashReward || 0;
@@ -117,6 +122,7 @@ VIP.fire = (function () {
                 pendingCashEl.innerHTML = `
                     <strong style="color:#ffd700;">🏆 ¡Tenés $${pendingCash.toLocaleString('es-AR')} para reclamar!</strong><br>
                     <span style="font-size:12px;color:#ccc;">Premio de tu racha Fueguito día ${VIP.state.fireStatus.pendingCashRewardDay}</span><br>
+                    ${(function () { const dl = VIP.state.fireStatus.plazoDeadline; if (!dl) return ''; const left = Math.max(0, Math.ceil((new Date(dl).getTime() - Date.now()) / 86400000)); return '<span style="font-size:11.5px;color:#ffe08a;">⏳ Te ' + (left === 1 ? 'queda 1 día' : 'quedan ' + left + ' días') + ' (plazo de ' + VIP.state.fireStatus.plazoDays + ' días) para completar las apuestas y cobrarlo. Apostar es jugar, no perder.</span><br>'; })()}
                     ${_pBar}
                     ${_rolloverNote}
                     <button id="claimFireRewardBtn" onclick="VIP.fire.claimFireReward()" style="margin-top:8px;background:linear-gradient(135deg,#d4af37,#ffd700);color:#000;border:none;padding:10px 20px;border-radius:20px;font-weight:900;font-size:14px;cursor:pointer;">💰 Reclamar $${pendingCash.toLocaleString('es-AR')}</button>
@@ -158,9 +164,11 @@ VIP.fire = (function () {
                     ? ` <span style="font-size:10px;color:#ffb84d;">(retiro con rollover x${_fsMult})</span>`
                     : '';
                 // #405: requisito por monto de cada premio
+                // #885 (owner): "10 fueguitos en 20 días": plazo para llegar Y apostar; apostar es jugar, no perder
+                const _pz = Number(m.depositDays) || 0;
                 const reqNote = (Number(m.rollover) > 0)
-                    ? `<br><span style="font-size:10.5px;color:#aaa;">rollover ${_fA(m.rollover)} (apostar en la racha, no cargar) para cobrarlo</span>`
-                    : ''; // #654
+                    ? `<br><span style="font-size:10.5px;color:#aaa;">${m.day} 🔥 en ${_pz || m.day * 2} días · en ese plazo apostás ${_fA(m.rollover)} jugando (no es plata perdida: todo lo que apostás suma, ganes o pierdas)</span>`
+                    : (_pz ? `<br><span style="font-size:10.5px;color:#aaa;">${m.day} 🔥 en ${_pz} días</span>` : ''); // #654
                 return `<div class="milestone-item ${statusClass}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
                     <span>${statusIcon} <strong>Día ${m.day}</strong>: ${rewardText}${depositNote}${reqNote}</span>
                     <span style="font-size:11px;color:#aaa;">${statusLabel}</span>

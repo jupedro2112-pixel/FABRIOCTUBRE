@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 885. 🛡️ Aviso "cada carga ×3 por antifraude" en Info/cargas/retiro + ⏳ PLAZO por hito del fueguito — SW v598, admin SW v171
+**Pedidos (owner):** "en Info y todo avisar que las cargas van con rollover ×3 por antifraude, explicarlo en el retiro y en Info; acomodá y
+centrá todo" · "en los fueguitos aclarar cuántos días tiene cada racha, el de 10 son 20 días: 10 fueguitos en 20 días, y que tiene esos días
+para darle esas apuestas (no es pérdida, es apostar a los juegos)".
+- **Rollover ×3:** `GET /api/platforms` manda `depositRolloverX`/`bonusRolloverX`; `home._paintRollovers` llena `.rx-dep`/`.rx-bon` y esconde
+  `.rx-note` si el rollover de la carga es 0. Info: "¿Por qué elegir Girox?" + tarjeta nueva `#infoCardRollover` "Cargas y retiros
+  (antifraude)"; notas de carga mínima (4 lugares), Carga rápida del casino (`.cl-rx`) y encabezado del retiro (`.wd-rx`). Todo centrado (pin.css).
+- **Plazo del fueguito:** `depositDays` (sin uso desde #654) pasa a ser el PLAZO del hito: días desde el inicio del tramo (`rolloverSince`) para
+  llegar a los N fueguitos Y completar el rollover. Default día×2 (10→20, 20→40, 30→60, 50→100), siempre ≥ día; columna "Plazo (días)" en el
+  panel. `mig885FirePlazo` lo pone en día×2 en la config guardada y fija `Config['firePlazoSince']` (gracia: a los que ya tenían premio
+  esperando el plazo les cuenta desde hoy). `_fireDeadline`; vencido ⇒ `/api/fire/status` limpia el premio pendiente (atómico) y reinicia el
+  tramo (`plazoExpired` ⇒ aviso en la app) y `/api/fire/claim-reward` responde `PLAZO_VENCIDO`. App: "10 🔥 en 20 días · en ese plazo apostás
+  $X jugando (no es plata perdida…)", "Te quedan N días" en el premio pendiente, explicación en la condición y en Info.
+
 ### 884. 💸 Retirar premio bien explicado (cuánto se puede retirar hoy y qué falta, sin ir a soporte) — SW v597
 **Pedido (owner):** "en retiro explicá cuánto tiene disponible para retirar como detalle, bien explicado, que no se quejen todos a soporte".
 `_paintRollover` (withdraw.js): arriba grande "Podés retirar hoy: $X" (o "✅ Podés retirar $X, todo liberado"), saldo total y "todavía en juego";

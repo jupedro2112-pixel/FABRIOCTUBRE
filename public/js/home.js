@@ -867,6 +867,13 @@
         // #708 (owner): botón flotante "🧪 Carga de prueba" para los testers, visible desde cualquier lado (también sobre el casino).
         try { let tb = _el('testDepositBtn'); if (tester && !tb) { document.body.insertAdjacentHTML('beforeend', '<div id="testDepositBtn" class="test-btns"><button type="button" class="test-dep-btn" onclick="VIP.home.testDeposit()" title="Simula una carga acreditada (sólo usuario de prueba)">🧪 Carga de prueba</button><button type="button" class="test-dep-btn test-wd-btn" onclick="VIP.home.testWithdraw()" title="Simula un pedido de retiro (sólo usuario de prueba)">🧪 Retiro de prueba</button></div>'); } else if (!tester && tb) tb.remove(); } catch (_) {} // #714: + retiro
     }
+    // #885 (owner): "avisá en Info y todo que las cargas van con rollover ×3 por antifraude": `.rx-dep` / `.rx-bon` con el valor de Config.
+    // Rollover de la carga en 0 ⇒ los avisos `.rx-note` se esconden (no se promete algo que no aplica).
+    function _paintRollovers() {
+        const d = _platforms || {}; const dx = Number(d.depositRolloverX), bx = Number(d.bonusRolloverX);
+        if (Number.isFinite(dx)) { document.querySelectorAll('.rx-dep').forEach((x) => { x.textContent = '×' + dx; }); document.querySelectorAll('.rx-note').forEach((x) => { x.style.display = dx > 0 ? '' : 'none'; }); }
+        if (Number.isFinite(bx)) document.querySelectorAll('.rx-bon').forEach((x) => { x.textContent = '×' + bx; });
+    }
     // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
     function _paintMinDeposit(n) {
         // #302: si el server (todavía) no manda el valor, queda el default del HTML ($5.000). Sólo 0 explícito lo oculta.
@@ -2383,7 +2390,7 @@
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
             // #751 (owner): la carga mínima va ADENTRO del botón (siempre), sin la nota verde que ocupaba lugar
-            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); const first = document.body.classList.contains('nodep'); return '<button type="button" class="cl-btn cl-attach' + (first ? ' cl-first' : '') + '" onclick="VIP.autoload.sendReceipt()">' + (first ? '⚡ PRIMERA CARGA · adjuntá tu comprobante' : '📎 Adjuntar comprobante') + _sbTagHtml() + '<small class="min-tag min-always">' + (first ? '⚠️ Aviso importante: carga mínima ' + md : 'Carga mínima ' + md + ' · con menos no se acredita') + '</small></button><div class="rcpt-note cl-rcpt">📸 Con todos los datos visibles: si no se ven, se rechaza</div>'; })() + // #742: + bono de historia · #766: PRIMERA CARGA · #808
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); const first = document.body.classList.contains('nodep'); return '<button type="button" class="cl-btn cl-attach' + (first ? ' cl-first' : '') + '" onclick="VIP.autoload.sendReceipt()">' + (first ? '⚡ PRIMERA CARGA · adjuntá tu comprobante' : '📎 Adjuntar comprobante') + _sbTagHtml() + '<small class="min-tag min-always">' + (first ? '⚠️ Aviso importante: carga mínima ' + md : 'Carga mínima ' + md + ' · con menos no se acredita') + '</small></button><div class="rcpt-note cl-rcpt">📸 Con todos los datos visibles: si no se ven, se rechaza</div>' + ((Number(_platforms && _platforms.depositRolloverX) || 0) > 0 ? '<div class="rcpt-note cl-rcpt cl-rx">🛡️ Antifraude: cada carga se juega ×' + Number(_platforms.depositRolloverX) + ' antes de retirarla</div>' : ''); })() + // #885 // #742: + bono de historia · #766: PRIMERA CARGA · #808
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
@@ -2649,6 +2656,7 @@
         // #266: cartel "servicio completo" + nombre de la cabecera WhatsApp ("Cargas <plataforma default>").
         try { if (_platforms && _platforms.homeBanner) { _paintHomeBanner(_platforms.homeBanner); localStorage.setItem(HOME_BANNER_KEY, JSON.stringify(_platforms.homeBanner)); } } catch (_) {}
         try { _paintMinDeposit(_platforms && _platforms.minDeposit); } catch (_) {} // #299
+        try { _paintRollovers(); } catch (_) {} // #885
         try { _paintActionBtns(_platforms && _platforms.actionBtns); } catch (_) {} // #385
         try { _paintEntryNews(_platforms && _platforms.entryNews); } catch (_) {} // #349
         try { _paintRefundPromo(_platforms && _platforms.refundPromo); } catch (_) {} // #372

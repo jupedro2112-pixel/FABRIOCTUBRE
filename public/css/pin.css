@@ -2631,3 +2631,11 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 .wd-roll-warn { color: var(--p-text); font-weight: 700; }
 .wd-roll-faq { margin-top: 8px; font-size: 12px; } .wd-roll-faq summary { cursor: pointer; font-weight: 800; color: var(--p-text); }
 .wd-roll-faq ul { margin: 6px 0 0; padding-left: 18px; color: var(--p-muted); } .wd-roll-faq li { margin: 3px 0; }
+
+/* #885 avisos de rollover ×3 antifraude: centrados y prolijos */
+.rx-note { display: block; margin: 6px auto 0; max-width: 34em; text-align: center; font: 700 11.5px/1.35 var(--p-font); color: var(--p-muted); }
+.fg-p .rx-note, .min-note .rx-note { margin-top: 5px; }
+.wd-auto.wd-rx { margin: 2px auto 0; text-align: center; } .wd-auto.wd-rx .rx-note { margin-top: 0; color: var(--p-text); }
+.cl-rx { text-align: center; font-weight: 700; }
+#withdrawModal .modal-header { text-align: center; } #withdrawModal .modal-header p { margin-left: auto; margin-right: auto; }
+.wd-roll { text-align: left; } .wd-roll-big, .wd-roll-sum { text-align: center; justify-content: center; }

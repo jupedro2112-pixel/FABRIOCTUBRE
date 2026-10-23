@@ -6369,6 +6369,7 @@ app.get('/api/platforms', authMiddleware, async (req, res) => {
         return { id: p.id, name: p.name, emoji: p.emoji, connected: p.connected, externalUrl: p.externalUrl || null, playUrl: play, logoUrl: p.logoUrl || '', isDefault: p.isDefault }; }),
       askMode: s.askMode, askTimeoutMin: s.askTimeoutMin, defaultPlatform: s.defaultPlatform, lastPlatform, preferredPlatform,
       choiceEnabled, minDeposit: minDep, withdrawMinArs: wdMin, withdrawOtp, // #299 / #379 / #382
+      depositRolloverX: await getDepositRolloverX().catch(() => 3), bonusRolloverX: await _giftRolloverX().catch(() => 5), // #885: avisos de rollover en la app
       // #385: textos de los botones de abajo de la carga automática (COMANDOS). #266 homeBanner · #349 entryNews · #372 refundPromo ·
       // #373 supportIntro (nombre de turno #377). text === null ⇒ el comando se vació en COMANDOS → la app no lo muestra.
       actionBtns: { load, loadSub, withdraw, withdrawSub },
@@ -12674,6 +12675,8 @@ async function initializeData() {
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
+  // #885 (owner): plazo por hito del fueguito = día×2 (10 fueguitos en 20 días); se edita después en el panel. firePlazoSince = desde cuándo vale.
+  try { if (!(await getConfig('mig885FirePlazo', null))) { const fm = await getConfig('fireMilestones', null); if (Array.isArray(fm) && fm.length) await Config.set('fireMilestones', fm.map((m) => Object.assign({}, m, { depositDays: (parseInt(m.day, 10) || 15) * 2 })), 'mig#885'); await Config.set('firePlazoSince', new Date().toISOString(), 'mig#885'); await Config.set('mig885FirePlazo', new Date().toISOString(), 'mig#885'); } } catch (e) { console.warn('[startup-migration] #885:', e.message); }
   try { if (!(await getConfig('mig884RetiroText', null))) { await Command.updateOne({ name: '/sys_support_topic_retiro', response: SUPPORT_RETIRO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_RETIRO_DEFAULT } }); await Config.set('mig884RetiroText', new Date().toISOString(), 'mig#884'); } } catch (e) { console.warn('[startup-migration] #884:', e.message); }
   try { if (!(await getConfig('mig883BonoText', null))) { await Command.updateOne({ name: '/sys_support_topic_bono', response: SUPPORT_BONO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_BONO_DEFAULT } }); await Config.set('mig883BonoText', new Date().toISOString(), 'mig#883'); } } catch (e) { console.warn('[startup-migration] #883:', e.message); }
   try { if (!(await getConfig('mig882DepositRoll', null))) { if ((await getConfig('depositRolloverX', null)) == null) await Config.set('depositRolloverX', 3, 'mig#882'); await Config.set('mig882DepositRoll', new Date().toISOString(), 'mig#882'); } } catch (e) { console.warn('[startup-migration] #882:', e.message); }
@@ -15543,9 +15546,9 @@ async function _countRealDepositsDays(userId, username, days) {
 const FIRE_MILESTONES_DEFAULT = [
   // #658 (owner): rollover = 30× el premio ("configurá ×3 lo que pusiste")
   { day: 10, reward: 10000, type: 'cash', rollover: 300000,  requireDeposits: 0, depositDays: 20, desc: 'Recompensa Fueguito 10 días' },
-  { day: 20, reward: 20000, type: 'cash', rollover: 600000,  requireDeposits: 0, depositDays: 30, desc: 'Recompensa Fueguito 20 días' },
-  { day: 30, reward: 30000, type: 'cash', rollover: 900000,  requireDeposits: 0, depositDays: 40, desc: 'Recompensa Fueguito 30 días' },
-  { day: 50, reward: 50000, type: 'cash', rollover: 1500000, requireDeposits: 0, depositDays: 60, desc: 'Recompensa Fueguito 50 días' }
+  { day: 20, reward: 20000, type: 'cash', rollover: 600000,  requireDeposits: 0, depositDays: 40, desc: 'Recompensa Fueguito 20 días' },
+  { day: 30, reward: 30000, type: 'cash', rollover: 900000,  requireDeposits: 0, depositDays: 60, desc: 'Recompensa Fueguito 30 días' },
+  { day: 50, reward: 50000, type: 'cash', rollover: 1500000, requireDeposits: 0, depositDays: 100, desc: 'Recompensa Fueguito 50 días' }
 ];
 
 // Lee los premios del fueguito desde Config (editables en el panel); si no hay config
@@ -15563,7 +15566,8 @@ async function getFireMilestones() {
         // #654: rollover del hito ($ a apostar); si la config vieja no lo tiene, 10× el premio
         rollover: (m.rollover != null && m.rollover !== '') ? Math.max(0, Math.round(Number(m.rollover) || 0)) : Math.max(0, Math.round((Number(m.reward) || 0) * 30)), // #658: 30× el premio si falta
         requireDeposits: Math.max(0, Math.round(Number(m.requireDeposits) || 0)),
-        depositDays: Math.max(1, Math.min(365, parseInt(m.depositDays, 10) || 30)),
+        // #885 (owner): PLAZO del hito = días para llegar a los N fueguitos Y completar sus apuestas (10 fueguitos en 20 días). Default día×2.
+        depositDays: Math.max(parseInt(m.day, 10) || 1, Math.min(365, parseInt(m.depositDays, 10) || (parseInt(m.day, 10) || 15) * 2)),
         desc: String(m.desc || '').slice(0, 80) || ('Recompensa Fueguito ' + (parseInt(m.day, 10) || '') + ' días')
       }))
       .filter(m => m.day > 0 && m.reward > 0)
@@ -15604,6 +15608,15 @@ async function _fireRolloverResetFields(username) {
   return { rolloverSince: now, rolloverBase: Math.max(0, Number(base) || 0) };
 }
 function _fireNextAfter(ms, day) { return ms.find(m => m.day > Number(day)) || null; }
+// #885: vencimiento del premio pendiente = inicio del tramo (rolloverSince) + plazo del hito. A los que ya tenían un premio esperando el plazo
+// les cuenta desde que salió esta regla (Config['firePlazoSince']), para no hacerles perder el premio de golpe.
+let _firePlazoSince = { at: 0, v: null };
+async function _fireDeadline(fireStreak, ms) {
+  if (!ms || !(Number(ms.depositDays) > 0)) return null;
+  if (Date.now() - _firePlazoSince.at > 60000) { let v = null; try { v = await getConfig('firePlazoSince', null); } catch (_) {} _firePlazoSince = { at: Date.now(), v }; }
+  const since = Math.max(new Date(fireStreak.rolloverSince || fireStreak.lastReset || fireStreak.createdAt || Date.now()).getTime(), _firePlazoSince.v ? new Date(_firePlazoSince.v).getTime() : 0);
+  return new Date(since + Number(ms.depositDays) * 86400000);
+}
 // Rollover de los premios del fueguito (owner 2026-08-05): el premio se acredita
 // como DEPÓSITO CON `multiplier` en 1girox → la plata queda JUGABLE al instante
 // pero NO RETIRABLE hasta apostar (multiplier × premio); el retiro ya valida
@@ -15708,6 +15721,18 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
     let pendingCashRewardDesc = fireStreak.pendingCashRewardDesc || '';
     // #654 (owner): el premio pendiente queda hasta que lo cobra (sólo le falta el rollover; no hacen falta más fueguitos). Se reemplaza
     // recién cuando una racha llega a un hito nuevo (ahí "se limpia" y el contador vuelve a 0) — eso pasa en /api/fire/claim.
+    // #885: ...o cuando vence el PLAZO del hito (días para llegar y completar las apuestas).
+    let _plazoExpired = null;
+    if (pendingCashReward > 0) {
+      const _pms = FIRE_MILESTONES.find(m => m.day === Number(pendingCashRewardDay)) || null;
+      const _dl = await _fireDeadline(fireStreak, _pms);
+      if (_dl && Date.now() > _dl.getTime()) {
+        const _rf = await _fireRolloverResetFields(req.user.username);
+        const _u = await FireStreak.updateOne({ userId, pendingCashReward: { $gt: 0 }, pendingCashRewardDay: pendingCashRewardDay }, { $set: Object.assign({ pendingCashReward: 0, pendingCashRewardDay: 0, pendingCashRewardDesc: '', pendingCashRewardDate: '' }, _rf) });
+        if (_u.modifiedCount) { _plazoExpired = { day: pendingCashRewardDay, reward: pendingCashReward, days: _pms.depositDays }; logger.info(`[fire] premio día ${pendingCashRewardDay} de ${req.user.username} vencido por plazo (${_pms.depositDays} días)`); Object.assign(fireStreak, _rf); }
+        pendingCashReward = 0; pendingCashRewardDay = 0; pendingCashRewardDesc = '';
+      }
+    }
 
     // Construir lista de milestones con estado para la UI (premios editables desde el panel)
     const _fireNextDay = ((FIRE_MILESTONES.find(m => m.day > currentStreak) || FIRE_MILESTONES[FIRE_MILESTONES.length - 1] || {}).day) || 10; // #291
@@ -15759,6 +15784,9 @@ app.get('/api/fire/status', authMiddleware, async (req, res) => {
       // usa para avisar "para retirarlo apostá X×" antes de que el cliente reclame.
       rolloverMultiplier: await getFireRolloverMultiplier(),
       // #654: ROLLOVER del tramo actual (reemplaza al mínimo de cargas, que queda en 0)
+      plazoDays: _rollFor ? (Number(_rollFor.depositDays) || 0) : 0, // #885
+      plazoDeadline: await (async () => { try { const d = await _fireDeadline(fireStreak, _rollFor); return d ? d.toISOString() : null; } catch (_) { return null; } })(),
+      plazoExpired: _plazoExpired,
       rolloverNeed: _rollNeed, rolloverHave: _rollHave, rolloverUnknown: _rollHaveRaw === null, rolloverForDay: _rollFor ? _rollFor.day : null, rolloverSince: _rollSince, rolloverExpiresDay: _rollAfter ? _rollAfter.day : null,
       minDeposits: 0,
       depositsWindowDays: _fireNextDay,
@@ -15888,6 +15916,14 @@ app.post('/api/fire/claim-reward', authMiddleware, async (req, res) => {
     const _pDay = Number(fireStreak.pendingCashRewardDay) || 0;
     const _ms = _msAll.find(m => m.day === _pDay) || null;
     const _need = _ms ? (Number(_ms.rollover) || 0) : 0;
+    // #885: vencido el plazo del hito, el premio ya no se cobra (se limpia y arranca un tramo nuevo).
+    try {
+      const _dl = await _fireDeadline(fireStreak, _ms);
+      if (_dl && Date.now() > _dl.getTime()) {
+        await FireStreak.updateOne({ userId, pendingCashReward: { $gt: 0 } }, { $set: Object.assign({ pendingCashReward: 0, pendingCashRewardDay: 0, pendingCashRewardDesc: '', pendingCashRewardDate: '' }, await _fireRolloverResetFields(username)) });
+        return res.status(400).json({ error: `Se venció el plazo de ${_ms.depositDays} días para cobrar el premio del día ${_pDay} (llegar a los fueguitos y completar las apuestas). Arrancás un tramo nuevo: seguí sumando fueguitos. 🔥`, code: 'PLAZO_VENCIDO' });
+      }
+    } catch (_) {}
     if (_need > 0) {
       const _fmt = (n) => '$' + Math.round(n).toLocaleString('es-AR');
       const _have = await _fireWageredSince(username, fireStreak, true);
@@ -16120,7 +16156,7 @@ app.post('/api/admin/fire-milestones', authMiddleware, adminMiddleware, async (r
       type: 'cash',
       rollover: Math.max(0, Math.round(Number(m.rollover) || 0)), // #654
       requireDeposits: 0,
-      depositDays: Math.max(1, Math.min(365, parseInt(m.depositDays, 10) || 30)),
+      depositDays: Math.max(parseInt(m.day, 10) || 1, Math.min(365, parseInt(m.depositDays, 10) || (parseInt(m.day, 10) || 15) * 2)), // #885 plazo
       desc: String(m.desc || '').slice(0, 80)
     }))
     .filter(m => m.day > 0 && m.reward > 0)

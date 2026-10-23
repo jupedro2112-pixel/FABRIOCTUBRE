@@ -132,7 +132,7 @@ VIP.withdraw = (function () {
         if (r.available < wMin) { const form = _el('withdrawForm'); if (form) form.style.display = 'none'; }
     }
     function _bonX(r) { const d = (r.items || []).find((x) => x.kind === 'bonus' && x.multiplier); return d ? d.multiplier : 5; }
-    function _depX(r) { const d = (r.items || []).find((x) => x.kind === 'deposit' && x.multiplier); return d ? d.multiplier : 3; }
+    function _depX(r) { const d = (r.items || []).find((x) => x.kind === 'deposit' && x.multiplier); if (d) return d.multiplier; try { const v = Number(VIP.home.platformsData.depositRolloverX); if (v > 0) return v; } catch (_) {} return 3; }
 
     async function _loadAccountAndBalance() {
         // 1. Datos bancarios guardados + estado del teléfono.
