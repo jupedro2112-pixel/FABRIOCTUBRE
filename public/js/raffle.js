@@ -46,10 +46,17 @@ VIP.raffle = (function () {
     }
     // #920 (owner): el recuadro arranca ABIERTO y se puede minimizar; minimizado muestra el puesto del jugador (o cuánto falta para empezar).
     const MIN_KEY = 'vip_rf_min';
-    function _isMin() { try { return localStorage.getItem(MIN_KEY) === '1'; } catch (_) { return false; } }
+    // #922 (owner): la PRIMERA vez se ve abierto; después arranca minimizado ("Ver más" lo abre). Lo que toque vale en esta sesión.
+    function _minState(key) {
+        try { const v = sessionStorage.getItem(key); if (v === '1' || v === '0') return v === '1'; } catch (_) {}
+        try { const seen = localStorage.getItem(key + '_seen') === '1'; if (!seen) { localStorage.setItem(key + '_seen', '1'); try { sessionStorage.setItem(key, '0'); } catch (_) {} return false; } } catch (_) { return false; }
+        return true;
+    }
+    function _setMin(key, v) { try { sessionStorage.setItem(key, v ? '1' : '0'); } catch (_) {} }
+    function _isMin() { return _minState(MIN_KEY); }
     function toggleMin(ev) {
         try { if (ev) { ev.stopPropagation(); ev.preventDefault(); } } catch (_) {}
-        try { localStorage.setItem(MIN_KEY, _isMin() ? '0' : '1'); } catch (_) {}
+        _setMin(MIN_KEY, !_isMin());
         document.querySelectorAll('.rf-strip[data-brand]').forEach((el) => { el.outerHTML = stripHtml(el.dataset.brand); });
         _countdown();
     }
@@ -62,7 +69,7 @@ VIP.raffle = (function () {
     // Recuadro compacto (arriba de las páginas y en el Inicio): título, cuenta regresiva y los 3 trofeos.
     function stripHtml(brand) {
         const d = _d || {}; const ns = d.notStarted !== false; const st = d.startsAt || '2026-11-01T03:00:00.000Z'; const to = ns ? st : d.closesAt; const b = esc(brand || 'picaroja');
-        if (_isMin()) return '<div class="rf-strip rf-sb-' + b + ' rf-min" data-brand="' + b + '"><button type="button" class="rf-mini" onclick="VIP.raffle.toggleMin(event)"><img src="/images/sorteo/premios/iphone.svg" alt=""><span><b>🏆 Sorteo mensual</b><small>' + esc(_miniLine()) + '</small></span><em>Ver ▾</em></button></div>';
+        if (_isMin()) return '<div class="rf-strip rf-sb-' + b + ' rf-min" data-brand="' + b + '"><button type="button" class="rf-mini" onclick="VIP.raffle.toggleMin(event)"><img src="/images/sorteo/premios/iphone.svg" alt=""><span><b>🏆 Sorteo mensual</b><small>' + esc(_miniLine()) + '</small></span><em>Ver más ▾</em></button></div>';
         return '<div class="rf-strip rf-sb-' + b + '" data-brand="' + b + '">' +
             '<div class="rf-box" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🏆 Sorteo mensual</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span><button type="button" class="rf-minbtn" onclick="VIP.raffle.toggleMin(event)" aria-label="Minimizar">–</button></div><div class="rf-count js-rf-count" data-to="' + esc(to || '') + '"></div>' + _trophies(d.prizes || DEF.prizes, 'active') + '<em class="rf-box-go">Ver ranking ›</em></div>' +
             '<div class="rf-box rf-box-soon" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🚗 ' + esc((d.upcoming && d.upcoming.title) || DEF.upcoming.title) + '</b><span>Empieza en</span></div><div class="rf-count js-rf-count" data-to="' + esc(st) + '"></div>' + _trophies((d.upcoming && d.upcoming.prizes) || DEF.upcoming.prizes, 'upcoming') + '</div></div>';
@@ -129,6 +136,23 @@ VIP.raffle = (function () {
             close(); try { if (VIP.lobby) VIP.lobby.close(); } catch (_) {} try { VIP.home.setHomeMode('mini'); } catch (_) {}
         } catch (_) { try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {} }
     }
+    // #922 (owner): los sorteos del Inicio se minimizan; minimizados queda UNA línea con el puesto en cada sorteo (o cuánto falta para empezar).
+    const HMIN_KEY = 'vip_rf_home_min';
+    function _hMin() { return _minState(HMIN_KEY); }
+    function _homeMini(t, t2) {
+        document.querySelectorAll('.rf-entries').forEach((box) => {
+            if (!box.querySelector('.rf-ent-min')) box.insertAdjacentHTML('beforeend', '<button type="button" class="rf-ent-min" onclick="VIP.raffle.toggleHomeMin(event)" aria-label="Minimizar">–</button><button type="button" class="rf-ent-mini" onclick="VIP.raffle.toggleHomeMin(event)"><span>🏆</span><b>Mensual: <em class="js-rf-m1">' + esc(t || '') + '</em></b><b>Gran: <em class="js-rf-m2">' + esc(t2 || '') + '</em></b><i>Ver más ▾</i></button>');
+            box.classList.toggle('is-min', _hMin());
+            if (t != null) box.querySelectorAll('.js-rf-m1').forEach((e) => { e.textContent = t; });
+            if (t2 != null) box.querySelectorAll('.js-rf-m2').forEach((e) => { e.textContent = t2; });
+        });
+    }
+    function toggleHomeMin(ev) {
+        try { if (ev) { ev.stopPropagation(); ev.preventDefault(); } } catch (_) {}
+        _setMin(HMIN_KEY, !_hMin());
+        _homeMini(null, null);
+    }
+    try { setTimeout(() => _homeMini('Empieza en noviembre', 'Empieza en noviembre'), 0); } catch (_) {}
     // Botón del Inicio: "Vas 4° · 500 pts · te faltan 2.501 para el 1°" (se refresca cada 10 min, sólo con sesión).
     let _entAt = 0;
     async function paintEntries() {
@@ -141,9 +165,10 @@ VIP.raffle = (function () {
             document.querySelectorAll('.js-rf-pos').forEach((e) => { e.textContent = t; });
             const g2 = d.gran || {}; const t2 = (g2.notStarted !== false) ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : (g2.me && g2.me.position ? 'Vas ' + g2.me.position + '° · ' + num(g2.me.points) + ' pts' : 'Sumá puntos jugando');
             document.querySelectorAll('.js-rf-gran').forEach((e) => { e.textContent = t2; });
+            _homeMini(t, t2);
         } catch (_) {}
     }
     try { setTimeout(function loop() { paintEntries(); setTimeout(loop, 60 * 1000); }, 4000); } catch (_) {}
     try { setInterval(() => { if (document.querySelector('.js-rf-count')) _countdown(); }, 1000); } catch (_) {} // cuentas regresivas visibles (páginas, Inicio, sorteo)
-    return { open, close, contact, paintEntries, stripHtml, toggleMin, tick: _countdown };
+    return { open, close, contact, paintEntries, stripHtml, toggleMin, toggleHomeMin, tick: _countdown };
 })();

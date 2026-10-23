@@ -242,6 +242,7 @@
     <link rel="stylesheet" href="/css/modals.css">
     <link rel="stylesheet" href="/css/responsive.css">
     <!-- #370: tema "Pinterest" (blanco, grises, rojo). Se carga ÚLTIMO y re-pinta todo menos la Carga manual (WhatsApp). -->
+    <link rel="stylesheet" href="/css/ganamos-nav.css"><!-- #922 barra de abajo de Ganamos -->
     <link rel="stylesheet" href="/css/pin.css">
     <style>
         /* In-app notification banner (foreground PWA) */
@@ -1295,9 +1296,9 @@
             <!-- ===== #512 (owner): MENÚ BÁSICO — "un extra básico con 2 botones, carga y retiro, y que pueda elegir la plataforma,
                  nada más; abajo elegir otro menú". Tercer modo del Inicio (body.home-basic, reusa el ocultado de home-easy). home.js: _basicPaint. ===== -->
             <div id="basicView" class="basic-view" aria-label="Menú básico">
-                <div class="rf-entries"><!-- #921: dos recuadros chicos, uno al lado del otro --><button type="button" class="rf-entry" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/iphone.svg" alt=""><span class="rf-entry-t"><b>Sorteo mensual</b><i>iPhone 18 Pro Max</i><small class="js-rf-pos">Empieza en noviembre</small></span></button><button type="button" class="rf-entry rf-entry-gran" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/auto.svg" alt=""><span class="rf-entry-t"><b>Gran Sorteo</b><i>Auto 0 km</i><small class="js-rf-gran">Empieza en noviembre</small></span></button></div>
                 <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
                 <div class="play-bal" id="playBalBasic"><span class="pb-k">🎰 Tu saldo para jugar</span><b class="js-play-bal">$0</b><button type="button" class="pb-r" onclick="VIP.ui.syncBalance && VIP.ui.syncBalance()" title="Actualizar saldo" aria-label="Actualizar saldo">↻</button></div><!-- #847 --><button type="button" class="fit-link" onclick="VIP.home.openFitPhone()">📱 Ajustar la pantalla a mi teléfono ›</button><!-- #865 -->
+                <div class="rf-entries"><!-- #921: dos recuadros chicos, uno al lado del otro --><button type="button" class="rf-entry" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/iphone.svg" alt=""><span class="rf-entry-t"><b>Sorteo mensual</b><i>iPhone 18 Pro Max</i><small class="js-rf-pos">Empieza en noviembre</small></span></button><button type="button" class="rf-entry rf-entry-gran" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/auto.svg" alt=""><span class="rf-entry-t"><b>Gran Sorteo</b><i>Auto 0 km</i><small class="js-rf-gran">Empieza en noviembre</small></span></button></div>
                 <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas"><span class="bv-new">Novedad</span>🔥 Fueguito <b><span id="bvFireN">0</span> d</b></button></div>
                 <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
                 <!-- #755 (owner): los servicios ARRIBA de todo en el básico -->
@@ -2633,7 +2634,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v618</div>
+                    <div class="pf-build" id="appBuildTag">app v619</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2657,7 +2658,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v618</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v619</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>

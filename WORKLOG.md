@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 922. Sorteos minimizables (1ª vez abiertos), plataforma elegida al instante, saldo arriba en el básico, Ganamos con la barra real de ganamos.net y Deportes como selector chico — SW v619
+**Pedido (owner, capturas):** minimizar el sorteo y ver el puesto; la primera vez abierto y después minimizado ("Ver más"); fichas del básico como las del
+completo, que se vea la elegida y que el menú cambie al toque; subir el saldo del básico (había espacio de más); sacar de Ganamos Deportes/Depósito/
+Retiro/Chat; la barra de abajo de Ganamos igual a ganamos.net; Deportes en ninguna página como pantalla: las dos de Girox chiquitas para elegir y abrir directo.
+- `raffle.js`: `_minState(key)` = 1ª vez abierto (`<key>_seen` en localStorage), después minimizado; lo que toque vale en la sesión (sessionStorage).
+  Inicio: botón "–" y línea "🏆 Mensual: Vas N° · Gran: Vas M°" (o "Empieza en…") con "Ver más ▾"; recuadros de las páginas igual.
+- home.js `_repaintChosen()`: al elegir plataforma se marca AL INSTANTE (antes esperaba al server) en las tarjetas del completo, las fichas del básico
+  (ahora con círculo de elegida y RECOMENDADO en Girox), pestañas, JUGÁ AQUÍ y "Menú X directo"; si el server la rechaza, vuelve atrás.
+- Básico: el saldo va justo debajo de Nivel/Racha y los sorteos debajo del saldo (márgenes chicos).
+- Ganamos: barra = la de su bundle (`.main-mobile-menu` → `css/ganamos-nav.css`, fondo con el hueco de la mascota, brillo `menu-active.webp`, íconos
+  SVG originales en `GN_IC`): Deporte · Sorteos (en el lugar de Polymarket, que es de su sistema) · [mascota = Inicio] · Casino · Casino en vivo.
+- `sportsMenu()`: Deporte/Deportes abre un menú chico con las 2 de Girox (Deportes / Deportes 2) que abre directo (`sport(path)`); `go('deportes')` ya no
+  muestra la pantalla grande en ninguna página. Probado: elegir ⇒ POST /api/platform/session {game:'/sports'}.
+
 ### 921. GRAN SORTEO por puntos con EXTRAS por actividad y misiones + botones del sorteo encuadrados — SW v617, admin SW v187
 **Pedido (owner):** el Gran Sorteo (auto $30.000.000 · viaje al Caribe para 2 · USD 2.000) también por puntos, más extras: +10 puntos por cada día
 con una carga de $10.000 y +10% de los puntos de la semana si completan las misiones semanales; "la actividad es importante". Y "encuadrá bien" los

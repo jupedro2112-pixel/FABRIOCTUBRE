@@ -229,7 +229,7 @@
         const box = _el('basicPlats'); if (!box) return;
         const defId = (_platforms && _platforms.defaultPlatform) || 'girox'; const pref = (_platforms && _platforms.preferredPlatform) || null;
         const soon = (p) => p.connected === false && p.id !== defId && p.id !== 'girox';
-        box.innerHTML = _entryList().map((p) => { const on = pref ? pref === p.id : p.id === defId; return '<button type="button" class="bv-chip plat-' + _esc(p.id) + (on ? ' on' : '') + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.basicPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name || p.id) + '</b>' + (soon(p) ? '<small>Pronto</small>' : (on ? '<small>✓</small>' : '')) + '</button>'; }).join('');
+        box.innerHTML = _entryList().map((p) => { const on = pref ? pref === p.id : p.id === defId; return '<button type="button" class="bv-chip plat-' + _esc(p.id) + (on ? ' on' : '') + (soon(p) ? ' soon' : '') + '" onclick="VIP.home.basicPick(\'' + _esc(p.id) + '\',' + (soon(p) ? 'true' : 'false') + ')">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '') + '<b>' + _esc(p.name || p.id) + '</b>' + (p.id === 'girox' ? '<span class="plat-reco">Recomendado</span>' : '') + '<span class="bv-check">' + (on ? '✓' : '') + '</span>' + (soon(p) ? '<small>Pronto</small>' : '') + '</button>'; }).join(''); // #922: como el completo
     }
     async function basicPick(id, isSoon) {
         if (isSoon) { try { VIP.ui.showToast('Pronto: esta plataforma se habilita en breve', 'info'); } catch (_) {} return; }
@@ -2195,28 +2195,38 @@
         setPreferred(platformId);
     }
 
+    // #922 (owner): "que aparezca seleccionado cuando se elige y apenas se elige se cambie en el menú la plataforma": un solo repintado
+    // para todo lo que muestra la elegida (tarjetas del completo, fichas del básico, pestañas, JUGÁ AQUÍ y "Menú X directo").
+    function _repaintChosen() {
+        try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
+        try { _paintPlatNav(); } catch (_) {} try { _paintBrandLabels(); } catch (_) {}
+    }
     async function setPreferred(platformId) {
         if (!(await _brandGuard(platformId))) return; // #908: con saldo en la otra plataforma no se cambia
         // #907: PICA ROJA se guarda en el teléfono; al server va 'girox' (misma cuenta). Elegir otra apaga la predeterminada PICA ROJA.
         if (BRANDS[platformId]) _setLocalBrand(platformId); else _setLocalBrand('girox');
         if (_isDoor(platformId)) { // #912: PICA ROJA o JUGAYGANA → al server va 'girox' (misma cuenta)
+            if (_platforms) { _platforms.preferredPlatform = platformId; _platforms.defaultPlatform = platformId; } _repaintChosen(); // #922: al instante
             try { await fetch(VIP.config.API_URL + '/api/platforms/preferred', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox' }) }); } catch (_) {}
             if (_platforms) { _platforms.preferredPlatform = platformId; _platforms.defaultPlatform = platformId; }
             try { _paintBrandLabels(); } catch (_) {} // #917
             try { _paintPlatNav(); } catch (_) {} // #920
-            try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
+            _repaintChosen();
+            try { VIP.ui.showToast('✅ Elegiste ' + ((DOORS[platformId] && DOORS[platformId].name) || platformId), 'success'); } catch (_) {}
             return;
         }
         if (_platforms && _isDoor(_platforms.defaultPlatform)) _platforms.defaultPlatform = 'girox';
+        const _prevPref = _platforms ? _platforms.preferredPlatform : null;
+        if (_platforms && platformId) { _platforms.preferredPlatform = platformId; _repaintChosen(); } // #922: se marca al instante
         try {
             const r = await fetch(VIP.config.API_URL + '/api/platforms/preferred', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken },
                 body: JSON.stringify({ platform: platformId })
             });
             const d = await r.json().catch(() => ({}));
-            if (!r.ok) { VIP.ui.showToast(d.error || 'No se pudo guardar', 'error'); return; }
+            if (!r.ok) { if (_platforms) _platforms.preferredPlatform = _prevPref; _repaintChosen(); VIP.ui.showToast(d.error || 'No se pudo guardar', 'error'); return; }
             if (_platforms) _platforms.preferredPlatform = d.preferredPlatform || null;
-            renderPlatforms();
+            _repaintChosen();
             VIP.ui.showToast(d.preferredPlatform ? ('Listo: tus cargas van directo a ' + (d.label || '')) : 'Listo: te preguntamos dónde jugar en cada carga', 'success');
         } catch (_) { VIP.ui.showToast('Error de conexión', 'error'); }
     }

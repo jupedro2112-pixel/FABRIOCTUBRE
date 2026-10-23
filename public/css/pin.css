@@ -3160,3 +3160,46 @@ html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-play-name { fon
 html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-play-sub { display: none !important; }
 html body #platformsButtons .plat-play-btn.plat-girox .plat-reco { font-size: 7.5px !important; padding: 1px 4px !important; }
 html body #platformsButtons .plat-check { width: 14px !important; height: 14px !important; font-size: 9px !important; top: 4px !important; right: 4px !important; }
+/* #922 sorteos del Inicio minimizables: "–" arriba a la derecha; minimizado = una línea con el puesto en cada sorteo */
+.rf-entries { position: relative; }
+.rf-ent-min { position: absolute; top: -6px; right: -6px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; border: 0; background: #111; color: #fff; font: 900 14px/1 var(--p-font); box-shadow: 0 2px 6px rgba(0,0,0,.35); cursor: pointer; }
+.rf-ent-mini { display: none; grid-column: 1 / -1; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; border: 0; border-radius: 12px; padding: 8px 10px; cursor: pointer; text-align: left;
+  background: linear-gradient(135deg, #1a0006, #7a0018 60%, #e60023); color: #fff; font-family: var(--p-font); box-shadow: 0 4px 12px rgba(230,0,35,.2); }
+.rf-ent-mini span { font-size: 18px; flex: none; }
+.rf-ent-mini b { flex: 1 1 0; min-width: 0; font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-ent-mini em { font-style: normal; font-weight: 900; color: #ffd76a; }
+.rf-ent-mini i { flex: none; font-style: normal; font-size: 11px; font-weight: 900; color: #ffd76a; }
+.rf-entries.is-min .rf-entry, .rf-entries.is-min .rf-ent-min { display: none !important; }
+.rf-entries.is-min .rf-ent-mini { display: flex; }
+/* #922 fichas del básico con el mismo formato que las tarjetas del completo: círculo de "elegida" arriba a la derecha + RECOMENDADO en Girox */
+#basicPlats .bv-chip { position: relative; }
+#basicPlats .bv-check { position: absolute; top: 5px; right: 5px; width: 15px; height: 15px; border-radius: 50%; border: 2px solid currentColor; background: #fff; color: #111; font: 900 10px/11px var(--p-font); text-align: center; box-sizing: border-box; }
+#basicPlats .bv-chip.on .bv-check { background: #fff; color: #111; border-color: #fff; }
+html body #basicPlats .bv-chip.plat-girox .plat-reco { display: block; font-size: 7.5px !important; font-weight: 900; padding: 1px 4px !important; border-radius: 6px; background: #16a34a !important; color: #fff !important; text-transform: uppercase; letter-spacing: .3px; }
+html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .plat-play-btn[class*="plat-"] .plat-play-name { font-size: 9.5px !important; text-transform: uppercase; max-width: 100%; overflow-wrap: anywhere; }
+/* #922 (owner: "subí el saldo, generás espacio al pedo"): en el básico, Nivel/Racha → saldo → sorteos, pegados */
+#basicView > #statusRow { margin-bottom: 4px !important; }
+#basicView > .play-bal { margin-top: 4px !important; margin-bottom: 6px !important; }
+#basicView > .rf-entries { margin-top: 0 !important; margin-bottom: 8px !important; }
+/* #922 selector chico de deportes (PICA ROJA / JUGAYGANA) y ajustes de la barra real de Ganamos */
+.prl-sportpop { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); z-index: 20; min-width: 150px; border-radius: 12px; background: var(--prl-card, #1a2c38); border: 1px solid var(--prl-line, #2f4553); box-shadow: 0 10px 24px rgba(0,0,0,.35); overflow: hidden; }
+.prl-sportpop-center { position: absolute !important; left: 50% !important; top: 40% !important; bottom: auto !important; transform: translate(-50%, -50%) !important; min-width: 200px; z-index: 30; }
+.prl-sportpop-l { display: flex; flex-direction: column; }
+.prl-sportpop-i { display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--prl-tx, #fff); padding: 11px 14px; font: 800 13px inherit; font-family: inherit; cursor: pointer; text-align: left; white-space: nowrap; }
+.prl-sportpop-i + .prl-sportpop-i { border-top: 1px solid var(--prl-line, #2f4553); }
+.prl-sportpop-i .prl-ic { color: var(--prl-acc, #e60023); }
+.prl-gn .prl-gnm .gnm__more { width: 110px; }
+.prl-gn .prl-gnm .gnm__menu-item[data-v="inicio"] .gnm__menu-text { margin-top: auto; }
+.prl-gn .prl-gnm .gnm__ganamos-dog { border: 0; background: none; padding: 0; cursor: pointer; }
+.prl-gn .prl-ql { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 120px); }
+/* #922 selector chico de deportes (PICA ROJA / JUGAYGANA) y ajustes de la barra real de Ganamos */
+.prl-sportpop { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); z-index: 20; min-width: 150px; border-radius: 12px; background: var(--prl-card, #1a2c38); border: 1px solid var(--prl-line, #2f4553); box-shadow: 0 10px 24px rgba(0,0,0,.35); overflow: hidden; }
+.prl-sportpop-center { position: absolute !important; left: 50% !important; top: 40% !important; bottom: auto !important; transform: translate(-50%, -50%) !important; min-width: 200px; z-index: 30; }
+.prl-sportpop-l { display: flex; flex-direction: column; }
+.prl-sportpop-i { display: flex; align-items: center; gap: 8px; border: 0; background: none; color: var(--prl-tx, #fff); padding: 11px 14px; font: 800 13px inherit; font-family: inherit; cursor: pointer; text-align: left; white-space: nowrap; }
+.prl-sportpop-i + .prl-sportpop-i { border-top: 1px solid var(--prl-line, #2f4553); }
+.prl-sportpop-i .prl-ic { color: var(--prl-acc, #e60023); }
+.prl-gn .prl-gnm .gnm__more { width: 110px; }
+.prl-gn .prl-gnm .gnm__ganamos-dog { border: 0; background: none; padding: 0; cursor: pointer; }
+.prl-gn .prl-ql { bottom: calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 120px); }
+.prl-gnm .gnm__menu-item[data-v].on .gnm__menu-active { opacity: 1; }
