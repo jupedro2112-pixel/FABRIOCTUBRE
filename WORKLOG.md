@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 904. 🏦 Fondeos de la cuenta de pagos como INGRESO del cierre · botón "Pagado por banco externo" en Pagos a confirmar — admin SW v182
+**Pedido (owner):** "se stockeó para pagos $1.650.000, tenelo en cuenta para el cierre de mañana (mañana cargo), tomalo como ingreso; y en
+pagos pendientes, aceptar el pago descontando fichas pero que diga que se pagó de banco externo".
+- `Expense.kind` ('gasto' | 'fondeo'). Panel → Gastos: "Tipo: 💸 Gasto / 🏦 Fondeo (entra plata para pagos · ingreso del cierre)" (con fondeo
+  no se paga nada por la API ni se pide CBU). Totales separados ("Fondeos (30 d)"); la lista lo marca "🏦 Fondeo · ingreso".
+- Cierre (`_closeReconcile`): los fondeos NO cuentan como gasto; `sistema.fondeos` se muestra como "🏦 Fondeo (ingreso)" y explica, hasta su
+  monto, las entradas del banco que no son cargas de clientes (causa 'fondeo' en vez de "entradas sin acreditar"); si el banco todavía no lo
+  muestra, avisa cuánto falta (`fondeoNoVistoEnBanco`). Probado: $1.650.000 entrados sin fondeo ⇒ "sin acreditar"; con fondeo ⇒ explicado.
+- Pagos a confirmar: **🏦 Pagado por banco externo** = `/api/admin/payouts/:id/pay-other-bank` (la misma del chat: descuenta las fichas si
+  no estaban, `paidVia:'other_bank'`; si el cliente ya se las jugó, no paga y avisa).
+**Para el owner:** registrar el fondeo con la FECHA del día en que entra la plata al banco (el cierre es por día).
+
 ### 902–903. 🏦 Consulta al banco cada 1 min (respaldo del webhook) · rollover de la carga ×3 → ×2 → ×1 — admin SW v181
 **Pedidos (owner, captura de Cargas pendientes: $7.000 bien leído pero "todavía no figura una transferencia de ese monto en el banco
 automático"):** "¿por qué no detecta la carga directo? necesito que cargue todo directo, detecte y cargue, todo ágil" · "si no funciona ×3

@@ -5926,7 +5926,8 @@ async function cierresDetalle(dk) {
             '<div>Depósitos automáticos (banco): <b>' + money(s.depositosAuto || 0) + '</b> · ' + (s.depositosAutoN || 0) + '</div>' +
             '<div>Depósitos a mano (agente): <b class="' + (s.depositosManual ? 'cl-warn' : '') + '">' + money(s.depositosManual || 0) + '</b> · ' + (s.depositosManualN || 0) + '</div>' +
             (s.depositosPrueba ? '<div>Depósitos de prueba: <b>' + money(s.depositosPrueba) + '</b> · ' + (s.depositosPruebaN || 0) + '</div>' : '') +
-            '<div>Retiros: <b>' + money(s.retiros || 0) + '</b> · ' + (s.retirosN || 0) + ' (pagados por banco ' + money(s.pagosBanco || 0) + ' · a mano <b class="' + (s.pagosManual ? 'cl-warn' : '') + '">' + money(s.pagosManual || 0) + '</b>)</div></div>' +
+            '<div>Retiros: <b>' + money(s.retiros || 0) + '</b> · ' + (s.retirosN || 0) + ' (pagados por banco ' + money(s.pagosBanco || 0) + ' · a mano <b class="' + (s.pagosManual ? 'cl-warn' : '') + '">' + money(s.pagosManual || 0) + '</b>)</div>' +
+            (s.fondeos ? '<div>🏦 Fondeo (ingreso): <b style="color:var(--p-green,#16a34a)">' + money(s.fondeos) + '</b> · ' + (s.fondeosN || 0) + (d.fondeoNoVistoEnBanco ? ' <small class="cl-warn">(' + money(d.fondeoNoVistoEnBanco) + ' todavía no figura en el banco)</small>' : '') + '</div>' : '') + '</div>' + // #904
             '<div class="cl-rec-box"><b>🏦 Banco</b>' +
             '<div>Entró: <b>' + money(b.entradas || 0) + '</b> · ' + (b.entradasN || 0) + ' (acreditadas ' + money(b.entradasAcreditadas || 0) + ')</div>' +
             '<div>Sin acreditar a nadie: <b class="' + (b.entradasSinAcreditar ? 'cl-warn' : '') + '">' + money(b.entradasSinAcreditar || 0) + '</b> · ' + (b.entradasSinAcreditarN || 0) + '</div>' +
@@ -6168,21 +6169,22 @@ async function loadGastos() {
     try {
         const r = await authFetch('/api/admin/gastos?days=30'); const j = await r.json(); if (!r.ok) { l.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(j.error || 'Error') + '</div>'; return; }
         const m = function (n) { return '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); };
-        if (t) t.innerHTML = _diaKpi('Gastos de hoy', m(j.totalHoy)) + _diaKpi('Gastos (30 d)', m(j.total)) + _diaKpi('API del banco', j.apiOk ? '✅ conectada' : '❌ sin token');
+        if (t) t.innerHTML = _diaKpi('Gastos de hoy', m(j.totalHoy)) + _diaKpi('Gastos (30 d)', m(j.total)) + _diaKpi('Fondeos (30 d)', m(j.fondeos || 0)) + _diaKpi('API del banco', j.apiOk ? '✅ conectada' : '❌ sin token'); // #904
         const items = j.items || [];
-        l.innerHTML = items.length ? '<table class="data-table"><thead><tr><th>Día</th><th>Concepto</th><th>Monto</th><th>Destino</th><th>Cómo</th><th>Estado</th><th>Por</th><th></th></tr></thead><tbody>' + items.map(function (g) { return '<tr><td>' + escapeHtml(g.dateKey) + '</td><td>' + escapeHtml(g.concept) + '</td><td><b>' + m(g.amount) + '</b></td><td><small>' + escapeHtml(g.toName || '') + (g.toCBU ? '<br>' + escapeHtml(g.toCBU) : '') + '</small></td><td>' + (g.paidVia === 'hgcash' ? '🏦 API' : '✍️ a mano') + '</td><td>' + (g.status === 'paid' ? '<span class="cl-st fin">✅ pagado</span>' : (g.status === 'failed' ? '<span class="cl-st bad" title="' + escapeHtml(g.hgError || '') + '">❌ falló</span>' : '⏳')) + '</td><td><small>' + escapeHtml(g.createdBy || '') + '</small></td><td>' + (g.paidVia === 'hgcash' && g.status === 'paid' ? '' : '<button class="btn-secondary btn-small" onclick="gastoBorrar(\'' + g.id + '\')">🗑</button>') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center;">Sin gastos cargados.</div>';
+        l.innerHTML = items.length ? '<table class="data-table"><thead><tr><th>Día</th><th>Concepto</th><th>Monto</th><th>Destino</th><th>Cómo</th><th>Estado</th><th>Por</th><th></th></tr></thead><tbody>' + items.map(function (g) { return '<tr><td>' + escapeHtml(g.dateKey) + '</td><td>' + escapeHtml(g.concept) + '</td><td><b>' + m(g.amount) + '</b></td><td><small>' + escapeHtml(g.toName || '') + (g.toCBU ? '<br>' + escapeHtml(g.toCBU) : '') + '</small></td><td>' + (g.kind === 'fondeo' ? '<b style="color:var(--p-green,#16a34a)">🏦 Fondeo · ingreso</b>' : g.paidVia === 'hgcash' ? '🏦 API' : '✍️ a mano') + '</td><td>' + (g.kind === 'fondeo' ? '<span class="cl-st fin">✅ registrado</span>' : g.status === 'paid' ? '<span class="cl-st fin">✅ pagado</span>' : (g.status === 'failed' ? '<span class="cl-st bad" title="' + escapeHtml(g.hgError || '') + '">❌ falló</span>' : '⏳')) + '</td><td><small>' + escapeHtml(g.createdBy || '') + '</small></td><td>' + (g.paidVia === 'hgcash' && g.status === 'paid' ? '' : '<button class="btn-secondary btn-small" onclick="gastoBorrar(\'' + g.id + '\')">🗑</button>') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center;">Sin gastos cargados.</div>';
     } catch (_) { l.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
 }
 async function gastoCrear() {
     const v = function (id) { const el = document.getElementById(id); return el ? String(el.value || '').trim() : ''; };
-    const body = { concept: v('gsConcept'), amount: Number(v('gsAmount')), toCBU: v('gsCbu'), toName: v('gsName'), toCUIT: v('gsCuit'), dateKey: v('gsDate') || undefined, payNow: !!(document.getElementById('gsPayNow') || {}).checked };
+    const kind = v('gsKind') === 'fondeo' ? 'fondeo' : 'gasto'; // #904
+    const body = { kind, concept: v('gsConcept') || (kind === 'fondeo' ? 'Fondeo de la cuenta de pagos' : ''), amount: Number(v('gsAmount')), toCBU: v('gsCbu'), toName: v('gsName'), toCUIT: v('gsCuit'), dateKey: v('gsDate') || undefined, payNow: !!(document.getElementById('gsPayNow') || {}).checked };
     if (!body.concept || !(body.amount > 0)) { showToast('Concepto y monto', 'error'); return; }
     if (body.payNow && !confirm('¿Pagar $' + body.amount.toLocaleString('es-AR') + ' por la API del banco a "' + (body.toCbu || body.toCBU) + '"?\n\nLa plata sale de la cuenta ahora y no se puede deshacer.')) return;
     const msg = document.getElementById('gsMsg'); if (msg) msg.textContent = body.payNow ? 'Pagando…' : 'Guardando…';
     try {
         const r = await authFetch('/api/admin/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json();
         if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); if (msg) msg.textContent = '❌ ' + (j.error || ''); return; }
-        showToast(body.payNow ? '💸 Gasto pagado y registrado' : '💸 Gasto registrado', 'success'); if (msg) msg.textContent = '✅ listo';
+        showToast(kind === 'fondeo' ? '🏦 Fondeo registrado: el cierre de ese día lo toma como ingreso' : (body.payNow ? '💸 Gasto pagado y registrado' : '💸 Gasto registrado'), 'success'); if (msg) msg.textContent = '✅ listo';
         ['gsConcept', 'gsAmount', 'gsCbu', 'gsName', 'gsCuit', 'gsDate'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
         loadGastos();
     } catch (_) { showToast('Error de conexión', 'error'); }
@@ -6191,7 +6193,9 @@ async function gastoBorrar(id) {
     if (!confirm('¿Borrar este gasto?')) return;
     try { const r = await authFetch('/api/admin/gastos/' + encodeURIComponent(id), { method: 'DELETE' }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Gasto borrado', 'success'); loadGastos(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
-window.loadGastos = loadGastos; window.gastoCrear = gastoCrear; window.gastoBorrar = gastoBorrar;
+// #904: con "Fondeo" no se paga nada por la API (es plata que entra): se esconde ese tilde.
+function gastoKindChange() { const f = (document.getElementById('gsKind') || {}).value === 'fondeo'; const p = document.getElementById('gsPayNow'); if (p) { p.checked = false; p.disabled = f; const l = p.closest('label'); if (l) l.style.opacity = f ? '.4' : ''; } ['gsCbu', 'gsName', 'gsCuit'].forEach((id) => { const el = document.getElementById(id); if (el) el.disabled = f; }); }
+window.loadGastos = loadGastos; window.gastoCrear = gastoCrear; window.gastoBorrar = gastoBorrar; window.gastoKindChange = gastoKindChange;
 // #763: Cargas automáticas — reporte + detalle de cada cliente
 async function loadCargasAuto() {
     const r1 = document.getElementById('caResumen'), l = document.getElementById('caLista'); if (!r1) return;
@@ -6256,12 +6260,27 @@ async function loadPayReview() {
                 (rk.fraudNotes && rk.fraudNotes.length ? '<div style="color:#888;font-size:11px;">' + rk.fraudNotes.map(function (n) { return escapeHtml(n.note || ''); }).join(' · ') + '</div>' : '') +
                 '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
                 '<button type="button" class="btn-primary btn-small" onclick="payReviewApprove(\'' + p.id + '\')">✅ Confirmar y pagar</button>' +
+                '<button type="button" class="btn-secondary btn-small" onclick="payReviewOtherBank(\'' + p.id + '\')" title="Ya lo pagaste desde otra cuenta: descuenta las fichas y lo marca pagado (no sale por el banco automático)">🏦 Pagado por banco externo</button>' + // #904
                 '<button type="button" class="btn-secondary btn-small" onclick="payReviewReject(\'' + p.id + '\')" style="color:#ff8080;">⛔ Rechazar</button>' +
                 '<button type="button" class="btn-secondary btn-small" onclick="try{viewUserChat(\'' + p.userId + '\')}catch(e){showSection(\'chats\')}">💬 Ver chat</button>' +
                 '</div></div>';
         }).join('');
     } catch (_) { box.innerHTML = '<span style="color:#ff8080;">Error de conexión</span>'; }
 }
+// #904 (owner): "en pagos pendientes, aceptar el pago descontando fichas pero que diga que se pagó de banco externo". Usa la misma ruta que
+// el botón del chat (/pay-other-bank: descuenta las fichas si no estaban descontadas; si el cliente ya se las jugó, no paga y avisa).
+async function payReviewOtherBank(id) {
+    const p = _prItems.find(function (x) { return x.id === id; });
+    if (!confirm('¿Marcar ' + (p ? fmtARS(p.amount) + ' de ' + p.username : 'este retiro') + ' como PAGADO DESDE UN BANCO EXTERNO?\n\nConfirmá sólo si YA hiciste la transferencia por fuera. Se descuentan las fichas del cliente y no sale nada por el banco automático.')) return;
+    try {
+        const r = await authFetch('/api/admin/payouts/' + encodeURIComponent(id) + '/pay-other-bank', { method: 'POST' }); const j = await r.json().catch(function () { return {}; });
+        if (r.ok && j.success) showToast('🏦 Pagado por banco externo ✅ (fichas descontadas)', 'success');
+        else if (r.ok && j.insufficient) showToast(j.message || 'Saldo insuficiente: no se pagó. Se avisó al cliente.', 'error');
+        else showToast(j.error || 'No se pudo', 'error');
+        loadPayReview();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.payReviewOtherBank = payReviewOtherBank;
 async function payReviewSaveCfg() {
     const minArs = Number(document.getElementById('prMinArs').value), autoBelow = document.getElementById('prAutoBelow').checked, delayMin = Number((document.getElementById('prDelayMin') || {}).value) || 30;
     const trustedOnly = !!(document.getElementById('prTrustedOnly') || {}).checked, trustedDays = Number((document.getElementById('prTrustedDays') || {}).value) || 7, trustedMinDeposits = Number((document.getElementById('prTrustedMinDep') || {}).value); // #881

@@ -3096,7 +3096,8 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 </div>
                 <div class="dia-card"><div class="dia-card-h"><b>➕ Cargar un gasto</b><small>Con "Pagar ahora por la API" la plata sale de la cuenta del banco al CBU/alias que pongas y queda registrada; sin el tilde sólo se registra (ya lo pagaste por otro lado). En los dos casos el cierre del día lo descuenta del resultado y la conciliación lo explica.</small></div>
                     <div class="gs-form">
-                        <label>Concepto<input type="text" id="gsConcept" maxlength="120" placeholder="ej. Comisión publicista, publicidad, sueldo…"></label>
+                        <label style="display:flex;flex-direction:column;gap:3px">Tipo<select id="gsKind" onchange="gastoKindChange()"><option value="gasto">💸 Gasto (sale plata)</option><option value="fondeo">🏦 Fondeo (entra plata para pagos · ingreso del cierre)</option></select></label>
+<label>Concepto<input type="text" id="gsConcept" maxlength="120" placeholder="ej. Comisión publicista, publicidad, sueldo…"></label>
                         <label>Monto $<input type="number" id="gsAmount" min="1" step="1" placeholder="0"></label>
                         <label>CBU / CVU / alias<input type="text" id="gsCbu" maxlength="40" placeholder="22 dígitos o alias"></label>
                         <label>Titular<input type="text" id="gsName" maxlength="80" placeholder="Nombre del destinatario"></label>

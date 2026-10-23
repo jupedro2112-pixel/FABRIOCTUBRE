@@ -20241,9 +20241,11 @@ app.get('/api/admin/gastos', authMiddleware, adminMiddleware, async (req, res) =
     const days = Math.max(1, Math.min(90, parseInt(req.query.days, 10) || 30));
     const since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000));
     const items = await Expense.find({ dateKey: { $gte: since } }).sort({ createdAt: -1 }).limit(300).lean();
-    const tot = items.filter((g) => g.status !== 'failed').reduce((s, g) => s + (Number(g.amount) || 0), 0);
-    const hoy = datosIa.dateKeyART(new Date()); const totHoy = items.filter((g) => g.dateKey === hoy && g.status !== 'failed').reduce((s, g) => s + (Number(g.amount) || 0), 0);
-    res.json({ success: true, items, total: Math.round(tot), totalHoy: Math.round(totHoy), apiOk: hgcashPay.isEnabled() });
+    const isG = (g) => g.kind !== 'fondeo' && g.status !== 'failed', isF = (g) => g.kind === 'fondeo'; // #904
+    const tot = items.filter(isG).reduce((s, g) => s + (Number(g.amount) || 0), 0);
+    const hoy = datosIa.dateKeyART(new Date()); const totHoy = items.filter((g) => g.dateKey === hoy && isG(g)).reduce((s, g) => s + (Number(g.amount) || 0), 0);
+    const fondeos = Math.round(items.filter(isF).reduce((s, g) => s + (Number(g.amount) || 0), 0));
+    res.json({ success: true, items, total: Math.round(tot), totalHoy: Math.round(totHoy), fondeos, apiOk: hgcashPay.isEnabled() });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/gastos', authMiddleware, adminMiddleware, async (req, res) => {
@@ -20251,11 +20253,12 @@ app.post('/api/admin/gastos', authMiddleware, adminMiddleware, async (req, res) 
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const b = req.body || {};
     const amount = Math.round(Number(b.amount) || 0); if (!(amount >= 1 && amount <= 50000000)) return res.status(400).json({ error: 'Monto inválido' });
-    const concept = String(b.concept || '').trim().slice(0, 120); if (concept.length < 2) return res.status(400).json({ error: 'Poné el concepto del gasto' });
+    const kind = b.kind === 'fondeo' ? 'fondeo' : 'gasto'; // #904
+    const concept = (String(b.concept || '').trim() || (kind === 'fondeo' ? 'Fondeo de la cuenta de pagos' : '')).slice(0, 120); if (concept.length < 2) return res.status(400).json({ error: 'Poné el concepto del gasto' });
     const toCBU = String(b.toCBU || '').trim().slice(0, 40) || null, toName = String(b.toName || '').trim().slice(0, 80) || null, toCUIT = String(b.toCUIT || '').replace(/\D/g, '').slice(0, 11) || null;
-    const payNow = b.payNow === true;
+    const payNow = b.payNow === true && kind === 'gasto'; // un fondeo nunca se "paga": sólo se registra
     const dateKey = /^\d{4}-\d{2}-\d{2}$/.test(String(b.dateKey || '')) ? String(b.dateKey) : datosIa.dateKeyART(new Date());
-    const doc = await Expense.create({ id: uuidv4(), dateKey, amount, concept, toCBU, toName, toCUIT, paidVia: payNow ? 'hgcash' : 'manual', status: payNow ? 'paying' : 'paid', createdBy: req.user.username });
+    const doc = await Expense.create({ id: uuidv4(), kind, dateKey, amount, concept, toCBU, toName, toCUIT, paidVia: payNow ? 'hgcash' : 'manual', status: payNow ? 'paying' : 'paid', createdBy: req.user.username });
     if (payNow) {
       if (!hgcashPay.isEnabled()) { await Expense.deleteOne({ id: doc.id }); return res.status(503).json({ error: 'hgcash no está configurado (token de API).' }); }
       if (!toCBU || !/^(\d{22}|[a-z0-9._-]{6,40})$/i.test(toCBU)) { await Expense.deleteOne({ id: doc.id }); return res.status(400).json({ error: 'Para pagar por la API hace falta el CBU/CVU (22 dígitos) o el alias.' }); }
@@ -21176,9 +21179,13 @@ async function _closeReconcile(dayKey) {
   out.banco.salidas = sum(outs); out.banco.salidasN = outs.length;
   out.items.entradasSinAcreditar = bIn.sinAcreditar.slice(0, 50).map((m) => ({ hora: m.date || m.createdAt, de: m.fromName || null, monto: r0(m.amount), estado: ms(m) || 'pendiente' }));
   // ---- GASTOS del día (#770): pagados por la API (salen del banco) o registrados a mano
-  const gastos = await Expense.find({ dateKey: dayKey, status: { $ne: 'failed' } }).select('amount concept toName paidVia createdBy createdAt hgId').lean();
+  const _gAll = await Expense.find({ dateKey: dayKey, status: { $ne: 'failed' } }).select('amount concept toName paidVia createdBy createdAt hgId kind').lean();
+  const gastos = _gAll.filter((g) => g.kind !== 'fondeo'), fondeos = _gAll.filter((g) => g.kind === 'fondeo'); // #904
   const gBanco = gastos.filter((g) => g.paidVia === 'hgcash'), gMan = gastos.filter((g) => g.paidVia !== 'hgcash');
   out.sistema.gastos = sum(gastos); out.sistema.gastosN = gastos.length; out.sistema.gastosBanco = sum(gBanco); out.sistema.gastosManual = sum(gMan);
+  // #904: FONDEOS = plata que el dueño metió en la cuenta de pagos (ingreso). Explican esa parte de las entradas del banco "sin acreditar".
+  out.sistema.fondeos = sum(fondeos); out.sistema.fondeosN = fondeos.length;
+  out.items.fondeos = fondeos.slice(0, 20).map((g) => ({ hora: g.createdAt, usuario: '—', monto: r0(g.amount), agente: g.createdBy || null, nota: g.concept || 'Fondeo' }));
   out.items.gastos = gastos.slice(0, 50).map((g) => ({ hora: g.createdAt, usuario: g.toName || '—', monto: r0(g.amount), agente: g.createdBy || null, nota: (g.concept || '') + (g.paidVia === 'hgcash' ? ' · por API' : ' · a mano') }));
   // ---- DIFERENCIA y causas (signo: + = el banco tiene MÁS que el sistema = sobrante; − = faltante)
   const dif = r0((out.banco.entradas - out.banco.salidas) - (out.sistema.depositos - out.sistema.retiros));
@@ -21186,7 +21193,10 @@ async function _closeReconcile(dayKey) {
   const add = (clave, titulo, monto, signo, explica, severidad) => { if (!(Math.abs(monto) > 0)) return; out.causas.push({ clave, titulo, monto: r0(monto), impacto: r0(monto) * signo, explica, severidad }); };
   add('dep_manual', 'Cargas acreditadas A MANO por un agente (sin pasar por el banco)', out.sistema.depositosManual, -1, 'El sistema las cuenta como depósito pero el banco no tiene esa entrada. Si el cliente transfirió, tiene que verse como entrada del banco; si no, revisar con quién y por qué se acreditó.', 'alta');
   add('dep_prueba', 'Cargas de PRUEBA (usuario tester)', out.sistema.depositosPrueba, -1, 'Sólo en el entorno de prueba. En producción tiene que ser $0.', 'media');
-  add('in_sin_acreditar', 'Entradas del banco SIN acreditar a ningún cliente', out.banco.entradasSinAcreditar, +1, 'Plata que entró al banco y no se cargó a nadie (sin match, pendiente o en revisión). Revisar en Cargas pendientes / Movimientos.', 'alta');
+  // #904: lo que el dueño registró como FONDEO explica (hasta su monto) las entradas del banco que no son cargas de clientes.
+  const _fondeoExpl = Math.min(out.sistema.fondeos || 0, out.banco.entradasSinAcreditar || 0); out.fondeoNoVistoEnBanco = Math.max(0, (out.sistema.fondeos || 0) - _fondeoExpl);
+  add('fondeo', 'Fondeo de la cuenta de pagos (ingreso registrado en Gastos)', _fondeoExpl, +1, 'Plata que se metió en la cuenta para pagar retiros: se toma como INGRESO del día y explica esa entrada del banco.', 'baja');
+  add('in_sin_acreditar', 'Entradas del banco SIN acreditar a ningún cliente', Math.max(0, (out.banco.entradasSinAcreditar || 0) - _fondeoExpl), +1, 'Plata que entró al banco y no se cargó a nadie (sin match, pendiente o en revisión). Revisar en Cargas pendientes / Movimientos.', 'alta');
   add('in_devueltas', 'Entradas devueltas al origen (rebote por carga menor al mínimo)', out.banco.entradasDevueltas, +1, 'Entró y se devolvió: la entrada cuenta en el banco pero la salida de la devolución también. Neutro si la devolución salió el mismo día.', 'baja');
   add('in_dup', 'Entradas duplicadas o ignoradas por el sistema', out.banco.entradasDupIgn, +1, 'El banco las informó pero el sistema las descartó (duplicado o ignorado). Verificar que no sean cargas reales.', 'media');
   add('pago_manual', 'Retiros pagados A MANO (por fuera de la API del banco)', out.sistema.pagosManual, +1, 'El sistema los cuenta como retiro pero el banco no registra la salida por API. Si se pagaron desde otra cuenta, es normal; si no, verificar.', 'alta');
