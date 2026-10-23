@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-22
 
+### 939. JUGAYGANA: sus proveedores (orden y logos de jugaygana44) y las PORTADAS DEL ZIP en 11 proveedores — SW v631
+**Pedido (owner):** "subí todo lo que modificaste en fotos" (en la PRUEBA/Render, NO en picaroja.com). Sale `public/data/jugaygana-games.json` (#937):
+- Hoja de Proveedores = los de JUGAYGANA en su orden y con su logo (`images/jugaygana/prov/<i>.webp`), sólo los que existen en Girox (28).
+- **Leídos (portadas de JUGAYGANA, `images/jugaygana/g/<id>.webp`, 833 juegos):** RubyPlay 159, Mancala 85, BGaming 190, Betsoft 8, Playson 66,
+  Microgaming 57, NetEnt 81, Ezugi 45, Hacksaw 27, 77 Gaming 113, Evoplay 2 (el resto de sus portadas no está en Girox o era dudoso).
+  Muestra de 30 al azar revisada a ojo: todas correctas. Se sacó "All Lucky Clovers 5" (título tapado por la franja).
+- **Sin leer todavía** (KA Gaming, Pragmatic, 1Spin4Win, Spinoro, Amatic, Rival, KingMidas, Greentube…): `pid` ⇒ abren sus juegos de Girox
+  (`all(pid)`). Sin entrada propia en Girox no aparecen (Red Tiger y Shacks caerían en todo Evolution; varios en vivo no figuran en la lista).
+- Categorías de la barra: siguen con el catálogo de Girox (con 11 proveedores leídos quedarían casi vacías).
+- Para seguir: el proceso de #937 (scratchpad; si se reinició Tails hay que volver a recortar desde el zip).
+
 ### 938. Ganamos: "Ver todo" de cada fila muestra SÓLO los juegos de esa fila — SW v630
 **Owner:** "en Mostrar Todo de algunos juegos no abre todos, va a otra sección". En Ganamos, "Ver todo" llevaba a TODO el catálogo (filas sin
 proveedor) o a todo el proveedor (`GN_MORE`, eliminado). Ahora `gnRow(i)` → `jgList` (la vista de lista de #936 sirve para las tres páginas;

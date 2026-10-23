@@ -228,13 +228,13 @@ VIP.lobby = (function () {
         return _jgGamesP;
     }
     const _jgG = (a) => ({ key: a[0], name: a[1], img: '/images/jugaygana/g/' + a[2] + '.webp' });
-    function jgProvOpen(i) { _jgGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (!p) return; jgProv(false); jgList(p.n, p.g.map(_jgG)); }); }
+    function jgProvOpen(i) { _jgGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (!p) return; jgProv(false); if (p.g) jgList(p.n, p.g.map(_jgG)); else if (p.pid) all(p.pid, p.n); }); } // sin leer todavía: sus juegos de Girox
     function _jgProvListHtml() {
         if (!_jgGamesP) { _jgGamesLoad().then(() => { const l = $('jgProvList'); if (l) l.innerHTML = _jgProvListHtml(); }); return '<div class="prl-note">Cargando…</div>'; }
         if (!(_jgGames && (_jgGames.providers || []).length)) { // sin datos copiados: los proveedores de Girox, como antes
             return ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('');
         }
-        return (_jgGames.providers || []).map((p, i) => '<button type="button" onclick="VIP.lobby.jgProvOpen(' + i + ')"><span class="jg-pl">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="" loading="lazy">' : '') + esc(p.n) + '</span><small>' + p.g.length + '</small></button>').join('');
+        return (_jgGames.providers || []).map((p, i) => '<button type="button" onclick="VIP.lobby.jgProvOpen(' + i + ')"><span class="jg-pl">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="" loading="lazy">' : '') + esc(p.n) + '</span><small>' + (p.g ? p.g.length : Number(p.cnt || 0)) + '</small></button>').join('');
     }
     function _jgCard(g) { // #918: como su tarjeta: imagen cuadrada, el nombre abajo sobre un degradé
         return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<em><b>' + esc(g.name) + '</b></em></span></button>';
