@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 884. 💸 Retirar premio bien explicado (cuánto se puede retirar hoy y qué falta, sin ir a soporte) — SW v597
+**Pedido (owner):** "en retiro explicá cuánto tiene disponible para retirar como detalle, bien explicado, que no se quejen todos a soporte".
+`_paintRollover` (withdraw.js): arriba grande "Podés retirar hoy: $X" (o "✅ Podés retirar $X, todo liberado"), saldo total y "todavía en juego";
+"Qué te falta para liberar el resto": cada carga / bono con su monto, rollover ×N (`multiplier` nuevo en `_rolloverSummary`), barra, "faltan $R"
+y "cuando llegues, esos $X pasan solos a retirables"; aviso del mínimo; desplegable "¿Por qué no puedo retirar todo mi saldo?" (carga ×3 /
+bono ×5 leídos de los objetivos, cuenta lo apostado, se libera solo, no hace falta escribir a soporte). Encabezado: "Disponible para retirar".
+`/sys_support_topic_retiro` remite a ese detalle (`mig884RetiroText`, sólo si seguía con el texto de #878).
+
 ### 883. 🛡️ TODA carga real con rollover ×3 (con o sin bono); el bono ×5 — corrige #882 — SW v596, admin SW v170
 **Pedido (owner):** "no, carga con bono es ×5 rollover pero carga común de plata ×3 rollover, sin bono". `_depositWithBonus` aplica el
 `multiplier` de `getDepositRolloverX()` (3) también a las cargas SIN bono (hgcash y carga manual del panel; mismo respaldo ×2 → sin rollover si

@@ -2624,3 +2624,10 @@ html.sat-fixed.ios-notch #casinoTopBar { padding-top: var(--sat) !important; }
 .wd-roll-it { margin: 6px 0; } .wd-roll-row { display: flex; justify-content: space-between; gap: 8px; }
 .wd-roll-bar { height: 6px; border-radius: 99px; background: var(--p-border); overflow: hidden; margin: 4px 0 2px; } .wd-roll-bar i { display: block; height: 100%; background: var(--p-red, #e60023); border-radius: 99px; }
 .wd-roll-it small, .wd-roll-p { color: var(--p-muted); font-size: 11.5px; } .wd-roll-p { margin: 6px 0 0; }
+
+/* #884 retiro bien explicado */
+.wd-roll-big { font: 800 15px var(--p-font); margin: 0 0 6px; } .wd-roll-big b { font-size: 19px; } .wd-roll-big.ok b { color: #16a34a; }
+.wd-roll-falta { color: var(--p-red, #e60023); white-space: nowrap; }
+.wd-roll-warn { color: var(--p-text); font-weight: 700; }
+.wd-roll-faq { margin-top: 8px; font-size: 12px; } .wd-roll-faq summary { cursor: pointer; font-weight: 800; color: var(--p-text); }
+.wd-roll-faq ul { margin: 6px 0 0; padding-left: 18px; color: var(--p-muted); } .wd-roll-faq li { margin: 3px 0; }

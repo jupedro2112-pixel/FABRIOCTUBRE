@@ -10265,7 +10265,7 @@ function _rolloverSummary(r) {
   const w = (r && r.wagering) || {}; const reqs = Array.isArray(w.requirements) ? w.requirements : [];
   const num = (v) => Math.max(0, Math.round(Number(v) || 0));
   const items = reqs.map((q) => { const target = num(q.target), progress = Math.min(target, num(q.progress)); const remaining = q.remaining != null ? num(q.remaining) : Math.max(0, target - progress);
-    return { kind: q.kind === 'bonus' ? 'bonus' : (q.kind === 'deposit' ? 'deposit' : String(q.kind || 'otro')), locked: num(q.locked), target, progress, remaining, pct: q.pct != null ? Math.min(100, num(q.pct)) : (target ? Math.min(100, Math.round(progress * 100 / target)) : 0) }; })
+    return { kind: q.kind === 'bonus' ? 'bonus' : (q.kind === 'deposit' ? 'deposit' : String(q.kind || 'otro')), locked: num(q.locked), multiplier: q.multiplier != null ? num(q.multiplier) : null, target, progress, remaining, pct: q.pct != null ? Math.min(100, num(q.pct)) : (target ? Math.min(100, Math.round(progress * 100 / target)) : 0) }; })
     .filter((x) => x.remaining > 0 || x.locked > 0);
   const balance = num(r && r.balance), available = Math.min(balance, num(r && r.available != null ? r.available : balance));
   return { balance, available, locked: Math.max(num(r && r.locked), balance - available), bonusLocked: num(r && r.bonusLocked), claimable: num(r && r.claimableTotal),
@@ -12674,6 +12674,7 @@ async function initializeData() {
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
+  try { if (!(await getConfig('mig884RetiroText', null))) { await Command.updateOne({ name: '/sys_support_topic_retiro', response: SUPPORT_RETIRO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_RETIRO_DEFAULT } }); await Config.set('mig884RetiroText', new Date().toISOString(), 'mig#884'); } } catch (e) { console.warn('[startup-migration] #884:', e.message); }
   try { if (!(await getConfig('mig883BonoText', null))) { await Command.updateOne({ name: '/sys_support_topic_bono', response: SUPPORT_BONO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_BONO_DEFAULT } }); await Config.set('mig883BonoText', new Date().toISOString(), 'mig#883'); } } catch (e) { console.warn('[startup-migration] #883:', e.message); }
   try { if (!(await getConfig('mig882DepositRoll', null))) { if ((await getConfig('depositRolloverX', null)) == null) await Config.set('depositRolloverX', 3, 'mig#882'); await Config.set('mig882DepositRoll', new Date().toISOString(), 'mig#882'); } } catch (e) { console.warn('[startup-migration] #882:', e.message); }
   try { if (!(await getConfig('mig879NoWithdrawOtp', null))) { await Config.set('withdrawOtpRequired', false, 'mig#879'); await Config.set('mig879NoWithdrawOtp', new Date().toISOString(), 'mig#879'); console.log('✅ #879: retiro sin SMS por retiro (teléfono verificado una vez)'); } } catch (e) { console.warn('[startup-migration] #879:', e.message); }
@@ -14154,7 +14155,7 @@ const SUPPORT_QUICK_KINDS = ['cargar', 'retirar', 'otro', 'carga', 'retiro', 're
 // Textos editables en COMANDOS (/sys_support_topic_* y /sys_support_detail). Una vez por tema cada 2 h por cliente; nunca si un
 // agente respondió hace < 10 min.
 const SUPPORT_TOPIC_CARGA_DEFAULT = '💳 Carga mínima {min}: con eso o más se acredita sola. Si cargaste menos, mandanos la captura.';
-const SUPPORT_TOPIC_RETIRO_DEFAULT = '💸 Retiro mínimo {retiro_min}, desde "Retirar premio" con el código SMS. ¿No llegó? Pasanos fecha y monto.';
+const SUPPORT_TOPIC_RETIRO_DEFAULT = '💸 Retiro mínimo {retiro_min}, desde "Retirar premio". Ahí ves cuánto podés retirar hoy y, si una parte sigue en juego, cuánto te falta apostar (se libera solo). ¿Ya lo pediste y no llegó? Pasanos fecha y monto.';
 const SUPPORT_TOPIC_REEMBOLSO_DEFAULT = '🎁 La info del reembolso está en el botón de abajo. ¿Algo no cierra? Contanos.';
 const SUPPORT_TOPIC_OTRO_DEFAULT = '❓ Contanos qué pasó, cuándo y con qué monto, y te respondemos.';
 const SUPPORT_DETAIL_DEFAULT = '📝 ¿Otra consulta? Escribila acá y te respondemos.';
@@ -14171,6 +14172,7 @@ const SUPPORT_TEXTS_OLD_878 = {
   '/sys_support_topic_bono': ['🎁 Así funciona el BONO y el ROLLOVER ×{rollover}:\n\n1️⃣ Qué es: todo regalo (bono de carga, fueguito, ruleta, misiones, reembolsos, código de bienvenida, nivel VIP) entra a tu cuenta como BONO. Para poder retirarlo tiene un rollover ×{rollover}: hay que APOSTAR (jugar) {rollover} veces el monto del bono. Ejemplo: un bono de $2.000 se desbloquea apostando $10.000 en total en la plataforma.\n\n2️⃣ Apostar NO es cargar: cuenta lo que jugás (cada apuesta suma, ganes o pierdas), no lo que transferís.\n\n3️⃣ Mientras tanto: tu plata cargada se puede retirar siempre; lo que queda bloqueado es sólo la parte del bono hasta cumplir el rollover. En la plataforma ves el progreso en tu perfil (saldo retirable / bono pendiente).\n\n4️⃣ Cuando completás las apuestas, el bono y lo que ganaste con él pasan a saldo retirable y lo sacás desde "Retirar premio".\n\nÚnica excepción: las comisiones de REFERIDOS se retiran sin apostar. Si pediste un retiro y te dice que hay un objetivo de apuestas pendiente, es esto: te falta completar el rollover. Contanos acá el monto del bono y cuánto jugaste y lo revisamos.', () => SUPPORT_TOPIC_BONO_DEFAULT],
 };
 const SUPPORT_BONO_OLD_878 = '🎁 Todo regalo entra como BONO con rollover ×{rollover}: para retirarlo hay que APOSTAR {rollover} veces el bono (ej.: $2.000 ⇒ $10.000 jugados). Cuenta lo que jugás, no lo que cargás. Tu plata cargada se retira siempre; sólo el bono queda bloqueado hasta cumplirlo. Referidos: sin rollover. ¿Dudas? Pasanos el monto del bono.'; // #883: texto anterior (decía que la carga se retira siempre)
+const SUPPORT_RETIRO_OLD_878 = '💸 Retiro mínimo {retiro_min}, desde "Retirar premio" con el código SMS. ¿No llegó? Pasanos fecha y monto.'; // #884: texto anterior
 const SUPPORT_TERMS_BTN = { kind: 'go_section', target: 'terms', label: '📄 Bases y condiciones', channel: 'support', small: true }; // #878: botón chico
 function _supportTopicFromText(text) {
   const t = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

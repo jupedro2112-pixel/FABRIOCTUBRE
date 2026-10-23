@@ -97,21 +97,42 @@ VIP.withdraw = (function () {
     // #881: detalle del rollover arriba del formulario: saldo total, cuánto es retirable, cuánto está bloqueado y cuánto falta apostar.
     let _rolloverShown = false;
     function _paintRollover(r) {
+        // #884 (owner): "en retiro explicá bien cuánto tiene disponible para retirar, con detalle, que no se quejen todos a soporte".
         _rolloverShown = false;
         let box = _el('withdrawRollover');
         if (!box) { const anchor = _el('withdrawNoBalance'); if (!anchor || !anchor.parentNode) return; box = document.createElement('div'); box.id = 'withdrawRollover'; box.className = 'wd-roll'; anchor.parentNode.insertBefore(box, anchor); }
-        if (!r || !(r.locked > 0)) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        if (!r) { box.style.display = 'none'; box.innerHTML = ''; return; }
         const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
-        const items = (r.items || []).filter((x) => x.remaining > 0).map((x) => '<div class="wd-roll-it"><div class="wd-roll-row"><span>' + (x.kind === 'bonus' ? '🎁 Bono' : x.kind === 'deposit' ? '💵 Carga' : '🎯 Objetivo') + ' ' + m(x.locked) + '</span><b>falta apostar ' + m(x.remaining) + '</b></div><div class="wd-roll-bar"><i style="width:' + Math.max(2, Math.min(100, x.pct || 0)) + '%"></i></div><small>Apostaste ' + m(x.progress) + ' de ' + m(x.target) + ' (' + (x.pct || 0) + '%)</small></div>').join('');
-        box.innerHTML = '<div class="wd-roll-h">🔒 Parte de tu saldo todavía no es retirable</div>'
-            + '<div class="wd-roll-sum"><span>Saldo total <b>' + m(r.balance) + '</b></span><span>Retirable hoy <b class="ok">' + m(r.available) + '</b></span><span>Bloqueado <b>' + m(r.locked) + '</b></span></div>'
-            + items
-            + '<p class="wd-roll-p">El bono tiene rollover: para liberarlo hay que <b>apostar</b> (jugar) el monto que falta. Cuenta lo que jugás, ganes o pierdas, no lo que cargás.' + (r.claimable > 0 ? ' 🎁 Tenés ' + m(r.claimable) + ' para reclamar en el regalito de la plataforma.' : '') + '</p>';
+        const wMin = _withdrawMin();
+        if (!(r.locked > 0)) {
+            box.innerHTML = '<div class="wd-roll-big ok">✅ Podés retirar <b>' + m(r.available) + '</b></div><div class="wd-roll-p">Todo tu saldo ya está liberado: no tenés apuestas pendientes.' + (r.claimable > 0 ? ' 🎁 Además tenés <b>' + m(r.claimable) + '</b> para reclamar en el regalito de la plataforma.' : '') + '</div>';
+            box.style.display = ''; return;
+        }
+        const items = (r.items || []).filter((x) => x.remaining > 0);
+        const row = (x) => {
+            const what = x.kind === 'bonus' ? '🎁 Bono' : x.kind === 'deposit' ? '💵 Carga' : '🎯 Objetivo';
+            const mult = x.multiplier ? ' ×' + x.multiplier : '';
+            return '<div class="wd-roll-it"><div class="wd-roll-row"><span>' + what + ' de <b>' + m(x.locked) + '</b>' + (mult ? ' <small>(rollover' + mult + ')</small>' : '') + '</span><b class="wd-roll-falta">faltan ' + m(x.remaining) + '</b></div>'
+                + '<div class="wd-roll-bar"><i style="width:' + Math.max(2, Math.min(100, x.pct || 0)) + '%"></i></div>'
+                + '<small>Llevás apostado ' + m(x.progress) + ' de ' + m(x.target) + ' (' + (x.pct || 0) + '%). Cuando llegues, esos ' + m(x.locked) + ' pasan solos a retirables.</small></div>';
+        };
+        box.innerHTML = '<div class="wd-roll-big' + (r.available >= wMin ? ' ok' : '') + '">Podés retirar hoy: <b>' + m(r.available) + '</b></div>'
+            + '<div class="wd-roll-sum"><span>Saldo total <b>' + m(r.balance) + '</b></span><span>Todavía en juego <b>' + m(r.locked) + '</b></span></div>'
+            + (items.length ? '<div class="wd-roll-h">Qué te falta para liberar el resto</div>' + items.map(row).join('') : '')
+            + (r.available < wMin ? '<p class="wd-roll-p wd-roll-warn">El retiro mínimo es ' + m(wMin) + '. Cuando lo retirable llegue a ese monto vas a poder pedirlo desde acá.</p>' : '')
+            + '<details class="wd-roll-faq"><summary>¿Por qué no puedo retirar todo mi saldo?</summary><ul>'
+            + '<li><b>Cada carga</b> se juega ×' + _depX(r) + ' antes de retirarla y <b>cada bono o regalo</b> ×' + _bonX(r) + '. Es para que el servicio no se use para mover plata sin jugar.</li>'
+            + '<li><b>Cuenta lo que apostás</b> en la plataforma, ganes o pierdas, no lo que cargás.</li>'
+            + '<li>Se va liberando <b>solo</b> a medida que jugás: no hace falta pedir nada ni escribir a soporte.</li>'
+            + '<li>Lo que ganes jugando también suma a tu saldo y se libera con la misma regla.</li>'
+            + (r.claimable > 0 ? '<li>🎁 Tenés <b>' + m(r.claimable) + '</b> para reclamar en el regalito de la plataforma.</li>' : '')
+            + '</ul></details>';
         box.style.display = '';
         _rolloverShown = true;
-        const wMin = _withdrawMin();
-        if (r.available < wMin) { const form = _el('withdrawForm'); if (form) form.style.display = 'none'; box.innerHTML += '<p class="wd-roll-p"><b>Cuando lo retirable llegue a ' + m(wMin) + ' vas a poder pedir tu retiro.</b></p>'; }
+        if (r.available < wMin) { const form = _el('withdrawForm'); if (form) form.style.display = 'none'; }
     }
+    function _bonX(r) { const d = (r.items || []).find((x) => x.kind === 'bonus' && x.multiplier); return d ? d.multiplier : 5; }
+    function _depX(r) { const d = (r.items || []).find((x) => x.kind === 'deposit' && x.multiplier); return d ? d.multiplier : 3; }
 
     async function _loadAccountAndBalance() {
         // 1. Datos bancarios guardados + estado del teléfono.
