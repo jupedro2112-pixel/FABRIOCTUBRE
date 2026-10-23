@@ -1987,7 +1987,30 @@ async function _askReceiptResend(userId, username, why, compId) {
     }
     const txt = await renderSystemCommand('/sys_receipt_unreadable', RECEIPT_UNREADABLE_DEFAULT, {});
     if (txt) await _sendUserSystemMessage({ id: userId, username }, txt, { metadata: { kind: 'receipt_unreadable', why: String(why || '').slice(0, 60), channel: 'support' }, push: { title: '📸 Reenviá tu comprobante', body: 'Necesitamos ver titular, CUIT, fecha y hora, monto y N° de operación.' } });
+    if (why !== 'not_comprobante') _chatAutoCloseIfHandled(userId, 'comprobante ilegible: se pidió reenviar').catch(() => {}); // #895
   } catch (e) { logger.warn(`[comprobante] pedido de reenvío: ${e.message}`); }
+}
+// #895 (owner 2026-10-23): "todo lo que es duplicado y problema de la gente que hace mal la cosa y que se informa en el chat, que quede
+// CERRADO; si la gente abre Soporte, que sí se abra". El comprobante viaja como imagen del chat y reabre el chat; cuando el SISTEMA ya lo
+// resolvió (carga acreditada sola, comprobante repetido, ilegible, menor al mínimo, a la espera del banco) se vuelve a cerrar. NO se cierra si
+// el cliente escribió TEXTO que nadie respondió (eso es abrir Soporte), ni si el chat está en Pagos (sólo pasa de 'open' a 'closed').
+async function _chatAutoCloseIfHandled(userId, why) {
+  try {
+    if (!userId) return;
+    const cs = await ChatStatus.findOne({ userId }).select('status').lean();
+    if (!cs || cs.status !== 'open') return;
+    const lastText = await Message.findOne({ senderId: userId, type: 'text', timestamp: { $gte: new Date(Date.now() - 24 * 3600 * 1000) } }).sort({ timestamp: -1 }).select('timestamp').lean();
+    if (lastText) {
+      const lastAgent = await Message.findOne({ receiverId: userId, senderId: { $ne: userId }, type: { $in: ['text', 'image', 'file'] }, adminOnly: { $ne: true }, timestamp: { $gte: lastText.timestamp } }).select('_id').lean();
+      if (!lastAgent) return; // escribió y nadie le respondió ⇒ es Soporte: queda abierto
+    }
+    const r = await ChatStatus.updateOne({ userId, status: 'open' }, { $set: { status: 'closed', closedAt: new Date(), closedBy: 'auto', assignedTo: null } });
+    if (r && r.modifiedCount) {
+      try { await delayClockResolve(userId, { responded: true, agentId: 'system', agentUsername: 'automático', via: 'auto' }); } catch (_) {}
+      try { notifyAdmins('chat_closed', { userId, by: 'sistema', adminId: 'system' }); } catch (_) {}
+      logger.info(`[chat] cerrado solo (${why}) user=${userId}`);
+    }
+  } catch (e) { logger.warn(`[chat] auto-cierre: ${e.message}`); }
 }
 // Deja el comprobante en Cargas pendientes YA escalado (sin otro mensaje al cliente) y abre el chat en Abiertos con una nota interna.
 async function _receiptQueueForAgent(userId, username, compId, why, first) {
@@ -2001,9 +2024,9 @@ async function _receiptQueueForAgent(userId, username, compId, why, first) {
       _emitDepositReviewUpdate(userId, { action: 'escalated', id: c.id, username, amount: c.amount || 0 });
     }
     if (!first) return;
-    await ChatStatus.findOneAndUpdate({ userId }, { $set: { userId, username, status: 'open', category: 'cargas', closedAt: null, closedBy: null, lastMessageAt: new Date() } }, { upsert: true, setDefaultsOnInsert: true });
+    // #895: el chat NO se abre (lo resuelve el agente desde Cargas pendientes); queda la nota interna para cuando lo mire.
     await _emitAdminOnlyChatNote(userId, username, `📸 COMPROBANTE ILEGIBLE 2 VECES (${String(why || '').slice(0, 40)}) — pasó solo a manual. Revisalo en "Cargas pendientes": si se ve, confirmalo con el monto; si no, pedile acá los datos (titular, CUIT, fecha y hora, monto, N° de operación).`);
-    try { notifyAdmins('chat_moved', { userId, to: 'open', by: 'sistema' }); } catch (_) {}
+    _chatAutoCloseIfHandled(userId, 'comprobante ilegible ⇒ Cargas pendientes').catch(() => {});
     logger.info(`[comprobante] ${username}: 2 comprobantes ilegibles ⇒ a un agente`);
   } catch (e) { logger.warn(`[comprobante] pase a agente: ${e.message}`); }
 }
@@ -2103,6 +2126,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
         await _emitAdminOnlyChatNote(userId, username, '🧾 Comprobante recibido (sin lectura automática: la IA de comprobantes no está configurada en este entorno). Verificalo a mano en Cargas pendientes.');
         const ackTxt = await renderSystemCommand('/sys_receipt_received', RECEIPT_RECEIVED_DEFAULT, { amount: '' });
         if (ackTxt) await _sendUserSystemMessage({ id: userId, username }, ackTxt, { metadata: { kind: 'deposit_pending', comprobanteId: base.id, amount: 0 } });
+        _chatAutoCloseIfHandled(userId, 'comprobante recibido (sin IA)').catch(() => {}); // #895
         _emitDepositReviewUpdate(userId, { action: 'queued', id: base.id, username, amount: 0 });
       } catch (e) { logger.warn(`[comprobante] sin IA: ${e.message}`); }
       return;
@@ -2234,6 +2258,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
         const dupTxt = await renderSystemCommand('/sys_receipt_duplicate', RECEIPT_DUPLICATE_DEFAULT, { amount: _amtStr(result.amount) });
         if (dupTxt) await _sendUserSystemMessage({ id: userId, username }, dupTxt, { metadata: { kind: 'receipt_duplicate', amount: result.amount || 0 } });
       } catch (_) {}
+      _chatAutoCloseIfHandled(userId, 'comprobante repetido').catch(() => {}); // #895
       return;
     }
 
@@ -2262,6 +2287,7 @@ async function analyzeComprobanteFromMessage({ userId, username, content, messag
         const ackTxt = await renderSystemCommand('/sys_receipt_received', RECEIPT_RECEIVED_DEFAULT, { amount: _amtStr(result.amount) });
         if (ackTxt) await _sendUserSystemMessage({ id: userId, username }, ackTxt, { metadata: { kind: 'deposit_pending', comprobanteId: base.id, amount: result.amount || 0 } });
         _emitDepositReviewUpdate(userId, { action: 'queued', id: base.id, username, amount: result.amount || 0 });
+        _chatAutoCloseIfHandled(userId, 'comprobante recibido: lo acredita el banco automático').catch(() => {}); // #895 (si no entra, va a Cargas pendientes)
       }
     } catch (e) { logger.warn(`[deposit-review] acuse: ${e.message}`); }
   } catch (e) {
@@ -2738,7 +2764,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
             await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'needs_review', matchedMovementId: movement.movementId } });
             const mvNow = await BankMovement.findOne({ movementId: movement.movementId }).lean();
             const rr = await _refundBelowMinMovement(mvNow, { by: 'auto', amount: Number(amount), minDep: minCharge, toCBU });
-            if (rr.ok) return;
+            if (rr.ok) { _chatAutoCloseIfHandled(user.id, 'carga menor al mínimo: devuelta sola').catch(() => {}); return; } // #895
             logger.warn(`[hgcash] devolución automática bajo mínimo falló mov=${movement.movementId}: ${rr.error} — queda para devolver a mano`);
           }
         } catch (e) { logger.warn(`[hgcash] devolución automática bajo mínimo excepción: ${e.message}`); }
@@ -2754,6 +2780,7 @@ async function hgcashAutoCarga({ movement, comprobante, mode }) {
       await _emitAdminOnlyChatNote(user.id, user.username,
         `🏦 ✅ Comprobante CORRECTO (${dataDesc}) — PERO el monto es menor al mínimo de carga ($${minCharge.toLocaleString('es-AR')}). NO se cargó automático.\n👉 Pedile al cliente que envíe la diferencia para llegar al mínimo y cargá la suma a mano.`);
       logger.info(`[hgcash] bajo mínimo user=${user.username} $${amount} < $${minCharge} mov=${movement.movementId}`);
+      _chatAutoCloseIfHandled(user.id, 'carga menor al mínimo: avisado').catch(() => {}); // #895 (queda en Cargas pendientes para devolver)
       return;
     }
   } catch (minErr) {
@@ -3196,6 +3223,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
       try { io.to(`user_${user.id}`).emit('deposit_credited', { amount: Number(amount), firstDeposit: !!_hgFTD }); } catch (_) {} // #712: cartel "Buena suerte" en el casino
     } catch (_) {}
     _emitHgcashUpdate('cargado');
+    _chatAutoCloseIfHandled(user.id, 'carga acreditada sola').catch(() => {}); // #895
     logger.info(`[hgcash] auto-carga OK user=${user.username} amount=$${amount} movement=${movement.movementId} platform=${pid} by=${by}`);
   } catch (e) {
     if (charged) {
@@ -4527,7 +4555,7 @@ app.post('/api/auth/register', authLimiter, registerIpLimiter, async (req, res) 
     await ChatStatus.create({
       userId: userId,
       username: username,
-      status: 'open',
+      status: 'closed', // #895: el chat nace CERRADO; se abre cuando el cliente escribe (antes llenaba Abiertos con altas sin mensajes)
       category: 'cargas',
       lastMessageAt: new Date()
     });
@@ -4707,7 +4735,7 @@ app.post('/api/auth/register-quick', authLimiter, registerIpLimiter, async (req,
     await ChatStatus.create({
       userId,
       username,
-      status: 'open',
+      status: 'closed', // #895: el chat nace CERRADO; se abre cuando el cliente escribe (antes llenaba Abiertos con altas sin mensajes)
       category: 'cargas',
       lastMessageAt: new Date()
     });
@@ -5287,7 +5315,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         await ChatStatus.create({
           userId: userId,
           username: gxUser.username,
-          status: 'open',
+          status: 'closed', // #895: el chat nace CERRADO; se abre cuando el cliente escribe (antes llenaba Abiertos con altas sin mensajes)
           category: 'cargas'
         });
 

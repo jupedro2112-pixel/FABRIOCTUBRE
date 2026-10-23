@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 895. 💬 Chats: lo que resuelve el sistema solo queda CERRADO; se abre sólo cuando el cliente escribe
+**Pedido (owner):** "todo lo que es duplicado y problema de la gente que hace mal la cosa y que se informa en el chat, que quede cerrado; si
+la gente abre Soporte, que sí se abra el chat". Antes el comprobante (imagen del chat) reabría el chat y quedaba abierto aunque el sistema lo
+resolviera. `_chatAutoCloseIfHandled(userId, why)` lo cierra (`closedBy:'auto'`, resuelve el reloj de demora) cuando: la carga se acreditó
+sola, el comprobante está repetido, es ilegible/incompleto (1er pedido de reenvío), quedó recibido esperando el banco (si no entra, va solo a
+Cargas pendientes), fue menor al mínimo (devuelto o avisado). NO cierra si: el cliente escribió TEXTO en las últimas 24 h que ningún agente
+respondió (una nota interna no cuenta), el chat está en Pagos, o la foto no era un comprobante (puede ser una consulta con captura). El 2º
+comprobante ilegible ya no abre el chat (queda en Cargas pendientes con la nota). El chat de un cliente NUEVO nace cerrado (antes las altas
+llenaban Abiertos, que muestra hasta 100, y tapaban a los que escribieron). Probado en Mongo en memoria (5 casos).
+
 ### 893. 📱 Verificación de teléfono: el número queda siempre todo junto y con 10 dígitos (que no falle el SMS) — SW v600
 **Pedido (owner, captura de "Verificá tu teléfono"):** "que tome el dato como lo determina el país, todos juntos los números, que no falle el
 SMS por un espacio". Antes se sacaban espacios/guiones/0/un 9 repetido, pero un "15" ("11 15 5555-1234") o el número pegado con "+54 9"
