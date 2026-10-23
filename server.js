@@ -21683,6 +21683,16 @@ app.post('/api/admin/support/:userId/close', authMiddleware, async (req, res) =>
     res.json({ success: true, since: now });
   } catch (e) { logger.error(`[support-close] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #900: ¿esta consulta necesita a una persona? NO si sólo es "no puedo / no me deja retirar", "cuánto me falta", rollover (lo explica la app).
+// SÍ si habla de algo que no llegó, un descuento, un error o un reclamo (o de cualquier otra cosa).
+function _supportNeedsHuman(text) {
+  const t = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (!t.trim()) return false;
+  const problem = /no (me )?(llego|llega|llegaron|entro|entra|acredit|cayo|cae|figura|aparece)|no (lo )?recib|descont|me sacaron|robar|estaf|error|reclam|devol|hace (\d+ |unas |varias )?(horas|dias)|todavia no|sigue sin|cbu|titular|mal |equivoc/;
+  if (problem.test(t)) return true;
+  const onlyWithdrawRule = /(no (me )?(deja|dejan|puedo|permite)|como|cuando|por que no( puedo)?) (retirar|sacar|cobrar)|cuanto (me )?falta|rollover|apostar|desbloque|retirable|bloquead|minimo (de|para) retir/;
+  return !onlyWithdrawRule.test(t);
+}
 app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
@@ -21696,7 +21706,9 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
         lastMessage: { $first: '$content' }, lastType: { $first: '$type' }, lastAt: { $first: '$timestamp' }, lastRole: { $first: '$senderRole' },
         unread: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$read', false] }] }, 1, 0] } },
         // #898 (owner): "en Soporte que se vean sólo los chats de la gente que se queja": cuenta los TEXTOS que escribió el cliente
-        userTexts: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$type', 'text'] }] }, 1, 0] } }
+        // #900: los temas rápidos (chips "Con un retiro"…) ya tienen respuesta automática: no cuentan como queja
+        userTexts: { $sum: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$type', 'text'] }, { $not: [{ $ifNull: ['$metadata.quick', false] }] }] }, 1, 0] } },
+        userTextList: { $push: { $cond: [{ $and: [{ $eq: ['$senderRole', 'user'] }, { $eq: ['$type', 'text'] }, { $not: [{ $ifNull: ['$metadata.quick', false] }] }] }, '$content', '$$REMOVE'] } }
       } },
       // Sólo conversaciones donde el cliente ESCRIBIÓ algo: los avisos automáticos (comprobante ilegible, retiro procesado…) y las fotos de
       // comprobantes solas los resuelve el sistema (y Cargas pendientes) y no ocupan Soporte.
@@ -21709,6 +21721,7 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
       { $project: {
         _id: 0, userId: '$_id', username: { $ifNull: ['$user.username', '?'] }, unread: 1, lastAt: 1, lastRole: 1,
         lastMessage: { $cond: [{ $eq: ['$lastType', 'image'] }, '📸 Imagen', { $substrCP: [{ $ifNull: ['$lastMessage', ''] }, 0, 90] }] },
+        userTextList: { $slice: ['$userTextList', 5] },
         online: { $gt: [{ $ifNull: ['$user.lastLogin', new Date(0)] }, { $subtract: [new Date(), 300000] }] },
         status: { $ifNull: [{ $arrayElemAt: ['$cs.status', 0] }, 'open'] },
         // #747 (owner): CERRADA = el agente cerró la charla (User.supportSessionSince) después del último mensaje; si el cliente
@@ -21716,7 +21729,10 @@ app.get('/api/admin/support/conversations', authMiddleware, async (req, res) => 
         closed: { $gt: [{ $ifNull: ['$user.supportSessionSince', new Date(0)] }, '$lastAt'] }
       } }
     ]);
-    res.json({ conversations: rows, unreadTotal: rows.filter((r) => !r.closed).reduce((s, r) => s + (r.unread || 0), 0), pending: rows.filter((r) => !r.closed).length, closed: rows.filter((r) => r.closed).length });
+    // #900 (owner): "si quieren retirar y no pueden, no hace falta respuesta": si TODO lo que escribió es la consulta de no poder retirar /
+    // cuánto falta apostar (ya contestada sola y explicada en Retirar premio) no ocupa Soporte; un retiro que NO LLEGÓ o un descuento sí.
+    const _rows = rows.filter((r) => (r.userTextList || []).some(_supportNeedsHuman)).map((r) => { delete r.userTextList; return r; });
+    res.json({ conversations: _rows, unreadTotal: _rows.filter((r) => !r.closed).reduce((s, r) => s + (r.unread || 0), 0), pending: _rows.filter((r) => !r.closed).length, closed: _rows.filter((r) => r.closed).length });
   } catch (e) { logger.error(`/api/admin/support/conversations: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
 

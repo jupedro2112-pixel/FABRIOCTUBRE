@@ -1790,6 +1790,18 @@
                             <button type="button" onclick="VIP.home.supportQuick('bono')">🎰 Con el bono</button><!-- #715 -->
                             <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra cosa</button>
                         </div>
+                        <!-- #900 (owner): "si van a Soporte, un breve resumen de cómo funciona todo según el problema que pueden tener" -->
+                        <details class="sp-faq">
+                            <summary>📌 Cómo funciona todo (mirá antes de escribir)</summary>
+                            <ul>
+                                <li><b>💳 Carga:</b> mínimo <span class="md-amt">$2.000</span>. Transferís al CBU de la app, mandás el comprobante entero (titular, monto, fecha y N° de operación) y se acredita sola en minutos. Un comprobante repetido no se acredita.</li>
+                                <li><b>💸 Retiro:</b> mínimo <span class="wd-min">$10.000</span>, a un CBU a tu nombre. Sale solo a tu cuenta.</li>
+                                <li><b>🔒 ¿No te deja retirar todo?</b> Cada carga se juega <span class="rx-dep">×3</span> y cada bono <span class="rx-bon">×5</span> antes de retirarlos (antifraude). En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar. Se libera solo jugando: no hace falta escribir.</li>
+                                <li><b>⏳ “Retiro procesado, lo estamos verificando”:</b> ya está en camino, en breve lo ves en tu cuenta.</li>
+                                <li><b>🎁 Bonos y reembolso:</b> los bonos de carga se aplican solos; el reembolso diario se reclama desde la app.</li>
+                                <li><b>❗ ¿Nada de esto es tu caso?</b> Escribinos acá qué pasó, cuándo y con qué monto, y te respondemos.</li>
+                            </ul>
+                        </details>
                         <div class="sp-closed" id="spClosed" hidden>🔒 Chat cerrado</div><!-- #613: fijado debajo de las opciones, con fecha -->
                         <div class="sp-sla" id="spSla">⏱ Responde dentro de los 10 minutos</div>
                     </div>
@@ -2618,7 +2630,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v601</div>
+                    <div class="pf-build" id="appBuildTag">app v602</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2642,7 +2654,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v601</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v602</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>

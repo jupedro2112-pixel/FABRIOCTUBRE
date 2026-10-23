@@ -674,7 +674,7 @@
     // #603: aviso "Chat cerrado" en el selector cuando Soporte cierra la charla; se borra al abrir un tema nuevo
     function supportClosedNotice() { try { VIP.ui.showToast('🔒 Chat cerrado por Soporte', 'info'); } catch (_) {} } // #613: el aviso fijado lo pinta chat.js con la fecha
     function supportIntroToggle(ev) {
-        try { if (ev && ev.target && ev.target.closest && ev.target.closest('button')) return; } catch (_) {}
+        try { if (ev && ev.target && ev.target.closest && ev.target.closest('button, details')) return; } catch (_) {} // #900: el resumen se abre sin plegar la presentación
         const el = _el('supportIntro'); if (!el) return;
         if (document.body.classList.contains('sp-sent')) el.classList.toggle('sp-open');
     }

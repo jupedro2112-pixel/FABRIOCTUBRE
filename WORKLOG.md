@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 900. ⚡ Todo automático: menú del panel por "lo que necesita una persona" · Soporte sólo con quejas reales · resumen en la app — SW v602, admin SW v179
+**Pedidos (owner):** "todo automático, no hay gente para nada, sólo Soporte; personas sólo para comprobantes a verificar (lo duplicado se
+rechaza) y cuando falla el banco, a confirmar" · "armá el menú admin de esa manera" · "si quieren retirar y no pueden no hace falta respuesta;
+si van a Soporte, que haya un breve resumen de cómo funciona todo según el problema" · "todo agilizado".
+- Menú: **👤 Para el agente** = Soporte · Comprobantes a verificar (antes Cargas pendientes) · Pagos a confirmar (antes Retiros pendientes);
+  **⚡ Automático (lo hace solo)** = INICIO · Cargas automáticas · Alertas de estafa · Cronogramas. El resto igual (mismos `data-section`).
+- Soporte (`/api/admin/support/conversations`): los temas rápidos (`metadata.quick`) no cuentan; una conversación entra sólo si algún texto del
+  cliente `_supportNeedsHuman` (no si es sólo "no puedo retirar / cuánto me falta / rollover", que contesta el sistema y explica Retirar premio;
+  sí si habla de algo que no llegó, un descuento, un error o cualquier otra cosa).
+- App, Soporte: desplegable **"📌 Cómo funciona todo"** (carga mínima, comprobante, retiro, rollover ×3/×5 y Retirar premio, "procesado,
+  verificando", bonos/reembolso, y "si no es tu caso, escribinos") con los valores de Config (`.md-amt`, `.wd-min`, `.rx-dep`, `.rx-bon`).
+- Los comprobantes duplicados no entran a Comprobantes a verificar (se rechazan solos con aviso).
+
 ### 899. 🛟 La carga (manual y automática) nunca queda trabada por el rollover ×3 de la carga
 **Reporte (owner):** "me están diciendo que desde el panel lo manual no está cargando". Riesgo encontrado: desde #882/#883 cada carga va con
 `multiplier` (rollover de la carga) y sólo se reintentaba sin él si el error de 1girox NOMBRABA "multiplier"; un 422 distinto (p. ej.
