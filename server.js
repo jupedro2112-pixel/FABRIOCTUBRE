@@ -2833,7 +2833,10 @@ async function _depositWithBonus(adapter, username, amount, description, referen
   // (Las devoluciones de retiro rechazado NO pasan por acá: vuelven libres.)
   let depMult = await _depositRolloverXFor(adapter);
   const _wg = (extra) => Object.assign(depMult > 0 ? { multiplier: depMult } : {}, extra);
-  const _multRejected = (x) => !x.success && x.httpStatus === 422 && /multiplier|multiplicador/i.test(String(x.code || '') + ' ' + String(x.error || '')) && !/bonus_multiplier/i.test(String(x.error || ''));
+  // #899 (owner: "desde el panel lo manual no está cargando"): CUALQUIER 422 (validación: 1girox no movió plata) con el rollover de la carga
+  // puesto se reintenta sin él (×2 y después sin rollover, misma reference) — antes sólo si el error nombraba "multiplier", y un
+  // `feature_disabled` / `invalid_rollover` dejaba la carga sin hacer. El 422 del BONO (bonus_out_of_range) sigue su camino aparte.
+  const _multRejected = (x) => !x.success && x.httpStatus === 422 && x.code !== 'bonus_out_of_range' && !/bonus_out_of_range|bonus out of range/i.test(String(x.error || ''));
   if (!(bonus > 0)) {
     let r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true }));
     for (const fb of [2, 0]) { if (!(_multRejected(r0) && depMult > 0 && depMult !== fb)) break; logger.warn(`[deposit] ${username}: 1girox rechazó el rollover ×${depMult} de la carga ⇒ pruebo ×${fb}`); depMult = fb; r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }

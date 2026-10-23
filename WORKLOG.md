@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-22
 
+### 899. 🛟 La carga (manual y automática) nunca queda trabada por el rollover ×3 de la carga
+**Reporte (owner):** "me están diciendo que desde el panel lo manual no está cargando". Riesgo encontrado: desde #882/#883 cada carga va con
+`multiplier` (rollover de la carga) y sólo se reintentaba sin él si el error de 1girox NOMBRABA "multiplier"; un 422 distinto (p. ej.
+`feature_disabled` si la red no tiene el rollover habilitado) dejaba la carga sin hacer. Ahora `_multRejected` = CUALQUIER 422 salvo
+`bonus_out_of_range` ⇒ ×2 y después sin rollover propio, misma reference (un 422 no mueve plata: no duplica). Probado (money3.js): 1girox
+con el rollover deshabilitado ⇒ la carga entra (sin y con bono). Si pasa, la carga queda SIN el ×3: hay que pedirle a 1girox que habilite el
+rollover en la red. Los comprobantes duplicados ya NO entran a Cargas pendientes (se rechazan solos con aviso al cliente).
+
 ### 898. 💬 Panel: SOPORTE arriba (sólo quien escribió), con Cargar / Retiro y la franja de cargas trabadas para confirmar — admin SW v178
 **Pedidos (owner):** "dejá el chat en otro lado, que suba el de Soporte y en Soporte agregamos carga y retiro como en el chat completo" ·
 "un botón de confirmación abajo del chat para los que se traban porque no detecta el comprobante (los duplicados ya fueron avisados, ahí no);
