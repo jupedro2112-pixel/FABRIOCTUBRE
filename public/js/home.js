@@ -1009,12 +1009,30 @@
         let sat = v;
         if (sat == null) { try { sat = (window.VIP_DEVICE && window.VIP_DEVICE.sat) || 0; } catch (_) { sat = 0; } }
         document.documentElement.style.setProperty('--sat', Math.max(0, Math.min(80, Math.round(sat))) + 'px');
+        document.documentElement.classList.toggle('sat-fixed', v != null); // #867: el elegido reemplaza los mínimos fijos (ios-notch 44 px)
         _fitPaintCur();
     }
     function _fitPaintCur() {
-        const el = _el('fitCur'); if (!el) return; const v = _fitCur(); let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || ''; } catch (_) {}
-        el.textContent = v == null ? 'Ahora: automático' : ('Ahora: ' + (lb || 'a mano') + ' · ' + v + ' px');
+        const el = _el('fitCur'); const v = _fitCur(); let lb = ''; try { lb = localStorage.getItem('vip_fit_model') || ''; } catch (_) {}
+        if (el) el.textContent = v == null ? 'Modelo: automático' : ('Modelo: ' + (lb || 'a mano'));
+        const cs = getComputedStyle(document.documentElement);
+        const tv = _el('fitTopV'), bv = _el('fitBotV');
+        if (tv) tv.textContent = (parseInt(cs.getPropertyValue('--sat'), 10) || 0) + ' px';
+        if (bv) { const ob = _fitBotCur(); bv.textContent = ob == null ? 'auto' : ob + ' px'; }
     }
+    // #867 (owner: "deja un espacio en blanco abajo y no se ajusta bien"): margen de ABAJO (--sab) ajustable aparte; "auto" = el del teléfono.
+    function _fitBotCur() { try { const v = localStorage.getItem('vip_sab_override'); return v === null || v === '' ? null : Number(v); } catch (_) { return null; } }
+    function _fitBotApply(v) {
+        const d = document.documentElement;
+        try { if (v == null) { localStorage.removeItem('vip_sab_override'); d.style.removeProperty('--sab'); d.classList.remove('sab-fixed'); } else { localStorage.setItem('vip_sab_override', String(v)); d.style.setProperty('--sab', v + 'px'); d.classList.add('sab-fixed'); } } catch (_) {}
+        _fitPaintCur();
+    }
+    function fitNudgeBottom(delta) {
+        let v = _fitBotCur();
+        if (v == null) { const p = document.createElement('div'); p.style.cssText = 'position:fixed;left:-9999px;padding-bottom:var(--sab,0px)'; document.body.appendChild(p); v = Math.round(parseFloat(getComputedStyle(p).paddingBottom) || 0); p.remove(); }
+        _fitBotApply(Math.max(0, Math.min(60, v + delta)));
+    }
+    function fitBottomAuto() { _fitBotApply(null); }
     function openFitPhone() {
         let m = _el('fitModal');
         if (!m) {
@@ -1022,7 +1040,9 @@
                 '<div class="fav-pick-h"><b>📱 Ajustá la pantalla a tu teléfono</b><button type="button" class="fav-x" onclick="VIP.home.closeFitPhone()" aria-label="Cerrar">✕</button></div>' +
                 '<p class="fav-pick-sub">Si arriba se corta algo, elegí tu modelo. Después podés subir o bajar un poco con ▲ ▼.</p>' +
                 '<input type="search" id="fitSearch" class="fav-search" placeholder="Buscá tu modelo (ej. iPhone 13, Galaxy, Moto)" autocomplete="off" oninput="VIP.home.fitFilter(this.value)">' +
-                '<div class="fit-tune"><span id="fitCur"></span><button type="button" onclick="VIP.home.fitNudge(-4)" aria-label="Subir">▲ subir</button><button type="button" onclick="VIP.home.fitNudge(4)" aria-label="Bajar">▼ bajar</button></div>' +
+                '<div class="fit-tune"><span>⬆️ Arriba <b id="fitTopV"></b></span><button type="button" onclick="VIP.home.fitNudge(-4)" aria-label="Menos espacio arriba">−</button><button type="button" onclick="VIP.home.fitNudge(4)" aria-label="Más espacio arriba">+</button></div>' +
+                '<div class="fit-tune"><span>⬇️ Abajo <b id="fitBotV"></b></span><button type="button" onclick="VIP.home.fitNudgeBottom(-4)" aria-label="Menos espacio abajo">−</button><button type="button" onclick="VIP.home.fitNudgeBottom(4)" aria-label="Más espacio abajo">+</button><button type="button" onclick="VIP.home.fitBottomAuto()">auto</button></div>' +
+                '<p class="fit-cur" id="fitCur"></p>' +
                 '<div id="fitList" class="fit-list"></div>' +
                 '<button type="button" class="btn btn-primary fav-done" onclick="VIP.home.closeFitPhone()">Listo</button></div></div>');
             m = _el('fitModal');
@@ -2678,5 +2698,5 @@
         get platformsData() { return _platforms; } };
     VIP.home.installManifestSync = installManifestSync; // #826
     Object.assign(VIP.home, { favOpenPicker, favClosePicker, favSearch, favMore, favToggle, favToggleTop, favPlay }); // #840
-    Object.assign(VIP.home, { openFitPhone, closeFitPhone, fitFilter, fitPick, fitNudge }); // #865
+    Object.assign(VIP.home, { openFitPhone, closeFitPhone, fitFilter, fitPick, fitNudge, fitNudgeBottom, fitBottomAuto }); // #865/#867
 })();

@@ -67,7 +67,7 @@
     border: 2px solid #d4af37;
     border-radius: 20px;
     padding: 25px;
-    padding-bottom: max(25px, env(safe-area-inset-bottom));
+    padding-bottom: max(25px, var(--sab, env(safe-area-inset-bottom)));
     width: 90%;
     max-width: 400px;
     max-height: calc(100dvh - 40px);

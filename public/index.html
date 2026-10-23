@@ -419,7 +419,9 @@
         sat = app ? (full ? (envTop > 0 ? envTop : 24) : 0) : envTop;
       }
       // #865 (owner): el cliente puede elegir su modelo (Perfil / abajo del saldo) ⇒ ese margen manda sobre el automático.
-      try { var _ov = localStorage.getItem('vip_sat_override'); if (_ov !== null && _ov !== '' && !isNaN(+_ov)) sat = +_ov; } catch (e) {}
+      try { var _ov = localStorage.getItem('vip_sat_override'); if (_ov !== null && _ov !== '' && !isNaN(+_ov)) { sat = +_ov; d.classList.add('sat-fixed'); } } catch (e) {}
+      // #867: también el margen de ABAJO (barra de gestos) se puede fijar ⇒ --sab (inline gana a :root y a html.android-edge).
+      try { var _ob = localStorage.getItem('vip_sab_override'); if (_ob !== null && _ob !== '' && !isNaN(+_ob)) { d.style.setProperty('--sab', Math.max(0, Math.min(60, Math.round(+_ob))) + 'px'); d.classList.add('sab-fixed'); } } catch (e) {}
       sat = Math.max(0, Math.min(80, Math.round(sat)));
       d.style.setProperty('--sat', sat + 'px');
       d.classList.add(ios ? 'dev-ios' : (and ? 'dev-android' : 'dev-other'), w <= 340 ? 'scr-xs' : (w <= 375 ? 'scr-s' : (w <= 414 ? 'scr-m' : 'scr-l')), 'dev-ready');
@@ -2612,7 +2614,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v588</div>
+                    <div class="pf-build" id="appBuildTag">app v589</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2636,7 +2638,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v588</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v589</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
