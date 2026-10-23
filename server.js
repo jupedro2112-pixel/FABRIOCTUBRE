@@ -9821,6 +9821,40 @@ function _vipLevelsPublic() {
 }
 
 // #304: avatar del perfil (la PWA guarda la clave del ícono; los de nivel se validan en la app por vipLevel).
+// ===== #908 (owner): "si eligen Girox, saldo Girox y la otra anulada hasta gastar el saldo; lo mismo con PICA ROJA; en el perfil, las cargas
+// de esa plataforma". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es siempre el real. Con saldo ≥ BRAND_LOCK_ARS en la
+// plataforma activa no se puede pasar a la otra (siempre se puede retirar). Cargas, retiros, bonos y cierres no cambian.
+const BRAND_LOCK_ARS = 100;
+const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox' };
+function _brandAt(u, when) { const h = (u && u.brandHistory) || []; let b = 'picaroja'; for (const x of h) { if (new Date(x.since) <= new Date(when)) b = x.brand; } return b; }
+app.get('/api/me/brand', authMiddleware, async (req, res) => {
+  try { const u = await User.findOne({ id: req.user.userId }).select('activeBrand').lean(); res.set('Cache-Control', 'no-store'); res.json({ brand: (u && u.activeBrand) || 'picaroja', names: _BRANDS }); }
+  catch (e) { res.json({ brand: 'picaroja', names: _BRANDS }); }
+});
+app.post('/api/me/brand', authMiddleware, async (req, res) => {
+  try {
+    const want = req.body && _BRANDS[req.body.brand] ? req.body.brand : null; if (!want) return res.status(400).json({ error: 'Plataforma inválida' });
+    const u = await User.findOne({ id: req.user.userId }).select('id username activeBrand brandHistory').lean(); if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const cur = u.activeBrand || 'picaroja';
+    if (cur === want) return res.json({ success: true, brand: want });
+    const b = await girox.getUserBalance(u.username).catch(() => null);
+    if (!b || !b.success) return res.status(503).json({ error: 'No pudimos ver tu saldo ahora. Probá de nuevo en un momento.' });
+    const bal = Math.round(Number(b.balance) || 0);
+    if (bal >= BRAND_LOCK_ARS) return res.status(409).json({ locked: true, brand: cur, balance: bal, error: `Tenés $${bal.toLocaleString('es-AR')} en ${_BRANDS[cur]}. Para jugar en ${_BRANDS[want]}, usá ese saldo o retiralo primero.` });
+    await User.updateOne({ id: u.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+    res.json({ success: true, brand: want });
+  } catch (e) { logger.error('[brand] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Mis cargas (perfil): las cargas reales del cliente, sólo las de la plataforma activa (según en cuál estaba al momento de cada carga).
+app.get('/api/me/deposits', authMiddleware, async (req, res) => {
+  try {
+    const u = await User.findOne({ id: req.user.userId }).select('activeBrand brandHistory').lean();
+    const brand = (u && u.activeBrand) || 'picaroja';
+    const txs = await Transaction.find({ userId: req.user.userId, type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } }).sort({ timestamp: -1 }).limit(60).select('amount bonus timestamp').lean();
+    const items = txs.map((t) => ({ amount: Math.round(t.amount || 0), bonus: Math.round(t.bonus || 0), at: t.timestamp, brand: _brandAt(u, t.timestamp) })).filter((t) => t.brand === brand).slice(0, 20);
+    res.set('Cache-Control', 'no-store'); res.json({ brand, brandName: _BRANDS[brand], items });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/me/avatar', authMiddleware, async (req, res) => {
   try { const u = await User.findOne({ id: req.user.userId }).select('avatar').lean(); res.json({ avatar: (u && u.avatar) || null }); }
   catch (e) { res.status(500).json({ error: 'Error del servidor' }); }

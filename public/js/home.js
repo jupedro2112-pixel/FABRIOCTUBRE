@@ -590,6 +590,19 @@
         } catch (_) {}
         try { VIP.ui.showModal('verifyPhoneModal'); } catch (_) { const m = _el('verifyPhoneModal'); if (m) m.classList.remove('hidden'); }
     }
+    // #908 (owner): "en el perfil, las cargas de esa plataforma, no todas".
+    async function _pfDeposits() {
+        let box = _el('pfDeposits');
+        if (!box) { const anchor = _el('pfUserBox'); if (!anchor || !anchor.parentNode) return; anchor.insertAdjacentHTML('afterend', '<details class="pf-deps" id="pfDeposits"><summary>🧾 Mis cargas</summary><div class="pf-deps-l">Cargando…</div></details>'); box = _el('pfDeposits'); }
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/me/deposits', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const d = await r.json();
+            if (!r.ok) return;
+            const sm = box.querySelector('summary'); if (sm) sm.textContent = '🧾 Mis cargas en ' + (d.brandName || 'PICA ROJA');
+            const l = box.querySelector('.pf-deps-l'); if (!l) return;
+            const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
+            l.innerHTML = (d.items || []).length ? d.items.map((t) => '<div class="pf-dep"><span>' + new Date(t.at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span><b>' + m(t.amount) + '</b>' + (t.bonus ? '<em>+' + m(t.bonus) + ' bono</em>' : '') + '</div>').join('') : '<div class="pf-dep-empty">Todavía no tenés cargas en ' + _esc(d.brandName || 'PICA ROJA') + '.</div>';
+        } catch (_) {}
+    }
     function openProfile() {
         paintPfPhone(); paintPfNotif(); // #645
         _pfShown = true; // #393
@@ -597,6 +610,7 @@
         _pfPaint();
         try { _paintAvatar(); } catch (_) {} // #304
         try { VIP.ui.showModal('profileModal'); } catch (_) { const m = _el('profileModal'); if (m) m.classList.remove('hidden'); }
+        try { _pfDeposits(); } catch (_) {} // #908
     }
     function profileTogglePw() { _pfShown = !_pfShown; _pfPaint(); }
     function profileCopy(which) {
@@ -937,7 +951,7 @@
             '</button>';
         }).join('');
     }
-    function entrySwitch(id) { _entryPlat = id; renderEntryTabs(); _entryLoad(); if (id === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} } } // #907 // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
+    async function entrySwitch(id) { if (!(await _brandGuard(id))) return; if (id === 'picaroja' || id === 'girox') { try { await setPreferred(id); } catch (_) {} } _entryPlat = id; renderEntryTabs(); _entryLoad(); if (id === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} } } // #907 · #908 // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
     // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
@@ -2089,6 +2103,22 @@
     // (localStorage vip_pr_off = '1'); al elegirla, al server se le guarda 'girox'.
     const PR_OFF_KEY = 'vip_pr_off';
     function _prOn() { try { return localStorage.getItem(PR_OFF_KEY) !== '1'; } catch (_) { return true; } }
+    // #908: la plataforma ACTIVA (PICA ROJA o Girox) la guarda el server; con saldo en una, la otra queda bloqueada hasta usarlo o retirarlo.
+    let _brand = null;
+    async function _syncBrand() {
+        try { const r = await fetch(VIP.config.API_URL + '/api/me/brand', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const d = await r.json(); if (d && d.brand) { _brand = d.brand; try { if (d.brand === 'girox') localStorage.setItem(PR_OFF_KEY, '1'); else localStorage.removeItem(PR_OFF_KEY); } catch (_) {} } } catch (_) {}
+    }
+    // true = puede pasar a esa plataforma (o ya está ahí). Si tiene saldo en la otra, avisa y devuelve false.
+    async function _brandGuard(id) {
+        if (id !== 'picaroja' && id !== 'girox') return true;
+        if ((_brand || 'picaroja') === id) return true;
+        try {
+            const r = await fetch(VIP.config.API_URL + '/api/me/brand', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ brand: id }) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) { try { VIP.ui.showToast((r.status === 409 ? '🔒 ' : '') + (d.error || 'No se pudo cambiar de plataforma'), r.status === 409 ? 'info' : 'error'); } catch (_) {} return false; }
+            _brand = id; return true;
+        } catch (_) { try { VIP.ui.showToast('Sin conexión. Probá de nuevo.', 'error'); } catch (__) {} return false; }
+    }
     function _injectPR() {
         if (!_platforms) return;
         const list = Array.isArray(_platforms.platforms) ? _platforms.platforms : (_platforms.platforms = []);
@@ -2102,6 +2132,7 @@
             const r = await fetch(VIP.config.API_URL + '/api/platforms', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } });
             if (!r.ok) return _platforms;
             _platforms = await r.json();
+            try { await _syncBrand(); } catch (_) {} // #908
             try { _injectPR(); } catch (_) {} // #907
             try { _paintPlatNav(); } catch (_) {} // #620
             _platformsAt = Date.now();
@@ -2137,6 +2168,7 @@
     }
 
     async function setPreferred(platformId) {
+        if (!(await _brandGuard(platformId))) return; // #908: con saldo en la otra plataforma no se cambia
         // #907: PICA ROJA se guarda en el teléfono; al server va 'girox' (misma cuenta). Elegir otra apaga la predeterminada PICA ROJA.
         try { if (platformId === 'picaroja') localStorage.removeItem(PR_OFF_KEY); else localStorage.setItem(PR_OFF_KEY, '1'); } catch (_) {}
         if (platformId === 'picaroja') {
@@ -2218,6 +2250,8 @@
         try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (_) { return false; }
     }
     function openPlatform(platformId, opts) {
+        // #908: si la PERSONA elige la otra plataforma (sin opts: los ingresos internos a Girox de la Página exclusiva pasan `embed`), se chequea el saldo.
+        if (!opts && (platformId === 'picaroja' || platformId === 'girox') && (_brand || 'picaroja') !== platformId) { _brandGuard(platformId).then((ok) => { if (ok) { setPreferred(platformId).catch(() => {}); openPlatform(platformId, { checked: true }); } }); return; }
         if (platformId === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} return; } // #907: Página exclusiva
         const test = !!(opts && opts.test);
         // #695 (owner): "en Entrar a la página no figura el chat de carga rápida" → el casino con sesión se abre SIEMPRE ADENTRO

@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 908. 🔒 Plataforma ACTIVA (PICA ROJA o Girox): con saldo en una, la otra bloqueada · "Mis cargas" del perfil por plataforma — SW v605
+**Pedido (owner):** "si eligen Girox, saldo Girox y la otra anulada hasta gastar el saldo; lo mismo con PICA ROJA; usa el mismo panel pero que
+la gente no lo vea; en el perfil, las cargas de PICA ROJA, no todas". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es
+siempre el real y siempre se puede retirar.
+- `User.activeBrand` ('picaroja' default | 'girox') + `brandHistory` [{brand, since}]. `GET/POST /api/me/brand`: pasar a la otra sólo si el
+  saldo real (girox.getUserBalance) es < `BRAND_LOCK_ARS` ($100); si no, 409 "Tenés $X en PICA ROJA. Para jugar en Girox, usá ese saldo o
+  retiralo primero". `GET /api/me/deposits`: cargas reales del cliente marcadas con la plataforma en la que estaba al cargar (`_brandAt`), sólo
+  las de la activa (no se tocó ningún camino de carga).
+- App: `_syncBrand` (en loadPlatforms) y `_brandGuard` en setPreferred, entrySwitch y openPlatform elegido por la persona (los ingresos internos
+  a Girox de la Página exclusiva pasan `embed` y no se bloquean). Perfil: "🧾 Mis cargas en <plataforma>".
+Probado: Mongo en memoria (bloqueo con $25.000, cambio con $50, cargas separadas) y jsdom (aviso y perfil).
+
 ### 907. ♦️ PÁGINA EXCLUSIVA PICA ROJA (picaroja.com/paginaoficial): lobby propio con TODOS los juegos de Girox — SW v604
 **Pedido (owner):** "agregar donde está Jugaygana la plataforma PICA ROJA armada en base a Girox, con todos los juegos de Girox de punta a punta
 (abre el link de cada juego y entra logueado), fotos de PICA ROJA, 'página exclusiva', deslizantes, premium y sencilla; en deportes los dos de

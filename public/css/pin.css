@@ -2713,3 +2713,12 @@ body.prl-open { overflow: hidden; }
 .prl-nav .prl-load { color: #fff; background: var(--p-red, #e60023); border-radius: 14px; margin: -14px 4px 0; box-shadow: 0 6px 16px rgba(230,0,35,.35); }
 .prl-nav .prl-load span { font-size: 18px; }
 .prl button:focus-visible { outline: 2px solid var(--p-red, #e60023); outline-offset: 2px; }
+
+/* #908 Mis cargas en el perfil */
+.pf-deps { margin: 10px 0 4px; border: 1px solid var(--p-border); border-radius: 12px; background: var(--p-surface); }
+.pf-deps summary { cursor: pointer; padding: 9px 12px; font: 800 13px var(--p-font); color: var(--p-text); }
+.pf-deps-l { padding: 0 12px 10px; display: grid; gap: 4px; max-height: 240px; overflow-y: auto; }
+.pf-dep { display: flex; gap: 8px; align-items: baseline; font: 600 12.5px var(--p-font); color: var(--p-muted); }
+.pf-dep b { color: var(--p-text); margin-left: auto; font-variant-numeric: tabular-nums; }
+.pf-dep em { font-style: normal; color: #16a34a; font-size: 11.5px; }
+.pf-dep-empty { font: 600 12.5px var(--p-font); color: var(--p-muted); padding: 4px 0; }
