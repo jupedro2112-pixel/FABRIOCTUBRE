@@ -2802,13 +2802,23 @@ async function _depositWithBonus(adapter, username, amount, description, referen
   const bonus = Math.round(Number(bonusAmount) || 0);
   if (!(bonus > 0)) return adapter.depositToUser(username, amount, description, reference, null);
   const mult = await _bonusMultiplierFor(adapter);
-  let r = await adapter.depositToUser(username, amount, description, reference, { bonusAmount: bonus, bonusMultiplier: mult });
+  // #882 (owner): "que no puedan reclamar el bono y después retirar la plata": la CARGA que lleva bono queda con rollover
+  // ×depositRolloverX (3) y el bono con el global (×5). Si 1girox rechaza el multiplicador de la carga (422 en 'multiplier'), se repite
+  // SIN él con la MISMA reference (en un 422 no movió plata): la carga nunca se pierde por esto.
+  let depMult = await _depositRolloverXFor(adapter);
+  const _wg = (extra) => Object.assign(depMult > 0 ? { multiplier: depMult } : {}, extra);
+  const _multRejected = (x) => !x.success && x.httpStatus === 422 && /multiplier|multiplicador/i.test(String(x.code || '') + ' ' + String(x.error || '')) && !/bonus_multiplier/i.test(String(x.error || ''));
+  let r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult }));
+  // si rechaza el ×N de la carga: se prueba ×2 (siempre aceptado) y recién después sin rollover propio — misma reference, un 422 no movió plata
+  for (const fb of [2, 0]) { if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; logger.warn(`[auto-bonus] ${username}: 1girox rechazó el rollover ×${depMult} de la carga (${r.code || r.error}) ⇒ pruebo ×${fb}`); depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult })); }
   let needSeparate = false;
   if (!r.success && (r.code === 'bonus_out_of_range' || (r.httpStatus === 422 && /bon(o|us)/i.test(String(r.error || ''))))) {
     logger.warn(`[auto-bonus] ${username}: 1girox rechazó la carga por el bono $${bonus} (${r.code || r.error}) ⇒ carga sin bono + bono aparte`);
-    r = await adapter.depositToUser(username, amount, description, reference, { noBonus: true });
+    r = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true }));
+    for (const fb of [2, 0]) { if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
     needSeparate = !!r.success;
   } else if (r.success && r.bonusFailed) needSeparate = true;
+  if (r.success) r.depositRolloverX = depMult;
   if (r.success && !needSeparate) { r.bonusVia = 'attached'; return r; }
   if (needSeparate) {
     r.bonusFailed = true;
@@ -2825,6 +2835,20 @@ async function _depositWithBonus(adapter, username, amount, description, referen
 async function _bonusMultiplierFor(adapter) {
   if (!adapter || adapter.id === 'girox' || adapter === girox) return getGiroxBonusMultiplier();
   return 0;
+}
+// #882: rollover de la CARGA cuando lleva bono. Config['depositRolloverX'] (default 3; 0 = sin rollover en la carga). Si la plataforma sólo
+// acepta ciertos multiplicadores, el permitido más cercano hacia arriba (o el mayor), como el del bono.
+async function getDepositRolloverX() { try { const v = Number(await getConfig('depositRolloverX', 3)); return Number.isFinite(v) && v >= 0 ? Math.min(50, Math.round(v)) : 3; } catch (_) { return 3; } }
+async function _depositRolloverXFor(adapter) {
+  if (adapter && !(adapter.id === 'girox' || adapter === girox)) return 0;
+  const cv = await getDepositRolloverX(); if (!(cv > 0)) return 0;
+  try {
+    // la lista de la CARGA es config.rollover.multipliers (la del bono es otra); el panel de 1girox ofrece 0/1/2/3/5/10
+    const cfg = await girox.getPlatformConfig(); const raw = cfg.success && cfg.config && cfg.config.rollover && cfg.config.rollover.multipliers;
+    const allowed = Array.isArray(raw) ? raw.map(Number).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b) : [];
+    if (allowed.length && !allowed.includes(cv)) { const up = allowed.filter((n) => n >= cv); return up.length ? up[0] : allowed[allowed.length - 1]; }
+  } catch (_) {}
+  return cv;
 }
 
 // Le PREGUNTA al cliente dónde quiere jugar: deja el movimiento/comprobante en
@@ -12644,6 +12668,7 @@ async function initializeData() {
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
+  try { if (!(await getConfig('mig882DepositRoll', null))) { if ((await getConfig('depositRolloverX', null)) == null) await Config.set('depositRolloverX', 3, 'mig#882'); await Config.set('mig882DepositRoll', new Date().toISOString(), 'mig#882'); } } catch (e) { console.warn('[startup-migration] #882:', e.message); }
   try { if (!(await getConfig('mig879NoWithdrawOtp', null))) { await Config.set('withdrawOtpRequired', false, 'mig#879'); await Config.set('mig879NoWithdrawOtp', new Date().toISOString(), 'mig#879'); console.log('✅ #879: retiro sin SMS por retiro (teléfono verificado una vez)'); } } catch (e) { console.warn('[startup-migration] #879:', e.message); }
   try { if (!(await getConfig('mig878ShortSupport', null))) { for (const [name, [oldTxt, nu]] of Object.entries(SUPPORT_TEXTS_OLD_878)) await Command.updateOne({ name, response: oldTxt }, { $set: { response: nu() } }); await Config.set('mig878ShortSupport', new Date().toISOString(), 'mig#878'); } } catch (e) { console.warn('[startup-migration] #878:', e.message); }
   try { if (!(await getConfig('mig839FdPopup', null))) { await Command.updateOne({ name: '/sys_first_deposit_popup', response: FIRST_DEPOSIT_POPUP_OLD }, { $set: { response: FIRST_DEPOSIT_POPUP_DEFAULT } }); await Config.set('mig839FdPopup', new Date().toISOString(), 'mig#839'); } } catch (e) { console.warn('[startup-migration] #839:', e.message); }
@@ -21329,15 +21354,16 @@ app.post('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async 
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const x = Math.round(Number(req.body && req.body.x)); if (!(x >= 0 && x <= 50)) return res.status(400).json({ error: 'Rollover entre 0 y 50' });
     const by = req.user.username;
+    if (req.body && req.body.depositX != null) { const dx = Math.round(Number(req.body.depositX)); if (!(dx >= 0 && dx <= 50)) return res.status(400).json({ error: 'Rollover de la carga entre 0 y 50' }); await Config.set('depositRolloverX', dx, by); } // #882
     await Config.set('bonusRolloverX', x, by); await Config.set('fireRolloverMultiplier', x, by); await Config.set('communityWelcomeRolloverX', x, by);
     const cur = await getStrategyConfig(); cur.missions.antiFraud.rolloverX = x; await Config.set('strategyClientes', cur, by);
     try { const rc = await getDailyRouletteConfig(); if (rc && rc.prizes) { rc.prizes = rc.prizes.map((p) => (p.type === 'cash' ? Object.assign({}, p, { rolloverX: x }) : p)); await Config.set('dailyRoulette', rc, by); } } catch (_) {}
     try { const ic = Object.assign({}, INSTANT_CASHBACK_DEFAULT, (await getConfig('instantCashback', null)) || {}, { rolloverX: x }); await Config.set('instantCashback', ic, by); } catch (_) {} // #659: reembolso acumulativo también
-    logger.info(`[anti-estafa] rollover global ×${x} por ${by}`);
-    res.json({ success: true, x });
+    logger.info(`[anti-estafa] rollover global ×${x} (carga con bono ×${await getDepositRolloverX()}) por ${by}`);
+    res.json({ success: true, x, depositX: await getDepositRolloverX() });
   } catch (e) { res.status(500).json({ error: 'Error' }); }
 });
-app.get('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async (req, res) => { try { const x = await _giftRolloverX(); const fire = await getFireRolloverMultiplier(); const wc = await getWelcomeCodeRolloverX(); const st = await getStrategyConfig(); const flagged = await User.countDocuments({ 'fraudFlags.0': { $exists: true } }); res.json({ success: true, bonos: x, fueguito: fire, codigo: wc, misiones: st.missions.antiFraud.rolloverX, flagged }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
+app.get('/api/admin/strategy/rollover', authMiddleware, adminMiddleware, async (req, res) => { try { const x = await _giftRolloverX(); const fire = await getFireRolloverMultiplier(); const wc = await getWelcomeCodeRolloverX(); const st = await getStrategyConfig(); const flagged = await User.countDocuments({ 'fraudFlags.0': { $exists: true } }); res.json({ depositX: await getDepositRolloverX(), success: true, bonos: x, fueguito: fire, codigo: wc, misiones: st.missions.antiFraud.rolloverX, flagged }); } catch (e) { res.status(500).json({ error: 'Error' }); } });
 app.post('/api/admin/strategy', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });

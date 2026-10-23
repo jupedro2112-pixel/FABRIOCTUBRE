@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 882. 🛡️ La CARGA que lleva bono queda con rollover ×3 (el bono ×5) — anti "cobro el bono y retiro la carga" — admin SW v169
+**Pedido (owner):** "exigí bien el rollover después de la carga para que no puedan estafar reclamando el bono y después retirando la plata: que
+exija rollover ×3 y que el bono no sea retirable por el rollover ×5; hacé todo para que no se rompa". `_depositWithBonus` manda `multiplier`
+= `getDepositRolloverX()` (Config['depositRolloverX'], default 3, migración `mig882DepositRoll`; panel → Estrategia → Anti-estafa general,
+"Carga con bono ×") junto con `bonus_multiplier` (global ×5). Sólo en cargas CON bono (las cargas sin bono siguen libres, owner: "las cargas son
+cargas"). Lista permitida = `config.rollover.multipliers` de 1girox (la del bono es otra; el doc v1.15 dice 0/1/2/5/10 pero el panel de 1girox
+ya ofrece ×3, captura del owner). Si 1girox rechazara el ×N (422 multiplier) se reintenta ×2 y después sin rollover propio, misma reference
+(un 422 no mueve plata: la carga nunca se pierde). En el bono que entra aparte (tope de 1girox) la carga mantiene su ×3.
+Probado con la red de 1girox simulada (money2.js): ×3+×5 adjunto, sin bono libre, tope ⇒ carga ×3 + bono aparte ×5, rechazo del ×3 ⇒ ×2.
+
 ### 881. 💸 Retiro: sólo lo RETIRABLE de 1girox + detalle del rollover · pago automático sólo a clientes de CONFIANZA (activable) — SW v595, admin SW v168
 **Pedido (owner):** "en el pago detectá desde Girox el monto retirable; si tiene rollover no puede retirar eso, explicale que el bono todavía no es
 retirable, que le falta apostar, y detallá; después que los pagos automáticos salgan para clientes activos de hace 1 semana, habituales y buenos,

@@ -118,6 +118,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **#659 (owner 2026-10-20): TODOS los regalos van con el ROLLOVER GLOBAL (`Config['bonusRolloverX']`, ×5; panel → Estrategia →
   rollover): bonos de carga, fueguito, ruleta, misiones, código de bienvenida, extra por instalar, REEMBOLSOS (los tres períodos y el
   acumulativo), bono de nivel VIP y rakeback. ÚNICA excepción: comisiones de REFERIDOS, retirables sin apostar (multiplier 0).
+  **#882:** la CARGA que lleva bono va además con rollover propio ×`Config['depositRolloverX']` (3) en `_depositWithBonus` (las cargas sin bono, libres).
   El texto de abajo describe el estado anterior (regalo directo ×0) y sigue valiendo sólo para referidos.
 - **Regalos = BONO 0 "regalo directo" (2026-09-07, v1.10+):** reembolsos, ruleta,
   rakeback, nivel VIP, referidos e instalación se acreditan con `creditUserBalance`
