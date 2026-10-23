@@ -876,7 +876,7 @@
     }
     // #299: carga mínima (Config['minDepositArs'], viene en GET /api/platforms). 0 = no se muestra.
     function _paintMinDeposit(n) {
-        // #302: si el server (todavía) no manda el valor, queda el default del HTML ($5.000). Sólo 0 explícito lo oculta.
+        // #302: si el server (todavía) no manda el valor, queda el default del HTML ($2.000, #897). Sólo 0 explícito lo oculta.
         if (n == null || n === '' || !Number.isFinite(Number(n))) return;
         const v = Math.round(Number(n));
         const txt = v > 0 ? '$' + v.toLocaleString('es-AR') : '';
@@ -884,7 +884,7 @@
         const b = _el('alMinDep'); if (b) { b.textContent = txt ? ('· mínimo ' + txt) : ''; b.style.display = txt ? '' : 'none'; }
         const c = _el('alMinLine'); if (c) { const bb = c.querySelector('b'); if (bb) bb.textContent = txt; c.style.display = txt ? '' : 'none'; }
         const d = _el('serviceBannerMin'); if (d) { const bb = d.querySelector('b'); if (bb) bb.textContent = txt; d.style.display = txt ? '' : 'none'; }
-        document.querySelectorAll('.md-amt').forEach((x) => { x.textContent = txt || '$5.000'; }); // #684: notas "con $X o más se acredita sola"
+        document.querySelectorAll('.md-amt').forEach((x) => { x.textContent = txt || '$2.000'; }); // #684: notas "con $X o más se acredita sola"
         document.querySelectorAll('.min-note').forEach((x) => { x.style.display = txt ? '' : 'none'; });
     }
     // #385: textos de los botones "Adjuntar comprobante aquí" y "Retirar premio" desde COMANDOS (/sys_load_btn*, /sys_withdraw_btn*).
@@ -2426,7 +2426,7 @@
             // #684 (owner): carga mínima clara también acá
             // #706 (owner): nota RESUMIDA con "Carga mínima $X" más grande; el botón Adjuntar lleva la etiqueta hasta la 5ª carga (body.fewdep)
             // #751 (owner): la carga mínima va ADENTRO del botón (siempre), sin la nota verde que ocupaba lugar
-            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR'); const first = document.body.classList.contains('nodep'); return '<button type="button" class="cl-btn cl-attach' + (first ? ' cl-first' : '') + '" onclick="VIP.autoload.sendReceipt()">' + (first ? '⚡ PRIMERA CARGA · adjuntá tu comprobante' : '📎 Adjuntar comprobante') + _sbTagHtml() + '<small class="min-tag min-always">' + (first ? '⚠️ Aviso importante: carga mínima ' + md : 'Carga mínima ' + md + ' · con menos no se acredita') + '</small></button><div class="rcpt-note cl-rcpt">📸 Con todos los datos visibles: si no se ven, se rechaza</div>' + ((Number(_platforms && _platforms.depositRolloverX) || 0) > 0 ? '<div class="rcpt-note cl-rcpt cl-rx">🛡️ Antifraude: cada carga se juega ×' + Number(_platforms.depositRolloverX) + ' antes de retirarla</div>' : ''); })() + // #885 // #742: + bono de historia · #766: PRIMERA CARGA · #808
+            (function () { const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 2000).toLocaleString('es-AR'); const first = document.body.classList.contains('nodep'); return '<button type="button" class="cl-btn cl-attach' + (first ? ' cl-first' : '') + '" onclick="VIP.autoload.sendReceipt()">' + (first ? '⚡ PRIMERA CARGA · adjuntá tu comprobante' : '📎 Adjuntar comprobante') + _sbTagHtml() + '<small class="min-tag min-always">' + (first ? '⚠️ Aviso importante: carga mínima ' + md : 'Carga mínima ' + md + ' · con menos no se acredita') + '</small></button><div class="rcpt-note cl-rcpt">📸 Con todos los datos visibles: si no se ven, se rechaza</div>' + ((Number(_platforms && _platforms.depositRolloverX) || 0) > 0 ? '<div class="rcpt-note cl-rcpt cl-rx">🛡️ Antifraude: cada carga se juega ×' + Number(_platforms.depositRolloverX) + ' antes de retirarla</div>' : ''); })() + // #885 // #742: + bono de historia · #766: PRIMERA CARGA · #808
             // #670 (owner): Retirar desde adentro del casino (mismo flujo que el botón de afuera: datos + SMS + pago automático)
             '<button type="button" class="cl-btn cl-wd" onclick="VIP.home.casinoWithdraw()">💸 Retirar premio</button>' +
             // #687 (owner): botón para ir DIRECTO a Soporte desde adentro del casino
@@ -2511,7 +2511,7 @@
     // #766 (owner): "en todos los Cargá ahora de las 3 secciones, un botón PRIMERA CARGA bien llamativo, que se agrande y achique, y que
     // diga cuánto es el mínimo de carga como aviso importante" — sólo hasta que haga la primera carga (body.nodep).
     function _paintFirstLoad(on) {
-        const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 5000).toLocaleString('es-AR');
+        const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 2000).toLocaleString('es-AR');
         try { const b = document.querySelector('#evCtaTop .ev-cta-b'), t = document.querySelector('#evCtaTop .ev-cta-t'); if (b && t) { if (on) { if (!b.dataset.o) { b.dataset.o = b.innerHTML; t.dataset.o = t.innerHTML; } b.textContent = '⚡ PRIMERA CARGA'; t.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (b.dataset.o) { b.innerHTML = b.dataset.o; t.innerHTML = t.dataset.o; delete b.dataset.o; delete t.dataset.o; } } } catch (_) {}
         try { const bb = document.querySelector('#bvLoadBtn > span > b'), bt = document.querySelector('#bvLoadBtn .bv-min'); if (bb && bt) { if (on) { if (!bb.dataset.o) { bb.dataset.o = bb.innerHTML; bt.dataset.o = bt.innerHTML; } bb.textContent = 'PRIMERA CARGA'; bt.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (bb.dataset.o) { bb.innerHTML = bb.dataset.o; bt.innerHTML = bt.dataset.o; delete bb.dataset.o; delete bt.dataset.o; } } } catch (_) {}
         // #776 (BUG GRAVE, usuario real "al presionar Carga rápida se cuelga absolutamente todo"): acá se llamaba toggleCasinoLoad(true)

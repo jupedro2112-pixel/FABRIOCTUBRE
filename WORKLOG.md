@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-22
 
+### 897. 💵 Carga mínima $2.000 en toda la página — SW v601
+**Pedido (owner):** "configurá todo con carga mínima $2.000 para toda la página y configuraciones". `mig897MinDep2000` pone
+`Config['minDepositArs']=2000` (una vez; después se cambia en el panel) y baja `hgcash.minChargeARS` a 2000 si era mayor (el chequeo de "menor al
+mínimo" usa el mayor de los dos). `MIN_DEPOSIT_ARS_DEFAULT` 5000 → 2000. Textos de respaldo de la app (antes de pintar el valor), las dos
+landings y las Bases: "$2.000". Los textos de COMANDOS ya usan `{min}`. Quedan igual: el ejemplo de la ruleta ("2 de $5.000" = $10.000) y el
+monto mínimo de la misión "3 cargas en la semana" (es una regla de la misión, editable en Estrategia).
+
 ### 896. 🩺 Diagnóstico del banco automático (por qué no entran las cargas solas) — admin SW v177
 **Pedido (owner, captura de Cargas automáticas: 0 automáticas, 22 a mano, 0 movimientos del banco):** "revisemos por qué no funciona así lo
 arreglamos". Con 0 movimientos guardados el aviso del banco no llega o se rechaza en la puerta (firma inválida / sin secreto), pero no había

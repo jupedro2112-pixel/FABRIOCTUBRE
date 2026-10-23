@@ -6478,7 +6478,7 @@ const BELOW_MIN_REFUNDED_DEFAULT = '✅ Tu devolución de ${monto} ya fue hecha 
 app.get('/api/admin/support/:userId/below-min', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
-    let minDep = 5000; try { minDep = Number(await getMinDepositArs()) || 5000; } catch (_) {}
+    let minDep = MIN_DEPOSIT_ARS_DEFAULT; try { minDep = Number(await getMinDepositArs()) || MIN_DEPOSIT_ARS_DEFAULT; } catch (_) {}
     const since = new Date(Date.now() - 15 * 86400000);
     const items = await BankMovement.find({ matchedUserId: req.params.userId, direction: /inbound/i, createdAt: { $gte: since }, amount: { $gt: 0, $lt: minDep }, matchStatus: { $in: ['needs_review', 'no_match', 'pending', 'refunded', 'error'] } })
       .sort({ createdAt: -1 }).limit(10).select('movementId amount fromName fromCBU matchStatus chargeError refundedAt refundHgId createdAt').lean();
@@ -6527,7 +6527,7 @@ app.post('/api/admin/hgcash/movements/:movementId/refund', authMiddleware, async
     if (!/inbound/i.test(String(mv.direction || ''))) return res.status(400).json({ error: 'Sólo se devuelven transferencias ENTRANTES.' });
     if (!['needs_review', 'no_match', 'pending', 'error'].includes(mv.matchStatus)) return res.status(400).json({ error: `No se puede devolver: el movimiento está "${mv.matchStatus}" (ya cargado o en proceso).` });
     const amount = Number(mv.amount) || 0;
-    let minDep = 5000; try { minDep = Number(await getMinDepositArs()) || 5000; } catch (_) {}
+    let minDep = MIN_DEPOSIT_ARS_DEFAULT; try { minDep = Number(await getMinDepositArs()) || MIN_DEPOSIT_ARS_DEFAULT; } catch (_) {}
     if (!(amount > 0) || amount >= minDep) return res.status(400).json({ error: `Sólo se devuelven transferencias menores a la carga mínima ($${minDep.toLocaleString('es-AR')}). Esta es de $${amount.toLocaleString('es-AR')}.` });
     const toCBU = String(mv.fromCBU || '').replace(/\D/g, '');
     if (toCBU.length !== 22) return res.status(400).json({ error: 'El movimiento no tiene el CBU/CVU de origen (22 dígitos): hay que devolverlo a mano.' });
@@ -12722,6 +12722,8 @@ async function initializeData() {
   // #885 (owner): plazo por hito del fueguito = día×2 (10 fueguitos en 20 días); se edita después en el panel. firePlazoSince = desde cuándo vale.
   // #890: el cliente no se entera de las fallas de pago (aviso apagado una vez; el tilde sigue en Configuración → banco) y el aviso de "retiro
   // demorado" pasa a "en proceso" (sólo si nadie lo editó).
+  // #897 (owner: "configurá todo con carga mínima $2.000 para toda la página"): una vez; después se cambia en el panel.
+  try { if (!(await getConfig('mig897MinDep2000', null))) { await Config.set('minDepositArs', 2000, 'mig#897'); const hg = (await getConfig('hgcash', null)) || {}; if (typeof hg === 'object' && Number(hg.minChargeARS) > 2000) await Config.set('hgcash', Object.assign({}, hg, { minChargeARS: 2000 }), 'mig#897'); await Config.set('mig897MinDep2000', new Date().toISOString(), 'mig#897'); console.log('✅ #897: carga mínima $2.000'); } } catch (e) { console.warn('[startup-migration] #897:', e.message); }
   try { if (!(await getConfig('mig890NoFriction', null))) { const bs = (await getConfig('bankOutageSettings', null)) || {}; await Config.set('bankOutageSettings', Object.assign({}, BANK_SETTINGS_DEFAULT, typeof bs === 'object' ? bs : {}, { notifyFailedClient: false }), 'mig#890'); await Command.updateOne({ name: '/sys_withdraw_delayed', response: WITHDRAW_DELAYED_OLD_820 }, { $set: { response: WITHDRAW_DELAYED_DEFAULT } }); await Config.set('mig890NoFriction', new Date().toISOString(), 'mig#890'); } } catch (e) { console.warn('[startup-migration] #890:', e.message); }
   try { if (!(await getConfig('mig885FirePlazo', null))) { const fm = await getConfig('fireMilestones', null); if (Array.isArray(fm) && fm.length) await Config.set('fireMilestones', fm.map((m) => Object.assign({}, m, { depositDays: (parseInt(m.day, 10) || 15) * 2 })), 'mig#885'); await Config.set('firePlazoSince', new Date().toISOString(), 'mig#885'); await Config.set('mig885FirePlazo', new Date().toISOString(), 'mig#885'); } } catch (e) { console.warn('[startup-migration] #885:', e.message); }
   try { if (!(await getConfig('mig884RetiroText', null))) { await Command.updateOne({ name: '/sys_support_topic_retiro', response: SUPPORT_RETIRO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_RETIRO_DEFAULT } }); await Config.set('mig884RetiroText', new Date().toISOString(), 'mig#884'); } } catch (e) { console.warn('[startup-migration] #884:', e.message); }
@@ -14026,7 +14028,7 @@ async function _isFirstRealDeposit(user) {
 // #299 (owner 2026-10-17): CARGA MÍNIMA informativa ($5.000 default): la app la muestra en "Adjuntar comprobante aquí"
 // y en el paso 1 de la carga automática. Config['minDepositArs'], editable en COMANDOS → Bonos automáticos.
 // Es un AVISO al cliente: no bloquea acreditaciones (una transferencia menor igual se acredita).
-const MIN_DEPOSIT_ARS_DEFAULT = 5000;
+const MIN_DEPOSIT_ARS_DEFAULT = 2000; // #897 (owner): carga mínima $2.000 en toda la página
 // #379 (owner 2026-10-18): RETIRO MÍNIMO (antes $4.999 fijo). Config['withdrawMinArs'], editable en COMANDOS → Bonos automáticos.
 const WITHDRAW_MIN_ARS_DEFAULT = 10000;
 // #385: textos de los botones "Adjuntar comprobante aquí" / "Retirar premio" (editables en COMANDOS).
