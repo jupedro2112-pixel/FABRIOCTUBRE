@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 912. 🟡 Página JUGAYGANA (picaroja.com/jugaygana) — misma página que PICA ROJA, juegos y cuenta de Girox, estilo negro/amarillo — SW v609
+**Pedido (owner):** "replicá lo mismo con el link /jugaygana, al estilo de jugaygana44.bet (es mía), idéntica: logo, orden, proveedores, menú,
+portadas y deslizante; usá todo de Girox, igual que la última". jugaygana44.bet es una app React que a cualquier pedido automático le devuelve
+el index vacío (no se pudo leer su JS/CSS ni sus portadas): se armó la base con el logo de la app y portadas PROVISORIAS; para dejarla idéntica
+hacen falta capturas y los archivos de sus portadas (se le pidieron al owner).
+- `lobby.js`: SKINS (picaroja | jugaygana); `open(view, skin)` rearma la página si cambia la marca; `?jg=1` la abre (pasa por openPlatform ⇒
+  respeta el bloqueo por saldo). Imágenes `public/images/jugaygana/` (logo.svg, icon.svg, b1-b3.svg). CSS `.prl-jyg`.
+- home.js: DOORS {picaroja, jugaygana} = puertas a Girox (al server va 'girox'); BRANDS {picaroja, girox, jugaygana}; `localStorage vip_brand`.
+  La plataforma 'jugaygana' del server (sin API) se muestra conectada y abre la página. ⚠️ Si algún día se conecta la API REAL de JUGAYGANA,
+  sacar 'jugaygana' de DOORS (si no, la app seguiría mandando sus cargas a Girox).
+- Server: `/jugaygana` ⇒ `/?jg=1`; `_BRANDS` y `User.activeBrand` aceptan 'jugaygana' (Mis cargas y bloqueo por marca).
+
 ### 911. Página PICA ROJA: juegos de a 4 por fila (Inicio y Slots), 8 visibles por sección — SW v608
 **Pedido (owner):** "achicá los juegos, que entren 4 por fila, así se ven más". También pidió mostrar "cuánta gente juega" cada slot copiando
 números de Stake o estimados: NO se hizo (serían cifras falsas presentadas como reales a los clientes); se le ofreció un contador REAL.

@@ -140,7 +140,7 @@ const userSchema = new mongoose.Schema({
   // simply reloading the page.
   // #908 (owner): plataforma ACTIVA del cliente para la app ('picaroja' | 'girox'; por dentro es la misma cuenta de 1girox). Con saldo en una,
   // la otra queda bloqueada hasta usarlo o retirarlo. brandHistory = desde cuándo estuvo en cada una (marca las cargas en "Mis cargas").
-  activeBrand: { type: String, enum: ['picaroja', 'girox', null], default: null },
+  activeBrand: { type: String, enum: ['picaroja', 'girox', 'jugaygana', null], default: null },
   brandHistory: { type: [{ brand: String, since: Date, _id: false }], default: [] },
   mustChangePassword: {
     type: Boolean,

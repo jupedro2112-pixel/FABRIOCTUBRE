@@ -951,7 +951,7 @@
             '</button>';
         }).join('');
     }
-    async function entrySwitch(id) { if (!(await _brandGuard(id))) return; if (id === 'picaroja' || id === 'girox') { try { await setPreferred(id); } catch (_) {} } _entryPlat = id; renderEntryTabs(); _entryLoad(); if (id === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} } } // #907 · #908 // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
+    async function entrySwitch(id) { if (!(await _brandGuard(id))) return; if (BRANDS[id]) { try { await setPreferred(id); } catch (_) {} } _entryPlat = id; renderEntryTabs(); _entryLoad(); if (_isDoor(id)) { try { VIP.lobby.open('inicio', id); } catch (_) {} } } // #907 · #908 // #300: la pestaña siempre abre la página (Ganamos se ve con 'Próximamente')
     // #278: el modo logo de #277 se descartó (owner: "quedó mal") → la web se carga al entrar, como en #267.
     // ---------------- #312: carrusel de fotos ilustrativas de Girox en el Inicio ----------------
     // #327 (owner): fotos nuevas (grillas de juegos: Sugar Rush, Jokers, Fire Joker, Starburst, Crazy Time…); las anteriores se borraron.
@@ -1278,7 +1278,7 @@
         const f = _el('entryFrame'); if (!f) return;
         const p = _entryList().find((x) => x.id === _entryPlat) || {};
         // #312: Girox = carrusel de fotos (no se carga su web); las demás siguen embebidas.
-        if ((p.id || _entryPlat) === 'girox' || (p.id || _entryPlat) === 'picaroja') { // #907: PICA ROJA = mismas fotos (la página se abre aparte)
+        if ((p.id || _entryPlat) === 'girox' || _isDoor(p.id || _entryPlat)) { // #907: PICA ROJA = mismas fotos (la página se abre aparte)
             clearTimeout(_entryTimer); _entryStatus(null);
             if (f.getAttribute('src') && f.getAttribute('src') !== 'about:blank') f.src = 'about:blank';
             f.style.display = 'none'; _entryUrl = null;
@@ -2102,15 +2102,22 @@
     // la conoce (las cargas/retiros/bonos siguen yendo a 'girox'). Va primera y es la predeterminada salvo que la persona elija otra
     // (localStorage vip_pr_off = '1'); al elegirla, al server se le guarda 'girox'.
     const PR_OFF_KEY = 'vip_pr_off';
-    function _prOn() { try { return localStorage.getItem(PR_OFF_KEY) !== '1'; } catch (_) { return true; } }
+    // #912: JUGAYGANA también es una PUERTA de la app a la misma cuenta de Girox (página propia /jugaygana). DOORS = puertas; BRANDS = las que
+    // tienen saldo "propio" a ojos del cliente (bloqueo #908). localStorage vip_brand = la marca activa en este teléfono.
+    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana.png' } };
+    const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1 };
+    const _isDoor = (id) => !!DOORS[id];
+    function _localBrand() { try { const b = localStorage.getItem('vip_brand'); if (BRANDS[b]) return b; return localStorage.getItem(PR_OFF_KEY) === '1' ? 'girox' : 'picaroja'; } catch (_) { return 'picaroja'; } }
+    function _setLocalBrand(b) { try { localStorage.setItem('vip_brand', b); if (b === 'girox') localStorage.setItem(PR_OFF_KEY, '1'); else localStorage.removeItem(PR_OFF_KEY); } catch (_) {} }
+    function _prOn() { return _isDoor(_localBrand()); }
     // #908: la plataforma ACTIVA (PICA ROJA o Girox) la guarda el server; con saldo en una, la otra queda bloqueada hasta usarlo o retirarlo.
     let _brand = null;
     async function _syncBrand() {
-        try { const r = await fetch(VIP.config.API_URL + '/api/me/brand', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const d = await r.json(); if (d && d.brand) { _brand = d.brand; try { if (d.brand === 'girox') localStorage.setItem(PR_OFF_KEY, '1'); else localStorage.removeItem(PR_OFF_KEY); } catch (_) {} } } catch (_) {}
+        try { const r = await fetch(VIP.config.API_URL + '/api/me/brand', { headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }); const d = await r.json(); if (d && d.brand) { _brand = d.brand; _setLocalBrand(d.brand); } } catch (_) {}
     }
     // true = puede pasar a esa plataforma (o ya está ahí). Si tiene saldo en la otra, avisa y devuelve false.
     async function _brandGuard(id) {
-        if (id !== 'picaroja' && id !== 'girox') return true;
+        if (!BRANDS[id]) return true;
         if ((_brand || 'picaroja') === id) return true;
         try {
             const r = await fetch(VIP.config.API_URL + '/api/me/brand', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ brand: id }) });
@@ -2123,7 +2130,12 @@
         if (!_platforms) return;
         const list = Array.isArray(_platforms.platforms) ? _platforms.platforms : (_platforms.platforms = []);
         if (!list.some((p) => p.id === 'picaroja')) list.unshift({ id: 'picaroja', name: 'PICA ROJA', emoji: '♦️', connected: true, logoUrl: '/icons/icon-96x96.png', exclusive: true });
-        if (_prOn()) { _platforms.preferredPlatform = 'picaroja'; _platforms.defaultPlatform = 'picaroja'; }
+        // #912: JUGAYGANA = puerta a Girox (aunque el server la tenga sin API): siempre disponible y abre su página.
+        const jg = list.find((p) => p.id === 'jugaygana');
+        if (jg) Object.assign(jg, { connected: true, door: true, logoUrl: jg.logoUrl || DOORS.jugaygana.logoUrl, name: 'JUGAYGANA' });
+        else list.push({ id: 'jugaygana', name: 'JUGAYGANA', emoji: '🟡', connected: true, door: true, logoUrl: DOORS.jugaygana.logoUrl });
+        const lb = _localBrand();
+        if (_isDoor(lb)) { _platforms.preferredPlatform = lb; _platforms.defaultPlatform = lb; }
     }
     async function loadPlatforms(force) {
         if (!force && _platforms && (Date.now() - _platformsAt) < 60000) return _platforms;
@@ -2170,14 +2182,14 @@
     async function setPreferred(platformId) {
         if (!(await _brandGuard(platformId))) return; // #908: con saldo en la otra plataforma no se cambia
         // #907: PICA ROJA se guarda en el teléfono; al server va 'girox' (misma cuenta). Elegir otra apaga la predeterminada PICA ROJA.
-        try { if (platformId === 'picaroja') localStorage.removeItem(PR_OFF_KEY); else localStorage.setItem(PR_OFF_KEY, '1'); } catch (_) {}
-        if (platformId === 'picaroja') {
+        if (BRANDS[platformId]) _setLocalBrand(platformId); else _setLocalBrand('girox');
+        if (_isDoor(platformId)) { // #912: PICA ROJA o JUGAYGANA → al server va 'girox' (misma cuenta)
             try { await fetch(VIP.config.API_URL + '/api/platforms/preferred', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox' }) }); } catch (_) {}
-            if (_platforms) { _platforms.preferredPlatform = 'picaroja'; _platforms.defaultPlatform = 'picaroja'; }
+            if (_platforms) { _platforms.preferredPlatform = platformId; _platforms.defaultPlatform = platformId; }
             try { renderPlatforms(); } catch (_) {} try { _basicPaint(); } catch (_) {} try { renderEntryTabs(); } catch (_) {}
             return;
         }
-        if (_platforms && _platforms.defaultPlatform === 'picaroja') _platforms.defaultPlatform = 'girox';
+        if (_platforms && _isDoor(_platforms.defaultPlatform)) _platforms.defaultPlatform = 'girox';
         try {
             const r = await fetch(VIP.config.API_URL + '/api/platforms/preferred', {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + VIP.state.currentToken },
@@ -2251,8 +2263,8 @@
     }
     function openPlatform(platformId, opts) {
         // #908: si la PERSONA elige la otra plataforma (sin opts: los ingresos internos a Girox de la Página exclusiva pasan `embed`), se chequea el saldo.
-        if (!opts && (platformId === 'picaroja' || platformId === 'girox') && (_brand || 'picaroja') !== platformId) { _brandGuard(platformId).then((ok) => { if (ok) { setPreferred(platformId).catch(() => {}); openPlatform(platformId, { checked: true }); } }); return; }
-        if (platformId === 'picaroja') { try { VIP.lobby.open('inicio'); } catch (_) {} return; } // #907: Página exclusiva
+        if (!opts && BRANDS[platformId] && (_brand || 'picaroja') !== platformId) { _brandGuard(platformId).then((ok) => { if (ok) { setPreferred(platformId).catch(() => {}); openPlatform(platformId, { checked: true }); } }); return; }
+        if (_isDoor(platformId)) { try { VIP.lobby.open('inicio', platformId); } catch (_) {} return; } // #907/#912: página propia de la marca
         const test = !!(opts && opts.test);
         // #695 (owner): "en Entrar a la página no figura el chat de carga rápida" → el casino con sesión se abre SIEMPRE ADENTRO
         // (overlay con Carga rápida, Retirar e Ir a Soporte), también en navegador. La pestaña aparte (/jugar.html) queda sólo

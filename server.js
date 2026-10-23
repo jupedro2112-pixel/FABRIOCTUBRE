@@ -1258,6 +1258,7 @@ app.get('/linkreferido', (req, res) => {
 });
 // #907: picaroja.com/paginaoficial = la app con la Página exclusiva PICA ROJA abierta (antes del vanity /:code, así una campaña no la tapa).
 app.get(['/paginaoficial', '/paginaoficial/'], (req, res) => res.redirect(302, '/?pr=1'));
+app.get(['/jugaygana', '/jugaygana/'], (req, res) => res.redirect(302, '/?jg=1')); // #912: página JUGAYGANA (juegos y cuenta de Girox)
 app.get('/:code', async (req, res, next) => {
   const candidate = req.params.code || '';
   // Sólo procesar si parece un código/slug válido: 3-40 chars, letras/números/_/-
@@ -9825,7 +9826,7 @@ function _vipLevelsPublic() {
 // de esa plataforma". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es siempre el real. Con saldo ≥ BRAND_LOCK_ARS en la
 // plataforma activa no se puede pasar a la otra (siempre se puede retirar). Cargas, retiros, bonos y cierres no cambian.
 const BRAND_LOCK_ARS = 100;
-const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox' };
+const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA' }; // #912: JUGAYGANA = otra puerta a la misma cuenta de Girox
 function _brandAt(u, when) { const h = (u && u.brandHistory) || []; let b = 'picaroja'; for (const x of h) { if (new Date(x.since) <= new Date(when)) b = x.brand; } return b; }
 app.get('/api/me/brand', authMiddleware, async (req, res) => {
   try { const u = await User.findOne({ id: req.user.userId }).select('activeBrand').lean(); res.set('Cache-Control', 'no-store'); res.json({ brand: (u && u.activeBrand) || 'picaroja', names: _BRANDS }); }

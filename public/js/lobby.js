@@ -29,20 +29,29 @@ VIP.lobby = (function () {
         up: '<path d="M6 5h12M12 20V9M7 13l5-5 5 5"/>'
     };
     const ico = (k) => '<svg class="prl-ic" viewBox="0 0 24 24" aria-hidden="true">' + (IC[k] || '') + '</svg>';
-    const BANNERS = [['/images/picaroja/b1.svg', 'slots'], ['/images/picaroja/b2.svg', 'vivo'], ['/images/picaroja/b3.svg', 'deportes']];
+    // #912: la misma página con otro estilo por marca (todas son puertas a la MISMA cuenta de Girox).
+    const SKINS = {
+        picaroja: { name: 'PICA ROJA', sub: 'Página exclusiva', logo: '/images/picaroja/logo-mono.svg', home: '/images/picaroja/logo-mono.svg', cls: '', dir: '/images/picaroja/' },
+        jugaygana: { name: 'JUGAYGANA', sub: '', logo: '/images/jugaygana/logo.svg', home: '/images/jugaygana/icon.svg', cls: 'prl-jyg', dir: '/images/jugaygana/', wordmark: true }
+    };
+    let _skin = 'picaroja';
+    const SK = () => SKINS[_skin] || SKINS.picaroja;
+    const BANNERS_OF = () => [[SK().dir + 'b1.svg', 'slots'], [SK().dir + 'b2.svg', 'vivo'], [SK().dir + 'b3.svg', 'deportes']];
     let _provOpen = false;
     function _shell() {
-        if ($('prLobby')) return $('prLobby');
+        const old = $('prLobby'); if (old && old.dataset.skin === _skin) return old; if (old) old.remove();
+        const sk = SK();
         const nb = (v, k, t) => '<button type="button" data-v="' + v + '" onclick="VIP.lobby.go(\'' + v + '\')">' + ico(k) + '<span>' + t + '</span></button>';
         document.body.insertAdjacentHTML('beforeend',
-            '<div id="prLobby" class="prl" hidden role="dialog" aria-label="PICA ROJA · Página exclusiva">' +
-            '<header class="prl-top"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="/images/picaroja/logo-mono.svg" alt="" class="prl-logo"><span class="prl-brand"><b>PICA ROJA</b><small>Página exclusiva</small></span></button>' +
+            '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
+            '<header class="prl-top"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio">' +
+            (sk.wordmark ? '<img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark">' : '<img src="' + sk.logo + '" alt="" class="prl-logo"><span class="prl-brand"><b>' + sk.name + '</b><small>' + sk.sub + '</small></span>') + '</button>' +
             '<div class="prl-wallet"><span class="prl-bal" id="prlBal">—</span><button type="button" class="prl-load" onclick="VIP.lobby.load()">Cargar</button></div>' +
             '<button type="button" class="prl-x" onclick="VIP.lobby.menu()" aria-label="Menú y perfil">' + ico('menu') + '</button></header>' +
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             '<nav class="prl-nav" aria-label="Menú">' + nb('slots', 'slots', 'Slots') + nb('vivo', 'live', 'En vivo') +
-            '<button type="button" data-v="inicio" class="prl-home" onclick="VIP.lobby.go(\'inicio\')"><img src="/images/picaroja/logo-mono.svg" alt=""><span>Inicio</span></button>' +
+            '<button type="button" data-v="inicio" class="prl-home" onclick="VIP.lobby.go(\'inicio\')"><img src="' + sk.home + '" alt=""><span>Inicio</span></button>' +
             nb('deportes', 'sport', 'Deportes') + '<button type="button" data-v="menu" onclick="VIP.lobby.menu()">' + ico('menu') + '<span>Menú</span></button>' +
             '</nav>' +
             '<div class="prl-drawer" id="prlDrawer" hidden onclick="if(event.target===this)VIP.lobby.menu(false)"><aside class="prl-dr" role="dialog" aria-label="Mi cuenta"><div id="prlDrBody"></div></aside></div>' +
@@ -74,7 +83,7 @@ VIP.lobby = (function () {
         if (box.querySelectorAll('.prl-hid').length === 0 && btn) btn.closest('.prl-more').remove();
     }
     function _hero() {
-        return '<div class="prl-hero" id="prlHero">' + BANNERS.map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="PICA ROJA" decoding="async"></button>').join('') + '</div>';
+        return '<div class="prl-hero" id="prlHero">' + BANNERS_OF().map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="' + SK().name + '" decoding="async"></button>').join('') + '</div>';
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
     function _provTile(p) {
@@ -97,7 +106,7 @@ VIP.lobby = (function () {
         document.querySelectorAll('.prl-nav [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === _view || (_view === 'all' && b.dataset.v === 'slots')));
         if (!_data) { m.innerHTML = _hero() + '<div class="prl-note">Cargando los juegos…</div>'; return; }
         if (_view === 'deportes') {
-            m.innerHTML = _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="/images/picaroja/b3.svg" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
+            m.innerHTML = _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + SK().dir + 'b3.svg" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
             return;
         }
         if (_view === 'vivo') {
@@ -144,7 +153,8 @@ VIP.lobby = (function () {
             else { const m = $('prlMain'); if (m) m.innerHTML = _hero() + '<div class="prl-note">' + esc(d.error || 'No pudimos traer los juegos. Probá de nuevo.') + '</div>'; }
         } catch (_) { const m = $('prlMain'); if (m) m.innerHTML = _hero() + '<div class="prl-note">Sin conexión. Probá de nuevo.</div>'; }
     }
-    function open(view) {
+    function open(view, skin) {
+        _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open');
         _view = view || 'inicio'; _render(); _paintBal();
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
@@ -197,7 +207,7 @@ VIP.lobby = (function () {
         const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
         const item = (k, t, fn) => '<button type="button" class="prl-mi" onclick="' + fn + '">' + ico(k) + '<span>' + t + '</span><b class="prl-chev">›</b></button>';
         b.innerHTML =
-            '<div class="prl-dr-head"><img src="/images/picaroja/logo-mono.svg" alt="" class="prl-logo"><div><b>' + esc(u.username || 'Mi cuenta') + '</b><small>PICA ROJA · Página exclusiva</small></div><button type="button" class="prl-x" onclick="VIP.lobby.menu(false)" aria-label="Cerrar">✕</button></div>' +
+            '<div class="prl-dr-head"><img src="' + SK().home + '" alt="" class="prl-logo"><div><b>' + esc(u.username || 'Mi cuenta') + '</b><small>' + SK().name + (SK().sub ? ' · ' + SK().sub : '') + '</small></div><button type="button" class="prl-x" onclick="VIP.lobby.menu(false)" aria-label="Cerrar">✕</button></div>' +
             '<div class="prl-dr-card"><small>Saldo</small><b class="prl-dr-bal">' + esc(($('prlBal') || {}).textContent || '—') + '</b>' +
             '<div class="prl-dr-btns"><button type="button" class="prl-load" onclick="VIP.lobby.load()">Cargar</button><button type="button" class="prl-ghost" onclick="VIP.lobby.withdraw()">Retirar</button></div></div>' +
             '<div class="prl-dr-card"><small>Nivel y rango</small>' +
@@ -212,8 +222,9 @@ VIP.lobby = (function () {
     function support() { menu(false); close(); try { VIP.home.setHomeMode('mini'); } catch (_) {} }
     // picaroja.com/paginaoficial ⇒ /?pr=1: se abre apenas la app tiene sesión.
     try {
-        if (/[?&]pr=1\b/.test(location.search)) {
-            let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); open('inicio'); try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
+        const _auto = /[?&]pr=1\b/.test(location.search) ? 'picaroja' : /[?&]jg=1\b/.test(location.search) ? 'jugaygana' : null; // #912: /jugaygana ⇒ ?jg=1
+        if (_auto) {
+            let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
     return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support };
