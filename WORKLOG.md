@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-22
 
+### 929. Sorteo: hay que ANOTARSE (app instalada con notificaciones + Telegram) y se suma DESDE que te anotás — SW v626
+**Pedido (owner):** "para empezar a sumar hay que anotarse, tener la app instalada con notificaciones y unirse a Telegram para ver los ganadores".
+- `User.raffleJoinedAt` / `raffleTelegramAt`. `raffleService.requirementsOf(u)`: app = token FCM `standalone`; notif = ese token con permiso (o
+  `notifPermission:'granted'`); telegram = tocó "Unirme" (Telegram no se puede verificar). `POST /api/raffle/telegram` (registra y devuelve el
+  invite de Comunidad), `POST /api/raffle/join` (valida y pone raffleJoinedAt una sola vez).
+- `computeMonth`: sólo anotados; cada uno suma DESDE que se anotó (stats y cargas desde esa hora, agrupados por hora). Extra y Gran Sorteo: sólo
+  anotados (días/misiones desde su fecha). `publicStatus`: joined, joinedAt, requirements.
+- Pantalla: recuadro "📝 Anotate para empezar a sumar" con la lista ✅/⬜ y botones Instalar / Activar / Unirme + "Anotarme"; bases con el requisito;
+  botón del Inicio "Anotate para sumar". Probado (Mongo en memoria, `scripts/test-raffle-join.js`): anotado antes = todo el mes, anotado el 15 =
+  desde esa hora, no anotado = no suma; requisitos bien detectados.
+- (Se rechazó otra vez la quiniela PAGA / cupón pago: la versión gratuita, sin compra, sí se arma — #930.)
+
 ### 928. Sorteo: PREMIO EXTRA ($100.000 en 10 ganadores cada 100 clientes con 2+ cargas) + "el formato cambia mes a mes" — SW v625, admin SW v188
 **Pedido (owner):** en los requisitos del sorteo: todos los que participan entran en $100.000 repartidos en 10 ganadores por cada 100 clientes con al
 menos 2 cargas en el mes; el formato del sorteo cambia mes a mes.

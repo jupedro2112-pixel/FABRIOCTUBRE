@@ -3220,3 +3220,13 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 .rf-extra { border: 1px dashed var(--rfb-acc, var(--rf-acc)); }
 .rf-extra b { font-size: 14px; } .rf-extra p { margin: 6px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--rf-mut); }
 .rf-extra .rf-extra-me { color: var(--rf-tx); font-weight: 700; } .rf-extra-last { font-family: ui-monospace, monospace; font-size: 11.5px !important; }
+/* #929 anotarse al sorteo */
+.rf-join { border: 2px solid var(--rfb-acc, var(--rf-acc)); }
+.rf-join b { font-size: 15px; } .rf-join p { margin: 6px 0; font-size: 12.5px; color: var(--rf-mut); }
+.rf-join ul { list-style: none; margin: 6px 0 10px; padding: 0; display: grid; gap: 6px; }
+.rf-join li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.rf-join li b { flex: 1; font-size: 13px; font-weight: 700; } .rf-join li.ok b { opacity: .7; }
+.rf-join li button { border: 0; border-radius: 999px; padding: 6px 12px; font: 800 12px var(--p-font); background: var(--rf-acc); color: #fff; cursor: pointer; }
+.rf-join .rf-btn[disabled] { opacity: .45; cursor: not-allowed; }
+.rf-join-sub { font-size: 11.5px !important; }
+.rf-joined { margin-top: 10px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, #16a34a 14%, transparent); color: var(--rf-tx); font-size: 12.5px; font-weight: 700; }

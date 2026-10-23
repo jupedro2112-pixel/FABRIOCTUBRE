@@ -74,6 +74,32 @@ VIP.raffle = (function () {
             '<div class="rf-box" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🏆 Sorteo mensual</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span><button type="button" class="rf-minbtn" onclick="VIP.raffle.toggleMin(event)" aria-label="Minimizar">–</button></div><div class="rf-count js-rf-count" data-to="' + esc(to || '') + '"></div>' + _trophies(d.prizes || DEF.prizes, 'active') + '<em class="rf-box-go">Ver ranking ›</em></div>' +
             '<div class="rf-box rf-box-soon" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🚗 ' + esc((d.upcoming && d.upcoming.title) || DEF.upcoming.title) + '</b><span>Empieza en</span></div><div class="rf-count js-rf-count" data-to="' + esc(st) + '"></div>' + _trophies((d.upcoming && d.upcoming.prizes) || DEF.upcoming.prizes, 'upcoming') + '</div></div>';
     }
+    // #929 (owner): para SUMAR hay que ANOTARSE: app instalada con notificaciones + Telegram (ahí se anuncian los ganadores de todos los premios).
+    function _joinHtml(d) {
+        if (d.joined) return '<section class="rf-joined">✅ Estás anotado desde el ' + esc(fdate(d.joinedAt)) + ': sumás puntos desde ese momento.</section>';
+        const r = d.requirements || {};
+        const row = (ok, txt, btn) => '<li class="' + (ok ? 'ok' : '') + '"><span>' + (ok ? '✅' : '⬜') + '</span><b>' + txt + '</b>' + (ok ? '' : btn) + '</li>';
+        return '<section class="rf-card rf-join"><b>📝 Anotate para empezar a sumar</b><p>Sólo suman los anotados, desde el momento en que se anotan. Requisitos:</p><ul>' +
+            row(r.app, 'App de PICA ROJA instalada', '<button type="button" onclick="VIP.ui.installApp && VIP.ui.installApp()">Instalar</button>') +
+            row(r.notif, 'Notificaciones activadas', '<button type="button" onclick="VIP.raffle.notif()">Activar</button>') +
+            row(r.telegram, 'Unido a Telegram (ahí anunciamos los ganadores)', '<button type="button" onclick="VIP.raffle.telegram()">Unirme</button>') +
+            '</ul><button type="button" class="rf-btn" onclick="VIP.raffle.join()"' + (r.ok ? '' : ' disabled') + '>Anotarme</button>' +
+            (r.app ? '' : '<p class="rf-join-sub">Si ya la instalaste, abrí el sorteo desde la app instalada.</p>') + '</section>';
+    }
+    async function _post(path) { const r = await fetch(VIP.config.API_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: '{}' }); return { r, d: await r.json().catch(() => ({})) }; }
+    async function telegram() {
+        let w = null; try { w = window.open('about:blank', '_blank'); } catch (_) {}
+        try { const { d } = await _post('/api/raffle/telegram'); if (d.url) { if (w) w.location.href = d.url; else window.open(d.url, '_blank', 'noopener'); } else if (w) w.close(); } catch (_) { try { if (w) w.close(); } catch (__) {} }
+        _load();
+    }
+    async function notif() {
+        try { if (typeof window.enableNotifications === 'function') await window.enableNotifications(); else if (window.Notification) await Notification.requestPermission(); } catch (_) {}
+        setTimeout(_load, 1500);
+    }
+    async function join() {
+        try { const { r, d } = await _post('/api/raffle/join'); if (r.ok) { try { VIP.ui.showToast('✅ ¡Listo! Ya estás anotado: desde ahora sumás puntos.', 'success'); } catch (_) {} } else { try { VIP.ui.showToast(d.error || 'Te falta algún requisito', 'error'); } catch (_) {} } } catch (_) {}
+        _load();
+    }
     // #928 (owner): premio extra — $100.000 en 10 ganadores de $10.000 por cada 100 clientes con al menos 2 cargas en el mes.
     function _extraHtml(x, ns) {
         if (!x) return '';
@@ -99,6 +125,7 @@ VIP.raffle = (function () {
         const me = _d.me || {}; const pos = me.position; const ns = !!_d.notStarted; const win = _d.myWin;
         m.innerHTML =
             '<section class="rf-box rf-box-big"><div class="rf-box-h"><b>' + (ns ? 'Empieza el 1 de ' + esc(_d.monthLabel.split(' ')[0]) : 'Termina el ' + esc(fdate(_d.closesAt, true)) + ' h') + '</b><span>' + (ns ? 'Faltan' : 'Quedan') + '</span></div><div class="rf-count js-rf-count" data-to="' + esc(ns ? _d.startsAt : _d.closesAt) + '"></div>' + _trophies(_d.prizes, 'active') + '</section>' +
+            _joinHtml(_d) +
             _extraHtml(_d.extra, ns) +
             (win ? '<section class="rf-card rf-win"><b>🎉 ¡Ganaste el ' + win.pos + '° puesto de ' + esc(win.monthLabel) + '!</b><p>' + esc(win.prize) + '</p>' + (win.delivered ? '<p class="rf-ok">✅ Premio entregado.</p>' : '<button type="button" class="rf-btn" onclick="VIP.raffle.contact()">🏆 Coordinar la entrega</button>') + '</section>' : '') +
             (!ns ? '<section class="rf-mine">' + (pos ? '<b>' + pos + '°</b><span>' + num(me.points) + ' pts' + (pos > 1 ? ' · te faltan <b>' + num(me.toFirst) + '</b> para el 1°' : ' · ¡vas primero!') + '</span>' : '<span>Todavía no sumaste puntos este mes · cada $100.000 apostados = 100 pts</span>') + '</section>' : '') +
@@ -111,6 +138,7 @@ VIP.raffle = (function () {
             _granHtml(_d.gran, _d.upcoming) +
             '<details class="rf-bases"><summary>📜 Bases y condiciones</summary><ul class="rf-rules">' +
             '<li><b>Empieza:</b> el 1 de noviembre de 2026. Lo jugado antes no suma.</li>' +
+            '<li><b>Hay que anotarse:</b> para sumar puntos tenés que anotarte en esta pantalla, con la app de PICA ROJA instalada, las notificaciones activadas y unido a nuestro Telegram (ahí anunciamos los ganadores de todos los premios del mes). Sumás desde el momento en que te anotás; el extra y el Gran Sorteo también son sólo para anotados.</li>' +
             '<li><b>Participan:</b> clientes registrados en la app de PICA ROJA con al menos una carga real en el mes. Suma lo jugado en PICA ROJA, JUGAYGANA, Ganamos o Girox (misma cuenta).</li>' +
             '<li><b>Puntos:</b> cada $100.000 apostados con plata real = 100 puntos. Los bonos no suman: se toma la parte de lo apostado proporcional a tus cargas reales del mes (ej.: cargaste $100.000 y recibiste $50.000 de bono ⇒ cuenta 2/3 de lo apostado).' + (!ns && me.wagered ? ' Lo tuyo: ' + money(me.wagered) + ' apostado × ' + money(me.deposits) + ' ÷ ' + money((me.deposits || 0) + (me.bonusGranted || 0)) + ' = ' + money(me.validWagered) + ' ⇒ ' + num(me.points) + ' pts.' : '') + '</li>' +
             '<li><b>Hasta cuándo suma:</b> hasta el ' + esc(fdate(_d.closesAt, true)) + ' h (hora argentina). Se actualiza cada 20 minutos.</li>' +
@@ -172,7 +200,7 @@ VIP.raffle = (function () {
             const r = await fetch(VIP.config.API_URL + '/api/raffle', { headers: { Authorization: 'Bearer ' + VIP.state.currentToken } }); if (!r.ok) return;
             const d = await r.json(); _d = d; const me = d.me || {};
             document.querySelectorAll('.rf-strip[data-brand]').forEach((el) => { el.outerHTML = stripHtml(el.dataset.brand); }); // #920: con los datos reales (puesto)
-            const lf = _left(d.startsAt); const t = d.notStarted ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste! Tocá acá' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' : 'Sumá puntos jugando');
+            const lf = _left(d.startsAt); const t = !d.joined ? 'Anotate para sumar' : d.notStarted ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : d.myWin && !d.myWin.delivered ? '🎉 ¡Ganaste! Tocá acá' : (me.position ? 'Vas ' + me.position + '° · ' + num(me.points) + ' pts' : 'Sumá puntos jugando');
             document.querySelectorAll('.js-rf-pos').forEach((e) => { e.textContent = t; });
             const g2 = d.gran || {}; const t2 = (g2.notStarted !== false) ? 'Empieza en ' + lf.d + 'd ' + lf.h + 'h' : (g2.me && g2.me.position ? 'Vas ' + g2.me.position + '° · ' + num(g2.me.points) + ' pts' : 'Sumá puntos jugando');
             document.querySelectorAll('.js-rf-gran').forEach((e) => { e.textContent = t2; });
@@ -181,5 +209,5 @@ VIP.raffle = (function () {
     }
     try { setTimeout(function loop() { paintEntries(); setTimeout(loop, 60 * 1000); }, 4000); } catch (_) {}
     try { setInterval(() => { if (document.querySelector('.js-rf-count')) _countdown(); }, 1000); } catch (_) {} // cuentas regresivas visibles (páginas, Inicio, sorteo)
-    return { open, close, contact, paintEntries, stripHtml, toggleMin, toggleHomeMin, tick: _countdown };
+    return { open, close, contact, paintEntries, stripHtml, toggleMin, toggleHomeMin, join, telegram, notif, tick: _countdown };
 })();

@@ -69,6 +69,14 @@ function validWageredFor(wagered, deposits, bonus) {
   return Math.round(w * d / (d + b));
 }
 
+// #929: requisitos para anotarse — app instalada con notificaciones (token FCM 'standalone' con permiso) + tocó "Unirme a Telegram".
+function requirementsOf(u) {
+  const toks = (u && Array.isArray(u.fcmTokens)) ? u.fcmTokens : [];
+  const app = toks.some((t) => t && t.context === 'standalone') || (u && u.fcmTokenContext === 'standalone');
+  const notif = app && (toks.some((t) => t && t.context === 'standalone' && (t.notifPermission === 'granted' || t.notifPermission == null)) || (u && u.notifPermission === 'granted'));
+  const telegram = !!(u && u.raffleTelegramAt);
+  return { app: !!app, notif: !!notif, telegram, ok: !!(app && notif && telegram) };
+}
 async function getConfig(deps) {
   try {
     const doc = await deps.models.Config.findOne({ key: 'raffleconfig' }).lean();
@@ -85,7 +93,7 @@ async function eligibleExtra(deps, from, to, min) {
     { $match: { type: 'deposit', status: 'completed', timestamp: { $gte: from, $lte: to }, description: { $not: /PRUEBA/i }, 'metadata.source': { $nin: GIFT_SOURCES } } },
     { $group: { _id: '$userId', n: { $sum: 1 } } }, { $match: { n: { $gte: min } } }
   ]);
-  const users = await deps.models.User.find({ id: { $in: rows.map((r) => r._id) }, role: 'user', isBlocked: { $ne: true } }).select('id username').lean();
+  const users = await deps.models.User.find({ id: { $in: rows.map((r) => r._id) }, role: 'user', isBlocked: { $ne: true }, raffleJoinedAt: { $ne: null, $lte: to } }).select('id username').lean(); // #929: sólo anotados
   return users.filter((u) => u.username && !/^prueba|test/i.test(u.username));
 }
 // Sorteo verificable: cada cliente recibe sha256(mes + ':' + id); ganan los `k` valores más bajos. Con la lista de participantes cualquiera puede recalcularlo.
@@ -107,17 +115,21 @@ async function computeMonth(deps, mk, opts = {}) {
   const { from, to } = monthRange(mk);
   const until = new Date(Math.min(to.getTime(), (opts.now ? new Date(opts.now) : new Date()).getTime()));
   const dep = await depositsByUser(deps, from, to);
-  const users = await User.find({ id: { $in: [...dep.keys()] }, role: 'user', isBlocked: { $ne: true } }).select('id username').lean();
+  const users = await User.find({ id: { $in: [...dep.keys()] }, role: 'user', isBlocked: { $ne: true }, raffleJoinedAt: { $ne: null, $lte: until } }).select('id username raffleJoinedAt').lean(); // #929: sólo anotados
   const byLower = new Map(users.filter((u) => u.username && !/^prueba|test/i.test(u.username)).map((u) => [String(u.username).toLowerCase(), u]));
-  const list = [...byLower.values()];
+  // #929: cada uno suma DESDE que se anotó (si se anotó este mes) ⇒ se agrupan por hora de inicio para pedir stats y cargas de ese rango
+  const groups = new Map();
+  for (const u of byLower.values()) { const st = new Date(Math.max(from.getTime(), Math.floor(new Date(u.raffleJoinedAt).getTime() / 3600000) * 3600000)); const k = st.getTime(); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(u); }
   let updated = 0, errors = 0;
-  for (let i = 0; i < list.length; i += 100) {
-    const chunk = list.slice(i, i + 100);
-    const r = await deps.girox.getPlayersStatsBatch(chunk.map((u) => u.username), from, until, 'raffle-' + mk);
+  for (const [stk, glist] of groups) {
+  const gFrom = new Date(stk); const gDep = gFrom.getTime() === from.getTime() ? dep : await depositsByUser(deps, gFrom, to);
+  for (let i = 0; i < glist.length; i += 100) {
+    const chunk = glist.slice(i, i + 100);
+    const r = await deps.girox.getPlayersStatsBatch(chunk.map((u) => u.username), gFrom, until, 'raffle-' + mk);
     if (!r || !r.success) { errors++; if (deps.logger) deps.logger.warn('[sorteo] batch ' + mk + ' falló: ' + ((r && r.error) || 's/detalle')); continue; }
     for (const [uname, st] of Object.entries(r.players || {})) {
       const u = byLower.get(String(uname).toLowerCase()); if (!u) continue;
-      const deposits = Math.round(dep.get(u.id) || 0);
+      const deposits = Math.round(gDep.get(u.id) || 0);
       const wagered = Math.round(Math.max(0, Number(st.wagered) || 0));
       const bonusGranted = Math.round(Math.max(0, Number(st.bonusGranted) || 0));
       const validWagered = validWageredFor(wagered, deposits, bonusGranted);
@@ -130,7 +142,8 @@ async function computeMonth(deps, mk, opts = {}) {
       updated++;
     }
   }
-  return { participants: list.length, updated, errors };
+  }
+  return { participants: byLower.size, updated, errors };
 }
 
 async function ranking(deps, mk, limit) {
@@ -179,9 +192,9 @@ async function computeGran(deps, cfg, now) {
   const days = await Transaction.aggregate([
     { $match: { type: 'deposit', status: 'completed', timestamp: { $gte: from, $lte: until }, description: { $not: /PRUEBA/i }, 'metadata.source': { $nin: GIFT_SOURCES } } },
     { $group: { _id: { u: '$userId', d: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp', timezone: TZ_OFFSET } } }, total: { $sum: '$amount' } } },
-    { $match: { total: { $gte: Number(g.dailyMinArs) || 10000 } } }, { $group: { _id: '$_id.u', days: { $sum: 1 } } }
+    { $match: { total: { $gte: Number(g.dailyMinArs) || 10000 } } }, { $group: { _id: '$_id.u', dayList: { $push: '$_id.d' } } }
   ]);
-  for (const d of days) { const e = byUser.get(d._id) || { username: null, base: 0, days: 0, weeks: 0, mpts: 0 }; e.days = d.days; byUser.set(d._id, e); }
+  for (const d of days) { const e = byUser.get(d._id) || { username: null, base: 0, days: 0, weeks: 0, mpts: 0 }; e.dayList = d.dayList; byUser.set(d._id, e); } // #929: se filtran por la fecha en que se anotó
   // 3) semanas con misiones: +missionPct% de los puntos de ESA semana (apostado con plata real de la semana, 1girox)
   if (MissionClaim) {
     const fromWk = new Date(from.getTime() - 7 * 86400000).toISOString().slice(0, 10);
@@ -199,17 +212,20 @@ async function computeGran(deps, cfg, now) {
           const u = low.get(String(un).toLowerCase()); if (!u) continue;
           const wp = pointsFor(validWageredFor(st.wagered, dep.get(u.id) || 0, st.bonusGranted));
           const e = byUser.get(u.id) || { username: u.username, base: 0, days: 0, weeks: 0, mpts: 0 };
-          e.username = e.username || u.username; e.weeks += 1; e.mpts += Math.round(wp * (Number(g.missionPct) || 10) / 100); byUser.set(u.id, e);
+          e.username = e.username || u.username; (e.wkList = e.wkList || []).push({ wk, pts: Math.round(wp * (Number(g.missionPct) || 10) / 100) }); byUser.set(u.id, e);
         }
       }
     }
   }
   // usuarios válidos (clientes, no bloqueados ni de prueba) y guardado
-  const valid = await User.find({ id: { $in: [...byUser.keys()] }, role: 'user', isBlocked: { $ne: true } }).select('id username').lean();
+  const valid = await User.find({ id: { $in: [...byUser.keys()] }, role: 'user', isBlocked: { $ne: true }, raffleJoinedAt: { $ne: null } }).select('id username raffleJoinedAt').lean(); // #929: sólo anotados
   let n = 0;
   for (const u of valid) {
     if (/^prueba|test/i.test(u.username || '')) continue;
-    const e = byUser.get(u.id); const daily = e.days * (Number(g.dailyPoints) || 10); const total = e.base + daily + e.mpts;
+    const e = byUser.get(u.id); const jd = new Date(new Date(u.raffleJoinedAt).getTime() - 3 * 3600000).toISOString().slice(0, 10); // día (ART) en que se anotó
+    e.days = (e.dayList || []).filter((d) => d >= jd).length; const wks = (e.wkList || []).filter((w) => w.wk >= new Date(new Date(jd + 'T00:00:00Z').getTime() - 6 * 86400000).toISOString().slice(0, 10));
+    e.weeks = wks.length; e.mpts = wks.reduce((a, w) => a + w.pts, 0);
+    const daily = e.days * (Number(g.dailyPoints) || 10); const total = e.base + daily + e.mpts;
     const prev = await RaffleScore.findOne({ monthKey: GK, userId: u.id }).select('points').lean();
     const set = { username: u.username, basePoints: e.base, dailyPoints: daily, missionPoints: e.mpts, activeDays: e.days, missionWeeks: e.weeks, points: total };
     if (!prev || prev.points !== total) set.updatedAt = new Date();
@@ -271,6 +287,8 @@ async function publicStatus(deps, userId, opts = {}) {
   const myIdx = all.findIndex((s) => s.userId === userId);
   const mine = myIdx >= 0 ? all[myIdx] : await deps.models.RaffleScore.findOne({ monthKey: mk, userId }).lean();
   const firstPts = all.length ? all[0].points : 0;
+  const meU = await deps.models.User.findOne({ id: userId }).select('raffleJoinedAt raffleTelegramAt fcmTokens fcmTokenContext notifPermission').lean();
+  const req = requirementsOf(meU);
   const thirdPts = all.length >= 3 ? all[2].points : 0;
   const month = await deps.models.RaffleMonth.findOne({ monthKey: mk }).select('lastRunAt participants').lean();
   const last = await deps.models.RaffleMonth.findOne({ status: 'closed' }).sort({ monthKey: -1 }).lean();
@@ -284,6 +302,7 @@ async function publicStatus(deps, userId, opts = {}) {
     deliveryBusinessDays: cfg.deliveryBusinessDays, cashOption: cfg.cashOption !== false,
     prizes: cfg.active.prizes, title: cfg.active.title, upcoming: cfg.upcoming,
     top: all.slice(0, 20).map((s, i) => ({ pos: i + 1, name: s.userId === userId ? s.username : mask(s.username), points: s.points, me: s.userId === userId })),
+    joined: !!(meU && meU.raffleJoinedAt), joinedAt: meU && meU.raffleJoinedAt, requirements: req,
     me: {
       position: myIdx >= 0 ? myIdx + 1 : null, points: mine ? mine.points : 0, validWagered: mine ? mine.validWagered : 0, wagered: mine ? mine.wagered : 0,
       deposits: mine ? mine.deposits : 0, bonusGranted: mine ? mine.bonusGranted : 0,
@@ -316,4 +335,4 @@ async function publicStatus(deps, userId, opts = {}) {
   };
 }
 
-module.exports = { drawExtra, eligibleExtra, computeGran, granRange, DEFAULT_CONFIG, monthKeyOf, monthRange, prevMonthKey, monthLabel, mask, pointsFor, validWageredFor, getConfig, computeMonth, ranking, closeMonth, tick, publicStatus };
+module.exports = { requirementsOf, drawExtra, eligibleExtra, computeGran, granRange, DEFAULT_CONFIG, monthKeyOf, monthRange, prevMonthKey, monthLabel, mask, pointsFor, validWageredFor, getConfig, computeMonth, ranking, closeMonth, tick, publicStatus };

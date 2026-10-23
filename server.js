@@ -25825,6 +25825,25 @@ app.get('/api/raffle', authMiddleware, async (req, res) => {
   try { res.set('Cache-Control', 'no-store'); res.json(await raffleService.publicStatus(_raffleDeps(), req.user.userId)); }
   catch (e) { logger.warn('[sorteo] status: ' + e.message); res.status(503).json({ error: 'No pudimos cargar el sorteo. Probá de nuevo.' }); }
 });
+// #929 (owner): para SUMAR en el sorteo hay que ANOTARSE: app instalada con notificaciones + unirse a Telegram (donde se anuncian los ganadores).
+// La app instalada/notificaciones se verifican con el token FCM 'standalone'; Telegram no se puede verificar ⇒ se registra que tocó "Unirme".
+app.post('/api/raffle/telegram', authMiddleware, async (req, res) => {
+  try {
+    await User.updateOne({ id: req.user.userId }, { $set: { raffleTelegramAt: new Date() } });
+    const c = (await getConfig('communityConfig')) || {};
+    res.json({ success: true, url: c.inviteUrl || c.channelUrl || c.supportUrl || '' });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/raffle/join', authMiddleware, async (req, res) => {
+  try {
+    const u = await User.findOne({ id: req.user.userId }).select('id raffleJoinedAt raffleTelegramAt fcmTokens fcmTokenContext notifPermission').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const reqs = raffleService.requirementsOf(u);
+    if (!reqs.ok) return res.status(400).json({ error: 'Te falta cumplir los requisitos para anotarte.', requirements: reqs });
+    if (!u.raffleJoinedAt) await User.updateOne({ id: u.id, raffleJoinedAt: null }, { $set: { raffleJoinedAt: new Date() } });
+    res.json({ success: true, joined: true });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // SOPORTE DE ENTREGA DE PREMIOS: el ganador toca "Coordinar la entrega" ⇒ mensaje al Soporte (charla abierta, se ve como queja/pedido) y
 // queda registrado en el sorteo (contactAt). Sólo los ganadores reales del último mes cerrado.
 app.post('/api/raffle/contact', authMiddleware, async (req, res) => {
