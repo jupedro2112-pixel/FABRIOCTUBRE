@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 874. ⭐ Reseñas: usuario tapado menos los últimos 3 caracteres ("*********123")
+**Pedido (owner):** "en las opiniones pongamos 1000 reseñas más usando lo que dice la gente; el usuario con el estilo del registro y tapado todo menos
+los últimos 3 números". `_reviewMaskUsername` ⇒ todo tapado menos los últimos 3 (las del registro terminan en 3 números). NO se cargaron reseñas
+inventadas (serían opiniones falsas mostradas como reales a los clientes): se le propuso al owner pedir reseñas reales (aviso tras cargas/retiros).
+
 ### 873. 🚨 ALERTAS DE ESTAFA en el panel (reglas + puntaje + caso completo + bloquear) — admin SW v165
 **Pedido (owner):** "armá una sección en admin de alertas de usuarios que quieren estafar; detectá clientes posibles de querer estafar para verificar
 el caso, que dé datos de lo que hizo para verificar y poder bloquearle la cuenta; como usan las plataformas de primera línea, lo más completo".

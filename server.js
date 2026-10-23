@@ -24596,9 +24596,9 @@ const Review = require('./src/models/Review');
 function _reviewMaskUsername(u) {
   const s = String(u || '');
   if (!s) return '***';
-  const visibleChars = Math.max(1, Math.min(6, Math.ceil(s.length * 0.20)));
-  const hiddenChars = s.length - visibleChars;
-  return '*'.repeat(hiddenChars) + s.slice(hiddenChars);
+  // #874 (owner): mismo estilo que el usuario del registro (nombre + 3 números) y TODO tapado menos los últimos 3: "*********123".
+  const vis = Math.min(3, s.length);
+  return '*'.repeat(Math.max(3, s.length - vis)) + s.slice(-vis);
 }
 function _reviewBucketOf(stars) {
   const n = Number(stars) || 0;
