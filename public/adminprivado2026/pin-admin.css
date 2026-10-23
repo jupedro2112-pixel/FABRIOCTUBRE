@@ -330,3 +330,7 @@ tr.fin td { opacity: .92; }
 .in-box .in-v { font-size: 1.6rem; font-weight: 900; margin: .2rem 0; color: var(--p-text, #fff); font-variant-numeric: tabular-nums; }
 .in-box .in-s { font-size: .72rem; color: var(--p-muted, #9ca3af); }
 .in-note { margin: 0 0 .6rem; padding: .5rem .7rem; border-radius: 10px; background: var(--p-surface, rgba(255,255,255,.06)); font-size: .82rem; }
+
+/* #894 accesos a las guías (links comunes, no secciones del panel) */
+.nav-ext { display: flex; align-items: center; gap: 10px; padding: 9px 16px; color: var(--p-muted, #9ca3af); font-size: 13px; font-weight: 600; text-decoration: none; }
+.nav-ext:hover { color: var(--p-text, #fff); }

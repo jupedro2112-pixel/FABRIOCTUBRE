@@ -652,6 +652,7 @@ function setupRoleBasedUI() {
     // diaria, Referidos, Usuarios y Transacciones. (Los permisos reales los pone el servidor; esto ordena lo que ven.)
     if (role === 'depositor' || role === 'withdrawer') {
         const AGENT_SECTIONS = ['chats', 'depositReviews', 'payReview', 'cargasAuto', 'roulette', 'referrals', 'users', 'transactions'];
+        try { const enc = document.getElementById('navGuiaEnc'); if (enc) enc.style.display = 'none'; } catch (_) {} // #894: el manual del encargado es sólo del admin
         document.querySelectorAll('.sidebar-nav .nav-item').forEach((it) => { if (!AGENT_SECTIONS.includes(it.dataset.section)) it.style.display = 'none'; else it.style.display = ''; });
         document.querySelectorAll('.sidebar-nav .nav-group-title').forEach((t) => {
             let n = t.nextElementSibling, any = false;
@@ -4953,7 +4954,7 @@ window.handleUnblockFromChat = handleUnblockFromChat;
 // ============================================
 function switchSection(section) {
     // CORREGIDO: Solo admin general puede acceder a "Usuarios"
-    if (section === 'users' && currentAdmin?.role !== 'admin') {
+    if (section === 'users' && !['admin', 'depositor', 'withdrawer'].includes(currentAdmin?.role)) { // #894: los agentes de cargas/pagos también (el server ya lo permite)
         showToast('No tienes permiso para acceder a esta sección', 'error');
         return;
     }
