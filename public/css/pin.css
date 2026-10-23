@@ -3248,3 +3248,28 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 .rf-join .rf-btn[disabled] { opacity: .45; cursor: not-allowed; }
 .rf-join-sub { font-size: 11.5px !important; }
 .rf-joined { margin-top: 10px; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, #16a34a 14%, transparent); color: var(--rf-tx); font-size: 12.5px; font-weight: 700; }
+
+/* #940 JUGAYGANA: "Top en vivo" / "Los más jugados" (estilo de jugaygana44: tarjetas oscuras redondeadas, acento amarillo) */
+.prl-jyg .jgm-sec { margin: 6px 0 12px; }
+.prl-jyg .jgm-sec h3 { margin: 4px 0 8px 14px; font: 600 17px inherit; font-family: inherit; color: #fff; display: flex; align-items: center; gap: 8px; }
+.prl-jyg .jgm-badge { background: rgba(230,40,40,.18); color: #ff4d4d; border-radius: 8px; padding: 1px 8px; font-size: 14px; }
+.prl-jyg .jgm-row { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 2px 4px; scrollbar-width: none; }
+.prl-jyg .jgm-row::-webkit-scrollbar { display: none; }
+.prl-jyg .jgm { flex: 0 0 78%; max-width: 300px; scroll-snap-align: start; text-align: left; border: 0; border-radius: 16px; background: #1e1e1e; color: #fff; padding: 12px; cursor: pointer; font-family: inherit; }
+.prl-jyg .jgm-h { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: #b0b0b0; margin-bottom: 8px; }
+.prl-jyg .jgm-h em { font-style: normal; color: #f2ce00; white-space: nowrap; } .prl-jyg .jgm-h .jgm-live { color: #ff4d4d; }
+.prl-jyg .jgm-t { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 14px; }
+.prl-jyg .jgm-t img, .prl-jyg .jgm-t i { width: 20px; height: 20px; object-fit: contain; flex: 0 0 20px; }
+.prl-jyg .jgm-t span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .prl-jyg .jgm-t b { font-size: 15px; }
+.prl-jyg .jgm-o { display: flex; gap: 6px; margin-top: 10px; }
+.prl-jyg .jgm-o span { flex: 1; display: flex; justify-content: space-between; align-items: center; background: #2b2b2b; border-radius: 8px; padding: 7px 8px; font-weight: 700; font-size: 13px; }
+.prl-jyg .jgm-o small { color: #9a9a9a; font-weight: 600; } .prl-jyg .jgm-o-go span { justify-content: center; color: #101010; background: #f2ce00; }
+.prl-jyg .jgm-sk { height: 150px; border-radius: 16px; background: #1e1e1e; margin: 4px 0 10px; }
+.prl-jyg .jgm-note { margin: 0 0 8px 14px; font-size: 11px; color: #8a8a8a; }
+
+/* #941 JUGAYGANA idéntica a jugaygana44: secciones = UNA grilla de N filas llenada por columnas (se desliza entera), portadas sin texto encima */
+.prl-jyg .jg-row-g { display: grid; grid-template-rows: repeat(var(--jr, 1), auto); grid-auto-flow: column; grid-auto-columns: 111px; gap: 10px; }
+.prl-jyg .jg-row-g .jg-card { width: 111px; }
+.prl-jyg .jg-card em { display: none; }
+.prl-jyg .jg-st-ic { width: 26px; height: 26px; border-radius: 50%; vertical-align: -6px; margin-right: 8px; }
+.prl-jyg .jg-all { background: linear-gradient(to right, #3a3200, #f2ce00); border-radius: 10px; padding: 9px 16px; font-weight: 800; letter-spacing: .3px; }

@@ -25499,6 +25499,12 @@ app.get('/api/games/catalog', authMiddleware, async (req, res) => {
 // cupo de 60/min); guardadas 10 min. Abrir un juego = el mismo ingreso logueado de los favoritos (/api/platform/session con direct).
 let _lobbyCache = { at: 0, data: null };
 const _LIVE_SLUG = /evolution|live|ezugi|vivo|playtech-live|xpg|vivogaming|tvbet/i;
+// #940 (owner): "Top en vivo" y "Los más jugados" de la sección Eventos deportivos de JUGAYGANA (datos públicos de ESPN, cache 60 s).
+const sportsBoard = require('./src/services/sportsBoard');
+app.get('/api/sports/board', async (req, res) => {
+  try { res.set('Cache-Control', 'public, max-age=60'); res.json(await sportsBoard.board()); }
+  catch (e) { res.status(503).json({ live: [], top: [] }); }
+});
 app.get('/api/games/lobby', authMiddleware, async (req, res) => {
   try {
     res.set('Cache-Control', 'private, max-age=300');

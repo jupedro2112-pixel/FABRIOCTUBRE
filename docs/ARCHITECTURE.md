@@ -1399,6 +1399,10 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **JUGAYGANA listas copiadas (#937):** `public/data/jugaygana-games.json` (proveedores en su orden con logo + categorías de la barra; cada juego =
   `[key de Girox, nombre, imgId]`). Sin el archivo, la página usa el catálogo de Girox (proveedores y categorías por búsqueda) como antes.
   "Mostrar Todo" de cada colección del inicio = `jgColl` → vista `jglist`. Deportes: Digitain (`sport/onyx`) y Ultim8 (`sport/gr8`).
+- **Catálogo de 1girox (#941):** el listado general `/api/games?page=` NO trae Amigo Gaming y su paginación repite juegos; para buscar un juego
+  usar `?search=` y para un proveedor `?provider_id=` con varios `sort` unidos. Inicio de JUGAYGANA = colecciones de jugaygana.io en grilla por columnas.
+- **Eventos deportivos de JUGAYGANA (#940):** `GET /api/sports/board` (`src/services/sportsBoard.js`, ESPN, cache 60 s). Digitain directo requiere que
+  Digitain autorice nuestro dominio (`parent`), ver WORKLOG #940.
 - **Dominio propio de JUGAYGANA (#935):** `jugaygana-vercel/vercel.json` = proxy a picaroja.com (raíz → `/?jg=1`). Ojo limitadores por IP detrás del proxy.
 - **Comprobantes repetidos (#932):** `_receiptCollapseDups` deja UNA ficha pendiente por huella (dedupeKey > imageHash > monto+fecha con hora+titular);
   las copias quedan `rejected`/`duplicate` con `dupOf`. Un flujo nuevo que encole comprobantes debe llamarlo (o dejar que lo haga el tick).

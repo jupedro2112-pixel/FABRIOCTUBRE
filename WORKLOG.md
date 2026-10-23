@@ -8,6 +8,33 @@
 
 ## Sesión 2026-10-22
 
+### 941. JUGAYGANA: inicio IDÉNTICO a jugaygana44 (orden, filas, TODOS) + Amigo Gaming (SÍ está en Girox) — SW v632
+**Owner:** "faltan juegos en cada sección; el formato es distinto: en unas dice TODOS y en otras deslizante con flechas; revisá todo" + captura de
+1girox.com con Amigo Gaming.
+- ⚠️ **El listado general de la API de 1girox (`/api/games?page=`) NO trae a Amigo Gaming (aggregator 7)** ni repite orden estable (con
+  `provider_id` y varias páginas salen repetidos: hay que unir varios `sort`). La búsqueda (`?search=`) y `/api/games/providers` sí lo traen
+  (143 juegos, id 126808). Verificado: TaDa, NetGame, Endorphina, Red Tiger, 7777, Spinomenal, Fugaso, SmartSoft, Galaxsys, Tom Horn, Caleta,
+  3Cherry, InBet, Pascal, Spinmatic, Pop Ok NO están (Aviator figura en 77 Gaming / King Midas, no Spribe).
+- **Inicio:** las secciones de jugaygana44 = colecciones de jugaygana.io (mismo orden, comprobado contra las capturas). Re-cruzadas con Girox por
+  BÚSQUEDA de nombre (+ búsqueda corta si no aparece; el ® rompía "Giga Match® Mahjong" / "Diamond Explosion® 7s SE"): Populares 14/21,
+  Halloween 11/11, Seleccionados 19/20, RubyPlay 20/20, Nuevo 18/20, Crash 19/20, Casino 2/15 (TaDa/7777/Pop Ok no están). Portadas = su
+  `custom_image` (o miniatura) guardadas en `images/jugaygana/games/`.
+- **Formato como su página:** cada sección es UNA grilla de N filas llenada por COLUMNAS (`.jg-row-g`, `--jr`), deslizable con flechas; botón
+  **TODOS** salvo en Populares y Halloween (como el original); RubyPlay con su logo; sin "Casino lobby"; portadas sin el nombre encima.
+- **Proveedor Amigo Gaming:** 157 portadas leídas a ojo ⇒ 130 juegos (dudosas afuera: títulos tapados por la franja, "Moon Girls"/"1000 Moon
+  Girls", "Coinboy"/"Coinboy Riches", y los que no están: 12 Fortune Signs, Triple Chili, 3 Fat Kings, 88 Ace Royale…).
+
+### 940. JUGAYGANA: "Top en vivo" y "Los más jugados" en Eventos deportivos — SW v632
+**Pedido (owner):** los partidos como jugaygana44 (que usa el iframe `sport-iframe.gotod.xyz` = otra casa de apuestas, platform.mdlr.tech, con
+la billetera de jugaygana44 ⇒ el owner eligió partidos propios que abren Girox). `src/services/sportsBoard.js` + `GET /api/sports/board`
+(público, cache 60 s): ESPN, mismas 12 ligas y pesos de equipos que las historias (`storyAutopilot` exporta `TEAM_W`, `LEAGUES`, `short`,
+`decOdds`); `live` (en juego, con resultado y minuto) y `top` (próximas 36 h). Tarjetas `.jgm` en `#jgBoard`; tocar ⇒ Digitain logueado.
+- **"Tomá los de Digitain directo" (owner):** 1girox da sin login el server y el partner de Digitain (`/api/player/sports/digitain/token?widget=1`
+  ⇒ `sport.bookiewiseapi.com`, partner `nexus_girox`), y su web lo arranca con `Bootstrapper.bootIframe({ parent: [location.host], … }, {name:'Mobile'})`.
+  NO se pudo hacer: (1) Digitain (Akamai) bloquea las conexiones de Tails/Tor (403) ⇒ no se pudo ver su API ni probar; (2) el `parent` es el
+  dominio autorizado por Digitain (1girox.com): en picaroja.com/Render probablemente no cargue. Para hacerlo bien: pedirle a 1girox que Digitain
+  autorice nuestro dominio o que nos den un feed de eventos. El owner pasó una clave de prueba por el chat: NO se usó ni se guardó (recomendado cambiarla).
+
 ### 939. JUGAYGANA: sus proveedores (orden y logos de jugaygana44) y las PORTADAS DEL ZIP en 11 proveedores — SW v631
 **Pedido (owner):** "subí todo lo que modificaste en fotos" (en la PRUEBA/Render, NO en picaroja.com). Sale `public/data/jugaygana-games.json` (#937):
 - Hoja de Proveedores = los de JUGAYGANA en su orden y con su logo (`images/jugaygana/prov/<i>.webp`), sólo los que existen en Girox (28).

@@ -192,4 +192,4 @@ function planDay(dayKey, matches, ctx) {
   return matchItems.concat(out.map((x, i) => Object.assign({ slot: i, time: SLOTS[i] }, x))).map((x) => (x.img ? Object.assign(x, { img: fill(x.img) }) : x));
 }
 
-module.exports = { topMatches, planDay, favoriteSlot, SLOTS, THEMES, MATCH_TIME };
+module.exports = { topMatches, planDay, favoriteSlot, SLOTS, THEMES, MATCH_TIME, TEAM_W, LEAGUES, short, decOdds: _decOdds }; // #940: sportsBoard reusa equipos/ligas

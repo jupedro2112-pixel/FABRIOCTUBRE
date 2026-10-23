@@ -260,24 +260,52 @@ VIP.lobby = (function () {
         const slides = d.slides || [];
         const t = (x) => '<h2 class="jg-t">' + esc(x) + '</h2>';
         const cols = (d.collections || []).map((c, ci) => {
-            const games = c.games || []; const n = Math.min(5, Math.max(1, Number(c.rows) || 1)); const per = Math.ceil(games.length / n); const rows = [];
-            for (let i = 0; i < n; i++) { const part = games.slice(i * per, (i + 1) * per); if (part.length) rows.push(part); }
+            // #941 (owner: "idéntica a jugaygana44"): como en su inicio, las filas forman UNA grilla que se llena por COLUMNAS (1º arriba, 2º abajo,
+            // 3º arriba…) y se desliza entera; "TODOS" sólo donde su página lo tiene (no en Populares ni Halloween).
+            const games = c.games || []; const n = Math.min(5, Math.max(1, Number(c.rows) || 1));
+            const noAll = /populares|halloween/i.test(c.title || '');
             return '<section class="jg-sec' + (c.bg ? ' jg-sec-bg' : '') + '">' + (c.bg ? '<img class="jg-sec-bgi" src="' + esc(c.bg) + '" alt="" loading="lazy">' + (c.art ? '<img class="jg-sec-art" src="' + esc(c.art) + '" alt="" loading="lazy">' : '') : '') +
-                '<div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.jgColl(' + ci + ')">Mostrar Todo</button></div>' + // #936: sólo los de esa sección
-                '<div class="jg-rows">' + rows.map((r) => '<div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹‹</button><div class="jg-row">' + r.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div>').join('') + '</div></section>';
+                '<div class="jg-sec-h"><div><h2 class="jg-st">' + (c.icon ? '<img class="jg-st-ic" src="' + esc(c.icon) + '" alt="">' : '') + esc(c.title) + '</h2><span class="jg-line"></span></div>' + (noAll ? '' : '<button type="button" class="jg-all" onclick="VIP.lobby.jgColl(' + ci + ')">TODOS</button>') + '</div>' + // #936: sólo los de esa sección
+                '<div class="jg-rows"><div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹</button><div class="jg-row jg-row-g" style="--jr:' + n + '">' + games.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div>' + '</div></section>';
         }).join('');
         return _rfStrip() + (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
                 '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
             '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' +
-            '<section class="jg-sec">' + t('Eventos deportivos') + '<div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
-            (_lobbies().length ? '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">Casino lobby</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'lobbies\')">Mostrar Todo</button></div><div class="jg-rows"><div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹‹</button><div class="jg-row">' + _lobbies().map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div></div></section>' : '') + // #920
+            '<section class="jg-sec">' + t('Eventos deportivos') + '<div id="jgBoard">' + _jgBoardHtml() + '</div><div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
+            // #941: sin "Casino lobby" (su inicio no lo tiene)
             cols +
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
             ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
             '</div>' +
             '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist" id="jgProvList">' +
             _jgProvListHtml() + '</div></div></div>'; // #937: sus proveedores, en su orden y con su logo
+    }
+    // #940 (owner: "como jugaygana44, los partidos en Eventos deportivos"): "Top en vivo" y "Los más jugados" con partidos reales
+    // (/api/sports/board, ESPN). Tocar un partido abre la casa de deportes de Girox (Digitain) logueada: no hay enlace directo a cada partido.
+    let _jgBoard = null, _jgBoardAt = 0;
+    function _jgMatch(m) {
+        const o = m.odds;
+        const team = (n, l, sc) => '<div class="jgm-t">' + (l ? '<img src="' + esc(l) + '" alt="" loading="lazy" onerror="this.remove()">' : '<i></i>') + '<span>' + esc(n) + '</span>' + (m.live ? '<b>' + esc(sc) + '</b>' : '') + '</div>';
+        return '<button type="button" class="jgm" onclick="VIP.lobby.sport(\'/sports-new\')">' +
+            '<div class="jgm-h"><span>' + esc(m.league) + '</span>' + (m.live ? '<em class="jgm-live">● ' + esc(m.clock || 'En vivo') + '</em>' : '<em>' + (m.today ? 'Hoy' : 'Mañana') + ' ' + esc(m.hour) + '</em>') + '</div>' +
+            team(m.home, m.homeLogo, m.hs) + team(m.away, m.awayLogo, m.as) +
+            (o ? '<div class="jgm-o"><span><small>1</small>' + o.home.toFixed(2) + '</span>' + (o.draw ? '<span><small>X</small>' + o.draw.toFixed(2) + '</span>' : '') + '<span><small>2</small>' + o.away.toFixed(2) + '</span></div>' : '<div class="jgm-o jgm-o-go"><span>Apostar ›</span></div>') +
+            '</button>';
+    }
+    function _jgBoardHtml() {
+        if (!_jgBoard || Date.now() - _jgBoardAt > 60000) _jgBoardLoad();
+        if (!_jgBoard) return '<div class="jgm-sk"></div>';
+        const row = (title, list, live) => list.length ? '<div class="jgm-sec"><h3>' + esc(title) + (live ? ' <span class="jgm-badge">live</span>' : '') + '</h3><div class="jgm-row">' + list.map(_jgMatch).join('') + '</div></div>' : '';
+        return row('Top en vivo', _jgBoard.live || [], true) + row('Los más jugados', _jgBoard.top || [], false) +
+            ((_jgBoard.live || []).length || (_jgBoard.top || []).length ? '<p class="jgm-note">Cuotas de referencia: en la casa de deportes pueden variar.</p>' : '');
+    }
+    function _jgBoardLoad() {
+        if (_jgBoardLoad._busy) return; _jgBoardLoad._busy = true;
+        fetch(VIP.config.API_URL + '/api/sports/board').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => {
+            _jgBoardLoad._busy = false; if (!d) return;
+            _jgBoard = d; _jgBoardAt = Date.now(); const b = $('jgBoard'); if (b && b.isConnected) b.innerHTML = _jgBoardHtml();
+        });
     }
     function jgSlideScroll(el) { const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); _jgSlide = i; const d = $('jgDots'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i)); }
     function _jgAuto() {
