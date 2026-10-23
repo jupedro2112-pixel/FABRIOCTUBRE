@@ -292,6 +292,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **CLAVE DE DATOS (#590/#743):** `Config['datosIaPinHash']` protege Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app (header
   `x-datos-pin`, gates `app.use` ANTES de esas rutas) y abre SMS masivo. Una sección nueva "de datos" se suma a `_datosPinGate` (server) y a
   `datosIaGate(label)` + la regex de `authFetch` (panel). La clave vive sólo en la DB (se carga en Configuración), nunca en código ni docs.
+- **CIERRE vs 1GIROX (#888):** `_closeGiroxSide` (cierre → "🎰 1girox"): fichas movidas por la app + caja de 1girox (`listChipRequests`) vs los
+  totales del panel de 1girox que carga el owner (`DailyClose.giroxPanel`). Un flujo NUEVO que mueva fichas tiene que dejar Transaction con
+  `platform` y el `type` correcto (si no, el cierre con 1girox no cuadra). **AGENTES (#889):** depositor/withdrawer ven 8 secciones
+  (`AGENT_SECTIONS` en admin.js); clave temporal del panel = `User.panelMustChangePassword`.
 - **ALERTAS DE ESTAFA (#873):** `src/services/fraudRadar.js` (reglas + puntaje + caso). Una señal nueva de estafa va como regla ahí (con
   evidencia); nunca bloquear automático: el panel bloquea con `/api/admin/users/:id/block`. Probar con MongoDB en memoria (WORKLOG #873).
 - **HISTORIAS AUTOMÁTICAS (#827):** `src/services/storyAutopilot.js` (contenido) + `_storyAutoTick` (publica 5/día, `Story.autoKey` único).

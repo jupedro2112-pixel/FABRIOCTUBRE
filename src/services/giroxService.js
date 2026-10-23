@@ -1519,6 +1519,26 @@ let _configCache = null;
 let _configCachedAt = 0;
 const CONFIG_TTL_MS = 10 * 60 * 1000;
 
+/**
+ * #888: solicitudes de la CAJA de 1girox (cargas/retiros que el jugador pide y un agente aprueba DENTRO de 1girox, por fuera de nuestra
+ * app). GET /chip-requests (v1.15 §2.15), paginado de a 100. Sólo lectura. Sirve para conciliar el cierre: lo que se movió en 1girox sin
+ * pasar por la app. Devuelve { success, items: [{ id, type, status, amount, creditedAmount, createdAt, processedAt, username, agent }] }.
+ */
+async function listChipRequests({ type = null, status = null, from, to, maxPages = 20 } = {}) {
+  const items = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const q = new URLSearchParams({ page: String(page), per_page: '100' });
+    if (type) q.set('type', type); if (status) q.set('status', status); if (from) q.set('from', from); if (to) q.set('to', to);
+    const r = await _request({ method: 'get', path: '/chip-requests?' + q.toString(), label: 'chip-requests', readOnly: true });
+    if (!r.ok) return { success: false, error: r.error, code: r.code, httpStatus: r.httpStatus, items };
+    const d = r.data || {}; const rows = Array.isArray(d.data) ? d.data : [];
+    for (const x of rows) items.push({ id: x.id, type: x.type, status: x.status, amount: Number(x.amount) || 0, creditedAmount: x.credited_amount != null ? Number(x.credited_amount) : null,
+      createdAt: x.created_at || null, processedAt: x.processed_at || null, username: (x.user && x.user.name) || null, agent: (x.agent && x.agent.name) || null });
+    const last = d.meta && Number(d.meta.last_page); if (!rows.length || !last || page >= last) break;
+  }
+  return { success: true, items };
+}
+
 async function getPlatformConfig({ force = false } = {}) {
   if (!force && _configCache && (Date.now() - _configCachedAt) < CONFIG_TTL_MS) {
     return { success: true, config: _configCache, cached: true };
@@ -1615,6 +1635,7 @@ module.exports = {
   formatStatsDate,
   // configuración del sitio
   getPlatformConfig,
+  listChipRequests, // #888
   // bonos pendientes de reclamar
   claimPendingBonus,
   getGiftModeSummary,

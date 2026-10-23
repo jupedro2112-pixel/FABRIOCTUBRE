@@ -3882,7 +3882,7 @@ const authMiddleware = async (req, res, next) => {
     // Solo los campos que este middleware usa (corre en CADA request; hidratar
     // el doc completo con fcmTokens/tagHistory/etc. era costo puro).
     // ⚠️ Si un chequeo futuro necesita otro campo del user: agregarlo acá.
-    const AUTH_USER_FIELDS = 'id username role isActive isBlocked blockReason tokenVersion mustChangePassword';
+    const AUTH_USER_FIELDS = 'id username role isActive isBlocked blockReason tokenVersion mustChangePassword panelMustChangePassword'; // #889
     let user = await User.findOne({ id: decoded.userId }).select(AUTH_USER_FIELDS);
 
     if (!user) {
@@ -3942,6 +3942,13 @@ const authMiddleware = async (req, res, next) => {
     // login default-password detection, or admin reset), only the allow-listed
     // endpoints are reachable. Any other authenticated request returns 403 so
     // the SPA can re-open the mandatory change modal — even after a reload.
+    // #889: cuenta del panel con clave temporal ⇒ sólo puede cambiarla (y salir) hasta hacerlo.
+    if (user.panelMustChangePassword === true && isAdminRole(user.role)) {
+      const p = req.path || '';
+      if (!['/api/admin/change-own-password', '/api/auth/logout', '/api/auth/admin-logout', '/api/auth/verify', '/api/health'].includes(p)) {
+        return res.status(403).json({ error: 'Tenés que cambiar tu clave antes de seguir.', code: 'MUST_CHANGE_PASSWORD' });
+      }
+    }
     if (user.mustChangePassword === true) {
       if (isAdminRole(user.role)) {
         // Self-heal: admins must NEVER carry the mustChangePassword flag.
@@ -5346,7 +5353,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     // que setea mustChangePassword:true sobre una contraseña nueva — ese flag se
     // respeta más abajo a través de user.mustChangePassword.
     const isDefaultPassword = password === 'asd123';
-    const needsPasswordChange = false;
+    const needsPasswordChange = isAdminRole(user.role) && user.panelMustChangePassword === true; // #889
     
     let isValidPassword = false;
 
@@ -19057,6 +19064,20 @@ app.get('/api/admin/reembolsos', authMiddleware, adminMiddleware, async (req, re
 // ============================================
 
 // Cambiar contraseña de usuario (admin) - CON PERMISOS POR ROL
+// #889: la cuenta del panel con clave temporal elige la suya (corta las sesiones: vuelve a entrar con la nueva).
+app.post('/api/admin/change-own-password', authMiddleware, authLimiter, async (req, res) => {
+  try {
+    if (!isAdminRole(req.user.role)) return res.status(403).json({ error: 'Solo cuentas del panel' });
+    const np = String((req.body && req.body.newPassword) || '');
+    if (np.length < 8 || /^\s|\s$/.test(np)) return res.status(400).json({ error: 'La clave nueva tiene que tener al menos 8 caracteres (sin espacios al principio ni al final).' });
+    const user = await User.findOne({ id: req.user.userId }); if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (typeof user.comparePassword === 'function' && await user.comparePassword(np).catch(() => false)) return res.status(400).json({ error: 'Elegí una clave distinta a la temporal.' });
+    user.password = np; user.passwordChangedAt = new Date(); user.panelMustChangePassword = false; user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+    logger.info(`[panel] ${user.username} cambió su clave (clave temporal)`);
+    res.json({ success: true });
+  } catch (e) { logger.error('[panel] change-own-password: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/admin/change-password', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { userId, newPassword } = req.body;
@@ -19090,6 +19111,8 @@ app.post('/api/admin/change-password', authMiddleware, adminMiddleware, async (r
 
     user.password = newPassword;
     user.passwordChangedAt = new Date();
+    // #889: el admin general puede pedir que una cuenta del panel cambie la clave al entrar (clave temporal).
+    if (user.role !== 'user') user.panelMustChangePassword = adminRole === 'admin' && req.body && req.body.forceChange === true;
     // Corta las sesiones vivas del target: sin esto, una cuenta comprometida
     // seguía operando con su JWT viejo (30-90 días) pese al cambio de clave.
     user.tokenVersion = (user.tokenVersion || 0) + 1;
@@ -21045,7 +21068,61 @@ async function _closeReconcile(dayKey) {
   out.explicado = explicado; out.sinExplicar = r0(dif - explicado);
   out.causas.sort((a, b) => Math.abs(b.impacto) - Math.abs(a.impacto));
   out.resumen = out.sinDatosBanco ? 'Sin movimientos del banco ese día: no hay nada que conciliar.' : (dif === 0 ? 'Cuadra: el banco y el sistema coinciden.' : (Math.abs(out.sinExplicar) <= Math.max(1000, Math.round(out.sistema.depositos * 0.001)) ? 'La diferencia queda explicada por las causas de abajo.' : 'Queda una parte SIN explicar: revisar a mano los ítems marcados.'));
+  // ---- #888 (owner): "que el retiro y las cargas de Girox y de la app coincidan; si se retira del panel, que cumpla y coincida; los cierres
+  // de ambos paneles tienen que dar igual". Lado 1GIROX = las FICHAS que movimos en 1girox ese día (las mismas categorías que el panel de
+  // 1girox) + lo que se movió en 1girox POR FUERA de la app (caja de 1girox, GET /chip-requests aceptadas). El owner carga los totales del
+  // cierre de 1girox (DailyClose.giroxPanel) y se calcula la diferencia por rubro.
+  try { out.girox = await _closeGiroxSide(dayKey, d0, d1); } catch (e) { out.girox = { error: e.message }; }
   out.calculadoEn = new Date();
+  return out;
+}
+async function _closeGiroxSide(dayKey, d0, d1) {
+  const r0 = (n) => Math.round(Number(n) || 0);
+  const okSt = { $nin: ['failed', 'cancelled'] }; const notTest = { description: { $not: /PRUEBA/i } };
+  const plat = { $in: ['girox', null] };
+  const [dep, gifts, wds] = await Promise.all([
+    Transaction.aggregate([{ $match: Object.assign({ type: 'deposit', status: okSt, platform: plat, timestamp: { $gte: d0, $lte: d1 } }, notTest) },
+      { $group: { _id: { $ifNull: ['$metadata.source', 'carga'] }, n: { $sum: 1 }, monto: { $sum: '$amount' }, bono: { $sum: { $ifNull: ['$bonus', 0] } } } }]),
+    Transaction.aggregate([{ $match: Object.assign({ type: { $in: CASHBACK_GIFT_TX_TYPES }, status: okSt, platform: plat, timestamp: { $gte: d0, $lte: d1 } }, notTest) },
+      { $group: { _id: '$type', n: { $sum: 1 }, monto: { $sum: '$amount' } } }]),
+    Transaction.aggregate([{ $match: Object.assign({ type: 'withdrawal', status: okSt, platform: plat, timestamp: { $gte: d0, $lte: d1 } }, notTest) }, { $group: { _id: null, n: { $sum: 1 }, monto: { $sum: '$amount' } } }])
+  ]);
+  const G = { cargas: { n: 0, monto: 0 }, bonosCarga: { n: 0, monto: 0 }, regalos: { n: 0, monto: 0, porTipo: {} }, devoluciones: { n: 0, monto: 0 }, retiros: { n: 0, monto: 0 } };
+  for (const x of dep) {
+    if (x._id === 'payout_refund') { G.devoluciones.n += x.n; G.devoluciones.monto += x.monto; continue; }
+    if (['install_bonus', 'welcome_gift', 'welcome_code'].includes(x._id)) { G.regalos.n += x.n; G.regalos.monto += x.monto; G.regalos.porTipo[x._id] = r0(x.monto); continue; }
+    G.cargas.n += x.n; G.cargas.monto += x.monto; // (el bono de la carga NO se suma acá: además se guarda como Transaction 'bonus' propia ⇒ va en regalos)
+  }
+  for (const x of gifts) { G.regalos.n += x.n; G.regalos.monto += x.monto; G.regalos.porTipo[x._id] = r0((G.regalos.porTipo[x._id] || 0) + x.monto); if (x._id === 'bonus') { G.bonosCarga.n = x.n; G.bonosCarga.monto = x.monto; } }
+  if (wds[0]) { G.retiros.n = wds[0].n; G.retiros.monto = wds[0].monto; }
+  // Por fuera de la app: caja de 1girox (aceptadas, procesadas ese día).
+  let fuera = { cargas: { n: 0, monto: 0, acreditado: 0 }, retiros: { n: 0, monto: 0 }, items: [], disponible: true, error: null };
+  try {
+    const lr = await girox.listChipRequests({ status: 'accepted', from: dayKey, to: dayKey });
+    if (!lr.success) { fuera.disponible = false; fuera.error = lr.error || lr.code || 'no disponible'; }
+    for (const x of (lr.items || [])) {
+      const when = new Date(x.processedAt || x.createdAt); if (!(when >= d0 && when <= d1)) continue;
+      if (x.type === 'withdrawal') { fuera.retiros.n++; fuera.retiros.monto += x.amount; } else { fuera.cargas.n++; fuera.cargas.monto += x.amount; fuera.cargas.acreditado += (x.creditedAmount != null ? x.creditedAmount : x.amount); }
+      if (fuera.items.length < 60) fuera.items.push({ hora: x.processedAt || x.createdAt, usuario: x.username, tipo: x.type === 'withdrawal' ? 'retiro' : 'carga', monto: r0(x.amount), agente: x.agent || null });
+    }
+  } catch (e) { fuera.disponible = false; fuera.error = e.message; }
+  const out = {
+    app: { cargas: r0(G.cargas.monto), cargasN: G.cargas.n, bonosCarga: r0(G.bonosCarga.monto), regalos: r0(G.regalos.monto), regalosN: G.regalos.n, regalosPorTipo: G.regalos.porTipo, devoluciones: r0(G.devoluciones.monto), devolucionesN: G.devoluciones.n, retiros: r0(G.retiros.monto), retirosN: G.retiros.n },
+    fuera: { disponible: fuera.disponible, error: fuera.error, cargas: r0(fuera.cargas.monto), cargasN: fuera.cargas.n, cargasAcreditado: r0(fuera.cargas.acreditado), retiros: r0(fuera.retiros.monto), retirosN: fuera.retiros.n, items: fuera.items }
+  };
+  // Lo que el panel de 1girox debería mostrar para el día (todas las fichas que entraron/salieron de los jugadores).
+  out.esperado = { cargas: out.app.cargas + out.app.devoluciones + out.fuera.cargas, bonos: out.app.regalos + Math.max(0, out.fuera.cargasAcreditado - out.fuera.cargas), retiros: out.app.retiros + out.fuera.retiros };
+  const doc = await DailyClose.findOne({ dateKey: dayKey }).select('giroxPanel').lean().catch(() => null);
+  const gp = doc && doc.giroxPanel;
+  if (gp) {
+    out.panel = gp;
+    out.dif = { cargas: gp.cargas != null ? r0(gp.cargas - out.esperado.cargas) : null, bonos: gp.bonos != null ? r0(gp.bonos - out.esperado.bonos) : null, retiros: gp.retiros != null ? r0(gp.retiros - out.esperado.retiros) : null };
+    const causas = [];
+    if (out.dif.cargas) causas.push(out.dif.cargas > 0 ? `1girox muestra ${r0(out.dif.cargas)} MÁS en cargas: alguien cargó fichas directo en el panel de 1girox (no pasó por la app ni por su caja), o una carga de la app se registró a otro día.` : `La app registra ${r0(-out.dif.cargas)} más en cargas que 1girox: una carga que la app dio por hecha no entró (revisar las cargas a mano y las de prueba) o se contó en otro día.`);
+    if (out.dif.retiros) causas.push(out.dif.retiros > 0 ? `1girox muestra ${r0(out.dif.retiros)} MÁS en retiros: alguien descontó fichas directo en el panel de 1girox (por fuera de la app).` : `La app registra ${r0(-out.dif.retiros)} más en retiros que 1girox: un descuento que la app dio por confirmado no figura en 1girox (revisar Confirmación de pagos).`);
+    if (out.dif.bonos) causas.push(`Bonos: diferencia de ${r0(out.dif.bonos)}. Puede ser un bono automático de 1girox (reglas del panel de 1girox, bienvenida al crear el jugador) o un regalo que la app acreditó como carga.`);
+    out.causas = causas; out.cuadra = causas.length === 0;
+  }
   return out;
 }
 async function _closeEnsure(dayKey, recalc) {
@@ -21124,6 +21201,20 @@ app.get('/api/admin/cierres/:dateKey/detalle', authMiddleware, adminMiddleware, 
     try { await DailyClose.updateOne({ dateKey: dk }, { $set: { detalle: det } }); } catch (_) {}
     res.json({ success: true, detalle: det });
   } catch (e) { logger.error('[cierres] detalle ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #888: el owner carga los totales del cierre del panel de 1girox (cargas / retiros / bonos de ese día) para que se comparen con la app.
+app.post('/api/admin/cierres/:dateKey/girox-panel', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const dk = String(req.params.dateKey || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return res.status(400).json({ error: 'Día inválido' });
+    const b = req.body || {}; const num = (v) => (v === '' || v == null ? null : (Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.round(Number(v)) : NaN));
+    const gp = { cargas: num(b.cargas), retiros: num(b.retiros), bonos: num(b.bonos), by: req.user.username, at: new Date() };
+    if ([gp.cargas, gp.retiros, gp.bonos].some((v) => Number.isNaN(v))) return res.status(400).json({ error: 'Montos inválidos' });
+    let doc = await DailyClose.findOne({ dateKey: dk }); if (!doc) doc = await _closeEnsure(dk, false);
+    await DailyClose.updateOne({ dateKey: dk }, { $set: { giroxPanel: gp } });
+    const det = await _closeReconcile(dk); await DailyClose.updateOne({ dateKey: dk }, { $set: { detalle: det } }).catch(() => {});
+    res.json({ success: true, detalle: det });
+  } catch (e) { logger.error('[cierres] girox-panel ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.post('/api/admin/cierres/:dateKey', authMiddleware, adminMiddleware, async (req, res) => {
   try {

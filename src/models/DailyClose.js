@@ -36,6 +36,8 @@ const schema = new mongoose.Schema({
   notes: { type: String, default: '' },
   // #744 (owner): CONCILIACIÓN automática: desglose del día (auto/manual/banco) y posibles causas de la diferencia. Se recalcula solo.
   detalle: { type: mongoose.Schema.Types.Mixed, default: null },
+  // #888: totales del CIERRE DEL PANEL DE 1GIROX que carga el owner ({ cargas, retiros, bonos, by, at }) para compararlos con la app.
+  giroxPanel: { type: mongoose.Schema.Types.Mixed, default: null },
   gastos: { type: Number, default: 0 }, // #770: gastos del día (Expense) — se descuentan del RESULTADO
   autoFinalizedAt: { type: Date, default: null },
   generatedAt: { type: Date, default: Date.now },

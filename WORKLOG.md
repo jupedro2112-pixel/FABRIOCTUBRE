@@ -8,6 +8,27 @@
 
 ## Sesión 2026-10-22
 
+### 888. 🎰 Cierre diario con el lado 1GIROX (app vs panel de 1girox, y lo hecho directo en 1girox) — admin SW v174
+**Pedido (owner):** "que el retiro de Girox y la app coincidan, el retiro y las cargas; si se retira del panel que cumpla y coincida; los
+cierres de ambos paneles tienen que dar perfecto igual". `_closeReconcile` suma `out.girox = _closeGiroxSide(dayKey)`: FICHAS que la app movió
+en 1girox ese día (cargas reales sin prueba ni fallidas, devoluciones de retiro rechazado, bonos/regalos por tipo — el bono de carga se cuenta
+UNA vez: además de `Transaction.bonus` se guarda como Transaction 'bonus' —, retiros descontados) + lo hecho en 1girox POR FUERA de la app:
+`girox.listChipRequests` (nuevo, GET /chip-requests aceptadas, procesadas ese día ART; si la key no lo permite se avisa). `esperado` = lo que
+el panel de 1girox debería mostrar (cargas / bonos / retiros). El owner copia los totales del cierre de 1girox (`DailyClose.giroxPanel`,
+`POST /api/admin/cierres/:dk/girox-panel`) y se ve la diferencia por rubro con posibles causas (carga/descuento hecho directo en el panel de
+1girox, día distinto, bono automático de reglas de 1girox). Panel → Cierres → Ver detalle → "🎰 1girox". La Partner API NO tiene listado de
+movimientos del ledger: una carga/descuento hecho a mano en el panel de 1girox (no por su caja) sólo aparece como diferencia.
+Probado en Mongo en memoria (excluye prueba/fallida/otro día, bono 1 vez, caja de 1girox, cuadra/no cuadra, caja no disponible).
+
+### 889. 👥 Agentes de cargas y pagos con menú reducido · 🔑 clave temporal para cuentas del panel (cambio obligatorio al entrar)
+**Pedido (owner):** "a los agentes de pagos y cargas les damos sólo Soporte, Cargas pendientes, Retiros pendientes, Cargas automáticas,
+Ruleta diaria, Referidos, Usuarios y Transacciones; y al ingreso del general le ponemos una clave [clave] y que al abrir pida cambiarla".
+- `setupRoleBasedUI`: depositor/withdrawer ven sólo esos 8 `data-section` (se esconden los grupos vacíos). Los permisos reales siguen en el server.
+- `User.panelMustChangePassword` (los admins nunca usan `mustChangePassword`: se auto-limpia). "Cambiar contraseña" de una cuenta del panel
+  (sólo el admin general) tiene la casilla "clave temporal" (`forceChange`). En el login `needsPasswordChange` ⇒ el panel pide la clave nueva
+  (`_forceOwnPasswordChange` → `POST /api/admin/change-own-password`, mín. 8, distinta de la temporal, corta las sesiones) y `authMiddleware`
+  bloquea toda otra ruta con `MUST_CHANGE_PASSWORD` hasta cambiarla. La clave temporal la pone el owner desde el panel: NUNCA en el código.
+
 ### 887. 🧭 Panel: arriba de todo "⚡ Día a día" = Chats · Retiros pendientes · Cargas automáticas · Alertas de estafa — admin SW v173
 **Pedido (owner):** "poné en la parte superior chat, retiros, cargas automáticas, alerta estafa". Se MOVIERON esos 4 `nav-item` (mismos
 `data-section` e ids de contadores `unreadBadge`/`payReviewBadge`) al principio del menú, antes de INICIO; el resto de Atención queda igual.

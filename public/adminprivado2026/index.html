@@ -4175,6 +4175,8 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <label for="confirmPassword">Confirmar Contraseña:</label>
                     <input type="password" id="confirmPassword" placeholder="Repite la contraseña">
                 </div>
+                <!-- #889: clave temporal para cuentas del panel -->
+                <label id="pwForceWrap" style="display:none;margin-top:6px;cursor:pointer;font-size:13px"><input type="checkbox" id="pwForceChange" style="width:auto"> Es una clave temporal: pedirle que la cambie la próxima vez que entre</label>
             </div>
             <div class="modal-footer">
                 <button class="btn-secondary close-modal">Cancelar</button>

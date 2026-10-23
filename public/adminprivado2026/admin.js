@@ -416,7 +416,7 @@ async function handleLogin(e) {
             
             // Verificar si necesita cambiar contraseña
             if (data.user.needsPasswordChange) {
-                showPasswordChangeModal();
+                await _forceOwnPasswordChange(); // #889: clave temporal ⇒ elegir la propia antes de entrar
                 return;
             }
             
@@ -648,6 +648,18 @@ function setupRoleBasedUI() {
         if (tabComunidad) tabComunidad.style.display = 'flex';
     }
     
+    // #889 (owner): los agentes de PAGOS y CARGAS ven sólo: Soporte, Cargas pendientes, Retiros pendientes, Cargas automáticas, Ruleta
+    // diaria, Referidos, Usuarios y Transacciones. (Los permisos reales los pone el servidor; esto ordena lo que ven.)
+    if (role === 'depositor' || role === 'withdrawer') {
+        const AGENT_SECTIONS = ['chats', 'depositReviews', 'payReview', 'cargasAuto', 'roulette', 'referrals', 'users', 'transactions'];
+        document.querySelectorAll('.sidebar-nav .nav-item').forEach((it) => { if (!AGENT_SECTIONS.includes(it.dataset.section)) it.style.display = 'none'; else it.style.display = ''; });
+        document.querySelectorAll('.sidebar-nav .nav-group-title').forEach((t) => {
+            let n = t.nextElementSibling, any = false;
+            while (n && !n.classList.contains('nav-group-title')) { if (n.classList.contains('nav-item') && n.style.display !== 'none') any = true; n = n.nextElementSibling; }
+            t.style.display = any ? '' : 'none';
+        });
+        try { document.querySelectorAll('.sidebar-nav details, .sidebar-nav .nav-legacy-wrap').forEach((d) => { if (!d.querySelector('.nav-item:not([style*="display: none"])')) d.style.display = 'none'; }); } catch (_) {}
+    }
     // Depositor y withdrawer pueden ver "Usuarios" pero NO pueden exportar CSV
     const usersNavItem = document.querySelector('.nav-item[data-section="users"]');
     if (usersNavItem) {
@@ -3563,7 +3575,8 @@ async function handlePasswordChange() {
             },
             body: JSON.stringify({
                 userId: selectedUserId,
-                newPassword
+                newPassword,
+                forceChange: !!(document.getElementById('pwForceChange') || {}).checked // #889
             })
         });
         
@@ -4507,6 +4520,8 @@ function copyAccessLink() {
 function openUserPasswordModal(userId, username, userRole) {
     selectedUserId = userId;
     selectedUserRole = userRole;
+    // #889: "clave temporal" sólo para cuentas del panel y sólo si quien cambia es el admin general
+    try { const fw = document.getElementById('pwForceWrap'), fc = document.getElementById('pwForceChange'); if (fc) fc.checked = false; if (fw) fw.style.display = (userRole && userRole !== 'user' && currentAdmin && currentAdmin.role === 'admin') ? '' : 'none'; } catch (_) {}
     // Update modal title to show which user's password is being changed
     const modalHeader = document.querySelector('#passwordModal .modal-header h3');
     if (modalHeader) {
@@ -5930,6 +5945,7 @@ async function cierresDetalle(dk) {
         html += lst('Retiros pagados a mano', it.pagosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['via', 'Vía']]);
         html += lst('Cargas de prueba', it.depositosPrueba, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['nota', 'Nota']]);
         html += lst('Gastos del día', it.gastos, [['hora', 'Hora'], ['usuario', 'Destino'], ['monto', 'Monto'], ['agente', 'Cargó'], ['nota', 'Concepto']]); // #770
+        html += _cierresGiroxHtml(dk, d.girox || {}, money, signed); // #888
         html += '<div class="cl-rec-adj"><details><summary>⚙️ Ajustes manuales del día (comisión, banco, USDT)</summary>' + _cierresAdjHtml(dk) + '</details></div></div>';
         cell.innerHTML = html;
     } catch (e) { cell.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
@@ -17452,3 +17468,55 @@ async function saveNewbieOffers() {
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.loadNewbieOffers = loadNewbieOffers; window.saveNewbieOffers = saveNewbieOffers;
+
+// ===== #888: lado 1GIROX del cierre (app vs panel de 1girox) =====
+function _cierresGiroxHtml(dk, g, money, signed) {
+    if (g.error) return '<div class="cl-rec-box" style="margin-top:10px"><b>🎰 1girox</b><div style="color:#ff8080">No se pudo calcular: ' + escapeHtml(g.error) + '</div></div>';
+    const a = g.app || {}, f = g.fuera || {}, e = g.esperado || {}, p = g.panel || {}, dif = g.dif || {};
+    const tipo = { bonus: 'bonos de carga', fire_reward: 'fueguito', refund: 'reembolsos', rakeback: 'rakeback', vip_levelup: 'nivel VIP', referral_commission: 'referidos', roulette: 'ruleta', install_gift: 'instalar app', mission: 'misiones', review_gift: 'reseñas', install_bonus: 'instalar (viejo)', welcome_gift: 'bienvenida', welcome_code: 'código' };
+    const porTipo = Object.keys(a.regalosPorTipo || {}).map(function (k) { return (tipo[k] || k) + ' ' + money(a.regalosPorTipo[k]); }).join(' · ');
+    const cell = function (k) { const v = dif[k]; if (v == null) return '<td style="color:#9ab">—</td>'; return '<td><b style="color:' + (v === 0 ? 'var(--p-green,#16a34a)' : 'var(--p-red,#e60023)') + '">' + (v === 0 ? '✅ igual' : signed(v)) + '</b></td>'; };
+    const inp = function (k) { return '<input type="number" min="0" step="1" id="gxp-' + k + '-' + dk + '" value="' + (p[k] != null ? p[k] : '') + '" placeholder="del panel de 1girox" style="width:130px">'; };
+    let h = '<div class="cl-rec-box" style="margin-top:10px"><b>🎰 1girox — fichas del día</b>'
+        + '<div>Cargas hechas por la app: <b>' + money(a.cargas || 0) + '</b> · ' + (a.cargasN || 0) + (a.devoluciones ? ' · devoluciones de retiro rechazado <b>' + money(a.devoluciones) + '</b>' : '') + '</div>'
+        + '<div>Bonos y regalos de la app: <b>' + money(a.regalos || 0) + '</b> · ' + (a.regalosN || 0) + (porTipo ? ' <small style="color:#9ab">(' + escapeHtml(porTipo) + ')</small>' : '') + '</div>'
+        + '<div>Retiros descontados por la app: <b>' + money(a.retiros || 0) + '</b> · ' + (a.retirosN || 0) + '</div>'
+        + (f.disponible === false ? '<div style="color:#f59e0b">⚠️ No se pudo leer la caja de 1girox (' + escapeHtml(f.error || '') + '): lo hecho directo en 1girox no está en este cálculo.</div>'
+            : '<div>Hecho en 1girox POR FUERA de la app (caja): cargas <b class="' + (f.cargas ? 'cl-warn' : '') + '">' + money(f.cargas || 0) + '</b> · ' + (f.cargasN || 0) + ' · retiros <b class="' + (f.retiros ? 'cl-warn' : '') + '">' + money(f.retiros || 0) + '</b> · ' + (f.retirosN || 0) + '</div>')
+        + '<table class="data-table" style="margin-top:8px;font-size:12px"><thead><tr><th></th><th>Según la app</th><th>Panel de 1girox</th><th>Diferencia</th></tr></thead><tbody>'
+        + '<tr><td><b>Cargas</b></td><td>' + money(e.cargas || 0) + '</td><td>' + inp('cargas') + '</td>' + cell('cargas') + '</tr>'
+        + '<tr><td><b>Bonos</b></td><td>' + money(e.bonos || 0) + '</td><td>' + inp('bonos') + '</td>' + cell('bonos') + '</tr>'
+        + '<tr><td><b>Retiros</b></td><td>' + money(e.retiros || 0) + '</td><td>' + inp('retiros') + '</td>' + cell('retiros') + '</tr>'
+        + '</tbody></table>'
+        + '<div style="margin-top:6px"><button class="btn-primary btn-small" onclick="cierresGiroxSave(\'' + dk + '\')">Comparar con 1girox</button> <small style="color:#9ab">Copiá del cierre del panel de 1girox (ese mismo día) los totales de cargas, bonos y retiros.</small></div>'
+        + (g.panel ? (g.cuadra ? '<div class="cl-rec-dif ok" style="margin-top:6px"><b>✅ Cuadra: la app y 1girox dan igual.</b></div>' : '<div class="cl-rec-dif bad" style="margin-top:6px"><b>Posibles causas:</b><ul style="margin:4px 0 0;padding-left:18px">' + (g.causas || []).map(function (c) { return '<li>' + escapeHtml(c) + '</li>'; }).join('') + '</ul></div>') : '')
+        + ((f.items || []).length ? '<details class="cl-list"><summary>Movimientos hechos en 1girox por fuera de la app (' + f.items.length + ')</summary><table class="data-table"><thead><tr><th>Hora</th><th>Usuario</th><th>Tipo</th><th>Monto</th><th>Agente</th></tr></thead><tbody>' + f.items.map(function (x) { return '<tr><td>' + escapeHtml(fmtFechaHoraAR(x.hora)) + '</td><td>' + escapeHtml(x.usuario || '—') + '</td><td>' + escapeHtml(x.tipo) + '</td><td>' + money(x.monto) + '</td><td>' + escapeHtml(x.agente || '—') + '</td></tr>'; }).join('') + '</tbody></table></details>' : '')
+        + '</div>';
+    return h;
+}
+async function cierresGiroxSave(dk) {
+    const v = function (k) { const el = document.getElementById('gxp-' + k + '-' + dk); return el ? el.value : ''; };
+    try {
+        const r = await authFetch('/api/admin/cierres/' + dk + '/girox-panel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cargas: v('cargas'), bonos: v('bonos'), retiros: v('retiros') }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
+        const g = (j.detalle && j.detalle.girox) || {}; showToast(g.cuadra ? '✅ Cuadra con 1girox' : '⚠️ Hay diferencias con 1girox: mirá las causas', g.cuadra ? 'success' : 'error');
+        const row = document.getElementById('cld-' + dk); if (row) { row.style.display = 'none'; cierresDetalle(dk); }
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.cierresGiroxSave = cierresGiroxSave;
+
+// ===== #889: clave temporal del panel ⇒ la cuenta elige la suya al entrar =====
+async function _forceOwnPasswordChange() {
+    for (let i = 0; i < 5; i++) {
+        const p1 = window.prompt('🔑 Entraste con una clave temporal. Elegí tu clave nueva (mínimo 8 caracteres):', ''); if (p1 === null) break;
+        const p2 = window.prompt('Repetí la clave nueva:', ''); if (p2 === null) break;
+        if (p1 !== p2) { alert('Las claves no coinciden. Probá de nuevo.'); continue; }
+        try {
+            const r = await authFetch('/api/admin/change-own-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newPassword: p1 }) });
+            const j = await r.json().catch(() => ({}));
+            if (!r.ok) { alert(j.error || 'No se pudo cambiar la clave.'); continue; }
+            alert('✅ Clave cambiada. Entrá de nuevo con tu clave nueva.'); location.reload(); return;
+        } catch (_) { alert('Error de conexión. Probá de nuevo.'); }
+    }
+    alert('Tenés que cambiar la clave para usar el panel. Volvé a entrar.'); location.reload();
+}

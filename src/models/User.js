@@ -138,6 +138,9 @@ const userSchema = new mongoose.Schema({
   // non-allow-listed path returns 403 with `code: 'MUST_CHANGE_PASSWORD'` while
   // this flag is true. This prevents bypassing the mandatory change modal by
   // simply reloading the page.
+  // #889 (owner): el admin general puede dejar a una cuenta del PANEL con clave temporal y que la cambie al entrar (los admins nunca
+  // usan mustChangePassword: ese flag se limpia solo para ellos).
+  panelMustChangePassword: { type: Boolean, default: false },
   mustChangePassword: {
     type: Boolean,
     default: false,
