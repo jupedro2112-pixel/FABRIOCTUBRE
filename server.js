@@ -22043,7 +22043,7 @@ function _payoutRetrySafe(r) {
   return r.debitConfirmed === true || /^No se pudo leer el saldo/.test(String(r.error || ''));
 }
 const WITHDRAW_DELAYED_OLD_820 = '⏳ Tu retiro de ${amount} está demorado. Ya lo está revisando un agente y te avisamos apenas salga. ¡Gracias por la paciencia!'; // #890: el de antes ("está demorado")
-const WITHDRAW_DELAYED_DEFAULT = '⏳ Tenemos muchos pagos en este momento: tu retiro de ${amount} ya está en la fila y sale en breve. Aguardá un poquito más, te avisamos por acá apenas se acredite.'; // #890 (owner): "si falla, que aguarde un poco más por muchos pagos"
+const WITHDRAW_DELAYED_DEFAULT = '✅ Tu retiro de ${amount} fue procesado y lo estamos verificando. Aguardá un poquito: en breve lo vas a ver en tu cuenta y te avisamos por acá.'; // #890 (owner): "retiro procesado, estamos verificando"
 async function _payoutAutoFailNote(id, o) {
   if (o && o.code === 200 && o.body && o.body.success !== false) return;
   const p = await PendingPayout.findOne({ id }).lean(); if (!p || p.status === 'paid' || p.status === 'paying' || p.status === 'cancelled') return;
@@ -22057,7 +22057,7 @@ async function _payoutAutoFailNote(id, o) {
     try {
       const u = await User.findOne({ id: p.userId }).select('id username fcmToken fcmTokens fcmTokenContext').lean();
       const txt = await renderSystemCommand('/sys_withdraw_delayed', WITHDRAW_DELAYED_DEFAULT, { amount: Number(p.amount || 0).toLocaleString('es-AR') });
-      if (u && txt) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'withdraw_delayed', channel: 'support' }, push: { title: '⏳ Tu retiro está en la fila', body: 'Tenemos muchos pagos: aguardá un poquito más, ya sale.' } }); // #890: sin hablar de fallas
+      if (u && txt) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'withdraw_delayed', channel: 'support' }, push: { title: '✅ Retiro procesado', body: 'Lo estamos verificando: en breve lo vas a ver en tu cuenta.' } }); // #890: sin hablar de fallas
       await PendingPayout.updateOne({ id: p.id }, { $set: { clientDelayNotifiedAt: new Date() } });
     } catch (e) { logger.warn('[pay-retry] aviso al cliente: ' + e.message); }
   }

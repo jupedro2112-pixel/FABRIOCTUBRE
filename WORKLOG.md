@@ -13,8 +13,8 @@
 aguarde un poco más por muchos pagos". Antes el cliente recibía "⚠️ el banco está con fallas…" al primer fallo, "está demorado, lo revisa un
 agente" y después "el banco volvió a funcionar". Ahora: `BANK_SETTINGS_DEFAULT.notifyFailedClient=false` (+ `mig890NoFriction` lo apaga en la
 config guardada; el tilde sigue en Configuración del banco) ⇒ ni aviso de falla ni "banco normalizado"; `_payoutAutoFailNote` manda UNA vez
-(`clientDelayNotifiedAt`) `/sys_withdraw_delayed` = "⏳ Tenemos muchos pagos: tu retiro de $X ya está en la fila y sale en breve. Aguardá un
-poquito más…" (push "Tu retiro está en la fila"), se reintente solo o espere al agente. El pago sigue igual: reintento solo (6 × 10 min, sólo
+(`clientDelayNotifiedAt`) `/sys_withdraw_delayed` = "✅ Tu retiro de $X fue procesado y lo estamos verificando. Aguardá un poquito: en breve lo
+vas a ver en tu cuenta" (push "✅ Retiro procesado"; owner: "retiro procesado, estamos verificando, mejor"), se reintente solo o espere al agente. El pago sigue igual: reintento solo (6 × 10 min, sólo
 casos seguros) y si no, queda en Retiros pendientes para "Confirmar y pagar" / "Rechazar".
 
 ### 888. 🎰 Cierre diario con el lado 1GIROX (app vs panel de 1girox, y lo hecho directo en 1girox) — admin SW v174
