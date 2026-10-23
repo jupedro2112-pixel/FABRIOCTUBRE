@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 877. 🚨 Alertas de estafa sobre el JUEGO y el CELULAR (no IP, no "retiró más de lo que cargó")
+**Pedido (owner):** "miralo sobre el juego: cargar 5.000 y retirar 30.000 es apuesta; la IP se repite mucho, miralo sobre el teléfono; que no se
+haga lenta la página de juego". `fraudRadar.scan` recibe `deps.stats` (stats batch de 1girox, SÓLO para quienes pidieron retirar, máx. 100 ⇒ un
+pedido por key): se fue `wd_over_deposits`; nueva `no_play_withdraw` (+35: pide retirar habiendo apostado menos de lo cargado+regalado);
+`bonus_abuse`, `new_big_wd` y `fast_cycle` sólo cuentan si casi no jugó. Se fue `ip_shared` (y su agregación; la IP queda como dato en el caso);
+`device_shared` sube a +40 y `referral_farm` es sólo por MISMO celular (+30, desde 1 referido). Velocidad: el radar corre SÓLO al abrir la
+sección del panel (no hay cron), memoria de 5 min (fresh ≤ 1/min) ⇒ no toca la app ni el casino. Probado en Mongo en memoria: el ganador
+legítimo (cargó 5k, apostó 80k, retira 30k) NO aparece; el que pasa plata sin jugar sí; IP compartida sin celular no suma.
+
 ### 875–876. ⭐ Reseña con regalo tras la 5ª carga · 🏠 INICIO del panel con los números del día (clave propia) — SW v592, admin SW v166
 - **#875** (owner: "armá lo de las reseñas después de la 5ª carga, que puedan reclamar un 20% después de su carga; que aparezca después, no
   antes"): `GET /api/reviews/offer` (5+ cargas reales, sin opinión ni regalo previo) y `POST /api/reviews` acredita REVIEW_GIFT_PCT=20% de la

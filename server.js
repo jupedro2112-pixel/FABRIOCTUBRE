@@ -19071,9 +19071,12 @@ app.get('/api/admin/fraud/alerts', authMiddleware, adminMiddleware, async (req, 
   try {
     if (!['admin', 'depositor', 'withdrawer'].includes(req.user.role)) return res.status(403).json({ error: 'Sin permiso.' });
     const days = Math.max(1, Math.min(180, parseInt(req.query.days, 10) || 30));
-    if (!req.query.fresh && _fraudCache.data && _fraudCache.days === days && Date.now() - _fraudCache.at < 2 * 60 * 1000) return res.json(Object.assign({ cached: true }, _fraudCache.data));
+    // #877: 5 min de memoria (las stats del juego usan el cupo de 1girox que comparten cargas y retiros); 'fresh' fuerza, pero no más de 1 por minuto.
+    if (_fraudCache.data && _fraudCache.days === days && Date.now() - _fraudCache.at < (req.query.fresh ? 60 * 1000 : 5 * 60 * 1000)) return res.json(Object.assign({ cached: true }, _fraudCache.data));
     const PendingPayout = require('./src/models/PendingPayout'); const BankMovement = require('./src/models/BankMovement');
-    const data = await fraudRadar.scan({ User, Transaction, PendingPayout, BankMovement }, { days });
+    // #877: cuánto apostó / ganó cada uno (Partner API, batch; sólo para quienes retiran, máx. 100). netwin positivo = perdió.
+    const stats = async (usernames, from, to) => { const out = new Map(); const r = await girox.getPlayersStatsBatch(usernames, from, to, 'fraude'); if (r && r.success) for (const [k, v] of Object.entries(r.players || {})) out.set(k, v); return out; };
+    const data = await fraudRadar.scan({ User, Transaction, PendingPayout, BankMovement, stats }, { days });
     data.rules = fraudRadar.RULES; data.generatedAt = new Date().toISOString();
     _fraudCache = { at: Date.now(), days, data };
     res.json(data);

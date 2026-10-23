@@ -27,15 +27,14 @@ function sameName(a, b) {
 const RULES = {
   cbu_dep_shared: { pts: 30, label: 'Carga desde una cuenta bancaria que usan OTROS clientes' },
   cbu_wd_shared: { pts: 35, label: 'Retira a una cuenta bancaria que usan OTROS clientes' },
-  device_shared: { pts: 25, label: 'Mismo celular que otras cuentas' },
-  ip_shared: { pts: 15, label: 'Muchas cuentas creadas desde la misma conexión (IP)' },
+  device_shared: { pts: 40, label: 'Mismo celular que otras cuentas' },
   third_party_payers: { pts: 20, label: 'Carga desde cuentas de varias personas distintas' },
   wd_other_person: { pts: 30, label: 'Retira a nombre de otra persona (distinta de la que carga)' },
   bonus_abuse: { pts: 25, label: 'Abuso de bonos: recibió mucho en regalos y retira enseguida' },
-  wd_over_deposits: { pts: 20, label: 'Retira mucho más de lo que cargó' },
-  new_big_wd: { pts: 15, label: 'Cuenta nueva pidiendo un retiro grande' },
+  no_play_withdraw: { pts: 35, label: 'Retira casi sin haber jugado (pasa la plata)' },
+  new_big_wd: { pts: 10, label: 'Cuenta nueva pidiendo un retiro grande sin jugar' },
   fast_cycle: { pts: 15, label: 'Carga y retira enseguida (pasa la plata sin jugar)' },
-  referral_farm: { pts: 25, label: 'Trajo referidos que comparten su celular o conexión (cuentas propias)' },
+  referral_farm: { pts: 30, label: 'Trajo referidos desde su MISMO celular (cuentas propias)' },
   flagged: { pts: 20, label: 'Ya marcado por el sistema anti-estafa' },
   no_phone: { pts: 5, label: 'Sin teléfono verificado' }
 };
@@ -89,12 +88,19 @@ async function scan(deps, opts = {}) {
   const tokens = []; for (const u of users) { if (u.fcmToken) tokens.push(u.fcmToken); for (const t of u.fcmTokens || []) if (t && t.token) tokens.push(t.token); }
   const devOthers = tokens.length ? await User.aggregate([{ $match: { $or: [{ fcmToken: { $in: tokens } }, { 'fcmTokens.token': { $in: tokens } }] } }, { $project: { username: 1, id: 1, t: { $concatArrays: [{ $cond: [{ $ifNull: ['$fcmToken', false] }, ['$fcmToken'], []] }, { $map: { input: { $ifNull: ['$fcmTokens', []] }, as: 'x', in: '$$x.token' } }] } } }, { $unwind: '$t' }, { $match: { t: { $in: tokens } } }, { $group: { _id: '$t', users: { $addToSet: '$username' } } }]) : [];
   const devMap = new Map(devOthers.map((x) => [x._id, x.users]));
-  const ips = [...new Set(users.map((u) => u.registrationIp).filter(Boolean))];
-  const ipOthers = ips.length ? await User.aggregate([{ $match: { registrationIp: { $in: ips }, role: 'user' } }, { $group: { _id: '$registrationIp', users: { $addToSet: '$username' }, n: { $sum: 1 } } }]) : [];
-  const ipMap = new Map(ipOthers.map((x) => [x._id, x]));
+  // (#877: sin cruce por IP en el escaneo — se repite mucho; la IP queda en el caso como dato)
   // Referidos de cada candidato (para "granja de referidos").
   const refs = await User.find({ referredByUserId: { $in: ids } }).select('username referredByUserId registrationIp fcmToken fcmTokens').lean();
   const refsBy = new Map(); for (const r of refs) { if (!refsBy.has(r.referredByUserId)) refsBy.set(r.referredByUserId, []); refsBy.get(r.referredByUserId).push(r); }
+
+  // 3b) #877 (owner: "miralo sobre el JUEGO: cargar $5.000 y retirar $30.000 es apostar, no estafa"): cuánto APOSTÓ y ganó/perdió cada uno, de
+  // la Partner API (stats batch, `deps.stats`). Sólo para quienes pidieron retirar (máx. 100 ⇒ un pedido agrupado): las consultas comparten el
+  // cupo de 60/min con cargas y retiros. Sin stats (API caída) las reglas de juego no se evalúan (no se inventa nada).
+  let play = new Map();
+  if (typeof deps.stats === 'function') {
+    const withWd = users.filter((u) => (payBy.get(u.id) || []).some((p) => !['cancelled', 'rejected'].includes(p.status))).map((u) => u.username).slice(0, 100);
+    if (withWd.length) { try { play = (await deps.stats(withWd, new Date(Date.now() - Math.min(days, 90) * 86400000), new Date())) || new Map(); } catch (_) { play = new Map(); } }
+  }
 
   // 4) Reglas por cliente.
   const alerts = [];
@@ -118,9 +124,7 @@ async function scan(deps, opts = {}) {
     const devO = new Set(); const myTok = [u.fcmToken, ...(u.fcmTokens || []).map((t) => t && t.token)].filter(Boolean);
     for (const t of myTok) for (const o of devMap.get(t) || []) if (o && o !== u.username) devO.add(o);
     if (devO.size) add('device_shared', `Mismo celular que: ${[...devO].slice(0, 8).join(', ')}`);
-    // Misma IP de alta
-    const ipx = u.registrationIp && ipMap.get(u.registrationIp);
-    if (ipx && ipx.n >= 4) add('ip_shared', `${ipx.n} cuentas creadas desde la IP ${u.registrationIp}: ${ipx.users.filter((x) => x !== u.username).slice(0, 8).join(', ')}`);
+    // (#877: la IP NO suma — se repite muchísimo: wifi de la casa, datos del celular. Queda como dato en el caso.)
     // Cuentas de terceros (varias personas distintas le cargan)
     const payers = new Map(); for (const b of myIn) { const k = tail(b.fromCUIT, 11) || normName(b.fromName); if (k) payers.set(k, b.fromName || b.fromCUIT); }
     if (payers.size >= 3) add('third_party_payers', `${payers.size} titulares distintos le cargaron: ${[...payers.values()].slice(0, 6).join(' · ')}`);
@@ -131,20 +135,22 @@ async function scan(deps, opts = {}) {
       const other = wdNames.filter((w) => !depNames.some((d) => sameName(d, w)));
       if (other.length) add('wd_other_person', `Carga: ${depNames.slice(0, 3).join(' · ')} — Retira a: ${other.slice(0, 3).join(' · ')}`);
     }
-    // Abuso de bonos
-    if (gift.total >= 5000 && dep.total > 0 && gift.total >= dep.total * 0.8 && wdTotal >= dep.total * 0.8) add('bonus_abuse', `Regalos ${money(gift.total)} (${gift.n}) vs cargas ${money(dep.total)} · pidió retirar ${money(wdTotal)}`);
-    // Retira mucho más de lo cargado
-    if (wdTotal >= 30000 && wdTotal > Math.max(1, dep.total) * 3) add('wd_over_deposits', `Pidió retirar ${money(wdTotal)} habiendo cargado ${money(dep.total)} (${dep.n} cargas)`);
-    // Cuenta nueva con retiro grande
+    // JUEGO (#877): retirar más de lo cargado NO es alerta si apostó (ganó jugando). Sí lo es retirar casi sin haber apostado.
+    const st = play.get(u.username) || null; const wag = st ? Math.round(Number(st.wagered) || 0) : null; const nw = st ? Math.round(Number(st.netwin) || 0) : null;
+    const lowPlay = wag != null && wag < Math.max(5000, (dep.total + gift.total) * 1.0); // apostó menos de 1 vez lo que cargó + le regalaron
+    if (wag != null && lowPlay && wdTotal >= Math.max(10000, dep.total * 0.8)) add('no_play_withdraw', `Pidió retirar ${money(wdTotal)} · cargó ${money(dep.total)} · apostó sólo ${money(wag)} en ${Math.min(days, 90)} días`);
+    // Abuso de bonos: muchos regalos, pide retirar y JUGÓ poco (con juego real no es abuso: el rollover ya lo cubre)
+    if (gift.total >= 5000 && dep.total > 0 && gift.total >= dep.total * 0.8 && wdTotal >= dep.total * 0.8 && (wag == null || wag < (dep.total + gift.total) * 2)) add('bonus_abuse', `Regalos ${money(gift.total)} (${gift.n}) vs cargas ${money(dep.total)} · pidió retirar ${money(wdTotal)}${wag != null ? ' · apostó ' + money(wag) : ''}`);
+    // Cuenta nueva con retiro grande: sólo si casi no jugó
     const bigNew = asked.find((p) => p.amount >= 50000 && (new Date(p.createdAt) - new Date(u.createdAt)) / 86400000 <= 3);
-    if (bigNew) add('new_big_wd', `Retiro de ${money(bigNew.amount)} a los ${Math.max(0, Math.round((new Date(bigNew.createdAt) - new Date(u.createdAt)) / 3600000))} h de crear la cuenta`);
+    if (bigNew && (wag == null || lowPlay)) add('new_big_wd', `Retiro de ${money(bigNew.amount)} a las ${Math.max(0, Math.round((new Date(bigNew.createdAt) - new Date(u.createdAt)) / 3600000))} h de crear la cuenta${wag != null ? ' · apostó ' + money(wag) : ''}`);
     // Ciclo rápido carga → retiro (sin jugar)
     const cyc = myPays.find((p) => myIn.some((b) => { const t = new Date(b.date || b.createdAt).getTime(), w = new Date(p.createdAt).getTime(); return w > t && w - t <= 2 * 3600000 && Math.abs((Number(p.amount) || 0) - (Number(b.amount) || 0)) <= Math.max(2000, (Number(b.amount) || 0) * 0.15); }));
-    if (cyc) add('fast_cycle', `Retiro de ${money(cyc.amount)} menos de 2 h después de una carga parecida`);
-    // Granja de referidos
+    if (cyc && (wag == null || lowPlay)) add('fast_cycle', `Retiro de ${money(cyc.amount)} menos de 2 h después de una carga parecida`);
+    // Granja de referidos: SÓLO por el mismo celular (#877: la IP se repite mucho)
     const myRefs = refsBy.get(u.id) || [];
-    const farm = myRefs.filter((r) => (u.registrationIp && r.registrationIp === u.registrationIp) || [r.fcmToken, ...(r.fcmTokens || []).map((t) => t && t.token)].filter(Boolean).some((t) => myTok.includes(t)));
-    if (farm.length >= 2) add('referral_farm', `${farm.length} referidos con su misma conexión o celular: ${farm.slice(0, 8).map((r) => r.username).join(', ')}`);
+    const farm = myRefs.filter((r) => [r.fcmToken, ...(r.fcmTokens || []).map((t) => t && t.token)].filter(Boolean).some((t) => myTok.includes(t)));
+    if (farm.length >= 1) add('referral_farm', `${farm.length} referido(s) desde su mismo celular: ${farm.slice(0, 8).map((r) => r.username).join(', ')}`);
     if ((u.fraudFlags || []).length) add('flagged', `Marcas: ${u.fraudFlags.join(', ')}`);
     if (!u.phoneVerified && R.length) add('no_phone', 'No verificó su celular por SMS');
 
@@ -154,7 +160,7 @@ async function scan(deps, opts = {}) {
       userId: u.id, username: u.username, score, level: score >= 60 ? 'alto' : 'medio', reasons: R,
       isBlocked: !!u.isBlocked, blockReason: u.blockReason || null, review: u.fraudReview || null, ageDays: Math.round(ageDays),
       phoneVerified: !!u.phoneVerified, source: u.acquisitionSource || null, campaign: u.acquisitionCampaign || null,
-      deposits: { n: dep.n, total: Math.round(dep.total) }, gifts: { n: gift.n, total: Math.round(gift.total) },
+      deposits: { n: dep.n, total: Math.round(dep.total) }, gifts: { n: gift.n, total: Math.round(gift.total) }, play: st ? { wagered: wag, netwin: nw } : null,
       withdrawals: { asked: asked.length, askedTotal: Math.round(wdTotal), paid: paid.length, paidTotal: Math.round(paid.reduce((a, p) => a + (Number(p.amount) || 0), 0)), pending: myPays.filter((p) => ['pending_review', 'pending', 'processing', 'failed'].includes(p.status)).length }
     });
   }
