@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-22
 
+### 871–872. 🤖 Panel: "Automático (no tocar)" con Cronograma notis y Cronograma historias separados + 📋 "Mañana sale" · 🔒 registro sólo con invitación — admin SW v164
+- **#871** (owner: "sacá historias de adentro de notificaciones, otra sección, ambos 'automatizado (no tocar)'; siempre lo que se va a publicar el
+  otro día, en detalle"; "cronograma notis y otro cronograma telegram" = historias, no hay cronograma de Telegram): menú con grupo
+  "🤖 Automático (no tocar)" → "📅 Cronograma notis" (sección de siempre) y "📖 Cronograma historias" (`cronohistSection`, la tarjeta de historias
+  automáticas movida; hoy y MAÑANA abiertos). Arriba de Cronograma notis, "📋 Mañana sale": campañas de mañana (hora AR) con horario, tandas,
+  título + texto completos, audiencia, destinatarios y bono (`_cronRenderTomorrow`).
+- **#872** (owner: "sacá el registro desde el inicio, que sea sólo con invitación"): migración `mig872InviteOnly` ⇒ `registrationMode='invite'`
+  (#748): desde la app sólo con link de referido real o de campaña activa; la landing de pauta (`_landingSignupHandler`) no pasa por ese chequeo.
+
 ### 869–870. 🖼️ Fotos del buscador de juegos por nuestro server · 📱 ajuste de pantalla compacto — SW v591
 - **#869** (owner: "en el buscador las fotos aparecen falladas"): `GET /api/games/img?u=` sirve las fotos del catálogo de 1girox desde nuestro
   dominio (sólo admin.1girox.com/game-img y img-girox.red777.win, ≤1 MB, cache 1 día) ⇒ ningún navegador las bloquea; `_favImg` las usa y todas

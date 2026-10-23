@@ -4986,6 +4986,7 @@ function switchSection(section) {
     if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
+    if (section === 'cronohist') loadStoriesAuto(); // #871
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
@@ -15514,6 +15515,25 @@ function cronMonthShift(d) {
     _cronDayFilter = null;
     loadCronograma();
 }
+// #871 (owner): "lo que se va a publicar el otro día, en detalle": campañas de MAÑANA (hora AR) con horario, tandas, texto completo, audiencia y bono.
+async function _cronRenderTomorrow() {
+    const box = document.getElementById('cronTomorrow'); if (!box) return;
+    const tk = _cronArtKey(new Date(Date.now() + 86400000)); const lab = document.getElementById('cronTomorrowDate');
+    if (lab) lab.textContent = '· ' + new Date(tk + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+    let data = _cronData;
+    if (!data || tk.slice(0, 7) !== _cronMonth) { try { const r = await authFetch('/api/admin/cronograma?month=' + tk.slice(0, 7)); data = await r.json(); } catch (_) { data = null; } }
+    const rows = ((data && (data.campaigns || data.items)) || []).filter((c) => !c.cancelled && (c.parts || []).some((p) => _cronArtKey(p.runAt) === tk));
+    if (!rows.length) { box.innerHTML = '<span style="color:#888">No hay notificaciones programadas para mañana todavía (el automático programa el mes en curso y el siguiente).</span>'; return; }
+    box.innerHTML = rows.map((c) => {
+        const ps = (c.parts || []).filter((p) => _cronArtKey(p.runAt) === tk).map((p) => _cronFmt(p.runAt) + (p.count != null ? ' (' + p.count + ')' : '')).join(' · ');
+        const g = c.gift || {};
+        return '<div style="border-left:3px solid #f59e0b;padding:6px 10px;margin:6px 0;background:rgba(245,158,11,.06);border-radius:6px">' +
+            '<div><b>' + escHtml(c.name || 'Campaña') + '</b> <span style="color:#a5b4fc">🕒 ' + escHtml(ps) + '</span></div>' +
+            (g.title || g.message ? '<div style="white-space:pre-wrap;color:#e5e7eb;margin-top:3px">' + escHtml((g.title ? '📣 ' + g.title + '\n' : '') + (g.message || '')) + '</div>' : '') +
+            '<div style="color:#8fd3a8;font-size:.76rem;margin-top:3px">👥 ' + escHtml(c.audienceLabel || g.audienceType || '') + (c.estimatedCount != null ? ' · ~' + Number(c.estimatedCount).toLocaleString('es-AR') + ' destinatarios' : '') +
+            (g.amount ? ' · 🎁 ' + (g.giftType === 'percent' || g.mode === 'percent' || Number(g.amount) <= 300 ? '+' + escHtml(String(g.amount)) + '%' : '$' + Number(g.amount).toLocaleString('es-AR')) + (g.validHours ? ' por ' + escHtml(String(g.validHours)) + ' h' : '') : '') + (g.appOnly ? ' · sólo app' : '') + '</div></div>';
+    }).join('');
+}
 async function loadCronograma() {
     if (!_cronMonth) _cronMonth = _cronArtKey(new Date()).slice(0, 7);
     const lbl = document.getElementById('cronMonthLabel');
@@ -15525,6 +15545,7 @@ async function loadCronograma() {
         if (!r.ok) throw new Error(j.error || 'error');
         _cronData = j;
         _cronRenderCalendar(); _cronRenderList(); try { _cronRenderDayPanel(); } catch (_) {}
+        try { _cronRenderTomorrow(); } catch (_) {} // #871
     } catch (e) {
         const l = document.getElementById('cronList'); if (l) l.innerHTML = '<span style="color:#f87171">No se pudo cargar el cronograma</span>';
     }
@@ -16045,7 +16066,7 @@ async function loadStoriesAuto() {
         const dayLbl = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
         let h = '';
         (j.days || []).forEach((d, di) => {
-            h += '<details' + (di === 0 ? ' open' : '') + ' style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b style="text-transform:capitalize">' + (di === 0 ? 'Hoy · ' : (di === 1 ? 'Mañana · ' : '')) + escHtml(dayLbl(d.day)) + '</b> · ' +
+            h += '<details' + (di <= 1 ? ' open' : '') + ' style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b style="text-transform:capitalize">' + (di === 0 ? 'Hoy · ' : (di === 1 ? 'Mañana · ' : '')) + escHtml(dayLbl(d.day)) + '</b> · ' +
                 d.items.map((it) => (KIND[it.kind] || ['•'])[0]).join(' ') + (d.matchesKnown ? '' : ' <span style="color:#888;font-size:.74rem">(los partidos se definen ese día)</span>') + '</summary>' +
                 '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.4rem 0">' +
                 d.items.map((it) => { const k = KIND[it.kind] || ['•', '#888'];
