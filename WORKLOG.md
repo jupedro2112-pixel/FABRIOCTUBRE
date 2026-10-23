@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-22
 
+### 911. Página PICA ROJA: juegos de a 4 por fila (Inicio y Slots), 8 visibles por sección — SW v608
+**Pedido (owner):** "achicá los juegos, que entren 4 por fila, así se ven más". También pidió mostrar "cuánta gente juega" cada slot copiando
+números de Stake o estimados: NO se hizo (serían cifras falsas presentadas como reales a los clientes); se le ofreció un contador REAL.
+
 ### 910. Proveedores de la Página PICA ROJA con el NOMBRE legible — SW v607
 **Pedido (owner):** "en los logos de proveedores que se vea el texto, se tiene que entender". Los logos que da 1girox son casi todos ÍCONOS
 (sin el nombre); en blanco quedaban manchas. Ahora: ícono chico en gris + nombre del proveedor en texto blanco (hasta 2 líneas).

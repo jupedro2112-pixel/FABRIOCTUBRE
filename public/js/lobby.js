@@ -59,18 +59,18 @@ VIP.lobby = (function () {
     function _title(icon, title, onclick) {
         return '<div class="prl-sh">' + (onclick ? '<button type="button" class="prl-st" onclick="' + onclick + '">' : '<span class="prl-st">') + ico(icon) + '<h3>' + esc(title) + '</h3>' + (onclick ? '<b class="prl-chev">›</b></button>' : '</span>') + '</div>';
     }
-    // #909: secciones como Stake: de a 3 por fila; "Ver más" despliega de a 6 (el orden de los juegos es el de Girox: más jugados primero).
+    // #909: secciones como Stake: de a 4 por fila (#911); "Ver más" despliega de a 8 (el orden de los juegos es el de Girox: más jugados primero).
     let _secN = 0;
     function _row(icon, title, games, providerId) {
         if (!games || !games.length) return '';
         const id = 'prlS' + (++_secN);
         return '<section class="prl-sec">' + _title(icon, title, providerId ? 'VIP.lobby.all(' + Number(providerId) + ', \'' + esc(title).replace(/'/g, '') + '\')' : null) +
-            '<div class="prl-grid prl-g3" id="' + id + '" data-show="6">' + games.map((g, i) => _card(g).replace('class="prl-g"', 'class="prl-g' + (i >= 6 ? ' prl-hid' : '') + '"')).join('') + '</div>' +
-            (games.length > 6 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.more(\'' + id + '\', this)">Ver más</button></div>' : '') + '</section>';
+            '<div class="prl-grid prl-g3" id="' + id + '" data-show="8">' + games.map((g, i) => _card(g).replace('class="prl-g"', 'class="prl-g' + (i >= 8 ? ' prl-hid' : '') + '"')).join('') + '</div>' +
+            (games.length > 8 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.more(\'' + id + '\', this)">Ver más</button></div>' : '') + '</section>';
     }
     function more(id, btn) {
         const box = $(id); if (!box) return;
-        const hid = box.querySelectorAll('.prl-hid'); for (let i = 0; i < Math.min(6, hid.length); i++) hid[i].classList.remove('prl-hid');
+        const hid = box.querySelectorAll('.prl-hid'); for (let i = 0; i < Math.min(8, hid.length); i++) hid[i].classList.remove('prl-hid');
         if (box.querySelectorAll('.prl-hid').length === 0 && btn) btn.closest('.prl-more').remove();
     }
     function _hero() {

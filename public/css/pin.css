@@ -2732,8 +2732,11 @@ span.prl-st { cursor: default; }
 .prl button:focus-visible { outline: 2px solid #557086; outline-offset: 2px; }
 @media (min-width: 720px) { .prl-slide { flex-basis: 48%; } .prl-g { flex-basis: 150px; } }
 /* #909: secciones de a 3 (Stake), barra con Inicio ♠ al centro y más grande, menú de cuenta, botón volver arriba */
-.prl-g3 { grid-template-columns: repeat(3, 1fr); padding-top: 2px; }
-@media (min-width: 720px) { .prl-g3 { grid-template-columns: repeat(6, 1fr); } }
+/* #911: de a 4 por fila (más chicas, se ven más) en Inicio y en Slots */
+.prl-g3, .prl-grid { grid-template-columns: repeat(4, 1fr); gap: 10px 8px; padding-top: 2px; }
+@media (min-width: 720px) { .prl-g3, .prl-grid { grid-template-columns: repeat(8, 1fr); } }
+.prl-grid .prl-gi { border-radius: 6px; }
+.prl-grid .prl-gi i { font-size: 10px; padding: 4px; }
 .prl-hid { display: none !important; }
 .prl-nav { align-items: end; }
 .prl-nav .prl-home { position: relative; margin-top: -18px; gap: 4px; color: #fff; }
