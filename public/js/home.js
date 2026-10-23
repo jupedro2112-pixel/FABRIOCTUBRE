@@ -1179,6 +1179,7 @@
         win.document.body.innerHTML = '<style>@keyframes s{to{transform:rotate(360deg)}}</style><img src="' + o + k.logo + '" alt="" style="max-width:220px;height:' + k.h + 'px;object-fit:contain">' +
             '<div style="width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.15);border-top-color:' + k.sp + ';animation:s .8s linear infinite"></div><div style="opacity:.85">Abriendo ' + _esc(name) + '…</div>';
     }
+    let _lastStep = '';
     async function favPlay(key, nameArg) { // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         const name = nameArg || (f && f.name) || 'el juego';
@@ -1191,10 +1192,14 @@
             const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true }) }); // #923: deportes directo
             const d = await r.json().catch(() => ({}));
             if (r.ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
-        } catch (_) {}
+            else _lastStep = (d && d.gameStep) || (r.ok ? 'sin juego directo' : 'HTTP ' + r.status); // #926: motivo de 1girox
+        } catch (_) { _lastStep = 'sin conexión'; }
         if (url && win && !win.closed) { try { win.location.href = url; return; } catch (_) {} }
         if (url && !win) { try { location.href = url; return; } catch (_) {} } // sin ventanas (algunas apps instaladas): en la misma pantalla
         try { if (win && !win.closed) win.close(); } catch (_) {}
+        // #926 (owner: "desde las plataformas aparece Girox"): se avisa POR QUÉ no abrió directo (para corregirlo juego por juego).
+        try { VIP.ui.showToast('ℹ️ ' + name + ' no abrió directo (' + String(_lastStep || '').slice(0, 80) + '): entrás por Girox con tu sesión.', 'info'); } catch (_) {}
+        try { console.warn('[juego directo]', key, _lastStep); } catch (_) {}
         // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
         let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
         setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? (key === 'sport/gr8' ? '/sports' : '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);

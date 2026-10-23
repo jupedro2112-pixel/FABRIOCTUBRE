@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 926. Diagnóstico: aviso con el motivo cuando un juego no abre directo — SW v623
+**Owner:** desde los favoritos el juego abre directo (pestaña aparte con la cruz, sin Girox) pero "desde las plataformas aparece Girox". Las claves y el
+pedido son idénticos (mismo favPlay, mismo /api/platform/session, sin filtro de juegos) ⇒ depende del juego (p. ej. lobbies). `favPlay` ahora muestra
+"<juego> no abrió directo (<gameStep>)" y lo deja en consola, para corregir juego por juego con el dato real de 1girox.
+
 ### 925. PICA ROJA: Proveedores arriba y sin "Ver más (60)" — SW v622
 **Pedido (owner, captura):** subir Proveedores y sacar lo último ("Ver más (60)"). Ahora va después de las portadas y antes de Casino lobby, como fila
 deslizable con todos (`_providers(list, true)`). Recorrido de botones: 401 tocados, 0 errores.
