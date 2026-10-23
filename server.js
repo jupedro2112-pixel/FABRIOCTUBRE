@@ -12683,6 +12683,9 @@ async function initializeData() {
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
   // #885 (owner): plazo por hito del fueguito = día×2 (10 fueguitos en 20 días); se edita después en el panel. firePlazoSince = desde cuándo vale.
+  // #890: el cliente no se entera de las fallas de pago (aviso apagado una vez; el tilde sigue en Configuración → banco) y el aviso de "retiro
+  // demorado" pasa a "en proceso" (sólo si nadie lo editó).
+  try { if (!(await getConfig('mig890NoFriction', null))) { const bs = (await getConfig('bankOutageSettings', null)) || {}; await Config.set('bankOutageSettings', Object.assign({}, BANK_SETTINGS_DEFAULT, typeof bs === 'object' ? bs : {}, { notifyFailedClient: false }), 'mig#890'); await Command.updateOne({ name: '/sys_withdraw_delayed', response: WITHDRAW_DELAYED_OLD_820 }, { $set: { response: WITHDRAW_DELAYED_DEFAULT } }); await Config.set('mig890NoFriction', new Date().toISOString(), 'mig#890'); } } catch (e) { console.warn('[startup-migration] #890:', e.message); }
   try { if (!(await getConfig('mig885FirePlazo', null))) { const fm = await getConfig('fireMilestones', null); if (Array.isArray(fm) && fm.length) await Config.set('fireMilestones', fm.map((m) => Object.assign({}, m, { depositDays: (parseInt(m.day, 10) || 15) * 2 })), 'mig#885'); await Config.set('firePlazoSince', new Date().toISOString(), 'mig#885'); await Config.set('mig885FirePlazo', new Date().toISOString(), 'mig#885'); } } catch (e) { console.warn('[startup-migration] #885:', e.message); }
   try { if (!(await getConfig('mig884RetiroText', null))) { await Command.updateOne({ name: '/sys_support_topic_retiro', response: SUPPORT_RETIRO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_RETIRO_DEFAULT } }); await Config.set('mig884RetiroText', new Date().toISOString(), 'mig#884'); } } catch (e) { console.warn('[startup-migration] #884:', e.message); }
   try { if (!(await getConfig('mig883BonoText', null))) { await Command.updateOne({ name: '/sys_support_topic_bono', response: SUPPORT_BONO_OLD_878 }, { $set: { response: SUPPORT_TOPIC_BONO_DEFAULT } }); await Config.set('mig883BonoText', new Date().toISOString(), 'mig#883'); } } catch (e) { console.warn('[startup-migration] #883:', e.message); }
@@ -14001,7 +14004,7 @@ const BANK_UP_DEFAULT = '✅ El banco ya se normalizó: podés volver a pedir tu
 const BANK_FAIL_CLIENT_DEFAULT = '⚠️ El banco está con fallas y tu retiro no pudo procesarse todavía. Quedó pendiente: apenas se normalice lo procesamos y te avisamos por acá. Disculpá las molestias.';
 const BANK_UP_PENDING_DEFAULT = '✅ El banco volvió a funcionar. Tu retiro pendiente se procesa ahora; si en un rato no lo ves acreditado, escribinos por Soporte. Disculpá las molestias.';
 // Config['bankOutageSettings']: todo editable desde Configuración → Banco con fallas.
-const BANK_SETTINGS_DEFAULT = { autoEnabled: true, failThreshold: 3, pauseWithdrawals: true, notifyFailedClient: true };
+const BANK_SETTINGS_DEFAULT = { autoEnabled: true, failThreshold: 3, pauseWithdrawals: true, notifyFailedClient: false }; // #890: al cliente no se le avisa la falla
 async function getBankSettings() {
   try {
     const v = await getConfig('bankOutageSettings', null);
@@ -14074,9 +14077,11 @@ async function _bankPayoutFailed(reason, payout) {
   _bankFailStreak++;
   try {
     const st = await getBankSettings();
-    if (payout && payout.userId) {
+    // #890 (owner): "no generar fricción: si falla, que un agente confirme y listo, no pasó nada" ⇒ por defecto el cliente NO se entera
+    // de la falla (ni el aviso de banco con fallas ni, después, el de "banco normalizado"); sólo recibe el aviso normal cuando se paga.
+    if (payout && payout.userId && st.notifyFailedClient) {
       _addBankOutageWaiter(payout.userId, 'failed').catch(() => {});
-      if (st.notifyFailedClient && !(Number(payout.autoRetries) > 0)) { // #814: en los reintentos automáticos no se le vuelve a avisar
+      if (!(Number(payout.autoRetries) > 0)) { // #814: en los reintentos automáticos no se le vuelve a avisar
         try {
           const u = await User.findOne({ id: payout.userId }).select('id username fcmTokens fcmTokenContext').lean();
           if (u) await _sendUserSystemMessage(u, await renderSystemCommand('/sys_bank_fail_client', BANK_FAIL_CLIENT_DEFAULT, { monto: '$' + Number(payout.amount || 0).toLocaleString('es-AR') }), { push: { title: 'Retiro demorado ⚠️', body: 'El banco está con fallas. Te avisamos apenas se normalice.' } });
@@ -22037,7 +22042,8 @@ function _payoutRetrySafe(r) {
   if (r.status !== 'failed') return false;
   return r.debitConfirmed === true || /^No se pudo leer el saldo/.test(String(r.error || ''));
 }
-const WITHDRAW_DELAYED_DEFAULT = '⏳ Tu retiro de ${amount} está demorado. Ya lo está revisando un agente y te avisamos apenas salga. ¡Gracias por la paciencia!';
+const WITHDRAW_DELAYED_OLD_820 = '⏳ Tu retiro de ${amount} está demorado. Ya lo está revisando un agente y te avisamos apenas salga. ¡Gracias por la paciencia!'; // #890: el de antes ("está demorado")
+const WITHDRAW_DELAYED_DEFAULT = '⏳ Tenemos muchos pagos en este momento: tu retiro de ${amount} ya está en la fila y sale en breve. Aguardá un poquito más, te avisamos por acá apenas se acredite.'; // #890 (owner): "si falla, que aguarde un poco más por muchos pagos"
 async function _payoutAutoFailNote(id, o) {
   if (o && o.code === 200 && o.body && o.body.success !== false) return;
   const p = await PendingPayout.findOne({ id }).lean(); if (!p || p.status === 'paid' || p.status === 'paying' || p.status === 'cancelled') return;
@@ -22045,12 +22051,13 @@ async function _payoutAutoFailNote(id, o) {
   const willRetry = _payoutRetrySafe(p) && Number(p.autoRetries || 0) < PAYOUT_AUTO_RETRIES;
   await _emitAdminOnlyChatNote(p.userId, p.username, `💸 ⚠️ PAGO AUTOMÁTICO de $${Number(p.amount || 0).toLocaleString('es-AR')} no salió (${String(why).slice(0, 160)}). ` +
     (willRetry ? 'Se reintenta solo cada 10 min; si sigue fallando queda en Confirmación de pagos.' : 'NO se reintenta solo: resolvelo en Panel → Confirmación de pagos.')).catch(() => {});
-  // #820: el cliente se entera (una vez) cuando su retiro necesita a una persona.
-  if (!willRetry && !p.clientDelayNotifiedAt) {
+  // #820 → #890: si el pago automático no salió, el cliente recibe UNA vez "aguardá un poco más, hay muchos pagos" (sin hablar de fallas),
+  // se reintente solo o lo tenga que confirmar un agente.
+  if (!p.clientDelayNotifiedAt) {
     try {
       const u = await User.findOne({ id: p.userId }).select('id username fcmToken fcmTokens fcmTokenContext').lean();
       const txt = await renderSystemCommand('/sys_withdraw_delayed', WITHDRAW_DELAYED_DEFAULT, { amount: Number(p.amount || 0).toLocaleString('es-AR') });
-      if (u && txt) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'withdraw_delayed', channel: 'support' }, push: { title: '⏳ Tu retiro está demorado', body: 'Lo está revisando un agente. Te avisamos apenas salga.' } });
+      if (u && txt) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'withdraw_delayed', channel: 'support' }, push: { title: '⏳ Tu retiro está en la fila', body: 'Tenemos muchos pagos: aguardá un poquito más, ya sale.' } }); // #890: sin hablar de fallas
       await PendingPayout.updateOne({ id: p.id }, { $set: { clientDelayNotifiedAt: new Date() } });
     } catch (e) { logger.warn('[pay-retry] aviso al cliente: ' + e.message); }
   }
