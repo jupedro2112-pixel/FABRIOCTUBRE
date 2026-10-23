@@ -133,7 +133,7 @@ VIP.lobby = (function () {
     function sportsMenu(ev) {
         try { if (ev) { ev.stopPropagation(); ev.preventDefault(); } } catch (_) {}
         const old = $('prlSportPop'); if (old) { old.remove(); return; }
-        const sp = ((_data && _data.sports) || [{ path: '/sports', title: 'Deportes' }, { path: '/sports-new', title: 'Deportes 2' }]);
+        const sp = ((_data && _data.sports) || [{ path: '/sports-new', title: 'Digitain' }, { path: '/sports', title: 'Ultim8' }]);
         const gn = SK().layout === 'ganamos';
         const html = '<div id="prlSportPop" class="' + (gn ? 'gnm__more prl-sportpop-gn' : 'prl-sportpop') + '" role="menu"><div class="' + (gn ? 'gnm__more-list' : 'prl-sportpop-l') + '">' +
             sp.map((x, i) => '<button type="button" class="' + (gn ? 'gnm__more-item' : 'prl-sportpop-i') + '" role="menuitem" onclick="event.stopPropagation();VIP.lobby.sportPick(\'' + esc(x.path) + '\')">' + (gn ? '<span class="gnm__more-icon">' + GN_IC[i ? 'sp2' : 'sp1'] + '</span><span class="gnm__more-text">' + esc(x.title) + '</span>' : ico('sport') + '<span>' + esc(x.title) + '</span>') + '</button>').join('') + '</div></div>';
@@ -218,6 +218,24 @@ VIP.lobby = (function () {
         try { const r = await fetch('/data/jugaygana-home.json', { cache: 'no-cache' }); if (r.ok) _jgHomeData = await r.json(); } catch (_) {}
         return _jgHomeData;
     }
+    // #937 (owner, zip de jugaygana44): proveedores (en su orden, con su logo) y categorías de la barra con SUS juegos y SUS portadas, cada uno
+    // cruzado con el MISMO juego de Girox (se abre con su enlace, sin que se vea Girox). Lo que Girox no tiene no aparece (owner).
+    // /data/jugaygana-games.json: { providers: [{ n, logo, g: [[key, name, imgId]] }], cats: { <catKey>: [[key, name, imgId]] } }.
+    let _jgGames = null, _jgGamesP = null;
+    function _jgGamesLoad() {
+        if (_jgGames) return Promise.resolve(_jgGames);
+        if (!_jgGamesP) _jgGamesP = fetch('/data/jugaygana-games.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _jgGames = d; return d; });
+        return _jgGamesP;
+    }
+    const _jgG = (a) => ({ key: a[0], name: a[1], img: '/images/jugaygana/g/' + a[2] + '.webp' });
+    function jgProvOpen(i) { _jgGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (!p) return; jgProv(false); jgList(p.n, p.g.map(_jgG)); }); }
+    function _jgProvListHtml() {
+        if (!_jgGamesP) { _jgGamesLoad().then(() => { const l = $('jgProvList'); if (l) l.innerHTML = _jgProvListHtml(); }); return '<div class="prl-note">Cargando…</div>'; }
+        if (!(_jgGames && (_jgGames.providers || []).length)) { // sin datos copiados: los proveedores de Girox, como antes
+            return ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('');
+        }
+        return (_jgGames.providers || []).map((p, i) => '<button type="button" onclick="VIP.lobby.jgProvOpen(' + i + ')"><span class="jg-pl">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="" loading="lazy">' : '') + esc(p.n) + '</span><small>' + p.g.length + '</small></button>').join('');
+    }
     function _jgCard(g) { // #918: como su tarjeta: imagen cuadrada, el nombre abajo sobre un degradé
         return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<em><b>' + esc(g.name) + '</b></em></span></button>';
     }
@@ -227,7 +245,11 @@ VIP.lobby = (function () {
         const it = ((_jgHomeData && _jgHomeData.catnav) || []).find((x) => x.key === key); if (!it) return;
         if (it.home) { go('inicio'); return; }
         if (it.raffle) { try { VIP.raffle.open('jugaygana'); } catch (_) {} return; }
-        _allProv = null; _allCat = { label: it.label, q: it.q || '', sort: it.sort || '', key }; _view = 'all'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0;
+        _jgGamesLoad().then((d) => { // #937: la lista copiada de jugaygana44 si existe; si no, el catálogo de Girox como antes
+            const L = d && d.cats && d.cats[key];
+            if (L && L.length) { jgList(it.label, L.map(_jgG), key); return; }
+            _allProv = null; _allCat = { label: it.label, q: it.q || '', sort: it.sort || '', key }; _view = 'all'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0;
+        });
     }
     function _jgCatnav(active) {
         const items = (_jgHomeData && _jgHomeData.catnav) || []; if (!items.length) return '';
@@ -237,11 +259,11 @@ VIP.lobby = (function () {
         const d = _jgHomeData || {};
         const slides = d.slides || [];
         const t = (x) => '<h2 class="jg-t">' + esc(x) + '</h2>';
-        const cols = (d.collections || []).map((c) => {
+        const cols = (d.collections || []).map((c, ci) => {
             const games = c.games || []; const n = Math.min(5, Math.max(1, Number(c.rows) || 1)); const per = Math.ceil(games.length / n); const rows = [];
             for (let i = 0; i < n; i++) { const part = games.slice(i * per, (i + 1) * per); if (part.length) rows.push(part); }
             return '<section class="jg-sec' + (c.bg ? ' jg-sec-bg' : '') + '">' + (c.bg ? '<img class="jg-sec-bgi" src="' + esc(c.bg) + '" alt="" loading="lazy">' + (c.art ? '<img class="jg-sec-art" src="' + esc(c.art) + '" alt="" loading="lazy">' : '') : '') +
-                '<div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.go(\'slots\')">Mostrar Todo</button></div>' +
+                '<div class="jg-sec-h"><div><h2 class="jg-st">' + esc(c.title) + '</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.jgColl(' + ci + ')">Mostrar Todo</button></div>' + // #936: sólo los de esa sección
                 '<div class="jg-rows">' + rows.map((r) => '<div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹‹</button><div class="jg-row">' + r.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div>').join('') + '</div></section>';
         }).join('');
         return _rfStrip() + (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
@@ -254,13 +276,23 @@ VIP.lobby = (function () {
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
             ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
             '</div>' +
-            '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist">' +
-            ((_data && _data.providers) || []).filter((p) => !p.live).map((p) => '<button type="button" onclick="VIP.lobby.jgProv(false);VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')"><span>' + esc(p.name) + '</span><small>' + Number(p.count || 0) + '</small></button>').join('') + '</div></div></div>';
+            '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist" id="jgProvList">' +
+            _jgProvListHtml() + '</div></div></div>'; // #937: sus proveedores, en su orden y con su logo
     }
     function jgSlideScroll(el) { const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); _jgSlide = i; const d = $('jgDots'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i)); }
     function _jgAuto() {
         clearInterval(_jgTimer);
         _jgTimer = setInterval(() => { const el = $('jgSlides'); if (!el || !el.isConnected) { clearInterval(_jgTimer); return; } const n = el.children.length; if (!n) return; _jgSlide = (_jgSlide + 1) % n; try { el.scrollTo({ left: _jgSlide * el.clientWidth, behavior: 'smooth' }); } catch (_) { el.scrollLeft = _jgSlide * el.clientWidth; } }, 5000);
+    }
+    // #936 (owner: "en Mostrar Todo mostrá los juegos de cada sección, no de todos"): vista de UNA lista de juegos (sección del inicio, y desde
+    // #937 cada proveedor y cada categoría de la barra copiados de jugaygana44), con la barra de categorías arriba.
+    let _jgList = null;
+    function jgList(title, games, cat) { _jgList = { title: String(title || ''), games: games || [], cat: cat || '' }; _allProv = null; _allCat = null; _view = 'jglist'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
+    function jgColl(i) { const c = ((_jgHomeData && _jgHomeData.collections) || [])[i]; if (c) jgList(c.title, c.games); }
+    function _jgListHtml() {
+        const L = _jgList || { title: '', games: [] };
+        return _backBar() + '<div class="jg-wrap">' + _jgCatnav(L.cat) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(L.title) + '</h2><span class="jg-line"></span></div></div></div>' +
+            (L.games.length ? '<div class="prl-grid jg-grid">' + L.games.map(_jgCard).join('') + '</div>' : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
     }
     function jgProv(show) { const s2 = $('jgProv'); if (s2) s2.hidden = !show; }
     function _render() {
@@ -273,6 +305,7 @@ VIP.lobby = (function () {
             if (!_jgHomeData) { m.innerHTML = '<div class="prl-note">Cargando…</div>'; _jgData().then(() => { if (_skin === 'jugaygana' && _view === 'inicio') _render(); }); return; }
             m.innerHTML = _jgHome(); _jgSlide = 0; _jgAuto(); if (_q) search(_q); return;
         }
+        if (_view === 'jglist' && SK().layout === 'jugaygana') { if (!_jgHomeData) { _jgData().then(() => _render()); } m.innerHTML = _jgListHtml(); return; } // #936
         if (_view === 'lobbies') { m.innerHTML = _backBar() + (_lobbies().length ? (SK().layout === 'ganamos' ? _gcar('Casino lobby', _lobbies(), null) : _row('grid', 'Casino lobby', _lobbies())) : '<div class="prl-note">No hay lobbies para mostrar ahora.</div>'); return; }
         if (_view === 'deportes') {
             m.innerHTML = _backBar() + _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + (SK().layout === 'ganamos' ? SK().dir + 'casino-bg.png' : SK().layout === 'jugaygana' ? '/images/jugaygana/io/sports_cover_m.webp' : SK().dir + 'b3.svg') + '" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
@@ -423,5 +456,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, back, ql, sportsMenu, sportPick, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, back, ql, sportsMenu, sportPick, skin: () => _skin };
 })();

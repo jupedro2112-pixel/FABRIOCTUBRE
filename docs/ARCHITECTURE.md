@@ -1396,6 +1396,10 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   desde `stories._paintButton` vía `.casino-topbar .tn-stories` (aro + badge; `VIP.stories.paint()` al abrir `lobby.open`). Los links `app:*`
   con `body.prl-open`: lo que no es modal (soporte, ruleta, VIP…) cierra la página antes (si no, queda DETRÁS: lobby z-index 99990); `cargar` =
   Carga rápida de la página. Una sección nueva enlazable desde historias que no sea `.modal` ⇒ sumarla a ese criterio.
+- **JUGAYGANA listas copiadas (#937):** `public/data/jugaygana-games.json` (proveedores en su orden con logo + categorías de la barra; cada juego =
+  `[key de Girox, nombre, imgId]`). Sin el archivo, la página usa el catálogo de Girox (proveedores y categorías por búsqueda) como antes.
+  "Mostrar Todo" de cada colección del inicio = `jgColl` → vista `jglist`. Deportes: Digitain (`sport/onyx`) y Ultim8 (`sport/gr8`).
+- **Dominio propio de JUGAYGANA (#935):** `jugaygana-vercel/vercel.json` = proxy a picaroja.com (raíz → `/?jg=1`). Ojo limitadores por IP detrás del proxy.
 - **Comprobantes repetidos (#932):** `_receiptCollapseDups` deja UNA ficha pendiente por huella (dedupeKey > imageHash > monto+fecha con hora+titular);
   las copias quedan `rejected`/`duplicate` con `dupOf`. Un flujo nuevo que encole comprobantes debe llamarlo (o dejar que lo haga el tick).
 - **Historias automáticas (#934):** partidos sólo con `Config['storyMatchesEnabled']` (default false, tilde en Cronograma). Variables de texto:

@@ -25517,7 +25517,7 @@ app.get('/api/games/lobby', authMiddleware, async (req, res) => {
     const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
     const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
       sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean), lobbies,
-      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Deportes', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Deportes 2', sub: 'La otra cartelera de apuestas deportivas' }] }; // #923: key = apertura directa
+      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Digitain', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Ultim8', sub: 'Apuestas deportivas · en vivo y prepartido' }] /* #935 (owner): cada casa con su nombre, no "Deportes" */ }; // #923: key = apertura directa
     _lobbyCache = { at: Date.now(), data }; res.json(data);
   } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }
 });

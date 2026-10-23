@@ -2921,6 +2921,7 @@ span.prl-st { cursor: default; }
 .jg-provlist { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 5px; padding: 10px; background: #333; overflow-y: auto; }
 .jg-provlist button { display: flex; justify-content: space-between; align-items: center; border: 0; border-radius: 5px; background: #222; color: #fff; padding: 12px; font: 600 14px inherit; font-family: inherit; cursor: pointer; }
 .jg-provlist small { color: #f2ce00; }
+.jg-pl { display: flex; align-items: center; gap: 10px; } .jg-pl img { width: 30px; height: 30px; border-radius: 50%; flex: 0 0 30px; } /* #937 logos de sus proveedores */
 /* ===== #917 SORTEO MENSUAL: pantalla (estilo de la marca), tira de banners arriba de las páginas y botón del Inicio ===== */
 .rf { --rf-bg: #0f212e; --rf-card: #1a2c38; --rf-line: #2f4553; --rf-tx: #fff; --rf-mut: #b1bad3; --rf-acc: #e6002a; --rf-acc-tx: #fff;
   position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column; background: var(--rf-bg); color: var(--rf-tx); font-family: var(--p-font); }

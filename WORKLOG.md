@@ -8,6 +8,35 @@
 
 ## Sesión 2026-10-22
 
+### 937. JUGAYGANA: página lista para las listas copiadas de jugaygana44 (zip del owner) + carpeta para Vercel — SW v629
+**Pedido (owner):** zip `ads.zip` con capturas de jugaygana44.bet (inicio, 92 proveedores, 9 categorías de la barra): copiar todo, portadas incluidas,
+y que cada juego abra con el enlace de Girox sin que se vea Girox. "No mezcles las portadas" (sólo las de JUGAYGANA). Lo que Girox no tiene: OCULTO (owner).
+- **Front (`lobby.js`):** `/data/jugaygana-games.json` (`{providers:[{n,logo,g:[[key,name,imgId]]}],cats:{<catKey>:[...]}}`, imágenes en
+  `images/jugaygana/g/<id>.webp` y logos en `images/jugaygana/prov/<i>.webp`). Hoja de Proveedores = los suyos en su orden con logo → `jgProvOpen`
+  → `jgList`; `jgCat` usa la lista copiada si existe (si no, el catálogo de Girox como antes); sin el archivo, la hoja muestra los de Girox.
+  **EL ARCHIVO TODAVÍA NO EXISTE** (ver abajo): hoy todo se ve como antes.
+- **Proceso (en el scratchpad de esa sesión, se pierde al reiniciar Tails):** capturas de 390×844 cada 744 px con la cabecera fija de ~127 px ⇒ quedan
+  franjas de ~27 px SIN capturar (≈16% de portadas cortadas: se rellenan con su propia imagen, nunca con otra). Se unió cada página por `Scroll_px`
+  y se recortó la grilla (3 columnas de 111 px, paso ~121,33 px): 11.613 portadas + 92 logos. **Las portadas de JUGAYGANA NO son las de Girox**
+  (otro arte, p. ej. TV Bet) ⇒ comparar imágenes no sirve y el OCR no lee los títulos: se identifican LEYENDO el título (ayudantes con hojas
+  numeradas) contra la lista exacta de nombres de Girox del proveedor; ante duda, afuera. Las categorías heredan el juego de la portada idéntica
+  del proveedor (distancia < 1,6 y ninguna parecida con otro nombre: con < 4 entraban Bingo 30/80, Deuces Wild/Multi-hand).
+- **Cobertura:** de 92 proveedores sólo 38 existen en Girox (≈5.500 portadas). Leídos: Microgaming (57/479) y BGaming (192/284); el resto se frenó
+  (owner). Para terminar: volver a recortar desde el zip y leer los demás proveedores.
+- jugaygana44.bet y su JS devuelven el index vacío a pedidos automáticos (sin API); jugaygana.io tiene otra lista y otro orden (no sirve para nombres).
+
+### 936. JUGAYGANA: "Mostrar Todo" de cada sección del inicio muestra SÓLO sus juegos — SW v629
+**Pedido (owner):** "en Mostrar Todo mostrá los juegos de cada sección, no de todos". `jgColl(i)` → `jgList(título, juegos)` (vista `jglist` con la
+barra de categorías arriba); antes iba a `go('slots')` (todo el catálogo).
+
+### 935. Deportes con su nombre: Digitain y Ultim8 (no "Deportes" / "Deportes 2") + carpeta `jugaygana-vercel/`
+**Pedido (owner):** "digitain y ultim8, ponele bien esos nombres y dejalo donde corresponde, no pongas deportes". `/api/games/lobby` `sports`:
+`sport/onyx` (/sports-new) = **Digitain**, `sport/gr8` (/sports) = **Ultim8**; mismo orden en el fallback de `sportsMenu`.
+- `jugaygana-vercel/` (pedido: "una carpeta para subir a Vercel con un dominio"): `vercel.json` que muestra `https://picaroja.com/?jg=1` en la raíz y
+  reenvía todo lo demás a picaroja.com (la página usa login, saldo, cargas y juegos del server: no puede ser estática). ⚠️ Por el proxy, el server
+  puede ver a todos los clientes de ese dominio con pocas IPs de Vercel ⇒ los limitadores por IP podrían cortar a clientes legítimos con mucho
+  tráfico. Alternativa recomendada: apuntar el dominio directo al server y abrir JUGAYGANA según el Host.
+
 ### 934. Historias automáticas: SIN partidos de fútbol (interruptor en el panel) + 3 historias nuevas que explican la app — admin SW v189
 **Pedido (owner):** "mañana tenemos un partido, pero no vamos a publicar aún los partidos de fútbol; quiero ir primero con publicaciones explicando la app".
 - `Config['storyMatchesEnabled']` (default **false**): sin él `_storyAutoPlan` no pide partidos a ESPN (no salen los de las 00:05). Panel → Cronograma →

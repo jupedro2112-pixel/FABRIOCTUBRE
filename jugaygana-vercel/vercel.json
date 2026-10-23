@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "https://picaroja.com/?jg=1" },
+    { "source": "/:path*", "destination": "https://picaroja.com/:path*" }
+  ]
+}
