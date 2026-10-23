@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 886. 🎁 Bono para clientes NUEVOS el día 5, 15 y 30 desde el registro (historia + push SÓLO a ellos) + informe mensual — admin SW v172
+**Pedido (owner):** "a los clientes nuevos, que lo vean sólo los nuevos: notificación + bono de 50% con el mismo rollover, en historias
+('telegram'), día 5, 15 y 30 desde que se registró, el resto no lo ve; 'tenés un 50% activo dentro de 2 hs para reclamar de forma automática';
+fuera de la estrategia que ya tenemos; y un dato mensual de cómo funcionaron los bonos de los distintos días".
+`_newbieOffersTick` (cada 10 min, desde `hour` ART = 18 hasta las 23): a cada cliente (sin marcas de fraude) cuyo día de registro (ART) fue hace
+N ∈ `days` le crea una HISTORIA PERSONAL (`Story.audienceUserId` + `newbieDay`, foto premium "Tenés un 50% activo por 2 horas") con
+`bonusPct`/`bonusUntil` = 2 h, y le manda push sólo a él (`sendNotificationToUsernames`). `autoKey` único `nb-<N>-<userId>` (una vez,
+multi-instancia). "Reclamar ahora" = flujo #742 (storyBonus ⇒ `resolveAutoBonus` en la próxima carga; bono con rollover global, carga ×3).
+Aislamiento: `/api/stories/active` = generales + las del propio cliente; `/api/stories/public` y el listado del panel excluyen las personales;
+`claim-bonus` rechaza la de otro. Config `Config['newbieOffers']` {enabled, pct 50, hours 2, days [5,15,30], hour 18}; panel → Cronograma
+historias → "🎁 Bono para clientes nuevos" (config + informe por mes y día: enviadas, vistas, reclamaron, cargaron con el bono, cargado, bono).
+Kill switch `NEWBIE_OFFERS_DISABLED=1`. Probado en Mongo en memoria (sólo día 5/15/30, sin duplicar, cada uno ve la suya, informe ok).
+
 ### 885. 🛡️ Aviso "cada carga ×3 por antifraude" en Info/cargas/retiro + ⏳ PLAZO por hito del fueguito — SW v598, admin SW v171
 **Pedidos (owner):** "en Info y todo avisar que las cargas van con rollover ×3 por antifraude, explicarlo en el retiro y en Info; acomodá y
 centrá todo" · "en los fueguitos aclarar cuántos días tiene cada racha, el de 10 son 20 días: 10 fueguitos en 20 días, y que tiene esos días

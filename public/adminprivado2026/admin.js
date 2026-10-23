@@ -4986,7 +4986,7 @@ function switchSection(section) {
     if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
     if (section === 'notifications') loadNotificationsPanel();
     if (section === 'cronograma') loadCronograma(); // #190
-    if (section === 'cronohist') loadStoriesAuto(); // #871
+    if (section === 'cronohist') { loadStoriesAuto(); loadNewbieOffers(); } // #871 · #886
     if (section === 'fraud') loadFraud(); // #873
     if (section === 'inicio') loadInicio(); // #876
     if (section === 'referrals') loadAdminReferralSummary();
@@ -17427,3 +17427,28 @@ function _renderInicio(box, d, notice) {
                 box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% del total', '#f59e0b'));
     }
 }
+
+// ===== #886 bono para clientes nuevos (día 5/15/30) =====
+async function loadNewbieOffers() {
+    const box = document.getElementById('nbReport'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/newbie-offers?months=6'); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        const c = j.config || {}; const g = (id) => document.getElementById(id);
+        if (g('nbOn')) g('nbOn').checked = c.enabled !== false; if (g('nbPct')) g('nbPct').value = c.pct; if (g('nbHours')) g('nbHours').value = c.hours; if (g('nbDays')) g('nbDays').value = (c.days || []).join(', '); if (g('nbHour')) g('nbHour').value = c.hour;
+        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const pc = (a, b) => b ? Math.round(a * 100 / b) + '%' : '—';
+        const rows = j.rows || [];
+        if (!rows.length) { box.innerHTML = '<div style="color:#9ab;font-size:12px">📊 Todavía no salió ninguna. El informe mensual aparece acá apenas los primeros clientes lleguen a su día 5 / 15 / 30.</div>'; return; }
+        box.innerHTML = '<div style="font-weight:800;font-size:13px;margin-bottom:4px">📊 Cómo funcionó, por mes y por día</div><div style="overflow-x:auto"><table class="data-table" style="font-size:12px;min-width:640px"><thead><tr><th>Mes</th><th>Día</th><th>Enviadas</th><th>Vistas</th><th>Reclamaron</th><th>Cargaron con el bono</th><th>Total cargado</th><th>Bono dado</th></tr></thead><tbody>'
+            + rows.map((x) => '<tr><td>' + escapeHtml(x.month) + '</td><td>día ' + x.day + '</td><td>' + x.sent + '</td><td>' + x.viewed + ' <small style="color:#9ab">' + pc(x.viewed, x.sent) + '</small></td><td>' + x.claims + ' <small style="color:#9ab">' + pc(x.claims, x.sent) + '</small></td><td>' + x.uses + ' <small style="color:#9ab">' + pc(x.uses, x.sent) + '</small></td><td>' + m(x.deposited) + '</td><td>' + m(x.bonus) + '</td></tr>').join('')
+            + '</tbody></table></div>';
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">No se pudo cargar: ' + escHtml(e.message) + '</span>'; }
+}
+async function saveNewbieOffers() {
+    const g = (id) => document.getElementById(id);
+    try {
+        const r = await authFetch('/api/admin/newbie-offers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: g('nbOn').checked, pct: Number(g('nbPct').value), hours: Number(g('nbHours').value), days: g('nbDays').value, hour: Number(g('nbHour').value) }) });
+        const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; }
+        showToast('Bono para nuevos: ' + (j.config.enabled ? j.config.pct + '% por ' + j.config.hours + ' h, días ' + j.config.days.join(', ') + ' a las ' + j.config.hour + ' h' : 'APAGADO'), 'success'); loadNewbieOffers();
+    } catch (_) { showToast('Error de conexión', 'error'); }
+}
+window.loadNewbieOffers = loadNewbieOffers; window.saveNewbieOffers = saveNewbieOffers;

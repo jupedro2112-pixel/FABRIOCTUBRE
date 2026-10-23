@@ -47,6 +47,9 @@ const storySchema = new mongoose.Schema({
   bonusClaims: { type: Number, default: 0 },
   views: { type: Number, default: 0 },
   // #827 HISTORIAS AUTOMÁTICAS: 'sa-YYYY-MM-DD-<slot>' (única ⇒ multi-instancia sin duplicar) y qué es ('servicio' | 'deporte').
+  // #886 (owner): historia PERSONAL (sólo la ve ese cliente): bono de bienvenida a los N días de registrarse (5 / 15 / 30).
+  audienceUserId: { type: String, default: null, index: true },
+  newbieDay: { type: Number, default: null, index: true },
   autoKey: { type: String, default: undefined },
   autoKind: { type: String, default: null },
   // #834: FOTO de la historia automática (spec para storyImage.renderSvg, con los escudos/fotos ya embebidos en base64). Se sirve en

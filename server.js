@@ -24948,7 +24948,7 @@ function _storyPublic(s, req) {
 app.get('/api/stories/public', async (req, res) => {
   try {
     const now = new Date();
-    const items = await Story.find({ isActive: true, expiresAt: { $gt: now } }).sort({ publishedAt: 1 }).limit(12).lean();
+    const items = await Story.find({ isActive: true, expiresAt: { $gt: now }, audienceUserId: null }).sort({ publishedAt: 1 }).limit(12).lean(); // #886: nunca las personales
     res.set('Cache-Control', 'public, max-age=60');
     res.json({ items: items.map((s) => _storyPublic(s, req)) });
   } catch (e) { logger.warn(`[stories] public: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
@@ -24956,7 +24956,8 @@ app.get('/api/stories/public', async (req, res) => {
 app.get('/api/stories/active', authMiddleware, async (req, res) => {
   try {
     const now = new Date();
-    const items = await Story.find({ isActive: true, expiresAt: { $gt: now } }).sort({ publishedAt: 1 }).limit(30).lean();
+    // #886: las generales + las PERSONALES de este cliente (bono de bienvenida a los 5/15/30 días); las de otros no se ven.
+    const items = await Story.find({ isActive: true, expiresAt: { $gt: now }, $or: [{ audienceUserId: null }, { audienceUserId: String(req.user.userId) }] }).sort({ publishedAt: 1 }).limit(30).lean();
     res.json({ items: items.map((s) => _storyPublic(s, req)) });
   } catch (e) { logger.warn(`[stories] active: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
@@ -25110,6 +25111,7 @@ app.post('/api/stories/:id/claim-bonus', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo clientes' });
     const s = await Story.findOne({ id: String(req.params.id) }).lean();
+    if (s && s.audienceUserId && s.audienceUserId !== String(req.user.userId)) return res.status(404).json({ error: 'Historia no encontrada' }); // #886
     const pub = s ? _storyPublic(s, req) : null;
     if (!pub || !pub.bonusActive) return res.status(400).json({ error: 'Este bono ya no está vigente.', code: 'NOT_ACTIVE' });
     const user = await User.findOne({ id: req.user.userId }).select('id username storyBonus fraudFlags').lean();
@@ -25137,7 +25139,7 @@ app.get('/api/stories/bonus', authMiddleware, async (req, res) => {
 app.get('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (!_storiesAdminOnly(req, res)) return;
-    const [items, cfg] = await Promise.all([Story.find({}).sort({ publishedAt: -1 }).limit(200).lean(), getStoriesConfig()]);
+    const [items, cfg] = await Promise.all([Story.find({ audienceUserId: null }).sort({ publishedAt: -1 }).limit(200).lean(), getStoriesConfig()]); // #886: las personales van en su informe
     res.json({ items: items.map((s) => _storyPublic(s, req)), config: cfg });
   } catch (e) { logger.warn(`[stories] admin list: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
 });
@@ -25384,6 +25386,82 @@ async function _storyAutoTick() {
   } catch (e) { logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; }
 }
 setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyAutoTick().catch(() => {}); }, 5 * 60 * 1000); }, 2 * 60 * 1000);
+
+// ===== #886 BONO DE BIENVENIDA POR DÍAS (owner 2026-10-23): "a los clientes nuevos, que lo vean sólo los nuevos: notificación + bono de 50%
+// con el mismo rollover, en historias, el día 5, el 15 y el 30 desde que se registró; el resto no lo ve. 'Tenés un 50% activo, 2 hs para
+// reclamarlo de forma automática'. Fuera de la estrategia que ya tenemos; y un dato mensual de cómo funcionó cada día".
+// A la hora `hour` (ART) del día N desde el registro, cada cliente recibe una HISTORIA PERSONAL (Story.audienceUserId) con bonusPct por
+// `hours` + push sólo a él. "Reclamar ahora" usa el flujo de siempre (#742: User.storyBonus ⇒ resolveAutoBonus en la próxima carga, con el
+// rollover global en el bono y ×3 en la carga). `autoKey` único `nb-<N>-<userId>` ⇒ una sola vez por cliente y por día, multi-instancia.
+// Informe: GET /api/admin/newbie-offers (agrupa las historias por mes y por día N: enviadas, vistas, reclamos, usos, cargado, bono dado).
+const NEWBIE_OFFERS_DEFAULT = { enabled: true, pct: 50, hours: 2, days: [5, 15, 30], hour: 18 };
+async function getNewbieOffersConfig() {
+  let c = {}; try { c = (await getConfig('newbieOffers', null)) || {}; } catch (_) {}
+  const days = (Array.isArray(c.days) ? c.days : NEWBIE_OFFERS_DEFAULT.days).map((d) => parseInt(d, 10)).filter((d) => d >= 1 && d <= 365);
+  return { enabled: c.enabled !== false, pct: Math.min(200, Math.max(1, Math.round(Number(c.pct) || NEWBIE_OFFERS_DEFAULT.pct))), hours: Math.min(72, Math.max(1, Math.round(Number(c.hours) || NEWBIE_OFFERS_DEFAULT.hours))),
+    days: [...new Set(days)].sort((a, b) => a - b).slice(0, 8), hour: Math.min(22, Math.max(0, c.hour != null ? parseInt(c.hour, 10) : NEWBIE_OFFERS_DEFAULT.hour)) };
+}
+function _newbieImg(n, pct, hours, rx, dx) {
+  return { style: 'premium', accent: '#e60023', kicker: 'Regalo para vos', icon: 'regalo', h1: `Tenés un ${pct}% activo`, h2: `por ${hours} ${hours === 1 ? 'hora' : 'horas'}`,
+    bullets: [['✓', 'Tocá "Reclamar ahora"', 'Acá, en esta historia'], ['$', 'Tu próxima carga', `Lleva +${pct}% EXTRA automático`], ['★', 'Sólo para vos', `Por tus ${n} días en Pica Roja`]],
+    cta: 'Reclamar ahora', note: `El bono se juega ×${rx} y la carga ×${dx} (rollover)` };
+}
+let _newbieRunning = false;
+async function _newbieOffersTick() {
+  if (_newbieRunning || process.env.NEWBIE_OFFERS_DISABLED === '1') return;
+  _newbieRunning = true;
+  try {
+    const cfg = await getNewbieOffersConfig(); if (!cfg.enabled || !cfg.days.length) return;
+    const now = new Date(); const hourArt = (now.getUTCHours() + 21) % 24; if (hourArt < cfg.hour || hourArt >= 23) return;
+    const today = _schedArtKey(now); const t0 = new Date(today + 'T00:00:00-03:00').getTime();
+    const rx = await _giftRolloverX().catch(() => 5), dx = await getDepositRolloverX().catch(() => 3);
+    for (const n of cfg.days) {
+      const start = new Date(t0 - n * 86400000), end = new Date(start.getTime() + 86400000);
+      const users = await User.find({ role: 'user', createdAt: { $gte: start, $lt: end } }).select('id username fraudFlags').limit(2000).lean();
+      for (const u of users) {
+        if (_isFlagged(u)) continue;
+        const autoKey = `nb-${n}-${u.id}`;
+        if (await Story.exists({ autoKey })) continue;
+        const id = uuidv4(); const img = await _storyAutoImgSpec({ img: _newbieImg(n, cfg.pct, cfg.hours, rx, dx) }).catch(() => null);
+        const until = new Date(now.getTime() + cfg.hours * 3600000);
+        let doc;
+        try {
+          doc = await Story.create({ id, title: `🎁 Tenés un ${cfg.pct}% activo`, text: `Sólo para vos, por tus ${n} días con nosotros: tocá "Reclamar ahora" y tu próxima carga lleva +${cfg.pct}% EXTRA automático. Vale ${cfg.hours} h. El bono se juega ×${rx} y la carga ×${dx}.`,
+            mediaType: img ? 'image' : 'none', mediaUrl: img ? _storyImgUrl(id) : '', autoImg: img || null, autoImgVer: img ? STORY_IMG_VER : null, bgColor: img ? '#ffffff' : '#be123c',
+            linkUrl: 'app:cargar', linkLabel: 'Cargar ahora ›', durationSec: 8, hours: cfg.hours, publishedAt: now, expiresAt: until, isActive: true,
+            bonusPct: cfg.pct, bonusHours: cfg.hours, bonusUntil: until, autoKey, autoKind: 'bienvenida', audienceUserId: u.id, newbieDay: n, createdBy: 'automático' });
+        } catch (e) { if (e && e.code === 11000) continue; logger.warn('[bienvenida] ' + e.message); continue; }
+        try {
+          const r = await sendNotificationToUsernames(User, [u.username], `🎁 Tenés un ${cfg.pct}% activo por ${cfg.hours} h`, `Sólo para vos: abrí la historia y tocá "Reclamar ahora". Tu próxima carga lleva +${cfg.pct}% automático.`, { url: '/?story=' + doc.id, storyId: doc.id, tag: 'story-' + doc.id, type: 'story' });
+          Story.updateOne({ id: doc.id }, { $set: { pushStats: r || null } }).catch(() => {});
+        } catch (e) { logger.warn('[bienvenida] push: ' + e.message); }
+        logger.info(`[bienvenida] día ${n}: ${u.username} +${cfg.pct}% por ${cfg.hours} h`);
+      }
+    }
+  } catch (e) { logger.warn('[bienvenida] ' + e.message); } finally { _newbieRunning = false; }
+}
+setTimeout(() => { _newbieOffersTick().catch(() => {}); setInterval(() => { _newbieOffersTick().catch(() => {}); }, 10 * 60 * 1000); }, 4 * 60 * 1000);
+app.get('/api/admin/newbie-offers', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const months = Math.min(12, Math.max(1, parseInt(req.query.months, 10) || 3));
+    const since = new Date(Date.now() - months * 31 * 86400000);
+    const rows = await Story.aggregate([
+      { $match: { newbieDay: { $ne: null }, publishedAt: { $gte: since } } },
+      { $group: { _id: { m: { $dateToString: { format: '%Y-%m', date: '$publishedAt', timezone: '-03:00' } }, d: '$newbieDay' }, sent: { $sum: 1 }, viewed: { $sum: { $cond: [{ $gt: ['$views', 0] }, 1, 0] } }, claims: { $sum: '$bonusClaims' }, uses: { $sum: '$bonusUses' }, deposited: { $sum: '$bonusDepositTotal' }, bonus: { $sum: '$bonusUsedTotal' } } },
+      { $sort: { '_id.m': -1, '_id.d': 1 } }
+    ]);
+    res.json({ success: true, config: await getNewbieOffersConfig(), rows: rows.map((r) => ({ month: r._id.m, day: r._id.d, sent: r.sent, viewed: r.viewed, claims: r.claims, uses: r.uses, deposited: Math.round(r.deposited || 0), bonus: Math.round(r.bonus || 0) })), canEdit: req.user.role === 'admin' });
+  } catch (e) { logger.error('[bienvenida] informe: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/newbie-offers', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
+    const b = req.body || {}; const cur = await getNewbieOffersConfig();
+    const days = Array.isArray(b.days) ? b.days : String(b.days || '').split(/[^\d]+/);
+    await Config.set('newbieOffers', { enabled: b.enabled !== false, pct: b.pct != null ? Number(b.pct) : cur.pct, hours: b.hours != null ? Number(b.hours) : cur.hours, days: days.map((d) => parseInt(d, 10)).filter((d) => d >= 1 && d <= 365), hour: b.hour != null ? parseInt(b.hour, 10) : cur.hour }, req.user.username);
+    res.json({ success: true, config: await getNewbieOffersConfig() });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 // #828 (owner): "siempre automática, pero que si veo una mal la pueda borrar". Borrar = la historia sale de la app al instante (queda
 // isActive:false con su autoKey, así el motor NO la vuelve a publicar); si todavía no salió, se reserva el horario como 'borrada' (no sale).
 app.post('/api/admin/stories-autopilot/remove', authMiddleware, adminMiddleware, async (req, res) => {

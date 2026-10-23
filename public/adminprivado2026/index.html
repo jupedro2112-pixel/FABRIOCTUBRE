@@ -2762,6 +2762,23 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
             <!-- #871 (owner): Cronograma de HISTORIAS en su propia sección (antes adentro del de notificaciones) -->
             <section id="cronohistSection" class="section">
                 <div class="panel-header"><h2>📖 Cronograma historias <small style="font-size:.6em;color:#f59e0b;font-weight:800">· AUTOMÁTICO (NO TOCAR)</small></h2></div>
+                <!-- #886 (owner): bono de bienvenida por días (historia + push SÓLO al cliente, día 5/15/30 desde que se registró) -->
+                <div class="card" style="margin-bottom:1rem" id="nbCard">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+                        <h3 style="margin:0;font-size:1rem">🎁 Bono para clientes nuevos (historia + notificación sólo a ellos)</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadNewbieOffers()">🔄</button>
+                    </div>
+                    <p style="color:#9ab;font-size:12px;margin:.4rem 0 .6rem">El día 5, 15 y 30 desde que se registró, cada cliente ve una historia SÓLO PARA ÉL con el bono y le llega una notificación: tiene las horas indicadas para tocar "Reclamar ahora" y se aplica solo en su próxima carga (bono con el rollover de siempre, carga ×3). El resto de los clientes no la ve. Va aparte del autopiloto.</p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px">
+                        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="nbOn" style="width:auto"> Activado</label>
+                        <label style="margin:0">Bono % <input type="number" id="nbPct" min="1" max="200" style="width:64px"></label>
+                        <label style="margin:0">Vale <input type="number" id="nbHours" min="1" max="72" style="width:56px"> h</label>
+                        <label style="margin:0">Días desde el registro <input type="text" id="nbDays" style="width:110px" placeholder="5, 15, 30"></label>
+                        <label style="margin:0">Sale a las <input type="number" id="nbHour" min="0" max="22" style="width:56px"> h</label>
+                        <button class="btn btn-primary btn-sm" onclick="saveNewbieOffers()">Guardar</button>
+                    </div>
+                    <div id="nbReport" style="margin-top:.7rem">Cargando…</div>
+                </div>
                 <!-- #827 (owner): HISTORIAS AUTOMÁTICAS abajo de la estrategia de notificaciones (fijas, corren solas) -->
                 <div class="card" style="margin-bottom:1rem" id="stAutoCard">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
