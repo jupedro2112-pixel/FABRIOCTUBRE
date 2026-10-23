@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 938. Ganamos: "Ver todo" de cada fila muestra SÓLO los juegos de esa fila — SW v630
+**Owner:** "en Mostrar Todo de algunos juegos no abre todos, va a otra sección". En Ganamos, "Ver todo" llevaba a TODO el catálogo (filas sin
+proveedor) o a todo el proveedor (`GN_MORE`, eliminado). Ahora `gnRow(i)` → `jgList` (la vista de lista de #936 sirve para las tres páginas;
+fuera de JUGAYGANA usa las tarjetas `_card`). PICA ROJA no cambia ("Ver más" ya despliega la misma sección).
+- ⚠️ picaroja.com (AWS) estaba en la v603 el 2026-10-23: nada desde #907 está en producción; Render sí (v629). Las pruebas del owner son en Render.
+
 ### 937. JUGAYGANA: página lista para las listas copiadas de jugaygana44 (zip del owner) + carpeta para Vercel — SW v629
 **Pedido (owner):** zip `ads.zip` con capturas de jugaygana44.bet (inicio, 92 proveedores, 9 categorías de la barra): copiar todo, portadas incluidas,
 y que cada juego abra con el enlace de Girox sin que se vea Girox. "No mezcles las portadas" (sólo las de JUGAYGANA). Lo que Girox no tiene: OCULTO (owner).

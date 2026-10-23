@@ -178,7 +178,6 @@ VIP.lobby = (function () {
     // #915 (owner: "cada proveedor con su juego correspondiente, en el mismo orden"): las filas salen de /data/ganamos-home.json = las listas
     // FIJAS del inicio de Ganamos, en su orden, con los juegos de Girox que coinciden en nombre y proveedor (lo que Girox no tiene NO se
     // reemplaza: la fila queda más corta o no aparece). "Especialmente para vos" en Ganamos es personal (su API): acá van los más jugados de Girox.
-    const GN_MORE = { 'Rubyplay': /ruby/i, 'Amusnet': /amusnet|egt/i, 'Pragmatic Slots': /^pragmatic play$/i, 'Pragmatic Live': /pragmatic.*live/i };
     let _gnHomeData = null;
     async function _gnData() {
         if (_gnHomeData) return _gnHomeData;
@@ -201,7 +200,8 @@ VIP.lobby = (function () {
     }
     function _gnRowsHtml() {
         if (!_gnHomeData) return '';
-        return (_gnHomeData.rows || []).map((r) => { const re = GN_MORE[r.title]; const pv = re ? _provId(re) : null; return _gcar(r.title, r.games, pv ? 'VIP.lobby.all(' + Number(pv.id) + ', \'' + jsq(r.title) + '\')' : 'VIP.lobby.go(\'slots\')'); }).join('');
+        // #938 (owner: "Ver todo va a otra sección"): muestra los juegos de ESA fila (antes: todo el catálogo o todo el proveedor).
+        return (_gnHomeData.rows || []).map((r, ri) => _gcar(r.title, r.games, 'VIP.lobby.gnRow(' + ri + ')')).join('');
     }
     async function _gnFillRows() {
         if (_gnHomeData) return;
@@ -288,9 +288,14 @@ VIP.lobby = (function () {
     // #937 cada proveedor y cada categoría de la barra copiados de jugaygana44), con la barra de categorías arriba.
     let _jgList = null;
     function jgList(title, games, cat) { _jgList = { title: String(title || ''), games: games || [], cat: cat || '' }; _allProv = null; _allCat = null; _view = 'jglist'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
+    function gnRow(i) { const r = ((_gnHomeData && _gnHomeData.rows) || [])[i]; if (r) jgList(r.title, r.games); } // #938
     function jgColl(i) { const c = ((_jgHomeData && _jgHomeData.collections) || [])[i]; if (c) jgList(c.title, c.games); }
     function _jgListHtml() {
         const L = _jgList || { title: '', games: [] };
+        if (SK().layout !== 'jugaygana') { // #938: Ganamos / PICA ROJA — la misma lista con sus tarjetas
+            return _backBar() + '<div class="prl-sh"><span class="prl-st">' + ico('slots') + '<h3>' + esc(L.title) + '</h3></span></div>' +
+                (L.games.length ? '<div class="prl-grid">' + L.games.map(_card).join('') + '</div>' : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
+        }
         return _backBar() + '<div class="jg-wrap">' + _jgCatnav(L.cat) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(L.title) + '</h2><span class="jg-line"></span></div></div></div>' +
             (L.games.length ? '<div class="prl-grid jg-grid">' + L.games.map(_jgCard).join('') + '</div>' : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
     }
@@ -305,7 +310,7 @@ VIP.lobby = (function () {
             if (!_jgHomeData) { m.innerHTML = '<div class="prl-note">Cargando…</div>'; _jgData().then(() => { if (_skin === 'jugaygana' && _view === 'inicio') _render(); }); return; }
             m.innerHTML = _jgHome(); _jgSlide = 0; _jgAuto(); if (_q) search(_q); return;
         }
-        if (_view === 'jglist' && SK().layout === 'jugaygana') { if (!_jgHomeData) { _jgData().then(() => _render()); } m.innerHTML = _jgListHtml(); return; } // #936
+        if (_view === 'jglist') { if (SK().layout === 'jugaygana' && !_jgHomeData) { _jgData().then(() => _render()); } m.innerHTML = _jgListHtml(); return; } // #936/#938
         if (_view === 'lobbies') { m.innerHTML = _backBar() + (_lobbies().length ? (SK().layout === 'ganamos' ? _gcar('Casino lobby', _lobbies(), null) : _row('grid', 'Casino lobby', _lobbies())) : '<div class="prl-note">No hay lobbies para mostrar ahora.</div>'); return; }
         if (_view === 'deportes') {
             m.innerHTML = _backBar() + _title('sport', 'Deportes', null) + '<div class="prl-sports">' + (_data.sports || []).map((s, i) => '<button type="button" class="prl-sport" onclick="VIP.lobby.sport(\'' + esc(s.path) + '\')"><img src="' + (SK().layout === 'ganamos' ? SK().dir + 'casino-bg.png' : SK().layout === 'jugaygana' ? '/images/jugaygana/io/sports_cover_m.webp' : SK().dir + 'b3.svg') + '" alt="" class="prl-sport-bg' + (i ? ' alt' : '') + '"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + '</small></span></button>').join('') + '</div><p class="prl-note">Entrás con tu misma cuenta y tu saldo.</p>';
@@ -456,5 +461,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, back, ql, sportsMenu, sportPick, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, back, ql, sportsMenu, sportPick, skin: () => _skin };
 })();
