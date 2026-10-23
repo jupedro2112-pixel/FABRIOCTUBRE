@@ -4,9 +4,20 @@
 > commit por commit está en `git log --oneline`. Esto captura decisiones, umbrales de
 > negocio y pendientes que NO se ven leyendo el código.
 >
-> **Última actualización: 2026-10-22**
+> **Última actualización: 2026-10-23**
 
 ## Sesión 2026-10-22
+
+### 931. Historias en la página PICA ROJA: aro/contador en la barra y botones que abren ARRIBA de la página — SW v627
+**Pedido (owner):** "el sistema de historias no está funcionando en PICA ROJA; quiero historias nuevas todos los días automático".
+- **Diagnóstico:** el motor automático (#827, `_storyAutoTick`) SÍ publica en producción: 5 por día (10:00 · 13:00 · 16:00 · 19:00 · 21:30 ART,
+  duran 24 h, temas que rotan + partidos + slot del lunes + bono del miércoles). Verificado en `picaroja.com/api/stories/public` el 2026-10-23.
+  Lo que fallaba era el FRONT dentro de la página de marca (`lobby.js`, z-index 99990):
+  1. el botón Historias de su barra (`casinoBarHtml` con `idSuffix`) no tenía id ⇒ nunca se le pintaba el aro rojo ni el contador (parecía vacío);
+  2. los botones de la historia (soporte, ruleta, VIP, cargar…) abrían su pantalla DETRÁS de la página ⇒ "no hace nada".
+- **Arreglo:** `stories._paintButton` pinta además todo `.casino-topbar .tn-stories` (aro + badge); `VIP.stories.paint()` se llama al abrir la
+  página. En el link `app:*` con la página abierta (`body.prl-open`): `cargar` = Carga rápida de la página; reembolso/misiones/referidos/retirar/
+  deportes/juegos se abren arriba (modal o casino); el resto cierra la página primero y después abre.
 
 ### 929. Sorteo: hay que ANOTARSE (app instalada con notificaciones + Telegram) y se suma DESDE que te anotás — SW v626
 **Pedido (owner):** "para empezar a sumar hay que anotarse, tener la app instalada con notificaciones y unirse a Telegram para ver los ganadores".

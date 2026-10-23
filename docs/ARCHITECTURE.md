@@ -1392,6 +1392,10 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Historias (#674/#676/#680):** 8 fotos `st2-*.png` (orden: instalar · cargá · referidos · reembolsos · ruleta · misiones · Telegram ·
   SMS), link `app:instalar` → `VIP.appTest.doInstall()`. Generador: `scratchpad/gen_stories.py` (no está en el repo; cada foto se
   regenera con su argumento `install|sms|ruleta|telegram`).
+- **Historias en las páginas de marca (#931):** la barra de PICA ROJA / Ganamos / JUGAYGANA (`casinoBarHtml` con `idSuffix`, sin ids) se pinta
+  desde `stories._paintButton` vía `.casino-topbar .tn-stories` (aro + badge; `VIP.stories.paint()` al abrir `lobby.open`). Los links `app:*`
+  con `body.prl-open`: lo que no es modal (soporte, ruleta, VIP…) cierra la página antes (si no, queda DETRÁS: lobby z-index 99990); `cargar` =
+  Carga rápida de la página. Una sección nueva enlazable desde historias que no sea `.modal` ⇒ sumarla a ese criterio.
 - **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.
 - **Casino (#695):** `ui.js enterCasino` espera 4×30 s y el error dice el motivo (`_fetchCasinoSession` devuelve `status`/`timedOut`);
   en Render el arranque en frío (~50 s) y los redeploys son la causa típica del "No pudimos abrirte el casino".

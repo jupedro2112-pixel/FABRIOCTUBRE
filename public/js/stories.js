@@ -49,6 +49,10 @@
         const lbl = _el('storiesLbl');
         if (lbl) lbl.textContent = _items.length ? (unseen ? 'Historias' : 'Historias') : 'Historias';
         btn.title = _items.length ? (_items.length + ' historia' + (_items.length === 1 ? '' : 's') + ' activa' + (_items.length === 1 ? '' : 's')) : 'Sin historias por ahora';
+        // #931 (owner: "las historias no funcionan en PICA ROJA"): la barra de arriba de las páginas de marca (PICA ROJA / Ganamos / JUGAYGANA)
+        // y la del casino también muestran el aro rojo y el contador de nuevas (antes la de las páginas no tenía id y nunca se pintaba).
+        try { document.querySelectorAll('.casino-topbar .tn-stories').forEach((b) => { b.classList.toggle('has-active', _items.length > 0); b.classList.toggle('has-new', unseen > 0);
+            const bd = b.querySelector('.st-badge'); if (bd) { bd.textContent = unseen > 9 ? '9+' : String(unseen); bd.style.display = unseen > 0 ? '' : 'none'; } }); } catch (_) {}
     }
 
     function open(startIdx) {
@@ -132,6 +136,12 @@
                 // #854: Deportes con el casino YA abierto ⇒ directo adentro (la sesión ya está), sin cerrar ni volver a entrar.
                 if (k === 'deportes' && VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return;
                 let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
+                // #931: tocada ADENTRO de una página de marca (PICA ROJA…): Cargar = la Carga rápida de la página; lo que se abre como modal
+                // (reembolso, misiones, referidos, retirar) va arriba; el resto (soporte, ruleta, VIP…) se abría DETRÁS ⇒ primero se cierra la página.
+                if (!wait && document.body.classList.contains('prl-open')) {
+                    if (k === 'cargar') { try { VIP.home.toggleCasinoLoad(); return; } catch (_) {} }
+                    if (!['reembolso', 'misiones', 'referidos', 'retirar', 'deportes', 'juegos'].includes(k)) { try { VIP.lobby.close(); wait = 200; } catch (_) {} }
+                }
                 try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
                 setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
             else if (playPath) { link.href = '#'; link.textContent = s.linkLabel || 'Jugar ahora ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close();
@@ -239,5 +249,5 @@
         ring.title = _items.length + ' historia' + (_items.length === 1 ? '' : 's');
         ring.style.display = '';
     }
-    VIP.stories = { init, load, loadPublic, open, openById, claimBonus, close, next, prev, pause, resume };
+    VIP.stories = { init, load, loadPublic, open, openById, claimBonus, close, next, prev, pause, resume, paint: _paintButton };
 })();

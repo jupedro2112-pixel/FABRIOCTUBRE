@@ -345,7 +345,7 @@ VIP.lobby = (function () {
     function open(view, skin) {
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); // #914: modales (Perfil, Info, Retiro…) arriba de la página
-        _view = view || 'inicio'; _render(); _paintBal(); setTimeout(() => { try { VIP.raffle.tick(); } catch (_) {} }, 0); // #919: cuenta regresiva del sorteo al toque
+        _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra setTimeout(() => { try { VIP.raffle.tick(); } catch (_) {} }, 0); // #919: cuenta regresiva del sorteo al toque
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
