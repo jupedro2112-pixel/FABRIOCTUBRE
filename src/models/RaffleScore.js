@@ -11,6 +11,9 @@ const schema = new mongoose.Schema({
   bonusGranted: { type: Number, default: 0 },   // bonos recibidos en el mes (1girox bonus.granted)
   validWagered: { type: Number, default: 0 },   // wagered × deposits / (deposits + bonusGranted)
   points: { type: Number, default: 0, index: true },
+  // #921 Gran Sorteo (monthKey 'G:<clave>'): desglose de los puntos
+  basePoints: { type: Number, default: 0 }, dailyPoints: { type: Number, default: 0 }, missionPoints: { type: Number, default: 0 },
+  activeDays: { type: Number, default: 0 }, missionWeeks: { type: Number, default: 0 },
   updatedAt: { type: Date, default: Date.now }
 });
 schema.index({ monthKey: 1, userId: 1 }, { unique: true });

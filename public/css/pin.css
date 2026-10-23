@@ -3118,3 +3118,20 @@ html body .plat-play-btn.plat-girox .plat-reco { background: #16a34a !important;
 .prl:not(.prl-jyg):not(.prl-gn) .prl-back { background: var(--p-red, #e60023); }
 .prl:not(.prl-jyg):not(.prl-gn) .prl-chev:hover, .prl:not(.prl-jyg):not(.prl-gn) .prl-st:hover .prl-chev { color: var(--p-red, #e60023); }
 .prl:not(.prl-jyg):not(.prl-gn) .prl-top-btn { background: var(--p-red, #e60023); }
+/* #921 (owner: "encuadrá bien"): los botones del sorteo del Inicio adentro del ancho (antes el relleno los hacía salir por la derecha) */
+.rf-entries { box-sizing: border-box; width: auto; margin: 8px 12px; overflow: hidden; }
+.rf-entries .rf-entry { box-sizing: border-box; width: 100%; max-width: 100%; margin: 0; padding: 9px 12px; gap: 10px; min-width: 0; }
+.rf-entries .rf-entry-t { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.rf-entries .rf-entry-t b { font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-entries .rf-entry-t small { font-size: 11.5px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rf-entries .rf-entry-img { width: 34px; height: 34px; }
+.rf-entries .rf-entry-c { flex: 0 0 auto; font-size: 22px; line-height: 1; }
+/* #921 Gran Sorteo: cómo sumar extras + mi puesto */
+.rf-gran-how { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; font-size: 12.5px; line-height: 1.35; }
+.rf-gran-how b { color: var(--rfb-acc); }
+.rf-gran-me { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.rf-gran-me div { background: rgba(0,0,0,.3); border-radius: 10px; padding: 8px 10px; }
+.rf-gran-me small { display: block; font-size: 10.5px; color: var(--rfb-mut); text-transform: uppercase; letter-spacing: .5px; }
+.rf-gran-me b { font-size: 20px; font-weight: 900; }
+.rf-gran .rf-rank { margin-top: 8px; } .rf-gran .rf-rank li { background: rgba(0,0,0,.28); color: #fff; }
+.rf-gran .rf-pod-txt { color: var(--rfb-mut); }

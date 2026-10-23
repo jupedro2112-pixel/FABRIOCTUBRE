@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 921. GRAN SORTEO por puntos con EXTRAS por actividad y misiones + botones del sorteo encuadrados — SW v617, admin SW v187
+**Pedido (owner):** el Gran Sorteo (auto $30.000.000 · viaje al Caribe para 2 · USD 2.000) también por puntos, más extras: +10 puntos por cada día
+con una carga de $10.000 y +10% de los puntos de la semana si completan las misiones semanales; "la actividad es importante". Y "encuadrá bien" los
+botones del sorteo del Inicio (se salían por la derecha).
+- `raffleService.computeGran` (en el mismo tick, `RaffleScore` con monthKey `G:<clave>`): base = suma de los puntos del sorteo mensual de los meses
+  del período · días activos = días (ART) con cargas reales que suman ≥ `dailyMinArs` ($10.000) × `dailyPoints` (10) · misiones = por cada semana
+  (lunes ART, `MissionClaim` credited) +`missionPct`% (10) de los puntos de ESA semana (stats de 1girox de la semana, misma regla de plata real).
+  Se guarda el desglose (basePoints, dailyPoints, missionPoints, activeDays, missionWeeks). Cierra al día siguiente del fin (ganadores 1-2-3,
+  idempotente). Período por defecto (el owner no lo dio): **1/11/2026 al 31/1/2027**, editable en el panel (con los extras).
+  Probado con Mongo en memoria (`scratchpad/mdb/gran.js`): 3 días ≥ $10.000 (dos cargas de $6.000 el mismo día cuentan; $5.000 no) y 10% de la semana.
+- `publicStatus.gran` + pantalla: cuenta regresiva, trofeos, cómo sumar (3 líneas), mi puesto/puntos con desglose, top 10 tapado, bases detalladas.
+- Los extras van SÓLO en el Gran Sorteo; el mensual sigue sólo por lo apostado.
+- CSS: `.rf-entries` con border-box y textos con "…" (no se salen del ancho).
+
 ### 920. Casino lobby, Volver, saldo y sin perfil en las páginas; sorteo minimizable (también en Girox) con fotos y podio; plataformas con sus colores; JUGÁ AQUÍ abre la elegida; burbuja movible — SW v616
 **Pedido (owner, varios mensajes):** sección "Casino lobby" con los lobbies de Girox en todas; "Volver" en cada sección; logo de JUGAYGANA (el de su
 barra) en los logos chicos; selector de plataforma (completo y básico) prolijo con los colores de cada una (Ganamos violeta, JUGAYGANA negro y

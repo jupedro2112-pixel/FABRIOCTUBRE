@@ -17712,6 +17712,7 @@ async function raffleLoad() {
             '<div class="dia-card"><div class="dia-card-h"><b>🎁 Premios</b><small>Lo que ven los clientes. Todos se pueden cobrar en efectivo.</small></div>' +
             '<div><b>Sorteo mensual</b> <input class="rf-in" data-k="active" data-f="ttl" value="' + escapeHtml(d.config.active.title) + '">' + [0, 1, 2].map((i) => pz('active', i)).join('') + '</div>' +
             '<div style="margin-top:10px"><b>Próximamente</b> <input class="rf-in" data-k="upcoming" data-f="ttl" value="' + escapeHtml(d.config.upcoming.title) + '">' + [0, 1, 2].map((i) => pz('upcoming', i)).join('') + '</div>' +
+            '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">Gran Sorteo del <input type="date" id="rfGStart" value="' + escapeHtml(d.config.upcoming.start || '') + '"> al <input type="date" id="rfGEnd" value="' + escapeHtml(d.config.upcoming.end || '') + '"> · +<input type="number" id="rfGDay" style="width:60px" value="' + Number(d.config.upcoming.dailyPoints || 10) + '"> pts por día con carga ≥ $<input type="number" id="rfGMin" style="width:90px" value="' + Number(d.config.upcoming.dailyMinArs || 10000) + '"> · +<input type="number" id="rfGPct" style="width:60px" value="' + Number(d.config.upcoming.missionPct || 10) + '">% semana con misiones</div>' +
             '<div style="margin-top:10px">Días hábiles para entregar: <input id="rfDays" type="number" min="1" max="60" value="' + Number(d.config.deliveryBusinessDays || 10) + '" style="width:70px"></div>' +
             '<button class="btn btn-primary" style="margin-top:10px" onclick="raffleSaveConfig()">Guardar premios</button></div>';
     } catch (e) { box.innerHTML = '<div class="cfg-sub">Error de conexión</div>'; }
@@ -17725,6 +17726,8 @@ async function raffleDelivered(mk, pos) {
 }
 async function raffleSaveConfig() {
     const cfg = { active: { prizes: [{}, {}, {}] }, upcoming: { prizes: [{}, {}, {}] }, deliveryBusinessDays: Number((document.getElementById('rfDays') || {}).value) || 10 };
+    const gv = (id) => (document.getElementById(id) || {}).value; // #921
+    Object.assign(cfg.upcoming, { start: gv('rfGStart'), end: gv('rfGEnd'), dailyPoints: Number(gv('rfGDay')), dailyMinArs: Number(gv('rfGMin')), missionPct: Number(gv('rfGPct')) });
     document.querySelectorAll('#raffleBody .rf-in').forEach((el) => { const k = el.dataset.k; if (el.dataset.f === 'ttl') cfg[k].title = el.value; else cfg[k].prizes[Number(el.dataset.i)][el.dataset.f] = el.value; });
     try { const r = await authFetch('/api/admin/raffle/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) }); const d = await r.json(); showToast(r.ok ? '✅ Premios guardados' : (d.error || 'Error'), r.ok ? 'success' : 'error'); } catch (e) { showToast('Error de conexión', 'error'); }
 }

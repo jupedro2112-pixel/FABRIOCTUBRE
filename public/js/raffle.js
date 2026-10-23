@@ -67,6 +67,17 @@ VIP.raffle = (function () {
             '<div class="rf-box" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🏆 Sorteo mensual</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span><button type="button" class="rf-minbtn" onclick="VIP.raffle.toggleMin(event)" aria-label="Minimizar">–</button></div><div class="rf-count js-rf-count" data-to="' + esc(to || '') + '"></div>' + _trophies(d.prizes || DEF.prizes, 'active') + '<em class="rf-box-go">Ver ranking ›</em></div>' +
             '<div class="rf-box rf-box-soon" role="button" tabindex="0" onclick="VIP.raffle.open(\'' + b + '\')"><div class="rf-box-h"><b>🚗 ' + esc((d.upcoming && d.upcoming.title) || DEF.upcoming.title) + '</b><span>Empieza en</span></div><div class="rf-count js-rf-count" data-to="' + esc(st) + '"></div>' + _trophies((d.upcoming && d.upcoming.prizes) || DEF.upcoming.prizes, 'upcoming') + '</div></div>';
     }
+    // #921 GRAN SORTEO: también por puntos + extras por actividad (días con carga) y por misiones semanales.
+    function _granHtml(g, up) {
+        if (!g) return '';
+        const me = g.me || {}; const end = fdate(g.endsAt); const ns = g.notStarted;
+        return '<section class="rf-box rf-box-soon rf-gran"><div class="rf-box-h"><b>🚗 ' + esc(g.title || 'Gran Sorteo') + '</b><span>' + (ns ? 'Empieza en' : 'Termina en') + '</span></div><div class="rf-count js-rf-count" data-to="' + esc(ns ? g.startsAt : g.endsAt) + '"></div>' + _trophies((up && up.prizes) || g.prizes, 'upcoming') +
+            '<ul class="rf-gran-how"><li>🎰 <b>100 pts</b> cada $100.000 apostados</li><li>📅 <b>+' + num(g.dailyPoints) + ' pts</b> por cada día que cargás $' + num(g.dailyMinArs) + ' o más</li><li>🎯 <b>+' + num(g.missionPct) + '%</b> de tus puntos de la semana si completás tus misiones semanales</li></ul>' +
+            (!ns ? '<div class="rf-gran-me"><div><small>Tu puesto</small><b>' + (me.position ? me.position + '°' : '—') + '</b></div><div><small>Puntos</small><b>' + num(me.points) + '</b></div></div>' +
+                '<p class="rf-pod-txt">Apuestas ' + num(me.base) + ' + días activos ' + num(me.daily) + ' (' + num(me.activeDays) + ' días) + misiones ' + num(me.missions) + ' (' + num(me.missionWeeks) + ' sem.)' + (me.position > 1 ? ' · te faltan <b>' + num(me.toFirst) + '</b> para el 1°' : '') + '</p>' +
+                ((g.top || []).length ? '<ol class="rf-rank">' + g.top.map((t) => '<li class="' + (t.me ? 'me' : '') + (t.pos <= 3 ? ' top' : '') + '"><span class="rf-pos">' + (t.pos <= 3 ? trophy(t.pos) : t.pos + '°') + '</span><span class="rf-name">' + esc(t.name) + (t.me ? ' (vos)' : '') + '</span><b>' + num(t.points) + ' pts</b></li>').join('') + '</ol>' : '') : '') +
+            '<p class="rf-pod-txt">Del ' + esc(fdate(g.startsAt)) + ' al ' + esc(end) + '. Ganan los 3 con más puntos.</p></section>';
+    }
     function _render() {
         const m = $('rfMain'); if (!m) return;
         if (!_d) { m.innerHTML = '<div class="rf-note">Cargando el sorteo…</div>'; return; }
@@ -81,7 +92,7 @@ VIP.raffle = (function () {
             // #920: cómo vienen los ganadores — podio (2° · 1° · 3°) con los premios; con el mes cerrado, los nombres tapados.
             '<section class="rf-sec"><h3>🏅 Ganadores</h3><div class="rf-podium">' + [1, 0, 2].map((i) => { const w = _d.lastWinners && _d.lastWinners.winners[i]; const p = (_d.prizes || [])[i] || {}; return '<div class="rf-pod rf-pod' + (i + 1) + '">' + trophy(i + 1) + '<b>' + esc(w ? w.name : (i + 1) + '° puesto') + '</b><small>' + esc(w ? w.prize : p.title || '') + '</small><span class="rf-pod-base">' + (i + 1) + '</span></div>'; }).join('') + '</div>' +
             '<p class="rf-pod-txt">' + (_d.lastWinners ? 'Ganadores de ' + esc(_d.lastWinners.monthLabel) + '. ' : '') + 'Los 3 con más puntos al cierre ganan. Se publican el ' + esc(fdate(_d.announceAt, true)) + ' h y los contacta nuestro Soporte de entrega de premios.</p></section>' +
-            '<section class="rf-box rf-box-soon"><div class="rf-box-h"><b>🚗 ' + esc((_d.upcoming && _d.upcoming.title) || 'Gran Sorteo') + '</b><span>Empieza en</span></div><div class="rf-count js-rf-count" data-to="' + esc(_d.startsAt) + '"></div>' + _trophies(_d.upcoming && _d.upcoming.prizes, 'upcoming') + '<p class="rf-pod-txt">Empieza en noviembre. Sus bases se publican acá antes del inicio.</p></section>' +
+            _granHtml(_d.gran, _d.upcoming) +
             '<details class="rf-bases"><summary>📜 Bases y condiciones</summary><ul class="rf-rules">' +
             '<li><b>Empieza:</b> el 1 de noviembre de 2026. Lo jugado antes no suma.</li>' +
             '<li><b>Participan:</b> clientes registrados en la app de PICA ROJA con al menos una carga real en el mes. Suma lo jugado en PICA ROJA, JUGAYGANA, Ganamos o Girox (misma cuenta).</li>' +
@@ -90,6 +101,7 @@ VIP.raffle = (function () {
             '<li><b>Ganadores:</b> los 3 primeros del ranking, publicados el ' + esc(fdate(_d.announceAt, true)) + ' h en el menú completo, con nombres tapados. Empate: más apostado válido; si sigue igual, quien llegó antes.</li>' +
             '<li><b>Entrega:</b> dentro de los ' + num(_d.deliveryBusinessDays) + ' días hábiles, con nuestro Soporte exclusivo de entrega de premios, al titular de la cuenta con su DNI.' + (_d.cashOption ? ' Cada premio puede cobrarse en efectivo.' : '') + '</li>' +
             '<li><b>Transparencia:</b> cada jugador ve su puesto y sus puntos en todo momento. Una persona = una cuenta; las cuentas duplicadas o con jugadas irregulares quedan fuera.</li>' +
+            (_d.gran ? '<li><b>Gran Sorteo (' + esc(_d.gran.title || '') + '):</b> del ' + esc(fdate(_d.gran.startsAt)) + ' al ' + esc(fdate(_d.gran.endsAt)) + ' (hora argentina). Suma: 100 puntos cada $100.000 apostados con plata real (misma regla que el mensual) + ' + num(_d.gran.dailyPoints) + ' puntos por cada día con cargas reales que sumen $' + num(_d.gran.dailyMinArs) + ' o más + ' + num(_d.gran.missionPct) + '% de los puntos de cada semana (lunes a domingo) en la que completes misiones semanales. Ganan los 3 con más puntos al cierre; se publican al día siguiente y se entregan igual que el mensual (también en efectivo).</li>' : '') +
             (_d.lastWinners ? '<li><b>Últimos ganadores (' + esc(_d.lastWinners.monthLabel) + '):</b> ' + _d.lastWinners.winners.map((w) => w.pos + '° ' + esc(w.name) + ' · ' + esc(w.prize) + (w.delivered ? ' ✅' : '')).join(' · ') + '</li>' : '') +
             '</ul></details>';
         _countdown();

@@ -25801,7 +25801,7 @@ setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyA
 // 100 puntos cada $100.000 apostados con plata real (proporción cargas / (cargas + bonos) del mes, datos de 1girox). Participan sólo los
 // clientes de la app con carga real en el mes. Cierra el último día 23:59 (ART); el día 1 congela ganadores 1-2-3. Cron cada 20 min con
 // candado entre instancias; nunca corre con el casino simulado (Render comparte la base con producción).
-const _raffleDeps = () => ({ models: { User, Transaction, RaffleScore, RaffleMonth, Config }, girox, logger });
+const _raffleDeps = () => ({ models: { User, Transaction, RaffleScore, RaffleMonth, Config, MissionClaim }, girox, logger });
 async function _raffleTick() {
   try { const r = await raffleService.tick(_raffleDeps()); if (r && (r.close || (r.current && r.current.errors))) logger.info('[sorteo] ' + JSON.stringify(r)); }
   catch (e) { logger.warn('[sorteo] tick: ' + e.message); }
@@ -25855,7 +25855,11 @@ app.post('/api/admin/raffle/config', authMiddleware, adminMiddleware, async (req
     const b = req.body || {}; const clean = (p) => (Array.isArray(p) ? p.slice(0, 3).map((x, i) => ({ pos: i + 1, title: String((x && x.title) || '').slice(0, 60), detail: String((x && x.detail) || '').slice(0, 80) })) : undefined);
     const cur = await raffleService.getConfig(_raffleDeps());
     const next = { active: { title: String((b.active && b.active.title) || cur.active.title).slice(0, 60), prizes: clean(b.active && b.active.prizes) || cur.active.prizes },
-      upcoming: { title: String((b.upcoming && b.upcoming.title) || cur.upcoming.title).slice(0, 60), prizes: clean(b.upcoming && b.upcoming.prizes) || cur.upcoming.prizes },
+      upcoming: Object.assign({}, cur.upcoming, { title: String((b.upcoming && b.upcoming.title) || cur.upcoming.title).slice(0, 60), prizes: clean(b.upcoming && b.upcoming.prizes) || cur.upcoming.prizes },
+        // #921: período y extras del Gran Sorteo (fechas YYYY-MM-DD hora argentina)
+        (b.upcoming && /^\d{4}-\d{2}-\d{2}$/.test(String(b.upcoming.start || ''))) ? { start: b.upcoming.start } : {}, (b.upcoming && /^\d{4}-\d{2}-\d{2}$/.test(String(b.upcoming.end || ''))) ? { end: b.upcoming.end } : {},
+        (b.upcoming && Number(b.upcoming.dailyPoints) >= 0) ? { dailyPoints: Math.min(1000, Number(b.upcoming.dailyPoints)) } : {}, (b.upcoming && Number(b.upcoming.dailyMinArs) > 0) ? { dailyMinArs: Math.round(Number(b.upcoming.dailyMinArs)) } : {},
+        (b.upcoming && Number(b.upcoming.missionPct) >= 0) ? { missionPct: Math.min(100, Number(b.upcoming.missionPct)) } : {}),
       deliveryBusinessDays: Math.max(1, Math.min(60, Number(b.deliveryBusinessDays) || cur.deliveryBusinessDays)), cashOption: b.cashOption !== false };
     await Config.updateOne({ key: 'raffleconfig' }, { $set: { value: next } }, { upsert: true });
     res.json({ success: true, config: next });
