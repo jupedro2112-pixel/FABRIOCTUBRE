@@ -2839,22 +2839,24 @@ async function _depositWithBonus(adapter, username, amount, description, referen
   const _multRejected = (x) => !x.success && x.httpStatus === 422 && x.code !== 'bonus_out_of_range' && !/bonus_out_of_range|bonus out of range/i.test(String(x.error || ''));
   if (!(bonus > 0)) {
     let r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true }));
-    for (const fb of [2, 0]) { if (!(_multRejected(r0) && depMult > 0 && depMult !== fb)) break; logger.warn(`[deposit] ${username}: 1girox rechazó el rollover ×${depMult} de la carga ⇒ pruebo ×${fb}`); depMult = fb; r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
+    for (const fb of [2, 1, 0]) { /* #903 (owner): ×3 → ×2 → ×1 (y sólo si 1girox no acepta ninguno, sin rollover propio + alerta) */ if (!(_multRejected(r0) && depMult > 0 && depMult !== fb)) break; logger.warn(`[deposit] ${username}: 1girox rechazó el rollover ×${depMult} de la carga ⇒ pruebo ×${fb}`); depMult = fb; r0 = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
     if (r0.success) r0.depositRolloverX = depMult;
+    if (r0.success && depMult === 0 && (await _depositRolloverXFor(adapter)) > 0) { logger.error(`[deposit] ⚠️ ${username}: la carga entró SIN rollover propio (1girox no aceptó ×3/×2/×1). Pedirle a 1girox que habilite el rollover en la red. ref=${reference}`); try { mongoose.connection.collection('hgcash_webhook_diag').updateOne({ _id: _schedArtKey(new Date()) }, { $inc: { cargasSinRollover: 1 }, $set: { lastSinRollover: { at: new Date(), username, reference } } }, { upsert: true }).catch(() => {}); } catch (_) {} }
     return r0;
   }
   const mult = await _bonusMultiplierFor(adapter);
   let r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult }));
   // si rechaza el ×N de la carga: se prueba ×2 (siempre aceptado) y recién después sin rollover propio — misma reference, un 422 no movió plata
-  for (const fb of [2, 0]) { if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; logger.warn(`[auto-bonus] ${username}: 1girox rechazó el rollover ×${depMult} de la carga (${r.code || r.error}) ⇒ pruebo ×${fb}`); depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult })); }
+  for (const fb of [2, 1, 0]) { /* #903 (owner): ×3 → ×2 → ×1 (y sólo si 1girox no acepta ninguno, sin rollover propio + alerta) */ if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; logger.warn(`[auto-bonus] ${username}: 1girox rechazó el rollover ×${depMult} de la carga (${r.code || r.error}) ⇒ pruebo ×${fb}`); depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ bonusAmount: bonus, bonusMultiplier: mult })); }
   let needSeparate = false;
   if (!r.success && (r.code === 'bonus_out_of_range' || (r.httpStatus === 422 && /bon(o|us)/i.test(String(r.error || ''))))) {
     logger.warn(`[auto-bonus] ${username}: 1girox rechazó la carga por el bono $${bonus} (${r.code || r.error}) ⇒ carga sin bono + bono aparte`);
     r = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true }));
-    for (const fb of [2, 0]) { if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
+    for (const fb of [2, 1, 0]) { /* #903 (owner): ×3 → ×2 → ×1 (y sólo si 1girox no acepta ninguno, sin rollover propio + alerta) */ if (!(_multRejected(r) && depMult > 0 && depMult !== fb)) break; depMult = fb; r = await adapter.depositToUser(username, amount, description, reference, _wg({ noBonus: true })); }
     needSeparate = !!r.success;
   } else if (r.success && r.bonusFailed) needSeparate = true;
   if (r.success) r.depositRolloverX = depMult;
+  if (r.success && depMult === 0 && (await _depositRolloverXFor(adapter)) > 0) { logger.error(`[deposit] ⚠️ ${username}: la carga entró SIN rollover propio (1girox no aceptó ×3/×2/×1 en la carga). Pedirle a 1girox que habilite el rollover en la red. ref=${reference}`); try { mongoose.connection.collection('hgcash_webhook_diag').updateOne({ _id: _schedArtKey(new Date()) }, { $inc: { cargasSinRollover: 1 }, $set: { lastSinRollover: { at: new Date(), username, reference } } }, { upsert: true }).catch(() => {}); } catch (_) {} }
   if (r.success && !needSeparate) { r.bonusVia = 'attached'; return r; }
   if (needSeparate) {
     r.bonusFailed = true;
@@ -2882,7 +2884,8 @@ async function _depositRolloverXFor(adapter) {
     // la lista de la CARGA es config.rollover.multipliers (la del bono es otra); el panel de 1girox ofrece 0/1/2/3/5/10
     const cfg = await girox.getPlatformConfig(); const raw = cfg.success && cfg.config && cfg.config.rollover && cfg.config.rollover.multipliers;
     const allowed = Array.isArray(raw) ? raw.map(Number).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b) : [];
-    if (allowed.length && !allowed.includes(cv)) { const up = allowed.filter((n) => n >= cv); return up.length ? up[0] : allowed[allowed.length - 1]; }
+    // #903 (owner): "si no funciona ×3, ponele ×2 mínimo; si no, ×1" ⇒ el permitido más ALTO que no pase del configurado (≥ 1); si no hay, el menor ≥ 1.
+    if (allowed.length && !allowed.includes(cv)) { const down = allowed.filter((n) => n <= cv && n >= 1); if (down.length) return down[down.length - 1]; const up = allowed.filter((n) => n >= 1); return up.length ? up[0] : 0; }
   } catch (_) {}
   return cv;
 }
@@ -3634,6 +3637,48 @@ function _hgWebhookDiag(result, req, extra) {
     mongoose.connection.collection('hgcash_webhook_diag').updateOne({ _id: dk }, { $inc: inc, $set: Object.assign({ lastAt: new Date(), lastResult: result, lastIp: String(req.ip || '').slice(0, 60), lastFwdBy: String(req.get('X-Forwarded-By') || '').slice(0, 80) || null }, result === 'ok' ? { lastOkAt: new Date() } : { lastBadAt: new Date(), lastBadResult: result }, extra || {}) }, { upsert: true }).catch(() => {});
   } catch (_) {}
 }
+// #902 (owner: "¿por qué no detecta la carga directo? necesito que cargue todo directo"): RESPALDO del webhook. Si el aviso del banco no
+// llega (URL o secreto mal en hgcash), cada minuto se le pregunta a la API del banco qué entró en las últimas 3 h y lo que falta se guarda
+// como BankMovement y se cruza con los comprobantes igual que un aviso (`hgcashMatchFromMovement`). Sólo movimientos ENTRANTES con código
+// único del banco (COELSA o externalID): si después llega también el aviso, la carga no se repite (HgcashCharge.chargeKey es único y la
+// reference a 1girox es la misma). Kill switch: HGCASH_POLL_DISABLED=1.
+let _hgPollRunning = false;
+async function _hgcashPollTick() {
+  if (_hgPollRunning || process.env.HGCASH_POLL_DISABLED === '1') return;
+  _hgPollRunning = true;
+  const diag = (set, inc) => { try { mongoose.connection.collection('hgcash_webhook_diag').updateOne({ _id: _schedArtKey(new Date()) }, Object.assign({ $set: set }, inc ? { $inc: inc } : {}), { upsert: true }).catch(() => {}); } catch (_) {} };
+  try {
+    const cfg = await getHgcashConfig(); if (!cfg.enabled) return;
+    const hg = require('./src/services/hgcashService'); if (!hg.isEnabled()) return;
+    let accId = cfg.accountId;
+    if (!accId) { const acc = await hg.getAccounts(); if (acc.ok && (acc.data || []).length) { const a = acc.data.find((x) => !x.currency || /ARS/i.test(String(x.currency))) || acc.data[0]; accId = a.id; } }
+    if (!accId) { diag({ lastPollAt: new Date(), lastPollError: 'sin cuenta del banco' }); return; }
+    const lm = await hg.listMovements({ accountId: accId, from: new Date(Date.now() - 3 * 3600 * 1000), to: new Date() });
+    if (!lm.ok) { diag({ lastPollAt: new Date(), lastPollError: String(lm.error || 'error').slice(0, 200) }); return; }
+    let added = 0;
+    for (const it of lm.items) {
+      if (it.direction !== 'in') continue;
+      const p = it.raw || {};
+      const coelsa = p.coelsaCode || p.coelsa || null, ext = p.externalID || p.externalId || null, id = String(p.id || it.id || '');
+      if (!id || (!coelsa && !ext)) continue;
+      const or = [{ movementId: id }]; if (coelsa) or.push({ coelsaCode: coelsa }); if (ext) or.push({ externalId: ext });
+      if (await BankMovement.exists({ $or: or })) continue;
+      const amountNum = it.amount || (p.amount != null ? (Number(String(p.amount).replace(/[^\d.-]/g, '')) || null) : null);
+      const doc = { movementId: id, externalId: ext, coelsaCode: coelsa, amount: amountNum, amountRaw: p.amount != null ? String(p.amount) : null, currency: p.currency || null, direction: 'Inbound',
+        status: p.status || it.status || null, type: p.type || null, accountId: p.accountId || accId, fromName: p.fromName || null, fromCBU: p.fromCBU || null, fromCUIT: p.fromCUIT || null,
+        toName: p.toName || null, toCBU: p.toCBU || null, toCUIT: p.toCUIT || null, date: it.date || (p.date ? new Date(p.date) : null), timezone: p.timezone || null, topic: 'POLL', eventType: 'poll', raw: p };
+      try { await BankMovement.create({ ...doc, matchStatus: 'pending', createdAt: new Date() }); } catch (e) { if (e && e.code === 11000) continue; throw e; }
+      added++;
+      logger.info(`[hgcash] consulta al banco: entrada nueva $${amountNum} de "${doc.fromName || '?'}" coelsa=${coelsa || '-'} (el aviso no había llegado)`);
+      const fresh = await BankMovement.findOne({ movementId: id }).lean();
+      if (fresh) hgcashMatchFromMovement(fresh).catch((e) => logger.warn('[hgcash] consulta: match ' + e.message));
+    }
+    if (added) _emitHgcashUpdate('movimiento');
+    diag({ lastPollAt: new Date(), lastPollError: null, lastPollSeen: lm.items.length }, added ? { pollAdded: added } : null);
+  } catch (e) { logger.warn('[hgcash] consulta al banco: ' + e.message); diag({ lastPollAt: new Date(), lastPollError: String(e.message).slice(0, 200) }); }
+  finally { _hgPollRunning = false; }
+}
+setTimeout(() => { _hgcashPollTick().catch(() => {}); setInterval(() => { _hgcashPollTick().catch(() => {}); }, 60 * 1000); }, 90 * 1000);
 app.post('/api/hgcash/webhook', async (req, res) => {
   try {
     const secrets = _hgcashWebhookSecrets(); // #320: panel y/o SSM
@@ -20418,12 +20463,14 @@ app.get('/api/admin/hgcash/diagnostico', authMiddleware, adminMiddleware, async 
     if (!w.total && !(api.ok && api.entrantes > 0)) causas.push({ sev: 'media', t: 'Hoy no llegó ningún aviso del banco', fix: 'Si hubo transferencias, revisar la dirección del webhook en la cuenta hgcash.' });
     if (cbuApp && cbuCuenta && cbuApp !== cbuCuenta) causas.push({ sev: 'alta', t: 'El CBU que ve el cliente en la app NO es el de la cuenta conectada al banco automático', fix: 'Poner en la app el CBU de la cuenta hgcash (o conectar la cuenta correcta).' });
     if (cbuApp && cbuCfg && cbuApp !== cbuCfg) causas.push({ sev: 'media', t: 'El CBU de la app es distinto del configurado en el banco automático', fix: 'Que coincidan.' });
+    if ((w.cargasSinRollover || 0) > 0) causas.push({ sev: 'alta', t: 'Hoy entraron ' + w.cargasSinRollover + ' carga(s) SIN el rollover de la carga: 1girox no aceptó ×3, ×2 ni ×1', fix: 'Pedirle a 1girox que habilite el rollover (objetivo de apuesta) en la carga para tu red.' }); // #903
     if (!causas.length) causas.push({ sev: 'ok', t: 'No se ve ningún problema de configuración', fix: 'Hacé una transferencia chica de prueba y volvé a revisar.' });
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, dia: dk,
       config: { activado: !!cfg.enabled, modo: cfg.mode, claveApi: hgSvc.isEnabled(), secretoWebhook: secretOk, cbuConfig: cbuCfg ? '…' + cbuCfg.slice(-6) : null, cbuApp: cbuApp ? '…' + cbuApp.slice(-6) : null, cbuCuenta: cbuCuenta ? '…' + cbuCuenta.slice(-6) : null },
       avisos: { hoy: w.total || 0, aceptados: (r.ok || 0) + (r.ok_pago || 0), entrantes: r.ok || 0, firmaInvalida: r.firma_invalida || 0, sinSecreto: r.sin_secreto || 0, sinId: r.sin_id || 0, ultimo: w.lastAt || null, ultimoResultado: w.lastResult || null, ultimoOk: w.lastOkAt || null, ultimoRechazo: w.lastBadAt || null, ayer: (diagY && diagY.total) || 0, reenviadoPor: w.lastFwdBy || null },
       movimientos: { hoy: movHoy, entrantesHoy: movIn, ultimo: lastMov ? lastMov.createdAt : null, ultimoEntrante: lastIn ? lastIn.createdAt : null },
+      consulta: { ultima: w.lastPollAt || null, error: w.lastPollError || null, agregadasHoy: w.pollAdded || 0, vistas: w.lastPollSeen || 0 }, // #902
       bancoApi: api, causas });
   } catch (e) { logger.error('[hgcash] diagnóstico: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });

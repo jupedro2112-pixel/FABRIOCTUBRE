@@ -17522,6 +17522,7 @@ async function hgDiagRun() {
             '<tr><td>Avisos del banco hoy</td><td><b>' + a.hoy + '</b> (aceptados ' + a.aceptados + ')</td><td>Rechazados</td><td>firma inválida ' + a.firmaInvalida + ' · sin secreto ' + a.sinSecreto + '</td></tr>' +
             '<tr><td>Último aviso</td><td>' + t(a.ultimo) + ' (' + escapeHtml(a.ultimoResultado || '—') + ')</td><td>Avisos ayer</td><td>' + a.ayer + '</td></tr>' +
             '<tr><td>Movimientos guardados hoy</td><td>' + m.hoy + ' (entrantes ' + m.entrantesHoy + ')</td><td>Último entrante guardado</td><td>' + t(m.ultimoEntrante) + '</td></tr>' +
+            '<tr><td>Consulta automática al banco (cada 1 min)</td><td colspan="3">' + (j.consulta && j.consulta.ultima ? 'última ' + t(j.consulta.ultima) + ' · ' + (j.consulta.error ? '<span style="color:#d97706">' + escapeHtml(j.consulta.error) + '</span>' : 'ok') + ' · entradas recuperadas hoy <b>' + (j.consulta.agregadasHoy || 0) + '</b>' : 'todavía no corrió') + '</td></tr>' +
             '<tr><td>Según la API del banco, hoy</td><td colspan="3">' + (b.ok ? '<b>' + b.entrantes + '</b> transferencias entrantes (' + b.hoy + ' movimientos) · última ' + t(b.ultima) : '<span style="color:#d97706">' + escapeHtml(b.error || 'no se pudo consultar') + '</span>') + '</td></tr>' +
             '</tbody></table></div>' +
             '<div style="font-size:11.5px;color:var(--p-muted,#9ca3af);margin-top:6px">Los avisos se cuentan desde que se subió esta versión. Si después de una transferencia de prueba sigue en 0, el aviso del banco no llega a picaroja.com.</div>';

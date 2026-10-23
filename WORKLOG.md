@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 902–903. 🏦 Consulta al banco cada 1 min (respaldo del webhook) · rollover de la carga ×3 → ×2 → ×1 — admin SW v181
+**Pedidos (owner, captura de Cargas pendientes: $7.000 bien leído pero "todavía no figura una transferencia de ese monto en el banco
+automático"):** "¿por qué no detecta la carga directo? necesito que cargue todo directo, detecte y cargue, todo ágil" · "si no funciona ×3
+ponele ×2 mínimo, si no ×1, pero que no se pueda retirar el bono si no apostó: evitar estafas".
+- **#902** `_hgcashPollTick` (cada 60 s, cada instancia): `hgcashService.listMovements` de las últimas 3 h; cada ENTRANTE con código único
+  (COELSA o externalID) que no esté en BankMovement (por id, coelsa o externalId) se guarda (`topic:'POLL'`) y va a `hgcashMatchFromMovement`
+  como un aviso. Sin código único no se toma (no se puede asegurar que no se repita). Doble carga imposible: `HgcashCharge.chargeKey` único
+  + misma reference a 1girox. Diagnóstico muestra "Consulta automática al banco" (última, error, entradas recuperadas hoy). Kill switch
+  `HGCASH_POLL_DISABLED=1`. Probado en Mongo en memoria (entrada nueva sí; salida, sin coelsa y coelsa ya visto no; 2 pasadas sin duplicar).
+- **#903** respaldo del rollover de la carga `[2, 1, 0]` (antes `[2, 0]`); si la lista de 1girox no tiene el ×3 se usa el permitido más ALTO
+  ≤ 3 (×2, ×1) y si no hay ninguno, el menor ≥ 1 (×5). Si igual entra sin rollover propio: log de error + contador en el diagnóstico ("pedirle a
+  1girox que habilite el rollover"). El bono sigue SIEMPRE con ×5. Probado: acepta ×3 → ×3; rechaza ×3 → ×2; sólo ×1 → ×1; nada → sin + alerta.
+
 ### 901. 📌 Panel: "🎯 Manejo · Atención automática" FIJADO arriba (cargas / retiros / soporte); el resto abajo — admin SW v180
 **Pedido (owner):** "dejá todo lo nuevo de chat, pagos, retiros del lado de cargas / retiro / soporte y bajá el resto; dejá fijado arriba
 Manejo · Atención automática". `.nav-pinned` (sticky dentro del `.sidebar-nav`, que es el que scrollea) con Soporte · Comprobantes a verificar ·
