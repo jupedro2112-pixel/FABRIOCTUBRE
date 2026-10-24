@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 987. Casino en vivo con TODOS los proveedores en las 4 páginas de marca (= F971) — SW v660
+La lista pública de proveedores de 1girox sólo trae a Evolution entre los de vivo (Ezugi, Pragmatic Live, SA Gaming, Iconic21 Live, Vivo Gaming, LiveVegas,
+TVBet y ElCasino tienen sus mesas en el catálogo pero no figuran). `public/data/girox-live.json` (9 proveedores, ~1.100 mesas; `scripts/girox/build-live.py`
+desde el catálogo completo del 2026-10-23) alimenta "En vivo" de las 4 páginas y suma esos proveedores a "Proveedores" del Inicio de PICA ROJA. Detalle: F971.
+
 ### 986. 🔀 FUSIÓN: esta versión (hasta #985) + las PÁGINAS DE MARCA de FABRIOCTUBRE (PICA ROJA · JUGAYGANA · Ganamos · BuffaloPlay) — SW v659 · admin SW v208
 **Pedido (owner):** "usamos las páginas como las configuramos [en FABRIOCTUBRE]; de allá toda la configuración y la página completa". Base = este repo TAL CUAL
 (commit `1e6ae70`, #985); encima, SÓLO lo de las páginas (hecho en FABRIOCTUBRE, rama `fusion-gemela-985`). Donde ambos tocaban lo mismo quedó lo de acá.
