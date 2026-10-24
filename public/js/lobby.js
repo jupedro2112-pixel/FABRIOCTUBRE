@@ -165,8 +165,8 @@ VIP.lobby = (function () {
     function _gcar(title, games, onclick) {
         if (!games || !games.length) return '';
         const id = 'gnC' + (++_gcN); const pages = Math.ceil(Math.min(games.length, 24) / 4);
-        return '<section class="gn-sec"><div class="gn-sh"><span>' + esc(title) + '</span>' + (onclick ? '<button type="button" onclick="' + onclick + '">Ver todo ›</button>' : '') + '</div>' +
-            '<div class="gn-car" id="' + id + '" onscroll="VIP.lobby.gcarScroll(this)">' + games.slice(0, 24).map((g) => '<button type="button" class="gn-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<i>' + esc(g.name) + '</i></span></button>').join('') + '</div>' +
+        return '<section class="gn-sec"><div class="gn-sh"><span>' + esc(title) + '</span>' + (onclick ? '<button type="button" onclick="' + onclick + '">Mostrar todo ›</button>' : '') + '</div>' +
+            '<div class="gn-car" id="' + id + '" onscroll="VIP.lobby.gcarScroll(this)">' + games.slice(0, 24).map((g) => '<button type="button" class="gn-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<i>' + esc(g.name) + '</i></span><b class="gn-gname">' + esc(g.name) + '</b></button>').join('') + '</div>' + // #947: el nombre debajo, como su página
             (pages > 1 ? '<div class="gn-bars" data-for="' + id + '">' + Array.from({ length: pages }, (_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div>' : '') + '</section>';
     }
     function gcarScroll(el) {
@@ -190,7 +190,7 @@ VIP.lobby = (function () {
         return _gnPromos(false) +
             '<div class="gn-links"><button type="button" class="gn-link" onclick="VIP.lobby.go(\'slots\')"><img src="' + SK().dir + 'casino-original.webp" alt=""><b>Casino</b><span>Diversión sin límites ›</span></button>' +
             '<button type="button" class="gn-link" onclick="VIP.lobby.go(\'vivo\')"><img src="' + SK().dir + 'livecasino-original.webp" alt=""><b>Casino en vivo</b><span>Jugá con crupieres en vivo ›</span></button></div>' +
-            (tiles.length ? '<div class="gn-tiles">' + tiles.map((g) => '<button type="button" class="gn-tile" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' + (g.img ? '<img src="' + esc(img(g.img)) + '" alt="">' : '<i>' + esc(g.name) + '</i>') + '</button>').join('') + '</div>' : '') +
+            (tiles.length ? '<div class="gn-tiles">' + tiles.map((g) => '<button type="button" class="gn-tile" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '">' + (g.img ? '<img src="' + esc(img(g.img)) + '" alt="">' : '<i>' + esc(g.name) + '</i>') + '</button>').join('') + '</div>' : '') +
             // #922 (owner): en Ganamos sin Deportes / Depósito / Retiro / Chat (se carga con la burbuja; deportes en la barra de abajo)
 
             _gcar('Casino lobby', _lobbies(), 'VIP.lobby.go(\'lobbies\')') + // #920
@@ -201,7 +201,14 @@ VIP.lobby = (function () {
     function _gnRowsHtml() {
         if (!_gnHomeData) return '';
         // #938 (owner: "Ver todo va a otra sección"): muestra los juegos de ESA fila (antes: todo el catálogo o todo el proveedor).
-        return (_gnHomeData.rows || []).map((r, ri) => _gcar(r.title, r.games, 'VIP.lobby.gnRow(' + ri + ')')).join('');
+        return (_gnHomeData.rows || []).map((r, ri) => (r.hw ? _gnHalloween(r, ri) : _gcar(r.title, r.games, 'VIP.lobby.gnRow(' + ri + ')'))).join('');
+    }
+    // #947: "Especial de Halloween" como en ganandoargentina.com (fondo, título, marco con sus juegos, el perro y JUGÁ YA = la lista de esa fila).
+    function _gnHalloween(r, ri) {
+        const H = '/images/ganamos/hw/';
+        return '<section class="gn-hw"><img class="gn-hw-bg" src="' + H + 'halloween-bg.webp" alt="" loading="lazy"><div class="gn-hw-frame"><img class="gn-hw-title" src="' + H + 'halloween-title.webp" alt="' + esc(r.title) + '">' +
+            '<div class="gn-hw-list">' + r.games.map((g) => '<button type="button" class="gn-hw-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '">' + (g.img ? '<img src="' + esc(img(g.img)) + '" alt="" loading="lazy">' : '') + '</button>').join('') + '</div></div>' +
+            '<img class="gn-hw-border" src="' + H + 'halloween-frame.webp" alt=""><button type="button" class="gn-hw-btn" onclick="VIP.lobby.gnRow(' + ri + ')"><img src="' + H + 'halloween-button.webp" alt="Jugá ya"></button><img class="gn-hw-dog" src="' + H + 'halloween-dog.webp" alt=""></section>';
     }
     async function _gnFillRows() {
         if (_gnHomeData) return;

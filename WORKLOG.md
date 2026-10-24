@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-22
 
+### 947. GANAMOS: inicio idéntico a ganandoargentina.com con SUS portadas, juegos directos y "Especial de Halloween" — SW v638
+**Pedido (owner):** Ganamos "idéntica de punta a punta" (ganandoargentina.com + zip de capturas `Ganando_Argentina.zip`), sin conectar con Girox, con
+sus portadas (las de JUGAYGANA donde haga falta). (`ganamosargentina.com` no existe; el owner confirmó ganandoargentina.com.)
+- **Inicio (leído de su bundle `assets/index-*.js`, componente `home-mobile`):** orden = banner · accesos · eventos · "Especialmente para vos" ·
+  Exclusivo (Sz) · 123slots · Halloween (Rz, `holiday==='halloween'`) · AI Generated (Iz) · Primicias (Gz) · Rubyplay (Oz) · Amusnet (Vz) ·
+  Pragmatic Slots (Zz) · Amigo Gaming (Nz) · XPG (jz) · Destacadas/Joker/Clásicas (Dz/Yz/Lz versión `pragmatic` = usuario común) · Pragmatic Live (Bz).
+  Cruce con Girox por BÚSQUEDA de nombre + proveedor (los "Ganamos …" exclusivos son builds propios: no se cambian por el juego común):
+  Exclusivo 1/30 (Gana Volcano), Halloween 2/9, Rubyplay 9/9, Amusnet 9/11, Pragmatic 11/11, Amigo 8/15 (antes 0: ahora Amigo está), Destacadas 13/21,
+  Joker 7/14, Clásicas 13/19, Pragmatic Live 2/10; AI Generated, Primicias, XPG = 0 (no están).
+- **Portadas:** las de SU código (su dominio, Pragmatic, Mascot, Jacktop…; los .webm de Amigo ⇒ 1er cuadro con ffmpeg) en `images/ganamos/g/`; si
+  no se puede, la de JUGAYGANA del mismo juego; Gana Volcano = su SVG animado (`images/ganamos/gana-volcano.svg`). Cada juego con `gid`/`lk`.
+- **Formato:** filas de 3,3 portadas con el NOMBRE debajo y "Mostrar todo ›" (= `gnRow`, sólo esa fila); "Especial de Halloween" con sus imágenes
+  (`images/ganamos/hw/`: fondo, título, marco, perro, botón JUGÁ YA). Las tarjetas mandan `gid`/`lk` ⇒ abren directo como los favoritos.
+- Sigue: proveedores y secciones del zip (OCR del nombre escrito debajo de cada portada).
+
 ### 946. Ningún juego ni deporte abre la web de Girox (tampoco desde el Inicio de PICA ROJA) — SW v637
 **Pedido (owner):** "hacé que no conecte en nada" (confirmado: "sí, así mismo"). `favPlay` ya no tiene respaldo a Girox: si 1girox no da el juego
 directo (después de la pregunta del bono de #945) se avisa "tocalo de nuevo". Se borró el respaldo viejo (`openPlatform('girox', { embed: true })`).
