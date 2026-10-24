@@ -6748,6 +6748,7 @@ async function loadCBUConfig() {
     loadInstantCashbackCfg();
     // Cargar las plataformas de juego (multi-plataforma; guarda solo admin general)
     loadPlatformsCfg();
+    loadBrandDomains(); // F979
     // Cargar el estado de los niveles VIP (solo admin general)
     loadVipLevelsConfig();
     // Cargar los premios del fueguito (solo admin general)
@@ -6964,6 +6965,30 @@ async function agentChoosePlatform(movementId, platformId, btn) {
     if (selectedUserId) { loadPlatformBanner(selectedUserId); loadMessages(selectedUserId); }
 }
 
+// F979: Card de Configuración "🌐 Dominios de las marcas" (vacío = la página se abre adentro de la app).
+const _BD_IDS = { picaroja: 'bdPicaroja', jugaygana: 'bdJugaygana', ganamos: 'bdGanamos' };
+async function loadBrandDomains() {
+    const form = document.getElementById('brandDomainsForm'), header = document.getElementById('brandDomainsHeader');
+    try {
+        const r = await authFetch('/api/admin/brand-domains');
+        if (!r.ok) { if (form) form.style.display = 'none'; if (header) header.style.display = 'none'; return; }
+        const j = await r.json(); const d = j.domains || {};
+        Object.entries(_BD_IDS).forEach(([k, id]) => { const el = document.getElementById(id); if (el) { el.value = d[k] || ''; el.disabled = j.canEdit !== true; } });
+        const b = document.getElementById('bdSaveBtn'); if (b) b.style.display = j.canEdit === true ? '' : 'none';
+    } catch (_) {}
+}
+async function saveBrandDomains() {
+    const msg = document.getElementById('bdMsg'); const domains = {};
+    Object.entries(_BD_IDS).forEach(([k, id]) => { const el = document.getElementById(id); domains[k] = el ? el.value.trim() : ''; });
+    try {
+        const r = await authFetch('/api/admin/brand-domains', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ domains }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { if (msg) { msg.style.color = '#e66'; msg.textContent = j.error || 'No se pudo guardar'; } return; }
+        if (msg) { msg.style.color = '#4c4'; msg.textContent = '✓ Guardado. Los clientes lo toman en hasta 5 minutos.'; }
+        loadBrandDomains();
+    } catch (_) { if (msg) { msg.style.color = '#e66'; msg.textContent = 'Error de conexión'; } }
+}
+window.saveBrandDomains = saveBrandDomains;
 // Card de Configuración: "🎮 Plataformas de juego".
 async function loadPlatformsCfg() {
     const form = document.getElementById('platformsForm');

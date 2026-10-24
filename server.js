@@ -672,11 +672,15 @@ function resolveAllowedOrigins() {
 // Se permite SIEMPRE (además de ALLOWED_ORIGINS) para que un cambio de SSM no la deje sin registro.
 // #553: la landing NO entra al CORS con credenciales: /api/landing/info y /api/landing/signup se abren a cualquier origen SIN
 // credenciales (bloque de abajo), igual que siempre fue el signup. Así un compromiso del proyecto de Vercel no gana un canal con cookies.
+// F979: dominios propios de las páginas de marca (Config['brandDomains'], panel → Configuración → Dominios de las marcas). Cada uno apunta a ESTE
+// servidor; el navegador manda Origin en los POST aunque sea el mismo sitio ⇒ sin esto el dominio nuevo no podría ni iniciar sesión.
+let _brandDomainOrigins = new Set();
 function corsOriginFn(origin, callback) {
   const allowed = resolveAllowedOrigins();
   // Requests sin cabecera Origin (same-origin, curl, mobile) siempre se permiten.
   if (!origin) return callback(null, true);
   if (allowed.includes(origin)) return callback(null, true);
+  if (_brandDomainOrigins.has(origin)) return callback(null, true); // F979
   logger.warn(`CORS bloqueado para origen: ${origin}`);
   return callback(new Error('No autorizado por CORS'));
 }
@@ -9982,6 +9986,54 @@ function _vipLevelsPublic() {
 // plataforma activa no se puede pasar a la otra (siempre se puede retirar). Cargas, retiros, bonos y cierres no cambian.
 const BRAND_LOCK_ARS = 100;
 const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' }; // #912: JUGAYGANA = otra puerta a la misma cuenta de Girox
+// F979 (owner: "abrir el dominio de cada página adentro de la app y que quede logueado; todavía no tengo los dominios"): cada marca puede tener
+// su dominio propio. Vacío (hoy) ⇒ todo sigue igual (la página se abre adentro de la app). Cargado ⇒ al abrir esa marca desde otro dominio la app pide
+// un link de acceso de un solo uso (mismo mecanismo que la app instalada en iPhone: `installLinks`, 7 días) y pasa al dominio YA logueada.
+const BRAND_DOMAIN_KEYS = ['picaroja', 'jugaygana', 'ganamos'];
+const BRAND_SITE_FLAG = { picaroja: 'pr', jugaygana: 'jg', ganamos: 'gn' };
+const _HOST_RE = /^(?=.{3,120}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;
+function _cleanBrandDomains(v) {
+  const out = {};
+  for (const k of BRAND_DOMAIN_KEYS) {
+    const h = String((v && v[k]) || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    out[k] = _HOST_RE.test(h) ? h : '';
+  }
+  return out;
+}
+async function _brandDomains() {
+  const d = _cleanBrandDomains(await getConfig('brandDomains', {}));
+  _brandDomainOrigins = new Set(Object.values(d).filter(Boolean).map((h) => 'https://' + h));
+  return d;
+}
+setTimeout(() => { _brandDomains().catch(() => {}); }, 15000); setInterval(() => { _brandDomains().catch(() => {}); }, 5 * 60 * 1000);
+app.get('/api/brand-domains', async (req, res) => {
+  try { res.set('Cache-Control', 'public, max-age=300'); res.json({ domains: await _brandDomains() }); } catch (e) { res.json({ domains: {} }); }
+});
+app.get('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req, res) => {
+  try { res.json({ domains: await _brandDomains(), canEdit: req.user.role === 'admin' }); } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.put('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const raw = (req.body && req.body.domains) || {}; const d = _cleanBrandDomains(raw);
+    const bad = BRAND_DOMAIN_KEYS.filter((k) => String(raw[k] || '').trim() && !d[k]);
+    if (bad.length) return res.status(400).json({ error: 'Dominio inválido: ' + bad.join(', ') + ' (ej. jugaygana.net, sin https:// ni barras)' });
+    await Config.set('brandDomains', d, req.user.username); const now = await _brandDomains();
+    logger.info(`[brand-domains] ${req.user.username}: ${JSON.stringify(now)}`); res.json({ success: true, domains: now });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/auth/brand-link', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
+    const brand = String((req.body && req.body.brand) || ''); const d = await _brandDomains(); const host = d[brand];
+    if (!host) return res.status(404).json({ error: 'Esa plataforma no tiene dominio propio' });
+    const token = crypto.randomBytes(24).toString('base64url'); const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const u = await User.findOneAndUpdate({ id: req.user.userId }, { $push: { installLinks: { $each: [{ hash, createdAt: new Date() }], $slice: -5 } } }, { new: true }).select('username').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, url: 'https://' + host + '/?' + BRAND_SITE_FLAG[brand] + '=1&acceso=' + token + '&u=' + encodeURIComponent(u.username) });
+  } catch (e) { logger.warn(`[brand-link] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 function _brandAt(u, when) { const h = (u && u.brandHistory) || []; let b = 'picaroja'; for (const x of h) { if (new Date(x.since) <= new Date(when)) b = x.brand; } return b; }
 app.get('/api/me/brand', authMiddleware, async (req, res) => {
   try { const u = await User.findOne({ id: req.user.userId }).select('activeBrand').lean(); res.set('Cache-Control', 'no-store'); res.json({ brand: (u && u.activeBrand) || 'picaroja', names: _BRANDS }); }
@@ -12998,7 +13050,7 @@ async function initializeData() {
   // refuerzo (el autopiloto las vuelve a programar solo a los 5 min del arranque; sólo las 'scheduled' con fecha futura, nada enviado).
   // #981: la explicación del sorteo guardada con el texto viejo pasa al nuevo (tickets + puntos con techo).
   try { if (!(await getConfig('mig981SorteosV2', null))) { const r = await Command.updateOne({ name: '/sys_sq_sorteo', response: /cada \{ptsper\} apostados con plata real = \{pts\} puntos/ }, [{ $set: { response: { $replaceOne: { input: '$response', find: "🧮 Cómo sumás puntos: cada {ptsper} apostados con plata real = {pts} puntos (los bonos no suman). Se actualiza cada 20 minutos y ves tu puesto en vivo, con los demás nombres tapados.", replacement: "🧮 Puntos (ranking, 2° y 3° premio): {puntos}. Los bonos no suman.\\n\\n🎟️ Tickets (1° premio): {tickets}. Cada ticket es un número a tu nombre que ves en \"Mis tickets\"; al cierre publicamos la huella del sorteo y el día del sorteo la semilla: cualquiera puede verificar el ganador.\\n\\nTodo se actualiza cada 20 minutos y ves tu puesto, tus puntos y tus tickets en vivo, con los demás nombres tapados." } } } }]).catch(() => null); await Config.set('mig981SorteosV2', new Date().toISOString(), 'startup-migration'); logger.info('[mig981] explicación del sorteo: ' + ((r && r.modifiedCount) || 0) + ' actualizada(s)'); } } catch (e) { logger.warn('[mig981] ' + e.message); }
-  // #979 (owner): bonos a las 19 h ⇒ las campañas futuras del autopiloto (programadas a las 20:00) se borran y el tick las rearma a las 19:00.
+  // F979 (owner): bonos a las 19 h ⇒ las campañas futuras del autopiloto (programadas a las 20:00) se borran y el tick las rearma a las 19:00.
   try { if (!(await getConfig('mig979Hora19', null))) { const r = await _autopilotClearFuture(); await Config.set('mig979Hora19', new Date().toISOString(), 'startup-migration'); logger.info('[mig979] autopiloto a las 19 h: ' + r + ' campañas futuras rearmadas'); } } catch (e) { logger.warn('[mig979] ' + e.message); }
   // #976 (owner 2026-10-24): rollover de la CARGA ×1 (antes ×3; el bono sigue ×5), retiro mínimo $5.000 (antes $10.000), textos guardados que decían
   // "×3" y una historia de 48 h para avisar a todos (sin push: el anillo la muestra; el deploy puede caer a cualquier hora).
@@ -25818,7 +25870,7 @@ app.post('/api/stories/:id/view', authMiddleware, async (req, res) => {
 // #971: interacción en las historias — toque en el botón y reacción (una por cliente, atómica por reactedBy).
 const STORY_REACTIONS = ['fire', 'heart', 'laugh', 'like'];
 app.post('/api/stories/:id/click', authMiddleware, async (req, res) => {
-  try { await Story.updateOne({ id: String(req.params.id), clickedBy: { $ne: String(req.user.userId) } }, { $inc: { clicks: 1 }, $addToSet: { clickedBy: String(req.user.userId) } }); res.json({ ok: true }); } catch (_) { res.json({ ok: false }); } // #979: un toque por cliente
+  try { await Story.updateOne({ id: String(req.params.id), clickedBy: { $ne: String(req.user.userId) } }, { $inc: { clicks: 1 }, $addToSet: { clickedBy: String(req.user.userId) } }); res.json({ ok: true }); } catch (_) { res.json({ ok: false }); } // F979: un toque por cliente
 });
 app.post('/api/stories/:id/react', authMiddleware, async (req, res) => {
   try {
@@ -26508,7 +26560,7 @@ async function _journeyTick(force) {
   if (_journeyRunning || process.env.JOURNEY_DISABLED === '1') return null; _journeyRunning = true;
   try {
     const nc = await getNotifCenterConfig(); if (!nc.journey) return null;
-    const now = new Date(); const hourArt = (now.getUTCHours() + 21) % 24; if (!force && (hourArt < 17 || hourArt >= 19)) return null; // #979: 17–19 h, justo antes del bono de las 19 (autopiloto / historia)
+    const now = new Date(); const hourArt = (now.getUTCHours() + 21) % 24; if (!force && (hourArt < 17 || hourArt >= 19)) return null; // F979: 17–19 h, justo antes del bono de las 19 (autopiloto / historia)
     const today = _schedArtKey(now); const last = await getConfig('journeyLast', null); if (!force && last && last.day === today) return null;
     if (!(await _cronClaim('journey', 15 * 60000))) return null; // una instancia por pasada
     const [firstPct, dailyPct, minDep, rolloverX, apCfg] = await Promise.all([getConfig('firstDepositBonusPct', 50), getDailyRefundPct(), getMinDepositArs().catch(() => 5000), _giftRolloverX().catch(() => 5), getAutopilotConfig()]);
@@ -29306,7 +29358,7 @@ app.post('/api/admin/cronograma-plans', authMiddleware, adminMiddleware, async (
 // por `hours` horas con el tope global de bonos y el rollover global. La audiencia se resuelve al salir cada tanda ⇒ los clientes
 // nuevos entran solos. Los textos nunca nombran la ruleta (guard isRouletteText).
 const arCalendar = require('./src/utils/arCalendar');
-const AUTOPILOT_DEFAULT = { enabled: false, time: '19:00', hours: 4, cap: 8, parts: 3, gapMin: 30, appOnly: true }; // #979 (owner): bonos a las 19 h
+const AUTOPILOT_DEFAULT = { enabled: false, time: '19:00', hours: 4, cap: 8, parts: 3, gapMin: 30, appOnly: true }; // F979 (owner): bonos a las 19 h
 // #821 (owner 2026-10-22): "que no sea ni editable ni que se lance: que automáticamente empiece a correr la estrategia" ⇒ SIEMPRE
 // encendido y con la configuración fija de abajo (sin panel para cambiarla). Sólo se apaga con la env AUTOPILOT_DISABLED=1 (emergencia).
 // #968: refuerzo de octubre-noviembre: 4 avisos más por cliente al mes, bonos válidos 2 h más y +10 puntos en los días comunes.

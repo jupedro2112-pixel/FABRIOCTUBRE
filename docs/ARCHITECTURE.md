@@ -1570,4 +1570,7 @@ ranking (`_sorteoWinners(key, pk, excludeUserId)`). Requisito teléfono = 10 dí
   Nunca se cae en la web de Girox desde una página.
 - Marca activa: `User.activeBrand`/`brandHistory`; `home.js` `_brandGuard` + `VIP.lobby.open` (si la marca del server es otra pasa por el chequeo de saldo).
 - Sitio JUGAYGANA independiente: `window.VIP_SITE='jugaygana'` (head de index.html + `js/site.js`), manifest `?site=jugaygana`.
+- **Dominio propio por marca (F979/#995):** `Config['brandDomains']` (panel → Configuración → Dominios de las marcas; vacío = adentro de la app). `lobby.js`
+  `_toDomain` → `POST /api/auth/brand-link` (token de un solo uso en `User.installLinks`) → `https://<dominio>/?<jg|gn|pr>=1&acceso=…`; los dominios
+  cargados entran solos en CORS (`_brandDomainOrigins`). Misma cuenta de 1girox siempre.
 

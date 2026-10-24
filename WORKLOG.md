@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 995. Dominio propio por marca con pase LOGUEADO desde la app (= F979) — SW v668 · admin SW
+Panel → Configuración → 🌐 Dominios de las marcas (`Config['brandDomains']`; vacío = la página se abre dentro de la app, como hoy). Con dominio: la app pasa
+al cliente ya logueado (`POST /api/auth/brand-link`, token de un solo uso en `installLinks`) y el dominio entra solo en CORS. Usuarios, saldo y API son
+SIEMPRE los de la misma cuenta de 1girox (owner): el dominio sólo cambia la puerta. El dominio tiene que apuntar a este servidor (no por el proxy de Vercel).
+
 ### 994. "Juegos nuevos" liviano (120 últimos de Girox) + categorías de JUGAYGANA llenas (= F978) — SW v667
 Con esta rama en producción, picaroja.com pasa a tener las páginas de marca (hoy `/js/lobby.js` da 404 ahí) y el dominio propio de JUGAYGANA vía
 `jugaygana-vercel/` puede andar (jugaygana.net todavía no existe en DNS).
