@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1005. PICA ROJA: abajo Slots · Inicio · Deportes también en el menú opción 1 (= F991) — SW v677
+
 ### 1004. Adentro de PICA ROJA la cabecera del menú completo + PLATAFORMA más abajo (= F990) — SW v676
 
 ### 1003. Dominio de marca reconocido detrás de un proxy (Origin / X-Forwarded-Host / bh=1) + carpeta jugaygana-vercel apuntando a la prueba (= F989)
