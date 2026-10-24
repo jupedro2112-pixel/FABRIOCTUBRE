@@ -3322,3 +3322,6 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 @media (max-width: 360px) { .prl-hql span { display: none; } .prl-hql { padding: 0 8px; } }
 .prl-gn .prl-top-logo .prl-brandbtn, .prl-jio .prl-top-logo .prl-brandbtn { min-width: 0; flex: 0 1 auto; }
 .prl-gn .prl-top-logo .prl-wordmark, .prl-jio .prl-top-logo .prl-wordmark { max-width: 38vw; object-fit: contain; }
+/* #953 (owner): en Ganamos el nombre NO va encima de la portada; sólo se ve si la foto no carga (queda detrás de la imagen) */
+.gn-g i { z-index: 0; }
+.gn-g img { z-index: 1; }

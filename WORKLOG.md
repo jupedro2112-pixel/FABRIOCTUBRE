@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 953. Ganamos: sin el nombre del juego ENCIMA de la portada — SW v642
+**Owner:** "en Ganamos sacá el texto de las fotos, están tapando las fotos". La tarjeta `.gn-g` tiene el nombre en `<i>` (respaldo por si la
+portada no carga) y quedaba dibujado arriba de la imagen. Ahora la imagen va por encima (`z-index`): el nombre sólo se ve si la foto falla;
+el nombre de abajo de la tarjeta (`.gn-gname`) sigue igual.
+
 ### 952. Ganamos y JUGAYGANA: saldo + "Carga rápida" ARRIBA (debajo del menú superior), finos y con su formato; sin burbuja — SW v641
 **Owner:** "la carga rápida y el monto del usuario lo ponemos en la parte superior abajo del menú superior con el formato de Ganamos, bien
 fino, y sacá la burbuja; lo mismo en JUGAYGANA". `lobby.js _shell`: la cabecera de las páginas con logo (`sk.wordmark`) lleva logo · saldo ·
