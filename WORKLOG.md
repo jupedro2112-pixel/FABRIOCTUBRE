@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-22
 
+### 946. Ningún juego ni deporte abre la web de Girox (tampoco desde el Inicio de PICA ROJA) — SW v637
+**Pedido (owner):** "hacé que no conecte en nada" (confirmado: "sí, así mismo"). `favPlay` ya no tiene respaldo a Girox: si 1girox no da el juego
+directo (después de la pregunta del bono de #945) se avisa "tocalo de nuevo". Se borró el respaldo viejo (`openPlatform('girox', { embed: true })`).
+- **Consulta del owner:** "lalodj no entra logueado a Girox, ¿es porque no existe?". Diagnóstico ya disponible: `GET /api/admin/girox/test-sso?username=<usuario>`
+  (admin general, con la sesión del panel abierta en el mismo navegador): si responde `ok:false` con "Revisá que el jugador exista en 1girox", el
+  usuario no está en 1girox (p. ej. se creó en la prueba sin la API real, o con la key de otro publicista, #699).
+
 ### 945. 🐛 "Toqué para apostar a Tucumán y me mandó a Girox" (y lo mismo con slots): el BONO ACTIVO bloqueaba el juego directo — SW v636
 **Owner (captura):** desde JUGAYGANA, un partido y los slots abrían la web de Girox (y deslogueada); los favoritos del Inicio de PICA ROJA no.
 - **Causa (leída del código de la web de 1girox, `ra()` alrededor de `games/<id>`, `player/sports/gr8/launch`, Digitain token):** si el jugador tiene

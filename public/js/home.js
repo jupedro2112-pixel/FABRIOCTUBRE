@@ -1266,10 +1266,9 @@
         // #944 (owner: "que en JUGAYGANA no aparezca nada más que JUGAYGANA, ni un logo de Girox"): en el sitio JUGAYGANA NO se cae en la web de
         // Girox; se avisa y se puede reintentar (el juego directo es el mismo ingreso que los favoritos de PICA ROJA).
         // #945 (owner: "toqué para apostar y me mandó a Girox"): tampoco desde las páginas de marca (JUGAYGANA, Ganamos, PICA ROJA).
-        if (window.VIP_SITE === 'jugaygana' || document.body.classList.contains('prl-open')) { try { VIP.ui.showToast('No pudimos abrir ' + name + ' en este momento. Tocalo de nuevo en unos segundos.', 'error'); } catch (_) {} return; }
-        // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
-        let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
-        setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? ({ 'sport/gr8': '/sports', 'sport/horses': '/horses', 'sport/turf': '/horses-new', 'sport/poker': '/poker' }[key] || '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
+        // #946 (owner: "hacé que no conecte en nada"): NUNCA se abre la web de Girox por un juego o deporte que no salió directo (tampoco desde el
+        // Inicio de PICA ROJA): se avisa y se reintenta.
+        try { VIP.ui.showToast('No pudimos abrir ' + name + ' en este momento. Tocalo de nuevo en unos segundos.', 'error'); } catch (_) {}
     }
     // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
     let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;
