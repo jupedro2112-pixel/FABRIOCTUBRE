@@ -1521,3 +1521,11 @@ marcas. `lobby.js` `_toDomain`: si la marca tiene dominio y estamos en otro, `PO
 La sesión vive en el localStorage de cada dominio: un cliente que entra directo al dominio sin el link inicia sesión una vez.
 - **#980:** en un dominio de marca NO hay login ni registro (middleware `_isBrandHost` + `_BRAND_HOST_DENY` en server.js; `GET /` inyecta `VIP_BRAND_LOCK` y
   `ui.showLoginScreen` muestra "Entrá desde la app de PICA ROJA"). Única puerta: el pase de la app (`/api/auth/access-link`).
+
+### PICA ROJA dentro del menú completo (#994)
+`home.js _prInlineSync()` (en `setHomeMode` y al cambiar de plataforma) llama `VIP.lobby.inline(on)` con `on = modo full && marca del teléfono = picaroja && menú
+completo habilitado && no es un dominio de marca`. `inline(true)` arma `#prLobby` con `_shell()` y lo mueve a `#prInline` (`.prl-inline`, CSS en pin.css #994);
+`body.pr-home` muestra el Perfil al lado del saldo. `open('x','picaroja')` con la página montada sólo navega y hace scroll; abrir OTRA marca la reemplaza
+(el id es único) y `close()` la vuelve a montar. Barra de abajo (opción 2): `_prNav(true, true)` → Slots · Inicio (`homeTop`) · Deportes · Plataformas
+(`VIP.home.platSheet`). Arriba `_paintPlatStrip` (home.js) pinta todas las plataformas con la elegida en el medio; tocar otra = `pickPlatform` → `openPlatform(id)`.
+

@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-24
 
+### 994. PICA ROJA DENTRO del menú completo (página predeterminada) + todas las plataformas arriba (la elegida en el medio, más grande) + "Plataformas" abajo + Perfil al lado del saldo — SW v680
+**Pedido (owner, captura del menú completo):** "esto quiero que sea el menú completo y abajo, sin salir de ahí, la plataforma de PICA ROJA; como sacamos Perfil y
+pusimos Deportes, poné Perfil al lado del saldo sólo en PICA ROJA; entrás y estás para jugar en PICA ROJA, página predeterminada; en el menú de abajo agregá una
+sección para elegir la plataforma; arriba el botón con todas las plataformas, PICA ROJA en el medio más grande porque es la principal; si eligen Ganamos, Ganamos
+pasa a estar más grande y seleccionada".
+- **Página dentro del Inicio** (lobby.js `inline(on)`, `_inlMounted`, `_inlWant`; home.js `_prInlineSync`): con PICA ROJA como marca del teléfono y el menú
+  COMPLETO, `#prLobby` se monta dentro de `#prInline` (al final de `#homePanel`, el que scrollea) con `.prl-inline` (sin capa, sin su barra de arriba/abajo, sin su
+  tira de saldo ni la burbuja). `open('…','picaroja')` con la página montada = `go()` + bajar hasta ella. `#prLobby` es ÚNICO: otra marca abierta encima reemplaza
+  el nodo y al cerrarla `close()` lo vuelve a montar. Al abrir la app (pref `girox` = directo) con PICA ROJA se entra al menú completo (`_giroxDirect`).
+- **Barra de abajo** (sólo con la opción 2, `body.menu2`): Slots · Inicio (sube al principio, `VIP.lobby.homeTop`) · Deportes · **Plataformas** (`#navPlats` →
+  `VIP.home.platSheet()`, tarjetas con la elegida marcada). Arriba quedan la cabecera y el Soporte de siempre.
+- **Arriba** (`_paintPlatStrip`): el botón de plataforma muestra PICA ROJA, JUGAYGANA, Ganamos y Girox con la ELEGIDA en el medio, más grande y con el color de
+  su marca; tocar otra = `pickPlatform` (chequeo de saldo #908 + elegir + entrar); tocar la elegida = entrar. No aparece en los dominios de marca.
+- **Perfil al lado del saldo** (`.bs-perfil`, visible sólo con `body.pr-home`).
+- Probado con la app completa en un navegador automático (APIs simuladas): opción 2 = arriba Telegram · Info · plataformas · Soporte · Historias y abajo
+  Slots · Inicio · Deportes · Plataformas; opción 1 = sin cambios abajo y las plataformas más chicas arriba.
+
 ### 993. Burbuja de Carga rápida REDONDA y en 2 renglones (CARGA / RÁPIDA) en todas las páginas de marca — SW v679
 **Pedido (owner):** "la burbuja de Carga rápida de todas las plataformas más redonda, que diga CARGA y RÁPIDA abajo, no en línea recta, así ocupa menos".
 `.prl-ql` = círculo de 66 px (logo arriba, texto en 2 renglones). Se sigue pudiendo arrastrar.

@@ -3939,3 +3939,38 @@ body.prl-app3 #prLobby .prl-nav [data-v="vivo"], body.prl-app3 #prLobby .prl-nav
 .prl-ql { flex-direction: column; justify-content: center; gap: 2px; width: 66px; height: 66px; padding: 0 !important; border-radius: 50% !important; text-align: center; }
 .prl-ql img { width: 24px; height: 24px; }
 .prl-ql span { font-size: 8.5px; line-height: 1.05; letter-spacing: .3px; }
+/* #994: PICA ROJA DENTRO del menú completo (lobby.js inline): sin capa, sin su barra de arriba ni la de abajo, sin su tira de saldo (está la del Inicio) */
+#prLobby.prl-inline { position: relative; inset: auto; z-index: auto; display: block; margin: 16px 0 0; border-radius: 18px 18px 0 0; overflow: hidden; }
+#prLobby.prl-inline .prl-main { overflow: visible; flex: none; padding-top: 10px; }
+#prLobby.prl-inline .prl-cbar, #prLobby.prl-inline .prl-pr-bal, #prLobby.prl-inline .prl-nav, #prLobby.prl-inline .prl-ql, #prLobby.prl-inline .prl-top-btn, #prLobby.prl-inline .prl-pin { display: none !important; }
+body.pr-home #homePanel { padding-bottom: calc(76px + var(--sab, 0px)); }
+/* Perfil al lado del saldo, sólo con PICA ROJA en el Inicio */
+.bs-perfil { display: none; }
+body.pr-home .balance-strip .bs-perfil { display: inline-flex; align-items: center; gap: 5px; flex: none; margin-left: 8px; padding: 7px 11px; border-radius: 999px; border: 1px solid var(--p-border, #e5e5e5); background: var(--p-card, #fff); color: var(--p-text, #111); font: 800 12px var(--p-font); cursor: pointer; }
+/* #994: arriba TODAS las plataformas, la elegida en el medio y más grande (color de su marca) */
+.header .tn-plat.tn-pstrip-on { flex: 2.2 1 0; }
+.header .tn-plat.tn-pstrip-on .tn-ico { margin-top: 0; }
+.header .tn-plat.tn-pstrip-on #navPlatLogo, .header .tn-plat.tn-pstrip-on #navPlatIco { display: none !important; }
+.tn-pstrip { display: inline-flex; align-items: center; gap: 5px; }
+.tn-pstrip i { display: inline-flex; width: 21px; height: 21px; border-radius: 6px; overflow: hidden; opacity: .6; filter: grayscale(.5); background: #000; box-shadow: 0 0 0 1px var(--p-border, #e5e5e5); transition: width .2s, height .2s, opacity .2s; }
+.tn-pstrip i img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tn-pstrip i.on { width: 34px; height: 34px; border-radius: 10px; opacity: 1; filter: none; box-shadow: 0 0 0 2px var(--p-red, #e6002a), 0 3px 10px rgba(0,0,0,.2); }
+.tn-pstrip i.on[data-pid="jugaygana"] { box-shadow: 0 0 0 2px #f2ce00, 0 3px 10px rgba(0,0,0,.2); }
+.tn-pstrip i.on[data-pid="ganamos"] { box-shadow: 0 0 0 2px #8b00c9, 0 3px 10px rgba(0,0,0,.2); }
+.tn-pstrip i.on[data-pid="girox"] { box-shadow: 0 0 0 2px #16a34a, 0 3px 10px rgba(0,0,0,.2); }
+/* #994: sección Plataformas del menú de abajo */
+.ps-box { max-width: 380px; padding: 18px 16px 14px; border-radius: 18px; }
+.ps-box h3 { margin: 0 0 12px; font: 800 17px var(--p-font); text-align: center; }
+#psList { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ps-it { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 14px; border: 1.5px solid var(--p-border, #e5e5e5); background: var(--p-card, #fff); color: var(--p-text, #111); cursor: pointer; }
+.ps-it img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; background: #000; }
+.ps-it b { font: 800 13px var(--p-font); }
+.ps-it small { font: 600 11px var(--p-font); color: var(--p-muted, #777); }
+.ps-it.on { border-color: var(--p-red, #e6002a); box-shadow: 0 0 0 2px rgba(230,0,42,.15); }
+.ps-it.on small { color: var(--p-red, #e6002a); }
+.ps-x { display: block; width: 100%; margin-top: 12px; padding: 11px; border: 0; border-radius: 12px; background: var(--p-surface, #f1f1f1); color: var(--p-text, #111); font: 800 13px var(--p-font); cursor: pointer; }
+/* #994: con el menú de una sola barra (opción 1) hay más botones arriba: las plataformas van más chicas */
+body:not(.menu2) .header .tn-plat.tn-pstrip-on { flex: 1.7 1 0; }
+body:not(.menu2) .tn-pstrip { gap: 3px; }
+body:not(.menu2) .tn-pstrip i { width: 15px; height: 15px; border-radius: 4px; }
+body:not(.menu2) .tn-pstrip i.on { width: 27px; height: 27px; border-radius: 8px; }
