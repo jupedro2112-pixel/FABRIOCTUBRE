@@ -3476,17 +3476,17 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 .bp-lt { display: flex; align-items: center; gap: 6px; padding: 10px 8px; background: #23262b; border-bottom: 1px solid #4c5359; position: sticky; top: 0; z-index: 3; }
 .bp-lt button { border: 0; background: #1f2226; color: #fff; width: 34px; height: 32px; border-radius: 4px; font: 400 24px/1 Arial, sans-serif; cursor: pointer; }
 .bp-lt h2 { margin: 0; font: 600 16px Montserrat, Arial, sans-serif; color: #fff; }
-/* Menú ☰ (secciones) */
-.bp-navwrap { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.55); display: flex; }
+/* Menú ☰ (#960: como el de thornet abierto en el celu: ~53 % del ancho, íconos de color, la sección actual en gris, banner abajo) */
+.bp-navwrap { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.35); display: flex; }
 .bp-navwrap[hidden] { display: none; }
-.bp-nav { width: min(80vw, 320px); height: 100%; overflow-y: auto; background: #1c2431; box-shadow: 8px 0 24px rgba(0,0,0,.45); display: flex; flex-direction: column;
-  padding: calc(var(--sat, env(safe-area-inset-top, 0px)) + 10px) 0 calc(var(--sab, env(safe-area-inset-bottom, 0px)) + 16px); }
-.bp-nav-h { display: flex; align-items: center; justify-content: space-between; padding: 4px 14px 14px; border-bottom: 1px solid #4c5359; margin-bottom: 6px; }
-.bp-nav-h img { height: 26px; max-width: 70%; object-fit: contain; }
-.bp-nav-h button { border: 0; background: none; color: #b9bfca; font-size: 18px; width: 34px; height: 34px; cursor: pointer; }
-.bp-nav > button { border: 0; background: none; color: #fff; text-align: left; font: 600 14.5px Montserrat, Arial, sans-serif; padding: 13px 20px; cursor: pointer; border-left: 3px solid transparent; }
-.bp-nav > button:active, .bp-nav > button:hover { background: #23262b; border-left-color: #6452cc; }
-.bp-nav small { display: block; padding: 16px 20px 4px; font: 700 11px Montserrat, Arial, sans-serif; color: #8d94a3; letter-spacing: .6px; text-transform: uppercase; }
+.bp-nav { width: min(54vw, 260px); min-width: 190px; height: 100%; background: linear-gradient(180deg, #161a26 0, #1c2030 100%); box-shadow: 6px 0 18px rgba(0,0,0,.5); display: flex; flex-direction: column;
+  padding: calc(var(--sat, env(safe-area-inset-top, 0px)) + 14px) 0 calc(var(--sab, env(safe-area-inset-bottom, 0px))); }
+.bp-nav-l { flex: 1; overflow-y: auto; }
+.bp-nav-l button { display: flex; align-items: center; gap: 14px; width: 100%; border: 0; background: none; color: #fff; text-align: left; font: 500 13px Montserrat, Arial, sans-serif; padding: 4px 12px; min-height: 42px; cursor: pointer; }
+.bp-nav-l button.on, .bp-nav-l button:active { background: #2a2c33; }
+.bp-nav-l img { width: 32px; height: 29px; object-fit: contain; flex: none; }
+.bp-nav-b { border: 0; padding: 0; background: none; cursor: pointer; display: block; width: 100%; }
+.bp-nav-b img { display: block; width: 100%; aspect-ratio: 768 / 164; object-fit: cover; }
 .rf.rf-buffaloplay { --rf-bg: #11141d; --rf-card: #1c2431; --rf-line: #4c5359; --rf-mut: #b9bfca; --rf-acc: #e01616; --rf-acc-tx: #fff; font-family: Montserrat, Arial, sans-serif; }
 .rf.rf-buffaloplay { --rfb-bg: linear-gradient(135deg, #1c2431, #23262b); --rfb-acc: #ff8a1f; --rfb-tx: #fff; --rfb-mut: #b9bfca; }
 /* #958: botón BuffaloPlay en los menús básico y completo (azul noche y naranja, el ícono del búfalo) — y las 5 plataformas en UNA línea */
@@ -3505,3 +3505,4 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 #bpMore[hidden], #bpEmpty[hidden] { display: none !important; }
 html body #basicPlats .bv-chip.plat-jugaygana b, html body #platformsButtons .plat-play-btn.plat-jugaygana .plat-play-name { font-size: 7.6px !important; letter-spacing: -.2px !important; }
 html body #basicPlats .bv-chip .plat-reco, html body #basicPlats .bv-chip em, html body #platformsButtons .plat-play-btn.plat-girox .plat-reco { font-size: 6.5px !important; padding: 1px 3px !important; letter-spacing: 0 !important; max-width: 96%; overflow: hidden; white-space: nowrap; }
+.prl-bp .prl-cbar + .prl-top.bp-head { padding-top: 0; } /* #960: debajo de la barra de PICA ROJA */

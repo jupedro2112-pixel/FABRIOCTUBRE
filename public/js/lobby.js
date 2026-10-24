@@ -56,7 +56,7 @@ VIP.lobby = (function () {
         document.body.insertAdjacentHTML('beforeend',
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
-            (sk.layout === 'jugaygana' || sk.layout === 'buffaloplay' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
+            (sk.layout === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
             // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
             // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
             (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
@@ -64,9 +64,9 @@ VIP.lobby = (function () {
                 '<button type="button" class="jg-hi" onclick="VIP.stories.open()" aria-label="Mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></button>' +
                 '<button type="button" class="jg-user" onclick="VIP.lobby.ql()"><b class="js-prl-user">' + esc(_uname()) + '</b><small>CARGA RÁPIDA</small></button>' +
                 '<button type="button" class="jg-burger" onclick="VIP.lobby.menu(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div></header>' : '') +
-            // #958: BuffaloPlay como thornet: ☰ · (logo) · actualizar saldo · saldo (= Carga rápida) · chat (Soporte) · usuario (cuenta).
+            // #958: BuffaloPlay como thornet: ☰ · actualizar saldo · saldo (= Carga rápida) · chat (Soporte) · usuario (cuenta).
+            // #960 (owner: "arriba la barra de PICA ROJA como en todos"): esta va debajo de esa barra, sin el logo.
             (sk.layout === 'buffaloplay' ? '<header class="prl-top bp-head"><button type="button" class="bp-hb" onclick="VIP.lobby.bpNav(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6h17M3.5 12h17M3.5 18h17"/></svg></button>' +
-                '<button type="button" class="prl-brandbtn bp-logo" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
                 '<div class="bp-hr"><button type="button" class="bp-ref" onclick="VIP.lobby.bpRefresh(this)" aria-label="Actualizar saldo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 9A8 8 0 0 0 5 7.5M4.5 15A8 8 0 0 0 19 16.5"/><path d="M5 3v4.5h4.5M19 21v-4.5h-4.5"/></svg></button>' +
                 '<button type="button" class="bp-bal" onclick="VIP.lobby.ql()" aria-label="Saldo · Carga rápida"><b class="js-prl-bal">—</b><small>CARGA RÁPIDA</small></button>' +
                 '<button type="button" class="bp-hi" onclick="VIP.lobby.support()" aria-label="Soporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c-5 0-8.5 3.1-8.5 7 0 1.9.9 3.6 2.4 4.9L5 20l4.1-2c.9.3 1.9.4 2.9.4 5 0 8.5-3.1 8.5-6.9s-3.5-7-8.5-7z"/><circle cx="8.3" cy="11.5" r="1.1" class="f"/><circle cx="12" cy="11.5" r="1.1" class="f"/><circle cx="15.7" cy="11.5" r="1.1" class="f"/></svg></button>' +
@@ -538,9 +538,9 @@ VIP.lobby = (function () {
     // ---- Casino en vivo y CrazZy Win!
     function _bpLiveHtml() {
         const L = (_bpHome && _bpHome.live) || [];
-        return '<div class="bp-lv">' + L.map((l, i) => '<button type="button" onclick="VIP.lobby.bpLiveOpen(' + i + ')" aria-label="' + esc(l.n) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.n) + '" loading="lazy"></button>').join('') + '</div>';
+        // #959 (owner: "sacá los juegos de adentro, que entren a esos juegos"): cada tarjeta (foto de BuffaloPlay) abre DIRECTO el lobby de Girox.
+        return '<div class="bp-lv">' + L.map((l) => { const g = _bpA(l.lobby || []); return '<button type="button"' + (g.key ? _bpPlayAttrs(g) : '') + '><img src="' + esc(l.img) + '" alt="' + esc(l.n) + '" loading="lazy"></button>'; }).join('') + '</div>';
     }
-    function bpLiveOpen(i) { const l = ((_bpHome && _bpHome.live) || [])[i]; if (l) jgList(l.n, l.g.map(_bpA)); }
     function _bpGridHtml(title, games, banner) {
         _bpCur = null;
         return '<div class="bp-lt"><button type="button" onclick="VIP.lobby.back()" aria-label="Volver">‹</button><h2>' + esc(title) + '</h2></div>' + (banner || '') +
@@ -556,15 +556,17 @@ VIP.lobby = (function () {
         _view = 'inicio'; m.innerHTML = _bpHomeHtml(); _bpSlide = 0; _bpAuto();
     }
     // Menú ☰ de la izquierda (secciones, como su página); el ícono de usuario abre la cuenta (saldo, cargar/retirar, nivel, perfil).
+    // #960 (owner, foto del menú de thornet abierto en el celu): sus íconos y sus 6 secciones, la actual resaltada, y un banner abajo (CrazZy Win!).
     function bpNav(show) {
         const n = $('bpNav'); if (!n) return;
         if (show) {
-            const it = (t, on) => '<button type="button" onclick="VIP.lobby.bpNav(false);' + on + '">' + esc(t) + '</button>';
-            const sp = ((_data && _data.sports) || []).map((x) => it(x.title, "VIP.lobby.sport('" + esc(x.path) + "')")).join('');
-            n.querySelector('.bp-nav').innerHTML = '<div class="bp-nav-h"><img src="' + SK().logo + '" alt="BuffaloPlay"><button type="button" onclick="VIP.lobby.bpNav(false)" aria-label="Cerrar">✕</button></div>' +
-                it('Inicio', "VIP.lobby.go('inicio')") + it('Slots', "VIP.lobby.bpOpenTab(0)") + it('Juegos nuevos', "VIP.lobby.bpOpenTab('new')") + it('Casino Vivo', "VIP.lobby.go('vivo')") + it('CrazZy Win!', "VIP.lobby.go('crazy')") +
-                (sp ? '<small>Deportes</small>' + sp : '') + '<small>Mi cuenta</small>' + it('Carga rápida', 'VIP.lobby.ql()') + it('Retirar', 'VIP.lobby.withdraw()') + it('Sorteo del mes', "VIP.raffle.open('buffaloplay')") +
-                it('Soporte', 'VIP.lobby.support()') + (window.VIP_SITE === 'jugaygana' ? '' : it('Volver a la app', 'VIP.lobby.close(true)'));
+            const horses = ((_data && _data.sports) || []).find((x) => /horse|caballo/i.test((x.key || '') + ' ' + (x.path || '') + ' ' + (x.title || '')));
+            const it = (ic, t, on, cur) => '<button type="button" class="' + (cur ? 'on' : '') + '" onclick="VIP.lobby.bpNav(false);' + on + '"><img src="' + SK().dir + 'nav/' + ic + '.png" alt="">' + esc(t) + '</button>';
+            n.querySelector('.bp-nav').innerHTML = '<div class="bp-nav-l">' +
+                it('inicio', 'Inicio', "VIP.lobby.go('inicio')", _view === 'inicio') + it('deportes', 'Deportes', 'VIP.lobby.sportsMenu(null)', false) +
+                it('slots', 'Slots', "VIP.lobby.go('slots')", _view === 'slots') + it('vivo', 'Casino Vivo', "VIP.lobby.go('vivo')", _view === 'vivo') +
+                (horses ? it('caballos', 'Caballos', "VIP.lobby.sport('" + esc(horses.path) + "')", false) : '') + it('crazy', 'CrazZy Win!', "VIP.lobby.go('crazy')", _view === 'crazy') + '</div>' +
+                '<button type="button" class="bp-nav-b" onclick="VIP.lobby.bpNav(false);VIP.lobby.go(\'crazy\')" aria-label="CrazZy Win!"><img src="' + SK().dir + 'crazywin.webp" alt=""></button>';
         }
         n.hidden = !show;
     }
@@ -744,5 +746,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpLiveOpen, bpNav, bpRefresh, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpNav, bpRefresh, skin: () => _skin };
 })();

@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-24
 
+### 960. BuffaloPlay: barra de PICA ROJA arriba (como en todas) y el menú ☰ como el de thornet en el celu — SW v648
+**Owner** (foto del menú de thornet abierto): "borramos el que está y dejamos arriba la parte superior de menú de PICA ROJA como en todos, es importante".
+Arriba va la misma barra que en Ganamos/PICA ROJA (`casinoBarHtml`: Volver · Menú · marca · Historias · Info · Perfil) y debajo la de thornet sin el
+logo (☰ · actualizar · saldo/Carga rápida · chat · usuario). El ☰ es su menú: ~53 % del ancho, sus íconos (recortados de la foto, fondo
+transparente, `images/buffaloplay/nav/`), Inicio · Deportes · Slots · Casino Vivo · Caballos · CrazZy Win! (la sección actual en gris) y el banner
+CrazZy Win! abajo (el de ellos es su torneo "Copa Red Rake").
+
+### 959. BuffaloPlay: Casino en vivo entra DIRECTO al lobby y el menú ☰ sin los datos de la cuenta — SW v648
+**Owner:** "sacá los datos de mi cuenta de la barra deslizante; Ezugi y Vivo Gaming con las fotos de Buffalo pero el link el de Girox; sacá los juegos
+de adentro, que entren a esos juegos". Cada tarjeta de Casino en vivo (fotos de BuffaloPlay) abre el lobby de Girox: Pragmatic Play = Live Casino Lobby
+(3/101), Ezugi = Ezugi Lobby (7/1630_ifg), Vivo Gaming = VivoGaming Lobby (9/13452). `buffaloplay-home.json → live[].lobby` (ya no lleva las listas).
+El menú ☰ quedó sin los datos de la cuenta (después #960 lo rehízo como el de thornet); la cuenta sigue en el ícono de usuario.
+
 ### 958. Página BuffaloPlay con el formato de Thornet (juegos y cuenta de Girox) + botón en los menús — SW v647
 **Owner:** "armame esta (Thornet.zip) con la misma idea, llamala buffaloplay con su logo, usá Girox para todas las APIs pero con este formato de
 página, 100 % idéntica, hasta las fotos de los slots; sólo los juegos que tiene este proveedor; lo nuevo en una sección Nuevos con el buscador; y el
