@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 978. JUGAYGANA: categorías que faltaban llenas + "Juegos nuevos" liviano (Inicio más rápido) — SW v666
+**Pedido (owner):** "revisá jugaygana.net, completá los juegos donde falte y metele optimización".
+- **jugaygana.net NO existe** (DNS NXDOMAIN, 2026-10-24): no hay nada publicado en ese dominio. Si se compra, apuntarlo a Vercel con `jugaygana-vercel/`.
+  OJO: esa config reenvía a picaroja.com y **producción (picaroja.com) todavía NO tiene las páginas de marca** (corre la versión de la gemela: `/js/lobby.js`
+  da 404); andan en Render. Hasta que la fusión (#986 de la rama `fusion-gemela-985`) pase a producción, JUGAYGANA por dominio propio no funciona.
+- Categorías de JUGAYGANA: bingo 25→60 (bingo/keno/lotería/raspadita), habilidad 56→120 (crash, minas, plinko, aviator, dados…). "Compra de bonos" ya tiene
+  los 56 que existen en Girox.
+- "Juegos nuevos" (`<marca>-extra.json`, Ganamos/JUGAYGANA/BuffaloPlay) = los 120 ÚLTIMOS juegos que agregó Girox, en vez de "todo lo de Girox que la página no
+  tenía" (después de #973/#977 casi todo eso ya está en los proveedores): ~110-130 KB comprimidos menos al abrir el Inicio de cada página.
+- `complete-brands-2.py` quedó idempotente (una 2ª corrida duplicaba "Peter & Sons" y "Bluejack" por el nombre prolijo; se sacaron).
+
 ### 977. Ganamos y JUGAYGANA todavía más completas (proveedores que faltaban + filas/categorías llenas) + sorteo con los colores de JUGAYGANA — SW v665
 **Pedido (owner):** "seguí completando Ganamos y JUGAYGANA con todos los juegos que puedas" y "el sorteo en JUGAYGANA amoldá los colores a la plataforma".
 - `scripts/girox/complete-brands-2.py` (después de `complete-brands.py`): (1) cada proveedor de Girox que la página NO tenía se agrega al final con todos sus
