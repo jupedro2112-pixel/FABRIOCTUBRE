@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 950. Usuarios de PRUEBA sin el bloqueo de marca por saldo (para probar todas las plataformas)
+**Owner:** "habilitá todas las plataformas para probarlas, ninguna me deja (usuario alex69608531)". Era el bloqueo de #908 (con ≥ $100 de saldo
+no se cambia de marca). `POST /api/me/brand`: los usernames de `Config['brandLockFree']` (por defecto `alex69608531`, `pruebanardo`) cambian
+de marca sin mirar el saldo (es la misma cuenta de 1girox: no mueve fichas). A los clientes no les cambia nada.
+
 ### 949. GANAMOS: la pestaña Casino con SUS proveedores (zip Ganando_Argentina.zip): 36 proveedores, 1.525 juegos con sus portadas — SW v639
 **Pedido (owner):** Ganamos idéntica con las fotos del zip (54 proveedores + secciones); "fijate bien y conectá, que hay muchos que sí tiene".
 - Capturas de 384 px de alto variable (tramos superpuestos, sin huecos). La grilla (3 × 111 px, paso 138) se detecta por las franjas oscuras;

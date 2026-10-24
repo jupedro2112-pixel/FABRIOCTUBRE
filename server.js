@@ -9919,6 +9919,13 @@ app.post('/api/me/brand', authMiddleware, async (req, res) => {
     const u = await User.findOne({ id: req.user.userId }).select('id username activeBrand brandHistory').lean(); if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
     const cur = u.activeBrand || 'picaroja';
     if (cur === want) return res.json({ success: true, brand: want });
+    // #950 (owner: "habilitá todas las plataformas para probarlas"): usuarios de PRUEBA sin el bloqueo por saldo (Config['brandLockFree'],
+    // lista de usernames; los de abajo vienen cargados por defecto). Es la misma cuenta de 1girox: cambiar de marca no mueve fichas.
+    let _free = ['alex69608531', 'pruebanardo']; try { const c = await getConfig('brandLockFree', null); if (Array.isArray(c)) _free = c; } catch (_) {}
+    if (_free.map((x) => String(x).toLowerCase()).includes(String(u.username).toLowerCase())) {
+      await User.updateOne({ id: u.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+      return res.json({ success: true, brand: want, tester: true });
+    }
     const b = await girox.getUserBalance(u.username).catch(() => null);
     if (!b || !b.success) return res.status(503).json({ error: 'No pudimos ver tu saldo ahora. Probá de nuevo en un momento.' });
     const bal = Math.round(Number(b.balance) || 0);
