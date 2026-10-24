@@ -138,13 +138,6 @@ const userSchema = new mongoose.Schema({
   // non-allow-listed path returns 403 with `code: 'MUST_CHANGE_PASSWORD'` while
   // this flag is true. This prevents bypassing the mandatory change modal by
   // simply reloading the page.
-  // #908 (owner): plataforma ACTIVA del cliente para la app ('picaroja' | 'girox'; por dentro es la misma cuenta de 1girox). Con saldo en una,
-  // la otra queda bloqueada hasta usarlo o retirarlo. brandHistory = desde cuándo estuvo en cada una (marca las cargas en "Mis cargas").
-  // #929 (owner): el sorteo suma SÓLO desde que el cliente se anota (requisitos: app instalada con notificaciones + tocar "Unirme a Telegram").
-  raffleJoinedAt: { type: Date, default: null },
-  raffleTelegramAt: { type: Date, default: null },
-  activeBrand: { type: String, enum: ['picaroja', 'girox', 'jugaygana', 'ganamos', 'buffaloplay', null], default: null },
-  brandHistory: { type: [{ brand: String, since: Date, _id: false }], default: [] },
   mustChangePassword: {
     type: Boolean,
     default: false,
@@ -367,6 +360,22 @@ const userSchema = new mongoose.Schema({
   // #823: último teléfono con el que entró (lo detecta index.html): { os, model, w, h, dpr, app, sat, at }.
   lastDevice: { type: mongoose.Schema.Types.Mixed, default: null },
   deviceIds: { type: [String], default: [], index: true },
+  // #971 RECORRIDO DE RETENCIÓN (Centro de avisos): pasos ya enviados ("<paso>@<episodio>", episodio = día de la última carga o 'reg'),
+  // último paso y segmento. Lo escribe sólo _journeyTick (server.js).
+  journey: {
+    segment: { type: String, default: null },
+    lastStep: { type: String, default: null },
+    lastAt: { type: Date, default: null },
+    sent: { type: [{ k: { type: String }, at: { type: Date } }], default: [] }
+  },
+  // #971 QUÉ AVISOS QUIERE (Perfil → "Qué avisos querés recibir"): 'all' (todo) · 'mine' (sólo lo suyo: reembolso, regalos para él,
+  // sorteos; nada masivo) · 'none' (sólo Soporte y sus cargas/retiros). fatigue = pushes de promo seguidas sin que abra la app
+  // (se resetea en /api/activity/ping): con 10 o más, las promos masivas dejan de salirle solas hasta que vuelva a entrar.
+  notifPrefs: {
+    level: { type: String, enum: ['all', 'mine', 'none'], default: 'all' },
+    updatedAt: { type: Date, default: null },
+    fatigue: { type: Number, default: 0 }
+  },
   pendingAccessCodeAt: { type: Date, default: null }, // #965: cuándo se generó el código temporal (vence a los 7 días) // #952: IDs propios del celular (localStorage) vistos en el ping; el radar cruza cuentas por acá
   // Último permiso de notificaciones reportado por el cliente: 'granted' / 'denied' / 'default'
   notifPermission: {
@@ -463,6 +472,9 @@ const userSchema = new mongoose.Schema({
   // 'manual'  = lo creó un publisher_admin desde el panel.
   // El default es 'organic' por compatibilidad con usuarios pre-existentes y
   // con el flujo de registro público que no toca este campo.
+  // #975 (owner 2026-10-24): REGISTRO ABIERTO SIN REGALOS. true = se registró desde la página sin link de publicidad ni referido ⇒ sin bono de
+  // 1ª carga, sin extra por instalar, sin código de bienvenida, sin 2ª carga, sin ofertas de bienvenida. Sí reembolsos, ruleta, lotes, misiones.
+  noWelcomeGifts: { type: Boolean, default: false, index: true },
   acquisitionSource: {
     type: String,
     // 'landing' = alta por la landing puente externa (POST /api/landing/signup).

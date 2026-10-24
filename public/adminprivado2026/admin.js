@@ -651,7 +651,7 @@ function setupRoleBasedUI() {
     // #889 (owner): los agentes de PAGOS y CARGAS ven sólo: Soporte, Cargas pendientes, Retiros pendientes, Cargas automáticas, Ruleta
     // diaria, Referidos, Usuarios y Transacciones. (Los permisos reales los pone el servidor; esto ordena lo que ven.)
     if (role === 'depositor' || role === 'withdrawer') {
-        const AGENT_SECTIONS = ['support', 'chats', 'depositReviews', 'payReview', 'cargasAuto', 'roulette', 'referrals', 'users', 'transactions']; // #898: + Soporte
+        const AGENT_SECTIONS = ['support', 'depositReviews', 'payReview', 'cargasAuto', 'chats']; // #898 · #982 (owner): sólo Soporte, Comprobantes a verificar, Pagos a confirmar, Cargas automáticas y Chat completo
         document.querySelectorAll('.sidebar-nav .nav-item').forEach((it) => { if (!AGENT_SECTIONS.includes(it.dataset.section)) it.style.display = 'none'; else it.style.display = ''; });
         document.querySelectorAll('.sidebar-nav .nav-group-title').forEach((t) => {
             let n = t.nextElementSibling, any = false;
@@ -2834,15 +2834,11 @@ async function loadUserInfo(userId) {
               '" style="font-size:12px;font-weight:800;color:' + (user.vipLevelInfo.color || '#ffd700') + ';">' +
               user.vipLevelInfo.emoji + ' ' + escapeHtml(user.vipLevelInfo.name) + '</span>'
             : '';
-        // #969 (owner: "un solo admin para cargar cada plataforma"): en qué plataforma está jugando el cliente (la carga va a esa; es la misma
-        // cuenta de 1girox). Se cambia con el botón de marca del cliente (#913).
-        const _BRN = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' };
-        const brandTag = ' <span class="chat-brand" title="Plataforma activa del cliente" style="font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--p-surface-2,#eef);border:1px solid var(--p-border,#ccd);">🎰 ' + escapeHtml(_BRN[user.activeBrand] || 'PICA ROJA') + '</span>';
         if (user.acquisitionPublisher) {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag +
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag +
                 ' <span class="chat-publisher">(📣 ' + escapeHtml(user.acquisitionPublisher) + ')</span>';
         } else {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag;
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag;
         }
 
         // Mostrar estado de la app de notificaciones
@@ -4376,10 +4372,6 @@ function renderUsers(users) {
             ? `<button class="action-btn-small" title="Cambiar contraseña" onclick='openUserPasswordModal(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)}, ${JSON.stringify(user.role)})'><span class="icon icon-key"></span></button>`
             : '';
 
-        // #913: cambiar la MARCA activa del cliente (PICA ROJA / Girox / JUGAYGANA) sin tocar su saldo (es la misma cuenta de Girox).
-        const brandBtn = adminRole === 'admin' && !isAdminUser
-            ? `<button class="action-btn-small" title="Cambiar marca (PICA ROJA / Girox / JUGAYGANA / Ganamos)" onclick='adminSetBrand(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)})'>🏷️</button>`
-            : '';
         let blockBtn = '';
         if (canBlock) {
             if (user.isBlocked) {
@@ -4448,7 +4440,7 @@ function renderUsers(users) {
                     <span class="icon icon-comment"></span>
                 </button>
                 ${pwdBtn}
-                ${blockBtn}${brandBtn}
+                ${blockBtn}
                 ${accessLinkBtn}
             </td>
         </tr>
@@ -4872,20 +4864,6 @@ window.toggleFraudDetail = toggleFraudDetail;
 window.blockFromFraud = blockFromFraud;
 window.handleBlockUser = handleBlockUser;
 window.handleUnblockUser = handleUnblockUser;
-// #913: marca activa del cliente (el bloqueo por saldo es para el cliente; el admin la cambia igual, sin mover fichas).
-async function adminSetBrand(userId, username) {
-    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana', '4': 'ganamos', '5': 'buffaloplay' }; // #958
-    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n4 = Ganamos\n5 = BuffaloPlay\n\nEscribí el número:');
-    if (pick == null) return;
-    const brand = opts[String(pick).trim()]; if (!brand) { showToast('Opción inválida', 'error'); return; }
-    try {
-        const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/brand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand }) });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok) { showToast(d.error || 'No se pudo cambiar la marca', 'error'); return; }
-        showToast('✅ ' + username + ' ahora está en ' + d.brandName + ' (que cierre y abra la app)', 'success');
-    } catch (e) { showToast('Error de conexión', 'error'); }
-}
-window.adminSetBrand = adminSetBrand;
 window.handleToggleVerifyPhone = handleToggleVerifyPhone;
 window.handleToggleLoginNoPwd = handleToggleLoginNoPwd;
 
@@ -5023,6 +5001,9 @@ function switchSection(section) {
     if (section === 'cronohist') { loadStoriesAuto(); loadNewbieOffers(); } // #871 · #886
     if (section === 'fraud') loadFraud(); // #873
     if (section === 'inicio') loadInicio(); // #876
+    if (section === 'notifCenter') loadNotifCenter(); // #971/#973
+    if (section === 'weeklyReview') loadWeeklyReview(); // #973
+    if (section === 'sorteoStats') loadSorteoStats(); // #981
     if (section === 'sorteos') loadSorteos(); // #915
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
@@ -5856,7 +5837,9 @@ async function stratLoad() {
         _stTypes = j.missionTypes || {}; _stWeek = (j.stats && j.stats.missionsWeek) || [];
         const g = (id) => document.getElementById(id);
         g('stFdPct').value = j.firstDeposit.pct; g('stIgOn').checked = !!j.firstDeposit.installExtraEnabled; g('stIgPct').value = j.firstDeposit.installExtraPct;
-        g('stFdInfo').textContent = 'Hoy: ' + j.firstDeposit.pct + '% · con la app instalada ' + j.firstDeposit.withApp + '%';
+        if (g('stFdCap')) g('stFdCap').value = j.firstDeposit.capArs != null ? j.firstDeposit.capArs : 15000; if (g('stIgFixed')) g('stIgFixed').value = j.firstDeposit.installExtraFixedArs != null ? j.firstDeposit.installExtraFixedArs : 5000; // #974
+        const _fx = Number(j.firstDeposit.installExtraFixedArs) || 0, _cap = Number(j.firstDeposit.capArs) || 0;
+        g('stFdInfo').textContent = 'Hoy: ' + j.firstDeposit.pct + '%' + (_cap > 0 ? ' hasta $' + _cap.toLocaleString('es-AR') : ' sin tope') + (j.firstDeposit.installExtraEnabled ? ' · instalando la app +' + (_fx > 0 ? '$' + _fx.toLocaleString('es-AR') : j.firstDeposit.installExtraPct + '%') : '');
         g('stSdOn').checked = !!j.secondDeposit.enabled; g('stSdPct').value = j.secondDeposit.pct; g('stSdAfter').value = j.secondDeposit.afterHours; g('stSdValid').value = j.secondDeposit.validHours;
         const s = j.stats.secondDeposit; g('stSdInfo').textContent = 'Últimos 30 días: ' + s.offered30 + ' ofrecidos · ' + s.used30 + ' usados · ' + s.expired30 + ' vencidos';
         g('stMsOn').checked = !!j.missions.enabled; const af = j.missions.antiFraud || {}; g('stAfRoll').value = af.rolloverX != null ? af.rolloverX : 3; g('stAfPct').value = af.maxRewardPctOfDeposits != null ? af.maxRewardPctOfDeposits : 20; g('stAfMin').value = af.minRewardArs != null ? af.minRewardArs : 500; g('stAfBlock').checked = af.blockIfNetWithdrawn !== false; g('stMsInfo').textContent = 'Semana ' + j.stats.weekKey + ': ' + _stWeek.reduce((a, x) => a + x.n, 0) + ' misiones cumplidas · últimos 30 días ' + j.stats.missions30.n + ' por $' + Number(j.stats.missions30.amt || 0).toLocaleString('es-AR') + (j.stats.failedWeek ? ' · ⚠ ' + j.stats.failedWeek + ' con el crédito rebotado por la plataforma (se reintentan solos)' : '');
@@ -5888,7 +5871,7 @@ function stratAddMission() { const tb = document.getElementById('stMsRows'); con
 async function stratSave() {
     const g = (id) => document.getElementById(id);
     _stTierSync(); const items = _stReadRows();
-    const body = { firstDeposit: { pct: g('stFdPct').value, installExtraEnabled: g('stIgOn').checked, installExtraPct: g('stIgPct').value }, secondDeposit: { enabled: g('stSdOn').checked, pct: Number(g('stSdPct').value), afterHours: Number(g('stSdAfter').value), validHours: Number(g('stSdValid').value) }, missions: { enabled: g('stMsOn').checked, items: items, tiers: _stTiers, demoteAfterWeeks: Number(g('stDemote').value) || 2, antiFraud: { rolloverX: Number(g('stAfRoll').value), maxRewardPctOfDeposits: Number(g('stAfPct').value), minRewardArs: Number(g('stAfMin').value), blockIfNetWithdrawn: g('stAfBlock').checked } } };
+    const body = { firstDeposit: { pct: g('stFdPct').value, capArs: g('stFdCap') ? g('stFdCap').value : undefined, installExtraEnabled: g('stIgOn').checked, installExtraPct: g('stIgPct').value, installExtraFixedArs: g('stIgFixed') ? g('stIgFixed').value : undefined }, secondDeposit: { enabled: g('stSdOn').checked, pct: Number(g('stSdPct').value), afterHours: Number(g('stSdAfter').value), validHours: Number(g('stSdValid').value) }, missions: { enabled: g('stMsOn').checked, items: items, tiers: _stTiers, demoteAfterWeeks: Number(g('stDemote').value) || 2, antiFraud: { rolloverX: Number(g('stAfRoll').value), maxRewardPctOfDeposits: Number(g('stAfPct').value), minRewardArs: Number(g('stAfMin').value), blockIfNetWithdrawn: g('stAfBlock').checked } } };
     try { const r = await authFetch('/api/admin/strategy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Estrategia guardada y en marcha', 'success'); const si = g('stSaveInfo'); if (si) si.textContent = 'Guardado ' + new Date().toLocaleTimeString('es-AR'); stratLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function stratRolloverLoad() { try { const r = await authFetch('/api/admin/strategy/rollover'); const j = await r.json(); if (!r.ok) return; const i = document.getElementById('stRollX'); if (i && document.activeElement !== i) i.value = j.bonos; const di = document.getElementById('stDepRollX'); if (di && document.activeElement !== di) di.value = j.depositX != null ? j.depositX : 3; const p = document.getElementById('stRollInfo'); if (p) p.textContent = 'Hoy: bonos de carga ×' + j.bonos + ' · toda carga ×' + (j.depositX != null ? j.depositX : 3) + ' · fueguito ×' + j.fueguito + ' · código ×' + j.codigo + ' · misiones ×' + j.misiones + ' · cuentas marcadas por CBU repetido: ' + j.flagged; } catch (_) {} }
@@ -5900,6 +5883,15 @@ let _clItems = [], _clUsdt = null;
 const _clM = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
 const _clU = (n) => (n == null ? '—' : 'US$ ' + Number(n).toLocaleString('es-AR', { maximumFractionDigits: 0 }));
 const _clC = (v) => '<span style="color:' + (v >= 0 ? 'var(--p-green)' : 'var(--p-red)') + ';font-weight:800">' + _clM(v) + '</span>';
+// #971: semáforo del mes — regalado sobre depositado (verde ≤15 % · amarillo ≤20 % · rojo más). Si está en rojo: bajar frecuencia o % de bonos, nunca el reembolso.
+function _clGiftSemaforo(items) {
+    const m = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 7);
+    const rows = (items || []).filter(function (c) { return String(c.dateKey || '').slice(0, 7) === m; });
+    const dep = rows.reduce(function (a, c) { return a + (Number(c.depositos) || 0); }, 0), reg = rows.reduce(function (a, c) { return a + (Number(c.regalos) || 0); }, 0);
+    if (!dep) return '';
+    const pct = Math.round(reg * 1000 / dep) / 10; const sem = pct <= 15 ? '🟢' : pct <= 20 ? '🟡' : '🔴';
+    return _diaKpi(sem + ' REGALOS / DEPÓSITOS (mes)', pct.toLocaleString('es-AR') + '%', _clM(reg) + ' regalado sobre ' + _clM(dep) + ' · sano hasta 15 % · rojo +20 %: bajá frecuencia o % de bonos, no el reembolso');
+}
 async function cierresLoad() {
     const list = document.getElementById('cierresList'); if (list && !list.innerHTML) list.innerHTML = '<div class="dia-note">Generando los cierres que falten…</div>';
     try {
@@ -5911,6 +5903,7 @@ async function cierresLoad() {
         const malos = _clItems.filter(function (x) { return x.arqueo === 'faltante' || x.arqueo === 'sobrante'; }).length; const bd = document.getElementById('cierresBadge'); if (bd) { bd.textContent = malos; bd.style.display = malos ? '' : 'none'; }
         const t = j.totals || {};
         document.getElementById('cierresTotals').innerHTML = _diaKpi('INGRESOS (30 d)', _clM(t.ingresos)) + _diaKpi('GASTOS', _clM(t.egresos), 'transf. ' + _clM(t.fee) + ' · gastos ' + _clM(t.gastos) + ' · comisión ' + _clM(t.comision)) + _diaKpi('RESULTADO (plata)', _clC(t.resultado)) + _diaKpi('Depósitos', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('NETO (fichas)', _clC(t.neto)) + _diaKpi('Días con diferencia', String(malos)); // #948
+        try { document.getElementById('cierresTotals').insertAdjacentHTML('beforeend', _clGiftSemaforo(_clItems)); } catch (_) {} // #971
         if (!list) return;
         // #744 (owner): cierres día a día, automáticos. Diferencia SIEMPRE visible (0 = cuadra) y "Ver detalle" con la conciliación.
         const arq = function (c) { const d = Number(c.diferencia) || 0; const num = (d > 0 ? '+' : '') + _clM(d).replace('$-', '-$'); if (c.arqueo === 'sin_datos') return '<span class="cl-st">— sin datos del banco</span>'; return c.arqueo === 'cuadra' ? '<span class="cl-st fin">✅ Da 0</span>' : ('<span class="cl-st bad">⚠ ' + (c.arqueo === 'faltante' ? 'Faltante' : 'Sobrante') + ' <b>' + num + '</b></span>'); };
@@ -6064,16 +6057,18 @@ async function loadRegistrationMode() {
         const ichk = document.getElementById('regInviteChk'); if (ichk) { ichk.checked = j.mode === 'invite'; ichk.disabled = !j.canEdit; } // #748
         const lchk = document.getElementById('regLoginChk'); if (lchk) { lchk.checked = j.entryLogin === true; lchk.disabled = !j.canEdit; } // #538
         const schk = document.getElementById('regQuickSmsChk'); if (schk) { schk.checked = j.quickEntrySms !== false; schk.disabled = !j.canEdit; } // #541
+        const ochk = document.getElementById('regOrganicGiftsChk'); if (ochk) { ochk.checked = j.organicGifts === true; ochk.disabled = !j.canEdit; } // #975
         if (btn) btn.style.display = j.canEdit ? '' : 'none';
-        if (st) st.textContent = (j.mode === 'invite' ? 'Ahora: 🔒 SÓLO CON INVITACIÓN (landing + referidos; login abierto)' : (j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (sólo nombre, sin SMS)' : 'Ahora: registro con SMS')) + (j.entryLogin ? ' · pantalla de ingreso: INICIAR SESIÓN' : '');
+        if (st) st.textContent = (j.mode === 'invite' ? 'Ahora: 🔒 SÓLO CON INVITACIÓN (landing + referidos; login abierto)' : (j.mode === 'quick' ? 'Ahora: ENTRADA RÁPIDA (nombre' + (j.quickEntrySms !== false ? ' + celular verificado' : ', sin SMS') + ')' : 'Ahora: registro con SMS')) + (j.organicGifts ? ' · registro abierto CON regalos' : ' · registro abierto SIN regalos de bienvenida') + (j.entryLogin ? ' · pantalla de ingreso: INICIAR SESIÓN' : '');
     } catch (_) {}
 }
 async function saveRegistrationMode() {
     const chk = document.getElementById('regSmsChk'); const ichk = document.getElementById('regInviteChk'); const mode = (ichk && ichk.checked) ? 'invite' : (chk && !chk.checked ? 'quick' : 'sms'); // #748
     const lchk = document.getElementById('regLoginChk'); const entryLogin = !!(lchk && lchk.checked); // #538
     const schk = document.getElementById('regQuickSmsChk'); const quickEntrySms = !!(schk && schk.checked); // #541
+    const ochk = document.getElementById('regOrganicGiftsChk'); const organicGifts = !!(ochk && ochk.checked); // #975
     try {
-        const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode, entryLogin, quickEntrySms }) });
+        const r = await authFetch('/api/admin/registration-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode, entryLogin, quickEntrySms, organicGifts }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
         showToast(mode === 'invite' ? '🔒 Registro SÓLO CON INVITACIÓN activado (landing y referidos)' : (mode === 'quick' ? 'Registro DESACTIVADO: la app pide sólo el nombre y entra directo' : 'Registro con SMS activado'), 'success');
         loadRegistrationMode();
@@ -6104,7 +6099,7 @@ async function datosIaGate(label) {
     try {
         const r = await authFetch('/api/admin/datos-ia-pin'); const j = r.ok ? await r.json() : { enabled: false };
         if (!j.enabled) return true;
-        let pin = sessionStorage.getItem('datos_pin');
+        let pin = sessionStorage.getItem('datos_pin') || sessionStorage.getItem('inicio_pin'); // #982: una sola clave
         if (!pin) { pin = prompt('🔒 ' + (label || 'Datos') + ' está protegido. Ingresá la clave:'); if (!pin) { showSection('commands'); return false; } sessionStorage.setItem('datos_pin', pin.trim()); }
         const t = await authFetch('/api/admin/datos-ia/usdt');
         if (t.status === 423) { sessionStorage.removeItem('datos_pin'); showToast('Clave incorrecta', 'error'); showSection('commands'); return false; }
@@ -6120,8 +6115,8 @@ async function saveDatosIaPin(remove) {
     try {
         const r = await authFetch('/api/admin/datos-ia-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin }) });
         const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo guardar', 'error'); return; }
-        try { sessionStorage.removeItem('datos_pin'); } catch (_) {}
-        document.getElementById('dpPin').value = ''; showToast(j.enabled ? 'Clave de Datos IA guardada' : 'Datos IA sin clave', 'success'); loadDatosIaPin();
+        try { if (pin) { sessionStorage.setItem('datos_pin', pin); sessionStorage.setItem('inicio_pin', pin); } else { sessionStorage.removeItem('datos_pin'); sessionStorage.removeItem('inicio_pin'); } } catch (_) {} // #984: queda activa ya
+        document.getElementById('dpPin').value = ''; showToast(j.enabled ? '🔑 Clave guardada: vale para Datos y para Principal (INICIO, Centro de avisos, Revisión semanal, Sorteos)' : 'Sin clave', 'success'); loadDatosIaPin();
     } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.datosIaGate = datosIaGate; window.loadDatosIaPin = loadDatosIaPin; window.saveDatosIaPin = saveDatosIaPin;
@@ -6591,6 +6586,7 @@ async function loadInstallBonusPct() {
         if (igEn) { igEn.checked = ig.enabled === true; igEn.disabled = !j.canEdit; }
         if (igP) { igP.value = ig.pct != null ? ig.pct : 50; igP.disabled = !j.canEdit; }
         if (igC) { igC.value = ig.capArs != null ? ig.capArs : 20000; igC.disabled = !j.canEdit; }
+        const igF = document.getElementById('installGiftFixedInput'); if (igF) { igF.value = ig.fixedArs != null ? ig.fixedArs : 5000; igF.disabled = !j.canEdit; } // #974
         if (igD) { igD.value = ig.days != null ? ig.days : 7; igD.disabled = !j.canEdit; }
         if (igB) igB.style.display = j.canEdit ? '' : 'none';
         const estado = j.enabled === true ? 'ACTIVO' : 'APAGADO (la app no muestra el cartel; lo ya reclamado se honra)';
@@ -6651,7 +6647,8 @@ async function saveInstallBonusPct() {
     if (firstDepositPct !== undefined && (!Number.isFinite(firstDepositPct) || firstDepositPct < 0 || firstDepositPct > 500)) { showToast('El % de la primera carga tiene que ser un número entre 0 y 500', 'error'); return; }
     // #283/#290: % EXTRA por instalar la app (va en el mismo POST)
     const igEn = document.getElementById('installGiftEnabledChk'), igP = document.getElementById('installGiftPctInput'), igC = document.getElementById('installGiftCapInput'), igD = document.getElementById('installGiftDaysInput');
-    const installGift = igEn ? { enabled: igEn.checked, pct: igP && igP.value !== '' ? Number(igP.value) : undefined, capArs: igC && igC.value !== '' ? Number(igC.value) : undefined, days: igD && igD.value !== '' ? Number(igD.value) : undefined } : undefined;
+    const igF = document.getElementById('installGiftFixedInput');
+    const installGift = igEn ? { enabled: igEn.checked, pct: igP && igP.value !== '' ? Number(igP.value) : undefined, capArs: igC && igC.value !== '' ? Number(igC.value) : undefined, days: igD && igD.value !== '' ? Number(igD.value) : undefined, fixedArs: igF && igF.value !== '' ? Number(igF.value) : undefined } : undefined;
     if (!confirm(`¿Guardar el bono por instalar la app ${enabled === false ? 'APAGADO' : 'ACTIVO'} en ${pct}%${autoLoadPct !== undefined ? ` y el cartel "Servicio completo" en ${autoLoadPct}%` : ''}?\n\n${enabled === false ? 'La app NO muestra el cartel ni deja reclamar. Los clientes que YA reclamaron conservan su % pendiente.' : 'Aplica al instante al cartel de la app y a los mensajes automáticos. Los clientes que YA reclamaron conservan el % que tenían.'}`)) return;
     try {
         const r = await authFetch('/api/admin/install-bonus-config', { method: 'POST', body: JSON.stringify({ pct, enabled, autoLoadPct, firstDepositPct, installGift, minDepositArs, withdrawMinArs, withdrawOtpRequired }) });
@@ -16248,6 +16245,114 @@ async function storiesAutoRepublish() {
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
 window.loadStoriesAuto = loadStoriesAuto; window.storiesAutoRemove = storiesAutoRemove; window.storiesAutoMatches = storiesAutoMatches; window.storiesAutoRepublish = storiesAutoRepublish;
+// ═══ #971: CENTRO DE AVISOS — fuentes, tope único, segmentos de hoy y pasos del recorrido ═══
+// #973: las secciones de PRINCIPAL comparten la clave de INICIO (header x-inicio-pin). Devuelve la respuesta o null (ya pintó el motivo en box).
+async function _inicioGuard(path, box, opts) {
+    const note = (t) => { if (box) box.innerHTML = '<div class="in-note">' + t + '</div>'; };
+    let r = await _inicioFetch(path, opts);
+    if (r.status === 428) { note('🔑 Todavía no hay clave de INICIO: creala para ver esta sección.'); if (await inicioCreatePin()) return _inicioFetch(path, opts); return null; }
+    if (r.status === 423) {
+        const pin = window.prompt('🔒 Clave de INICIO:', ''); if (!pin) { note('🔒 Protegido con clave: tocá 🔄 para ingresarla.'); return null; }
+        sessionStorage.setItem('inicio_pin', pin); r = await _inicioFetch(path, opts);
+        if (r.status === 423) { sessionStorage.removeItem('inicio_pin'); note('❌ Clave incorrecta: tocá 🔄 para probar de nuevo.'); return null; }
+    }
+    return r;
+}
+async function loadNotifCenter(refresh) {
+    const box = document.getElementById('ncBody'); if (!box) return;
+    try {
+        const r = await _inicioGuard('/api/admin/inicio/notif-center' + (refresh ? '?refresh=1' : ''), box); if (!r) return;
+        const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        const c = j.config || {}, pv = j.preview || {}, L = j.segmentLabels || {}; const num = (n) => Number(n || 0).toLocaleString('es-AR'); const money = (n) => '$' + num(n);
+        const DOW = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        const gift = (s) => s.gift.type === 'none' ? 'sólo aviso' : s.gift.type === 'percent' ? '+' + s.gift.pct + '% en la próxima carga · ' + s.gift.hours + ' h' : 'FICHAS según valor del cliente: ' + (j.tiers || []).map((t) => money(Math.round(t.chips * (s.gift.mult || 1)))).join(' / ');
+        const tog = (k, label, on, hint) => '<label style="display:flex;gap:.5rem;align-items:flex-start;padding:.4rem .55rem;border:1px solid var(--p-line,#334);border-radius:8px;cursor:pointer"><input type="checkbox" ' + (on ? 'checked' : '') + ' onchange="ncToggle(\'' + k + '\', this.checked)" style="margin-top:.2rem"><span><b>' + label + '</b> ' + (on ? '🟢' : '⚪') + '<br><small style="color:#9ab">' + hint + '</small></span></label>';
+        const fixed = (label, on, hint) => '<div style="padding:.4rem .55rem;border:1px solid var(--p-line,#334);border-radius:8px"><b>' + label + '</b> ' + (on ? '🟢' : '⚪') + '<br><small style="color:#9ab">' + hint + '</small></div>';
+        const jl = j.journeyLast, rl = j.refundLast, nb = j.newbie || {}, ap = j.autopilot || {};
+        const sources = [
+            tog('journey', '🧭 Recorrido por cliente', c.journey, 'Nuevos sin carga, enfriando (7–13 d), inactivos (14–29 d), perdidos (30–89 d), lejanos (90–180 d). Un paso por día, regalos crecientes. ' + (jl ? 'Último: ' + jl.day + ' · ' + (jl.steps || []).reduce((a, s) => a + (s.sent || 0), 0) + ' avisos en ' + (jl.steps || []).length + ' pasos.' : 'Todavía no corrió (sale a las 17 h, antes del bono de las 19).')),
+            fixed('🤖 Campaña masiva del día (autopiloto)', ap.enabled, (ap.parts || 3) + ' lotes desde las ' + (ap.time || '20:00') + ' · bono ' + (ap.hours || 4) + ' h · fija, sólo se apaga con AUTOPILOT_DISABLED=1'),
+            tog('refundReminder', '🔁 Aviso del reembolso diario', c.refundReminder, 'A quien perdió ayer y no lo reclamó, a las 11 h; al tocar abre Reembolso. ' + (rl ? 'Último: ' + rl.day + ' · ' + num(rl.sent) + ' enviados.' : 'Todavía no corrió.')),
+            fixed('🎁 Ofertas de bienvenida (historia personal + push)', nb.enabled, 'Días ' + (nb.days || []).join(', ') + ' desde el registro · +' + (nb.pct || 0) + '% por ' + (nb.hours || 0) + ' h · respeta el 1 por día. Se edita en Historias automáticas.'),
+            fixed('📣 Historia con bono (push a todos)', true, 'Los ' + (j.storyBonusDays || []).map((d) => DOW[d]).join(' y ') + ' a las 19:00 · ese día el autopiloto NO manda campaña (un solo aviso).'),
+            tog('winnersStory', '🏆 Historia "pagos de la semana"', c.winnersStory, 'Lunes al mediodía, sin push: cuántos retiros pagamos y el más grande (nombre tapado). Confianza con datos reales.'),
+            tog('legacyRules', '🗂️ Reglas viejas (B3–B6, seguimientos)', c.legacyRules, 'APAGADAS: las reemplaza el recorrido. Encenderlas duplica avisos.')
+        ];
+        const segs = Object.keys(L).map((k) => '<div class="in-box" style="padding:.4rem .6rem"><div class="in-l">' + L[k] + '</div><div class="in-v" style="font-size:1.1rem">' + num((pv.segments || {})[k]) + '</div></div>').join('');
+        const todaySteps = (pv.steps || []).length
+            ? '<table class="data-table" style="width:100%;font-size:.8rem"><thead><tr><th>Paso</th><th>Segmento</th><th>Regalo</th><th>Clientes</th><th>Ejemplos</th></tr></thead><tbody>' + pv.steps.map((s) => '<tr><td><b>' + escHtml(s.name) + '</b></td><td>' + (L[s.segment] || s.segment) + '</td><td>' + (s.gift === 'none' ? 'aviso' : s.gift === 'percent' ? '+' + s.amount + '%' : money(s.amount) + ' en fichas') + '</td><td>' + num(s.n) + '</td><td><small>' + (s.sample || []).map(escHtml).join(', ') + '</small></td></tr>').join('') + '</tbody></table>'
+            : '<div style="color:#9ab">Hoy no le toca ningún paso a nadie (o ya salió).</div>';
+        box.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:.5rem">' + sources.join('') + '</div>'
+            + '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.7rem 0"><b>Tope por cliente al mes:</b> <input type="number" id="ncCap" class="form-input" style="width:90px" min="2" max="60" value="' + (c.monthlyCap || '') + '" placeholder="auto ' + (j.cap || '') + '"> <button class="btn btn-secondary btn-small" onclick="ncSaveCap()">Guardar</button> <small style="color:#9ab">Hoy rige <b>' + (j.cap || '') + '</b>. Cuenta todo lo que sale por lotes. Los regalos de recuperación (14+ días sin cargar) no se frenan por este tope: recuperar vale más que la cuota.</small></div>'
+            + '<div style="margin:.3rem 0"><small style="color:#9ab">Clientes que bajaron sus avisos desde el Perfil: sólo lo mío <b>' + num((j.optOut || {}).mine) + '</b> · ninguno <b>' + num((j.optOut || {}).none) + '</b>. Además, 10 promos seguidas sin abrir la app pausan las masivas hasta que vuelva.</small></div>'
+            + '<h4 style="margin:.8rem 0 .3rem">📊 Dónde está cada cliente hoy (' + num(pv.total) + ' clientes)</h4><div class="in-grid">' + segs + '</div>'
+            + '<h4 style="margin:.8rem 0 .3rem">📅 Lo que le toca hoy <button class="btn btn-secondary btn-small" onclick="ncRunNow()">▶ Mandar ahora</button></h4>' + todaySteps
+            + '<details style="margin-top:.8rem"><summary style="cursor:pointer"><b>🧭 Los ' + (j.steps || []).length + ' pasos del recorrido</b> (fijos en el código, textos de servicio)</summary><div style="overflow:auto"><table class="data-table" style="width:100%;font-size:.78rem;margin-top:.4rem"><thead><tr><th>Día</th><th>Segmento</th><th>Paso</th><th>Regalo</th><th>Texto</th></tr></thead><tbody>' + (j.steps || []).map((s) => '<tr><td>' + s.day + '</td><td>' + (L[s.segment] || s.segment) + '</td><td><b>' + escHtml(s.name) + '</b>' + (s.capped ? '' : '<br><small style="color:#f59e0b">sin tope mensual</small>') + '</td><td>' + gift(s) + '</td><td><small><b>' + escHtml(s.title) + '</b> ' + escHtml(s.text) + '</small></td></tr>').join('') + '</tbody></table></div></details>';
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">' + escHtml(e.message) + '</span>'; }
+}
+async function ncToggle(k, v) { try { const r = await _inicioFetch('/api/admin/inicio/notif-center', { method: 'PUT', body: JSON.stringify({ [k]: !!v }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); loadNotifCenter(); } catch (e) { alert(e.message); loadNotifCenter(); } }
+async function ncSaveCap() { const v = (document.getElementById('ncCap') || {}).value; try { const r = await _inicioFetch('/api/admin/inicio/notif-center', { method: 'PUT', body: JSON.stringify({ monthlyCap: v === '' || v == null ? null : Number(v) }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); alert('Guardado. ' + (j.reprogrammed ? 'El autopiloto se reprograma solo con el tope nuevo (' + j.reprogrammed + ' campañas futuras rearmadas).' : '')); loadNotifCenter(); loadCronAutopilot(); } catch (e) { alert(e.message); } }
+async function ncRunNow() { if (!confirm('¿Mandar AHORA los pasos de hoy del recorrido? Sólo le llega a quien todavía no recibió ese paso.')) return; try { const r = await _inicioFetch('/api/admin/inicio/notif-center/run', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); alert(j.result ? 'Listo: ' + (j.result.steps || []).reduce((a, s) => a + (s.sent || 0), 0) + ' avisos en ' + (j.result.steps || []).length + ' pasos.' : 'No corrió: está apagado o lo está haciendo otra instancia.'); loadNotifCenter(true); } catch (e) { alert(e.message); } }
+window.loadNotifCenter = loadNotifCenter; window.ncToggle = ncToggle; window.ncSaveCap = ncSaveCap; window.ncRunNow = ncRunNow;
+// ═══ #981: SORTEOS — ¿están sirviendo? (Principal) ═══
+async function loadSorteoStats() {
+    const box = document.getElementById('ssBody'); if (!box) return;
+    try {
+        const r = await _inicioGuard('/api/admin/inicio/sorteos-stats', box); if (!r) return; const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        const n = (v) => Number(v || 0).toLocaleString('es-AR'); const pc = (v) => v == null ? '—' : Math.round(v * 100) + ' %'; const f1 = (v) => (Number(v) || 0).toFixed(1); const money = (v) => '$' + n(Math.round(v || 0));
+        const V = { bien: ['🟢 VA BIEN', '#22c55e'], regular: ['🟡 REGULAR', '#f59e0b'], mal: ['🔴 VA MAL', '#ef4444'], espera: ['⏳ TODAVÍA NO EMPEZÓ', '#64748b'] };
+        const box1 = (ico, label, val, sub, c) => '<div class="in-box" style="border-top:3px solid ' + (c || '#6366f1') + '"><div class="in-l">' + ico + ' ' + label + '</div><div class="in-v">' + val + '</div>' + (sub ? '<div class="in-s">' + sub + '</div>' : '') + '</div>';
+        box.innerHTML = (j.sorteos || []).map((s) => { const v = V[s.verdict] || V.espera; const c = s.counts, a = s.avg, t = s.tickets;
+            return '<div class="card" style="border-left:6px solid ' + v[1] + ';margin-bottom:1rem"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;align-items:center"><h3 style="margin:0">' + escHtml(s.emoji + ' ' + s.title) + ' <small style="color:#9ab;font-weight:600">· ' + escHtml(s.period.key) + ' · ' + ({ soon: 'por empezar', live: 'en curso', closed: 'cerrado' }[s.period.status] || '') + '</small></h3><b style="color:' + v[1] + '">' + v[0] + '</b></div>' +
+                '<ul style="margin:.4rem 0 .6rem 1rem;padding:0;font-size:.85rem">' + (s.reasons || []).map((x) => '<li>' + escHtml(x) + '</li>').join('') + '</ul>' +
+                '<div class="in-grid">' + box1('📝', 'Anotados', n(c.anotados), n(c.joins7) + ' en los últimos 7 días', '#6366f1') + box1('💳', 'Cargaron en el período', n(c.cargadores), n(c.joinedDepositors) + ' anotados · ' + n(c.nonJoinedDepositors) + ' sin anotar', '#0ea5e9') + box1('📈', 'Anotados entre los que cargan', pc(c.joinRate), 'sano desde 35 %', c.joinRate == null ? '#9ca3af' : c.joinRate >= 0.35 ? '#22c55e' : c.joinRate >= 0.15 ? '#f59e0b' : '#ef4444') +
+                box1('🎟️', 'Tickets emitidos', n(t.total), n(t.last7) + ' en 7 días · ' + n(t.prev7) + ' los 7 anteriores', '#7c3aed') + box1('📅', 'Días con carga (promedio)', f1(a.joined.days) + ' vs ' + f1(a.nonJoined.days), 'anotados vs no anotados', a.joined.days >= a.nonJoined.days * 1.2 ? '#22c55e' : '#f59e0b') + box1('💵', 'Cargado promedio', money(a.joined.total) + ' vs ' + money(a.nonJoined.total), 'anotados vs no anotados', '#10b981') + box1('👑', 'Concentración de la rifa', pc(t.topShare), 'tickets del que más tiene', t.topShare != null && t.topShare > 0.15 ? '#ef4444' : '#22c55e') + '</div>' +
+                (s.draws ? '<div style="font-size:.82rem;color:#9ab;margin-top:.5rem">Sorteo del 1° premio: ' + (s.draws.main ? (s.draws.main.revealed ? '✅ revelado' + (s.draws.main.winner ? ' → ' + escHtml(s.draws.main.winner.username) : '') : '🔏 huella publicada') : 'al cierre') + (s.draws.mid.length ? ' · Quincenales: ' + s.draws.mid.map((x) => x.date.slice(5) + ' ' + (x.revealed ? '✅ ' + escHtml(x.winner || '—') : x.committed ? '🔏' : '⏳')).join(' · ') : '') + '</div>' : '') + '</div>'; }).join('') || '<div class="in-note">No hay sorteos activos.</div>';
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">' + escHtml(e.message) + '</span>'; }
+}
+window.loadSorteoStats = loadSorteoStats;
+// ═══ #973: REVISIÓN SEMANAL — informe, decisión, historial y texto para copiar ═══
+let _wrText = '';
+async function loadWeeklyReview() {
+    const box = document.getElementById('wrBody'); if (!box) return;
+    try {
+        const r = await _inicioGuard('/api/admin/inicio/weekly-review', box); if (!r) return;
+        const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        _wrText = j.text || ''; const rep = j.report, t = j.tuning || {};
+        const n = (v) => Number(v || 0).toLocaleString('es-AR'); const money = (v) => '$' + n(Math.round(v || 0)); const pc = (v) => v == null ? '—' : (Math.round(v * 1000) / 10).toLocaleString('es-AR') + ' %';
+        const box1 = (ico, label, val, sub, c) => '<div class="in-box" style="border-top:3px solid ' + (c || '#6366f1') + '"><div class="in-l">' + ico + ' ' + label + '</div><div class="in-v">' + val + '</div>' + (sub ? '<div class="in-s">' + sub + '</div>' : '') + '</div>';
+        const tun = 'Ajuste vigente: nivel <b>' + (t.level > 0 ? '+' : '') + (t.level || 0) + '</b> · bonos del recorrido ×' + (t.pctMult || 1) + ' · fichas ×' + (t.chipsMult || 1) + ' · campaña masiva ' + ((t.apPctPlus || 0) >= 0 ? '+' : '') + (t.apPctPlus || 0) + ' pts';
+        if (!rep || !rep.metrics) { box.innerHTML = '<div class="in-note">Todavía no corrió: sale sola el lunes a las 10 h. ' + tun + '. <button class="btn btn-secondary btn-small" onclick="wrRun()">▶ Medir ahora</button></div>'; return; }
+        const m = rep.metrics, d = rep.decision || {}; const col = d.verdict === 'impulsar' ? '#f59e0b' : d.verdict === 'frenar' ? '#ef4444' : '#22c55e'; const V = { impulsar: '🚀 IMPULSAR', frenar: '🛑 FRENAR', mantener: '✅ MANTENER' };
+        const rate = (o) => o && o.targets ? o.converted / o.targets : null;
+        const steps = Object.keys((m.journey && m.journey.steps) || {});
+        box.innerHTML = '<div class="card" style="border-left:6px solid ' + col + ';margin-bottom:1rem"><div style="font-size:1.1rem;font-weight:900;color:' + col + '">' + (V[d.verdict] || d.verdict) + ' <small style="color:#9ab;font-weight:600">· semana ' + m.week.from + ' → ' + m.week.to + ' · nivel ' + d.prevLevel + ' → ' + d.level + (rep.forced ? ' · medición manual' : '') + '</small></div><ul style="margin:.4rem 0 0 1rem;padding:0;font-size:.85rem">' + (d.reasons || []).map((x) => '<li>' + escHtml(x) + '</li>').join('') + '</ul><div style="font-size:.78rem;color:#9ab;margin-top:.4rem">' + tun + '</div></div>'
+            + '<div class="in-grid">'
+            + box1('💳', 'Cargaron esta semana', n(m.deposits.users), n(m.deposits.count) + ' cargas · ' + money(m.deposits.amount) + ' · semana anterior ' + n(m.deposits.prevUsers), '#6366f1')
+            + box1('🔁', 'Volvieron', pc(m.repeatRate), 'de los que cargaron la semana anterior · la previa ' + pc(m.prevRepeatRate), m.repeatRate != null && m.prevRepeatRate != null && m.repeatRate < m.prevRepeatRate - 0.03 ? '#ef4444' : '#22c55e')
+            + box1('🎁', 'Regalos / depósitos', pc(m.giftRatio), money(m.gifts.regalos) + ' de ' + money(m.gifts.depositos) + ' (' + m.gifts.days + ' cierres)', m.giftRatio == null ? '#9ca3af' : m.giftRatio <= 0.15 ? '#22c55e' : m.giftRatio <= 0.2 ? '#f59e0b' : '#ef4444')
+            + box1('🆕', 'Registrados → 1ª carga', n(m.newRegs) + ' → ' + n(m.firstDeposits), m.newRegs ? pc(m.firstDeposits / m.newRegs) + ' hicieron su primera carga' : '', '#0ea5e9')
+            + box1('📲', 'Con la app (cargaron en 30 d)', pc(m.app && m.app.appPct), (m.app ? n(m.app.withApp) + ' de ' + n(m.app.depositors30) : ''), '#0ea5e9')
+            + box1('🎚️', 'Bajaron sus avisos', n(m.prefs.mine + m.prefs.none), 'sólo lo mío ' + n(m.prefs.mine) + ' · ninguno ' + n(m.prefs.none) + ' · pausados por fatiga ' + n(m.prefs.fatigued), '#f59e0b')
+            + box1('🧭', 'Recorrido (carga en 7 d)', pc(rate(m.journey)), n(m.journey.converted) + ' de ' + n(m.journey.targets) + ' contactados hace 7–14 d', '#7c3aed')
+            + box1('🤖', 'Campaña masiva (48 h)', pc(rate(m.campaigns)), n(m.campaigns.converted) + ' de ' + n(m.campaigns.targets), '#7c3aed')
+            + '</div>'
+            + (steps.length ? '<h3 class="in-h">🧭 Qué paso del recorrido funciona</h3><div class="card" style="padding:.4rem .6rem;overflow:auto"><table class="data-table" style="width:100%;font-size:.82rem"><thead><tr><th>Paso</th><th>Contactados</th><th>Cargaron en 7 d</th><th>%</th></tr></thead><tbody>' + steps.map((k) => { const s = m.journey.steps[k]; return '<tr><td><b>' + escHtml(k) + '</b></td><td>' + n(s.targets) + '</td><td>' + n(s.converted) + '</td><td>' + pc(s.targets ? s.converted / s.targets : null) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '')
+            + '<h3 class="in-h">💸 Reembolsos reclamados en la semana</h3><div class="in-grid">' + (Object.keys(m.refunds || {}).length ? Object.keys(m.refunds).map((k) => box1('💸', { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual' }[k] || k, n(m.refunds[k].n), money(m.refunds[k].amount), '#10b981')).join('') : '<div class="in-note">Ninguno</div>') + '</div>'
+            + ((d.recommendations || []).length ? '<h3 class="in-h">💡 Dónde está el problema de fondo (no automático)</h3><div class="card"><ul style="margin:0 0 0 1rem;padding:0;font-size:.85rem">' + d.recommendations.map((x) => '<li style="margin:.2rem 0">' + escHtml(x) + '</li>').join('') + '</ul></div>' : '')
+            + (m.segments ? '<h3 class="in-h">📊 Segmentos del recorrido (último día)</h3><div class="in-grid">' + Object.keys(m.segments).map((k) => box1('', k, n(m.segments[k]), '', '#64748b')).join('') + '</div>' : '')
+            + _inicioCohortsHtml(m.cohorts, n)
+            + ((rep.history || []).length ? '<h3 class="in-h">🗓️ Historial</h3><div class="card" style="padding:.4rem .6rem;overflow:auto"><table class="data-table" style="width:100%;font-size:.82rem"><thead><tr><th>Semana</th><th>Decisión</th><th>Nivel</th><th>Cargadores</th><th>Volvieron</th><th>Regalos/dep.</th><th>Recorrido</th></tr></thead><tbody>' + rep.history.map((x) => '<tr><td>' + x.weekKey + '</td><td>' + (V[x.verdict] || x.verdict || '—') + '</td><td>' + (x.level == null ? '—' : x.level) + '</td><td>' + n(x.depositors) + ' · ' + money(x.amount) + '</td><td>' + pc(x.repeatRate) + '</td><td>' + pc(x.giftRatio) + '</td><td>' + (x.journey ? n(x.journey.converted) + '/' + n(x.journey.targets) : '—') + '</td></tr>').join('') + '</tbody></table></div>' : '')
+            + '<details style="margin-top:1rem"><summary style="cursor:pointer"><b>📋 Informe en texto</b> (para copiar y analizar afuera)</summary><textarea readonly style="width:100%;min-height:260px;font-family:monospace;font-size:.75rem;margin-top:.4rem">' + escHtml(_wrText) + '</textarea></details>';
+    } catch (e) { box.innerHTML = '<span style="color:#f87171">' + escHtml(e.message) + '</span>'; }
+}
+async function wrRun() {
+    if (!confirm('¿Medir la semana AHORA y aplicar la decisión? (Normalmente corre sola los lunes a las 10 h.)')) return;
+    const box = document.getElementById('wrBody'); if (box) box.innerHTML = '<div class="in-note">⏳ Midiendo la semana… (puede tardar un minuto)</div>';
+    try { const r = await _inicioGuard('/api/admin/inicio/weekly-review/run', box, { method: 'POST' }); if (!r) return; const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); if (!j.report) alert('No corrió: otra instancia lo está haciendo. Probá en un minuto.'); loadWeeklyReview(); } catch (e) { alert(e.message); loadWeeklyReview(); }
+}
+async function wrCopy() { try { await navigator.clipboard.writeText(_wrText || 'Todavía no hay revisión semanal.'); showToast('📋 Informe copiado', 'success'); } catch (_) { alert('No se pudo copiar automáticamente: abrí "Informe en texto" abajo y copialo de ahí.'); } }
+window.loadWeeklyReview = loadWeeklyReview; window.wrRun = wrRun; window.wrCopy = wrCopy;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
 async function loadCronAutopilot() {
@@ -16606,7 +16711,7 @@ async function loadStories() {
                 + '<div><b>' + escapeHtml(s.title || 'CARGAS AUTOMATIC') + '</b> · ' + st + '</div>'
                 + '<div style="color:#ddd;">' + escapeHtml(s.text || '(sin texto)') + '</div>'
                 + (s.bonusPct ? '<div style="color:#ffd54f;font-weight:800;">🎁 Bono +' + s.bonusPct + '% · ' + (s.bonusActive ? 'vigente hasta ' + new Date(s.bonusUntil).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : 'bono vencido') + ' · ' + (s.bonusClaims || 0) + ' reclamos' + (s.notifyAll ? ' · 🔔 push a todos' : '') + '</div>' : '')
-                + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas' + (s.repeatWeekly ? ' · <span style="color:#00c853;font-weight:800;">🔁 semanal</span>' : '') + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
+                + '<div style="color:#888;font-size:11px;">Publicada ' + new Date(s.publishedAt).toLocaleString('es-AR') + ' · ' + s.hours + ' h · ' + (s.views || 0) + ' vistas · 👆 ' + (s.clicks || 0) + ' toques' + (s.reactions && (s.reactions.fire || s.reactions.heart || s.reactions.laugh || s.reactions.like) ? ' · 🔥' + (s.reactions.fire || 0) + ' ❤️' + (s.reactions.heart || 0) + ' 😂' + (s.reactions.laugh || 0) + ' 👍' + (s.reactions.like || 0) : '') + (s.repeatWeekly ? ' · <span style="color:#00c853;font-weight:800;">🔁 semanal</span>' : '') + (s.linkUrl ? ' · link: ' + escapeHtml(s.linkUrl) : '') + (s.createdBy ? ' · por ' + escapeHtml(s.createdBy) : '') + '</div>'
                 + '</div>'
                 + '<div style="display:flex;flex-direction:column;gap:6px;">'
                 + '<button class="btn-secondary btn-sm" onclick="extendStory(\'' + s.id + '\')" title="Vuelve a contar las horas desde ahora">⏱ Extender</button>'
@@ -16793,24 +16898,11 @@ function _drvCard(c, plats) {
                 '<span style="color:#888;font-size:11px;margin-left:auto;">' + _drvAgo(c.createdAt) + (pend ? ' · esperando ' + (c.waitingMin || 0) + ' min' : '') + '</span>' +
             '</div>' +
             '<div style="font-size:11.5px;color:#bbb;margin-top:4px;">' + [c.bank ? '🏛 ' + escapeHtml(c.bank) : '', c.originHolder ? '👤 ' + escapeHtml(c.originHolder) : '', c.operationNumber ? 'N° ' + escapeHtml(c.operationNumber) : '', c.paymentDate ? '📅 ' + escapeHtml(c.paymentDate) : ''].filter(Boolean).join(' · ') + '</div>' +
-            _drvCopiesHtml(c) +
             '<div style="margin-top:6px;">' + cands + '</div>' +
             repHtml +
             actions +
             '<div style="margin-top:6px;"><button type="button" class="btn-secondary btn-small" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')">💬 Abrir chat</button></div>' +
         '</div></div>';
-}
-// #932 (owner): el MISMO comprobante enviado varias veces va en UNA ficha: "lo mandó N veces" y, al tocarlo, cada envío con su foto.
-// Las copias ya quedaron cerradas como repetidas (no se cargan); se confirma o rechaza sólo esta ficha.
-function _drvCopiesHtml(c) {
-    const cp = c.copies || []; if (!cp.length) return '';
-    const n = cp.length + 1;
-    return '<details style="margin-top:6px;background:rgba(255,170,0,0.10);border:1px solid rgba(255,170,0,0.45);border-radius:8px;padding:5px 8px;">' +
-        '<summary style="cursor:pointer;font-size:12px;color:#ffcf6b;font-weight:800;">🔁 Mandó este mismo comprobante ' + n + ' veces · tocá para ver cada envío</summary>' +
-        '<div style="font-size:11.5px;color:#ddd;margin-top:5px;">1) ' + _drvAgo(c.createdAt) + ' — <b>esta ficha</b> (la que vale)</div>' +
-        cp.map(function (x, i) { return '<div style="font-size:11.5px;color:#bbb;margin-top:3px;">' + (i + 2) + ') ' + _drvAgo(x.createdAt) + ' — repetido, no se carga' +
-            (x.imageUrl ? ' · <a href="' + escapeHtml(x.imageUrl) + '" target="_blank" rel="noopener" style="color:#8fd3ff;">ver foto</a>' : '') + '</div>'; }).join('') +
-        '</details>';
 }
 async function drvConfirm(id, btn) {
     const card = btn.closest('.drv-card');
@@ -17541,19 +17633,19 @@ async function fraudReview(userId, status) {
 
 // ===== #876 INICIO =====
 let _inTimer = null;
-async function _inicioFetch(path, opts) { const pin = sessionStorage.getItem('inicio_pin') || ''; const o = Object.assign({}, opts || {}); o.headers = Object.assign({ 'x-inicio-pin': pin }, o.headers || {}); return authFetch(path, o); }
+async function _inicioFetch(path, opts) { const pin = sessionStorage.getItem('inicio_pin') || sessionStorage.getItem('datos_pin') || ''; /* #982: una sola clave */ const o = Object.assign({}, opts || {}); o.headers = Object.assign({ 'x-inicio-pin': pin }, o.headers || {}); return authFetch(path, o); }
 async function inicioCreatePin() {
     const p1 = window.prompt('Creá la clave de INICIO (4 a 32 caracteres):', ''); if (!p1) return false;
     const p2 = window.prompt('Repetí la clave:', ''); if (p1 !== p2) { showToast('Las claves no coinciden', 'error'); return false; }
     const r = await authFetch('/api/admin/inicio-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: p1 }) }); const j = await r.json();
     if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return false; }
-    sessionStorage.setItem('inicio_pin', p1); showToast('🔑 Clave de INICIO creada', 'success'); return true;
+    sessionStorage.setItem('inicio_pin', p1); sessionStorage.setItem('datos_pin', p1); showToast('🔑 Clave creada (Principal y Datos)', 'success'); return true;
 }
 async function inicioChangePin() {
-    const cur = window.prompt('Clave actual de INICIO:', ''); if (cur === null) return;
-    const p1 = window.prompt('Clave nueva:', ''); if (!p1) return; const p2 = window.prompt('Repetí la clave nueva:', ''); if (p1 !== p2) { showToast('Las claves no coinciden', 'error'); return; }
+    const cur = ''; // #984: el administrador general la cambia sin la anterior
+    const p1 = window.prompt('Clave nueva (vale para Principal y para Datos):', ''); if (!p1) return; const p2 = window.prompt('Repetí la clave nueva:', ''); if (p1 !== p2) { showToast('Las claves no coinciden', 'error'); return; }
     const r = await authFetch('/api/admin/inicio-pin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: p1, current: cur }) }); const j = await r.json();
-    if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } sessionStorage.setItem('inicio_pin', p1); showToast('🔑 Clave cambiada', 'success');
+    if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } sessionStorage.setItem('inicio_pin', p1); sessionStorage.setItem('datos_pin', p1); showToast('🔑 Clave cambiada (Principal y Datos)', 'success');
 }
 // #880 (owner): "dejá todo recuadrado con los datos en 0 si no tenemos datos": los recuadros se dibujan SIEMPRE (en 0 mientras carga,
 // sin clave o si falla) y después se llenan con los números reales.
@@ -17580,6 +17672,14 @@ async function loadInicio() {
         _renderInicio(box, d, '');
         if (d.isToday) _inTimer = setTimeout(() => { if (document.getElementById('inicioSection') && document.getElementById('inicioSection').classList.contains('active')) loadInicio(); }, 60000);
     } catch (e) { _renderInicio(box, _inicioEmpty(day), note('⚠️ No se pudo cargar (' + escHtml(e.message) + '). Tocá 🔄.')); }
+}
+// #971: cohortes — de los que se registraron cada mes, cuántos cargaron alguna vez y cuántos cargaron ese mes (M0) y los siguientes.
+function _inicioCohortsHtml(rows, n) {
+    if (!Array.isArray(rows) || !rows.length) return '';
+    const pc = (a, b) => b ? ' <small style="color:#9ab">' + Math.round(a * 100 / b) + '%</small>' : '';
+    return '<h3 class="in-h">📈 Cohortes · ¿los que entran se quedan? (por mes de registro)</h3><div class="card" style="padding:.4rem .6rem;overflow:auto"><table class="data-table" style="width:100%;font-size:.82rem"><thead><tr><th>Mes de registro</th><th>Registrados</th><th>Cargaron alguna vez</th><th>Cargaron ese mes</th><th>Mes +1</th><th>Mes +2</th><th>Mes +3</th></tr></thead><tbody>'
+        + rows.map((c) => '<tr><td><b>' + c.month + '</b></td><td>' + n(c.regs) + '</td><td>' + n(c.depositors) + pc(c.depositors, c.regs) + '</td>' + (c.m || []).map((v) => '<td>' + (v == null ? '—' : n(v) + pc(v, c.regs)) + '</td>').join('') + '</tr>').join('')
+        + '</tbody></table><small style="color:#9ab">Si "Mes +1" y "Mes +2" se sostienen, la retención funciona. Si caen a casi cero, el problema está después de la primera carga, no en la pauta.</small></div>';
 }
 function _renderInicio(box, d, notice) {
     {
@@ -17619,7 +17719,7 @@ function _renderInicio(box, d, notice) {
             grp('📲 Aceptación de la app (clientes que cargaron alguna vez)', // #913: base = cargadores, no registrados
                 box1('💳', 'Cargaron alguna vez', n(d.adoption.depositors), 'de ' + n(d.adoption.totalUsers) + ' registrados', '#6366f1') +
                 box1('📲', 'Instalaron la app', n(d.adoption.withApp), d.adoption.appPct + '% de los que cargaron', '#0ea5e9') +
-                box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% de los que cargaron', '#f59e0b'));
+                box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% de los que cargaron', '#f59e0b')) + _inicioCohortsHtml(d.cohorts, n); // #971
     }
 }
 
@@ -17642,7 +17742,7 @@ function _srtRender() {
     const run = (k) => { const x = diag.runs && diag.runs[k]; if (!x) return 'sin corrida'; if (x.error) return '❌ ' + escapeHtml(x.error); if (x.skipped) return '— ' + escapeHtml(x.skipped); return n(x.candidates) + ' jugadores con carga · ' + n(x.scored) + ' puntuados · ' + Math.round((x.ms || 0) / 1000) + ' s'; };
     const head = '<div class="card" style="margin-bottom:1rem"><div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center"><label><input type="checkbox" id="srtOn" ' + (c.enabled ? 'checked' : '') + ' onchange="sorteosSave({enabled:this.checked})"> <b>Sorteos visibles en la app</b></label>' +
         '<span style="color:#888;font-size:.85rem">🛠 Motor: último cálculo ' + f(diag.lastTickAt) + (diag.lastError ? ' · <b style="color:#ff8080">' + escapeHtml(diag.lastError) + '</b>' : ' · sin errores') + '</span></div>' +
-        '<div style="margin-top:.5rem;font-size:.85rem;color:#888">Requisitos para anotarse: ' + ['app', 'notif', 'telegram', 'deposit'].map((k) => '<label style="margin-right:.8rem"><input type="checkbox" ' + (c.requirements[k] ? 'checked' : '') + ' onchange="sorteosSave({requirements:{' + k + ':this.checked}})"> ' + ({ app: 'app instalada', notif: 'notificaciones', telegram: 'Telegram (lo declara el cliente)', deposit: 'una carga real' })[k] + '</label>').join('') + '</div></div>';
+        '<div style="margin-top:.5rem;font-size:.85rem;color:#888">Requisitos para anotarse: ' + ['app', 'notif', 'telegram', 'phone', 'deposit'].map((k) => '<label style="margin-right:.8rem"><input type="checkbox" ' + (c.requirements[k] ? 'checked' : '') + ' onchange="sorteosSave({requirements:{' + k + ':this.checked}})"> ' + ({ app: 'app instalada', notif: 'notificaciones', telegram: 'Telegram (lo declara el cliente)', phone: 'número de celular cargado', deposit: 'una carga real' })[k] + '</label>').join('') + '</div></div>';
     const tabs = '<div class="at-tabs" style="margin-bottom:.6rem">' + ['mensual', 'gran'].map((k) => '<button class="' + (_srtTab === k ? 'on' : '') + '" onclick="srtTab(\'' + k + '\')">' + escapeHtml(c[k].emoji + ' ' + c[k].title) + '</button>').join('') + '</div>';
     const k = _srtTab, s = c[k], x = d[k] || { period: {}, counts: {}, anotados: [], ranking: [] };
     // #967: + "📎 Adjuntar foto" (sube el archivo a la base y deja la URL en el campo); el campo acepta emoji o URL
@@ -17653,15 +17753,36 @@ function _srtRender() {
         '<label>Título <input class="form-input" id="srtTitle" value="' + escapeHtml(s.title) + '"></label><label>Emoji <input class="form-input" id="srtEmoji" value="' + escapeHtml(s.emoji) + '"></label>' +
         (k === 'mensual' ? '<label>Mes de inicio (AAAA-MM) <input class="form-input" id="srtStartMonth" value="' + escapeHtml(s.startMonth) + '"></label>' : '<label>Desde (AAAA-MM-DD) <input class="form-input" id="srtStart" value="' + escapeHtml(s.start) + '"></label><label>Hasta <input class="form-input" id="srtEnd" value="' + escapeHtml(s.end) + '"></label>') +
         '<label>Puntos <input class="form-input" type="number" id="srtPts" value="' + s.pts + '"></label><label>cada $ apostados <input class="form-input" type="number" id="srtPtsPer" value="' + s.ptsPer + '"></label><label>Hora de publicación <input class="form-input" type="number" id="srtPubH" value="' + (s.publishHour || 12) + '"></label>' +
-        (k === 'gran' ? '<label>+pts por día con cargas <input class="form-input" type="number" id="srtDayPts" value="' + s.dayDepositPts + '"></label><label>mínimo del día $ <input class="form-input" type="number" id="srtDayMin" value="' + s.dayDepositMin + '"></label><label>+% por semana con misiones <input class="form-input" type="number" id="srtMisPct" value="' + s.missionWeekPct + '"></label>' : '') +
+        // #981: techo diario, constancia, tickets, hitos y quincenales
+        '<label title="Por día cuentan hasta este monto apostado">techo diario $ <input class="form-input" type="number" id="srtDayCap" value="' + (s.dayCapArs || 0) + '"></label><label>+pts por día con carga <input class="form-input" type="number" id="srtDayPts" value="' + (s.dayDepositPts || 0) + '"></label><label>carga mínima del día $ <input class="form-input" type="number" id="srtDayMin" value="' + (s.dayDepositMin || 0) + '"></label>' +
+        '<label>+pts por semana constante <input class="form-input" type="number" id="srtWeekPts" value="' + (s.weekPts || 0) + '"></label><label>días con carga por semana <input class="form-input" type="number" id="srtWeekDays" value="' + (s.weekActiveDays || 3) + '"></label>' +
+        '<label>1 ticket cada N pts de juego <input class="form-input" type="number" id="srtTkPer" value="' + ((s.tickets || {}).per || 50) + '"></label><label>máx. tickets de juego por día <input class="form-input" type="number" id="srtTkCap" value="' + ((s.tickets || {}).dayCap || 0) + '"></label><label>tickets por día con carga <input class="form-input" type="number" id="srtTkDay" value="' + ((s.tickets || {}).activeDay || 0) + '"></label>' +
+        '<label>hito 10 cargas (tickets) <input class="form-input" type="number" id="srtMsTen" value="' + ((s.milestones || {}).tenDeposits || 0) + '"></label>' +
+        (k === 'gran' ? '<label>hito 1ª carga (tickets) <input class="form-input" type="number" id="srtMsFirst" value="' + ((s.milestones || {}).firstDeposit || 0) + '"></label><label>hito 4 semanas seguidas (tickets) <input class="form-input" type="number" id="srtMsFour" value="' + ((s.milestones || {}).fourWeeks || 0) + '"></label><label>+% por semana con misiones <input class="form-input" type="number" id="srtMisPct" value="' + (s.missionWeekPct || 0) + '"></label>' : '') +
+        '<label>quincenales activos <input type="checkbox" id="srtMidOn" ' + ((s.midDraws || {}).enabled ? 'checked' : '') + '></label><label>premio quincenal $ <input class="form-input" type="number" id="srtMidAmt" value="' + ((s.midDraws || {}).amount || 0) + '"></label><label>fechas (AAAA-MM-DD, coma) <input class="form-input" id="srtMidDates" value="' + escapeHtml(((s.midDraws || {}).dates || []).join(', ')) + '"></label>' +
         '</div><div style="margin-top:.6rem"><b>Premios</b>' + prz(0) + prz(1) + prz(2) + '</div>' +
         ('<div style="margin-top:.6rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.5rem"><label>SORTEO activo <input type="checkbox" id="srtExOn" ' + (s.extra.enabled ? 'checked' : '') + '></label><label>Nombre <input class="form-input" id="srtExTitle" value="' + escapeHtml(s.extra.title || '') + '"></label><label>ganadores <input class="form-input" type="number" id="srtExW" value="' + s.extra.winners + '"></label><label>monto $ c/u <input class="form-input" type="number" id="srtExAmt" value="' + s.extra.amount + '"></label><label>mín. cargas en el mes <input class="form-input" type="number" id="srtExMin" value="' + s.extra.minDeposits + '"></label><label>por cada N que cumplen (0 = cantidad fija) <input class="form-input" type="number" id="srtExPer" value="' + s.extra.per + '"></label><label>Sólo anotados <input type="checkbox" id="srtExJoin" ' + (s.extra.requireJoin ? 'checked' : '') + '></label></div>') +
         '<div style="margin-top:.7rem"><button class="btn btn-primary" onclick="sorteosSaveForm(\'' + k + '\')">💾 Guardar</button></div></details>';
     const cnt = x.counts || {};
-    const kpis = '<div class="at-kpis">' + _diaKpi('Estado', st[x.period.status] || '—') + _diaKpi('Anotados', n(cnt.anotados)) + _diaKpi('Participando (con puntos)', n(cnt.participantes)) + _diaKpi('Anotados con puntos', n(cnt.anotadosConPuntos)) + _diaKpi('SORTEO EXTRA', n(cnt.extraGanadores) + ' premios · ' + n(cnt.extraElegibles) + ' cumplen') + _diaKpi('Del ' + f(x.period.start).slice(0, 5) + ' al ' + f(x.period.end).slice(0, 5), 'ganadores ' + f(x.period.publishAt)) + '</div><div style="color:#888;font-size:.8rem;margin:.3rem 0 .8rem">🛠 ' + run(k) + '</div>';
-    const subs = '<div class="at-tabs" style="margin-bottom:.6rem"><button class="' + (_srtSub === 'ranking' ? 'on' : '') + '" onclick="srtSub(\'ranking\')">📊 Participando (' + n(x.ranking.length) + ')</button><button class="' + (_srtSub === 'anotados' ? 'on' : '') + '" onclick="srtSub(\'anotados\')">📝 Anotados (' + n(x.anotados.length) + ')</button>' + ('<button class="' + (_srtSub === 'extra' ? 'on' : '') + '" onclick="srtSub(\'extra\')">🎁 ' + escapeHtml((s.extra && s.extra.title) || 'SORTEO') + '</button>') + '</div>';
+    const kpis = '<div class="at-kpis">' + _diaKpi('Estado', st[x.period.status] || '—') + _diaKpi('Anotados', n(cnt.anotados)) + _diaKpi('Participando (con puntos)', n(cnt.participantes)) + _diaKpi('Anotados con puntos', n(cnt.anotadosConPuntos)) + _diaKpi('🎟️ Tickets emitidos', n((x.tickets || {}).total), n((x.tickets || {}).last7) + ' en 7 días') + _diaKpi('SORTEO EXTRA', n(cnt.extraGanadores) + ' premios · ' + n(cnt.extraElegibles) + ' cumplen') + _diaKpi('Del ' + f(x.period.start).slice(0, 5) + ' al ' + f(x.period.end).slice(0, 5), 'ganadores ' + f(x.period.publishAt)) + '</div><div style="color:#888;font-size:.8rem;margin:.3rem 0 .8rem">🛠 ' + run(k) + '</div>';
+    const subs = '<div class="at-tabs" style="margin-bottom:.6rem"><button class="' + (_srtSub === 'ranking' ? 'on' : '') + '" onclick="srtSub(\'ranking\')">📊 Participando (' + n(x.ranking.length) + ')</button><button class="' + (_srtSub === 'anotados' ? 'on' : '') + '" onclick="srtSub(\'anotados\')">📝 Anotados (' + n(x.anotados.length) + ')</button>' + '<button class="' + (_srtSub === 'tickets' ? 'on' : '') + '" onclick="srtSub(\'tickets\')">🎟️ Tickets (' + n((x.tickets || {}).total) + ')</button><button class="' + (_srtSub === 'sorteo' ? 'on' : '') + '" onclick="srtSub(\'sorteo\')">🎲 Sorteo</button>' + ('<button class="' + (_srtSub === 'extra' ? 'on' : '') + '" onclick="srtSub(\'extra\')">🎁 ' + escapeHtml((s.extra && s.extra.title) || 'SORTEO') + '</button>') + '</div>';
     let body = '';
-    if (_srtSub === 'ranking') {
+    if (_srtSub === 'tickets') {
+        // #981: tickets emitidos (numerados, por origen) + buscador por cliente o número
+        const tk = x.tickets || { total: 0, byReason: {}, last: [] }; const br = tk.byReason || {};
+        body = '<div class="card"><div class="at-kpis">' + _diaKpi('Emitidos', n(tk.total)) + _diaKpi('Por juego', n(br.juego)) + _diaKpi('Por día con carga', n(br.dia)) + _diaKpi('Por hitos', n(br.hito)) + '</div>' +
+            '<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.6rem 0"><input class="form-input" id="srtTkQ" placeholder="usuario o número de ticket" style="width:240px"><button class="btn btn-secondary" onclick="sorteosTicketsSearch()">🔎 Buscar</button><small style="color:#888">Cada ticket es un número correlativo a nombre del cliente; nunca se borra ni se reasigna.</small></div><div id="srtTkRes"></div>' +
+            '<details open style="margin-top:.6rem"><summary style="cursor:pointer;font-weight:800">Últimos emitidos</summary><table class="data-table"><thead><tr><th>#</th><th>Usuario</th><th>Origen</th><th>Cuándo</th></tr></thead><tbody>' + (tk.last || []).map((t) => '<tr><td><b>' + t.n + '</b></td><td>' + escapeHtml(t.username) + '</td><td>' + ({ juego: '🎰 juego', dia: '📅 día con carga', hito: '🏁 hito' }[t.reason] || t.reason) + '</td><td>' + f(t.at) + '</td></tr>').join('') + '</tbody></table></details></div>';
+    } else if (_srtSub === 'sorteo') {
+        // #981: sorteo del 1° premio (huella al cierre, semilla el día de publicación) y quincenales. Todo queda escrito (acta).
+        const acta = (d, title, kind, date, pk) => { if (!d) return '<div class="card" style="margin-top:.5rem"><b>' + title + '</b><br><small style="color:#888">Sin huella publicada todavía' + (kind === 'main' ? ' (se publica sola al cierre del período)' : ' (se publica sola ese día a las 00 h)') + '.</small><div style="margin-top:.4rem"><button class="btn btn-secondary btn-small" onclick="sorteosDrawStep(\'' + kind + '\',\'' + (date || '') + '\',\'commit\',true,\'' + pk + '\')">🔏 Publicar huella ahora</button></div></div>';
+            const w = d.winner; return '<div class="card" style="margin-top:.5rem;border-color:' + (d.revealedAt ? 'var(--p-green,#16a34a)' : '#f59e0b') + '"><b>' + title + '</b> · ' + (d.revealedAt ? '✅ revelado' : '🔏 huella publicada') + '<br><small>Huella: <code>' + escapeHtml(d.seedHash || '') + '</code> · tickets al congelar: <b>' + n(d.total) + '</b> · publicada ' + f(d.committedAt) + ' por ' + escapeHtml(d.by || '') + '</small>' +
+                (d.revealedAt ? '<div style="margin-top:.4rem"><small>Semilla: <code>' + escapeHtml(d.seed || '') + '</code> · revelada ' + f(d.revealedAt) + ' por ' + escapeHtml(d.revealedBy || '') + '</small><div style="margin-top:.3rem;font-size:1.05rem">' + (w ? '🏆 Ticket <b>#' + w.n + '</b> → <b>' + escapeHtml(w.username) + '</b>' + (d.amount ? ' · ' + m(d.amount) : (d.prize ? ' · ' + escapeHtml(d.prize) : '')) : '— Sin ganador (' + escapeHtml(d.note || 'sin tickets') + ')') + '</div>' + ((d.skipped || []).length ? '<small style="color:#888">Saltos: ' + d.skipped.map((s2) => '#' + s2.n + ' ' + escapeHtml(s2.username || '') + ' (' + escapeHtml(s2.why) + ')').join(' · ') + '</small>' : '') + '<p style="color:#888;font-size:.85rem;margin:.4rem 0 0">Verificación: 1 + (sha256(semilla + "|" + ' + escapeHtml(kind === 'mid' ? _srtTab + ':' + pk + ':mid:' + date : _srtTab + ':' + pk + ':main') + ') mod ' + n(d.total) + '). El premio se entrega / acredita a mano; el ganador ya recibió la push y hay nota en su chat.</p></div>'
+                    : '<div style="margin-top:.4rem"><button class="btn btn-primary btn-small" onclick="sorteosDrawStep(\'' + kind + '\',\'' + (date || '') + '\',\'reveal\',true,\'' + pk + '\')">🎲 Revelar semilla y sortear</button> <small style="color:#888">' + (kind === 'main' ? 'Lo normal: el día de publicación. Si nadie lo hace, se revela solo 48 h después.' : 'Se revela solo a las 20 h de ese día.') + '</small></div>') + '</div>'; };
+        body = '<div class="card"><h3 style="margin:0 0 .4rem">🎲 Sorteo del 1° premio · ' + escapeHtml((s.prizes[0] || {}).name || '') + '</h3><p style="margin:0 0 .4rem;color:#888;font-size:.9rem">Se sortea entre TODOS los tickets emitidos del período; si el número es de alguien no anotado, bloqueado o marcado por el radar, pasa al siguiente. El 2° y 3° premio salen del ranking (pestaña Participando).</p>' +
+            acta(x.mainDraw, 'Período en curso ' + escapeHtml(x.period.key || ''), 'main', null, x.period.key) + (x.prevMainDraw || (k === 'mensual' && x.period.key) ? acta(x.prevMainDraw, 'Período anterior', 'main', null, '') : '') +
+            ((x.midDraws || []).length ? '<h3 style="margin:1rem 0 .4rem">💵 Sorteos quincenales · ' + m((s.midDraws || {}).amount) + '</h3>' + x.midDraws.map((md) => acta(md.draw, 'Quincenal del ' + escapeHtml(md.date) + (md.status === 'soon' ? ' (todavía no llegó)' : ''), 'mid', md.date, x.period.key)).join('') : '') + '</div>';
+    } else if (_srtSub === 'ranking') {
         body = x.ranking.length ? '<table class="data-table"><thead><tr><th>#</th><th>Usuario</th><th>Puntos</th>' + (k === 'gran' ? '<th>base / días / misiones</th>' : '') + '<th>Apostado</th><th>Plata real</th><th>Cargas</th><th>Anotado</th></tr></thead><tbody>' + x.ranking.map((r) => '<tr' + (r.joined ? '' : ' style="opacity:.6"') + '><td><b>' + r.rank + '</b></td><td>' + escapeHtml(r.username) + '</td><td><b>' + n(r.points) + '</b></td>' + (k === 'gran' ? '<td><small>' + n(r.basePts) + ' / +' + n(r.dayPts) + ' / +' + n(r.missionPts) + '</small></td>' : '') + '<td>' + m(r.wagered) + '</td><td><small>' + Math.round((r.realShare || 0) * 100) + '%</small></td><td>' + n(r.deposits) + ' · ' + m(r.depositTotal) + '</td><td>' + (r.joined ? '✅' : '<span style="color:#f59e0b">no (no puede ganar)</span>') + '</td></tr>').join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center">Todavía nadie sumó puntos en este período' + (x.period.status === 'soon' ? ' (empieza el ' + f(x.period.start) + ')' : '') + '.</div>';
     } else if (_srtSub === 'anotados') {
         body = x.anotados.length ? '<table class="data-table"><thead><tr><th>Usuario</th><th>Se anotó</th><th>App</th><th>Notif</th><th>Telegram</th><th>Carga</th><th>Puntos (período)</th><th>Cargas (período)</th></tr></thead><tbody>' + x.anotados.map((a) => { const ck = a.checks || {}; const t = (v) => v ? '✅' : '❌'; return '<tr><td>' + escapeHtml(a.username) + '</td><td>' + f(a.joinedAt) + '</td><td>' + t(ck.app) + '</td><td>' + t(ck.notif) + '</td><td>' + t(a.telegram) + '</td><td>' + t(ck.deposit) + '</td><td><b>' + n(a.points) + '</b></td><td>' + n(a.deposits) + ' · ' + m(a.depositTotal) + (a.eligible ? '' : ' <small style="color:#f59e0b">sin carga del período</small>') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center">Todavía nadie se anotó.</div>';
@@ -17689,7 +17810,10 @@ function sorteosSaveForm(k) {
     const v = (id) => { const el = document.getElementById(id); return el ? el.value : undefined; }; const nn = (id) => Number(v(id)); const ck = (id) => !!(document.getElementById(id) || {}).checked;
     const s = { enabled: ck('srtEn'), title: v('srtTitle'), emoji: v('srtEmoji'), pts: nn('srtPts'), ptsPer: nn('srtPtsPer'), publishHour: nn('srtPubH'), prizes: [0, 1, 2].map((i) => ({ pos: i + 1, img: v('srtP' + i + 'img'), name: v('srtP' + i + 'name'), value: v('srtP' + i + 'value') })) };
     s.extra = { enabled: ck('srtExOn'), title: v('srtExTitle'), per: nn('srtExPer'), winners: nn('srtExW'), amount: nn('srtExAmt'), minDeposits: nn('srtExMin'), requireJoin: ck('srtExJoin') }; if (k === 'mensual') { s.startMonth = v('srtStartMonth'); }
-    else { s.start = v('srtStart'); s.end = v('srtEnd'); s.dayDepositPts = nn('srtDayPts'); s.dayDepositMin = nn('srtDayMin'); s.missionWeekPct = nn('srtMisPct'); }
+    else { s.start = v('srtStart'); s.end = v('srtEnd'); s.missionWeekPct = nn('srtMisPct'); }
+    // #981
+    Object.assign(s, { dayCapArs: nn('srtDayCap'), dayDepositPts: nn('srtDayPts'), dayDepositMin: nn('srtDayMin'), weekPts: nn('srtWeekPts'), weekActiveDays: nn('srtWeekDays'), tickets: { per: nn('srtTkPer'), dayCap: nn('srtTkCap'), activeDay: nn('srtTkDay') },
+      milestones: Object.assign({ tenDeposits: nn('srtMsTen') }, k === 'gran' ? { firstDeposit: nn('srtMsFirst'), fourWeeks: nn('srtMsFour') } : {}), midDraws: { enabled: ck('srtMidOn'), amount: nn('srtMidAmt'), dates: String(v('srtMidDates') || '').split(/[\s,;]+/).filter(Boolean) } });
     const patch = {}; patch[k] = s; sorteosSave(patch);
 }
 // #967: adjuntar foto de un premio desde el panel (se guarda en la base y se sirve por /api/sorteos/img/:id)
@@ -17708,6 +17832,20 @@ async function sorteosRecalc() {
     try { const r = await authFetch('/api/admin/sorteos/recalc', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('✅ Puntos recalculados', 'success'); loadSorteos(); }
     catch (e) { showToast(e.message, 'error'); }
 }
+// #981: huella / revelado del sorteo del 1° premio o quincenal
+async function sorteosDrawStep(kind, date, step, early, periodKey) {
+    const what = kind === 'mid' ? 'el quincenal del ' + date : 'el 1° premio';
+    if (!confirm(step === 'commit' ? '¿Publicar AHORA la huella de ' + what + '? Congela la cantidad de tickets. Los clientes la ven en la app.' : '¿Revelar la semilla y sortear ' + what + '? El ganador recibe la push y queda escrito; no se puede deshacer.')) return;
+    try { const body = { kind, early: !!early }; if (kind === 'mid') body.date = date; if (periodKey) body.periodKey = periodKey; const r = await authFetch('/api/admin/sorteos/' + _srtTab + '/draw/' + step, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast(step === 'commit' ? '🔏 Huella publicada (' + (j.draw.total || 0) + ' tickets)' : (j.draw.winner ? '🏆 Ticket #' + j.draw.winner.n + ' → ' + j.draw.winner.username : 'Sin ganador'), 'success'); loadSorteos(); }
+    catch (e) { showToast(e.message, 'error'); }
+}
+async function sorteosTicketsSearch() {
+    const q = (document.getElementById('srtTkQ') || {}).value || ''; const box = document.getElementById('srtTkRes'); if (!box) return; box.innerHTML = 'Buscando…';
+    try { const r = await authFetch('/api/admin/sorteos/' + _srtTab + '/tickets?u=' + encodeURIComponent(q)); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        box.innerHTML = j.list.length ? '<div style="font-size:.85rem;margin:.3rem 0">' + j.list.length + ' ticket(s)' + (q ? ' de "' + escapeHtml(q) + '"' : '') + ' · de ' + j.total + ' emitidos</div><div style="display:flex;flex-wrap:wrap;gap:4px">' + j.list.map((t) => '<span title="' + escapeHtml(t.username + ' · ' + t.reason) + '" style="font:700 11px ui-monospace,monospace;padding:4px 6px;border:1px solid var(--p-border,#333);border-radius:6px">#' + String(t.n).padStart(5, '0') + (q && !/^\d+$/.test(q) ? '' : ' ' + escapeHtml(t.username)) + '</span>').join('') + '</div>' : '<small style="color:#888">Sin resultados.</small>'; }
+    catch (e) { box.innerHTML = '<span style="color:#f87171">' + escapeHtml(e.message) + '</span>'; }
+}
+window.sorteosDrawStep = sorteosDrawStep; window.sorteosTicketsSearch = sorteosTicketsSearch;
 async function sorteosDraw(periodKey, redo, early) {
     if (!confirm((redo ? '¿Repetir el sorteo de ' + periodKey + '? Se pisa el resultado anterior.' : '¿Sortear ' + periodKey + ' ahora?') + (early ? '\n\nOJO: el mes todavía no cerró; lo normal es sortear el día 1.' : '') + '\n\nSe publica la semilla y los ganadores salen en la app con el nombre tapado.')) return;
     try { const r = await authFetch('/api/admin/sorteos/' + _srtTab + '/draw-extra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ periodKey, redo: !!redo, early: !!early }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('🎲 ' + (j.draw.winners || []).length + ' ganadores sorteados · semilla ' + j.draw.seed.slice(0, 8) + '…', 'success'); _srtSub = 'extra'; loadSorteos(); }
@@ -17925,5 +18063,3 @@ async function spQuickDel(key) {
     try { const r = await authFetch('/api/admin/support/quick-replies/' + encodeURIComponent(key), { method: 'DELETE' }); const j = await r.json().catch(function () { return {}; }); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } _spQuickItems = null; spQuickPaint(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 window.spQuickNew = spQuickNew; window.spQuickSave = spQuickSave; window.spQuickDel = spQuickDel;
-
-

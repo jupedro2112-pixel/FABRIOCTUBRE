@@ -1402,61 +1402,10 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Historias (#674/#676/#680):** 8 fotos `st2-*.png` (orden: instalar · cargá · referidos · reembolsos · ruleta · misiones · Telegram ·
   SMS), link `app:instalar` → `VIP.appTest.doInstall()`. Generador: `scratchpad/gen_stories.py` (no está en el repo; cada foto se
   regenera con su argumento `install|sms|ruleta|telegram`).
-- **Historias en las páginas de marca (#931):** la barra de PICA ROJA / Ganamos / JUGAYGANA (`casinoBarHtml` con `idSuffix`, sin ids) se pinta
-  desde `stories._paintButton` vía `.casino-topbar .tn-stories` (aro + badge; `VIP.stories.paint()` al abrir `lobby.open`). Los links `app:*`
-  con `body.prl-open`: lo que no es modal (soporte, ruleta, VIP…) cierra la página antes (si no, queda DETRÁS: lobby z-index 99990); `cargar` =
-  Carga rápida de la página. Una sección nueva enlazable desde historias que no sea `.modal` ⇒ sumarla a ese criterio.
-- **JUGAYGANA listas copiadas (#937):** `public/data/jugaygana-games.json` (proveedores en su orden con logo + categorías de la barra; cada juego =
-  `[key de Girox, nombre, imgId]`). Sin el archivo, la página usa el catálogo de Girox (proveedores y categorías por búsqueda) como antes.
-  "Mostrar Todo" de cada colección del inicio = `jgColl` → vista `jglist`. Deportes: Digitain (`sport/onyx`) y Ultim8 (`sport/gr8`).
-- **Catálogo de 1girox (#941):** el listado general `/api/games?page=` NO trae Amigo Gaming y su paginación repite juegos; para buscar un juego
-  usar `?search=` y para un proveedor `?provider_id=` con varios `sort` unidos. Inicio de JUGAYGANA = colecciones de jugaygana.io en grilla por columnas.
-- **Eventos deportivos de JUGAYGANA (#940):** `GET /api/sports/board` (`src/services/sportsBoard.js`, ESPN, cache 60 s). Digitain directo requiere que
-  Digitain autorice nuestro dominio (`parent`), ver WORKLOG #940.
-- **Ganamos / JUGAYGANA, datos (#947–#951; #951 = recorte por grilla fija, 2.372 juegos en el orden de sus fotos):** `ganamos-home.json` (filas del inicio + `hw` Halloween), `ganamos-games.json` (proveedores de la
-  pestaña Casino), `<marca>-extra.json` ("Juegos nuevos" = lo de Girox que la página no tiene; regenerar si cambian las listas). Portadas propias en
-  `images/ganamos/{g,p,hw}` e `images/jugaygana/g`; las de Girox sólo por `/api/games/img`.
-- **#964:** `openPlatform('girox')` sin `checked`/`test` con una marca puerta activa abre la página de la marca; `playGame` = `favPlay`.
-- **Fusión gemela (2026-10-24):** sorteos = `sorteos.js` (G915; `raffleService` borrado); comprobantes repetidos = #932 (`dupOf`, copias cerradas)
-  + G908 (reenvíos pendientes agrupados en `repeats`), el panel muestra los dos; seguridad G956 (`STAFF_DENY_MUTATIONS`, sesiones staff 8 h,
-  bloqueos por intentos, SSRF en webhooks, `src/utils/trustedProxy.js`); app instalada arranca con el menú Girox (G937) y, con una marca puerta
-  activa, `openPlatform('girox')` sigue abriendo la página de la marca (#964). `_withPicaroja` es no-op acá (PICA ROJA es puerta, no "Pronto").
-- **Páginas de marca sin Girox (#962):** juegos = `gamePlay`/`favPlay` (link directo del proveedor); deportes = `lobby.sport` con `SPORT_KEYS`
-  (nunca `casinoGoTo`/Girox embebido); historias con `_noGirox()` en stories.js. En Render (API simulada) el juego directo no abre: probar en producción.
-- **BuffaloPlay (#958):** 5ª puerta a la MISMA cuenta de Girox, con el formato de thornet.uno (zip Thornet.zip). `SKINS.buffaloplay`
-  (`layout:'buffaloplay'`) en lobby.js: `_render` la manda entera a `_bpRender` (vistas `inicio` · `slots` · `vivo` · `crazy` · `jglist`). Datos:
-  `buffaloplay-games.json` (proveedores en el orden de sus pestañas, sólo los juegos que Girox tiene, `[key, nombre, portada, gid, lk]`; portadas
-  recortadas de sus capturas en `images/buffaloplay/g/`, las que se veían cortadas usan la de Girox), `buffaloplay-extra.json` (pestaña "Nuevos" =
-  todo el resto de Girox, del más nuevo al más viejo; el buscador busca en los dos archivos, sin API) y `buffaloplay-home.json` (carrusel, Pragmatic
-  Live, Red Rake, mesas en vivo y `live[].lobby` = el lobby de Girox que abre cada tarjeta de Casino en vivo, #959). Favoritos / Recientes = `localStorage vip_bp_favs` / `vip_bp_rec` (del teléfono, NO
-  los favoritos de la cuenta). Entrada: `/buffaloplay` → `/?bp=1`. Marca: `_BRANDS`, `User.activeBrand`, DOORS/BRANDS de home.js (en la lista de
-  Arriba lleva la barra de PICA ROJA (`prl-cbar`, como todas; JUGAYGANA también desde #961, salvo en el sitio JUGAYGANA) y debajo la de thornet (`bp-head`); ☰ = `bpNav` con sus íconos (#960).
-  plataformas va justo después de JUGAYGANA, con el nombre "Buffalo Play" para que corte en dos líneas), botón 🏷️ del panel (opción 5).
-- **Juego directo con bono activo (#945):** 1girox responde `warn_forfeit` (pedir confirmación y reintentar con `forfeit_bono=1`) o `blocked`
-  en vez de `launch_url`; `/api/platform/session` lo devuelve como `forfeit`/`blocked` y `favPlay` pregunta/avisa. Nunca tomarlo como "no hay juego".
-- **Sitio JUGAYGANA (#944):** `VIP_SITE`/`html.site-jyg` (script del head), `js/site.js` (reemplazo de textos/íconos + reabre la página),
-  `manifest.json?site=jugaygana`. Juegos con `gid`/`lk` en los datos ⇒ apertura directa sin buscar. Deportes extra: `sport/horses|turf|poker`.
-- **Dominio propio de JUGAYGANA (#935):** `jugaygana-vercel/vercel.json` = proxy a picaroja.com (raíz → `/?jg=1`). Ojo limitadores por IP detrás del proxy.
-- **Comprobantes repetidos (#932):** `_receiptCollapseDups` deja UNA ficha pendiente por huella (dedupeKey > imageHash > monto+fecha con hora+titular);
-  las copias quedan `rejected`/`duplicate` con `dupOf`. Un flujo nuevo que encole comprobantes debe llamarlo (o dejar que lo haga el tick).
-- **Historias automáticas (#934):** partidos sólo con `Config['storyMatchesEnabled']` (default false, tilde en Cronograma). Variables de texto:
-  `{pct}` 1ª carga, `{rx}` rollover de bonos, `{dx}` rollover de la carga.
-- **"Cómo funciona todo" de Soporte (#933):** hoja `#spFaqSheet` (home.js `supportFaq`), no `<details>`; se cierra deslizando.
 - **Seguridad (#665):** `app.use('/api/admin/datos-ia', authMiddleware, adminMiddleware, gatePin)` — la clave se pide DESPUÉS del login.
 - **Casino (#695):** `ui.js enterCasino` espera 4×30 s y el error dice el motivo (`_fetchCasinoSession` devuelve `status`/`timedOut`);
   en Render el arranque en frío (~50 s) y los redeploys son la causa típica del "No pudimos abrirte el casino".
 
-
-## Sorteo mensual (#917, 2026-10-23)
-- **Qué:** ranking mensual por puntos entre los clientes de la app con carga real en el mes; 1°, 2° y 3° se llevan los premios de
-  `Config['raffleconfig']` (panel → 🏆 Sorteo mensual). Ganadores congelados el día 1 (ART) en `RaffleMonth.winners`.
-- **Puntos:** `raffleService.computeMonth` → por cliente: cargas reales del mes (Transaction deposit completed, sin PRUEBA ni regalos),
-  `getPlayersStatsBatch` (apostado y bonos del mes, de a 100) ⇒ válido = apostado × cargas ÷ (cargas + bonos) ⇒ puntos = válido / 1.000. Se guarda
-  con `$set` en `RaffleScore` (único mes+cliente).
-- **Cron:** `_raffleTick` cada 20 min con candado `RaffleMonth{monthKey:'lock'}` (una instancia a la vez). El día 1 `closeMonth(mesAnterior)` (sólo si
-  todos los batch salieron bien; idempotente). Con `girox.isSimulated()` no hace nada.
-- **Cliente:** `GET /api/raffle` (ranking top 20 con `mask()`, mi puesto, faltantes, bases); ganador ⇒ `POST /api/raffle/contact` deja un mensaje 🏆 en
-  Soporte (canal support, `metadata.kind:'prize'`) y `winners.$.contactAt`. Entrega: panel → "Marcar entregado" (`deliveredAt/By/Note`).
 ## Sorteos con ranking en vivo (#915) — `src/services/sorteos.js` + `_sorteoTick` (server.js) + `public/js/sorteos.js`
 - **Modelos:** `SorteoEntry` (anotado: userId+key único, checks al anotarse, telegramDeclared) · `SorteoScore` (key+periodKey+userId único; points =
   basePts + dayPts + missionPts, wagered, realShare, deposits, joined, eligible). Config: `Config['sorteos']` (normalizada con defaults),
@@ -1513,3 +1462,101 @@ plata ni sueldos). Foto: `storyImage` (SVG, `GET /api/stories/:id/auto.svg?v=STO
 ("🛠 Motor…"). Cada historia se publica en su propio try/catch: un error no frena a las demás. Kill switch: `STORIES_AUTOPILOT_DISABLED=1`.
 **Republicar (#911):** `_storyWipeForRepublish` + `_storyAutoTick({ force: true })` (one-shot `mig911StoriesRepublish` al deployar y
 `POST /api/admin/stories-autopilot/republish-today`): apaga las vigentes (no las personales), borra `sa-<hoy|ayer>-*` y publica las de hoy ya.
+
+
+## Centro de avisos (#971, 2026-10-24)
+
+**Idea:** un solo lugar para todo lo automático que le llega al cliente, con un solo tope. Panel → Cronograma → 🧭 Centro de avisos; config en
+`Config['notifCenter']` = { monthlyCap, journey, refundReminder, winnersStory, legacyRules }.
+
+**Fuentes (todas pasan por la misma cola de lotes o respetan sus topes):**
+| Fuente | Cuándo | Cómo sale | Tope |
+|---|---|---|---|
+| Recorrido por cliente (`retentionJourney.js` + `_journeyTick`) | 12–16 h ART, una vez por día | un NotifBatch por paso ("Recorrido · …"), chat + push `kind:'personal'` | 1/día; mensual sólo en pasos `capped` |
+| Autopiloto (campaña masiva) | 20:00, 3 lotes | NotifBatch desde ScheduledCampaign, push `kind:'promo'` | 1/día + mensual |
+| Lotes manuales del panel | cuando el agente quiere | NotifBatch | mensual si lo marca |
+| Aviso del reembolso diario (#970) | 11 h | `sendNotificationToUsernames` (personal) | 1 por día, propio |
+| Ofertas de bienvenida (días 5/15/30) | 18 h | historia personal + push personal | saltea a quien ya recibió un lote hoy |
+| Historia con bono | mié (y sáb en el refuerzo) 12:30 | historia + push a todos (promo) | ese día el autopiloto no programa |
+| Historia "pagos de la semana" | lunes 12 h | historia sin push | — |
+| Reglas viejas (NotificationRule) | — | apagadas salvo `legacyRules` | — |
+
+**Recorrido:** segmento por días desde la última carga real (`SCHED_ADAPTER.realDepositMatch`) o desde el registro: nuevo (0 cargas) · activo 0–6 · enfriando 7–13 · inactivo 14–29 · perdido 30–89 · lejano 90–180 · olvidado (+180, nada). `pickStep` devuelve a lo sumo un paso
+(prioridad recuperación > nuevo > sin app; tolerancia de 2 días), con clave "<paso>@<episodio>" guardada en `User.journey.sent` (episodio = día de
+la última carga: una carga nueva reinicia el recorrido). Fichas según `valueTier(avgDeposit 90 d)` chico/medio/grande = $2.000/$5.000/$10.000 ×
+mult, rollover global. Preview sin enviar: `GET /api/admin/notif-center` (`_journeyScan`, cache 10 min); `POST …/run` fuerza la pasada de hoy.
+
+**Preferencia del cliente:** `User.notifPrefs.level` all/mine/none + `fatigue`. Se aplica en `sendPushIfOffline` (lotes, por `data.kind`) y en
+`notificationService.prefsFilter` (masivo = promo, usernames = personal; `kind:'system'` siempre sale). Fatiga: +1 por push promo enviada, 0 al
+abrir la app (`/api/activity/ping`); ≥10 ⇒ sin promos.
+
+**Trampas:** un aviso automático nuevo va por `_createNotifBatchFromBody` (hereda `dailyCap`/`monthlyCap`) o lleva `data.kind`; no agregar otro
+cron de pushes por fuera. `_notifDayCounts`/`_notifMonthCounts` cuentan NotifBatch (no las pushes directas). Al cambiar el tope mensual el PUT
+borra las campañas futuras del autopiloto (`_autopilotClearFuture`) y el tick las rearma.
+
+
+## Revisión semanal automática (#973, 2026-10-24)
+
+**Qué hace:** cada lunes (10–14 h ART, una vez, `_cronClaim('weeklyreview')`) `_weeklyMetrics(now)` arma las métricas de la semana y
+`weeklyReview.decide(metrics, tuningActual)` devuelve impulsar / mantener / frenar con razones y recomendaciones. Si cambia el nivel, se guarda
+`Config['journeyTuning']` (= `tuningFor(level)`: pctMult, chipsMult, apPctPlus) y se borran las campañas futuras del autopiloto para que se rearmen.
+Informe + historial en `Config['weeklyReview']`. Rutas (clave de INICIO): `GET /api/admin/inicio/weekly-review`, `POST …/run` (fuerza).
+
+**Métricas:** cargadores/cargas/monto de la semana y cargadores de la anterior; `repeatRate` = de los que cargaron la semana anterior, cuántos
+también ésta (y `prevRepeatRate` para la semana previa); `giftRatio` = regalos/depósitos de los `DailyClose` de la semana; efectividad de los
+NotifBatch enviados hace 7–14 d (recorrido: carga real en 7 d, por paso; masivo: en 48 h); `RefundClaim` por tipo; registrados y primeras cargas;
+app instalada entre los que cargaron en 30 d; opt-out y fatiga; cohortes (`_inicioCohorts`); segmentos del último `journeyLast`.
+
+**Dónde se aplica el nivel:** `retentionJourney.pickStep(state, now, tuning)` (bono % ×pctMult redondeado a 5, tope 200; fichas ×chipsMult
+redondeadas a 500) y `_autopilotMonthItemsRaw` (`tb`: pct + apPctPlus, entre 10 y 100). El cache `_tuningCache` se refresca en
+`getJourneyTuning()` (lo llaman `_journeyScan` y `getAutopilotConfig`).
+
+**Trampas:** la decisión necesita cierres (`giftRatio` null ⇒ se trata como "hay margen") y ≥ 30 contactados para juzgar una conversión; no
+cambiar los umbrales sin correr `scripts/test-weekly-review.js`. El informe en texto (`reportText`) es lo que el owner copia para analizar afuera.
+
+
+## Bienvenida acotada (#974, 2026-10-24)
+
+- **Bono de 1ª carga:** `Config['firstDepositBonusPct']` (100) con tope `Config['firstDepositCapArs']` ($15.000; 0 = libre) y 0 % sobre el resto. Se
+  aplica en `resolveAutoBonus` (fuente `first_deposit`) ⇒ manual y hgcash por igual. Panel → Estrategia clientes → 1️⃣ Primera carga.
+- **Extra por instalar:** `Config['installGift']` = { enabled, fixedArs ($5.000), pct, capArs, days }. `installGiftAmount` = min(fixedArs, carga) si
+  fixedArs > 0; si no, pct con tope. En modo fijo `User.installGift.pct = null` (la app muestra sólo el monto). Textos con {monto}; el cartel de 1ª carga
+  (`/api/first-deposit-promo`) devuelve `extraMonto`, `capArs` y renderiza `/sys_first_deposit_popup` con {tope} y {extraMonto}.
+- **Anti-multicuenta de bienvenida:** `_welcomeAbuseOf(user)` busca otra cuenta con el mismo teléfono (últimos 10 dígitos), mismo `deviceIds` o mismo
+  token FCM. Si hay, `resolveAutoBonus` bloquea todos los bonos de bienvenida en la primera carga (nota interna al agente) y `maybeOfferInstallGift` no
+  ofrece el extra. No bloquea la cuenta ni toca ruleta/lotes/reembolsos. Sólo se evalúa cuando es la primera carga real (`_isFirstRealDeposit`).
+
+
+## Registro abierto sin regalos (#975, 2026-10-24)
+
+`User.noWelcomeGifts` se fija al crear la cuenta: landing / entrada rápida ⇒ `(!campaña || campaña === 'INGRESO') && !referido`; alta clásica ⇒
+`!attributedCampaign && !isValidReferral`; en ambos casos salvo `Config['organicWelcomeGifts'] === true`. Dónde se respeta: `_welcomeAbuseOf` (motivo
+⇒ `blockWelcome` en `resolveAutoBonus` y nada de extra en `maybeOfferInstallGift`), `_newbieOffersTick` (query), `retentionJourney` (pasos
+`needsWelcome` con `state.noWelcome`), `/api/first-deposit-promo` (`noGifts:true`, texto `/sys_first_deposit_nogift`). Reembolsos, ruleta, lotes,
+misiones, sorteos, VIP y referidos no miran el flag. Un regalo de bienvenida nuevo tiene que chequearlo.
+
+
+## Rollover ×1 en la carga y confianza a las 5 cargas (#976, 2026-10-24)
+
+- `Config['depositRolloverX']` = 1 (bono `bonusRolloverX` = 5). Textos: `.rx-dep`/`.rx-bon` los pinta home.js desde `/api/platforms`; los comandos
+  usan {carga}/{rollover}. Retiro mínimo `Config['withdrawMinArs']` = 5.000; la app lo lee de `platformsData.withdrawMinArs` (fallback 5.000).
+- Registro abierto (`User.noWelcomeGifts`): `retentionJourney.pickStep` calcula `trusted = !noWelcome || deposits ≥ TRUST_DEPOSITS`; sin confianza los
+  regalos `fixed` se convierten en percent `UNTRUSTED_PCT` y no existe oferta de 2ª carga. Con confianza el cliente queda como cualquier otro (sin paso especial, #977).
+
+
+## Sorteos v2: tickets y sorteo verificable (#981, 2026-10-24)
+
+**Reglas** (`src/services/sorteos.js`): `computePoints(s, { days: { 'YYYY-MM-DD': { wag, dep } }, depositTotal, bonusGranted, deposits, missionWeeks, weeksElapsed })`
+devuelve puntos (base con techo diario `dayCapArs` × realShare, `dayPts`, `weekPts`, `missionPts`), `depositDays`, `activeWeeks`, `streakWeeks` y
+`tickets { play, days, milestones, total, got }`. `drawNumber(seed, drawKey, total, skip)` = 1 + (sha256(seed|drawKey) mod total) + skip. `terms()` arma las Bases.
+
+**Motor** (`_sorteoTickOne`): por período, agrega cargas reales (total y por día ART), lee el apostado acumulado de 1girox (`_sorteoStats`), guarda
+`cum[hoy]` y deriva `wag` por día como diferencia entre acumulados consecutivos (los días sin pasada se suman al siguiente). Emite tickets por la
+diferencia entre lo que corresponde y lo ya emitido por origen (`ticketsPlay/Days/Milestones`), reservando bloques en `SorteoCounter` (`$inc`) e
+insertando `SorteoTicket` (único por key+periodKey+n). Después corre `_sorteoDrawsAuto`: commit del 1° premio al cierre, revelado automático a las
+48 h de `publishAt`; quincenales (`midDraws.dates`) commit al empezar el día, revelado a las 20 h. `Config['sorteoDraws']` guarda cada sorteo bajo
+`key:periodKey:main` o `key:periodKey:mid:YYYY-MM-DD` ({ seed, seedHash, total, winner, skipped, revealedAt… }); la app ve la semilla sólo revelada.
+
+**Trampas:** tickets nunca bajan (si cambia realShare, se conserva lo emitido); el commit congela `total` — tickets emitidos después no entran a ESE
+sorteo; cambiar `tickets.per`/`dayCap` a mitad de período sólo afecta lo que se emite de ahí en adelante. El ganador del 1° premio se excluye del
+ranking (`_sorteoWinners(key, pk, excludeUserId)`). Requisito teléfono = 10 dígitos cargados (no exige verificación: eso va al cobrar).

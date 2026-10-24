@@ -78,12 +78,11 @@ const comprobanteSchema = new mongoose.Schema({
   reviewQueuedAt: { type: Date, default: null },
   reviewEscalatedAt: { type: Date, default: null },   // cuándo se le avisó al cliente "pendiente, un agente la revisa"
   reviewEscalateReason: { type: String, default: null },
-  reviewResolution: { type: String, default: null },  // 'auto' | 'manual' | 'rejected' | 'duplicate' (#932)
+  reviewResolution: { type: String, default: null },  // 'auto' | 'manual' | 'rejected'
   reviewedBy: { type: String, default: null },
   reviewedAt: { type: Date, default: null },
   reviewNote: { type: String, default: null },
   reviewTxId: { type: String, default: null },
-  dupOf: { type: String, default: null, index: true }, // #932: copia repetida (mismo comprobante enviado otra vez) ⇒ id de la ficha que queda
   createdAt: { type: Date, default: Date.now, index: true }
 }, {
   timestamps: true

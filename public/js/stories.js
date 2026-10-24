@@ -3,10 +3,6 @@
 // barras de progreso, pasa sola, tocar a la derecha/izquierda avanza/retrocede, mantener
 // apretado pausa. Las historias vencen solas (horas configurables en el panel).
 (function () {
-    // #962: ¿la persona está en una página de marca (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay) y no en Girox? ⇒ nada de la web de Girox.
-    const _DOORS = ['picaroja', 'jugaygana', 'ganamos', 'buffaloplay'];
-    function _doorBrand() { try { const b = localStorage.getItem('vip_brand'); if (_DOORS.includes(b)) return b; return localStorage.getItem('vip_pr_off') === '1' ? null : 'picaroja'; } catch (_) { return 'picaroja'; } }
-    function _noGirox() { try { return document.body.classList.contains('prl-open') || window.VIP_SITE === 'jugaygana' || !!_doorBrand(); } catch (_) { return false; } }
     'use strict';
     window.VIP = window.VIP || {};
 
@@ -53,10 +49,6 @@
         const lbl = _el('storiesLbl');
         if (lbl) lbl.textContent = _items.length ? (unseen ? 'Historias' : 'Historias') : 'Historias';
         btn.title = _items.length ? (_items.length + ' historia' + (_items.length === 1 ? '' : 's') + ' activa' + (_items.length === 1 ? '' : 's')) : 'Sin historias por ahora';
-        // #931 (owner: "las historias no funcionan en PICA ROJA"): la barra de arriba de las páginas de marca (PICA ROJA / Ganamos / JUGAYGANA)
-        // y la del casino también muestran el aro rojo y el contador de nuevas (antes la de las páginas no tenía id y nunca se pintaba).
-        try { document.querySelectorAll('.casino-topbar .tn-stories').forEach((b) => { b.classList.toggle('has-active', _items.length > 0); b.classList.toggle('has-new', unseen > 0);
-            const bd = b.querySelector('.st-badge'); if (bd) { bd.textContent = unseen > 9 ? '9+' : String(unseen); bd.style.display = unseen > 0 ? '' : 'none'; } }); } catch (_) {}
     }
 
     function open(startIdx) {
@@ -121,14 +113,13 @@
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
             const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions(),
                 // #827: historias automáticas — casino directo en Deportes / en los juegos, retirar y niveles VIP
-                // #962 (owner: "ninguna visual de Girox en las otras páginas"): fuera de Girox, Deportes = link directo de la casa y "juegos" = la página.
-                deportes: () => { if (_noGirox()) { try { VIP.lobby.sport('/sports-new'); return; } catch (_) {} } if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return; try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); }, // #854: mismo ingreso que favoritos
-                juegos: () => { if (_noGirox()) { try { const b = (VIP.lobby && VIP.lobby.skin && document.body.classList.contains('prl-open')) ? VIP.lobby.skin() : _doorBrand(); VIP.lobby.open('slots', b); return; } catch (_) {} } VIP.home.openPlatform('girox', { embed: true }); },
+                deportes: () => { if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return; try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); }, // #854: mismo ingreso que favoritos
+                juegos: () => VIP.home.openPlatform('girox', { embed: true }),
                 retirar: () => { try { VIP.home.casinoWithdraw(); } catch (_) { VIP.withdraw.openWithdrawModal(); } },
                 vip: () => VIP.home.openVipLevels() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
             // #827: "app:play:/play/<agg>/<juego>" → casino directo en ESE juego (slot de la semana).
-            const playPath = /^app:play:(\/play\/[\w.\/@-]+)$/i.exec(s.linkUrl || '');
+            const playPath = /^app:play:(\/play\/[\w.\/-]+)$/i.exec(s.linkUrl || '');
             // #742 (owner): historia con BONO → botón "Reclamar ahora +X%": reclama, cierra y va directo a Girox (carga rápida).
             if (s.bonusActive && Number(s.bonusPct) > 0) {
                 link.href = '#'; link.style.display = ''; link.classList.add('st-bonus');
@@ -141,16 +132,9 @@
                 // #854: Deportes con el casino YA abierto ⇒ directo adentro (la sesión ya está), sin cerrar ni volver a entrar.
                 if (k === 'deportes' && VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return;
                 let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
-                // #931: tocada ADENTRO de una página de marca (PICA ROJA…): Cargar = la Carga rápida de la página; lo que se abre como modal
-                // (reembolso, misiones, referidos, retirar) va arriba; el resto (soporte, ruleta, VIP…) se abría DETRÁS ⇒ primero se cierra la página.
-                if (!wait && document.body.classList.contains('prl-open')) {
-                    if (k === 'cargar') { try { VIP.home.toggleCasinoLoad(); return; } catch (_) {} }
-                    if (!['reembolso', 'misiones', 'referidos', 'retirar', 'deportes', 'juegos'].includes(k)) { try { VIP.lobby.close(); wait = 200; } catch (_) {} }
-                }
                 try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
                 setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
             else if (playPath) { link.href = '#'; link.textContent = s.linkLabel || 'Jugar ahora ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close();
-                if (_noGirox()) { try { VIP.home.gamePlay(playPath[1].replace(/^\/play\//, ''), s.linkLabel ? String(s.linkLabel).replace(/[›»]/g, '').trim() : 'el juego'); return; } catch (_) {} } // #962: juego directo
                 if (VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo(playPath[1])) return; // #854
                 let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
                 setTimeout(() => { try { VIP.ui._casinoGamePath = playPath[1]; VIP.home.openPlatform('girox', { embed: true }); } catch (e) { console.warn('[stories] play', e); } }, wait); }; }
@@ -158,6 +142,7 @@
             else link.style.display = 'none';
             if (!(s.bonusActive && Number(s.bonusPct) > 0)) link.classList.remove('st-bonus');
         }
+        try { _paintReact(s); } catch (_) {} // #971
         _markSeen(s.id);
         try { if (VIP.state && VIP.state.currentToken) fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(s.id) + '/view', { method: 'POST', headers: { 'Authorization': 'Bearer ' + VIP.state.currentToken } }).catch(() => {}); } catch (_) {}
         _arm(dur);
@@ -174,6 +159,31 @@
             try { VIP.home.storyBonusRefresh(); } catch (_) {}
             try { VIP.home.goGiroxDirect(); } catch (_) {}
         } catch (_) { try { VIP.ui.showToast('Error de conexión', 'error'); } catch (e) {} }
+    }
+    // #971 (owner: "que a la gente le guste interactuar"): reacciones 🔥❤️😂👍 (una por cliente, se recuerda en el teléfono) y
+    // conteo de toques en el botón de la historia (el panel muestra vistas · toques · reacciones por historia).
+    const REACT = [['fire', '🔥'], ['heart', '❤️'], ['laugh', '😂'], ['like', '👍']];
+    let _curId = null, _clickArmed = false;
+    function _myReact(id) { try { return (JSON.parse(localStorage.getItem('vip_st_react') || '{}'))[id] || null; } catch (_) { return null; } }
+    function _saveReact(id, r) { try { const m = JSON.parse(localStorage.getItem('vip_st_react') || '{}'); m[id] = r; const ks = Object.keys(m); while (ks.length > 80) delete m[ks.shift()]; localStorage.setItem('vip_st_react', JSON.stringify(m)); } catch (_) {} }
+    function _auth() { return { 'Authorization': 'Bearer ' + VIP.state.currentToken, 'Content-Type': 'application/json' }; }
+    function _paintReact(s) {
+        _curId = s.id; const box = _el('storyReact'); if (!box) return;
+        if (!(VIP.state && VIP.state.currentToken)) { box.style.display = 'none'; return; }
+        const rx = s.reactions || {}; const mine = _myReact(s.id);
+        box.innerHTML = REACT.map(([k, e]) => '<button type="button" class="st-rbtn' + (mine === k ? ' on' : '') + '" data-r="' + k + '" aria-label="Reaccionar">' + e + (Number(rx[k]) > 0 ? '<b>' + Number(rx[k]) + '</b>' : '') + '</button>').join('');
+        box.style.display = '';
+        box.querySelectorAll('.st-rbtn').forEach((b) => { b.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); _react(s, b.getAttribute('data-r')); }; });
+        if (!_clickArmed) {
+            _clickArmed = true;
+            const link = _el('storyLink');
+            if (link) link.addEventListener('click', () => { try { if (_curId && VIP.state && VIP.state.currentToken) fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(_curId) + '/click', { method: 'POST', headers: _auth() }).catch(() => {}); } catch (_) {} }, true);
+        }
+    }
+    async function _react(s, r) {
+        if (_myReact(s.id)) return;
+        _saveReact(s.id, r); s.reactions = s.reactions || {}; s.reactions[r] = (Number(s.reactions[r]) || 0) + 1; _paintReact(s);
+        try { const res = await fetch(VIP.config.API_URL + '/api/stories/' + encodeURIComponent(s.id) + '/react', { method: 'POST', headers: _auth(), body: JSON.stringify({ reaction: r }) }); const j = await res.json(); if (j && j.reactions) { s.reactions = j.reactions; _paintReact(s); } } catch (_) {}
     }
     function openById(id) {
         const go = () => { const i = _items.findIndex((s) => s.id === id); if (i >= 0) open(i); else open(); };
@@ -255,5 +265,5 @@
         ring.title = _items.length + ' historia' + (_items.length === 1 ? '' : 's');
         ring.style.display = '';
     }
-    VIP.stories = { init, load, loadPublic, open, openById, claimBonus, close, next, prev, pause, resume, paint: _paintButton };
+    VIP.stories = { init, load, loadPublic, open, openById, claimBonus, close, next, prev, pause, resume };
 })();

@@ -8,154 +8,218 @@
 
 ## Sesión 2026-10-24
 
-### 970. Sin "Pronto" en ninguna plataforma + zip SÓLO de las páginas para la gemela — SW v658
-Pedido del owner: "quiero solamente el zip de las páginas, que lo configure otro Claude que no las tiene, sin tocar sus otras modificaciones
-(está más actualizado); que aparezcan las 4 plataformas en cada sector donde falten y sacar el Pronto".
-- Pantalla de ingreso (`loginhero.js`, fila de plataformas #423): PICA ROJA, JUGAYGANA y Ganamos ya no salen "Pronto" (son páginas propias con la
-  cuenta de Girox) y PICA ROJA va primera aunque el server no la mande. Tarjeta de Info (`#infoCardTwoPlatsDesc`): sin "pronto" ni "estamos
-  trabajando en las automatizaciones"; explica que se juega en una y para cambiar el saldo tiene que estar en $0.
-- Zip `paginas-de-marca` armado HUNK POR HUNK contra el árbol de la gemela (G969): sólo rutas de las páginas, ingreso directo a juegos/deportes,
-  catálogo/lobby/portadas, bloqueo por plataforma (`activeBrand`), selector de las 4 plataformas, panel (marca del cliente) y los estilos de las
-  páginas en un archivo APARTE (`public/css/marcas.css`, se carga después de pin.css). Afuera: comprobantes repetidos (#932), FAQ (#933), historias
-  (#934), nuestro sorteo viejo (#917…#929), BuffaloPlay y los números de versión.
+### 985. Girox embebido: login único en MODO EMBEBIDO (sin controles de sesión del casino)
+**Pedido (owner):** "armemos un Girox para la gente usando la misma página, como plataforma principal interna de Pica Roja: sacarle el menú superior y
+que en el Perfil no se pueda cambiar la contraseña de Girox; siempre desde la app, que la cambia también en Girox".
+- `giroxService.createSession` manda `embed: true` (Partner API v1.15 §2.7): el casino oculta Cerrar sesión / Iniciar sesión / Registrarse en la pestaña
+  o iframe abierto por SSO ⇒ el usuario se maneja sólo desde la app. Env `GIROX_SSO_EMBED=0` lo apaga. El cambio de clave desde la app ya se sincroniza
+  a Girox (`PUT /players/{username}/password`).
+- Lo que NO se puede hacer desde nuestro lado (la página de 1girox es de otro dominio y no se puede tocar su HTML desde el iframe): ocultar el resto del
+  header ni el formulario de cambio de clave de su Perfil. Eso se pide a 1girox (modo "white-label / clave administrada por el partner"). Se descartó
+  hacer un espejo/proxy de 1girox.com bajo picaroja.com: rompe los juegos (los proveedores validan el dominio) y viola el acuerdo con la plataforma.
 
-### 969. Una plataforma a la vez, de verdad: bloqueo en TODAS las entradas + el panel muestra la plataforma del cliente — SW v657 · admin SW v200
-Pedido del owner: "todas con la misma de 1girox; se le carga a la que eligió; si eligió una, sólo puede entrar en esa hasta tener saldo 0, las otras
-quedan bloqueadas; todo se calcula igual: es 1 usuario de PICA ROJA que puede usar varias plataformas". Es el modelo de #908 (`User.activeBrand`,
-`POST /api/me/brand` rechaza el cambio con saldo ≥ `BRAND_LOCK_ARS` = $100). Lo que faltaba:
-- `VIP.lobby.open` abría la página pedida SIN chequear (historias, arranque con la marca guardada en el teléfono, site.js). Ahora, si la marca
-  activa del server (`VIP.home.brandActive()`) es otra, pasa por `openPlatform` ⇒ `_brandGuard` (cartel de bloqueo si tiene saldo).
-  En el sitio JUGAYGANA no aplica (no hay otra página).
-- Panel → chat: al lado del usuario, "🎰 <plataforma activa>" (la carga del agente va a esa: es la misma cuenta). Se cambia con el botón de
-  marca del cliente (#913).
-- Sin cambios en cargas/retiros/reembolsos/cierres: todo se calcula igual sobre la única cuenta de 1girox.
+### 984. Clave única de verdad: guardarla desde Datos o desde INICIO fija las dos, sin pedir la anterior al admin — admin SW v207
+**Pedido (owner):** "no agarra [la clave]". Causa probable: ya había una clave distinta guardada (INICIO o Datos) o el bloqueo por 6 intentos.
+- `POST /api/admin/datos-ia-pin` y `POST /api/admin/inicio-pin` (sólo rol admin) escriben `datosIaPinHash` e `inicioPinHash` con el mismo valor y
+  limpian `_pinFails` (bloqueo por intentos). El admin general no necesita la clave anterior: el login del panel ya lo protege; la clave es para el staff.
+- Panel: al guardar queda activa en la sesión (`datos_pin` + `inicio_pin`); título "Clave de Datos y Principal (una sola)".
 
-### 968. La pantalla de carga de un juego nunca muestra Girox + zip de las páginas para la gemela — SW v656
-Pedido del owner: "que en cada momento que carga, si te lleva a Girox, sacar ese logo de Girox para que la gente no vea que es de otra plataforma".
-- `_gameLoadingScreen` (home.js): sin página de marca abierta ni marca elegida mostraba el logo y el nombre de Girox ("Abriendo X…" · Girox).
-  Ahora va la marca elegida, o PICA ROJA (en el sitio JUGAYGANA, JUGAYGANA). Se sacó la entrada `girox` de `_LOAD_SKIN`.
-- El juego en sí ya abre con el link del PROVEEDOR (`launch_url`, #857/#944), no con la web de Girox. Si algún proveedor muestra igual algo de
-  Girox mientras carga, es su propia página: falta la URL exacta (barra de direcciones) para ver si se puede saltear.
-- Zip para la gemela (pedido del owner, sin BuffaloPlay): `picaroja/`, `jugaygana/`, `ganamos/` (archivos propios de cada página, con su ruta
-  del repo) + `comun/cambios-comunes.patch` (código compartido, contra el árbol de la gemela G969; se aplica con `git apply --3way`; en esa versión
-  se quitaron el botón y la ruta de BuffaloPlay). Probado: aplicado sobre la gemela da el mismo árbol que el nuestro salvo BuffaloPlay.
+### 983. Tope del bono de 1ª carga a la vista en todos lados; crear la clave de INICIO también fija la de Datos — SW v648
+**Pedido (owner):** "¿aclaraste en algún lado el tope del bono del 100 %? no lo veo por ningún lado" · "¿cuál es la clave de Sorteos y Revisión semanal?".
+- "hasta $15.000" (valor vivo de `firstDepositCapArs`) en: notas de primera carga del básico/completo (`.fd-cap`), cartel de bienvenida, landing de pauta
+  (`welcome.capArs`), historia automática de bienvenida (`{tope}`) y pasos del recorrido (`{tope}`). La FAQ de Soporte y el texto del cartel ya lo tenían.
+- Clave: al crear la de INICIO desde el panel, si no hay clave de Datos se guarda la misma ⇒ una sola clave para Principal y Datos, se cree desde donde se cree.
 
-### 967. Cada juego en su lugar: revisión de los datos de las 3 marcas + categorías vacías de JUGAYGANA — SW v655
-Pedido del owner: "seguí revisando y dejá todo más fino, con los juegos adentro donde corresponde en cada plataforma".
-- **Auditoría** de `public/data/{ganamos,jugaygana,buffaloplay}-{games,home,extra}.json` (~25.000 entradas) contra el catálogo de 1girox
-  (copia del 23/10): todas las claves existen, id y launcher coinciden, ninguna portada local falta y no hay juegos en un proveedor que no es
-  el suyo (en Ganamos, "Hacksaw" incluye sus estudios asociados, Amusnet = EGT y Bluejack = betcorejacktop, a propósito, #949).
-- **JUGAYGANA:** las categorías JACKPOTS, BINGO y COMPRA DE BONOS venían VACÍAS del zip y caían en una búsqueda por nombre que traía poco.
-  Ahora `cats.jackpots` (120, Hold & Win / Mega Moolah / links), `cats.bingo` (25, bingo y keno) y `cats.bonos` (56, "Buy Feature/Bonus Buy"),
-  más jugados primero, con la portada de JUGAYGANA si la tiene y si no la de Girox (`_jgG` acepta URL además del número de portada).
-- Un juego del catálogo venía con el nombre interno (`madhitjokester96_rubyplay`): ahora "Giga Match Gems 96" en las listas de Juegos nuevos.
+### 982. 🔑 Una sola clave para todo lo protegido y agentes con 5 secciones — admin SW v206
+**Pedido (owner):** "¿cuál es la clave de todo? pongamos [clave] a todo; los agentes de cargas y pagos sólo Soporte, Comprobantes a verificar, Pagos
+a confirmar, Cargas automáticas y Chat completo; el resto libre pero lo que pide clave con la misma".
+- Si no hay clave propia de INICIO, `_inicioPinHash` usa `Config['datosIaPinHash']` ⇒ la clave de Datos vale también para Principal (INICIO, Centro de
+  avisos, Revisión semanal, Sorteos: ¿sirven?). El panel comparte la clave entre `datos_pin` e `inicio_pin` en la sesión: se escribe una vez. Guardar
+  la clave de Datos refresca la de INICIO. La clave la carga el owner en Configuración → Clave de Datos; nunca va en el código (repo público).
+- `AGENT_SECTIONS` = support, depositReviews, payReview, cargasAuto, chats (se quitan Ruleta, Referidos, Usuarios y Transacciones del menú de
+  depositor/withdrawer; las mutaciones sensibles ya las bloquea `STAFF_DENY_MUTATIONS`).
 
-### 966. Las 4 páginas de marca igualadas (menú ☰, sorteos y buscador) — SW v654
-Pedido del owner: "revisá todas las plataformas y conectalas con las otras, que estén lo más parecido posible". Se comparó qué tiene cada
-página (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay) y se completó lo que le faltaba a cada una, sin tocar el diseño propio de cada marca:
-- **Menú ☰ (cuenta) igual en las 4** (`_paintMenu`, lobby.js): saldo + Cargar/Retirar, nivel, casas de **Deportes** (cada una con su link
-  directo, #962), Soporte, Mi perfil, **Sorteos**, **Historias**, **Información** y Volver a la app. Antes Deportes/Historias/Info estaban sólo en JUGAYGANA.
-- `_sportsList()`: si la lista del server no llegó, igual muestra Digitain y Ultim8 (menú ☰ y la ventanita de Deportes).
-- **BuffaloPlay** ahora tiene los sorteos arriba del inicio (`_rfStrip()`), como las otras tres.
-- **Ganamos** tiene buscador en Casino (`_search()`), como las otras tres.
-No se pudo revisar con capturas: lalodj tiene que cambiar la clave (G956).
+### 981. 🎟️ SORTEOS v2 "premium y para todos": 1° premio por TICKETS (rifa verificable), 2° y 3° por ranking con techo diario y constancia, quincenales del auto, teléfono como requisito, estadística en Principal — SW v647 · admin SW v205
+**Pedido (owner):** "armá un sistema que no incentive sólo al que tiene más plata; el premio mayor por tickets que el cliente ve antes, sorteo por
+semilla verificable; el auto con hitos y sorteos quincenales; un ranking bien mostrado para que la gente entienda todo; Telegram, app y
+notificaciones siempre para anotarse y también el número de celular; abajo de Revisión semanal una estadística mínima de si los sorteos sirven; lo
+que veas mal borralo y dejalo prolijo (explicación y Bases)".
+- **Reglas** (`src/services/sorteos.js` reescrito + `scripts/test-sorteos-rules.js`): puntos = 1 por cada $1.000 apostados con plata real contando
+  hasta `dayCapArs` ($300.000) por día + `dayDepositPts` (10) por día con carga desde `dayDepositMin` ($2.000) + `weekPts` (50) por semana con
+  `weekActiveDays` (3) días con carga (+ misiones en el Gran). Tickets = 1 por cada `tickets.per` (50) puntos de juego del día (máx. `dayCap` 6/día)
+  + `activeDay` (1) por día con carga + hitos iguales para todos (`milestones`: mensual 10 cargas +3; gran 1ª carga +1, 4 semanas seguidas +5,
+  10 cargas +5). `prizes[0].mode='tickets'`, los otros 'ranking'. `midDraws` del Gran: $200.000 el 15/12, 31/12 y 15/1. `requirements.phone`.
+  Sorteo: `newSeed/commitHash/drawNumber` = 1 + (sha256(semilla|sorteo) mod tickets), salto al siguiente si no está anotado. Bases nuevas (`terms`).
+- **Motor** (`_sorteoTickOne` v2): apuesta POR DÍA a partir del acumulado de 1girox guardado cada día (`SorteoScore.cum`), cargas por día de la DB,
+  tickets emitidos de forma incremental y correlativa (`SorteoTicket` + `SorteoCounter` atómico, nunca se quitan). `_sorteoDrawsAuto`: al cerrar el
+  período publica la huella del 1° premio (y revela solo 48 h después de la publicación si nadie lo hizo); quincenales: huella a las 00 h, semilla a
+  las 20 h. El ganador recibe push personal + nota interna; 2° y 3° del ranking excluyen al ganador del 1°. Rutas: `GET /api/sorteos` (tickets míos
+  y total, chance, lista de números, sorteos con huella/semilla/ganador, vecinos del ranking, distancia al 3°, reglas en texto),
+  `GET /api/admin/sorteos/:key/tickets?u=`, `POST /api/admin/sorteos/:key/draw/commit|reveal`, `GET /api/admin/inicio/sorteos-stats`.
+- **App** (`public/js/sorteos.js`): portada con cómo se gana cada premio, "Cómo ganás" en tres líneas, **Mis tickets** (míos / emitidos / chance "1 en
+  N" / números / cómo conseguir más), cómo sumás puntos (techo y constancia), **Sorteos** (huella, semilla, ganador, fórmula), **Ranking por puntos**
+  con desglose, "te faltan X pts para el 3°", vecinos si estoy lejos del top, Bases nuevas. Requisito "número de celular cargado" con botón a Perfil.
+- **Panel → Sorteos:** configuración completa de las reglas nuevas, pestañas 🎟️ Tickets (emitidos, por origen, buscador) y 🎲 Sorteo (huella /
+  revelar con acta: semilla, total, ticket, ganador, saltos, fórmula). **Principal → "🎟️ Sorteos: ¿sirven?"** (clave de INICIO): semáforo por sorteo
+  (anotados entre los que cargan, días con carga anotados vs no, tickets por semana, concentración de la rifa, estado de los sorteos).
+- Explicación de Soporte (`/sys_sq_sorteo`): {puntos} y {tickets} nuevos; migración `mig981SorteosV2` actualiza el texto guardado. Test del servidor
+  reescrito (`scripts/test-sorteos-server.js`) y del frente ampliado.
 
-### 965. 🔀 FUSIÓN con la gemela (PICAROJAoficial, G907–G969) — SW v653 · admin SW v199
-**Owner:** "tengo actualizaciones de otro Claude que trabaja sobre esta misma copia pero no tiene las páginas; si lo cargamos, ¿no rompemos nada?" →
-reemplazar archivos SÍ rompía (su home.js/pin.css no tienen las páginas de marca ni #907–#964). Se aplicó su `cambios-2026-10-24.patch` con
-`git apply --3way` (base común 238c202c) en la rama `fusion-gemela`: ~30 archivos limpios, 23 choques resueltos a mano. Decisiones del owner:
-**sorteo = el de la gemela al 100%** y **la app instalada arranca siempre con el menú de Girox**.
-- Sorteos: queda `sorteos.js` (G915); se borraron `raffle.js`, `raffleService`, `RaffleScore`, `RaffleMonth`, su cron, rutas `/api/raffle*`, la sección
-  del panel y `scripts/test-raffle-join.js`. Páginas de marca: `_rfStrip()` pinta `data-srt-banner`; "Sorteo del mes"/pestaña Sorteos → `VIP.sorteos.open`.
-  **Agregado:** `_sorteoTick` NO corre con el casino simulado (la regla de nuestro #917; el de la gemela no la tenía y en Render habría escrito
-  puntajes falsos en la base real).
-- Barra del casino: nuestra `casinoBarHtml` + marca de la página (#927) + la píldora/banner del sorteo de la gemela (`casinoBrand`/`casinoSrtBtn`/
-  `casinoSrtBar`) + Carga rápida abierta en Girox directo (G937).
-- Comprobantes repetidos: se quedan los DOS (nuestro #932 cierra copias con `dupOf`; G908 agrupa los reenvíos todavía pendientes en `repeats`).
-- Historias: llave de partidos de la gemela (`storyAutoMatches`, diagnóstico, republicar); temas con variantes (ALTS) + nuestros 3 explicativos
-  (comprobante, rollover, carga rápida) con `{pct}/{rx}/{dx}`; exports para sportsBoard (#940). La ruta vieja `/stories-autopilot/config` escribe la misma llave.
-- "Cómo funciona todo" de Soporte: queda nuestra hoja (#933); su recuadro (G910) sin CSS propio.
-- PICA ROJA "Pronto" (G949): `_withPicaroja` no-op (acá es marca real).
-- Pruebas: `test-sorteos-front`, `test-sorteos-server`, `test-cashback-spec` (10/10), `test-bonus-cap` (12/12) OK; `node --check` de todo.
-- ⚠️ Al deployar corren sus migraciones one-shot (mig946 reseñas 5★, mig954 closeSince, mig955 ruleta $5.000, mig968 partidos ON + campañas del
-  autopiloto): si la gemela ya está en producción con la misma base, ya corrieron (marca en Config) y no se repiten.
+### 980. Menú COMPLETO hasta la primera carga (Girox directo después), "Pronto" de las plataformas abajo y sin fondo, ventana del sorteo como hoja — SW v646
+**Pedido (owner):** "¿qué recomendás que quede iniciado: el completo o el de Girox?" → "completo hasta la primera carga, Girox directo desde la
+primera carga, salvo elección propia" ("ok perfecto, configuralo así"); "el Pronto de las plataformas bajalo: tapa el nombre; sin fondo, abajo
+centrado del recuadro y que no tape la foto"; "arriba en el teléfono queda un texto que no se llega a ver".
+- `localStorage vip_has_dep` (home.js): se pone en '1' cuando `/api/first-deposit-promo` dice `noDeposits:false` o al acreditarse una carga
+  (`onDepositCredited`); se borra si vuelve `noDeposits:true`. `_defaultPref()` = 'girox' con carga, 'full' sin carga (si ese menú está activo).
+  Aplica en `maybeShowMenuChooser` (incluida la app instalada, #937) y en el modo inicial de `init`. Si la persona eligió un menú a mano se respeta.
+  El manifest de instalación (#673) sólo marca "elegido por la persona" si llega `&picked=1` (antes el default automático quedaba fijo para siempre).
+- "Pronto": en `.bv-chip` y `.plat-play-btn` queda abajo, centrado, sin fondo ni borde, 8 px; el nombre no se corta (ellipsis) y el logo no se tapa.
+- Texto tapado arriba: la ventana del sorteo (`.srt-modal`) en teléfono pasa a ser una hoja desde abajo (`justify-content: flex-end`): su cabecera ya
+  no puede quedar bajo la barra de estado. El resto de las cabeceras ya usan `--sat` (#823) y el cliente puede ajustar el margen desde Perfil (#865).
+  Si el texto tapado está en otra pantalla, falta una captura para ubicarlo.
 
-### 964. Revisión de punta a punta: con una marca activa nada abre la web de Girox — SW v652
-**Owner:** "en todos da el link (en picaroja.com), revisá de punta a punta". Recorrido de todo lo que abre juego/deporte/casino:
-- **Páginas de marca (lobby.js):** todas las tarjetas (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay, vivo, lobbies, búsqueda, Nuevos) → `play` →
-  `gamePlay`/`favPlay` (link directo); deportes → `sport` (#962). El menú y la barra de abajo sólo navegan dentro de la página. OK.
-- **`openPlatform('girox', …)` interno** (botón Jugar del menú básico/fácil, fotos del Inicio, historias, plataforma preferida): con una marca
-  puerta en `vip_brand` ahora abre la página de ESA marca. La web de Girox se abre sólo si la persona ELIGE Girox (`checked`, tras `_brandGuard`) o
-  en modo prueba (`test`).
-- **Fotos de juegos del Inicio (`playGame`, `ENTRY_GAMES`):** antes Girox embebido con `_casinoGamePath`; ahora `favPlay` (link directo).
-- Probado en el navegador de prueba con marca JUGAYGANA: `openPlatform('girox',{embed})` → página JUGAYGANA (sin casino de Girox); Joker's Jewels y
-  Ultim8 → `/api/platform/session` con `direct:true`.
+### 979. ⏰ Bonos a las 19 h, pasada de seguridad y archivo de cambios para encargados y soporte — admin SW v204
+**Pedido (owner):** "afinemos la seguridad y que esté todo ok; necesito un archivo para avisar las modificaciones del servicio a los encargados y
+soporte (la estrategia no hace falta, es automática): para saber qué responder si la gente se queja"; "el mejor horario para activar un bono en
+Argentina es a las 19 h".
+- **19 h:** historia semanal con bono (`BONUS_TIME` 19:00), campaña del autopiloto (`AUTOPILOT_DEFAULT.time` 19:00; migración `mig979Hora19` rearma
+  las futuras) y el recorrido corre a las 17–19 h (antes 12–16) para quedar justo antes del bono y conservar la prioridad del 1 por día.
+- **Seguridad (revisión de lo nuevo de hoy):** todas las rutas nuevas piden sesión; las del Centro y la Revisión van bajo `/api/admin/inicio/*` (clave
+  de INICIO, gate registrado antes) y sus mutaciones están en `STAFF_DENY_MUTATIONS`; la entrada rápida mantiene `authLimiter` + `landingIpLimiter` y el OTP
+  tiene máximo de intentos; el teléfono en `_welcomeAbuseOf` va normalizado a dígitos (sin regex del cliente). Ajuste menor: `POST /api/stories/:id/click`
+  cuenta un toque por cliente (`Story.clickedBy`, select:false).
+- **Archivo para el equipo:** `docs/soporte/CAMBIOS-SERVICIO-2026-10-24.md` y `.html` (imprimible): tabla antes/ahora, "si el cliente dice… respondé…" y
+  notas del panel para encargados. Sin estrategia ni claves.
 
-### 963. Al abrir la app con una marca elegida se abre SU página, no Girox — SW v651
-**Owner:** "no se ven accesos propios en la app, siempre va a Girox cuando abrís". Con el menú "Girox directo" (el de entrada, #836) `_giroxDirect`
-abría la plataforma preferida de `/api/platforms`; si todavía no había respondido (Tor) caía en `openPlatform('girox')`. Ahora primero mira
-`_localBrand()` (`vip_brand`): si es una puerta (PICA ROJA por defecto, JUGAYGANA, Ganamos, BuffaloPlay) abre esa página. Sólo con Girox elegida
-abre el casino de Girox. Owner confirmó que en picaroja.com los juegos del Inicio abren como link propio: las páginas usan ese mismo ingreso
-(`favPlay`); en Render no abre ninguno porque la API es la simulada (cargar `GIROX_API_URL`/`GIROX_API_KEY` en Render para probarlo ahí).
+### 978. Historia SEMANAL con bono fuerte (+100 % por 3 h, miércoles 12:30, push a todos) y menú: lo que no está en uso, al final — admin SW v203
+**Pedido (owner):** "tirá una historia semanal de notificación de bono, uno fuerte, para que lo puedan reclamar directo y los lleve a cargar; después
+limpiá todo lo que no va y bajalo al final en la fila del admin; dejame arriba todo lo que está en uso".
+- `STORY_AUTO_BONUS = { pct: 100, hours: 3 }` y `bonusDays = [3]` siempre (miércoles; se saca el sábado del refuerzo): una sola historia con bono por
+  semana, con push a todos a las 12:30, "Reclamar ahora" deja `User.storyBonus` y abre Girox directo con la Carga rápida (#742). El autopiloto no manda
+  campaña ese día (#971). El % pasa por el tope global de bonos y el rollover ×5 como siempre.
+- Menú del panel: Datos 2.0 e Ingresos diarios pasan al grupo final "No se usa (reemplazado)" (los cubren INICIO, Cierres y la Revisión semanal). Arriba
+  queda sólo lo que se usa: Principal, Manejo, Automático, Configuración, Atención, App, Administrativo, Publicidad.
 
-### 962. Deportes e historias con el LINK DIRECTO en las páginas de marca (nada de la web de Girox) — SW v650
-**Owner:** "estos juegos (favoritos) los abrís con el link externo que da la API (el agregador de Girox): replicá ese link en todos los juegos de
-todas las plataformas nuevas — PICA ROJA, Ganamos, JUGAYGANA y BuffaloPlay; lo mismo para entrar a deportes, directo al link, sin pasar por Girox;
-ninguna visual de Girox en otra página que no sea Girox".
-- **Juegos:** ya era así: `lobby.play` → `VIP.home.gamePlay` = `favPlay` (mismo `/api/platform/session` con `direct:true` + gid/lk ⇒ `launch_url` del
-  proveedor; si 1girox no lo da, aviso y reintento, nunca la web de Girox, #946). Las tarjetas de todas las marcas pasan gid/lk.
-- **Deportes (`lobby.sport`):** ya no cae en `casinoGoTo` / Girox embebido. Cada casa sale de `SPORT_KEYS` (`/sports-new`→sport/onyx, `/sports`→
-  sport/gr8, `/horses`→sport/horses, `/horses-new`→sport/turf, `/poker`→sport/poker) aunque la lista del server no haya llegado.
-- **Historias (`stories.js`):** con una página de marca abierta o una marca puerta elegida (`_noGirox`: `vip_brand` picaroja/jugaygana/ganamos/
-  buffaloplay o sitio JUGAYGANA) "Deportes" = link directo de Digitain, "Juegos" = la página de la marca y "Jugar ahora" (`app:play:`) = juego directo.
-  Con Girox elegida sigue como antes (casino de Girox).
-- **Ojo prueba:** en Render la API de 1girox es la SIMULADA (`?sim_login=`), así que ahí ningún juego directo abre (tampoco los favoritos:
-  "sin código en el ingreso"). Se prueba en producción, donde es el mismo ingreso que los favoritos.
+### 977. Registro abierto: a las 5 cargas NO hay regalo especial
+**Pedido (owner):** "no le corresponde la bienvenida, le corresponde las notificaciones de los clientes, etc." ⇒ se quita el paso `trust-5` de #976. Al
+llegar a 5 cargas reales el cliente del registro abierto simplemente pasa a recibir lo mismo que cualquier otro (fichas del recorrido, campañas, etc.).
 
-### 961. JUGAYGANA también con la barra de PICA ROJA arriba (en la app) — SW v649
-**Owner:** "te falta poner la barra de menú superior en JUGAYGANA". Arriba de su cabecera (logo · soporte · mensajes · usuario/Carga rápida · ☰)
-va la misma barra que en las otras marcas (Volver · Menú · JUGAYGANA · Historias · Info · Perfil). En el SITIO JUGAYGANA (`VIP_SITE`) no se muestra:
-ahí no hay app detrás (#944). Revierte lo de #956 "la barra de la app no va en JUGAYGANA".
+### 976. 🔓 Rollover de la carga ×1 (bono sigue ×5), retiro mínimo $5.000, aviso a todos, y el registro abierto entra a TODA la estrategia a las 5 cargas — SW v645
+**Pedido (owner):** "modificamos rollover ×1 en las cargas y modificalo en el aviso de todos los clientes; rollover ×5 en bono; retiro mínimo baja a
+$5.000 con la carga de $2.000"; "la configuración [sin regalos] para los clientes nuevos sin cargas; si pasan a ser clientes que depositan, que entren a
+toda la estrategia automáticamente después de 5 cargas mínimas".
+- `getDepositRolloverX` default 1 y migración `mig976Rollover1`: `depositRolloverX=1`, `withdrawMinArs=5000` (`WITHDRAW_MIN_ARS_DEFAULT` 5000), corrige
+  los comandos guardados que decían "×3"/"3 veces" en textos de cargas, y publica la historia "🔓 Novedad: tus cargas sin vueltas" (48 h, sin push).
+  Textos de la PWA: `.rx-dep` (dinámico, default ×1), Info "apostar su monto ×1 … ya podés retirar", retiro mínimo `.wd-min`/`#bvMinWd` $5.000,
+  fallback de withdraw.js 5000. `_depositWithBonus` ya elegía el multiplicador permitido ≤ configurado (#903): con 1 va directo.
+- **Registro abierto → estrategia completa a las 5 cargas** (`retentionJourney`: `TRUST_DEPOSITS=5`, `UNTRUSTED_PCT=50`): mientras `noWelcome` y
+  < 5 cargas reales, los pasos de FICHAS del recorrido salen como +50 % en la próxima carga (tiene que poner plata) y no hay oferta de 2ª carga
+  (`noWelcomeGifts: { $ne: true }` en el cron #504). Al llegar a 5 cargas: paso único `trust-5` ("🎉 Ya sos de la casa: +50 %", 48 h, una vez,
+  segmento "confianza" en el Centro) y desde ahí fichas, 2ª carga y todo lo demás como cualquier cliente. Los de publicidad/referido no cambian.
 
-### 960. BuffaloPlay: barra de PICA ROJA arriba (como en todas) y el menú ☰ como el de thornet en el celu — SW v648
-**Owner** (foto del menú de thornet abierto): "borramos el que está y dejamos arriba la parte superior de menú de PICA ROJA como en todos, es importante".
-Arriba va la misma barra que en Ganamos/PICA ROJA (`casinoBarHtml`: Volver · Menú · marca · Historias · Info · Perfil) y debajo la de thornet sin el
-logo (☰ · actualizar · saldo/Carga rápida · chat · usuario). El ☰ es su menú: ~53 % del ancho, sus íconos (recortados de la foto, fondo
-transparente, `images/buffaloplay/nav/`), Inicio · Deportes · Slots · Casino Vivo · Caballos · CrazZy Win! (la sección actual en gris) y el banner
-CrazZy Win! abajo (el de ellos es su torneo "Copa Red Rake").
+### 975. 🚪 Registro abierto de nuevo, SIN regalos de bienvenida para quien entra sin invitación — admin SW v202
+**Pedido (owner):** "habilitar de vuelta el registro en la página sin ningún beneficio, para que no llegue gente a querer estafar; sí promocionar
+instalar la app para recibir notificaciones, el reembolso y el servicio, pero no regalos".
+- `User.noWelcomeGifts` (true al nacer si no vino por link de publicidad activo ni por referido, salvo `Config['organicWelcomeGifts']=true`): sin bono
+  de 1ª carga, extra por instalar, código de bienvenida ni 2ª carga (`_welcomeAbuseOf` lo devuelve como motivo ⇒ `resolveAutoBonus` y
+  `maybeOfferInstallGift` lo respetan en manual y hgcash), sin ofertas de bienvenida (historias personales) y sin los pasos del recorrido que prometen
+  bono (`needsWelcome`). Sí: reembolsos, ruleta, lotes, misiones, sorteos, VIP, referidos. El cartel de primera carga les muestra
+  `/sys_first_deposit_nogift` (app + reembolso) en vez del bono.
+- Migración `mig975OpenReg`: `registrationMode='quick'` (nombre + celular verificado por SMS, `quickEntrySms` como estaba) y `organicWelcomeGifts=false`.
+  Panel → Configuración → Registro: tilde "Regalos de bienvenida también para el registro abierto" (default apagado) y el estado lo dice.
 
-### 959. BuffaloPlay: Casino en vivo entra DIRECTO al lobby y el menú ☰ sin los datos de la cuenta — SW v648
-**Owner:** "sacá los datos de mi cuenta de la barra deslizante; Ezugi y Vivo Gaming con las fotos de Buffalo pero el link el de Girox; sacá los juegos
-de adentro, que entren a esos juegos". Cada tarjeta de Casino en vivo (fotos de BuffaloPlay) abre el lobby de Girox: Pragmatic Play = Live Casino Lobby
-(3/101), Ezugi = Ezugi Lobby (7/1630_ifg), Vivo Gaming = VivoGaming Lobby (9/13452). `buffaloplay-home.json → live[].lobby` (ya no lleva las listas).
-El menú ☰ quedó sin los datos de la cuenta (después #960 lo rehízo como el de thornet); la cuenta sigue en el ícono de usuario.
+### 974. 🛡️ Bono de bienvenida con TOPE ($15.000), extra por instalar como MONTO FIJO ($5.000) y sin bienvenida para teléfono/celular repetido (manual y hgcash) — SW v644 · admin SW v201
+**Pedido (owner):** "¿el 100% y el 50% es mucho?" → revisado: la primera carga era 100% SIN tope (#812: $500.000 de carga = $500.000 de regalo) y el
+extra por instalar 50% hasta $10.000. "Armalo todo como vos digas, y que funcione así también en las cargas automáticas; cambiá todas las infos y
+mensajes".
+- **Tope propio del bono de 1ª carga:** `Config['firstDepositCapArs']` (default $15.000; 0 = libre), `getFirstDepositCapArs`. En `resolveAutoBonus` la
+  fuente `first_deposit` pasa por `bonusWithCap` con { capArs: tope, restPct: 0 } (antes `enabled:false`). Vale para la carga manual y para hgcash
+  (las dos llaman `resolveAutoBonus`). $5.000 → $5.000 · $10.000 → $10.000 · $50.000 → $15.000. Panel → Estrategia → "Tope $".
+- **Extra por instalar = monto fijo:** `Config['installGift'].fixedArs` (default $5.000; 0 = vuelve al % con tope). `installGiftAmount` devuelve
+  min(fijo, carga). Al que carga $5.000 le da $5.000 (antes $2.500); al que carga $50.000, $5.000 (antes $10.000). `User.installGift.pct` queda null
+  en modo fijo ⇒ la app muestra sólo el monto. Panel → Estrategia → "Extra fijo $" y COMANDOS → Bonos automáticos → "monto fijo $".
+- **Sin bienvenida con teléfono / celular / notificaciones compartidas:** `_welcomeAbuseOf(user)` (teléfono normalizado a 10 dígitos, `deviceIds`,
+  tokens FCM) ⇒ en la PRIMERA carga real `blockWelcome` (sin bono de 1ª carga, código, instalar, 2ª carga; la cuenta NO se bloquea) con nota interna
+  para el agente (#839), y `maybeOfferInstallGift` tampoco ofrece el extra. Se chequea sólo cuando es la primera carga (una consulta por cliente nuevo).
+- **Textos:** `/sys_install_gift_offer`, `/sys_install_gift_credited` ("${monto} EXTRA en fichas"), `/sys_first_deposit_popup` ({tope}, {extraMonto}),
+  FAQ de Soporte "🎁 Bonos" ({fd_pct}, {fd_tope}, {ig_txt}) y el cartel/notas de primera carga de la PWA (`_fdExtraTxt`: "$5.000" o "50%"). Migración
+  `mig974WelcomeCaps` pisa los guardados que todavía dicen "% EXTRA".
 
-### 958. Página BuffaloPlay con el formato de Thornet (juegos y cuenta de Girox) + botón en los menús — SW v647
-**Owner:** "armame esta (Thornet.zip) con la misma idea, llamala buffaloplay con su logo, usá Girox para todas las APIs pero con este formato de
-página, 100 % idéntica, hasta las fotos de los slots; sólo los juegos que tiene este proveedor; lo nuevo en una sección Nuevos con el buscador; y el
-botón de BuffaloPlay en el menú, al lado de JUGAYGANA, en el básico y el completo, que al elegirla cambie el menú, misma lógica que el resto".
-- **Página (`lobby.js`, skin `buffaloplay`):** cabecera de thornet (☰ secciones · logo · actualizar saldo · saldo = Carga rápida · chat = Soporte ·
-  usuario = cuenta). Inicio: carrusel (su banner "Diversión garantizada" + 3 propios), "Nuestra seleccion Pragmatic Live Casino" (Gates of Olympus
-  Roulette y Blackjack Lobby con sus portadas), Deportivas (abre las casas de deportes), "Recomendados de RedRake" (los 15 de Girox), "Mesas en vivo
-  seleccionadas" (Pragmatic Live más jugadas), redes (abre Historias: no hay cuentas de BuffaloPlay) y su pie (Productos / Nosotros / Promociones;
-  sus torneos "Copa Red Rake"/"Spin or Trick" no van: son de ellos → Sorteo del mes y Juegos nuevos). Slots: Favoritos · Recientes · buscador ·
-  pestañas de proveedores con la flecha que las despliega, grilla de 3 con corazón. Casino en vivo: Pragmatic Play / Ezugi / Vivo Gaming.
-  CrazZy Win!: banner propio (el suyo era la promo "Copa Red Rake 10.000€") + Red Rake.
-- **Juegos:** de sus 17 proveedores, Girox tiene 9 (RedRake, Pragmatic, Ruby Play, Mancala, NetEnt, BetSoft, Ka Gaming, Rival, Evoplay); Spinomenal,
-  DiceLab, RedTiger, Platipus, TomHorn, GameArt, Ortiz y Salsa no aparecen. Las portadas se recortaron por grilla fija (fila cada 107 px; las filas
-  partidas entre dos capturas se arman con las dos partes) y 8 agentes las identificaron contra el catálogo de Girox de cada proveedor (sólo título
-  inequívoco; variantes 88/90/94 sin número visible se saltearon) ⇒ **1.522 juegos**, 1.358 con su portada recortada y 164 con la de Girox (fila cortada
-  en las capturas). Revisión: las portadas con menos parecido a la de Girox eran el juego correcto con otro arte. "Nuevos" = 6.723 juegos de Girox.
-- **Logo:** `images/buffaloplay/` (`logo.svg/webp`, `icon.svg`, `icon-96/192.png`) — búfalo naranja sobre azul noche, hecho para esta marca.
-- **Menús:** BuffaloPlay entra en DOORS/BRANDS (bloqueo por saldo igual que el resto) y en la lista justo después de JUGAYGANA; las 5 plataformas en
-  una sola línea en el básico y el completo. Server: `/buffaloplay` → `/?bp=1`, `_BRANDS`, enum de `User.activeBrand`; panel 🏷️ opción 5 (admin-sw v190).
-- Verificado con capturas locales (Chrome sin pantalla): inicio, Slots, Nuevos desplegado, búsqueda, Casino en vivo, lista de Pragmatic Live,
-  CrazZy Win!, menú ☰ y los botones del básico.
+### 973. 📏 REVISIÓN SEMANAL automática (mide y ajusta sola), menú PRINCIPAL con clave (INICIO · Centro de avisos · Revisión semanal), avisos de reembolso semanal y mensual — admin SW v200
+**Pedido (owner):** "dejá arriba Principal con clave: INICIO y este Centro; lo que se deja de usar, último"; "avisos de reembolso SIEMPRE a los que
+tienen disponible, sea diario, semanal o mensual"; "¿lo analizás y lo modificás vos? armá un sistema de medición semanal para reajustar viendo la
+retención y todo lo que necesites; si ves todo bien dejás todo como está, si no impulsás todo; todo automático, con reportes de todo, y si hace
+falta otra sección abajo del Centro".
+- **Revisión semanal** (`src/services/weeklyReview.js` reglas puras + `scripts/test-weekly-review.js`; `_weeklyMetrics` + `_weeklyReviewTick` en
+  server.js, lunes 10–14 h ART, una vez por semana, `_cronClaim`). Mide: cargadores y monto de la semana vs la anterior; **volvieron** (cargaron la
+  semana anterior y también ésta) vs la previa; **regalado / depositado** de los cierres; efectividad de los lotes de hace 7–14 d (recorrido: carga en
+  7 d por paso; campaña masiva: carga en 48 h); reembolsos reclamados por tipo; registrados → primeras cargas; app instalada entre los que cargaron
+  en 30 d; avisos bajados y fatiga; cohortes; segmentos. Decide: regalos > 20 % ⇒ **frenar** un escalón; regalos ≤ 15 % y (volvieron cayó ≥ 3 pts o
+  el recorrido convirtió < 5 % con ≥ 30 contactados) ⇒ **impulsar**; si no, mantener (y si antes se impulsó y ya se recuperó, vuelve un escalón). El
+  escalón (−2…+3, `Config['journeyTuning']`) multiplica el % de bono (×1 + 0,1·n) y las fichas (×1 + 0,25·n) del recorrido (`pickStep(…, tuning)`)
+  y suma/resta puntos a la campaña masiva (`_tuningCache.apPctPlus`; al cambiar se rearman las campañas futuras). Nunca toca el reembolso.
+  Informe completo + historial (12 semanas) en `Config['weeklyReview']`; texto plano para copiar (`weeklyReview.reportText`) y "▶ Medir ahora".
+  Recomendaciones no automáticas (cohorte M+1 < 25 %, app < 50 %, opt-out > 10 %, campaña < 3 %, registro→1ª carga < 30 %, pocos reclamos del diario).
+- **Menú PRINCIPAL 🔒** arriba de todo: INICIO · Centro de avisos (sección propia, ya no dentro de Cronograma) · Revisión semanal. Las rutas del Centro
+  pasaron a `/api/admin/inicio/notif-center*` y la revisión a `/api/admin/inicio/weekly-review*` ⇒ misma clave de INICIO (gate #876; panel
+  `_inicioGuard`). Último grupo "🗄️ No se usa (reemplazado)": Encuesta, Inactivos, Bono $5.000, Cuentas sospechosas, Demoras, Notificaciones (manual),
+  Historias (manual). La clave de INICIO la fija el owner desde el panel (🔑 en INICIO); nunca va en el código ni en los docs.
+- **Aviso de reembolso para los tres períodos** (`_refundRemindPlan` / `_refundRemindRun`): diario (todos los días), **semanal** (lunes y jueves,
+  `/sys_refund_reminder_weekly`) y **mensual** (día 1 y 8, `/sys_refund_reminder_monthly`), a quien perdió en el período (stats de 1girox) y no reclamó
+  ese tipo (`RefundClaim type + periodKey`). Un envío por slot (`Config['refundRemindLast'].slots`), push personal (respeta "sólo lo mío").
 
-## 🔀 Fusión 2026-10-24: entradas de la GEMELA (repo PICAROJAoficial, mismo origen 238c202c). Numeración propia ⇒ prefijo **G**
-> Los comentarios `#907`…`#969` del código que vino de la gemela (sorteos `sorteos.js`, seguridad, cierres, velocidad) se refieren a estas G-entradas, no a las nuestras del mismo número.
+### 972. Recorrido: sin pasos de "instalá la app" (día 2 y 9)
+**Pedido (owner):** "lo de instalar a los 2 o 9 días no sirve: muchos ya pierden el contacto con nosotros si no tienen la app; tiene que ser en el
+momento toda la parte de instalar la app, por eso lo del 50 instalando la app y notificaciones". Se quitan los pasos `app-2`/`app-9` de
+`retentionJourney.js` (y la etiqueta del segmento en el panel); la instalación sigue resolviéndose al entrar: activar avisos + 50 % EXTRA por
+instalar en la primera carga (`installGift`). `pickStep` conserva el soporte del segmento 'sinapp' por si se quiere volver a usar. Test actualizado.
 
-### G969. 🎁 SORTEO EXTRA $1.000.000 en LOS DOS sorteos (10 × $100.000 cada uno), aclarado por separado — SW v641 · admin SW v198
+### 971. 🧭 CENTRO DE AVISOS: todo lo automático desde un solo lugar, recorrido de retención por cliente, qué avisos quiere cada uno, historias con reacciones, cohortes y semáforo de regalos — SW v643 · admin SW v199
+**Pedido (owner):** "el 1 2 3 4 cambialo de cuajo: no quiero que se mezclen dos automatizaciones de notificaciones, quiero que salga todo de un mismo
+lugar"; "quiero que todos instalen la app (por eso el 50%); estrategias sobre una persona con app para que no se olvide de jugar, a corto y a largo
+plazo; la gente inactiva que dejó de elegirnos que reciba hasta un regalo si hace falta, un bono fuerte: un cliente vale ~$15.000"; "activar el
+desactivar notificaciones para la gente que no quiere recibir pero sí tener la app, sin espantar"; "¿las historias entran en el centro? ¿está bien
+diseñado? quiero que a la gente le guste interactuar o si no solamente entrar y jugar".
+- **Recorrido de retención** (`src/services/retentionJourney.js`, reglas puras + `scripts/test-retention-journey.js`): cada cliente está en un
+  segmento por días desde su última carga real (o el registro): nuevo sin carga (avisos días 1/3/10/21, sin fichas) · sin app (días 2 y 9) ·
+  activo 0–6 d (nada: autopiloto + reembolso) · enfriando 7–13 d (+30 % / +50 %) · inactivo 14–29 d (+60 % y FICHAS) · perdido 30–89 d (100 % y
+  fichas ×1,5/×2 alternados) · lejano 90–180 d (uno por mes, fuerte); después de 180 d no se insiste. Fichas según VALOR del cliente (promedio de
+  carga 90 d): $2.000 / $5.000 / $10.000 × multiplicador, siempre con el rollover global. Un paso por día; `User.journey.sent` guarda
+  "<paso>@<episodio>" (episodio = día de la última carga) ⇒ si vuelve a cargar, el recorrido arranca de nuevo. Textos de servicio (test: nunca
+  ruleta/sueldos). `_journeyTick` corre al mediodía (12–16 h ART, una vez por día, `_cronClaim`), arma UN lote por paso con
+  `_createNotifBatchFromBody` (nombre "Recorrido · …") ⇒ misma cola, mismo chat + push, mismos topes. Estado en `Config['journeyLast']`.
+- **Tope único:** `dailyCap` nuevo en `_resolveNotifBatchAudience` (`_notifDayCounts`): el autopiloto y el recorrido pasan 1 ⇒ nunca dos lotes el
+  mismo día al mismo cliente. El tope mensual del autopiloto ahora sale de `Config['notifCenter'].monthlyCap` (vacío = automático 8+4). Las ofertas
+  de bienvenida saltean a quien ya recibió algo hoy. Los pasos de recuperación (14+ d) no se frenan por el tope mensual (recuperar vale más).
+- **Historia con bono al mediodía:** salía a las 00:08 con push a TODOS (madrugada). Ahora `BONUS_TIME = '12:30'` y ese día el autopiloto no programa
+  campaña (`_autopilotMonthItems` filtra mié/sáb en el refuerzo, mié después). Migración `mig971NotifCenter` borra las campañas futuras del
+  autopiloto para rearmarlas con `dailyCap` y sin esos días.
+- **Qué avisos quiere el cliente** (`User.notifPrefs.level`: all / mine / none; Perfil → "Qué avisos querés recibir", `GET/POST
+  /api/notifications/prefs`): en vez de apagar las notificaciones del teléfono (y perder el canal), elige cuánto le escribimos. 'none' = sólo
+  Soporte y sus cargas/retiros; 'mine' = nada masivo, sí lo suyo (reembolso, regalos para él, sorteos). Se aplica en `sendPushIfOffline` (lotes:
+  `data.kind` 'promo' | 'personal'; sin kind = sistema, siempre sale) y en `notificationService.prefsFilter` (masivo = promo, usernames =
+  personal). **Fatiga:** 10 promos seguidas sin abrir la app ⇒ no más masivas hasta que entre (`/api/activity/ping` la resetea).
+- **Reglas viejas apagadas:** `_runNotifRulesEvaluator` no corre salvo `notifCenter.legacyRules = true` (B3–B6 leían DailyPlayerStats, que ya no se
+  alimenta; los seguimientos los cubre el recorrido). El aviso del reembolso (#970) se apaga/enciende desde el Centro.
+- **Historias:** reacciones 🔥❤️😂👍 (una por cliente, `Story.reactions` + `reactedBy` select:false, `POST /api/stories/:id/react`) y conteo de
+  toques en el botón (`clicks`, `POST /api/stories/:id/click`); el panel muestra vistas · toques · reacciones. Historia automática "🏆 pagos de la
+  semana" (lunes al mediodía, sin push, `_winnersStoryTick`, `autoKey wk-…`): retiros pagados y el más grande con el nombre tapado.
+- **Panel:** Cronograma → 🧭 Centro de avisos (fuentes con interruptor, tope mensual, clientes que bajaron avisos, dónde está cada cliente hoy, lo
+  que le toca hoy con "▶ Mandar ahora", los 18 pasos con su texto). INICIO → cohortes por mes de registro (`_inicioCohorts`, cache 10 min).
+  Cierres → semáforo REGALOS / DEPÓSITOS del mes (verde ≤15 %, amarillo ≤20 %, rojo más). Staff no toca `/api/admin/notif-center`.
+
+### 970. 🔔 Push automática "No te olvides de reclamar tu reembolso" a los que perdieron ayer; al tocarla abre Reembolso — SW v642
+**Pedido (owner):** "configurá en notificaciones automáticas a todos los que se registran y pierden: no te olvides de reclamar tu reembolso; y cuando
+aprietan la notificación que los mande directo a ver el reembolso del día anterior".
+- `_refundReminderTick` (cada 15 min; manda UNA vez por día entre las 11 y las 21 h ART, una instancia por pasada): clientes activos (carga real en
+  los últimos 15 días) con push, que AYER perdieron en el casino (netwin de 1girox > 0 por stats batch, mismo criterio que el reembolso diario) y no
+  reclamaron el diario de ayer (`RefundClaim daily:<ayer>`). Marca `Config['refundRemindLast']` (día, candidatos, perdedores, enviados). Si 1girox
+  falla, reintenta en la pasada siguiente. Texto editable `/sys_refund_reminder` ({pct}); vacío = no se manda. `REFUND_REMIND_DISABLED=1` lo apaga.
+- La push lleva `url: /?open=refund`: app.js abre Reembolso al entrar por la notificación, y con la app abierta el service worker avisa (`vip-open`) y
+  también la abre. (Las reglas B1/B2 viejas del reembolso diario seguían borradas y la audiencia semanal/mensual usa `DailyPlayerStats`, que ya no se
+  alimenta: por eso esto va aparte, con datos reales de 1girox.)
+
+### 969. 🎁 SORTEO EXTRA $1.000.000 en LOS DOS sorteos (10 × $100.000 cada uno), aclarado por separado — SW v641 · admin SW v198
 **Pedido (owner):** "el sorteo extra es en el del iPhone y en el del auto: 10 personas de $100.000, serían $1.000.000 extra en cada sorteo; aclaralo
 individualmente y ponelo en la info del detalle, todo".
 - Reglas: `extra` en `mensual` y en `gran` (10 ganadores × $100.000, mínimo 10 cargas: en el mes para el mensual, durante el sorteo para el del auto;
@@ -166,7 +230,7 @@ individualmente y ponelo en la info del detalle, todo".
   Bases de cada sorteo con su propio párrafo, y la hoja del casino lo nombra en los dos.
 - Panel → Sorteos: pestaña 🎁 y campos del extra en Mensual y en Gran Sorteo; el botón de sortear usa el sorteo de la pestaña.
 
-### G968. 🎁 Refuerzo de regalos octubre-noviembre + partidos en las historias + todo automático
+### 968. 🎁 Refuerzo de regalos octubre-noviembre + partidos en las historias + todo automático
 **Pedido (owner):** "no te olvides lo de las historias: quiero la automatización con los partidos y demás; las notificaciones, todo corriendo automático y
 llegándole a la gente para incentivar; dale un bombazo más fuerte de regalos este mes de octubre y noviembre así retenemos más".
 - **Partidos:** `Config['storyAutoMatches'] = true` (one-shot `mig968GiftBoost`): las historias de los partidos del día (ESPN, con cuotas) salen a
@@ -180,19 +244,19 @@ llegándole a la gente para incentivar; dale un bombazo más fuerte de regalos e
 - Las ofertas de bienvenida por días (#886: 50 % día 5/15/30), misiones, segunda carga, ruleta diaria ($5.000) y reembolso diario 10 % siguen
   como estaban. Para extender o cortar el refuerzo: cambiar `GIFT_BOOST_UNTIL` / `AUTOPILOT_BOOST.until` (hoy 30/11).
 
-### G967. 📎 Panel → Sorteos: adjuntar la foto de cada premio desde la computadora — admin SW v197
+### 967. 📎 Panel → Sorteos: adjuntar la foto de cada premio desde la computadora — admin SW v197
 **Pedido (owner):** "dejá en Sorteos para subir las fotos de forma manual, externa, desde el panel, si después lo quiero hacer: adjuntar".
 - Botón "📎 Adjuntar foto" por premio (JPG/PNG/WEBP, hasta 600 KB): `POST /api/admin/sorteos/prize-image` guarda la imagen en la base
   (`SorteoImage`, no en disco: AWS tiene varias instancias) y deja `/api/sorteos/img/<id>` como `img` del premio en `Config['sorteos']`;
   `GET /api/sorteos/img/:id` la sirve con caché de un día. Subir otra borra la anterior. Vista previa al lado del campo; escribir un emoji en el campo
   vuelve al dibujo. Sólo el admin general (la lista de #956 ya bloquea a los agentes).
 
-### G966. ↩️ Premios: vuelven los dibujos (las fotos de #963 no gustaron) · se borran esas fotos
+### 966. ↩️ Premios: vuelven los dibujos (las fotos de #963 no gustaron) · se borran esas fotos
 **Pedido (owner):** "las fotos están mal, poné las que estaban, estaban bien, y borramos estas". Defaults de los 6 premios otra vez con emoji (📱 🛍️ 🎰 /
 🚗 🏝️ 💵); se eliminan iphone/regalo/fichas/caribe/usd.jpg. Queda sólo la foto del 208 (CC BY) por si se quiere pegar en el panel. El soporte de
 foto por premio (`pic()`, URL en el campo del panel) sigue disponible.
 
-### G964. ⚡ Velocidad (2ª tanda): feeds cacheados, crons con una sola instancia, bundle precomprimido, migraciones una vez, banners sin uso borrados
+### 964. ⚡ Velocidad (2ª tanda): feeds cacheados, crons con una sola instancia, bundle precomprimido, migraciones una vez, banners sin uso borrados
 **Pedido (owner):** "limpiamos la rapidez de la página sin romper nada".
 - `_memoJson(ms)`: `/api/claims-feed` (30 s) y `/api/roulette/recent-winners` (20 s) responden desde memoria (cada cliente los pedía cada 30-45 s).
 - `_cronClaim(name, ttl)` (lock en Config): `_closeTick` (15 min) y `_newbieOffersTick` (8 min) corren en UNA instancia por pasada (antes cada
@@ -202,38 +266,38 @@ foto por premio (`pic()`, URL en el campo del panel) sigue disponible.
 - Las dos migraciones de URL de fotos de historias (#850/#853) corren una vez por arranque, no en cada pasada de 5 min.
 - `public/images/banners/` (10 jpg, ~3,5 MB, sin ninguna referencia) eliminada del repo.
 
-### G965. 🔐 Código temporal de acceso con vencimiento (7 días)
+### 965. 🔐 Código temporal de acceso con vencimiento (7 días)
 `User.pendingAccessCodeAt`: el código temporal (login sin clave mientras el teléfono está sin verificar) vence a los 7 días; los códigos viejos sin
 fecha siguen valiendo hasta que verifiquen el teléfono. El bloqueo por cuenta del login (#956) frena la fuerza bruta.
 
-### G963. 📷 Fotos reales de los premios (chicas, no cargadas) en lugar de los dibujos
+### 963. 📷 Fotos reales de los premios (chicas, no cargadas) en lugar de los dibujos
 **Pedido (owner):** "fotos de los premios más reales pero no tan cargadas, así en ese tamaño: auto, iPhone y el resto, más realismo, que no parezca infantil".
 - `public/images/sorteos/`: iphone.jpg (pantalla del iPhone 15 Pro Max), regalo.jpg (caja con moño, para la orden de compra), fichas.jpg (fichas de casino),
   peugeot-208.jpg (auto), caribe.jpg (playa de Punta Cana), usd.jpg (maletín con dólares). Todas de Wikimedia Commons con licencia CC BY / CC0,
   recortadas a 480×320 y 14-107 KB; créditos y links en CREDITS.txt (obligatorio para CC BY). Son los defaults de los 6 premios en
   `src/services/sorteos.js`; desde el panel se puede pegar la URL de la foto del premio real cuando lo tengas.
 
-### G962. ▭ Orden del básico: sorteos debajo de la barra, Nivel/Racha, saldo, CARGAR/RETIRAR — SW v640
+### 962. ▭ Orden del básico: sorteos debajo de la barra, Nivel/Racha, saldo, CARGAR/RETIRAR — SW v640
 **Pedido (owner, capturas):** "en el básico los sorteos abajo de la barra superior, arriba de Nivel; CARGAR/RETIRAR abajo del saldo; el resto todo ok".
 Todo con `order` en la columna flex de `#basicView` (pisa el order:999 de #947): sorteos (-4) · status-row (-3) · saldo + ajustar pantalla (-2) ·
 carga mínima, guía, CARGAR, panel, RETIRAR, panel (-1) · lo demás en su orden.
 
-### G961. 🎰 Plataformas del completo con el mismo tamaño que en el básico — SW v639
+### 961. 🎰 Plataformas del completo con el mismo tamaño que en el básico — SW v639
 **Pedido (owner, capturas):** "respetar el del menú básico, poner el mismo tamaño para que quede igual en el completo y entre bien el texto".
 `#platformsButtons` en grilla de 4, tarjetas de 70 px con logo 22 px, nombre 9,5 px sin mayúsculas (entra entero), PRONTO / RECOMENDADO abajo, sin
 subtítulo, tilde chico arriba a la derecha.
 
-### G959. 🌐 IP real del cliente detrás de Cloudflare (`trust proxy` por rangos) — src/utils/trustedProxy.js
+### 959. 🌐 IP real del cliente detrás de Cloudflare (`trust proxy` por rangos) — src/utils/trustedProxy.js
 **Pedido (owner):** confirmó que todo el tráfico entra por Cloudflare ("listo, ya está"). Express confía sólo en los saltos de Cloudflare (rangos v4/v6
 publicados) y en redes privadas/locales (ELB, nginx): el primer salto ajeno es la IP real ⇒ límites por IP, `registrationIp` y radar con la IP del
 cliente, no la del nodo de Cloudflare. Quien pegue directo al balanceador no puede inventar X-Forwarded-For. En Render (sin Cloudflare) o con
 `TRUST_PROXY_HOPS` se mantiene el número de saltos de antes. Probado con 16 casos. Si Cloudflare publica rangos nuevos, se agregan ahí.
 
-### G960. ▭ Básico: el botón CARGAR no se sale del cuadro — SW v638
+### 960. ▭ Básico: el botón CARGAR no se sale del cuadro — SW v638
 **Pedido (owner, captura):** "en el básico se va de cuadro, acomodalo". Título en dos líneas (15 px, 14 px con bono vigente) y subtítulo corto
 "Carga mínima $2.000".
 
-### G956. 🛡️ Revisión de seguridad a fondo (3 auditorías en paralelo) y correcciones — admin SW v196
+### 956. 🛡️ Revisión de seguridad a fondo (3 auditorías en paralelo) y correcciones — admin SW v196
 **Pedido (owner):** "revisá seguridad al extremo y todo lo necesario para cuidar la página". Base ya sólida (headers CSP/HSTS/nosniff, mongo-sanitize,
 xss-clean, rate limits, HMAC del webhook hgcash, OTP con bcrypt, cookie httpOnly/Strict, sockets con tokenVersion, sin secretos en el repo).
 Lo corregido:
@@ -254,7 +318,7 @@ Lo corregido:
 - Pendiente (no se tocó por riesgo): `trust proxy` detrás de Cloudflare (los límites por IP ven la IP del edge: conviene `trust proxy 2` o usar
   `CF-Connecting-IP`), CSP con `unsafe-inline` (cientos de onclick), body JSON de 10 MB global, `pendingAccessCode` sin vencimiento.
 
-### G957. ⚡ Velocidad: índices, cache de Config, menos llamadas a 1girox, consultas acotadas
+### 957. ⚡ Velocidad: índices, cache de Config, menos llamadas a 1girox, consultas acotadas
 **Pedido (owner):** "revisá la velocidad y mejorala si se puede sin romper".
 - `getConfig` con cache de 5 s por proceso (se vacía en cada `Config.set`/`setConfig`): el home de cada cliente hacía ~20 lecturas a Atlas.
 - Índices nuevos: BankMovement {matchedUserId, createdAt} y {externalId}, Transaction {createdAt}, PendingPayout {status, paidAt}, Comprobante
@@ -266,14 +330,14 @@ Lo corregido:
 - Quedan para después (seguros pero más trabajo): precomprimir el bundle, cache de 30 s en claims-feed / recent-winners, lock multi-instancia en
   `_closeTick` y `_newbieOffersTick`, purgar CSS (pin.css 341 KB), borrar banners sin uso (2,6 MB en el repo).
 
-### G958. 🎨 "CARGÁ AQUÍ" grande (o "X% VIGENTE · APRETÁ AQUÍ" si hay bono) · plataformas más chicas — SW v637
+### 958. 🎨 "CARGÁ AQUÍ" grande (o "X% VIGENTE · APRETÁ AQUÍ" si hay bono) · plataformas más chicas — SW v637
 **Pedido (owner, capturas):** "poné CARGÁ AQUÍ en grande; si tiene bono vigente que diga 100% VIGENTE APRETÁ AQUÍ llamativo, si no CARGÁ AQUÍ;
 achicá la letra de las tarjetas para que entren Ganamos, Jugaygana y PICA ROJA; en el básico el cuadrado más chico, los 4 en una fila".
 - `_paintFirstLoad`: botón grande del completo (`#evCtaTop`) y CARGAR del básico: "🎁 100% VIGENTE · APRETÁ AQUÍ" (rojo con pulso, clase
   `ev-cta-live`) si hay % vigente (primera carga `.fd-pct` o promo `.promo-live`), si no "⚡ CARGÁ AQUÍ"; debajo la carga mínima.
 - Tarjetas de plataforma del completo: nombre 9,5 px, etiquetas 7,5 px, logo 26 px. Chips del básico: 4 columnas, 22 px de logo, letra 9,5 px.
 
-### G954. 🔒 Auditoría: comprobantes duplicados y retiros · cierres válidos desde hoy
+### 954. 🔒 Auditoría: comprobantes duplicados y retiros · cierres válidos desde hoy
 **Pedido (owner):** "revisá bien que no entren comprobantes duplicados y que no retiren plata gente que no puede; dejá fino el cierre a partir de hoy
 ya que está el botón de pago de otro banco".
 - **Comprobantes (revisado):** al llegar, un comprobante con la misma IMAGEN (imageHash) o los mismos DATOS (N° de operación, o monto+titular+CBU+fecha)
@@ -287,13 +351,13 @@ ya que está el botón de pago de otro banco".
 - **Cierres:** one-shot `mig954CloseSince` ⇒ `Config['closeSince'] = 2026-10-24`: los cierres (y la tabla) valen desde hoy, con pagos por banco
   externo, fondeos, $50 por transferencia e ingresos/gastos (#948). Los días anteriores quedan fuera.
 
-### G955. 🎡 Ruleta diaria: un giro con $5.000 cargados en el día — SW v636
+### 955. 🎡 Ruleta diaria: un giro con $5.000 cargados en el día — SW v636
 **Pedido (owner):** "la ruleta diaria: que tengan un tiro con cargas de 5.000; cambiá todo eso de Info automáticamente cuando modificamos algo".
 - One-shot `mig955RouletteMin5000` ⇒ `Config['dailyRoulette'].minDepositArs = 5000` (editable en el panel → Ruleta diaria, "Carga que desbloquea");
   `ROULETTE_MIN_DEPOSIT_DEFAULT` = 5000. Los textos de la app ya leen ese valor (`.rl-min` en Inicio, menú intermedio, básico e Info: roulette.js
   `_paintUnlock`), así que cambiarlo en el panel actualiza todo solo; se sacó el ejemplo fijo "ej. 2 de $5.000" de la Info.
 
-### G952. 🕵️ Radar: posible duplicado por ID del CELULAR y por NÚMERO de teléfono (no por IP) — SW v635
+### 952. 🕵️ Radar: posible duplicado por ID del CELULAR y por NÚMERO de teléfono (no por IP) — SW v635
 **Pedido (owner):** "el posible duplicado dejá de hacerlo por IP, hacelo por teléfono, y que tome algo del celular (IMEI) y ahí sí detallalo".
 - El navegador no expone el IMEI: la app genera UNA vez un ID propio del celular (`localStorage vip_device_id`, activity.js `_deviceId`) y lo manda en
   cada ping; el server lo guarda en `User.deviceIds` (últimos 6) y en `lastDevice.id`. La IP ya no sumaba desde #877 (queda sólo como dato del caso).
@@ -302,7 +366,7 @@ ya que está el botón de pago de otro banco".
 - Registro: ya estaba SÓLO con invitación (#872, `registrationMode='invite'`): se llega por link de referido o de publicidad; no hay autoregistro
   desde el inicio. No hubo que tocar nada.
 
-### G953. 🌐 Soporte para gente SIN ACCESO: al lado de los soportes en el panel; en la app "Soporte sin iniciar sesión (registro desactivado)" — admin SW v195
+### 953. 🌐 Soporte para gente SIN ACCESO: al lado de los soportes en el panel; en la app "Soporte sin iniciar sesión (registro desactivado)" — admin SW v195
 **Pedido (owner):** "si cierran sesión ponemos el soporte afuera y lo ubicamos del lado chat agente al lado de los soportes, con usuario de gente sin
 acceso, para escuchar lo que quieran preguntar; y que el título diga sin inicio de sesión (registro desactivado)".
 - Pantalla de ingreso (sin sesión): la burbuja dice "Soporte sin iniciar sesión · registro desactivado" y el panel del chat "Sin inicio de sesión
@@ -310,13 +374,13 @@ acceso, para escuchar lo que quieran preguntar; y que el título diga sin inicio
 - Panel → Soporte: debajo de la lista de clientes vuelve la lista "🌐 Sin inicio de sesión (registro desactivado)" (estaba oculta desde #747); se
   carga al abrir la sección y al responder se usa el mismo chat de la derecha (`gsSelect`).
 
-### G951. 🎁 Detalle del cierre: caja REGALADO (fichas) por tipo + guía de lectura — admin SW v194
+### 951. 🎁 Detalle del cierre: caja REGALADO (fichas) por tipo + guía de lectura — admin SW v194
 **Pedido (owner):** "en el detalle anotá también lo regalado; acomodalo bien como corresponde y dónde iría, para no marearse".
 - "Ver detalle" abre con una línea "Cómo leerlo" (plata vs fichas) y cuatro cajas en 2 × 2: 💰 INGRESOS · 💸 GASTOS · 🎁 REGALADO (bonos de carga,
   reembolsos, ruleta, misiones, fueguito, nivel VIP, rakeback, referidos, extra por instalar, regalo por opinar… desde `detalle.girox.app.regalosPorTipo`,
   total = `regalos`, y la cuenta de fichas: depósitos − retiros = venta − regalos = NETO) · 🏦 CAJA 00 hs. Debajo sigue la conciliación de siempre.
 
-### G948. 🧾 Cierre diario: INGRESOS / GASTOS detallados, pagos por banco externo como ingreso, caja del CBU a las 00 hs, $50 por transferencia, sin USDT — admin SW v193
+### 948. 🧾 Cierre diario: INGRESOS / GASTOS detallados, pagos por banco externo como ingreso, caja del CBU a las 00 hs, $50 por transferencia, sin USDT — admin SW v193
 **Pedido (owner):** "el cierre diario por banco automático; lo de USDT no va; dieron 2 cierres mal; los comprobantes que se marcan pagados desde otro banco
 tomalos como INGRESO y en el detalle poné ingresos y el detalle de todos los gastos; el CBU a las 00 hs plasmalo en el cierre, con los depósitos
 del banco y lo que cobró el banco de comisión; y las transacciones de cargas del día: $50 de gasto por transferencia, para que cierre perfecto".
@@ -329,39 +393,39 @@ del banco y lo que cobró el banco de comisión; y las transacciones de cargas d
   externo, fondeos), 💸 GASTOS (retiros, comisión %, N × $50, gastos registrados + lista) y 🏦 CAJA 00 hs (inicio, + resultado, esperado, real, dif.).
 - Los cierres de los últimos 3 días se recalculan solos con la regla nueva (`_closeTick`); los más viejos, con ↻ en la fila.
 
-### G949. 🎰 PICA ROJA como 4ª plataforma (Pronto) en el básico, el completo y la Info · Girox con fondo verde oscuro — (SW v634)
+### 949. 🎰 PICA ROJA como 4ª plataforma (Pronto) en el básico, el completo y la Info · Girox con fondo verde oscuro — (SW v634)
 **Pedido (owner, capturas):** "en ambos lados agregá un recuadro al final con el logo y PICA ROJA como plataforma, Pronto; el fondo de Girox verde
 oscuro, mirando el verde de Girox; en la Info poné PICA ROJA también con las 3 plataformas".
 - `PICAROJA_SOON` + `_withPicaroja(list)` en home.js (sólo visual: chips del básico y tarjetas del completo; tocarla dice Pronto). Info: título
   "¿Por qué elegir Girox o Ganamos o Jugaygana o PICA ROJA?" y la tarjeta "La plataforma que quieras" la nombra. CSS: Girox verde oscuro
   (#0f5132→#083d25) con logo en círculo blanco; PICA ROJA roja con el logo.
 
-### G950. 📌 Soporte "Cómo funciona todo": legible en el teléfono — (SW v634)
+### 950. 📌 Soporte "Cómo funciona todo": legible en el teléfono — (SW v634)
 **Pedido (owner, captura):** "hacé que sea todo legible, en el usuario del teléfono se corta" (el botón quedaba debajo de la barra inferior).
 - `.sp-faq-modal` por encima de la barra inferior, alineado arriba y con lugar reservado abajo (72 px + safe area); caja con alto máximo que lo respeta;
   letra 15 px / 1.5.
 
-### G947. ▭ Menú básico: los sorteos abajo de todo — SW v633
+### 947. ▭ Menú básico: los sorteos abajo de todo — SW v633
 **Pedido (owner, captura):** "en el menú básico esto ponelo abajo de todo". `#basicView .srt-cards { order: 999 }` (la vista es flex-column): quedan después
 de "¿Querés ver más?". En el intermedio y en Girox directo no cambia.
 
-### G946. ⭐ Reseñas de 5 estrellas aprobadas automáticamente
+### 946. ⭐ Reseñas de 5 estrellas aprobadas automáticamente
 **Pedido (owner):** "las reseñas de 5 estrellas aprobalas directamente".
 - `POST /api/reviews`: con 5★ nace `approved:true` (`approvedBy:'auto-5-estrellas'`) y sale al instante en el registro público; 1-4★ siguen pendientes
   para el panel. One-shot `mig946Approve5Stars` al boot: aprueba las 5★ que estaban esperando. El regalo por opinar (#875) no cambia.
 
-### G945. 🎰 Casino: el banner del sorteo cierra con ✕ (en vez de –) y vuelve a la píldora del medio — SW v632
+### 945. 🎰 Casino: el banner del sorteo cierra con ✕ (en vez de –) y vuelve a la píldora del medio — SW v632
 **Pedido (owner, capturas):** "eso dejalo fijo así (píldora) y si lo abren que se abra así (banner abajo); en la punta, en vez de un menos, una X y que vuelva
 a su lugar". Sólo cambia el botón: ✕ ⇒ `casinoBar(false)` (banner oculto, píldora en el medio). El resto ya era así desde #935/#937.
 
-### G944. 💬 Soporte: botón "🏆 Explicación del sorteo" (resumen armado con la config) + botón en el chat que abre el sorteo — SW v631
+### 944. 💬 Soporte: botón "🏆 Explicación del sorteo" (resumen armado con la config) + botón en el chat que abre el sorteo — SW v631
 **Pedido (owner):** "agregá un botón en Soporte: explicación del sorteo, y resumí el sorteo explicando".
 - Respuesta rápida `sorteo` (`dynamic:'sorteo'`, editable como `/sys_sq_sorteo` con variables {mensual} {gran} {pts} {ptsper} {requisitos} {extra} {pago}): una
   línea por sorteo (estado/fechas + 3 premios), cómo suman los puntos, requisitos para anotarse (dos sorteos separados), SORTEO EXTRA y cuándo se
   cobra. Botón del mensaje "🏆 Ver el sorteo y anotarme" (target `sorteo` ⇒ chat.js abre `VIP.sorteos.open('mensual')`). Como todas las rápidas,
   cierra la charla al enviarla.
 
-### G943. 🧷 Dos sorteos separados: inscripción con el nombre de cada uno · Bases minimizadas abajo de todo (Maximizar / Minimizar) — SW v630
+### 943. 🧷 Dos sorteos separados: inscripción con el nombre de cada uno · Bases minimizadas abajo de todo (Maximizar / Minimizar) — SW v630
 **Pedido (owner, captura):** "en el Gran Sorteo aparece el detalle de ambos en los 2, necesito que separes, son 2 sorteos separados; y las Bases dejalas abajo
 de todo minimizadas, para maximizar y leer y después minimizar de nuevo".
 - Verificado con la prueba: la ventana y las Bases del Gran Sorteo no mencionan al mensual ni al revés (ahora la prueba lo exige). Lo que se veía
@@ -369,19 +433,19 @@ de todo minimizadas, para maximizar y leer y después minimizar de nuevo".
   botón "Anotarme al …" y "✅ Registrado en el …".
 - Bases: sección al final con botón "📜 Bases y condiciones · <sorteo> · Maximizar ▾" (`tcToggle`); abre la lista y pasa a "Minimizar ▴".
 
-### G942. 📅 Gran Sorteo (auto) desde el 1 de diciembre · los 10 × $10.000 son "SORTEO EXTRA", al azar — SW v629
+### 942. 📅 Gran Sorteo (auto) desde el 1 de diciembre · los 10 × $10.000 son "SORTEO EXTRA", al azar — SW v629
 **Pedido (owner):** "el sorteo del auto, en el contador tomalo como que empieza el 1 de diciembre; los 10 sorteos al azar de 100.000 serían como extra".
 - Default `gran.start` = 2026-12-01 (fin sigue 2027-01-31; editable en el panel). El contador, la franja y las Bases lo toman solos.
 - Default `extra.title` = "SORTEO EXTRA $100.000"; app y Bases dicen "ganadores al azar" y "extra, aparte de los premios del ranking".
 
-### G941. 🪟 El sorteo abre en VENTANA: ✕ fija arriba, tocar afuera cierra, deslizar hacia abajo cierra — SW v628
+### 941. 🪟 El sorteo abre en VENTANA: ✕ fija arriba, tocar afuera cierra, deslizar hacia abajo cierra — SW v628
 **Pedido (owner, captura):** "abrilo tipo ventana y que la cruz arriba quede fija para cerrar; apretando afuera de la ventana que se pueda salir; después
 deslizar para abajo también".
 - `#srtModal` pasa a hoja `.srt-win` sobre el menú (fondo oscurecido; click en el fondo ⇒ `close`), cabecera sticky con agarradera y ✕, cuerpo con
   scroll propio, Bases como capa adentro. `_swipeInit`: arrastrar desde la cabecera (o desde el cuerpo si está arriba de todo) más de 90 px ⇒ cierra
   con animación. Las mitades y "Ver más en el menú" abren siempre esta ventana; el panel desplegado (#928/#940) queda sin uso.
 
-### G939. 🎁 SORTEO $100.000: para TODOS los que cargan (mínimo 10 cargas en el mes), 10 × $10.000 fijos, sorteo transparente el día 1 desde el panel — SW v626 · admin SW v192
+### 939. 🎁 SORTEO $100.000: para TODOS los que cargan (mínimo 10 cargas en el mes), 10 × $10.000 fijos, sorteo transparente el día 1 desde el panel — SW v626 · admin SW v192
 **Pedido (owner):** "el sorteo de 100.000: cambiamos términos y todo detalle, que sea para todos los que cargan, requisito mínimo 10 cargas en el mes; armá
 bien todo el admin para sortear eso el día 1 de forma transparente; y poné en la app SORTEO".
 - Reglas (`extra`): `{ title:'SORTEO $100.000', per:0 (cantidad FIJA), winners:10, amount:10000, minDeposits:10, requireJoin:false }`. `extraWinners`: con per 0
@@ -396,12 +460,12 @@ bien todo el admin para sortear eso el día 1 de forma transparente; y poné en 
 - App: recuadro "🎁 SORTEO $100.000: 10 ganadores de $10.000 · Para TODOS los que cargan: con 10 cargas o más en el mes entrás… Ya cumplen N"; hoja del
   casino y Bases con el mismo texto. Tests actualizados (nadie llega a 10 ⇒ 400; mes en curso sin early ⇒ 400; sortea entre todos los que cargan).
 
-### G940. 📂 Panel desplegado del sorteo: sin la fila "Próximamente", ✕ flotante y todo el contenido visible — SW v627
+### 940. 📂 Panel desplegado del sorteo: sin la fila "Próximamente", ✕ flotante y todo el contenido visible — SW v627
 **Pedido (owner, captura):** "que se abra; el Próximamente de abajo no" (seguía viéndose sólo la franja de inicio).
 - Se quita la fila de arriba; la ✕ Cerrar flota sobre la franja. `.srt-inline { overflow: visible; height/max-height: auto }`: ningún contenedor
   puede recortarlo (overflow:hidden era lo que lo dejaba encogerse dentro de la columna con scroll del básico).
 
-### G938. 🎰 Hoja del casino: AMBOS sorteos resumidos con sus premios, más chica, botón "Anotate, es gratis ›" — SW v625
+### 938. 🎰 Hoja del casino: AMBOS sorteos resumidos con sus premios, más chica, botón "Anotate, es gratis ›" — SW v625
 **Pedido (owner):** "ahí detallá un poco más de ambos sorteos pero resumido, sin que tape tanto; que estén los increíbles premios; el detalle en otro
 lado; y el Ver más es Anotate, es gratis".
 - `openMini`: cabecera "🏆 ¡Increíbles premios!", un bloque por sorteo (Gran Sorteo y mensual): título + estado vivo (empieza/termina en, anotado/puesto),
@@ -409,7 +473,7 @@ lado; y el Ver más es Anotate, es gratis".
   menú) y pie "El detalle completo y las Bases están en el menú". Hoja más angosta (380 px) con scroll propio. El banner de abajo de la barra también
   dice "Anotate, es gratis ›".
 
-### G937. 🎰 Girox directo al iniciar: sorteo resumido SIN abrir (píldora) + Carga rápida ABIERTA · app instalada ⇒ Girox siempre — SW v624
+### 937. 🎰 Girox directo al iniciar: sorteo resumido SIN abrir (píldora) + Carga rápida ABIERTA · app instalada ⇒ Girox siempre — SW v624
 **Pedido (owner):** "el sorteo desde Girox, cuando iniciás, que aparezca resumido sin abrir, y la Carga rápida abierta para cargar, siempre así; cuando la
 gente instala la app dejar Girox predeterminada siempre".
 - Casino: `_casinoBarOpen()` default cerrado ⇒ al entrar se ve la píldora "Sorteo mensual" en el medio (el banner de abajo sólo si la tocan; #935
@@ -417,13 +481,13 @@ recordaba abierto). Al armar la barra en Girox directo, `toggleCasinoLoad(true)`
 - App instalada (`_isInstalledApp()`: clase `is-app` / display-mode standalone): arranca SIEMPRE en Girox directo (si ese menú está activo), aunque
   haya elegido otro en el navegador; `installManifestSync` manda `menu=girox` en el start_url. Con "Cambiar menú" sigue pudiendo moverse en la sesión.
 
-### G936. 📜 Bases y condiciones de CADA sorteo escritas abajo del propio sorteo — SW v623
+### 936. 📜 Bases y condiciones de CADA sorteo escritas abajo del propio sorteo — SW v623
 **Pedido (owner):** "dentro del sorteo del auto que aparezca sólo la info del auto y en el del teléfono la del teléfono, separado, con sus términos y
 condiciones abajo sobre el sorteo".
 - Cada panel/pantalla ya mostraba sólo su sorteo (sin tarjeta cruzada desde #925); ahora el botón "Bases y condiciones ›" se reemplaza por la sección
   `.srt-tc-sec` con las Bases de ESE sorteo (`terms(cfg, key)`: fechas, puntos, premios, cobro del 1 al 10, requisitos…) escritas al final.
 
-### G935. 🎰 Casino: banner del sorteo DEBAJO de la barra; al cerrarlo queda la píldora "Sorteo mensual" en el medio (donde está PICA ROJA) — SW v622
+### 935. 🎰 Casino: banner del sorteo DEBAJO de la barra; al cerrarlo queda la píldora "Sorteo mensual" en el medio (donde está PICA ROJA) — SW v622
 **Pedido (owner, captura de la gemela):** "si se cierra, que quede en el medio donde está el PICA ROJA y la pica, que diga Sorteo mensual y se ponga ahí
 arriba; si lo abren, que aparezca abajo".
 - Barra del casino: vuelve `#casinoBrand` (PICA ROJA) al medio y `#casinoSrtBtn` (píldora) queda oculta mientras el banner está abierto. Debajo de
@@ -431,7 +495,7 @@ arriba; si lo abren, que aparezca abajo".
   Cerrado ⇒ banner oculto, PICA ROJA oculto y la píldora en el medio; tocarla lo reabre. Estado en `localStorage vip_srt_casino_bar`.
   `paintCasino()` se llama al armar la barra y en cada carga de datos.
 
-### G934. 🧩 Panel del sorteo sin recorte en el básico · Info sólo título + ícono con recuadro marcado · auto como dibujo — SW v621
+### 934. 🧩 Panel del sorteo sin recorte en el básico · Info sólo título + ícono con recuadro marcado · auto como dibujo — SW v621
 **Pedidos (owner, capturas):** "esto quiero que se vea desde adentro de cada uno" (el panel desplegado salía cortado), "que se vea sólo los títulos y los
 íconos de cada título; poné mejor recuadro, se pierde mucho", "el auto ponelo como versión igual que el teléfono".
 - Recorte: `.basic-view` es flex-column con scroll y el panel (overflow hidden) se encogía ⇒ `.srt-inline/.srt-cards/.srt-banner { flex: 0 0 auto }`.
@@ -439,7 +503,7 @@ arriba; si lo abren, que aparezca abajo".
   borde 1,5 px más oscuro y sombra; "Ver más ›" rojo.
 - Gran Sorteo: 1° premio vuelve al 🚗 (dibujo, como el 📱). La foto del 208 queda en el repo para pegarla en el panel si se quiere.
 
-### G931. 📖 Historias automáticas: las 5 a las 00 hs (se apagan las de ayer), Soporte siempre primero, fotos con el ESTILO DE LA PÁGINA, republicar ahora — SW v620 · admin SW v191
+### 931. 📖 Historias automáticas: las 5 a las 00 hs (se apagan las de ayer), Soporte siempre primero, fotos con el ESTILO DE LA PÁGINA, republicar ahora — SW v620 · admin SW v191
 **Pedido (owner):** "revisá que estén funcionando las historias con el estilo que pedí; siempre quiero que vaya del lado de la atención y se publiquen
 en el cambio de día: se borran y se publican de vuelta a las 00 hs; ahora borrá y publicá de vuelta; poné un estilo más del estilo de la página, todo".
 - `SLOTS` = 00:05 · 00:06 · 00:07 · 00:08 · 00:09 (las 5 juntas al cambiar el día; duran 24 h). `_storyAutoRetirePrevious` apaga las `sa-*` de días
@@ -452,19 +516,19 @@ en el cambio de día: se borran y se publican de vuelta a las 00 hs; ahora borr�
   flecha roja al botón. `STORY_IMG_VER` = 931 (los teléfonos piden la foto nueva). Las personales de #886 siguen 'premium'.
 - Panel: el título de Historias automáticas dice "5 por día a las 00 hs". Pendiente: ver en producción el 🛠 Motor tras el deploy.
 
-### G932. ℹ️ Info del servicio: sólo títulos plegados, logo chiquito sobre el título, fondo claro — (SW v620)
+### 932. ℹ️ Info del servicio: sólo títulos plegados, logo chiquito sobre el título, fondo claro — (SW v620)
 **Pedido (owner, captura):** "sólo títulos; poné en el inicio un logo chiquito sobre el título; y el fondo no le pongas fondo negro".
 - `.im-sec` plegada muestra sólo la fila del título (ícono + título, sin la línea de texto ni el degradé); "Ver más ›" la abre como siempre.
   Logo `.info-logo` (34 px) arriba de "Información del servicio". `#infoModal .modal-content` con fondo `--p-bg` (pisaba modals.css con fondo oscuro).
 
-### G933. 🎰 Girox directo: el recuadro del sorteo abre una HOJA RESUMIDA ahí adentro (contador + premios + 2 líneas + "Ver más en el menú") — (SW v620)
+### 933. 🎰 Girox directo: el recuadro del sorteo abre una HOJA RESUMIDA ahí adentro (contador + premios + 2 líneas + "Ver más en el menú") — (SW v620)
 **Pedido (owner, captura):** "que ese menú en Girox abra una ventana ahí adentro, no en el menú: una explicación resumida y si quiere ver más que vaya al
 menú; sólo el contador y lo que se sortea".
 - `openMini(key)` (sorteos.js): hoja `.srt-mini` sobre el casino con contador vivo (empieza en / termina en), los 3 premios con imagen, dos líneas de
   explicación, estado del cliente (registrado / puesto) y botón "Ver más en el menú ›" ⇒ `goMenu`: cierra la hoja y el casino y despliega el sorteo
   en el menú donde estén las dos mitades (si no hay dónde, pantalla completa). El recuadro de la barra ahora llama a `openMini`.
 
-### G930. ✅ Revisión de todo lo del día: pruebas simuladas de sorteos (server + app + panel) y de #916 · 2 fixes — SW v619 · admin SW v190
+### 930. ✅ Revisión de todo lo del día: pruebas simuladas de sorteos (server + app + panel) y de #916 · 2 fixes — SW v619 · admin SW v190
 **Pedido (owner):** "revisá que esté funcionando, que esté bien todo". Sin node_modules no se puede levantar el server ni Mongo: se probó con
 modelos/1girox/DOM simulados (`scripts/test-sorteos-server.js`, `scripts/test-sorteos-front.js`; correr con `node scripts/...`).
 - **Server (#915):** tick con 2 jugadores (puntos 900 = 1.200.000 × 0,75 / 1.000; Gran +días +misiones), `GET /api/sorteos` (puesto, máscara de
@@ -478,34 +542,34 @@ modelos/1girox/DOM simulados (`scripts/test-sorteos-server.js`, `scripts/test-so
 - **#916:** mensaje con {min}=30, nota interna, socket, ChatStatus cerrado 'auto'; `supportAutoCloseHours=0` sigue apagándolo.
 - Sintaxis OK en los 12 archivos tocados. Pendiente real: deploy en AWS y probar con 1girox de verdad (stats batch) el primer tick.
 
-### G929. ✂️ Panel desplegado sin el título repetido · al registrarse el bloque se va y dice "Registrado" — SW v618
+### 929. ✂️ Panel desplegado sin el título repetido · al registrarse el bloque se va y dice "Registrado" — SW v618
 **Pedido (owner):** "sacá de adentro del sorteo del auto el sorteo del auto; si completan el registro que se vaya y diga registrado".
 - Cabecera del panel `.srt-inline-head.slim`: sólo estado (En vivo / Próximamente) y "✕ Cerrar"; el título ya lo dice la mitad tocada.
 - `joinBlock` anotado ⇒ línea chica `.srt-reg` "✅ Registrado · desde el …". Las mitades dicen "Registrado ✅" o "Registrado · puesto #N".
 
-### G928. 📂 El sorteo se despliega AHÍ MISMO debajo de las mitades (con ✕ Cerrar), sin abrir la pantalla completa — SW v617
+### 928. 📂 El sorteo se despliega AHÍ MISMO debajo de las mitades (con ✕ Cerrar), sin abrir la pantalla completa — SW v617
 **Pedido (owner):** "cuando la gente aprieta sorteo, que se pueda ver ahí adentro sin que se abra en el menú y que se pueda sacar desde ahí".
 - `open(key, ev)`: si el toque viene de `[data-srt-cards]`/`[data-srt-banner]` ⇒ `openInline`: panel `.srt-inline` insertado DEBAJO del par (cabecera
   violeta con el título y "✕ Cerrar", mismo contenido que la pantalla: inicio, anotarse, premios, puntos, ranking, Bases). Tocar la misma mitad lo
   pliega; la mitad abierta queda marcada (`.srt-ban.on`). Las Bases se abren también ahí adentro con "‹ Volver al sorteo". `load()` repinta el
   panel cada 5 min (salvo que estén abiertas las Bases). La pantalla completa (`#srtModal`) queda sólo para el recuadro de adentro del casino.
 
-### G927. 📏 Sorteos compactos en el básico/intermedio, mismas medidas que en el completo — SW v616
+### 927. 📏 Sorteos compactos en el básico/intermedio, mismas medidas que en el completo — SW v616
 **Pedido (owner):** "y achicá como el completo en el básico". Reglas `#basicView .srt-cards` / `#easyView .srt-cards`: márgenes, padding, foto y letras
 del mismo tamaño que el banner de Girox directo.
 
-### G926. 🟣 Sorteos en el básico/intermedio IGUAL que en el completo: dos mitades lado a lado — SW v615
+### 926. 🟣 Sorteos en el básico/intermedio IGUAL que en el completo: dos mitades lado a lado — SW v615
 **Pedido (owner, capturas):** "esto del menú básico dejalo como el de completo".
 - `paintCards` arma el mismo par (`.srt-ban` Gran Sorteo | Sorteo mensual, con foto, estado vivo y "Ver más ›") para `[data-srt-cards]` y
   `[data-srt-banner]`; `.srt-cards` pasa a grilla de 2 columnas (`one` si hay un solo sorteo). Las tarjetas apiladas de #918 quedan sin uso.
 
-### G924/925. 🧱 Servicios del completo en UNA fila como el básico · sin tarjeta cruzada al pie del sorteo — SW v614
+### 924/925. 🧱 Servicios del completo en UNA fila como el básico · sin tarjeta cruzada al pie del sorteo — SW v614
 **Pedidos (owner, capturas):** "este recuadro del completo quiero que lo dejes como el básico" y "sacá adentro del auto sorteo, en la parte inferior, el del iPhone".
 - #924: bloque final en pin.css que pisa el 2 × 2 de #758: `.ev-services` en grilla de 4 en todos los modos (completo, Girox directo, entrada), cada
   `.ev-svc` en columna con ícono en círculo rojo suave, título y "Ver más ›" (el detalle `<small>` oculto), igual que `.bv-quick` del básico.
 - #925: la pantalla de cada sorteo ya no muestra la tarjeta del otro sorteo al final (`crossCard` queda sin usar).
 
-### G923. 🚗 Foto del Peugeot 208 como premio del Gran Sorteo (emoji o FOTO por premio) — SW v613 · admin SW v189
+### 923. 🚗 Foto del Peugeot 208 como premio del Gran Sorteo (emoji o FOTO por premio) — SW v613 · admin SW v189
 **Pedido (owner):** "usá fotos de auto 208".
 - `public/images/sorteos/peugeot-208.jpg` (+ `-sq`): foto CC BY 2.0 de Wikimedia Commons (autor Charles, Port Chester NY), recortada; crédito en
   `public/images/sorteos/CREDITS.txt`. Default del 1° premio del Gran Sorteo: "Peugeot 208 0 km" con esa foto.
@@ -513,30 +577,30 @@ del mismo tamaño que el banner de Girox directo.
   directo, portada (1° con foto grande a lo ancho), tarjeta cruzada y el recuadro de la barra del casino. Panel: el campo del premio dice "emoji o URL de
   la foto". Para usar la foto del auto real: subir la imagen y pegar la URL ahí.
 
-### G922. 🚗📱 Banner de Girox directo en DOS: Gran Sorteo (auto) a la izquierda y Sorteo mensual (iPhone) a la derecha — SW v612
+### 922. 🚗📱 Banner de Girox directo en DOS: Gran Sorteo (auto) a la izquierda y Sorteo mensual (iPhone) a la derecha — SW v612
 **Pedido (owner, captura):** "dividilo en 2 y poné de un lado el del auto y del otro, segundo, el del iPhone".
 - `[data-srt-banner]` pasa a grilla de 2 columnas (`.srt-banner`, clase `one` si hay un solo sorteo); orden fijo gran → mensual. Cada mitad: imagen
   del premio, título, estado vivo y "Ver más ›" debajo (textos con elipsis para que entren).
 
-### G921. 📐 Pantalla del sorteo, orden final: inicio chico · anotarse compacto · premio · puntos · ranking · Bases — SW v611
+### 921. 📐 Pantalla del sorteo, orden final: inicio chico · anotarse compacto · premio · puntos · ranking · Bases — SW v611
 **Pedido (owner):** "el comienzo del sorteo ponelo mucho más chico arriba, el anotarse más chiquito segundo, tercero el premio, cómo sumar puntos y el
 ranking anteúltimo".
 - `strip(s)`: franja de una línea ("⏳ Empieza en 7 d 22 h · Del 1 al 30 de noviembre" / "● EN VIVO · termina en…"), con cuenta regresiva viva.
 - `joinBlock(s, true)`: versión compacta (checklist más chica, botón chico; anotado = una línea). Luego `hero` (premios), premio extra, "Cómo sumás
   puntos" (incluye fecha de publicación), ranking, botón Bases y la tarjeta del otro sorteo al final. Se sacó el bloque grande de cuenta regresiva.
 
-### G920. 🎁 Pantalla del sorteo: PORTADA con los premios grandes y sus imágenes arriba de todo — SW v610
+### 920. 🎁 Pantalla del sorteo: PORTADA con los premios grandes y sus imágenes arriba de todo — SW v610
 **Pedido (owner, captura):** "ponele más lugar cuando entrás: lo principal, con imágenes de lo que se sortea".
 - `hero(s)` en sorteos.js: recuadro violeta "🎁 Lo que se sortea este mes" con el 1° puesto grande (imagen 92 px + nombre 22 px + valor) y el 2° y
   3° debajo, lado a lado, con su imagen. Va PRIMERO en los dos sorteos. Se sacó el podio de medallas (repetía los premios) y la fila chica de
   premios del Gran Sorteo; la sección "Ganadores" queda sólo con la fecha de publicación.
 
-### G919. 🟣 Sorteos: violeta OSCURO como la captura (fondo profundo #2a0a4f→#4a1283, borde lila #b05cff, texto blanco, "Ver más" lila claro) — SW v609
+### 919. 🟣 Sorteos: violeta OSCURO como la captura (fondo profundo #2a0a4f→#4a1283, borde lila #b05cff, texto blanco, "Ver más" lila claro) — SW v609
 **Pedido (owner, captura de la gemela):** "este color así".
 - Tokens `--srt-*` (claro y dark) + `--srt-lite`; borde lila de 1,5 px en tarjetas, banner, tarjeta cruzada, botón Anotarme, recuadro "Tu puesto", cabeceras
   de la pantalla y de las Bases, y el recuadro de la barra de Girox (hereda el gradiente). Acentos que eran lila claro sobre fondo claro pasan a `--srt-g2`.
 
-### G918. 🟣 Sorteos en VIOLETA, tarjetas separadas, Bases con paso a paso y cobro del 1 al 10, recuadro rectangular en Girox — SW v608
+### 918. 🟣 Sorteos en VIOLETA, tarjetas separadas, Bases con paso a paso y cobro del 1 al 10, recuadro rectangular en Girox — SW v608
 **Pedido (owner):** "los recuadros del sorteo dejalos separados, en dos, no juntos; los términos y condiciones adentro de cada uno, cómo funciona
 todo perfecto y cómo se cobra, el día y demás: dentro del mes de diciembre se paga el premio dentro de los primeros 10 días; un color
 diferente, un violeta como el de Ganamos" + "adentro de Girox se ve mal: armá un recuadro rectangular ahí centrado".
@@ -550,7 +614,7 @@ diferente, un violeta como el de Ganamos" + "adentro de Girox se ve mal: armá u
 - Barra del casino (#917): el pill pasa a RECUADRO RECTANGULAR centrado (bordes 9 px, fondo violeta, texto blanco "🏆 Sorteo mensual / NOVEDAD"),
   siempre con el texto visible, también en pantallas de 360 px.
 
-### G917. 🎰 Girox directo: el pill del medio de la barra pasa de "PICA ROJA · OFICIAL" a "🏆 Sorteo mensual · NOVEDAD" (abre el sorteo) — SW v607
+### 917. 🎰 Girox directo: el pill del medio de la barra pasa de "PICA ROJA · OFICIAL" a "🏆 Sorteo mensual · NOVEDAD" (abre el sorteo) — SW v607
 **Pedido (owner, captura):** "acá adentro de Girox poné Sorteo mensual (NOVEDAD) con ese tamaño, sacá PICA ROJA y que se pueda expandir desde
 ahí adentro para ver la novedad".
 - `casinoTopBar` (home.js): el `<span class="casino-brand">` pasa a `<button id="casinoSrtBtn" class="casino-brand casino-srt">` con el mismo
@@ -558,7 +622,7 @@ ahí adentro para ver la novedad".
   empezar, "EN VIVO · NOVEDAD" o "PUESTO #N" durante, "CERRADO" después. Toca ⇒ `VIP.sorteos.open('mensual')` encima del casino
   (`body.casino-open .srt-modal` z-index 100002 > overlay 99999). Verde (`--srt-*`). Si los sorteos están apagados el botón se oculta.
 
-### G916. ⏱️ Soporte: cierre automático a los 30 min sin respuesta del cliente, con mensaje de cierre y cerrado en el panel
+### 916. ⏱️ Soporte: cierre automático a los 30 min sin respuesta del cliente, con mensaje de cierre y cerrado en el panel
 **Pedido (owner):** "hacé cierre de mensaje si el usuario no contesta dentro de los 30 min: 'por no recibir respuestas cerramos la conversación
 de forma automática', eso en Soporte".
 - `_supportAutoCloseTick` (#401) pasa de 6 h a **30 minutos** (`Config['supportAutoCloseMinutes']`, default 30; `supportAutoCloseHours = 0`
@@ -568,7 +632,7 @@ de forma automática', eso en Soporte".
   chat arranca de cero (`supportSessionSince`), nota interna para el panel y **el chat pasa a CERRADO en el panel** (ChatStatus 'auto', sale de
   Abiertos; si vuelve a escribir se reabre como siempre).
 
-### G915. 🏆 SORTEOS con ranking en vivo: Sorteo mensual + Gran Sorteo, inscripción con requisitos, Bases, panel — SW v606 · admin SW v188
+### 915. 🏆 SORTEOS con ranking en vivo: Sorteo mensual + Gran Sorteo, inscripción con requisitos, Bases, panel — SW v606 · admin SW v188
 **Pedido (owner, con capturas de la gemela PICA ROJA):** "armá un ranking viendo todo lo apostado de los jugadores de Girox del general, tapá los
 nombres y que cada uno desde la app se registre y pueda ver su nombre completo y su puesto; ponelo arriba del menú básico abajo del saldo y en el
 ingreso rápido de Girox arriba; colores verdes, más sencillo pero con esas imágenes; Bases y condiciones completas; los dos sorteos individuales
@@ -596,7 +660,7 @@ la izquierda; en el admin, sorteo mensual con la gente anotada y la que va parti
   cargas, anotado o no) y Anotados (con qué cumplía cada uno), pestaña Premio extra con el botón de sortear.
 - Pendiente del lado del owner: las fechas/premios reales de cada mes (hoy están los de la gemela como default) y avisar en Telegram.
 
-### G914. 📣 Publicistas → Ver detalle: período con FECHA Y HORA — admin SW v187
+### 914. 📣 Publicistas → Ver detalle: período con FECHA Y HORA — admin SW v187
 **Pedido (owner):** "en publicista, cuando voy a ver detalle, que se pueda seleccionar fecha… y hora".
 - Modal "📊 Ver detalle" de una pauta: barra "📅 Período (fecha y hora, Argentina)" con Desde / Hasta (`datetime-local`), botón Ver y atajos
   Hoy · Ayer · 7 días · 30 días · Todo. Vacío = desde el inicio (como antes). Se manda ISO con `-03:00`; al abrir otra pauta se resetea.
@@ -605,7 +669,7 @@ la izquierda; en el admin, sorteo mensual con la gente anotada y la que va parti
   informativa se calcula sobre lo del período. `GET …/users?from=&to=` devuelve sólo los registrados en el período (lista del modal).
 - Sin período la ruta responde exactamente como antes (`computeCampaignStats`), así el link público `/r/<token>` (#805/#835) no cambia.
 
-### G913. 🏠 INICIO: aceptación sobre CARGADORES, Ayer, veces que cargaron, volvieron del día anterior · 🏦 pagos por banco externo = INGRESO del cierre — admin SW v186
+### 913. 🏠 INICIO: aceptación sobre CARGADORES, Ayer, veces que cargaron, volvieron del día anterior · 🏦 pagos por banco externo = INGRESO del cierre — admin SW v186
 **Pedido (owner):** "la aceptación de la app de INICIO hacela con usuarios que cargaron, no que se registraron; tema cierres: si hay pagos de
 forma externa tomalos como un ingreso en el cierre porque en el panel van a estar las fichas y la plata también, manejalo para que el próximo
 cierre dé bien" + "en INICIO poné ayer también y hoy por defecto, detallá cuántos cargaron 2 veces y más de 2, qué gente volvió del día anterior".
@@ -627,7 +691,7 @@ cierre dé bien" + "en INICIO poné ayer también y hoy por defecto, detallá cu
 **Para el owner:** el próximo cierre toma solos los pagos marcados "banco externo" y los fondeos registrados en Gastos con la FECHA en que entró la
 plata. Si querés que esos ingresos sumen también al RESULTADO (hoy no), decímelo.
 
-### G912. 🔒 Soporte: botón "No cumple rollover y quiere retirar" con los números REALES del cliente
+### 912. 🔒 Soporte: botón "No cumple rollover y quiere retirar" con los números REALES del cliente
 **Pedido (owner):** "un botón de rollover para la gente que no entiende cuánto tiene que apostar para completar el rollover, del bono y del
 saldo cargado; para la gente de soporte, que se le envíe eso y detalle todo" · "ponele al botón: no cumple rollover y quiere retirar".
 - Respuesta rápida DINÁMICA `rollover_mio` (`SUPPORT_QUICK_REPLIES`, `dynamic:true`): al tocarla, el server lee el saldo del cliente en
@@ -638,7 +702,7 @@ saldo cargado; para la gente de soporte, que se le envíe eso y detalle todo" ·
 - Textos editables en COMANDOS: `/sys_sq_rollover_mio` y `/sys_sq_rollover_libre` (variables `{saldo} {retirable} {bloqueado}
   {bloqueado_bono} {detalle} {falta}` + las de siempre). Nota interna en el chat con lo leído de 1girox (auditoría).
 
-### G911. 📖 Historias: borrar las vigentes y publicar las 5 de hoy YA (al deployar + botón del panel) — admin SW v185
+### 911. 📖 Historias: borrar las vigentes y publicar las 5 de hoy YA (al deployar + botón del panel) — admin SW v185
 **Pedido (owner):** "las historias borralas y publicá las del día a ver". Sin acceso a la base desde acá ⇒ `_storyWipeForRepublish`: apaga
 todas las historias vigentes (manuales y automáticas; las personales `nb-*`/`audienceUserId` no se tocan), borra las automáticas de hoy y
 ayer, y `_storyAutoTick({ force: true })` publica las 5 de hoy al instante (la hora de publicación pasa a "ahora"; sin push de bono si se
@@ -646,14 +710,14 @@ adelanta). Corre UNA vez al deployar (`Config['mig911StoriesRepublish']`) y a de
 (`POST /api/admin/stories-autopilot/republish-today`, devuelve publicadas / apagadas / salteadas). ⚠️ Render comparte la base (#779): si
 Render deploya primero, el one-shot corre ahí (publica con foto con URL absoluta a Render; producción se las toma al deployar, #850).
 
-### G910. 💬 Soporte: "Cómo funciona todo" en un RECUADRO encima de todo (legible, con scroll y cerrar) — SW v605
+### 910. 💬 Soporte: "Cómo funciona todo" en un RECUADRO encima de todo (legible, con scroll y cerrar) — SW v605
 **Pedido (owner):** "el ver más y ver menos no se puede leer el texto; necesito que aparezca arriba y que se pueda leer, abrí un recuadro
 como para ver y bajar y se pueda cerrar". Reemplaza el plegable de #907: en la tarjeta queda un BOTÓN y abre `#spFaqModal` (fijo,
 z-index alto, tarjeta blanca con cabecera "📌 Cómo funciona todo" + ✕, lista a 14,5 px con scroll propio y botón "Entendido · cerrar";
 se cierra también tocando el fondo o con Esc). `VIP.home.supportFaqOpen/Close`. Los `<span class="md-amt|wd-min|rx-dep|rx-bon">` siguen
 pintándose por clase (ahora viven en el recuadro, fuera de `#supportIntro`).
 
-### G909. 📖 Historias automáticas: 5 por día SIN repetir las de ayer · llave de PARTIDOS (apagada) · diagnóstico del motor — admin SW v184
+### 909. 📖 Historias automáticas: 5 por día SIN repetir las de ayer · llave de PARTIDOS (apagada) · diagnóstico del motor — admin SW v184
 **Pedidos (owner, por Telegram 2026-10-23 15:17 y chat 2026-10-24):** "vi que mañana tenemos un partido, pero no vamos a publicar aún los
 partidos de fútbol, quiero ir primero con publicaciones explicando la app" · "este partido ni lo publicaron, quiero que revises bien las
 historias automáticas: que publique 5 historias todos los días y que las rote, siempre eran nuevas historias".
@@ -672,7 +736,7 @@ historias automáticas: que publique 5 historias todos los días y que las rote,
   `STORIES_AUTOPILOT_DISABLED=1` (también se muestra).
 **Para el owner:** cuando quiera arrancar con fútbol, tocar "▶ Encender partidos" en el panel: desde el día siguiente a las 00:05.
 
-### G908. 📎 Cargas pendientes: el mismo comprobante mandado N veces = UNA ficha (los otros envíos adentro) y se cierran solos
+### 908. 📎 Cargas pendientes: el mismo comprobante mandado N veces = UNA ficha (los otros envíos adentro) y se cierran solos
 **Pedido (owner, Telegram):** "hoy un usuario mandó 4 veces el mismo comprobante y aparecieron 3 fichas en Cargas pendientes; que vaya por una
 ficha y al tocarla se vean las veces que lo envió, o una sola que diga que lo mandó varias veces, o una correcta y las demás repetidas".
 - Por qué pasaba: la detección de duplicados (`imageHash` / `dedupeKey`) sólo agarra la MISMA imagen o la misma lectura de la IA; con capturas
@@ -690,7 +754,7 @@ ficha y al tocarla se vean las veces que lo envió, o una sola que diga que lo m
 - Probado (lógica aislada, 7 casos): misma imagen ✓, otro usuario ✗, mismo monto con N° distintos ✗, mismo monto y uno sin N° ✓, montos
   distintos ✗, ambos sin monto ✓, misma huella ✓.
 
-### G907. 💬 Soporte: el resumen "Cómo funciona todo" se pliega (Ver menos), con alto máximo y scroll — SW v604
+### 907. 💬 Soporte: el resumen "Cómo funciona todo" se pliega (Ver menos), con alto máximo y scroll — SW v604
 **Pedido (owner, capturas):** "no aparece la forma ahí de ver menos, no se puede cerrar; se queda así y no se puede hacer nada, se tilda ahí".
 - Causa: era un `<details>` nativo adentro de la tarjeta compacta de Soporte (en fila al lado del avatar, `sp-sent`). Al abrirse crecía sin
   límite, empujaba el chat y la caja de texto fuera de la pantalla y no tenía ningún "cerrar" visible.
@@ -699,571 +763,6 @@ ficha y al tocarla se vean las veces que lo envió, o una sola que diga que lo m
   `supportFaqToggled`) para que el resumen tenga el ancho entero y el chat siga a la vista.
 
 ## Sesión 2026-10-22
-
-### 957. Revisión de JUGAYGANA y Ganamos con CAPTURAS REALES (Chrome sin pantalla) contra las fotos de los zip — SW v646
-**Owner:** "¿le metiste de lleno? Mirando las fotos, seguí ajustando que hay cosas que no viste". Se armó un Chrome headless en el scratchpad
-(puppeteer-core + Chromium de npm `@sparticuz/chromium`; Google bloquea la descarga directa por Tor) que entra a Render con el usuario de prueba
-y sirve js/css/datos/imágenes de la PC (API real) para ver cada ajuste antes de subirlo. Lo que apareció y se arregló:
-- **La web de Girox se abría ENCIMA** al entrar por /jugaygana (o /ganamosoficial, /paginaoficial) con un usuario con menú "Girox directo"
-  (verificación de edad de 1GIROX). `home.js _giroxDirect`: en el sitio JUGAYGANA abre JUGAYGANA y con `?jg|gn|pr=1` o una página de marca
-  abierta no hace nada.
-- **Portadas de "Juegos nuevos" vacías (~3.700):** img-girox.red777.win responde `application/octet-stream` y `/api/games/img` lo rechazaba.
-  Ahora el tipo se reconoce por los primeros bytes (jpeg/png/webp/gif/avif; cualquier otra cosa sigue siendo 404).
-- **JUGAYGANA como jugaygana44:** la búsqueda + Proveedores quedan fijas arriba junto con las categorías; carteles CASINO / CASINO EN VIVO /
-  EVENTOS DEPORTIVOS completos (sin "…"); pie con logo, derechos y accesos Secciones / Juegos / Deportes (`_jgFooter`, todo abre adentro).
-- **Ganamos:** los destacados de arriba (en su inicio: Dog Chaos · Gana Volcano · Buffalo Power Megaways) con sus portadas recortadas de la foto
-  (`images/ganamos/tile-*.webp`); Buffalo Power Megaways = 5/buffalo_megaways_ps_html de Girox. Dog Chaos no está en Girox (oculto). Si son
-  menos de 3 quedan centrados. "Exclusivo de Ganamos" suma Buffalo Power Megaways.
-
-### 956. JUGAYGANA con SU cabecera (como jugaygana44, sin saldo) y las casas de deportes en el menú ☰ — SW v645
-**Owner:** (captura de las tarjetas Digitain/Ultim8/Caballos/TurfWin/Póker) "esto sacalo; armalo como se ve en el zip (ads.zip), ahí está el
-menú de la parte superior y todo; sacá el saldo para que no moleste pero armalo igual en JUGAYGANA". `lobby.js _shell` (skin jugaygana):
-- Sin la barra de la app (Volver/Menú/Historias/Info/Perfil) ni la cabecera logo·saldo de #952: va `header.jg-head` como su página: logo ·
-  🎧 Soporte · ✉ (Historias) · usuario con "CARGA RÁPIDA" debajo (donde el original pone el saldo; abre el mismo panel) · ☰.
-- El ☰ (`menu(true)`, `_paintMenu`) suma en JUGAYGANA: "Deportes" (Digitain, Ultim8, Caballos, TurfWin, Póker, de `_data.sports`),
-  Historias, Información y, fuera del sitio JUGAYGANA, "Volver a la app" (`close(true)`). El saldo queda sólo dentro del ☰.
-- Inicio: "Eventos deportivos" mantiene los partidos (Top en vivo / Los más jugados) y ya no lleva las tarjetas de las casas.
-Ganamos no cambia (sigue con la barra de la app + logo · saldo · Carga rápida).
-
-### 955. Barra de arriba de Ganamos/JUGAYGANA bien encuadrada + lobbies sin texto asomando — SW v644
-**Owner:** (captura) "este recuadralo bien, está descentrado abajo y arriba". La cabecera logo · saldo · Carga rápida no tenía alto propio
-(el padding vertical estaba en 0) y los botones quedaban pegados arriba y abajo: ahora mide 52 px con todo centrado y saldo/botón de 32 px.
-Además las portadas de "Casino lobby" son PNG con partes transparentes y dejaban ver el nombre de respaldo de atrás: la imagen lleva fondo.
-
-### 954. JUGAYGANA (y las listas de Ganamos): ningún texto ENCIMA de las portadas — SW v643
-**Owner:** "hacé lo mismo en JUGAYGANA y afinemos todo". La tarjeta `_jgCard` (JUGAYGANA, y también "Mostrar todo" / "Juegos nuevos" de
-Ganamos) tenía el nombre sobre un degradé encima de la foto. Ahora el nombre va DEBAJO de la portada (`<em>` fuera del recuadro): en Ganamos
-con el formato de su tarjeta, en JUGAYGANA oculto como su original. Si una portada no carga, el nombre aparece en el recuadro (`<i>`, detrás
-de la imagen). Mismo criterio que #953: el texto de respaldo nunca tapa una foto.
-
-### 953. Ganamos: sin el nombre del juego ENCIMA de la portada — SW v642
-**Owner:** "en Ganamos sacá el texto de las fotos, están tapando las fotos". La tarjeta `.gn-g` tiene el nombre en `<i>` (respaldo por si la
-portada no carga) y quedaba dibujado arriba de la imagen. Ahora la imagen va por encima (`z-index`): el nombre sólo se ve si la foto falla;
-el nombre de abajo de la tarjeta (`.gn-gname`) sigue igual.
-
-### 952. Ganamos y JUGAYGANA: saldo + "Carga rápida" ARRIBA (debajo del menú superior), finos y con su formato; sin burbuja — SW v641
-**Owner:** "la carga rápida y el monto del usuario lo ponemos en la parte superior abajo del menú superior con el formato de Ganamos, bien
-fino, y sacá la burbuja; lo mismo en JUGAYGANA". `lobby.js _shell`: la cabecera de las páginas con logo (`sk.wordmark`) lleva logo · saldo ·
-botón `.prl-hql` (llama `VIP.lobby.ql()` = el mismo panel de Carga rápida) y la burbuja flotante `#prlQl` ya no se crea ahí (PICA ROJA la
-mantiene). Estilos al final de `pin.css` (#952): Ganamos violeta, JUGAYGANA amarillo, 30 px de alto; en pantallas <360 px sólo el ícono.
-
-### 951. GANAMOS completo y en el ORDEN de sus fotos: 37 proveedores, 2.372 juegos (antes 1.525) — SW v640
-**Owner:** "tomá bien el orden de juegos, detectá todo… subí todo como Ganamos, revisá la página y las fotos". El recorte de #949 buscaba las
-portadas por contenido y perdía filas enteras (portadas sin cargar = ícono de pica, filas tapadas por la barra de abajo o el botón CARGAS):
-Pragmatic daba 340 y en las fotos hay 675 lugares. Ahora el recorte usa una GRILLA FIJA por captura (fila cada ~137,6 px, ajustada con las
-portadas bien detectadas) y anota qué celdas tapa algo fijo de la página; de las capturas que se pisan se queda con la celda limpia.
-- Nombre de cada portada por OCR → cruce con Girox por proveedor (exacto / prefijo si está cortado con "…" / parecido ≥0,88 con controles de
-  números y variantes). Las ~730 portadas con el nombre tapado se leyeron mirando la portada contra la lista de ese proveedor (sólo si era
-  inequívoco): +226. Después, verificación de todo lo dudoso (668 portada↔nombre): 7 mal asignadas, sacadas.
-- 1spin4win: su única captura no se recortó sola; se cargaron a mano los 6 con nombre visible (variantes helix, las que usa Ganamos).
-- Portadas: propia recortada de la foto (1.703); si estaba tapada o era el ícono de pica, la de JUGAYGANA (283) o la de Girox (357).
-- `ganamos-extra.json` (Juegos nuevos) recalculado: 5.888 (lo que pasó a sus proveedores sale de ahí).
-- Lo que no figura en Girox (exclusivos "Ganamos …", Endorphina, Belatra, Platipus, Smartsoft, etc.) sigue oculto (decisión del owner).
-- Sólo datos e imágenes (`public/data/ganamos-*.json`, `public/images/ganamos/p/`); el código de lobby.js no cambió. Probado en Render, no en picaroja.com.
-
-### 950. Usuarios de PRUEBA sin el bloqueo de marca por saldo (para probar todas las plataformas)
-**Owner:** "habilitá todas las plataformas para probarlas, ninguna me deja (usuario alex69608531)". Era el bloqueo de #908 (con ≥ $100 de saldo
-no se cambia de marca). `POST /api/me/brand`: los usernames de `Config['brandLockFree']` (por defecto `alex69608531`, `pruebanardo`) cambian
-de marca sin mirar el saldo (es la misma cuenta de 1girox: no mueve fichas). A los clientes no les cambia nada.
-
-### 949. GANAMOS: la pestaña Casino con SUS proveedores (zip Ganando_Argentina.zip): 36 proveedores, 1.525 juegos con sus portadas — SW v639
-**Pedido (owner):** Ganamos idéntica con las fotos del zip (54 proveedores + secciones); "fijate bien y conectá, que hay muchos que sí tiene".
-- Capturas de 384 px de alto variable (tramos superpuestos, sin huecos). La grilla (3 × 111 px, paso 138) se detecta por las franjas oscuras;
-  **el nombre está ESCRITO debajo de cada portada** ⇒ OCR (tesseract) en vez de leer el arte. 3.052 portadas, 3.008 con nombre.
-- Cruce con Girox por proveedor: exacto, prefijo único (nombres cortados "…"), parecido ≥ 0,88 con margen; los "Ganamos …" exclusivos no se cambian.
-  Controles: los NÚMEROS del nombre tienen que coincidir (un número cortado = comienzo del real: "Sweet Bonanza 25…" = 2500) y se sacaron a mano
-  21 parecidos que eran otro juego/variante (Plinko Pop 2, Rooster Run 2, 3 Frozen Crowns, 40 Shining Crown, Bonanza Billion Xtreme, Buy…).
-- "Conectá bien": en Ganamos **Hacksaw incluye sus estudios asociados** (BullShark, BackSeat, Trusty, NowNow, Kitsune…: en Girox con su propio
-  nombre de proveedor) y **Bluejack = `betcorejacktop`** en Girox ⇒ +62 (Hacksaw 31→74, Bluejack 0→16). Las demás coincidencias de nombre con
-  otro proveedor son OTROS juegos (Plinko, Mines, Geisha…): no se conectan. En JUGAYGANA, Hacksaw: sólo "Dark Summoning" (tapado por la franja).
-- Portadas: recortes propios (`images/ganamos/p/`); 6 sin cargar en la captura y 54 tapadas por la barra de abajo de su página (detectadas por OCR
-  de "Inicio/Casino En Vivo…") ⇒ la de JUGAYGANA del mismo juego o la de Girox por `/api/games/img`. Datos `public/data/ganamos-games.json`.
-- Front: pestaña Casino de Ganamos = un bloque por proveedor (2 filas de 3, `gn-grid6`) con "Mostrar todo ›" (`gnProv`); tarjeta `_gnCard`
-  (portada + nombre debajo, `gid`/`lk`); las listas de Ganamos usan su tarjeta.
-
-### 948. "JUEGOS NUEVOS" arriba en JUGAYGANA y Ganamos: todo lo de Girox que esa página no tiene — SW v639
-**Pedido (owner):** "en JUGAYGANA un listado arriba de juegos nuevos con todos los juegos que no tiene, de Girox; lo mismo en Ganamos".
-- `public/data/jugaygana-extra.json` (4.949) y `ganamos-extra.json` (6.702): `[key, nombre, portada, gid, lk, proveedor]`, del más nuevo al más
-  viejo (`created_at` del catálogo), sin los que ya están en la página. Hay que regenerarlos si cambian las listas de la página.
-- JUGAYGANA: sección "Juegos nuevos" (2 filas, TODOS) después de la barra de categorías; Ganamos: carrusel arriba del inicio y de Casino.
-  TODOS / Mostrar todo ⇒ `extraAll(brand)` → lista que se dibuja de a 120 con "Ver más (N)" (`listMore`) para no trabar el teléfono.
-- `/api/games/img` acepta los otros servidores de portadas del catálogo (universalsoft, platipusgaming, cdn.gmbl, bswbet).
-
-### 947. GANAMOS: inicio idéntico a ganandoargentina.com con SUS portadas, juegos directos y "Especial de Halloween" — SW v638
-**Pedido (owner):** Ganamos "idéntica de punta a punta" (ganandoargentina.com + zip de capturas `Ganando_Argentina.zip`), sin conectar con Girox, con
-sus portadas (las de JUGAYGANA donde haga falta). (`ganamosargentina.com` no existe; el owner confirmó ganandoargentina.com.)
-- **Inicio (leído de su bundle `assets/index-*.js`, componente `home-mobile`):** orden = banner · accesos · eventos · "Especialmente para vos" ·
-  Exclusivo (Sz) · 123slots · Halloween (Rz, `holiday==='halloween'`) · AI Generated (Iz) · Primicias (Gz) · Rubyplay (Oz) · Amusnet (Vz) ·
-  Pragmatic Slots (Zz) · Amigo Gaming (Nz) · XPG (jz) · Destacadas/Joker/Clásicas (Dz/Yz/Lz versión `pragmatic` = usuario común) · Pragmatic Live (Bz).
-  Cruce con Girox por BÚSQUEDA de nombre + proveedor (los "Ganamos …" exclusivos son builds propios: no se cambian por el juego común):
-  Exclusivo 1/30 (Gana Volcano), Halloween 2/9, Rubyplay 9/9, Amusnet 9/11, Pragmatic 11/11, Amigo 8/15 (antes 0: ahora Amigo está), Destacadas 13/21,
-  Joker 7/14, Clásicas 13/19, Pragmatic Live 2/10; AI Generated, Primicias, XPG = 0 (no están).
-- **Portadas:** las de SU código (su dominio, Pragmatic, Mascot, Jacktop…; los .webm de Amigo ⇒ 1er cuadro con ffmpeg) en `images/ganamos/g/`; si
-  no se puede, la de JUGAYGANA del mismo juego; Gana Volcano = su SVG animado (`images/ganamos/gana-volcano.svg`). Cada juego con `gid`/`lk`.
-- **Formato:** filas de 3,3 portadas con el NOMBRE debajo y "Mostrar todo ›" (= `gnRow`, sólo esa fila); "Especial de Halloween" con sus imágenes
-  (`images/ganamos/hw/`: fondo, título, marco, perro, botón JUGÁ YA). Las tarjetas mandan `gid`/`lk` ⇒ abren directo como los favoritos.
-- Sigue: proveedores y secciones del zip (OCR del nombre escrito debajo de cada portada).
-
-### 946. Ningún juego ni deporte abre la web de Girox (tampoco desde el Inicio de PICA ROJA) — SW v637
-**Pedido (owner):** "hacé que no conecte en nada" (confirmado: "sí, así mismo"). `favPlay` ya no tiene respaldo a Girox: si 1girox no da el juego
-directo (después de la pregunta del bono de #945) se avisa "tocalo de nuevo". Se borró el respaldo viejo (`openPlatform('girox', { embed: true })`).
-- **Consulta del owner:** "lalodj no entra logueado a Girox, ¿es porque no existe?". Diagnóstico ya disponible: `GET /api/admin/girox/test-sso?username=<usuario>`
-  (admin general, con la sesión del panel abierta en el mismo navegador): si responde `ok:false` con "Revisá que el jugador exista en 1girox", el
-  usuario no está en 1girox (p. ej. se creó en la prueba sin la API real, o con la key de otro publicista, #699).
-
-### 945. 🐛 "Toqué para apostar a Tucumán y me mandó a Girox" (y lo mismo con slots): el BONO ACTIVO bloqueaba el juego directo — SW v636
-**Owner (captura):** desde JUGAYGANA, un partido y los slots abrían la web de Girox (y deslogueada); los favoritos del Inicio de PICA ROJA no.
-- **Causa (leída del código de la web de 1girox, `ra()` alrededor de `games/<id>`, `player/sports/gr8/launch`, Digitain token):** si el jugador tiene
-  un BONO activo y el juego no suma para él, 1girox NO devuelve `launch_url` sino `warn_forfeit` (+ `bono_amount`, `message`); su web pregunta y
-  reintenta con `forfeit_bono=1`. Si no puede jugar devuelve `blocked` (`reason: 'max_balance'` u otro). Nuestro `/api/platform/session` lo tomaba
-  como "1girox no dio el juego" ⇒ caía en Girox. Por eso a algunos juegos (los que el bono permite, p. ej. los favoritos) los abría y a otros no.
-- **Server:** `_verdict(jg)` en el pedido del juego y de deportes ⇒ responde `forfeit: { amount, message }` / `blocked: { reason, message }` (sin
-  pedir un ingreso a Girox); con `forfeit: true` en el body manda `forfeit_bono=1` (juegos y deportes).
-- **App (`favPlay`):** cartel propio `_forfeitAsk` ("Tenés un bono activo de $X; este juego no suma: si entrás igual el bono se pierde" · Entrar
-  igual / Mejor no) y reintento con `forfeit: true`; `blocked` ⇒ aviso con el motivo. Desde las páginas de marca (body.prl-open) o el sitio
-  JUGAYGANA, si aun así no abre directo, NO se abre Girox (aviso "tocalo de nuevo"). El Inicio de PICA ROJA mantiene su respaldo.
-- Nombres confirmados en su código: "Deportes" = juego 1140 (onyx, su cartel "DIGITAIN DEPORTE") = nuestro **Digitain**; "ULTIM8" = `/sports-2` (gr8).
-- Pendiente de ver con un jugador real: si el respaldo de Girox del Inicio de PICA ROJA abre deslogueado (en la captura se veía "Iniciar sesión").
-
-### 944. SITIO JUGAYGANA independiente + todos los juegos abren como los favoritos (sin Girox) + Caballos/TurfWin/Póker + portadas verificadas — SW v635
-**Pedido (owner):** "que cuando entren a JUGAYGANA no aparezca nada más que JUGAYGANA (independiente de Girox, pero con todos sus juegos,
-deportes, caballos…)" · "que todos los juegos ingresen como los favoritos de PICA ROJA, sin un logo de Girox, limpio al extremo" · "que realmente
-cada portada sea su juego".
-- **Modo sitio** (`window.VIP_SITE`, `localStorage vip_site`, clase `html.site-jyg`): se activa por `/jugaygana` (?jg=1) y queda en el teléfono
-  (?pr=1 / ?gn=1 lo apagan). Script en el `<head>` (antes de pintar): título JugaYGana, íconos `images/jugaygana/app-180/192/512.png` (nuevos, logo
-  sobre negro), theme-color, `manifest.json?site=jugaygana` y pantalla de carga negra con el logo hasta que abre la página o se muestra el login.
-  `js/site.js`: reemplaza en pantalla todo "PICA ROJA"/"Girox" por JUGAYGANA (MutationObserver, también lo que llega después) y el ícono de la app;
-  si con sesión la página quedó cerrada (salir del chat de Soporte, etc.), la vuelve a abrir. CSS: sin Historias, sin el bloque de plataformas del
-  ingreso ni la tarjeta "La plataforma que quieras" de Info; botones del ingreso amarillos.
-  `lobby.js`: se abre sola siempre que haya sesión (sin límite de espera al login); "Volver" = su inicio (close(true) para cerrar de verdad);
-  "Menú" = su menú "Mi cuenta" (sin "Volver a la app"); Soporte abre el chat y al salir vuelve a JUGAYGANA.
-  Manifest dinámico con `site=jugaygana`: nombre/íconos/colores de JUGAYGANA, `id` propio y `start_url` con `&jg=1` (app instalada aparte).
-  ⚠️ Las notificaciones push que manda el server siguen con sus textos (no pasan por la pantalla).
-- **Juegos directos:** los datos de JUGAYGANA llevan el id interno y el launcher de 1girox (`[key, nombre, img, gid, lk]`; inicio: `gid`/`lk`);
-  la tarjeta los manda (`data-gid`/`data-lk` → `gamePlay(key, name, {gid, lk})` → body de `/api/platform/session`) y el server los usa sin buscar el
-  juego por nombre (`_gameLaunchMeta` sólo si no vienen). En el sitio JUGAYGANA, si no sale directo NO se abre la web de Girox: aviso "tocalo de nuevo".
-- **Caballos / TurfWin / Póker** (lo mismo que abre la web de 1girox): `sport/horses` = juego 1002 (`universal`, agg 4), `sport/turf` = 1139 (onyx),
-  `sport/poker` = 3650 (onyx); en `sports` del lobby y en el menú de Deportes. Respaldo fuera del sitio: /horses, /horses-new, /poker.
-- **Verificación de portadas:** las 3.293 revisadas una por una (4 ayudantes con hojas portada + nombre): 0 errores. Sacados por prudencia: posibles
-  variantes (Golden Joker 243 / 27 con JACKPOT, Golden Poker con Buy Feature) y portadas que en jugaygana44 son sólo texto (Rock Vegas, Snakes
-  and Ladders Megadice, Motörhead, Cubes, Fruit Tycoon) ⇒ 3.285 juegos.
-
-### 943. Revisión de JUGAYGANA: los juegos de Amigo Gaming NO abrían directo (ids con "@") + 15 portadas recuperadas — SW v634
-**Pedido (owner):** "revisá todo y hacelo completo".
-- 🐛 **Amigo Gaming** (aggregator 7) tiene ids como `amigo_3Muertos@AMIGO`. `_FAV_KEY_RE` (catálogo/búsqueda/launch meta), la apertura directa
-  (`/^\/play\/(\d{1,3})\/(...)$/` de `/api/platform/session`), `casinoGoTo` (ui.js) y `app:play:` (stories.js) no aceptaban "@" ⇒ esos 132 juegos
-  caían en Girox en vez de abrir el juego (y en el catálogo de Girox ni aparecían). Ahora aceptan "@" (único carácter fuera de `[\w.-]` en las
-  3.291 keys de JUGAYGANA, verificado).
-- Datos verificados: 0 portadas faltantes, 0 juegos repetidos por lista, inicio con todas sus fotos.
-- **Portadas tapadas por la franja:** de 556 que habían quedado afuera, 41 tenían una copia ENTERA de la misma portada en otra página del zip; leídas
-  ⇒ 15 entran (3 Tombs, Tropicana, Bandit Megaways, Plinko 2 Halloween, French Roulette, Speed Auto Roulette, Dazzle Me Megaways, Diwali Auto
-  Roulette, Colour Game Mega Bonus, Andar Bahar, Egypts Gold, Grand Bonus Baccarat, Royal Roulette…); el resto no está en Girox. Total 3.293 juegos.
-- Lo que sigue afuera no se puede sumar sin errores: juego que Girox no tiene (o sólo tiene otra versión: Megaways, Buy Bonus, "with Júlio César"),
-  variantes que la portada no distingue (RTP, mesas sin número) y títulos tapados sin copia entera.
-
-### 942. JUGAYGANA COMPLETA "de punta a punta": 35 proveedores (3.282 juegos) y las categorías de la barra con SUS portadas — SW v633
-**Pedido (owner):** "subí todo completo de punta a punta". Se leyeron las portadas de TODOS los proveedores de jugaygana44 que existen en Girox
-(proceso #937: ayudantes leen el título contra la lista exacta de nombres de Girox del proveedor; ante duda, afuera) y se revisaron a mano los
-casos dudosos que informaron (afuera: versiones distintas como Buy Bonus / Fusion Reels / Megaways cuando la portada es el juego base, títulos
-tapados por la franja, mesas sin número/letra). Muestras al azar revisadas a ojo (30 + 36): todas correctas.
-- **Proveedores (juegos que entran / portadas en jugaygana44):** KA Gaming 950/1036, Pragmatic 569/673, 1Spin4Win 192/221, BGaming 190/284,
-  SpinOro 160/211, RubyPlay 159/193, Amigo 130/157, 77 Gaming 113/124, Mancala 85/117, NetEnt 81/101, Playson 66/108, GamZix 59/81,
-  Microgaming 57/479, KingMidas 57/102, Pragmatic Live 45/81, Ezugi 45/76, Evolution 43/73, ICONIC21 39/57, Rival 36/189, Live Vegas 32/41,
-  DreamPlay 32/42, Hacksaw 27/78, 100HP 24/29, Amatic 19/32, 3 Oaks 16/60, Red Rake 13/188, Greentube 11/14, Betsoft 8/251, Play'n GO 8/56,
-  TV Bet 7/13, Vivo 3/27, Push 2/8, Evoplay 2/311, Elbet 1/8, Aviatrix 1/5. (Pocos = Girox tiene pocos de ese proveedor.) Red Tiger, Spribe,
-  Shacks y Universal Race: 0 ⇒ no aparecen. 53 proveedores de jugaygana44 NO están en Girox (TaDa, PGSoft, Spinomenal, Endorphina, 7777…).
-- **Categorías (`cats`):** cada portada de categoría hereda el juego de la portada CASI IDÉNTICA de un proveedor leído (distancia < 3,0; se
-  revisaron 20 pares entre 2,0 y 3,0: todos correctos) y ninguna parecida (< 4) con otro nombre: Ruletas 51/265, Juegos de mesa 80/546,
-  Habilidad 54/519, Megaways 31/64, Nuevo 19/146, Destacados 5/23. Jackpots, Bingo y Compra de bonos = 0 (proveedores sin Girox) ⇒ siguen
-  con la búsqueda en el catálogo de Girox (`jgCat` cae ahí si la lista está vacía).
-- 3.282 portadas en `images/jugaygana/g/` (≈20 MB, webp de 111 px). Los recortes/lecturas quedaron en el scratchpad de la sesión (se pierden al reiniciar).
-
-### 941. JUGAYGANA: inicio IDÉNTICO a jugaygana44 (orden, filas, TODOS) + Amigo Gaming (SÍ está en Girox) — SW v632
-**Owner:** "faltan juegos en cada sección; el formato es distinto: en unas dice TODOS y en otras deslizante con flechas; revisá todo" + captura de
-1girox.com con Amigo Gaming.
-- ⚠️ **El listado general de la API de 1girox (`/api/games?page=`) NO trae a Amigo Gaming (aggregator 7)** ni repite orden estable (con
-  `provider_id` y varias páginas salen repetidos: hay que unir varios `sort`). La búsqueda (`?search=`) y `/api/games/providers` sí lo traen
-  (143 juegos, id 126808). Verificado: TaDa, NetGame, Endorphina, Red Tiger, 7777, Spinomenal, Fugaso, SmartSoft, Galaxsys, Tom Horn, Caleta,
-  3Cherry, InBet, Pascal, Spinmatic, Pop Ok NO están (Aviator figura en 77 Gaming / King Midas, no Spribe).
-- **Inicio:** las secciones de jugaygana44 = colecciones de jugaygana.io (mismo orden, comprobado contra las capturas). Re-cruzadas con Girox por
-  BÚSQUEDA de nombre (+ búsqueda corta si no aparece; el ® rompía "Giga Match® Mahjong" / "Diamond Explosion® 7s SE"): Populares 14/21,
-  Halloween 11/11, Seleccionados 19/20, RubyPlay 20/20, Nuevo 18/20, Crash 19/20, Casino 2/15 (TaDa/7777/Pop Ok no están). Portadas = su
-  `custom_image` (o miniatura) guardadas en `images/jugaygana/games/`.
-- **Formato como su página:** cada sección es UNA grilla de N filas llenada por COLUMNAS (`.jg-row-g`, `--jr`), deslizable con flechas; botón
-  **TODOS** salvo en Populares y Halloween (como el original); RubyPlay con su logo; sin "Casino lobby"; portadas sin el nombre encima.
-- **Proveedor Amigo Gaming:** 157 portadas leídas a ojo ⇒ 130 juegos (dudosas afuera: títulos tapados por la franja, "Moon Girls"/"1000 Moon
-  Girls", "Coinboy"/"Coinboy Riches", y los que no están: 12 Fortune Signs, Triple Chili, 3 Fat Kings, 88 Ace Royale…).
-
-### 940. JUGAYGANA: "Top en vivo" y "Los más jugados" en Eventos deportivos — SW v632
-**Pedido (owner):** los partidos como jugaygana44 (que usa el iframe `sport-iframe.gotod.xyz` = otra casa de apuestas, platform.mdlr.tech, con
-la billetera de jugaygana44 ⇒ el owner eligió partidos propios que abren Girox). `src/services/sportsBoard.js` + `GET /api/sports/board`
-(público, cache 60 s): ESPN, mismas 12 ligas y pesos de equipos que las historias (`storyAutopilot` exporta `TEAM_W`, `LEAGUES`, `short`,
-`decOdds`); `live` (en juego, con resultado y minuto) y `top` (próximas 36 h). Tarjetas `.jgm` en `#jgBoard`; tocar ⇒ Digitain logueado.
-- **"Tomá los de Digitain directo" (owner):** 1girox da sin login el server y el partner de Digitain (`/api/player/sports/digitain/token?widget=1`
-  ⇒ `sport.bookiewiseapi.com`, partner `nexus_girox`), y su web lo arranca con `Bootstrapper.bootIframe({ parent: [location.host], … }, {name:'Mobile'})`.
-  NO se pudo hacer: (1) Digitain (Akamai) bloquea las conexiones de Tails/Tor (403) ⇒ no se pudo ver su API ni probar; (2) el `parent` es el
-  dominio autorizado por Digitain (1girox.com): en picaroja.com/Render probablemente no cargue. Para hacerlo bien: pedirle a 1girox que Digitain
-  autorice nuestro dominio o que nos den un feed de eventos. El owner pasó una clave de prueba por el chat: NO se usó ni se guardó (recomendado cambiarla).
-
-### 939. JUGAYGANA: sus proveedores (orden y logos de jugaygana44) y las PORTADAS DEL ZIP en 11 proveedores — SW v631
-**Pedido (owner):** "subí todo lo que modificaste en fotos" (en la PRUEBA/Render, NO en picaroja.com). Sale `public/data/jugaygana-games.json` (#937):
-- Hoja de Proveedores = los de JUGAYGANA en su orden y con su logo (`images/jugaygana/prov/<i>.webp`), sólo los que existen en Girox (28).
-- **Leídos (portadas de JUGAYGANA, `images/jugaygana/g/<id>.webp`, 833 juegos):** RubyPlay 159, Mancala 85, BGaming 190, Betsoft 8, Playson 66,
-  Microgaming 57, NetEnt 81, Ezugi 45, Hacksaw 27, 77 Gaming 113, Evoplay 2 (el resto de sus portadas no está en Girox o era dudoso).
-  Muestra de 30 al azar revisada a ojo: todas correctas. Se sacó "All Lucky Clovers 5" (título tapado por la franja).
-- **Sin leer todavía** (KA Gaming, Pragmatic, 1Spin4Win, Spinoro, Amatic, Rival, KingMidas, Greentube…): `pid` ⇒ abren sus juegos de Girox
-  (`all(pid)`). Sin entrada propia en Girox no aparecen (Red Tiger y Shacks caerían en todo Evolution; varios en vivo no figuran en la lista).
-- Categorías de la barra: siguen con el catálogo de Girox (con 11 proveedores leídos quedarían casi vacías).
-- Para seguir: el proceso de #937 (scratchpad; si se reinició Tails hay que volver a recortar desde el zip).
-
-### 938. Ganamos: "Ver todo" de cada fila muestra SÓLO los juegos de esa fila — SW v630
-**Owner:** "en Mostrar Todo de algunos juegos no abre todos, va a otra sección". En Ganamos, "Ver todo" llevaba a TODO el catálogo (filas sin
-proveedor) o a todo el proveedor (`GN_MORE`, eliminado). Ahora `gnRow(i)` → `jgList` (la vista de lista de #936 sirve para las tres páginas;
-fuera de JUGAYGANA usa las tarjetas `_card`). PICA ROJA no cambia ("Ver más" ya despliega la misma sección).
-- ⚠️ picaroja.com (AWS) estaba en la v603 el 2026-10-23: nada desde #907 está en producción; Render sí (v629). Las pruebas del owner son en Render.
-
-### 937. JUGAYGANA: página lista para las listas copiadas de jugaygana44 (zip del owner) + carpeta para Vercel — SW v629
-**Pedido (owner):** zip `ads.zip` con capturas de jugaygana44.bet (inicio, 92 proveedores, 9 categorías de la barra): copiar todo, portadas incluidas,
-y que cada juego abra con el enlace de Girox sin que se vea Girox. "No mezcles las portadas" (sólo las de JUGAYGANA). Lo que Girox no tiene: OCULTO (owner).
-- **Front (`lobby.js`):** `/data/jugaygana-games.json` (`{providers:[{n,logo,g:[[key,name,imgId]]}],cats:{<catKey>:[...]}}`, imágenes en
-  `images/jugaygana/g/<id>.webp` y logos en `images/jugaygana/prov/<i>.webp`). Hoja de Proveedores = los suyos en su orden con logo → `jgProvOpen`
-  → `jgList`; `jgCat` usa la lista copiada si existe (si no, el catálogo de Girox como antes); sin el archivo, la hoja muestra los de Girox.
-  **EL ARCHIVO TODAVÍA NO EXISTE** (ver abajo): hoy todo se ve como antes.
-- **Proceso (en el scratchpad de esa sesión, se pierde al reiniciar Tails):** capturas de 390×844 cada 744 px con la cabecera fija de ~127 px ⇒ quedan
-  franjas de ~27 px SIN capturar (≈16% de portadas cortadas: se rellenan con su propia imagen, nunca con otra). Se unió cada página por `Scroll_px`
-  y se recortó la grilla (3 columnas de 111 px, paso ~121,33 px): 11.613 portadas + 92 logos. **Las portadas de JUGAYGANA NO son las de Girox**
-  (otro arte, p. ej. TV Bet) ⇒ comparar imágenes no sirve y el OCR no lee los títulos: se identifican LEYENDO el título (ayudantes con hojas
-  numeradas) contra la lista exacta de nombres de Girox del proveedor; ante duda, afuera. Las categorías heredan el juego de la portada idéntica
-  del proveedor (distancia < 1,6 y ninguna parecida con otro nombre: con < 4 entraban Bingo 30/80, Deuces Wild/Multi-hand).
-- **Cobertura:** de 92 proveedores sólo 38 existen en Girox (≈5.500 portadas). Leídos: Microgaming (57/479) y BGaming (192/284); el resto se frenó
-  (owner). Para terminar: volver a recortar desde el zip y leer los demás proveedores.
-- jugaygana44.bet y su JS devuelven el index vacío a pedidos automáticos (sin API); jugaygana.io tiene otra lista y otro orden (no sirve para nombres).
-
-### 936. JUGAYGANA: "Mostrar Todo" de cada sección del inicio muestra SÓLO sus juegos — SW v629
-**Pedido (owner):** "en Mostrar Todo mostrá los juegos de cada sección, no de todos". `jgColl(i)` → `jgList(título, juegos)` (vista `jglist` con la
-barra de categorías arriba); antes iba a `go('slots')` (todo el catálogo).
-
-### 935. Deportes con su nombre: Digitain y Ultim8 (no "Deportes" / "Deportes 2") + carpeta `jugaygana-vercel/`
-**Pedido (owner):** "digitain y ultim8, ponele bien esos nombres y dejalo donde corresponde, no pongas deportes". `/api/games/lobby` `sports`:
-`sport/onyx` (/sports-new) = **Digitain**, `sport/gr8` (/sports) = **Ultim8**; mismo orden en el fallback de `sportsMenu`.
-- `jugaygana-vercel/` (pedido: "una carpeta para subir a Vercel con un dominio"): `vercel.json` que muestra `https://picaroja.com/?jg=1` en la raíz y
-  reenvía todo lo demás a picaroja.com (la página usa login, saldo, cargas y juegos del server: no puede ser estática). ⚠️ Por el proxy, el server
-  puede ver a todos los clientes de ese dominio con pocas IPs de Vercel ⇒ los limitadores por IP podrían cortar a clientes legítimos con mucho
-  tráfico. Alternativa recomendada: apuntar el dominio directo al server y abrir JUGAYGANA según el Host.
-
-### 934. Historias automáticas: SIN partidos de fútbol (interruptor en el panel) + 3 historias nuevas que explican la app — admin SW v189
-**Pedido (owner):** "mañana tenemos un partido, pero no vamos a publicar aún los partidos de fútbol; quiero ir primero con publicaciones explicando la app".
-- `Config['storyMatchesEnabled']` (default **false**): sin él `_storyAutoPlan` no pide partidos a ESPN (no salen los de las 00:05). Panel → Cronograma →
-  Historias automáticas: tilde "⚽ Publicar partidos de fútbol" (`POST /api/admin/stories-autopilot/config`, sólo admin; al apagar se ocultan los de hoy).
-- Temas nuevos en `storyAutopilot.THEMES`: 🧾 Cómo mandar tu comprobante · 🔒 ¿Por qué no puedo retirar todo? (rollover carga ×{dx} = `depositRolloverX`,
-  bono ×{rx}) · ⚡ Cargá sin salir del juego (Carga rápida). `{dx}` nuevo en `fill` (ctx.depositX). La historia de Retiros ya no dice "código por SMS" (#879).
-- Siguen: 5 por día rotando, slot de la semana (lunes) y bono de la semana (miércoles).
-- (Info ya decía "cada carga tiene rollover ×3" desde #885: tarjeta "Cargas y retiros (antifraude)" y en "¿Por qué elegir…?".)
-
-### 933. Soporte: "Cómo funciona todo" se abría y no se podía cerrar ⇒ hoja que se cierra deslizando — SW v628
-**Pedido (owner, capturas):** "cuando abrís no se puede cerrar; quiero que se pueda abrir, deslizar para abajo y cerrar, volver al chat de soporte".
-- El `<details class="sp-faq">` dentro de `#supportIntro` (con el chat ya empezado la presentación queda en fila) se desplegaba ocupando todo y trababa.
-  Ahora es el botón `.sp-faq-btn` + hoja `#spFaqSheet` (se mueve al `<body>` al abrir; z-index 100005): se cierra deslizando hacia abajo, con la ✕,
-  tocando afuera, con "‹ Volver al chat de Soporte" o con el gesto de volver (`swipeBack`). `VIP.home.supportFaq(open)`. Mismos textos y clases de valores.
-
-### 932. Cargas pendientes: el MISMO comprobante mandado varias veces va en UNA ficha ("lo mandó N veces") — admin SW v189
-**Pedido (owner):** un cliente mandó 4 veces el mismo comprobante y aparecieron 3 fichas en Cargas pendientes; que salga una sola y diga cuántas veces lo mandó.
-- Causa: las fotos llegan juntas y el chequeo de duplicado (#376) corre en paralelo ⇒ todas pasan como "únicas".
-- `_receiptCollapseDups(userId?)` (server.js, junto a `_depositReviewTick`): agrupa las pendientes del mismo cliente por huella (`dedupeKey`, si no
-  `imageHash`, si no monto + fecha CON hora + titular; sin huella no se agrupa). Queda la más vieja (o la ya acreditada); las otras pasan a
-  `reviewStatus:'rejected'`, `reviewResolution:'duplicate'`, `dupOf` = la que queda (sin mensaje al cliente; rechazar no mueve plata y el banco
-  automático nunca carga una rechazada). Corre 4 s después de encolar, en cada tick y al listar.
-- `GET /api/admin/deposit-reviews` devuelve `copies` / `sentCount`; la ficha muestra "🔁 Mandó este mismo comprobante N veces" y, al tocar, cada
-  envío con su foto. En "Resueltas" no se listan las copias. Modelo: `Comprobante.dupOf`.
-- (El botón "🏦 Pagado por banco externo" en Pagos a confirmar ya existe desde #904; lo ven admin y agentes de retiro.)
-
-### 931. Historias en la página PICA ROJA: aro/contador en la barra y botones que abren ARRIBA de la página — SW v627
-**Pedido (owner):** "el sistema de historias no está funcionando en PICA ROJA; quiero historias nuevas todos los días automático".
-- **Diagnóstico:** el motor automático (#827, `_storyAutoTick`) SÍ publica en producción: 5 por día (10:00 · 13:00 · 16:00 · 19:00 · 21:30 ART,
-  duran 24 h, temas que rotan + partidos + slot del lunes + bono del miércoles). Verificado en `picaroja.com/api/stories/public` el 2026-10-23.
-  Lo que fallaba era el FRONT dentro de la página de marca (`lobby.js`, z-index 99990):
-  1. el botón Historias de su barra (`casinoBarHtml` con `idSuffix`) no tenía id ⇒ nunca se le pintaba el aro rojo ni el contador (parecía vacío);
-  2. los botones de la historia (soporte, ruleta, VIP, cargar…) abrían su pantalla DETRÁS de la página ⇒ "no hace nada".
-- **Arreglo:** `stories._paintButton` pinta además todo `.casino-topbar .tn-stories` (aro + badge); `VIP.stories.paint()` se llama al abrir la
-  página. En el link `app:*` con la página abierta (`body.prl-open`): `cargar` = Carga rápida de la página; reembolso/misiones/referidos/retirar/
-  deportes/juegos se abren arriba (modal o casino); el resto cierra la página primero y después abre.
-
-### 929. Sorteo: hay que ANOTARSE (app instalada con notificaciones + Telegram) y se suma DESDE que te anotás — SW v626
-**Pedido (owner):** "para empezar a sumar hay que anotarse, tener la app instalada con notificaciones y unirse a Telegram para ver los ganadores".
-- `User.raffleJoinedAt` / `raffleTelegramAt`. `raffleService.requirementsOf(u)`: app = token FCM `standalone`; notif = ese token con permiso (o
-  `notifPermission:'granted'`); telegram = tocó "Unirme" (Telegram no se puede verificar). `POST /api/raffle/telegram` (registra y devuelve el
-  invite de Comunidad), `POST /api/raffle/join` (valida y pone raffleJoinedAt una sola vez).
-- `computeMonth`: sólo anotados; cada uno suma DESDE que se anotó (stats y cargas desde esa hora, agrupados por hora). Extra y Gran Sorteo: sólo
-  anotados (días/misiones desde su fecha). `publicStatus`: joined, joinedAt, requirements.
-- Pantalla: recuadro "📝 Anotate para empezar a sumar" con la lista ✅/⬜ y botones Instalar / Activar / Unirme + "Anotarme"; bases con el requisito;
-  botón del Inicio "Anotate para sumar". Probado (Mongo en memoria, `scripts/test-raffle-join.js`): anotado antes = todo el mes, anotado el 15 =
-  desde esa hora, no anotado = no suma; requisitos bien detectados.
-- (Se rechazó otra vez la quiniela PAGA / cupón pago: la versión gratuita, sin compra, sí se arma — #930.)
-
-### 928. Sorteo: PREMIO EXTRA ($100.000 en 10 ganadores cada 100 clientes con 2+ cargas) + "el formato cambia mes a mes" — SW v625, admin SW v188
-**Pedido (owner):** en los requisitos del sorteo: todos los que participan entran en $100.000 repartidos en 10 ganadores por cada 100 clientes con al
-menos 2 cargas en el mes; el formato del sorteo cambia mes a mes.
-- `raffleService`: `cfg.extra` {pool 100000, winnersPerGroup 10, groupSize 100, minDeposits 2}; `eligibleExtra` (clientes con ≥ 2 cargas reales del mes, sin
-  pruebas/regalos/bloqueados/staff); al cerrar el mes: k = floor(califican/100)×10 ganadores de $10.000 con `drawExtra` = verificable: sha256(mes:id),
-  ganan los valores más bajos (recalculable con la lista). Se guarda en `RaffleMonth.extra` (eligible, perWinner, winners con nombre tapado).
-- `publicStatus.extra`: califican hoy, premios que habría, mis cargas del mes / si ya entro, ganadores del último mes (tapados; "¡Vos ganaste!").
-- Pantalla: recuadro "🎁 Premio extra" + bases (regla con ejemplo 250 ⇒ 20) + "El formato del sorteo cambia mes a mes". Panel: ganadores del extra
-  por mes (para pagarlos). Probado con Mongo en memoria (`scratchpad/mdb/extra.js`): 250 califican ⇒ 20, sin la de 1 carga ni la de prueba, recalculable.
-
-### 927. Si un juego cae en Girox, la pantalla muestra la MARCA que lo abrió (sin el motivo técnico) — SW v624
-**Pedido (owner):** ocultar el aviso del motivo (#926) y que, al cargar, en vez de "Girox" se vea la plataforma desde donde se abrió (hasta configurar las APIs).
-- `favPlay`: el motivo queda sólo en consola; `VIP.ui._openBrand = _openingBrand()` (página abierta o la elegida) antes de caer en Girox.
-- `renderCasinoTabs`: la caja de marca de la barra del casino toma logo/nombre de `brandOf(_openBrand)` (PICA ROJA / Ganamos / JUGAYGANA); se limpia al cerrar.
-- ui.js: "Ya entraste a <marca> con tu cuenta…" (antes "Girox" + gameStep); burbuja sin "1GIROX".
-- Revisión completa: sintaxis de todo, login (6 casos), menús, 484 handlers del index, panel (3 roles), retiros (3), bloqueo por saldo,
-  sorteo y Gran Sorteo (Mongo en memoria), landing, 401 botones de las 3 páginas + caída en Girox con su marca, 109/109 juegos contra el
-  catálogo real. Todo OK. (La apertura real de juegos/deportes necesita sesión de 1girox: la prueba el owner.)
-
-### 926. Diagnóstico: aviso con el motivo cuando un juego no abre directo — SW v623
-**Owner:** desde los favoritos el juego abre directo (pestaña aparte con la cruz, sin Girox) pero "desde las plataformas aparece Girox". Las claves y el
-pedido son idénticos (mismo favPlay, mismo /api/platform/session, sin filtro de juegos) ⇒ depende del juego (p. ej. lobbies). `favPlay` ahora muestra
-"<juego> no abrió directo (<gameStep>)" y lo deja en consola, para corregir juego por juego con el dato real de 1girox.
-
-### 925. PICA ROJA: Proveedores arriba y sin "Ver más (60)" — SW v622
-**Pedido (owner, captura):** subir Proveedores y sacar lo último ("Ver más (60)"). Ahora va después de las portadas y antes de Casino lobby, como fila
-deslizable con todos (`_providers(list, true)`). Recorrido de botones: 401 tocados, 0 errores.
-
-### 924. Inicio del menú completo: los servicios con el formato de 4 del básico — SW v621
-**Pedido (owner, captura):** "este formato de 4 del básico replicalo en el inicio del completo, ocupa mucho". `#entryServices` (las 4 tarjetas grandes
-`ev-svc`) se reemplazó por una copia de `.bv-quick` del básico (Misiones · Reembolsos · Referidos · Ruleta diaria, mismas funciones). Ningún JS usaba
-las clases viejas. (Se rechazó armar una quiniela/lotería propia con compra de números: sería una lotería sin licencia.)
-
-### 923. Revisión de punta a punta + deportes DIRECTO (sin la página de Girox) + carga con el logo de cada marca + cartel claro de cambio de plataforma + fotos propias de JUGAYGANA + seguridad — SW v620
-**Pedido (owner):** revisar todo; avisar claro que no se puede cambiar de plataforma con saldo (jugar o retirar); revisar seguridad; juegos y deportes
-que entren logueados como los favoritos de PICA ROJA y sin que se vea Girox ("100% independientes"); en Ganamos las fotos de Girox, en JUGAYGANA las
-suyas; sacar los "juegos especiales de Girox"; que al cargar un juego aparezca el logo de la plataforma. Mañana manda zips de fotos y una 5ª: Buffalo.
-- **Deportes directo:** la web de 1girox abre /sports y /sports-new como el juego `1140` (launcher `onyx`) y /sports-2 con `player/sports/gr8/launch`.
-  `/api/platform/session` acepta `game: '/sport/onyx' | '/sport/gr8'` (con `direct:true`): mismo canje de sesión que los slots y pide esa URL ⇒
-  `directGame` (pantalla completa, sin Girox). Si 1girox no la da, cae en Girox logueado (/sports-new o /sports). Lobby: `sports[].key`; `sport()` usa
-  `VIP.home.gamePlay` (= favPlay). (Digitain se arma con un script externo de bookiewiseapi: no se usa.) NO probado con sesión real (no hay acceso).
-- **Juegos:** las 3 páginas abren con `VIP.home.gamePlay` = `favPlay` (lo mismo que los favoritos). Verificado contra el catálogo real: los 109 juegos
-  y lobbies de las páginas resuelven id + launcher. Recorrido automático: 398 botones tocados en las 3 páginas (todas las secciones) + sorteo, 0 errores.
-- **Carga con el logo:** `_gameLoadingScreen` (ventana del juego) con logo, colores y spinner de la marca abierta (PICA ROJA / Ganamos / JUGAYGANA / Girox).
-- **Cambio de plataforma:** `_brandLockModal` (cartel: cuánto saldo y dónde, "Ir a jugar" / "Retirar mi saldo" / "Entendido") en vez de un toast;
-  nota fija "🔒 para cambiar, tu saldo tiene que estar en $0" debajo de los selectores (básico y completo); texto del 409 más claro.
-- **JUGAYGANA con sus fotos:** `images/jugaygana/games/` (57 archivos, su `custom_image` o miniatura, guardadas acá con la extensión real).
-- **Ganamos:** sin "Especialmente para vos" (eran los más jugados de Girox).
-- **Seguridad:** nombres de proveedores (vienen de 1girox) dentro de `onclick`: `esc(x).replace(/'/g,'')` no servía (el &#39; vuelve a ser comilla al
-  ejecutarse) ⇒ `jsq()` saca comillas/barras/<>& antes. Revisadas las rutas nuevas (auth/admin, validación de marca, sorteo sólo ganadores, proxy de
-  imágenes con host fijo). Las claves de juego que llegan al server ya se validan con `_FAV_KEY_RE`.
-
-### 922. Sorteos minimizables (1ª vez abiertos), plataforma elegida al instante, saldo arriba en el básico, Ganamos con la barra real de ganamos.net y Deportes como selector chico — SW v619
-**Pedido (owner, capturas):** minimizar el sorteo y ver el puesto; la primera vez abierto y después minimizado ("Ver más"); fichas del básico como las del
-completo, que se vea la elegida y que el menú cambie al toque; subir el saldo del básico (había espacio de más); sacar de Ganamos Deportes/Depósito/
-Retiro/Chat; la barra de abajo de Ganamos igual a ganamos.net; Deportes en ninguna página como pantalla: las dos de Girox chiquitas para elegir y abrir directo.
-- `raffle.js`: `_minState(key)` = 1ª vez abierto (`<key>_seen` en localStorage), después minimizado; lo que toque vale en la sesión (sessionStorage).
-  Inicio: botón "–" y línea "🏆 Mensual: Vas N° · Gran: Vas M°" (o "Empieza en…") con "Ver más ▾"; recuadros de las páginas igual.
-- home.js `_repaintChosen()`: al elegir plataforma se marca AL INSTANTE (antes esperaba al server) en las tarjetas del completo, las fichas del básico
-  (ahora con círculo de elegida y RECOMENDADO en Girox), pestañas, JUGÁ AQUÍ y "Menú X directo"; si el server la rechaza, vuelve atrás.
-- Básico: el saldo va justo debajo de Nivel/Racha y los sorteos debajo del saldo (márgenes chicos).
-- Ganamos: barra = la de su bundle (`.main-mobile-menu` → `css/ganamos-nav.css`, fondo con el hueco de la mascota, brillo `menu-active.webp`, íconos
-  SVG originales en `GN_IC`): Deporte · Sorteos (en el lugar de Polymarket, que es de su sistema) · [mascota = Inicio] · Casino · Casino en vivo.
-- `sportsMenu()`: Deporte/Deportes abre un menú chico con las 2 de Girox (Deportes / Deportes 2) que abre directo (`sport(path)`); `go('deportes')` ya no
-  muestra la pantalla grande en ninguna página. Probado: elegir ⇒ POST /api/platform/session {game:'/sports'}.
-
-### 921. GRAN SORTEO por puntos con EXTRAS por actividad y misiones + botones del sorteo encuadrados — SW v617, admin SW v187
-**Pedido (owner):** el Gran Sorteo (auto $30.000.000 · viaje al Caribe para 2 · USD 2.000) también por puntos, más extras: +10 puntos por cada día
-con una carga de $10.000 y +10% de los puntos de la semana si completan las misiones semanales; "la actividad es importante". Y "encuadrá bien" los
-botones del sorteo del Inicio (se salían por la derecha).
-- `raffleService.computeGran` (en el mismo tick, `RaffleScore` con monthKey `G:<clave>`): base = suma de los puntos del sorteo mensual de los meses
-  del período · días activos = días (ART) con cargas reales que suman ≥ `dailyMinArs` ($10.000) × `dailyPoints` (10) · misiones = por cada semana
-  (lunes ART, `MissionClaim` credited) +`missionPct`% (10) de los puntos de ESA semana (stats de 1girox de la semana, misma regla de plata real).
-  Se guarda el desglose (basePoints, dailyPoints, missionPoints, activeDays, missionWeeks). Cierra al día siguiente del fin (ganadores 1-2-3,
-  idempotente). Período por defecto (el owner no lo dio): **1/11/2026 al 31/1/2027**, editable en el panel (con los extras).
-  Probado con Mongo en memoria (`scratchpad/mdb/gran.js`): 3 días ≥ $10.000 (dos cargas de $6.000 el mismo día cuentan; $5.000 no) y 10% de la semana.
-- `publicStatus.gran` + pantalla: cuenta regresiva, trofeos, cómo sumar (3 líneas), mi puesto/puntos con desglose, top 10 tapado, bases detalladas.
-- Los extras van SÓLO en el Gran Sorteo; el mensual sigue sólo por lo apostado.
-- CSS: `.rf-entries` con border-box y textos con "…" (no se salen del ancho).
-- (owner, capturas): los dos sorteos van UNO AL LADO DEL OTRO, chicos (recuadro individual, texto adentro), en el INICIO del menú completo
-  (`#entryView`, salieron de `#homeFull` = cargas), del básico y del intermedio. Las 4 plataformas en UNA línea, cuadradas y más chicas
-  (`#basicPlats` y `#platformsButtons`, grid de 4). SW v618.
-
-### 920. Casino lobby, Volver, saldo y sin perfil en las páginas; sorteo minimizable (también en Girox) con fotos y podio; plataformas con sus colores; JUGÁ AQUÍ abre la elegida; burbuja movible — SW v616
-**Pedido (owner, varios mensajes):** sección "Casino lobby" con los lobbies de Girox en todas; "Volver" en cada sección; logo de JUGAYGANA (el de su
-barra) en los logos chicos; selector de plataforma (completo y básico) prolijo con los colores de cada una (Ganamos violeta, JUGAYGANA negro y
-amarillo, PICA ROJA rojo y blanco, Girox negro y verde); sorteos arriba en completo y básico (uno con el iPhone, otro con el auto, ambos desde
-noviembre); el detalle de ganadores con el estilo de la app; fotos premium de los premios; PICA ROJA oficial = Stake pero con colores/letra/íconos
-de la app; ninguna página con perfil, sólo juegos; el saldo como figura en cada original (PICA ROJA = la tira de saldo del Inicio); el sorteo abierto
-pero minimizable (minimizado = el puesto); el sorteo también en Girox; la burbuja de Carga rápida movible como en Girox, avisando al entrar; JUGÁ AQUÍ
-con el logo de la elegida y abriendo esa; en Ganamos, la burbuja y la barra Instalar app no tapan el menú.
-- Server: `/api/games/lobby` suma `lobbies` (búsqueda "lobby" en el catálogo de 1girox: 12 hoy — Live Casino/Blackjack/Baccarat Lobby de
-  Pragmatic, Ezugi, VivoGaming, Evolution…). Verificado contra el catálogo real que los 97 juegos de Ganamos/JUGAYGANA resuelven id + launcher para
-  abrirse directo (`_gameLaunchMeta`), igual que los de Girox.
-- `lobby.js`: Casino lobby (PICA ROJA fila, Ganamos carrusel, JUGAYGANA colección); vista `lobbies`; `_backBar()` en Slots/Todos/categorías/En
-  vivo/Deportes/Lobby; sin menú de cuenta (PICA ROJA: 5° botón = Lobby; JUGAYGANA sin hamburguesa); saldo en la barra (Ganamos caja violeta,
-  JUGAYGANA pastilla amarilla) y en PICA ROJA un clon de `#homeFull .balance-strip`; burbuja `#prlQl` arrastrable (posición en
-  `vip_prl_ql_pos`, mismo código que la de Girox) + toast "se puede mover" en cada entrada.
-- `raffle.js`: recuadro con botón "–" (minimizado: "Vas N° · X pts" / "Empieza en…", `localStorage vip_rf_min`), ilustraciones propias de los
-  premios (`images/sorteo/premios/*.svg`: iphone, orden, fichas, auto, viaje, usd), podio 2°·1°·3°, Gran Sorteo con "Empieza en"; sorteo con el
-  estilo de la app (tokens --p-*). `#casinoRf` en el casino de Girox. z-index del sorteo 100000 (arriba del casino 99999).
-- home.js: `platTap` abre la elegida; `_paintPlatNav` en cada cambio (`data-plat` ⇒ borde con el color); logo de JUGAYGANA `io/logo.webp`.
-- CSS: tarjetas de plataforma por marca (variables --pb-*), PICA ROJA oficial con tokens de la app, instalar app = padding (sin hueco).
-- Limpieza: borradas las portadas provisorias de JUGAYGANA (`b1-b3.svg`, `logo.svg`, sin referencias).
-- ⚠️ Pendiente del owner: cómo se gana el Gran Sorteo (período y forma). Hoy se muestra "Empieza en noviembre · bases se publican antes".
-
-### 919. Sorteo: premios nuevos, compacto con 3 trofeos, bases desplegables y arranca en NOVIEMBRE — SW v615
-**Pedido (owner):** sorteo 1 = 1° iPhone 18 Pro Max · 2° orden de compra $1.000.000 en supermercado · 3° $500.000 para jugar en la plataforma que
-quieras; más chico y con recuadro; al abrir, poco texto: ranking y premios con 3 trofeos; bases abajo para desplegar; empieza en noviembre (octubre
-no vale) con "empieza en" y la cuenta regresiva.
-- `raffleService`: premios nuevos en DEFAULT_CONFIG y `startMonth: '2026-11'`; antes de esa fecha el cron no calcula ni cierra nada y
-  `publicStatus` devuelve el mes de inicio con `notStarted` + `startsAt`. Probado (Mongo en memoria): octubre ⇒ skipped; noviembre suma; 1/12 cierra.
-- `raffle.js`: recuadro compacto `stripHtml(brand)` (cuenta regresiva + 3 trofeos dibujados oro/plata/bronce, colores de la marca) arriba de las
-  3 páginas (reemplaza las imágenes anchas, que en el celular se leían en 9 px); pantalla: Empieza en / Termina en + trofeos · mi puesto en una
-  línea · ranking · Gran Sorteo · "📜 Bases y condiciones" plegado. Botón del Inicio: "Empieza en N días y H h". Cuenta regresiva global (1 s).
-- Las imágenes `images/sorteo/*.svg` quedan como piezas para redes (ya no las usa la app).
-
-### 918. JUGAYGANA con el formato 100% de jugaygana.io + "Instalar app" ya no tapa el menú de Ganamos — SW v614
-**Pedido (owner, con capturas de jugaygana.io):** "respetá el formato de JUGAYGANA 100% (el orden de los juegos después lo damos), el sorteo nuevo
-arriba (también en Ganamos y PICA ROJA), sacá el Cargar de arriba, el menú como Ganamos, y que la barra Instalar app no tape lo de abajo".
-- Barra de categorías del inicio (componente `CategoryNav` de su bundle): INICIO · TORNEOS · NUEVO · DESTACADOS · RULETAS · JACKPOTS · MEGAWAYS ·
-  JUEGOS DE MESA · BINGO · COMPRA DE BONOS · HABILIDAD con SUS íconos SVG (en `data/jugaygana-home.json` → `catnav`), fija al subir. Igual que en
-  su página: TORNEOS ⇒ nuestro sorteo; NUEVO ⇒ catálogo de 1girox `sort=newest` (nuevo parámetro `sort` en `/api/games/catalog`); DESTACADOS ⇒
-  populares; el resto ⇒ su misma búsqueda (roulette, jackpot, megaways, blackjack, bingo, bonus, crash) sobre Girox.
-- Tarjetas como `home-game-card` (nombre abajo con degradé), flechas ‹‹ ›› por fila, "Mostrar Todo" en degradé #1a1a1a→#f2ce00, la colección
-  de Halloween con su fondo y su arte (`io/hw-bg.webp`, `io/hw-art.webp`, achicados de 4,5 MB a 50 KB), hamburguesa amarilla (abre Mi cuenta),
-  botón amarillo de volver arriba. Orden final: sorteo · carrusel · buscador + Proveedores · categorías · Eventos deportivos · colecciones ·
-  Casino en Vivo · portadas.
-- `body.has-install-bar .prl, .rf { bottom: 64px }`: con la barra "Instalar app" visible, las páginas y el sorteo terminan encima de ella.
-- (La fila "$0 · Cargar" de PICA ROJA / Ganamos de las capturas ya no existe desde #917.)
-
-### 917. 🏆 SORTEO MENSUAL por puntos (transparente) + Gran Sorteo "próximamente" + soporte de entrega de premios; menú con el nombre de la plataforma — SW v613, admin SW v186
-**Pedido (owner):** sorteo mensual con ranking (nombres tapados) para los clientes ACTIVOS de la app: 1° auto valorado en $10.000.000, 2° iPhone 18
-Pro Max, 3° $500.000; puntos: 100 cada $100.000 apostados SÓLO con plata real (no bonos), datos de Girox; ganador el día 1 en el menú completo;
-botón en el Inicio para ver el puesto y cuánto falta para el 1°; todo detallado (hasta cuándo suma, cuándo se entrega); premios cobrables en
-efectivo con un soporte exclusivo de entrega; otro sorteo "próximamente" (auto $30.000.000, viaje al Caribe para 2 todo incluido 5 días, USD 2.000);
-banners modernos con el estilo de cada página, arriba (como Ganamos); en Ganamos sólo esos dos sorteos. Además: "Menú <plataforma> directo",
-sin "Próximamente" en las plataformas, sin la fila de saldo/Cargar arriba de las páginas.
-- **Regla de puntos** (`src/services/raffleService.js`): 1girox informa apostado total y bonos recibidos, no con qué saldo se apostó ⇒
-  válido = apostado × cargas reales ÷ (cargas reales + bonos) del mes; puntos = válido / 1.000. Participan clientes (role user, no bloqueados, sin
-  cuentas de prueba) con carga real `completed` en el mes (sin "PRUEBA" ni regalos). Suma del día 1 00:00 al último día 23:59:59 ART. Empate: más
-  válido, después quien llegó antes (updatedAt sólo cambia si cambian los puntos). Probado con Mongo en memoria (`scratchpad/mdb/raffle.js`).
-- Modelos `RaffleScore` (mes+cliente, $set idempotente) y `RaffleMonth` (open/closed, ganadores congelados, contacto y entrega; 'lock' = candado
-  entre instancias). Cron `_raffleTick` cada 20 min: el día 1 cierra el mes anterior (idempotente) y recalcula el actual; NO corre con el casino
-  simulado (Render comparte la base). Rutas: `GET /api/raffle`, `POST /api/raffle/contact` (sólo ganadores: mensaje 🏆 a Soporte + contactAt),
-  `GET /api/admin/raffle`, `POST /api/admin/raffle/:mk/delivered`, `POST /api/admin/raffle/config` (Config 'raffleconfig'), `POST /api/admin/raffle/recalc`.
-- App: `public/js/raffle.js` (pantalla del sorteo con el estilo de la marca: cuenta regresiva, mi puesto/puntos/válido + la cuenta explicada,
-  premios, ranking top 20 tapado, ganadores, soporte de entrega, bases, Gran Sorteo próximamente); botón "🏆 Sorteo mensual" arriba en los menús
-  completo, intermedio y básico (con "Vas N° · X pts · te faltan Y"); banners `public/images/sorteo/<marca>-active|upcoming.svg` arriba de las 3
-  páginas; Ganamos sin las promos de torneos; pestaña Sorteos ⇒ el sorteo. Panel: sección 🏆 Sorteo mensual (ranking real, ganadores, entrega, premios).
-- Menú: "Menú <plataforma> directo" (`_brandName`/`_paintBrandLabels`); JUGAYGANA y Ganamos ya no figuran "Pronto" en ningún lado; páginas sin la
-  fila de saldo/Cargar (JUGAYGANA y Ganamos mantienen su barra con el logo). Girox queda como está (el owner integra su página).
-
-### 916. 🟡 JUGAYGANA igual a jugaygana.io (marca propia): banners, orden de colecciones y juegos por proveedor — SW v612
-**Pedido (owner):** "copiá todo de jugaygana.io, que es mía también" (jugaygana44.bet está caída). jugaygana.io es una app Vue (Laravel) cuyo
-API público `admin.jugaygana.io/api/` da: `sliders?page=home` (11 banners, 16:9 en el celular), `games/collections` (7 colecciones en orden:
-Juegos más populares, Juegos De Halloween, Seleccionados, RubyPlay, Nuevo, Crash, Casino; 2 filas c/u) y `frontend-flags` (sin barra de abajo).
-El componente Home (chunk Home-DAyU_Uf0) fija el orden en el celular: carrusel · buscador + Proveedores · Eventos deportivos · colecciones ·
-Casino en Vivo (4 imágenes) · portadas Casino / Casino en Vivo / Eventos deportivos. Colores: #101010, #121212, acento #f2ce00, Exo 2.
-- Imágenes en `public/images/jugaygana/slides/` (s1..s11 en su orden) e `io/` (logo, Casino en Vivo, portadas).
-- Juegos: cruzados con el catálogo público de Girox por NOMBRE y PROVEEDOR (sólo puede cambiar el sufijo de RTP: "Volcano Rising 88" =
-  "Volcano Rising 96", mismo juego de RubyPlay con otra versión de pago). `public/data/jugaygana-home.json`: populares 11/21, Halloween 9/11,
-  RubyPlay 18/20, Nuevo 6/20, Crash 19/20, Casino 1/15; Seleccionados 0/20 (todo Amigo Gaming) NO aparece. Sin equivalente en Girox: Amigo Gaming,
-  Pascal, Dreamplay, Mancala, Spinmatic, TaDa, 7777, Pop Ok, Red Tiger, IGT. Script: `scripts/jugaygana/map-to-girox.js`.
-- `lobby.js`: layout 'jugaygana' (`_jgHome`, carrusel cada 5 s, hoja de Proveedores con los de Girox). Las portadas provisorias #912 ya no se usan.
-
-### 915. Ganamos con el ORDEN EXACTO de sus juegos y cada juego con su proveedor — SW v611
-**Pedido (owner):** "respetá el orden de cada uno; cada proveedor tiene que tener su juego correspondiente, si no me puede traer problemas".
-- El inicio de Ganamos arma sus filas con LISTAS FIJAS en el bundle (Gz Primicias, Oz Rubyplay, Vz Amusnet, Zz Pragmatic, Nz Amigo, jz XPG,
-  Dz/Yz/Lz Destacadas/Joker/Clásicas —versión del usuario común, no RGS—, Bz Pragmatic Live, DF los 3 juegos grandes). Se extrajeron en orden y
-  se buscó cada juego en el catálogo público de 1girox: entra sólo si coincide NOMBRE y PROVEEDOR (se acepta únicamente el sufijo de RTP,
-  "Volcano Rising SE" = "Volcano Rising SE 96" de RubyPlay). Nunca se reemplaza por otro juego. Resultado en `public/data/ganamos-home.json`
-  (61 juegos): Rubyplay 9/9, Amusnet 8/11, Pragmatic 11/11, Destacadas 9/21, Joker 9/14, Clásicas 13/19, Pragmatic Live 2/10, juegos grandes 1/3
-  (Gana Volcano). Sin equivalente en Girox (filas que NO aparecen): Primicias (Mascot/Winfinity/RubyPlay nuevos), Amigo Gaming, XPG, 123slots,
-  Exclusivo de Ganamos, AI Generated. "Especialmente para vos" en Ganamos es personal (su API): acá = los más jugados de Girox.
-- Para regenerar si Ganamos cambia sus listas: scripts del scratchpad (gnx.py + gnmap.js) — extraer con el bundle nuevo y volver a cruzar.
-- JUGAYGANA: jugaygana44.bet no sirve sus archivos (CloudFront "Error", pantalla en blanco para todos): no se pudo leer su orden.
-
-### 914. 🟣 Página GANAMOS (picaroja.com/ganamosoficial) + barra de Girox y Carga rápida en las tres páginas — SW v610, admin SW v185
-**Pedido (owner):** Ganamos (marca propia, ganandoargentina.com) "idéntica de punta a punta" con los juegos y la cuenta de Girox por ahora;
-sorteos "Próximamente" hasta tener la API; link /ganamosoficial; en TODAS las páginas la barra de arriba de Girox (Volver · Menú · marca ·
-Historias · Info · Perfil) y la Carga rápida (mismo CBU, cargas y retiros) con el logo de cada marca; Soporte = el de PICA ROJA; Ganamos de la
-app (menú completo, básico, Inicio) abre esta página.
-- Leído de su bundle (ganandoargentina.com/assets): orden del inicio mobile (`home-mobile`), barra de abajo (`main-mobile-menu`: Deporte ·
-  Polymarket · [mascota = Inicio] · Casino · Casino en vivo), textos ("Diversión sin límites", "Especialmente para vos", "Primicias Ganamos",
-  "Tragamonedas Destacadas/Del Joker/Clásicas"…), colores (#130227, degradé #320548→#1f073a, #8B00C9) y las imágenes (logo, mascota, Casino,
-  Casino en vivo, halos, 4 portadas de torneos) ⇒ `public/images/ganamos/`.
-- Lo que en su página es de SU sistema (juegos exclusivos, AI Generated, Polymarket, torneos/sorteos, widget de eventos) acá NO se inventa: las
-  portadas de torneos van con "PRÓXIMAMENTE" y la vista Sorteos lo explica; Polymarket ⇒ "Sorteos" en la barra. Las filas por proveedor se
-  arman con el catálogo de Girox (RubyPlay, Amusnet, Pragmatic, Amigo Gaming, XPG, Pragmatic Live; Joker/Clásicas por búsqueda) en carrusel de a 4.
-- `home.js`: `casinoBarHtml(o)` (la barra del casino, misma salida que antes — verificado byte a byte) la usan las páginas; `toggleCasinoLoad`
-  se abre sobre la página si no hay juego abierto; DOORS/BRANDS + 'ganamos' (deja de mandar a ganamosvip.me).
-- `lobby.js`: z-index de la página 99990 (DEBAJO del casino 99999: el juego abre arriba y "Volver" vuelve a la página; los toasts 100002 se
-  ven), `body.casino-open` mientras está abierta (modales arriba). **Bug arreglado:** `close()` buscaba `#prlLobby` (no existe) ⇒ "Volver a la
-  app" nunca cerraba la página desde #907.
-- Server: `/ganamosoficial` ⇒ `/?gn=1`; `_BRANDS`/`User.activeBrand` + 'ganamos'; botón 🏷️ del panel con opción 4.
-
-### 913. 🏷️ Panel → Usuarios: botón para cambiar la MARCA activa de un cliente (sin tocar el saldo) — admin SW v184
-**Pedido (owner):** "sacale el saldo a PICA ROJA porque no puedo ver JUGAYGANA" (diego651917). No hace falta mover fichas: es la misma cuenta.
-`POST /api/admin/users/:id/brand` (sólo admin general; queda en `brandHistory` y en el log) + botón 🏷️ en la fila del cliente (`adminSetBrand`).
-El bloqueo por saldo sigue para el cliente; el admin lo saltea. La app lo toma al recargar las plataformas (cerrar y abrir).
-
-### 912. 🟡 Página JUGAYGANA (picaroja.com/jugaygana) — misma página que PICA ROJA, juegos y cuenta de Girox, estilo negro/amarillo — SW v609
-**Pedido (owner):** "replicá lo mismo con el link /jugaygana, al estilo de jugaygana44.bet (es mía), idéntica: logo, orden, proveedores, menú,
-portadas y deslizante; usá todo de Girox, igual que la última". jugaygana44.bet es una app React que a cualquier pedido automático le devuelve
-el index vacío (no se pudo leer su JS/CSS ni sus portadas): se armó la base con el logo de la app y portadas PROVISORIAS; para dejarla idéntica
-hacen falta capturas y los archivos de sus portadas (se le pidieron al owner).
-- `lobby.js`: SKINS (picaroja | jugaygana); `open(view, skin)` rearma la página si cambia la marca; `?jg=1` la abre (pasa por openPlatform ⇒
-  respeta el bloqueo por saldo). Imágenes `public/images/jugaygana/` (logo.svg, icon.svg, b1-b3.svg). CSS `.prl-jyg`.
-- home.js: DOORS {picaroja, jugaygana} = puertas a Girox (al server va 'girox'); BRANDS {picaroja, girox, jugaygana}; `localStorage vip_brand`.
-  La plataforma 'jugaygana' del server (sin API) se muestra conectada y abre la página. ⚠️ Si algún día se conecta la API REAL de JUGAYGANA,
-  sacar 'jugaygana' de DOORS (si no, la app seguiría mandando sus cargas a Girox).
-- Server: `/jugaygana` ⇒ `/?jg=1`; `_BRANDS` y `User.activeBrand` aceptan 'jugaygana' (Mis cargas y bloqueo por marca).
-
-### 911. Página PICA ROJA: juegos de a 4 por fila (Inicio y Slots), 8 visibles por sección — SW v608
-**Pedido (owner):** "achicá los juegos, que entren 4 por fila, así se ven más". También pidió mostrar "cuánta gente juega" cada slot copiando
-números de Stake o estimados: NO se hizo (serían cifras falsas presentadas como reales a los clientes); se le ofreció un contador REAL.
-
-### 910. Proveedores de la Página PICA ROJA con el NOMBRE legible — SW v607
-**Pedido (owner):** "en los logos de proveedores que se vea el texto, se tiene que entender". Los logos que da 1girox son casi todos ÍCONOS
-(sin el nombre); en blanco quedaban manchas. Ahora: ícono chico en gris + nombre del proveedor en texto blanco (hasta 2 líneas).
-
-### 909. 🎨 Página exclusiva PICA ROJA con estilo Stake (azul noche, sobria) y orden de juegos de Girox · menú de cuenta — SW v606
-**Pedido (owner, con capturas de Stake):** fondo, títulos y recuadros "tipo Stake", orden de juegos de Girox, logo de PICA ROJA sin color,
-creativos propios sobrios, proveedores con su logo en gris (se despliegan y llevan a sus juegos), barra de abajo estilo Stake con INICIO al
-centro, más grande y con una pica; un MENÚ con el perfil (saldo, nivel y rango) y Soporte adentro (salió de la barra).
-Se tomó el ESTILO visual (colores, recuadros, títulos con ícono y ›, "Ver más" con línea), sin logos ni nombre de Stake.
-- Creativos: `public/images/picaroja/b1-b3.svg` (Página exclusiva / En vivo / Deportes, 1200×560) y `logo-mono.svg` (pica blanca).
-- Server: el catálogo trae `logo` de cada proveedor (`https://1girox.com/img/providers/<x>.webp`); `/api/games/img` acepta esa ruta exacta
-  (`_GAME_IMG_HOST`). Los logos se ven en blanco con `filter` (CSS).
-- `lobby.js`: cabecera (pica + PICA ROJA, saldo + Cargar, botón ☰), portadas, franja de Proveedores (8 + "Ver más"), buscador, secciones de a 3
-  (6 visibles + "Ver más" de a 6; título con › abre el proveedor), vistas Slots (todos, carga al bajar), En vivo, Deportes; barra Slots · En vivo ·
-  [♠ Inicio] · Deportes · Menú; menú lateral: usuario, saldo (Cargar/Retirar), nivel y rango con barra de progreso (`/api/vip/status`),
-  Soporte, Mi perfil, Volver a la app; botón "volver arriba". Paleta fija `--prl-*` en `.prl` (la página es siempre oscura).
-
-### 908. 🔒 Plataforma ACTIVA (PICA ROJA o Girox): con saldo en una, la otra bloqueada · "Mis cargas" del perfil por plataforma — SW v605
-**Pedido (owner):** "si eligen Girox, saldo Girox y la otra anulada hasta gastar el saldo; lo mismo con PICA ROJA; usa el mismo panel pero que
-la gente no lo vea; en el perfil, las cargas de PICA ROJA, no todas". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es
-siempre el real y siempre se puede retirar.
-- `User.activeBrand` ('picaroja' default | 'girox') + `brandHistory` [{brand, since}]. `GET/POST /api/me/brand`: pasar a la otra sólo si el
-  saldo real (girox.getUserBalance) es < `BRAND_LOCK_ARS` ($100); si no, 409 "Tenés $X en PICA ROJA. Para jugar en Girox, usá ese saldo o
-  retiralo primero". `GET /api/me/deposits`: cargas reales del cliente marcadas con la plataforma en la que estaba al cargar (`_brandAt`), sólo
-  las de la activa (no se tocó ningún camino de carga).
-- App: `_syncBrand` (en loadPlatforms) y `_brandGuard` en setPreferred, entrySwitch y openPlatform elegido por la persona (los ingresos internos
-  a Girox de la Página exclusiva pasan `embed` y no se bloquean). Perfil: "🧾 Mis cargas en <plataforma>".
-Probado: Mongo en memoria (bloqueo con $25.000, cambio con $50, cargas separadas) y jsdom (aviso y perfil).
-
-### 907. ♦️ PÁGINA EXCLUSIVA PICA ROJA (picaroja.com/paginaoficial): lobby propio con TODOS los juegos de Girox — SW v604
-**Pedido (owner):** "agregar donde está Jugaygana la plataforma PICA ROJA armada en base a Girox, con todos los juegos de Girox de punta a punta
-(abre el link de cada juego y entra logueado), fotos de PICA ROJA, 'página exclusiva', deslizantes, premium y sencilla; en deportes los dos de
-Girox entrando como Girox; predeterminada en el menú completo, básico e Inicio; un link /paginaoficial; barra abajo: Inicio, En vivo,
-Deportes, Soporte". NO se copió el diseño ni la marca de Girox (ni de ganamos.net: se le explicó al owner que confundiría al cliente).
-- Server: `_gameCatalog(q, page, providerId)` (el catálogo público de 1girox acepta `provider_id`; trae `providers`); `GET /api/games/lobby`
-  (populares 36, nuevos, 8 proveedores principales y los de EN VIVO —slug evolution/live/ezugi…— 24 c/u, y los 2 deportes de Girox `/sports`
-  y `/sports-new` — salen del bundle de 1girox.com: "Deportes" y el otro), cacheado 10 min, sin gastar la Partner API. `/api/games/catalog`
-  acepta `provider` y hasta la página 400. `GET /paginaoficial` ⇒ `/?pr=1` (antes del vanity `/:code`). Probado contra el catálogo real
-  (8.137 juegos; KA Gaming, Pragmatic, Hotdog, Amusnet, Spinoro, Amatic, BGaming, 1Spin4Win; en vivo Evolution).
-- App: `public/js/lobby.js` (`VIP.lobby`): cabecera (logo, "Página exclusiva", saldo), 3 portadas propias (CSS), buscador, deslizantes,
-  "Todos los juegos" con carga al bajar y por proveedor, En vivo, Deportes (`casinoGoTo` / `_casinoGamePath` ⇒ Girox logueado; ui.js acepta
-  `/sports-new`), barra de abajo Inicio · En vivo · Deportes · Cargar · Soporte. Cada juego = `VIP.home.gamePlay` (= favPlay con nombre ⇒
-  `/api/platform/session` direct ⇒ el juego en pantalla completa logueado).
-- Plataforma "PICA ROJA" SÓLO en la app (`_injectPR` en loadPlatforms): primera y predeterminada (salvo `localStorage vip_pr_off='1'` si
-  eligen otra); `setPreferred('picaroja')` le guarda 'girox' al server ⇒ cargas, retiros, bonos y cierres SIN cambios. `openPlatform('picaroja')`,
-  la pestaña del Inicio y "Girox directo" abren la página.
 
 ### 906. 📎 "Comprobante no válido": pide TODOS los datos completos y visibles en la foto
 **Pedido (owner):** "en el comprobante no válido que diga que se vean los datos completos en la foto". Nuevo default de `/sys_sq_comprobante`

@@ -122,7 +122,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **#659 (owner 2026-10-20): TODOS los regalos van con el ROLLOVER GLOBAL (`Config['bonusRolloverX']`, ×5; panel → Estrategia →
   rollover): bonos de carga, fueguito, ruleta, misiones, código de bienvenida, extra por instalar, REEMBOLSOS (los tres períodos y el
   acumulativo), bono de nivel VIP y rakeback. ÚNICA excepción: comisiones de REFERIDOS, retirables sin apostar (multiplier 0).
-  **#882/#883:** TODA carga real (hgcash y manual) va con rollover propio ×`Config['depositRolloverX']` (3) en `_depositWithBonus`; el bono ×5.
+  **#882/#883 → #976:** TODA carga real (hgcash y manual) va con rollover propio ×`Config['depositRolloverX']` (**1** desde 2026-10-24, antes 3) en
+  `_depositWithBonus`; el bono ×5. Retiro mínimo `Config['withdrawMinArs']` $5.000 (#976). Registro abierto (`noWelcomeGifts`): sin fichas gratis ni 2ª
+  carga hasta 5 cargas reales (`retentionJourney.TRUST_DEPOSITS`); desde la 5ª entra a toda la estrategia, sin regalo especial (#977).
   Devoluciones de retiro rechazado: libres (no pasan por ahí). Un flujo nuevo de carga real tiene que usar `_depositWithBonus`.
   El texto de abajo describe el estado anterior (regalo directo ×0) y sigue valiendo sólo para referidos.
 - **Regalos = BONO 0 "regalo directo" (2026-09-07, v1.10+):** reembolsos, ruleta,
@@ -193,19 +195,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   (default false; panel → COMANDOS). Sin flag no hay cartel ni claim; lo ya reclamado se honra. El
   cartel dorado y las tarjetas del modal Info se ELIMINARON de la PWA. `/sys_install_app` es neutro
   (sin regalo) y una migración al boot pisa el texto viejo con "$5.000".
-- **PÁGINA EXCLUSIVA PICA ROJA (#907):** `public/js/lobby.js` + `GET /api/games/lobby` (catálogo público de 1girox) + `/paginaoficial`. La
-  plataforma 'picaroja' existe SÓLO en la app (`_injectPR`): al server SIEMPRE se le manda 'girox' (no agregarla al registro de plataformas
-  del server sin revisar cargas/retiros/cierres).
-  **#908:** `User.activeBrand` (picaroja|girox) = plataforma activa de la app; con saldo ≥ $100 no se cambia (`/api/me/brand`). Es la misma
-  cuenta de 1girox: nunca mostrar un saldo distinto del real ni trabar un retiro por esto.
-  **#912:** JUGAYGANA también es una PUERTA a Girox en la app (`DOORS` en home.js, página `/jugaygana`). Si se conecta la API REAL de
-  JUGAYGANA, sacarla de `DOORS` primero.
-  **#914:** Ganamos también es puerta a Girox (`/ganamosoficial`, diseño leído de ganandoargentina.com).
-  **#958:** BuffaloPlay = 5ª puerta (`/buffaloplay`, formato de thornet.uno; `buffaloplay-*.json`; va al lado de JUGAYGANA en los menús). Las páginas de marca van en z-index
-  99990 (debajo del casino 99999) y usan `casinoBarHtml` + `toggleCasinoLoad` (la Carga rápida de siempre).
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
-  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra SIEMPRE a Girox directo salvo que la persona haya elegido otro menú (#937: en la app INSTALADA, Girox siempre, elija lo que elija; el manifest manda `menu=girox`) (`localStorage vip_menu_user='1'` +
+  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra a Girox directo salvo que la persona haya elegido otro menú (#937: en la app INSTALADA, Girox; el manifest manda `menu=girox`; **#980: COMPLETO hasta la primera carga y Girox directo después**, flag `localStorage vip_has_dep`; el manifest marca "elegido" sólo con `&picked=1`) (`localStorage vip_menu_user='1'` +
   `vip_menu_pref` = 'easy'|'full'|'basic'|'girox'; ya no se pregunta al arrancar ni a los 10 min; #670: 'girox' = "Girox directo", modo play + casino embebido abierto al toque con Carga rápida y Retirar adentro; menús activos por panel `Config['menusEnabled']`, #635) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
   tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
   Carga automática (→ full). **mini (= SOPORTE desde #373; antes "Carga manual"):** se entra al CHAT
@@ -223,8 +215,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   `Config['vipLevelsConfig']` (panel → Niveles VIP → escalera), recargados por `vipLevels.refreshFromConfig`.
   Los idx se persisten en `User.vipLevel` y en las references `vip-lvl-*`: sólo agregar niveles AL FINAL.
 
-- **% EXTRA por instalar la app (#283/#290, 2026-10-17):** en la PRIMERA carga de un cliente sin la app se le
-  ofrece pct% (50%) de esa carga (tope) como EXTRA si la instala; queda como botón grande pendiente abajo hasta que reclame
+- **% EXTRA por instalar la app (#283/#290, 2026-10-17 → #974 MONTO FIJO):** en la PRIMERA carga de un cliente sin la app se le
+  ofrece `Config['installGift'].fixedArs` ($5.000; 0 = pct% con tope) como EXTRA si la instala; el bono de 1ª carga tiene TOPE propio
+  `Config['firstDepositCapArs']` ($15.000, 0 = libre) y `_welcomeAbuseOf` niega TODA la bienvenida (sin bloquear) si el teléfono / celular /
+  notificaciones ya están en otra cuenta; queda como botón grande pendiente abajo hasta que reclame
   desde la app instalada (`User.installGift`, rutas `/api/install-gift/*`, `Config['installGift']`, ref
   `vip-igift-<userId>`, Transaction `install_gift` — un tipo de regalo nuevo va SIEMPRE a
   `CASHBACK_GIFT_TX_TYPES`). Detalle: ARCHITECTURE Home 2.0 (#283).
@@ -294,6 +288,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#442:** `Config['bankOutage']` (banco con fallas): si está activa A MANO, `POST /api/withdrawal/request` responde 503 `BANK_OUTAGE`
   (#814: la alerta automática ya no frena solicitudes; se dispara con 3 fallas seguidas).
   Un flujo nuevo de pago por banco debe llamar `_bankPayoutFailed()` / `_bankPayoutOk()` para que la detección automática siga.
+  **#975 (2026-10-24): registro ABIERTO sin regalos.** `User.noWelcomeGifts=true` para quien se registra sin link de publicidad ni referido (salvo
+  `Config['organicWelcomeGifts']`): `_welcomeAbuseOf` lo devuelve como motivo ⇒ ningún bono de bienvenida (manual y hgcash), ni ofertas de bienvenida,
+  ni pasos del recorrido con `needsWelcome`. Un regalo de bienvenida NUEVO tiene que respetar ese flag. Modo actual: 'quick' + celular por SMS.
   **#421/#748:** `Config['registrationMode']` ('sms' | 'quick' | 'invite', Configuración → Registro de clientes). `'invite'` = SÓLO CON
   INVITACIÓN: `_inviteOnlyBlocks()` rechaza registros sin `referralCode` real ni `campaignCode` activo (texto `/sys_register_invite`); el
   login sigue abierto. Un flujo nuevo de alta tiene que pasar por ese chequeo. En 'quick' la pantalla
@@ -301,18 +298,13 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   acceso = autologin. Cambios en el alta de la landing afectan también a la entrada rápida.
   **#414:** hay un SOPORTE PARA VISITANTES sin cuenta (pantalla de ingreso → `GuestThread`, rutas `/api/public/support/*`
   con token secreto; panel → columna "Visitantes" de Soporte, `/api/admin/guest-support/*`). No mezcla con `Message`.
-  **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
-  respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
-  presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
-- **SORTEOS = los de la GEMELA (fusión 2026-10-24, owner):** `src/services/sorteos.js` + `SorteoScore`/`SorteoEntry`/`SorteoImage` + cron `_sorteoTick`
-  (Sorteo mensual + Gran Sorteo + sorteo extra; front `public/js/sorteos.js`, contenedores `[data-srt-cards]`/`[data-srt-banner]`, modal `#srtModal`;
-  panel → Sorteos). Nuestro #917 (`raffleService`/`raffle.js`) se BORRÓ. El cron NO corre con el casino simulado (Render comparte la base). En las
-  páginas de marca el sorteo va con `_rfStrip()` de lobby.js (= `data-srt-banner`).
-- **FUSIÓN CON LA GEMELA (2026-10-24):** el repo PICAROJAoficial salió de nuestro commit 238c202c y siguió aparte; sus entradas del WORKLOG llevan
-  prefijo **G** (G907…G969) y los comentarios `#9xx` del código que vino de ahí se refieren a esas. Una próxima tanda de la gemela se trae con
-  `git apply --3way <patch>` en una rama, nunca reemplazando archivos (pisaría las páginas de marca).
-- **CLAVE DE INICIO (#876):** el tablero INICIO del panel usa `Config['inicioPinHash']` (aparte de la de Datos; header `x-inicio-pin`). Se crea
-  y cambia desde el panel; nunca escribirla en código ni docs.
+  **#401/#916:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (5 min) lo pone a "ahora" cuando
+  respondimos y el cliente no contestó en `Config['supportAutoCloseMinutes']` (30 min, owner #916) ⇒ le llega `/sys_support_autoclosed`
+  ({min}), para él el chat arranca de cero (vuelve la presentación) y el chat pasa a CERRADO en el panel. Un filtro nuevo de mensajes del
+  cliente debe respetar ese campo.
+- **CLAVE DE INICIO (#876 → #982):** Principal (INICIO, Centro de avisos, Revisión semanal, Sorteos: ¿sirven?) usa `Config['inicioPinHash']` y, si no
+  existe, la CLAVE DE DATOS (`datosIaPinHash`): una sola clave para todo (header `x-inicio-pin`; el panel comparte `datos_pin`/`inicio_pin`). Se carga
+  desde el panel; nunca escribirla en código ni docs. **AGENTES (#982):** depositor/withdrawer ven sólo 5 secciones (`AGENT_SECTIONS`).
 - **CLAVE DE DATOS (#590/#743):** `Config['datosIaPinHash']` protege Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app (header
   `x-datos-pin`, gates `app.use` ANTES de esas rutas) y abre SMS masivo. Una sección nueva "de datos" se suma a `_datosPinGate` (server) y a
   `datosIaGate(label)` + la regex de `authFetch` (panel). La clave vive sólo en la DB (se carga en Configuración), nunca en código ni docs.
@@ -327,28 +319,26 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   Partidos de ESPN (1girox no expone eventos; su Deportes es Digitain sin deep link). Textos de SERVICIO, nunca "ruleta" ni plata/sueldos.
   **#834:** con FOTO (`src/services/storyImage.js`, SVG con el estilo de las manuales, `GET /api/stories/:id/auto.svg`); partidos a las 00:05
   (slots `m0..m2`). En Render no se arman fotos (comparte la base: producción se las agrega).
-- **PARTIDOS EN HISTORIAS (G909/G968):** llave `Config['storyAutoMatches']` (panel → Historias automáticas; la gemela la ENCENDIÓ por pedido del owner
-  el 24/10, migración `mig968GiftBoost`). La vieja `storyMatchesEnabled` (#934) ya no se lee.
-- **COMPROBANTES REPETIDOS (#932):** el mismo comprobante enviado varias veces = UNA ficha en Cargas pendientes (`_receiptCollapseDups`, `Comprobante.dupOf`).
-- **SITIO JUGAYGANA (#944):** `window.VIP_SITE === 'jugaygana'` (head de index.html + `js/site.js`): todo texto "PICA ROJA"/"Girox" visible se
-  reemplaza, la página de JUGAYGANA no se cierra y un juego que no abre directo NO cae en la web de Girox. Una pantalla/flujo nuevo que se use desde
-  JUGAYGANA tiene que abrirse ENCIMA de la página (modal) o pasar por `VIP.lobby.close(true)`; los logos nuevos van con su versión JUGAYGANA.
-- **IDS DE JUEGOS CON "@" (#943):** Amigo Gaming usa ids `amigo_X@AMIGO`. Todo patrón nuevo que valide una key de juego (`agg/game_id`) tiene que
-  aceptar "@" (`_FAV_KEY_RE`, apertura directa, `casinoGoTo`, `app:play:`); si no, esos juegos caen en Girox en vez de abrirse.
 - **HISTORIAS: PARTIDOS con LLAVE (#909, 2026-10-24):** los partidos del día salen sólo con `Config['storyAutoMatches']` (panel → Historias
   automáticas → ⚽; #968: ENCENDIDA por pedido del owner el 2026-10-24). Rotación de temas: cursor ×5 por día +
   redacciones alternativas `ALTS` (un tema nuevo va a `THEMES` y a `ALTS`). Cada historia se publica aislada; diagnóstico `Config['storyAutoDiag']`.
 - **COMPROBANTES REPETIDOS (#908):** la cola de Cargas pendientes agrupa reenvíos (`_sameReceipt`) y al resolver una ficha
   `_depositReviewCloseRepeats` cierra los demás como `duplicate`. Un flujo nuevo que confirme/rechace un comprobante pendiente tiene que llamarla.
-- **SORTEOS (#915):** `src/services/sorteos.js` (reglas) + `_sorteoTick` (20 min, stats batch de 1girox) + `SorteoEntry`/`SorteoScore`. Ranking
-  público con nombres tapados; sólo ANOTADOS ganan; requisitos en `Config['sorteos'].requirements`. Premios del extra se acreditan a mano. Panel → App → Sorteos.
+- **SORTEOS (#915 → #981 v2):** `src/services/sorteos.js` (reglas puras, test `scripts/test-sorteos-rules.js`) + `_sorteoTickOne` (20 min, stats batch
+  de 1girox; apuesta POR DÍA vía `SorteoScore.cum`) + `SorteoEntry`/`SorteoScore`/`SorteoTicket`/`SorteoCounter`. **1° premio por TICKETS** (números
+  correlativos que el cliente ve; sorteo = 1 + sha256(semilla|sorteo) mod total, huella publicada al cierre, revelado manual o automático a las 48 h),
+  2° y 3° por ranking (puntos con techo diario $300.000 + constancia). Tickets NUNCA se quitan ni se reasignan (índice único). Requisitos para anotarse:
+  app, notificaciones, Telegram, **celular cargado** y una carga. Premios se entregan a mano (push + nota al ganador). Panel → App → Sorteos (🎟️ / 🎲)
+  y Principal → "Sorteos: ¿sirven?". Un cambio en las reglas de puntos/tickets pasa por `computePoints` y sus tests, nunca por el motor.
 - **HISTORIAS PERSONALES (#886):** `Story.audienceUserId` = sólo la ve ese cliente (bono de bienvenida día 5/15/30, `_newbieOffersTick`,
   `Config['newbieOffers']`). Toda consulta NUEVA de historias para clientes o públicas tiene que filtrar `audienceUserId: null` (o el propio id).
-- **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca
+- **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). **#978:** la automática es SEMANAL (miércoles 12:30, +100 % por 3 h, `STORY_AUTO_BONUS`, `bonusDays=[3]`); ese día el autopiloto no manda campaña. El cliente que toca
   "Reclamar ahora" queda con `User.storyBonus` (pct, expiresAt) y `claimStoryBonusPercent` lo consume PRIMERO en `resolveAutoBonus` en su
   próxima carga. Un bono nuevo que deba aplicarse a la carga va a esa cadena (no a `creditUserBalance`); el cliente que no reclamó no ve nada.
 - **LINK DE RESULTADOS DEL PUBLICISTA (#805):** `Campaign.statsToken` ⇒ `/r/<token>` muestra números agregados de esa campaña sin login
   (sólo lectura). Generar uno nuevo invalida el anterior; desactivar = `statsToken:null`. Nunca agregar ahí datos de usuarios ni retiros.
+- **GIROX EMBEBIDO (#985):** el login único va con `embed:true` (oculta los controles de sesión del casino; `GIROX_SSO_EMBED=0` lo apaga). No se puede
+  modificar la página de 1girox desde el iframe (otro dominio): header completo y cambio de clave en su Perfil se piden a 1girox; NUNCA hacer un proxy/espejo.
 - **KEY POR PUBLICISTA (#699, 2026-10-21):** un usuario que se registró por el link de un publicista (`User.giroxOwnerCampaign`) se opera
   en 1girox con la API key de ESE publicista (`Campaign.giroxApiKey`, resolver `girox.setKeyResolver` en server.js), no con la principal.
   Si a unos clientes les falla el casino/saldo y a otros no: mirar "Creado por" en 1girox y la key del publicista en el panel. Nunca
@@ -380,6 +370,19 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   falte (sólo entradas con COELSA/externalID; la doble carga la frena `HgcashCharge.chargeKey`). Diagnóstico: Cargas automáticas → 🩺.
 - **CHATS QUE SE CIERRAN SOLOS (#895):** un aviso automático nuevo que resuelva lo del cliente (carga, comprobante) llama
   `_chatAutoCloseIfHandled(userId, why)`; el chat sólo queda abierto si el cliente escribió texto sin respuesta. Los chats nuevos nacen cerrados.
+- **CENTRO DE AVISOS (#971, 2026-10-24):** TODO lo automático que le llega al cliente sale de un solo lugar (panel → Cronograma → 🧭 Centro de avisos,
+  `Config['notifCenter']`): RECORRIDO por cliente (`src/services/retentionJourney.js` + `_journeyTick` al mediodía: nuevos / enfriando / inactivos /
+  perdidos / lejanos, un paso por día, regalos crecientes, fichas según valor del cliente; marca `User.journey.sent`), autopiloto, aviso del reembolso,
+  ofertas de bienvenida, historia con bono (ahora a las 12:30; ese día el autopiloto no manda), historia "pagos de la semana" (lunes). Reglas viejas
+  (NotificationRule) APAGADAS por defecto. **Tope único:** `monthlyCap` (cuenta todos los lotes) + `dailyCap: 1` en `_resolveNotifBatchAudience`
+  (`_notifDayCounts`). Un aviso automático NUEVO tiene que salir por `_createNotifBatchFromBody` (hereda topes) o, si es push directa, pasar
+  `data.kind` ('promo' | 'personal' | 'system') para que `User.notifPrefs` (Perfil → "Qué avisos querés recibir": todos / sólo lo mío / ninguno, +
+  fatiga: 10 promos sin abrir la app pausan las masivas) se respete en `sendPushIfOffline` y en `notificationService.prefsFilter`. Historias: `clicks` y
+  `reactions` (`POST /api/stories/:id/click|react`). INICIO muestra cohortes (`_inicioCohorts`); Cierres el semáforo regalos/depósitos del mes.
+  **#973 REVISIÓN SEMANAL:** `src/services/weeklyReview.js` + `_weeklyReviewTick` (lunes 10 h) mide la semana y AJUSTA SOLA el nivel
+  `Config['journeyTuning']` (−2…+3 ⇒ multiplicadores del recorrido y ± puntos del autopiloto); informe en `Config['weeklyReview']`. Panel → PRINCIPAL 🔒
+  (INICIO · Centro de avisos · Revisión semanal, todas con la clave de INICIO: rutas bajo `/api/admin/inicio/*`). Si cambiás una regla de regalos,
+  probá `node scripts/test-weekly-review.js` y `test-retention-journey.js`. Aviso del reembolso: diario, semanal (lun/jue) y mensual (1 y 8).
 - **Cargas pendientes (#376, 2026-10-18):** la carga manual del panel vive en `_agentDepositHandler(req, res, body)`
   (la ruta `POST /api/admin/deposit` sólo la llama) porque "Confirmar" de la cola de comprobantes la reusa. Todo comprobante
   válido queda `Comprobante.reviewStatus='pending'` hasta que se acredita (auto o manual) o se rechaza; si tocás el flujo de

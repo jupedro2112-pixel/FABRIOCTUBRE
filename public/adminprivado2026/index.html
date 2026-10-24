@@ -119,6 +119,26 @@ document.addEventListener('change', function (ev) {
             <nav class="sidebar-nav">
                 <!-- #743 (owner 2026-10-21): MENÚ REORGANIZADO — Configuración · Atención · App · Administrativo · Publicidad (+ Interno abajo). Todo lo que es DATOS (Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app) y SMS masivo piden la clave (Configuración → Clave de Datos). -->
 <!-- #901 (owner): "dejá fijado arriba Manejo · Atención automática" con lo nuevo de cargas / retiros / soporte; el resto, abajo. -->
+<!-- #973 (owner): "dejá arriba PRINCIPAL con clave: INICIO y el Centro de avisos; lo que se deja de usar, último". Las tres secciones usan la clave de INICIO. -->
+<div class="nav-pinned nav-principal">
+<div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">⭐ Principal 🔒</div>
+<a href="#" class="nav-item" data-section="inicio">
+<span>🏠</span>
+<span>INICIO</span>
+</a>
+<a href="#" class="nav-item" data-section="notifCenter" title="Todo lo automático que le llega al cliente, desde un solo lugar">
+<span>🧭</span>
+<span>Centro de avisos</span>
+</a>
+<a href="#" class="nav-item" data-section="weeklyReview" title="Cada lunes mide la semana y ajusta sola los regalos; informe completo para analizar">
+<span>📏</span>
+<span>Revisión semanal</span>
+</a>
+<a href="#" class="nav-item" data-section="sorteoStats" title="¿Están sirviendo los sorteos? anotados, tickets emitidos y si retienen">
+<span>🎟️</span>
+<span>Sorteos: ¿sirven?</span>
+</a>
+</div>
 <div class="nav-pinned">
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🎯 Manejo · Atención automática</div>
 <a href="#" class="nav-item" data-section="support" title="Soporte: lo que escribas le llega al cliente; desde acá también cargás y retirás">
@@ -151,10 +171,6 @@ document.addEventListener('change', function (ev) {
 
 
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">⚡ Automático (lo hace solo)</div>
-<a href="#" class="nav-item" data-section="inicio">
-<span>🏠</span>
-<span>INICIO</span>
-</a>
 
 <a href="#" class="nav-item" data-section="fraud" title="Clientes que podrían estar intentando estafar: evidencia y bloqueo">
 <span>🚨</span>
@@ -215,20 +231,11 @@ document.addEventListener('change', function (ev) {
 <span>🎯</span>
 <span>Estrategia clientes</span>
 </a>
-<a href="#" class="nav-item" data-section="encuesta">
-<span>📊</span>
-<span>Encuesta</span>
-</a>
-<a href="#" class="nav-item" data-section="inactivos">
-<span>💤</span>
-<span>Inactivos</span>
-</a>
 <a href="#" class="nav-item nav-item-sms-masivo" data-section="sms" style="display:none">
 <span>📱</span>
 <span>SMS Masivo 🔒</span>
 </a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🗂️ Administrativo</div>
-<!-- fusión 2026-10-24: el "Sorteo mensual" de acá (#917) se reemplazó por Sorteos de la gemela (G915) -->
 <a href="#" class="nav-item" data-section="cierres">
 <span>🧾</span>
 <span>Cierres 🔒</span>
@@ -250,34 +257,13 @@ document.addEventListener('change', function (ev) {
 <span class="icon icon-chart"></span>
 <span>Datos 🔒</span>
 </a>
-<a href="#" class="nav-item" data-section="datos2">
-<span>📊</span>
-<span>Datos 2.0 🔒</span>
-</a>
-<a href="#" class="nav-item" data-section="centralIngresos">
-<span>📈</span>
-<span>Ingresos diarios 🔒</span>
-</a>
 <a href="#" class="nav-item" data-section="centralAppUsers">
 <span>📱</span>
 <span>Usuarios con app 🔒</span>
 </a>
-<a href="#" class="nav-item" data-section="centralWelcomeBonus">
-<span>🎁</span>
-<span>Bono $5.000</span>
-</a>
 <a href="#" class="nav-item" data-section="reembolsos">
 <span>💸</span>
 <span>Reembolsos reclamados</span>
-</a>
-<a href="#" class="nav-item" data-section="suspiciousAccounts">
-<span>🕵️</span>
-<span>Cuentas sospechosas</span>
-</a>
-<a href="#" class="nav-item nav-item-chat-delays" data-section="chatDelays" style="display:none">
-<span>⏱️</span>
-<span>Demoras</span>
-<span id="chatDelaysWaitingBadge" class="badge hidden">0</span>
 </a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">📣 Publicidad</div>
 <a href="#" class="nav-item" data-section="campaigns">
@@ -294,17 +280,49 @@ document.addEventListener('change', function (ev) {
 </a>
 <!-- #408 (owner): se eliminaron del menú "Automatización" y "Estrategia de bonos" (grupo "No se usa"); sus secciones se quitaron del HTML. -->
                 <!-- #383/#387 (owner): el chat viejo (tipo WhatsApp) queda INTERNO y abajo de todo; Soporte pasó arriba (#387). -->
-                <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;opacity:.6;">Interno</div>
                 <!-- #821 (owner): Notificaciones manuales abajo (la estrategia automática del Cronograma manda; lo programado viejo quedó anulado) -->
-                <a href="#" class="nav-item nav-legacy" data-section="notifications" title="Envíos manuales (la estrategia automática está en Cronograma)">
+                                <!-- #827 (owner): Historias manuales abajo (las automáticas corren solas, se ven en Cronograma) -->
+                                <!-- #973 (owner): lo que se dejó de usar, último. Encuesta e Inactivos quedaron apagados por flags; Bono $5.000 (instalar) apagado (#221);
+                     Cuentas sospechosas la reemplazan las Alertas de estafa (#873); Notificaciones e Historias manuales las reemplazan el Centro de avisos y las historias automáticas. -->
+                <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;opacity:.6;text-transform:uppercase;">🗄️ No se usa (reemplazado)</div>
+<a href="#" class="nav-item nav-legacy" data-section="encuesta">
+<span>📊</span>
+<span>Encuesta</span>
+</a>
+<a href="#" class="nav-item nav-legacy" data-section="inactivos">
+<span>💤</span>
+<span>Inactivos</span>
+</a>
+<a href="#" class="nav-item nav-legacy" data-section="centralWelcomeBonus">
+<span>🎁</span>
+<span>Bono $5.000</span>
+</a>
+<a href="#" class="nav-item nav-legacy" data-section="suspiciousAccounts">
+<span>🕵️</span>
+<span>Cuentas sospechosas</span>
+</a>
+<a href="#" class="nav-item nav-legacy nav-item-chat-delays" data-section="chatDelays" style="display:none">
+<span>⏱️</span>
+<span>Demoras</span>
+<span id="chatDelaysWaitingBadge" class="badge hidden">0</span>
+</a>
+<a href="#" class="nav-item nav-legacy nav-legacy" data-section="notifications" title="Envíos manuales (la estrategia automática está en Cronograma)">
                     <span class="icon icon-bell"></span>
                     <span>Notificaciones (manual)</span>
                 </a>
-                <!-- #827 (owner): Historias manuales abajo (las automáticas corren solas, se ven en Cronograma) -->
-                <a href="#" class="nav-item nav-legacy" data-section="stories" title="Historias manuales (las automáticas están en Cronograma)">
+<a href="#" class="nav-item nav-legacy nav-legacy" data-section="stories" title="Historias manuales (las automáticas están en Cronograma)">
                     <span>📽️</span>
                     <span>Historias (manual)</span>
                 </a>
+                <!-- #978: Datos 2.0 e Ingresos diarios los reemplazan INICIO, Cierres automáticos y la Revisión semanal -->
+<a href="#" class="nav-item nav-legacy" data-section="datos2">
+<span>📊</span>
+<span>Datos 2.0 🔒</span>
+</a>
+<a href="#" class="nav-item nav-legacy" data-section="centralIngresos">
+<span>📈</span>
+<span>Ingresos diarios 🔒</span>
+</a>
             </nav>
             <div class="sidebar-footer">
                 <span id="adminName">Admin</span>
@@ -734,7 +752,7 @@ document.addEventListener('change', function (ev) {
                         </div>
                         <!-- #590 (owner): clave propia para Datos IA -->
                         <div class="cbu-form" id="datosPinForm" style="margin-bottom:14px;">
-                            <h3 style="margin:0 0 6px;">🔒 Clave de Datos IA</h3>
+                            <h3 style="margin:0 0 6px;">🔒 Clave de Datos y Principal (una sola)</h3>
                             <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 8px;">Además del login del panel, la sección Datos IA pide esta clave (una vez por sesión). Vacío = sin clave.</p>
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                                 <input type="password" id="dpPin" placeholder="Clave nueva" autocomplete="new-password" style="width:180px;">
@@ -766,6 +784,7 @@ document.addEventListener('change', function (ev) {
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;flex:1 0 100%;"><input type="checkbox" id="regLoginChk" style="width:auto;"> Pantalla de ingreso = <b>Iniciar sesión</b> (usuario, clave y "Olvidé mi contraseña"), sin el bono de bienvenida. Los links de publicidad y de referidos siguen mostrando el registro.</label>
                                 <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;flex:1 0 100%;"><input type="checkbox" id="regQuickSmsChk" style="width:auto;"> El registro desde el inicio de la app (sólo el nombre) exige <b>verificar el celular por SMS</b> antes de crear la cuenta. Los links de publicidad no lo piden.</label>
                                 <button class="btn-primary btn-small" id="regModeSaveBtn" onclick="saveRegistrationMode()"><span class="icon icon-save"></span> Guardar</button>
+                                <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;" title="#975: por defecto, quien se registra desde la página sin link de publicidad ni referido NO recibe bono de 1ª carga, extra por instalar, código ni 2ª carga (sí reembolsos, ruleta, lotes y misiones). Marcá esto sólo si querés regalarle también a ellos."><input type="checkbox" id="regOrganicGiftsChk" style="width:auto;"> Regalos de bienvenida también para el registro abierto (sin invitación)</label>
                                 <span id="regModeState" style="font-size:11.5px;color:#9ab;"></span>
                             </div>
                         </div>
@@ -921,7 +940,9 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                             <!-- #283/#290: % EXTRA por instalar la app (se ofrece al acreditarse la PRIMERA carga de un cliente sin la app) -->
                             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
                                 <label style="margin:0;display:flex;align-items:center;gap:5px;cursor:pointer;" title="Al acreditarse la PRIMERA carga de un cliente que no tiene la app instalada, la app le ofrece este % EXTRA sobre esa carga si la instala (ahora, o después de jugar: le queda un botón grande pendiente abajo). Se acredita solo cuando lo carga desde la app instalada con notificaciones."><input type="checkbox" id="installGiftEnabledChk" style="width:auto;"> 🎁 % EXTRA por instalar la app (sobre la 1ª carga) ACTIVO</label>
-                                <label style="margin:0;">% extra:</label>
+                                <label style="margin:0;" title="#974: monto fijo en fichas (0 = usar el % con tope)">monto fijo $:</label>
+                                <input type="number" id="installGiftFixedInput" min="0" step="500" style="width:100px;">
+                                <label style="margin:0;">o % extra:</label>
                                 <input type="number" id="installGiftPctInput" min="0" max="500" step="1" style="width:80px;">
                                 <label style="margin:0;">tope $:</label>
                                 <input type="number" id="installGiftCapInput" min="0" step="500" style="width:100px;">
@@ -1416,8 +1437,6 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
 
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
-            <!-- #917: SORTEO MENSUAL — ranking real (sin tapar), ganadores y entrega, premios editables -->
-            <!-- fusión: sección raffleSection (#917) eliminada; ver Sorteos (G915) -->
             <section id="cierresSection" class="section dia">
                 <div class="panel-header cfg-head">
                     <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Se cierran solos cada día con los datos del sistema y del banco. INGRESOS (depósitos + pagos por banco externo + fondeos) − GASTOS (retiros + comisión del banco + $ por transferencia + gastos) = RESULTADO en plata; el saldo del CBU a las 00 hs cierra el arqueo. Si un día no da 0, tocá <b>Ver detalle</b>: te marca qué fue automático, qué se confirmó a mano y de dónde puede venir la diferencia.</div></div>
@@ -1453,8 +1472,10 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 <div class="dia-card"><div class="dia-card-h"><b>1️⃣ Primera carga</b><small>Bono de bienvenida en la primera carga real + extra si instala la app (con notificaciones). El cliente lo ve al entrar y sobre CARGAR AHORA.</small></div>
                     <div class="dia-bar dia-bar-in">
                         <label>Bono 1ª carga %<input type="number" id="stFdPct" min="0" max="500" style="width:80px;"></label>
+                        <label title="#974: máximo del bono de la primera carga en pesos (0 = sin tope). Nada sobre el resto.">Tope $<input type="number" id="stFdCap" min="0" step="500" style="width:100px;"></label>
                         <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="stIgOn" style="width:auto;"> Extra por instalar la app</label>
-                        <label>Extra %<input type="number" id="stIgPct" min="0" max="500" style="width:80px;"></label>
+                        <label title="#974: monto FIJO en fichas por instalar la app (0 = usar el % de abajo)">Extra fijo $<input type="number" id="stIgFixed" min="0" step="500" style="width:100px;"></label>
+                        <label>o Extra %<input type="number" id="stIgPct" min="0" max="500" style="width:80px;"></label>
                         <span class="dia-pill" id="stFdInfo">…</span>
                     </div>
                 </div>
@@ -2668,6 +2689,31 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                  #190 CRONOGRAMA — campañas programadas (fecha/hora AR),
                  calendario mensual, tandas y comparativo semanal/mensual.
                  ============================================ -->
+            <!-- #971/#973: CENTRO DE AVISOS (Principal, clave de INICIO) -->
+            <section id="notifCenterSection" class="section">
+                <div class="panel-header"><h2>🧭 Centro de avisos</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-secondary" onclick="loadNotifCenter(true)">🔄</button></div></div>
+                <!-- #971 (owner): CENTRO DE AVISOS — "quiero que salga todo de un mismo lugar": todo lo automático que le llega al cliente, con un solo tope. -->
+                <div class="card" style="margin-bottom:1rem" id="notifCenterCard">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+                        <h3 style="margin:0;font-size:1rem">🧭 Centro de avisos · todo lo automático sale de acá</h3>
+                        <button class="btn btn-secondary btn-small" onclick="loadNotifCenter(true)">🔄 Actualizar</button>
+                    </div>
+                    <div style="color:#9ab;font-size:.78rem;margin:.4rem 0 .6rem">Un cliente recibe como máximo <b>1 aviso por día</b> y el tope mensual de abajo, cuente de donde cuente (recorrido, campaña del día, lotes a mano). El aviso del reembolso y lo que el cliente pide en su Perfil ("Qué avisos querés recibir") van aparte.</div>
+                    <div id="ncBody" style="font-size:.84rem">Cargando…</div>
+                </div>
+            </section>
+            <!-- #981: SORTEOS — estadística mínima (Principal, clave de INICIO) -->
+            <section id="sorteoStatsSection" class="section">
+                <div class="panel-header"><h2>🎟️ Sorteos: ¿están sirviendo?</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-secondary" onclick="loadSorteoStats()">🔄</button><button class="btn btn-secondary" onclick="switchSection('sorteos')">⚙️ Ir a Sorteos</button></div></div>
+                <div class="card" style="margin-bottom:1rem;font-size:.8rem;color:#9ab">Semáforo por sorteo con lo mínimo para decidir: cuántos de los que cargan se anotaron, si los anotados cargan más días que los que no, cuántos tickets se emiten por semana y si la rifa no se concentra en una sola persona. Verde = seguir igual · amarillo = empujar la inscripción · rojo = cambiar algo.</div>
+                <div id="ssBody">Cargando…</div>
+            </section>
+            <!-- #973: REVISIÓN SEMANAL automática (Principal, clave de INICIO) -->
+            <section id="weeklyReviewSection" class="section">
+                <div class="panel-header"><h2>📏 Revisión semanal</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-secondary" onclick="wrCopy()" title="Copia el informe en texto para pegarlo donde quieras analizarlo">📋 Copiar informe</button><button class="btn btn-secondary" onclick="wrRun()">▶ Medir ahora</button><button class="btn btn-secondary" onclick="loadWeeklyReview()">🔄</button></div></div>
+                <div class="card" style="margin-bottom:1rem;font-size:.8rem;color:#9ab">Todos los lunes a las 10 h el sistema mide la semana (cuántos cargaron, cuántos volvieron, cuánto se regaló sobre lo depositado, cuánto convirtió cada paso del recorrido y la campaña masiva, reembolsos, app instalada, avisos bajados) y decide solo: <b>impulsar</b> (más % y más fichas en el recorrido, más puntos en la campaña), <b>mantener</b> o <b>frenar</b>. Nunca toca el reembolso. Acá queda el informe completo y el historial.</div>
+                <div id="wrBody">Cargando…</div>
+            </section>
             <section id="cronogramaSection" class="section">
                 <div class="panel-header">
                     <h2>📅 Cronograma notis <small style="font-size:.6em;color:#f59e0b;font-weight:800">· AUTOMÁTICO (NO TOCAR)</small></h2>
@@ -2699,6 +2745,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     </div>
                     <div id="naBody" style="margin-top:.6rem;font-size:.84rem">Cargando…</div>
                 </div>
+                <div class="card" style="margin-bottom:1rem;border:1px solid #7c3aed"><b>🧭 El Centro de avisos se movió arriba de todo</b> (menú → Principal → Centro de avisos, con la clave de INICIO). Lo de abajo sigue siendo la campaña masiva diaria y las historias automáticas, que el Centro coordina.</div>
                 <!-- #819: la configuración DEFINITIVA va arriba de todo. #817: AUTOPILOTO de retención — programa solo el mes en curso y el siguiente, todos los días, por lotes y grupos -->
                 <div class="card" style="margin-bottom:1rem" id="cronAutopilotCard">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">

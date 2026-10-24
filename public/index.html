@@ -22,17 +22,6 @@
     <link rel="manifest" href="manifest.json" crossorigin="use-credentials"><!-- #826: con credenciales ⇒ el server lee la cookie vip_inst y arma el inicio de la app con la sesión -->
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png?v=358">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png?v=358">
-    <!-- #944 SITIO JUGAYGANA: se arma ANTES de pintar (título, íconos, pantalla de carga con su logo). Lo demás: js/site.js. -->
-    <script>(function(){try{var q=location.search,s='';try{s=localStorage.getItem('vip_site')||''}catch(e){}
-    if(/[?&]jg=1\b/.test(q))s='jugaygana';else if(/[?&](pr|gn)=1\b/.test(q))s='';
-    try{s?localStorage.setItem('vip_site',s):localStorage.removeItem('vip_site')}catch(e){}
-    window.VIP_SITE=s;if(s!=='jugaygana')return;var d=document.documentElement;d.classList.add('site-jyg');document.title='JugaYGana';
-    var l=document.querySelectorAll('link[rel~="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++){l[i].href=l[i].rel==='apple-touch-icon'?'/images/jugaygana/app-180.png':'/images/jugaygana/app-192.png';l[i].removeAttribute('sizes');}
-    var mf=document.querySelector('link[rel="manifest"]');if(mf)mf.href='manifest.json?site=jugaygana';
-    var m=document.querySelectorAll('meta[name="apple-mobile-web-app-title"],meta[name="application-name"]');for(i=0;i<m.length;i++)m[i].content='JugaYGana';
-    var t=document.querySelectorAll('meta[name="theme-color"],meta[name="msapplication-TileColor"]');for(i=0;i<t.length;i++)t[i].content='#101010';}catch(e){}})();</script>
-    <style>html.site-jyg body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:#101010 url(/images/jugaygana/io/logo.webp) center/62% auto no-repeat;pointer-events:all}
-    html.site-jyg.jyg-ready body::after{display:none}</style>
     
     <!-- Firebase SDK: lo carga el loader robusto de abajo (reintentos +
          fallback de CDN). No se ponen <script> estáticos acá para no bloquear
@@ -253,7 +242,6 @@
     <link rel="stylesheet" href="/css/modals.css">
     <link rel="stylesheet" href="/css/responsive.css">
     <!-- #370: tema "Pinterest" (blanco, grises, rojo). Se carga ÚLTIMO y re-pinta todo menos la Carga manual (WhatsApp). -->
-    <link rel="stylesheet" href="/css/ganamos-nav.css"><!-- #922 barra de abajo de Ganamos -->
     <link rel="stylesheet" href="/css/pin.css">
     <style>
         /* In-app notification banner (foreground PWA) */
@@ -1179,7 +1167,7 @@
                 <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
                 <b class="fg-t">👆 Acá arriba hacés tus cargas</b>
                 <p class="fg-p">Tocá <b>CARGÁ AHORA</b>: transferís, mandás la foto del comprobante y se acredita solo.</p>
-                <p class="fg-p">💵 Carga mínima <b class="md-amt">$2.000</b>: con ese monto o más se acredita sola. <b>Con menos de <span class="md-amt">$2.000</span> tu carga NO va a ser acreditada</b>: escribinos por Soporte.<br><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×3</span> antes de poder retirarla.</span></p>
+                <p class="fg-p">💵 Carga mínima <b class="md-amt">$2.000</b>: con ese monto o más se acredita sola. <b>Con menos de <span class="md-amt">$2.000</span> tu carga NO va a ser acreditada</b>: escribinos por Soporte.<br><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×1</span> antes de poder retirarla.</span></p>
                 <p class="fg-p fg-after">Después de jugar, mirá más abajo todo lo que te damos para sacarle el mejor provecho: <b>reembolsos, ruleta, fueguito, misiones y referidos</b>.</p>
             </div>
             <!-- #639 (owner): carga pendiente SIEMPRE arriba de todo (Inicio/básico; en intermedio y completo ya tienen la suya) y "Cambiar menú" centrado;
@@ -1206,12 +1194,20 @@
                      home.js (renderHowItWorks) con la escalera real — nada hardcodeado. -->
                 <!-- #751 (owner): "dale predominancia al servicio: Todo lo que ofrecemos 100% para vos; que se entienda que se puede expandir" -->
                 <div class="ev-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div>
-                <!-- #924 (owner): en el completo, el mismo formato de 4 del básico (ocupaba mucho) --><div class="bv-quick ev-quick" id="entryServices">
-                    <!-- #765 (owner): íconos de línea estilo Pinterest (los mismos del Inicio completo) -->
-                    <button type="button" onclick="VIP.home.openMissions()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg></i>Misiones<small>Ver más ›</small></button>
-                    <button type="button" onclick="VIP.home.svcRefund()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolsos<small>Ver más ›</small></button>
-                    <button type="button" onclick="VIP.ui.openReferralModal()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15 18c.3-2.3 1.6-3.8 3.5-4.3 1.6.4 2.5 1.6 2.5 3.3"/></svg></i>Referidos<small>Ver más ›</small></button>
-                    <button type="button" onclick="VIP.home.svcRoulette()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3v4M21 12h-4M12 21v-4M3 12h4"/></svg></i>Ruleta diaria<small>Ver más ›</small></button>
+                <div class="ev-services" id="entryServices">
+                    <button type="button" class="ev-svc svc-refund" onclick="VIP.home.svcRefund()" title="Reembolsos por lo que perdés">
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg></i>Reembolso</b><small id="evSvcRefund">de tu NETWIN</small>
+                    </button>
+                    <button type="button" class="ev-svc svc-roulette" onclick="VIP.home.svcRoulette()" title="Ruleta diaria">
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b><small>con <b class="rl-min">$10.000</b> cargados en el día</small>
+                    </button>
+                    <!-- #524: Misiones en la misma fila -->
+                    <button type="button" class="ev-svc svc-missions" onclick="VIP.home.openMissions()" title="Misiones de la semana">
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></i>Misiones</b><small id="evSvcMissions">de la semana</small>
+                    </button>
+                    <button type="button" class="ev-svc svc-ref" onclick="VIP.ui.openReferralModal()" title="Sistema de referidos">
+                        <b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b><small>cobrá todos los meses</small>
+                    </button>
                 </div>
                 <!-- #276 (owner): aclarar en una línea que es ilustrativo y que para cargar se usa la barra de arriba. -->
                 <!-- #316 (owner): la línea "Vista ilustrativa…" se sacó (la leyenda vive en el carrusel y el botón grande lleva a cargar). -->
@@ -1314,13 +1310,13 @@
                     <button type="button" onclick="VIP.home.svcRoulette()"><i class="bv-quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/><path d="M12 3v4M21 12h-4M12 21v-4M3 12h4"/></svg></i>Ruleta diaria<small>Ver más ›</small></button>
                 </div>
                 <div class="bv-plats-h"><b>¿Dónde jugás?</b><small>Elegí la plataforma</small></div>
-                <div class="bv-plats" id="basicPlats"></div><p class="bl-note">🔒 Cada plataforma tiene su saldo: para cambiar, tu saldo tiene que estar en $0 (jugalo o retiralo).</p><!-- #923 -->
+                <div class="bv-plats" id="basicPlats"></div>
                 <!-- #675 (owner): guía corta de primera carga en el BÁSICO (sólo quien nunca cargó): flecha al botón CARGAR -->
                 <div class="fg-card fg-basic" id="firstGuideBasic" hidden>
                     <button type="button" class="fg-x" onclick="VIP.home.firstGuideClose()" aria-label="Cerrar">✕</button>
                     <b class="fg-t">¿Cómo cargo? 👇</b>
                     <p class="fg-p">Tocá <b>CARGAR</b>, transferí a la cuenta que te mostramos y mandá la foto del comprobante. Se acredita solo.</p>
-                    <p class="fg-p">💵 Mínimo <b class="md-amt">$2.000</b>. <b>Con menos NO se acredita</b>: escribinos por Soporte.<br><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×3</span> antes de poder retirarla.</span></p>
+                    <p class="fg-p">💵 Mínimo <b class="md-amt">$2.000</b>. <b>Con menos NO se acredita</b>: escribinos por Soporte.<br><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×1</span> antes de poder retirarla.</span></p>
                     <i class="fg-arrow fg-arrow-down" aria-hidden="true"></i>
                 </div>
                 <!-- #516 (owner): CARGAR y RETIRAR se explican y se resuelven ACÁ (paneles desplegables), sin salir del básico -->
@@ -1329,20 +1325,20 @@
                 <div class="bv-panel" id="bvLoadPanel" hidden>
                     <ol class="bv-steps">
                         <li><b>Transferí</b> el monto que quieras (mínimo <b id="bvMinDep">$2.000</b>) a esta cuenta:
-                            <small class="min-note"><b class="mn-big">Carga mínima <span class="md-amt">$2.000</span></b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.setHomeMode('mini')">💬 escribinos a Soporte ›</button></span><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×3</span> antes de poder retirarla.</span></small>
+                            <small class="min-note"><b class="mn-big">Carga mínima <span class="md-amt">$2.000</span></b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.setHomeMode('mini')">💬 escribinos a Soporte ›</button></span><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×1</span> antes de poder retirarla.</span></small>
                             <div class="bv-cbu"><div><small>Alias</small><b id="bvAlias">cargando…</b></div><button type="button" class="bv-copy" onclick="VIP.home.basicCopy('alias')">Copiar</button></div>
                             <div class="bv-cbu"><div><small>CBU</small><b id="bvCbu">cargando…</b></div><button type="button" class="bv-copy" onclick="VIP.home.basicCopy('cbu')">Copiar</button></div>
                             <small class="bv-tit">Titular: <span id="bvTitular">—</span> · <span id="bvBank">—</span></small></li>
                         <li><b>Adjuntá la foto del comprobante</b> con el botón de abajo. <b>Con todos los datos visibles</b> (titular, CUIT, fecha y hora, monto y N° de operación): si no se ven, la carga se rechaza.</li>
                         <li><b>Listo:</b> la carga entra sola en tu plataforma en minutos. Si tenés un bono pendiente, se suma solo.</li>
                     </ol>
-                    <p class="fd-note" id="fdNoteBasic" hidden><span class="fd-l1">🎁 <b>Primera carga: +<span class="fd-pct">100%</span> automático</b></span><span class="fd-app">📲 Después, <b>+<span class="fd-pct-app">50%</span> EXTRA</b> instalando la app y activando las notificaciones</span></p><!-- #839 -->
+                    <p class="fd-note" id="fdNoteBasic" hidden><span class="fd-l1">🎁 <b>Primera carga: +<span class="fd-pct">100%</span> automático</b><small class="fd-cap"> · hasta $15.000</small></span><span class="fd-app">📲 Después, <b>+<span class="fd-pct-app">$5.000</span> EXTRA</b> instalando la app y activando las notificaciones</span></p><!-- #839 -->
                     <button type="button" class="bv-action" onclick="VIP.autoload.sendReceipt()">📎 Adjuntar comprobante<span class="sb-tag-slot"></span><small class="min-tag">Carga mínima <span class="md-amt">$2.000</span></small></button><!-- #706: etiqueta hasta la 5ª carga · #742: bono de historia -->
                 </div>
                 <button type="button" class="bv-btn bv-wd" onclick="VIP.home.basicToggle('wd')" aria-expanded="false"><i class="li li-w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M3 10h18M7 15h4"/></svg></i><span><b>RETIRAR</b><small class="bv-min">Retiro mínimo <b class="wd-amt">$10.000</b> · a tu CBU</small></span><em class="bv-chev">▾</em></button><!-- #757 -->
                 <div class="bv-panel" id="bvWdPanel" hidden>
                     <ol class="bv-steps">
-                        <li><b>Mínimo <span id="bvMinWd">$10.000</span></b>. Solo se retira el saldo disponible (lo que ya jugaste si tenías bono).</li>
+                        <li><b>Mínimo <span id="bvMinWd">$5.000</span></b>. Solo se retira el saldo disponible (lo que ya jugaste si tenías bono).</li>
                         <li>Ponés el <b>monto</b> y tu <b>CBU o alias</b> (tiene que estar a tu nombre).</li>
                         <li>El pago sale <b>automático</b> por banco, en minutos; te llega el comprobante al chat.</li>
                     </ol>
@@ -1355,7 +1351,7 @@
                     <div class="bv-switch2-h">¿Querés ver más?</div>
                     <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('easy')"><b>☰ Menú intermedio</b><small>Reembolsos, misiones, referidos y ruleta en botones grandes.</small></button>
                     <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('full')"><b>🧭 Menú completo · detallado</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, historias.</small></button>
-                    <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('girox')"><b>🎰 Menú <span class="mc-brand">Girox</span> directo</b><small>Entrás a jugar al toque en <span class="mc-brand">Girox</span>, la plataforma seleccionada; cargás y retirás desde adentro.</small></button><!-- #670/#672 -->
+                    <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('girox')"><b>🎰 Girox directo</b><small>Entrás a jugar al toque (hoy Girox, la plataforma seleccionada); cargás y retirás desde adentro.</small></button><!-- #670/#672 -->
                 </div>
             </div>
             <!-- #915 (owner): SORTEOS con ranking en vivo — pantalla completa por sorteo + Bases en capa aparte (✕ arriba a la izquierda). js/sorteos.js -->
@@ -1377,8 +1373,8 @@
                     <div class="sp-faq-scroll">
                         <ul>
                                 <li><b>💳 Carga:</b> mínimo <span class="md-amt">$2.000</span>. Transferís al CBU de la app, mandás el comprobante entero (titular, monto, fecha y N° de operación) y se acredita sola en minutos. Un comprobante repetido no se acredita.</li>
-                                <li><b>💸 Retiro:</b> mínimo <span class="wd-min">$10.000</span>, a un CBU a tu nombre. Sale solo a tu cuenta.</li>
-                                <li><b>🔒 ¿No te deja retirar todo?</b> Cada carga se juega <span class="rx-dep">×3</span> y cada bono <span class="rx-bon">×5</span> antes de retirarlos (antifraude). En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar. Se libera solo jugando: no hace falta escribir.</li>
+                                <li><b>💸 Retiro:</b> mínimo <span class="wd-min">$5.000</span>, a un CBU a tu nombre. Sale solo a tu cuenta.</li>
+                                <li><b>🔒 ¿No te deja retirar todo?</b> Cada carga se juega <span class="rx-dep">×1</span> y cada bono <span class="rx-bon">×5</span> antes de retirarlos (antifraude). En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar. Se libera solo jugando: no hace falta escribir.</li>
                                 <li><b>⏳ “Retiro procesado, lo estamos verificando”:</b> ya está en camino, en breve lo ves en tu cuenta.</li>
                                 <li><b>🎁 Bonos y reembolso:</b> los bonos de carga se aplican solos; el reembolso diario se reclama desde la app.</li>
                                 <li><b>❗ ¿Nada de esto es tu caso?</b> Escribinos acá qué pasó, cuándo y con qué monto, y te respondemos.</li>
@@ -1401,7 +1397,7 @@
                     <!-- #670 (owner): GIROX DIRECTO — abre la plataforma al toque con carga rápida y retiro adentro -->
                     <button type="button" class="mc-opt mc-girox" onclick="VIP.home.chooseMenu('girox')">
                         <span class="mc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M8 15h3"/></svg></span>
-                        <span class="mc-txt"><b>MENÚ <span class="mc-brand-up">GIROX</span> DIRECTO</b><small>Entrás a jugar al toque en <span class="mc-brand">Girox</span>, la plataforma que tenés seleccionada. Cargás y retirás desde adentro.</small></span><!-- #672 -->
+                        <span class="mc-txt"><b>GIROX DIRECTO</b><small>Entrás a jugar al toque. Abre Girox porque es la plataforma seleccionada; cuando estén las otras, abre la que tengas elegida. Cargás y retirás desde adentro.</small></span><!-- #672 -->
                         <span class="mc-tag">Recomendado</span><!-- #734 (owner) -->
                     </button>
                     <button type="button" class="mc-opt mc-basic" onclick="VIP.home.chooseMenu('basic')">
@@ -1531,7 +1527,7 @@
                     <div class="home-card-title"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor"/></svg> <span id="platformsCardTitleTxt">¿Dónde querés jugar?</span></div>
                     <!-- #271 (owner): explicar fija / cartel al cargar; "entrar a verla" sólo desde Inicio. -->
                     <p class="home-card-sub" id="platformsSub">Podés jugar en cualquiera de las dos. Tocá una para dejarla <b>fija</b> (tus cargas van directo ahí) o no elijas ninguna: cuando entre tu carga te aparece un cartel preguntando dónde querés la plata. Para verlas, andá a Inicio.</p>
-                    <div class="plat-play-row" id="platformsButtons"></div><p class="bl-note">🔒 Cada plataforma tiene su saldo: para cambiar, tu saldo tiene que estar en $0 (jugalo o retiralo).</p><!-- #923 -->
+                    <div class="plat-play-row" id="platformsButtons"></div>
                 </div>
 
                 <!-- ===== CARGA AUTOMÁTICA (#220/#222, compacta): lo completa js/autoload.js ===== -->
@@ -1553,7 +1549,7 @@
                             <!-- #302 (owner): aclaración visible de la carga mínima (valor de Config minDepositArs; default $2.000) -->
                             <div class="al-minline" id="alMinLine">💵 Carga mínima: <b>$2.000</b></div>
                             <!-- #684 (owner): que quede CLARO: $2.000 o más = automática; menos = Soporte revisa el caso -->
-                            <p class="min-note"><b class="mn-big">Carga mínima <span class="md-amt">$2.000</span></b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.setHomeMode('mini')">💬 escribinos a Soporte ›</button></span><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×3</span> antes de poder retirarla.</span></p>
+                            <p class="min-note"><b class="mn-big">Carga mínima <span class="md-amt">$2.000</span></b><span class="mn-sub">Con menos, tu carga <b>NO va a ser acreditada</b>: <button type="button" class="sup-link" onclick="VIP.home.setHomeMode('mini')">💬 escribinos a Soporte ›</button></span><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×1</span> antes de poder retirarla.</span></p>
                         </div>
                     </div>
                     <div class="al-step al-step-c al-step-2">
@@ -1605,7 +1601,7 @@
             <!-- #238 (owner): "enviar comprobante en la línea de retirar premio; retirar en rojo; 'Cargar aquí
                  (adjuntar comprobante)' con el signo de adjuntar". -->
             <div class="home-actions-row">
-                <p class="fd-note" id="fdNoteFull" hidden><span class="fd-l1">🎁 <b>Primera carga: +<span class="fd-pct">100%</span> automático</b></span><span class="fd-app">📲 Después, <b>+<span class="fd-pct-app">50%</span> EXTRA</b> instalando la app y activando las notificaciones</span></p><!-- #626 · #839 -->
+                <p class="fd-note" id="fdNoteFull" hidden><span class="fd-l1">🎁 <b>Primera carga: +<span class="fd-pct">100%</span> automático</b><small class="fd-cap"> · hasta $15.000</small></span><span class="fd-app">📲 Después, <b>+<span class="fd-pct-app">$5.000</span> EXTRA</b> instalando la app y activando las notificaciones</span></p><!-- #626 · #839 -->
                 <button type="button" class="load-row-btn" id="loadHereBtn" onclick="VIP.autoload.sendReceipt()" title="Adjuntar el comprobante de tu transferencia">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.4 11.1 12.3 20.2a5.5 5.5 0 0 1-7.8-7.8l9.2-9.2a3.7 3.7 0 0 1 5.2 5.2l-9.2 9.2a1.8 1.8 0 0 1-2.6-2.6l8.5-8.5"/></svg>
                     <span class="lr-text"><b>Comprobante aquí</b><small id="loadHereMin">carga mínima $2.000 · se acredita solo</small></span>
@@ -1715,8 +1711,8 @@
                     <img src="/icons/icon-192x192.png" class="fd-logo" alt="PICA ROJA" width="64" height="64">
                     <div class="fd-brand">PICA ROJA</div>
                     <div class="fd-kicker">BONO DE PRIMERA CARGA</div>
-                    <div class="fd-big"><b id="fdPct">100%</b><small>automático en tu primera carga</small></div>
-                    <div class="fd-app" id="fdApp"><i>📲</i><span>Después, <b id="fdPctApp">+50% EXTRA</b> instalando la app y activando las notificaciones</span></div><!-- #839 -->
+                    <div class="fd-big"><b id="fdPct">100%</b><small>automático en tu primera carga<span class="fd-cap"> · hasta $15.000</span></small></div>
+                    <div class="fd-app" id="fdApp"><i>📲</i><span>Después, <b id="fdPctApp">+$5.000 EXTRA</b> instalando la app y activando las notificaciones</span></div><!-- #839 -->
                     <p class="fd-txt" id="fdTxt"></p>
                     <button type="button" class="btn btn-primary fd-btn" onclick="VIP.home.fdGo()">Cargar ahora ›</button>
                     <button type="button" class="fd-later" onclick="VIP.home.fdClose()">Ahora no</button>
@@ -1827,26 +1823,7 @@
                             <button type="button" onclick="VIP.home.supportQuick('otro')">❓ Otra cosa</button>
                         </div>
                         <!-- #900 (owner): "si van a Soporte, un breve resumen de cómo funciona todo según el problema que pueden tener" -->
-                        <!-- #933 (owner): "cuando abrís no se puede cerrar": ahora es una HOJA que sube desde abajo; se cierra deslizando para abajo,
-                             con la ✕, tocando afuera o con "Volver al chat" (home.js supportFaq). La hoja se mueve al <body> al abrirse. -->
-                        <button type="button" class="sp-faq-btn" onclick="VIP.home.supportFaq(true)">📌 Cómo funciona todo <small>(mirá antes de escribir)</small> ›</button>
-                        <div id="spFaqSheet" class="sp-faq-sheet" hidden onclick="if(event.target===this)VIP.home.supportFaq(false)">
-                            <div class="sp-faq-card" role="dialog" aria-label="Cómo funciona todo">
-                                <div class="sp-faq-grab" aria-hidden="true"></div>
-                                <div class="sp-faq-head"><b>📌 Cómo funciona todo</b><button type="button" class="sp-faq-x" onclick="VIP.home.supportFaq(false)" aria-label="Cerrar">✕</button></div>
-                                <div class="sp-faq-scroll">
-                                <ul class="sp-faq-list">
-                                <li><b>💳 Carga:</b> mínimo <span class="md-amt">$2.000</span>. Transferís al CBU de la app, mandás el comprobante entero (titular, monto, fecha y N° de operación) y se acredita sola en minutos. Un comprobante repetido no se acredita.</li>
-                                <li><b>💸 Retiro:</b> mínimo <span class="wd-min">$10.000</span>, a un CBU a tu nombre. Sale solo a tu cuenta.</li>
-                                <li><b>🔒 ¿No te deja retirar todo?</b> Cada carga se juega <span class="rx-dep">×3</span> y cada bono <span class="rx-bon">×5</span> antes de retirarlos (antifraude). En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar. Se libera solo jugando: no hace falta escribir.</li>
-                                <li><b>⏳ “Retiro procesado, lo estamos verificando”:</b> ya está en camino, en breve lo ves en tu cuenta.</li>
-                                <li><b>🎁 Bonos y reembolso:</b> los bonos de carga se aplican solos; el reembolso diario se reclama desde la app.</li>
-                                <li><b>❗ ¿Nada de esto es tu caso?</b> Escribinos acá qué pasó, cuándo y con qué monto, y te respondemos.</li>
-                            </ul>
-                                </div>
-                                <button type="button" class="sp-faq-back" onclick="VIP.home.supportFaq(false)">‹ Volver al chat de Soporte</button>
-                            </div>
-                        </div>
+                        <button type="button" class="sp-faq-btn" onclick="VIP.home.supportFaqOpen(event)">📌 Cómo funciona todo (mirá antes de escribir) ›</button><!-- #910: abre un recuadro encima de todo (legible, con scroll y cerrar) -->
                         <div class="sp-closed" id="spClosed" hidden>🔒 Chat cerrado</div><!-- #613: fijado debajo de las opciones, con fecha -->
                         <div class="sp-sla" id="spSla">⏱ Responde dentro de los 10 minutos</div>
                     </div>
@@ -2254,14 +2231,14 @@
                 <p>Disponible para retirar: <strong id="withdrawBalanceAmount" style="color: #00ff88;">—</strong></p>
                 <!-- #379 (owner): pago automático + retiro mínimo configurable -->
                 <p class="wd-auto">💸 <b>Pago automático</b> a tu CBU · Retiro mínimo <b class="wd-min">$10.000</b> · 📱 con tu teléfono verificado</p>
-                <p class="wd-auto wd-rx"><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×3</span> antes de poder retirarla.</span></p>
+                <p class="wd-auto wd-rx"><span class="rx-note">🛡️ Por antifraude, cada carga se juega <span class="rx-dep">×1</span> antes de poder retirarla.</span></p>
             </div>
 
             <!-- Aviso: sin saldo suficiente -->
             <div id="withdrawNoBalance" style="display:none; background: rgba(255,68,68,0.12); border: 1px solid rgba(255,68,68,0.5); border-radius: 10px; padding: 16px; text-align: center;">
                 <div style="font-size: 34px; margin-bottom: 6px;">⚠️</div>
-                <p style="margin: 0; color: #ff6b6b; font-weight: 700; font-size: 14px;">El retiro mínimo es de <span class="wd-min">$10.000</span>.</p>
-                <p style="margin: 8px 0 0; color: #b0b0b0; font-size: 12px;">Cuando tu saldo llegue a <span class="wd-min">$10.000</span> vas a poder solicitar tu retiro desde acá. El pago es automático a tu CBU.</p>
+                <p style="margin: 0; color: #ff6b6b; font-weight: 700; font-size: 14px;">El retiro mínimo es de <span class="wd-min">$5.000</span>.</p>
+                <p style="margin: 8px 0 0; color: #b0b0b0; font-size: 12px;">Cuando tu saldo llegue a <span class="wd-min">$5.000</span> vas a poder solicitar tu retiro desde acá. El pago es automático a tu CBU.</p>
             </div>
 
             <!-- PASO 1: Datos bancarios + monto -->
@@ -2533,13 +2510,13 @@
                 <!-- #622 (owner 2026-10-20): textos MINIMIZADOS para que todo el Info entre en una pantalla. Mismos ids
                      (home.js llena infoMs*, infoDailyMax/Weekly/Monthly, infoCardWhyTitle, infoCardTwoPlatsDesc). -->
                 <!-- #640 (owner 2026-10-20): orden = Por qué elegirnos · (plataformas) · Niveles VIP · Reembolsos · Ruleta diaria · Referidos · Fueguito · Misiones -->
-                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Cargás solo en minutos, retirás a tu CBU y soporte en vivo 24 hs. <b>Carga mínima <span class="md-amt">$2.000</span>:</b> con ese monto o más se acredita sola; <b>con una carga menor, tu carga NO va a ser acreditada</b> (escribinos por Soporte). <b>La plataforma mejor paga de internet.</b> Por <b>antifraude</b>, <b>cada carga</b> se juega <b><span class="rx-dep">×3</span></b> antes de retirarla, y los bonos de bienvenida y regalos <b><span class="rx-bon">×5</span></b> (rollover); las comisiones de referidos, sin apostar.</p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M9 3l3 18 3-18"/></svg></i><span id="infoCardWhyTitle">¿Por qué elegir Girox?</span></b>Cargás solo en minutos, retirás a tu CBU y soporte en vivo 24 hs. <b>Carga mínima <span class="md-amt">$2.000</span>:</b> con ese monto o más se acredita sola; <b>con una carga menor, tu carga NO va a ser acreditada</b> (escribinos por Soporte). <b>La plataforma mejor paga de internet.</b> Por <b>antifraude</b>, <b>cada carga</b> se juega <b><span class="rx-dep">×1</span></b> antes de retirarla, y los bonos de bienvenida y regalos <b><span class="rx-bon">×5</span></b> (rollover); las comisiones de referidos, sin apostar.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <!-- #885 (owner): cargas y retiros con rollover ×3 por antifraude, bien explicado -->
-                <p class="im-sec" id="infoCardRollover"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></i>Cargas y retiros (antifraude)</b>Para cuidar el servicio y que nadie lo use para mover plata sin jugar, <b>cada carga tiene rollover <span class="rx-dep">×3</span></b>: hay que apostar 3 veces su monto antes de retirarla (ej.: cargás $10.000 ⇒ apostás $30.000). Los bonos y regalos van <b><span class="rx-bon">×5</span></b>. <b>Cuenta lo que apostás</b>, ganes o pierdas, no lo que cargás, y lo que ganás jugando se puede retirar con la misma regla. En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar para el resto: se libera solo, no hace falta escribir a Soporte.</p>
+                <p class="im-sec" id="infoCardRollover"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></i>Cargas y retiros (antifraude)</b>Para cuidar el servicio y que nadie lo use para mover plata sin jugar, <b>cada carga tiene rollover <span class="rx-dep">×1</span></b>: hay que apostar su monto <span class="rx-dep">×1</span> antes de retirarla (ej.: cargás $10.000 ⇒ apostás $10.000 y ya podés retirar). Los bonos y regalos van <b><span class="rx-bon">×5</span></b>. <b>Cuenta lo que apostás</b>, ganes o pierdas, no lo que cargás, y lo que ganás jugando se puede retirar con la misma regla. En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar para el resto: se libera solo, no hace falta escribir a Soporte.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
-                <p class="im-sec" id="infoCardTwoPlats"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>PICA ROJA</b>, <b>Girox</b>, <b>JUGAYGANA</b> y <b>Ganamos</b>, todas con el mismo usuario. Elegís una y jugás con su saldo; para cambiar de plataforma, tu saldo tiene que estar en $0.</span><!-- #710 (owner) --></p>
+                <p class="im-sec" id="infoCardTwoPlats"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b>, <b>Jugaygana</b> y <b>PICA ROJA</b> (nuestra plataforma propia, pronto), todas originales, con el mismo usuario. <i>(Estamos trabajando en las automatizaciones para Jugaygana, Ganamos y PICA ROJA.)</i></span><!-- #710 (owner) --></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</b>Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal (rakeback = te devolvemos un % de lo que apostaste). Los bonos se juegan <b>×5</b> antes de retirarlos.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
@@ -2676,7 +2653,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v658</div>
+                    <div class="pf-build" id="appBuildTag">app v648</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2693,6 +2670,11 @@
                     <span class="pf-theme-k"><b><i class="pi pi-sm">🔔</i>Notificaciones</b><small id="pfNotifHint">Avisos de cargas, reembolsos y premios</small></span>
                     <span style="display:inline-flex;align-items:center;"><button class="pf-ico-btn notif-topbar-btn" id="notificationBtn" title="Estado de las notificaciones" aria-label="Notificaciones">🔔</button><button type="button" class="pf-theme-btn" id="pfNotifActivate" onclick="var b=document.getElementById('notificationBtn'); if(b){ b.disabled=false; b.click(); }">Activar</button></span>
                 </div>
+                <!-- #971 (owner): qué avisos quiere recibir, sin apagar las notificaciones del teléfono (así no perdemos el canal). -->
+                <div class="pf-theme-row" id="pfAvisosRow">
+                    <span class="pf-theme-k"><b><i class="pi pi-sm">🎚️</i>Qué avisos querés recibir</b><small id="pfAvisosHint">Bonos del día, novedades y todo lo tuyo</small></span>
+                    <select class="pf-theme-btn pf-select" id="pfAvisosSel" onchange="VIP.home.setNotifLevel(this.value)" aria-label="Qué avisos querés recibir"><option value="all">Todos</option><option value="mine">Sólo lo mío</option><option value="none">Ninguno</option></select>
+                </div>
             </div>
             <!-- #270 (owner): predominancia a usuario, contraseña y página de la app + botón de captura. -->
             <div class="pf-main pf-main-big">
@@ -2700,7 +2682,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v652</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v648</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
@@ -3083,6 +3065,8 @@
             <div class="st-brand-foot"><img src="icons/icon-96x96.png?v=358" alt=""><span><b>PICA ROJA</b><small>oficial · cargas automáticas</small></span></div>
             <div class="st-caption" id="storyCaption"></div>
             <a class="st-link" id="storyLink" href="#" target="_blank" rel="noopener" style="display:none;">Ver más ›</a>
+            <!-- #971: reacciones (una por cliente) -->
+            <div class="st-react" id="storyReact" style="display:none;"></div>
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
@@ -3105,9 +3089,7 @@
     <script src="/js/ui.js"></script>
     <script src="/js/autoload.js"></script>
     <script src="/js/home.js"></script>
-    <script src="/js/lobby.js"></script><!-- #907 Página exclusiva PICA ROJA -->
-    <script src="/js/sorteos.js"></script><!-- G915 sorteos de la gemela (reemplazan a raffle.js) -->
-    <script src="/js/site.js"></script><!-- #944 sitio JUGAYGANA independiente -->
+    <script src="/js/sorteos.js"></script><!-- #915 -->
     <script src="/js/withdraw.js"></script>
     <script src="/js/installbonus.js"></script>
     <script src="/js/notifsurvey.js"></script>
