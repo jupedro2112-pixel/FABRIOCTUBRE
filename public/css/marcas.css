@@ -682,3 +682,18 @@ html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !import
 
 /* F984: saldo al lado de CARGA RÁPIDA en la cabecera de JUGAYGANA */
 .jg-bal { color: #f2ce00; font: 700 13px Roboto, Arial, sans-serif; white-space: nowrap; margin-right: 6px; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
+
+/* F986: el sorteo en las páginas de marca con el formato del casino de Girox (píldora → cartel "Anotate, es gratis" → resumen), cada una con su color */
+.srt-bbar { margin: 10px 12px 4px; }
+.srt-bbar[hidden] { display: none !important; }
+.srt-bbar .srt-bbar-open { padding: 0; background: none; border: 0; }
+.srt-pill { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 7px 14px; border-radius: 13px; border: 1.5px solid var(--srt-g3); background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; cursor: pointer; font-family: var(--p-font); box-shadow: 0 4px 14px var(--srt-sh); text-align: left; }
+.srt-pill .cb-ico { font-size: 20px; line-height: 1; flex: 0 0 auto; }
+.srt-pill .cb-ico.pic img { width: 34px; height: 26px; object-fit: contain; display: block; }
+.srt-pill .cb-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+.srt-pill b { font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.srt-pill small { font-size: 9px; font-weight: 800; letter-spacing: 1px; color: var(--srt-lite); white-space: nowrap; }
+.srt-pill i { font-style: normal; font-weight: 900; color: var(--srt-lite); margin-left: 4px; }
+/* colores por marca (JUGAYGANA ya tiene los suyos, #977; Girox = el violeta de siempre) */
+:root:has(#prLobby[data-skin="picaroja"]:not([hidden])) { --srt-g: #6d0a14; --srt-g2: #c8102e; --srt-g3: #ff4d5e; --srt-soft: #fff0f1; --srt-line: #ffc2c8; --srt-ink: #fff; --srt-lite: #ffd0d5; --srt-sh: rgba(200,16,46,.35); }
+:root:has(#prLobby[data-skin="ganamos"]:not([hidden])) { --srt-g: #1f0a3d; --srt-g2: #5b20b5; --srt-g3: #9b5cff; --srt-soft: #f1e8ff; --srt-line: #cdb0ff; --srt-ink: #fff; --srt-lite: #e2ccff; --srt-sh: rgba(91,32,181,.4); }

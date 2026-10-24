@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1001. Sorteo en las páginas de marca con el formato del casino de Girox: píldora → cartel "Anotate, es gratis" → resumen, cada una con su color (= F986) — SW v674
+
 ### 1000. Portadas de lobby distintas por marca (Ganamos: CDN SoftSwiss; JUGAYGANA/PICA ROJA: propias) + Ganamos en el orden de ganamos.net (= F985) — SW v673
 
 ### 999. Saldo en la cabecera de JUGAYGANA y Ganamos abre con la Carga rápida desplegada (= F984) — SW v672
