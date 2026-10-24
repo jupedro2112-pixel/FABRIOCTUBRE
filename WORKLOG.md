@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 970. Sin "Pronto" en ninguna plataforma + zip SÓLO de las páginas para la gemela — SW v658
+Pedido del owner: "quiero solamente el zip de las páginas, que lo configure otro Claude que no las tiene, sin tocar sus otras modificaciones
+(está más actualizado); que aparezcan las 4 plataformas en cada sector donde falten y sacar el Pronto".
+- Pantalla de ingreso (`loginhero.js`, fila de plataformas #423): PICA ROJA, JUGAYGANA y Ganamos ya no salen "Pronto" (son páginas propias con la
+  cuenta de Girox) y PICA ROJA va primera aunque el server no la mande. Tarjeta de Info (`#infoCardTwoPlatsDesc`): sin "pronto" ni "estamos
+  trabajando en las automatizaciones"; explica que se juega en una y para cambiar el saldo tiene que estar en $0.
+- Zip `paginas-de-marca` armado HUNK POR HUNK contra el árbol de la gemela (G969): sólo rutas de las páginas, ingreso directo a juegos/deportes,
+  catálogo/lobby/portadas, bloqueo por plataforma (`activeBrand`), selector de las 4 plataformas, panel (marca del cliente) y los estilos de las
+  páginas en un archivo APARTE (`public/css/marcas.css`, se carga después de pin.css). Afuera: comprobantes repetidos (#932), FAQ (#933), historias
+  (#934), nuestro sorteo viejo (#917…#929), BuffaloPlay y los números de versión.
+
 ### 969. Una plataforma a la vez, de verdad: bloqueo en TODAS las entradas + el panel muestra la plataforma del cliente — SW v657 · admin SW v200
 Pedido del owner: "todas con la misma de 1girox; se le carga a la que eligió; si eligió una, sólo puede entrar en esa hasta tener saldo 0, las otras
 quedan bloqueadas; todo se calcula igual: es 1 usuario de PICA ROJA que puede usar varias plataformas". Es el modelo de #908 (`User.activeBrand`,

@@ -72,6 +72,11 @@
             const list2 = Array.isArray(info.platforms) ? info.platforms : [];
             if (row && list2.length) {
                 // Igual que las pestañas de adentro (#301): Girox NUNCA es "Próximamente" (aunque en el entorno de prueba no haya API).
+                // #970 (owner: "sacá el pronto"): PICA ROJA, JUGAYGANA y Ganamos son páginas propias con la cuenta de Girox ⇒ nunca "Pronto";
+                // PICA ROJA va primera aunque el server no la mande (es de la app, no del server).
+                const _DOOR_LOGO = { picaroja: '/icons/icon-96x96.png', jugaygana: '/images/jugaygana/io/logo.webp', ganamos: '/images/ganamos-net.png' };
+                list2.forEach((p) => { if (_DOOR_LOGO[p.id]) { p.connected = true; if (p.id === 'jugaygana') p.logoUrl = _DOOR_LOGO.jugaygana; } });
+                if (!list2.some((p) => p.id === 'picaroja')) list2.unshift({ id: 'picaroja', name: 'PICA ROJA', connected: true, logoUrl: _DOOR_LOGO.picaroja });
                 const isSoon = (p) => p.connected === false && p.id !== 'girox';
                 const _nm = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || '')); // #428/#431: 'Jugaygana' con J mayúscula
                 row.innerHTML = list2.map((p) => '<span class="lg-plat-pill' + (isSoon(p) ? ' soon' : '') + '">' + (p.logoUrl ? '<img src="' + _esc(p.logoUrl) + '" alt="">' : '<i>' + _esc(p.emoji || '🎰') + '</i>') + '<b>' + _esc(_nm(p.name)) + '</b>' + (isSoon(p) ? '<small>Pronto</small>' : '') + '</span>').join(''); // #435: 'Pronto'
