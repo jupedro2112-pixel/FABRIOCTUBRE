@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1002. PICA ROJA fijable como app unificada (PLATAFORMA arriba, Inicio = menú completo), barra de la app adentro de PICA ROJA (Slots · Inicio · Deportes), portadas premium y sin Perfil en las otras (= F988) — SW v675
+
 ### 1001. Sorteo en las páginas de marca con el formato del casino de Girox: píldora → cartel "Anotate, es gratis" → resumen, cada una con su color (= F986) — SW v674
 
 ### 1000. Portadas de lobby distintas por marca (Ganamos: CDN SoftSwiss; JUGAYGANA/PICA ROJA: propias) + Ganamos en el orden de ganamos.net (= F985) — SW v673

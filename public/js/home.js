@@ -187,10 +187,27 @@
         setTimeout(() => { try { const lb = _localBrand(); if (_isDoor(lb)) { if (!document.body.classList.contains('prl-open')) VIP.lobby.open('inicio', lb); return; } const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
     }
     function _afterPref(pref) { _curPref = pref; if (pref === 'girox') _giroxDirect(); }
+    // F988 (owner: "si eligen PICA ROJA, que se pueda FIJAR la plataforma y quede como una app unificada con juegos integrados: arriba dice PLATAFORMA
+    // y abre la página; Inicio va al menú completo"). Sólo con PICA ROJA como marca de este teléfono. Al abrir la app entra a la página (como
+    // Girox directo, que con PICA ROJA ya abre su página) y el botón Inicio lleva al menú COMPLETO.
+    const PR_PIN_KEY = 'vip_pr_pin';
+    function prPinned() { try { return localStorage.getItem(PR_PIN_KEY) === '1' && _localBrand() === 'picaroja'; } catch (_) { return false; } }
+    function prPin(on) {
+        try { if (on) { localStorage.setItem(PR_PIN_KEY, '1'); localStorage.setItem(MENU_PREF_KEY, 'girox'); localStorage.setItem(MENU_USER_KEY, '1'); } else localStorage.removeItem(PR_PIN_KEY); } catch (_) {}
+        try { _paintPlatNav(); } catch (_) {}
+        try { VIP.ui.showToast(on ? '📌 PICA ROJA fijada: arriba queda PLATAFORMA (tus juegos) e Inicio te lleva al menú completo' : 'PICA ROJA ya no está fijada', 'success'); } catch (_) {}
+        try { if (VIP.lobby && VIP.lobby.skin && VIP.lobby.skin() === 'picaroja' && document.body.classList.contains('prl-open')) VIP.lobby.go('inicio'); } catch (_) {}
+    }
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.
     // #519 (owner): el botón INICIO es donde cada uno elige su tipo de menú. Si ya estás en el Inicio, abre el selector
     // (Básico · Fácil · Completo); si venías del chat u otra pantalla, primero te lleva al Inicio.
     function goHome() {
+        if (prPinned()) { // F988: PICA ROJA fijada ⇒ Inicio = menú completo (la página de juegos está en PLATAFORMA)
+            try { if (document.body.classList.contains('prl-open')) VIP.lobby.close(true); } catch (_) {}
+            setHomeMode(_menuOn('full') ? 'full' : _modeFor(getMenuPref()));
+            try { ['homePanel', 'homeFull', 'chatScreen'].forEach((id) => { const el = _el(id); if (el) el.scrollTop = 0; }); window.scrollTo({ top: 0 }); } catch (_) {}
+            return;
+        }
         // #539 (owner): INICIO va SIEMPRE al inicio del menú ya elegido (sin abrir el selector; para cambiar está "Cambiar menú").
         // #588 (owner): en el básico, INICIO cierra los paneles desplegados (CARGAR / RETIRAR).
         try {
@@ -295,13 +312,15 @@
         const img = _el('navPlatLogo'), ico = _el('navPlatIco'), lbl = _el('navPlatLbl');
         const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : (p.id === 'buffaloplay' ? '/images/buffaloplay/icon-96.png' : '')))));
         if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
-        if (lbl) lbl.textContent = 'JUGÁ AQUÍ'; // #623 (owner): dice JUGÁ AQUÍ; el logo muestra la elegida
+        if (lbl) lbl.textContent = prPinned() ? 'PLATAFORMA' : 'JUGÁ AQUÍ'; // #623 (owner): dice JUGÁ AQUÍ; el logo muestra la elegida · F988: fijada = PLATAFORMA
+        if (prPinned() && img) { img.src = '/icons/icon-96x96.png'; img.hidden = false; if (ico) ico.hidden = true; b.dataset.plat = 'picaroja'; }
         b.title = p ? ('Jugá en ' + p.name) : 'Elegí dónde jugar con tu saldo';
-        b.dataset.plat = (p && p.id) || ''; // #920: el CSS le da el color de la marca al logo
+        if (!prPinned()) b.dataset.plat = (p && p.id) || ''; // #920: el CSS le da el color de la marca al logo
     }
     // #623: JUGÁ AQUÍ con el logo de la elegida · #920 (owner): "si cambio a Ganamos, que figure su logo y abra Ganamos; lo mismo con PICA ROJA,
     // sin mezclar": abre DIRECTO la plataforma elegida (su página); sin ninguna elegida, el selector.
     function platTap() {
+        if (prPinned()) { openPlatform('picaroja', { embed: true }); return; } // F988
         const p = (_platforms && _platforms.preferredPlatform) ? _platChosen() : null;
         if (p && p.id) { openPlatform(p.id, { embed: true }); return; }
         easyPlay();
@@ -2699,7 +2718,7 @@
                     '<span class="casino-brand" aria-label="' + _esc(o.name || 'PICA ROJA') + ' oficial"><span class="cb-box"><img src="' + _esc(o.logo || '/icons/icon-192x192.png') + '" alt=""><span class="cb-txt"><b>' + _esc(o.name || 'PICA ROJA') + '</b><small>OFICIAL</small></span></span></span>' +
                     '<button type="button" class="tn-btn tn-stories" ' + (o.idSuffix ? '' : 'id="ctStories"') + ' onclick="VIP.stories.open()" title="Historias"><span class="tn-ico st-ring"><span class="st-core">▶</span><span class="st-badge" ' + (o.idSuffix ? '' : 'id="ctStoriesBadge"') + ' style="display:none">1</span></span><span class="tn-lbl">Historias</span></button>' +
                     '<button type="button" class="tn-btn" onclick="VIP.home.casinoInfo()" title="Información del servicio"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M12 11v5.5M12 7.6v.2"/></svg></span><span class="tn-lbl">Info</span></button>' +
-                    '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>' +
+                    (o.noProfile ? '' : '<button type="button" class="tn-btn" onclick="VIP.home.openProfile()" title="Tu perfil"><span class="tn-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c.8-4 3.9-6 7.5-6s6.7 2 7.5 6"/></svg></span><span class="tn-lbl">Perfil</span></button>') + // F988: sin Perfil en Girox, Ganamos y JUGAYGANA
                   '</div>';
     }
     function renderCasinoTabs() {
@@ -2708,7 +2727,7 @@
         let bar = _el('casinoTopBar');
         if (!bar) {
             overlay.insertAdjacentHTML('afterbegin',
-                '<div id="casinoTopBar" class="casino-topbar">' + casinoBarHtml({}) +
+                '<div id="casinoTopBar" class="casino-topbar">' + casinoBarHtml({ noProfile: true }) + // F988: en el casino de Girox sin Perfil
                 '</div>');
             bar = _el('casinoTopBar');
         }
@@ -3017,7 +3036,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { supportFaqOpen, supportFaqClose, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, paintPfAvisos, setNotifLevel, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { prPin, prPinned, supportFaqOpen, supportFaqClose, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, paintPfAvisos, setNotifLevel, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,

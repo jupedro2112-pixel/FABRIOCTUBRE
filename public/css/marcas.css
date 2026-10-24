@@ -697,3 +697,34 @@ html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !import
 /* colores por marca (JUGAYGANA ya tiene los suyos, #977; Girox = el violeta de siempre) */
 :root:has(#prLobby[data-skin="picaroja"]:not([hidden])) { --srt-g: #6d0a14; --srt-g2: #c8102e; --srt-g3: #ff4d5e; --srt-soft: #fff0f1; --srt-line: #ffc2c8; --srt-ink: #fff; --srt-lite: #ffd0d5; --srt-sh: rgba(200,16,46,.35); }
 :root:has(#prLobby[data-skin="ganamos"]:not([hidden])) { --srt-g: #1f0a3d; --srt-g2: #5b20b5; --srt-g3: #9b5cff; --srt-soft: #f1e8ff; --srt-line: #cdb0ff; --srt-ink: #fff; --srt-lite: #e2ccff; --srt-sh: rgba(91,32,181,.4); }
+
+/* F988: botón "Fijar PICA ROJA como mi app" arriba de la página de PICA ROJA */
+.prl-pin { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: calc(100% - 24px); margin: 10px 12px 0; padding: 9px 14px; border: 1.5px dashed var(--p-red, #e11d2a); border-radius: 12px; background: rgba(225,29,42,.08); color: inherit; text-align: left; cursor: pointer; font-family: var(--p-font); }
+.prl-pin b { font-size: 13.5px; font-weight: 800; } .prl-pin small { font-size: 11px; opacity: .8; }
+/* F988: en PICA ROJA la barra de abajo es la de la app (#bottomNav) por encima de la página; la barra propia de la página se esconde */
+body.prl-appnav #bottomNav.bottom-nav { z-index: 99995 !important; }
+body.prl-appnav #prLobby .prl-nav { display: none !important; }
+body.prl-appnav #prLobby .prl-main { padding-bottom: calc(68px + var(--sab, 0px)); }
+body.prl-appnav #bottomNav .tn-ico svg.prl-ic, body.prl-appnav #bottomNav .tn-ico .prl-ic { width: 20px; height: 20px; }
+body.prl-appnav #prlSportPop.prl-sportpop { z-index: 99996; }
+/* F988: portadas de PICA ROJA (premium, sobrias): fondo grafito con brillo rojo, logo, título corto y "Entrar ›" discreto; dibujo a la derecha */
+.prl-pb { position: relative; display: flex; align-items: stretch; aspect-ratio: 1200 / 560; text-align: left; color: #f4f1ea; font-family: var(--p-font);
+  background: radial-gradient(120% 140% at 88% 50%, rgba(200,16,46,.38) 0%, rgba(200,16,46,0) 55%), linear-gradient(135deg, #0c0e12 0%, #16090c 100%) !important;
+  border: 1px solid rgba(212,175,106,.18) !important; border-radius: 14px !important; box-shadow: 0 10px 26px rgba(0,0,0,.35) !important; }
+.prl-pb::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0) 40%); }
+.prl-pb .pb-txt { position: relative; z-index: 1; flex: 1 1 56%; display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 0 0 6%; min-width: 0; }
+.prl-pb small { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 800; letter-spacing: 1.6px; color: #d4af6a; }
+.prl-pb small img { width: 16px; height: 16px; border-radius: 4px; }
+.prl-pb b { font-size: clamp(18px, 5.4vw, 26px); font-weight: 800; letter-spacing: -.2px; line-height: 1.1; color: #fff; }
+.prl-pb em { font-style: normal; font-size: 11.5px; color: rgba(244,241,234,.72); line-height: 1.3; }
+.prl-pb .pb-cta { align-self: flex-start; margin-top: 6px; font-style: normal; font-size: 11.5px; font-weight: 800; letter-spacing: .4px; padding: 6px 13px; border-radius: 999px; border: 1px solid rgba(244,241,234,.35); color: #fff; }
+.prl-pb .pb-cta span { color: #e2364f; margin-left: 2px; }
+.prl-pb:active .pb-cta { background: #c8102e; border-color: #c8102e; }
+.prl-pb .pb-art { position: relative; z-index: 1; flex: 0 0 40%; display: flex; align-items: center; justify-content: center; padding-right: 4%; }
+.prl-pb .pb-art svg { width: 100%; max-width: 170px; height: auto; filter: drop-shadow(0 8px 18px rgba(0,0,0,.5)); }
+.prl-pb .pb-new { position: relative; width: 100%; max-width: 170px; aspect-ratio: 1 / 1; }
+.prl-pb .pb-new img { position: absolute; width: 58%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; border: 1px solid rgba(212,175,106,.35); box-shadow: 0 8px 18px rgba(0,0,0,.55); }
+.prl-pb .pb-new .pb-n0 { left: 0; top: 14%; transform: rotate(-9deg); }
+.prl-pb .pb-new .pb-n1 { left: 21%; top: 4%; z-index: 2; }
+.prl-pb .pb-new .pb-n2 { right: 0; top: 14%; transform: rotate(9deg); }
+.prl-pb.pb-sport { background: radial-gradient(120% 140% at 88% 50%, rgba(200,16,46,.28) 0%, rgba(200,16,46,0) 55%), linear-gradient(135deg, #0b100d 0%, #15090b 100%) !important; }
