@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-24
 
+### 982. JUGAYGANA: cabecera y menú como jugaygana44, sin Soporte, CARGA RÁPIDA en lugar de INGRESAR y abierta al entrar — SW v670
+**Pedido (owner, captura del menú de jugaygana44):** "sacamos el soporte, el INGRESAR lo cambiamos por CARGA RÁPIDA; que al entrar aparezca la Carga rápida
+abierta y cuando la cerrás quede ahí arriba; Tareas diarias lo sacamos". Cabecera: logo · mensajes (historias) · botón con borde **CARGA RÁPIDA** (`.jg-qlbtn`,
+donde su página tiene INGRESAR) · ☰ (sin el auricular de Soporte ni el nombre de usuario). Menú ☰ de JUGAYGANA: Inicio · Casino · Casino en vivo · Eventos
+deportivos arriba (como el suyo, sin Tareas diarias) y sin "Soporte". Al abrir la página la Carga rápida se abre sola (700 ms); cerrada, queda el botón.
+
 ### 981. Dominios de marca: sin "Cerrar sesión" y sesión que se renueva sola — SW v669
 **Pedido (owner):** "que no se pueda cerrar sesión en cada página, así queda siempre iniciado". En un dominio de marca (`VIP_BRAND_LOCK`): se oculta
 `#pfLogoutBtn` (`html.brand-lock`, pin.css), `VIP.auth.handleLogout` no hace nada, y al abrir la app se pide `POST /api/auth/renew` (una vez por día) ⇒
