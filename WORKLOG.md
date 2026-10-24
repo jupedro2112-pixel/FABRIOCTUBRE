@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 964. Revisión de punta a punta: con una marca activa nada abre la web de Girox — SW v652
+**Owner:** "en todos da el link (en picaroja.com), revisá de punta a punta". Recorrido de todo lo que abre juego/deporte/casino:
+- **Páginas de marca (lobby.js):** todas las tarjetas (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay, vivo, lobbies, búsqueda, Nuevos) → `play` →
+  `gamePlay`/`favPlay` (link directo); deportes → `sport` (#962). El menú y la barra de abajo sólo navegan dentro de la página. OK.
+- **`openPlatform('girox', …)` interno** (botón Jugar del menú básico/fácil, fotos del Inicio, historias, plataforma preferida): con una marca
+  puerta en `vip_brand` ahora abre la página de ESA marca. La web de Girox se abre sólo si la persona ELIGE Girox (`checked`, tras `_brandGuard`) o
+  en modo prueba (`test`).
+- **Fotos de juegos del Inicio (`playGame`, `ENTRY_GAMES`):** antes Girox embebido con `_casinoGamePath`; ahora `favPlay` (link directo).
+- Probado en el navegador de prueba con marca JUGAYGANA: `openPlatform('girox',{embed})` → página JUGAYGANA (sin casino de Girox); Joker's Jewels y
+  Ultim8 → `/api/platform/session` con `direct:true`.
+
 ### 963. Al abrir la app con una marca elegida se abre SU página, no Girox — SW v651
 **Owner:** "no se ven accesos propios en la app, siempre va a Girox cuando abrís". Con el menú "Girox directo" (el de entrada, #836) `_giroxDirect`
 abría la plataforma preferida de `/api/platforms`; si todavía no había respondido (Tor) caía en `openPlatform('girox')`. Ahora primero mira

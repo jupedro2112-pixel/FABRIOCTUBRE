@@ -1012,6 +1012,8 @@
     // casino normal. Un juego nuevo: agregar acá el par. Se navega DESPUÉS del SSO (ui.js, `_casinoGamePath`).
     const GAME_PLAY = { 'jokers-jewels': '/play/2/vs5joker', 'gates-of-olympus-1000': '/play/2/vs20olympx', 'sugar-rush-1000': '/play/2/vs20sugarrushx', 'sweet-bonanza-2500': '/play/2/vs20swbon2500', 'jokers-jewels-hold-spin': '/play/2/vs5jokjewhs', 'mines': '/play/4/mines_prod2_100hp', 'zeus-rush-fever': '/play/4/zeusrushfeverdeluxe96_rubyplay', 'buffalo-king-untamed': '/play/2/vswaysbkingasc', 'big-bass-bonanza': '/play/2/vs10bbbonanza', 'starlight-princess-1000': '/play/2/vs20starlightx' };
     function playGame(id) {
+        // #964: con link de juego ⇒ el mismo ingreso directo que los favoritos (el juego del proveedor aparte, sin la web de Girox).
+        if (GAME_PLAY[id]) { favPlay(GAME_PLAY[id].replace(/^\/play\//, ''), ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1]) || 'el juego'); return; }
         try { VIP.ui._casinoGamePath = GAME_PLAY[id] || null; VIP.ui._casinoGameName = ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1]) || ''; } catch (_) {}
         try { VIP.ui.showToast(GAME_PLAY[id] ? '🎰 Abriendo ' + ((ENTRY_GAMES.find((g) => g[0] === id) || [])[1] || 'el juego') + '…' : '🎰 Abriendo el casino…', 'info'); } catch (_) {}
         openPlatform('girox', { embed: true });
@@ -2409,6 +2411,10 @@
     function openPlatform(platformId, opts) {
         // #908: si la PERSONA elige la otra plataforma (sin opts: los ingresos internos a Girox de la Página exclusiva pasan `embed`), se chequea el saldo.
         if (!opts && BRANDS[platformId] && (_brand || 'picaroja') !== platformId) { _brandGuard(platformId).then((ok) => { if (ok) { setPreferred(platformId).catch(() => {}); openPlatform(platformId, { checked: true }); } }); return; }
+        // #964 (owner: "ninguna visual de Girox en las otras páginas, revisá de punta a punta"): un ingreso INTERNO a Girox (Jugar, fotos del
+        // Inicio, historias, menú básico/fácil) con una marca puerta activa en este teléfono abre la página de ESA marca. Sólo la persona eligiendo
+        // Girox (`checked`, tras `_brandGuard`) o el modo prueba abren la web de Girox.
+        if (platformId === 'girox' && !(opts && (opts.checked || opts.test)) && _isDoor(_localBrand())) { try { VIP.ui._casinoGamePath = null; VIP.ui._casinoGameName = null; } catch (_) {} platformId = _localBrand(); }
         if (_isDoor(platformId)) { try { VIP.lobby.open('inicio', platformId); } catch (_) {} return; } // #907/#912: página propia de la marca
         const test = !!(opts && opts.test);
         // #695 (owner): "en Entrar a la página no figura el chat de carga rápida" → el casino con sesión se abre SIEMPRE ADENTRO

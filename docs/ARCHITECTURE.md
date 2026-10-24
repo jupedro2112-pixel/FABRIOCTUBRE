@@ -1406,6 +1406,7 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Ganamos / JUGAYGANA, datos (#947–#951; #951 = recorte por grilla fija, 2.372 juegos en el orden de sus fotos):** `ganamos-home.json` (filas del inicio + `hw` Halloween), `ganamos-games.json` (proveedores de la
   pestaña Casino), `<marca>-extra.json` ("Juegos nuevos" = lo de Girox que la página no tiene; regenerar si cambian las listas). Portadas propias en
   `images/ganamos/{g,p,hw}` e `images/jugaygana/g`; las de Girox sólo por `/api/games/img`.
+- **#964:** `openPlatform('girox')` sin `checked`/`test` con una marca puerta activa abre la página de la marca; `playGame` = `favPlay`.
 - **Páginas de marca sin Girox (#962):** juegos = `gamePlay`/`favPlay` (link directo del proveedor); deportes = `lobby.sport` con `SPORT_KEYS`
   (nunca `casinoGoTo`/Girox embebido); historias con `_noGirox()` en stories.js. En Render (API simulada) el juego directo no abre: probar en producción.
 - **BuffaloPlay (#958):** 5ª puerta a la MISMA cuenta de Girox, con el formato de thornet.uno (zip Thornet.zip). `SKINS.buffaloplay`
