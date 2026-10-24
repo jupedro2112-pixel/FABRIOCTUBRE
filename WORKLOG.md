@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 984. JUGAYGANA con el saldo en la cabecera; Ganamos abre con la Carga rápida desplegada — SW v672
+**Pedido (owner):** "en JUGAYGANA, al costado de la parte superior ponemos el saldo; en Ganamos lo mismo pero, al no tener menú, lo dejamos así y agregamos la
+burbuja abierta abajo; si la cerramos que quede arriba como está y que diga CARGA RÁPIDA". JUGAYGANA: `.jg-bal` (saldo en amarillo, `js-prl-bal`) al lado del
+botón CARGA RÁPIDA. Ganamos: al entrar se abre la Carga rápida (igual que JUGAYGANA, 700 ms); cerrada, queda el botón de arriba, ahora en mayúscula.
+
 ### 983. JUGAYGANA: el menú ☰ es el OFICIAL (Inicio · Casino · Casino en vivo · Eventos deportivos) — SW v671
 **Pedido (owner, capturas):** "todo este menú lo cambiamos por este, es el oficial; sacá lo de abajo de todo de Tareas diarias". En JUGAYGANA `_paintMenu`
 arma SÓLO esos 4 ítems (mayúscula, ícono, filas alternadas #1b1b1b/#2a2a2a) en una lista que baja debajo de la cabecera (`.prl-drawer-jg`); sin saldo, nivel,
