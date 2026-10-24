@@ -3925,3 +3925,5 @@ body.prl-apphead #prLobby .prl-cbar { display: none !important; }
 body.prl-apphead #prLobby { padding-top: var(--prl-apphead, 64px); box-sizing: border-box; }
 /* #990 (owner): "PLATAFORMA bajalo un poco porque se encima" ⇒ el logo baja y no toca el borde de arriba */
 .header .tn-plat .tn-ico { margin-top: 6px; }
+/* #991: menú opción 1 adentro de PICA ROJA: la barra de la página queda en Slots · Inicio · Deportes, como la de la app */
+body.prl-app3 #prLobby .prl-nav [data-v="vivo"], body.prl-app3 #prLobby .prl-nav [data-v="lobbies"] { display: none !important; }

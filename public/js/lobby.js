@@ -786,9 +786,13 @@ VIP.lobby = (function () {
             Object.keys(_NAV_SWAP).forEach((id) => { const b = $(id); if (!b) return; const x = _NAV_SWAP[id]; _navSaved[id] = { html: b.innerHTML, on: b.getAttribute('onclick') };
                 b.innerHTML = '<span class="tn-ico">' + ico(x.ico) + '</span><span class="tn-lbl">' + x.lbl + '</span>'; b.setAttribute('onclick', x.on); });
             document.body.classList.add('prl-appnav');
+        } else if (on && _navSaved && !_navSaved._bottom) {
+            // #991: sin barra de abajo de la app (menú opción 1), la de la página queda en Slots · Inicio · Deportes e Inicio vuelve al menú completo
+            const h = document.querySelector('#prLobby .prl-nav .prl-home'); if (h) h.setAttribute('onclick', 'VIP.lobby.close(true);VIP.home.goHome()');
+            document.body.classList.add('prl-app3');
         } else if (!on && _navSaved) {
             Object.keys(_navSaved).forEach((id) => { if (id === '_bottom') return; const b = $(id); if (!b) return; if (_navSaved[id].html != null) b.innerHTML = _navSaved[id].html; b.setAttribute('onclick', _navSaved[id].on); });
-            _navSaved = null; document.body.classList.remove('prl-appnav', 'prl-apphead');
+            _navSaved = null; document.body.classList.remove('prl-appnav', 'prl-apphead', 'prl-app3');
         }
     }
     function close(force) {

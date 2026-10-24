@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 991. PICA ROJA: abajo SIEMPRE Slots · Inicio · Deportes (también sin la barra de abajo de la app) — SW v678
+**Pedido (owner):** "que al entrar a la plataforma parezca que seguís en el menú completo, pero que abajo cambie a Slots, Inicio y Deportes; después de las
+fotos, el orden como está ahora". Con el menú opción 2 ya lo hacía `#bottomNav` (#988); con la opción 1 la barra de la página (`.prl-nav`) esconde En vivo y
+Lobby (`body.prl-app3`) e Inicio cierra la página y va al menú completo. El orden de la página después de las portadas no se tocó.
+
 ### 990. Adentro de PICA ROJA, la cabecera del MENÚ COMPLETO (Telegram · Info · PLATAFORMA · Soporte · Historias) + PLATAFORMA más abajo — SW v677
 **Pedido (owner, 2 capturas):** "este menú (Volver · Menú · PICA ROJA · Historias · Info · Perfil), adentro sólo de PICA ROJA, cambialo por lo superior del menú
 completo; PLATAFORMA bajalo un poco porque se encima". `_prNav` (lobby.js): con PICA ROJA abierta la cabecera de la app pasa por encima de la página
