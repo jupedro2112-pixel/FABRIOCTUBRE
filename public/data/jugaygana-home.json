@@ -382,6 +382,198 @@
      "img": "https://img-girox.red777.win/kagaming/scaryclown.webp",
      "gid": 5273,
      "lk": "bsw_slots"
+    },
+    {
+     "key": "1/vswaysmjwl",
+     "name": "Mummys Jewels",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/541?v=1790303163",
+     "gid": 541,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs20mummy",
+     "name": "Mummy's Gold",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs20mummy.webp",
+     "gid": 2169,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vswayspompmr2",
+     "name": "Zombie School Megaways",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vswayspompmr2.webp",
+     "gid": 2678,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vswayswildbrst",
+     "name": "Witch Heart Megaways",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vswayswildbrst.webp",
+     "gid": 527,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/rp_54",
+     "name": "Feliz Día de los Muertos",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/35179?v=1788438182",
+     "gid": 35179,
+     "lk": "atomic"
+    },
+    {
+     "key": "3/BookOfMummy",
+     "name": "Book of Mummy",
+     "provider": "kagaming",
+     "img": "https://img-girox.red777.win/kagaming/bookofmummy.webp",
+     "gid": 4800,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "2/vswayszombcarn",
+     "name": "Zombie Carnival",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2676?v=1790038967",
+     "gid": 2676,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/1263",
+     "name": "Cursed Seas",
+     "provider": "Hacksaw Gaming",
+     "img": "https://img-girox.red777.win/hacksaw-gaming/1263.webp",
+     "gid": 1638,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs20mmuertx",
+     "name": "Mad Muertos",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs20mmuertx.webp",
+     "gid": 512,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "3/DayOfDead",
+     "name": "Dia De Muertos",
+     "provider": "kagaming",
+     "img": "https://img-girox.red777.win/kagaming/dayofdead.webp",
+     "gid": 4928,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "2/vswayscyclop",
+     "name": "Wild Skullz",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vswayscyclop.webp",
+     "gid": 2625,
+     "lk": "atomic"
+    },
+    {
+     "key": "3/BookOfSkull",
+     "name": "Book of Skull",
+     "provider": "kagaming",
+     "img": "https://img-girox.red777.win/kagaming/bookofskull.webp",
+     "gid": 4839,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "2/1434",
+     "name": "Cursed Crypt",
+     "provider": "Hacksaw Gaming",
+     "img": "https://img-girox.red777.win/hacksaw-gaming/1434.webp",
+     "gid": 1636,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/rp_21",
+     "name": "Dr. Frankenstein",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/35166?v=1790329452",
+     "gid": 35166,
+     "lk": "atomic"
+    },
+    {
+     "key": "3/ChineseZombie",
+     "name": "Chinese Zombie",
+     "provider": "kagaming",
+     "img": "https://admin.1girox.com/game-img/5174?v=1790213612",
+     "gid": 5174,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "2/vs10vampwolf",
+     "name": "Vampires vs Wolves",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2586?v=1790016420",
+     "gid": 2586,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vs15seoultrain",
+     "name": "Zombie Train",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs15seoultrain.webp",
+     "gid": 2679,
+     "lk": "atomic"
+    },
+    {
+     "key": "4/zombiesgowild_rngplay",
+     "name": "Zombies Go Wild",
+     "provider": "ensuregames",
+     "img": "https://img-girox.red777.win/ensuregames/zombiesgowild-rngplay.webp",
+     "gid": 10223,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/1472",
+     "name": "Cursed King",
+     "provider": "BackSeat Gaming",
+     "img": "https://img-girox.red777.win/backseat-gaming/1472.webp",
+     "gid": 1637,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/gates-of-halloween",
+     "name": "Gates Of Halloween",
+     "provider": "Colorful Play",
+     "img": "https://img-girox.red777.win/colorful-play/gates-of-halloween.webp",
+     "gid": 1835,
+     "lk": "atomic"
+    },
+    {
+     "key": "3/Frankenstein",
+     "name": "Frankenstein",
+     "provider": "kagaming",
+     "img": "https://admin.1girox.com/game-img/4617?v=1790329728",
+     "gid": 4617,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "3/ZombieSiege",
+     "name": "Zombie Siege",
+     "provider": "kagaming",
+     "img": "https://img-girox.red777.win/kagaming/zombiesiege.webp",
+     "gid": 5361,
+     "lk": "bsw_slots"
+    },
+    {
+     "key": "2/rp_136",
+     "name": "Giga Match Sugar Skull",
+     "provider": "RubyPlay",
+     "img": "https://cdn.gmbl.org.uk/rp_136.webp",
+     "gid": 35196,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/2113",
+     "name": "Ghosty Hallows",
+     "provider": "BackSeat Gaming",
+     "img": "https://img-girox.red777.win/backseat-gaming/2113.webp",
+     "gid": 1861,
+     "lk": "atomic"
     }
    ],
    "bg": "/images/jugaygana/io/hw-bg.webp",

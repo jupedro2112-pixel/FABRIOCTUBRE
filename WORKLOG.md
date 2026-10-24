@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-24
 
+### 975. "Especial de Halloween" de Ganamos LLENO (48 juegos de todo Girox, grilla que llena el recuadro) — SW v663
+**Pedido (owner, captura):** el recuadro de Halloween mostraba 2 juegos y mucho vacío: "completá toda la portada con juegos viejos de Halloween, buscá en
+toda la plataforma". `complete-brands.py` busca en TODO el catálogo de Girox juegos de temática Halloween (calabazas, zombis, vampiros, brujas, momias,
+fantasmas, calaveras, Día de Muertos, monstruos, diablos…; sin juegos en vivo) y lleva la fila a 48 (Ganamos y JUGAYGANA). CSS (`.gn-hw-list`): la grilla de
+3 columnas ocupa todo el recuadro y se desliza adentro; "JUGÁ" sigue abriendo la lista completa.
+
 ### 974. "Exclusivo de Ganamos" con 10 juegos y portadas de ganamos.net (prueba de diseño) — SW v662
 **Pedido (owner):** "en Exclusivo de Ganamos poné 10 juegos, usá 5/10 portadas de los juegos Ganamos de ganamos.net (es mía) para testear el diseño, con
 juegos de Pragmatic". 10 portadas "GANAMOS …" recortadas de las capturas de su página (`public/images/ganamos/excl/1..10.webp`, 111 px, traen el ♥ de su
