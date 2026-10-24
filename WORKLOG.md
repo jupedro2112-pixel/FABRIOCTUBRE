@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-24
 
+### 974. "Exclusivo de Ganamos" con 10 juegos y portadas de ganamos.net (prueba de diseño) — SW v662
+**Pedido (owner):** "en Exclusivo de Ganamos poné 10 juegos, usá 5/10 portadas de los juegos Ganamos de ganamos.net (es mía) para testear el diseño, con
+juegos de Pragmatic". 10 portadas "GANAMOS …" recortadas de las capturas de su página (`public/images/ganamos/excl/1..10.webp`, 111 px, traen el ♥ de su
+diseño) puestas a juegos de Pragmatic Play de Girox del mismo estilo: Joker's Jewels, Volcano Goddess, Egyptian Fortunes, Joker's Jewels Hold & Spin,
+Buffalo King, Cowboy Coins, 7 Clovers of Fortune, Chilli Heat, Gates of Olympus y Buffalo King Megaways (nombre real del juego debajo). Abren directo.
+Antes la fila tenía 2 (Gana Volcano de RubyPlay y Buffalo Power Megaways de Playson).
+**Deportes (owner):** queda como está, con el link directo de cada casa (no la web de Girox); lo del recorte se ve después.
+
 ### 973. Ganamos y JUGAYGANA COMPLETAS: cada proveedor con todos sus juegos de Girox — SW v661
 **Pedido (owner):** "completá más lo que hay en Ganamos y JUGAYGANA, donde falte poné juegos, respetando el proveedor".
 `scripts/girox/complete-brands.py` (catálogo completo de 1girox del 2026-10-23): a cada proveedor de la página le suma los juegos de ESE MISMO proveedor
