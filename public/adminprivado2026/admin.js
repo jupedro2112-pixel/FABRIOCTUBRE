@@ -4874,8 +4874,8 @@ window.handleBlockUser = handleBlockUser;
 window.handleUnblockUser = handleUnblockUser;
 // #913: marca activa del cliente (el bloqueo por saldo es para el cliente; el admin la cambia igual, sin mover fichas).
 async function adminSetBrand(userId, username) {
-    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana', '4': 'ganamos', '5': 'buffaloplay' }; // #958
-    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n4 = Ganamos\n5 = BuffaloPlay\n\nEscribí el número:');
+    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana', '4': 'ganamos' }; // #958 · #972: sin BuffaloPlay en las opciones
+    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n4 = Ganamos\n\nEscribí el número:');
     if (pick == null) return;
     const brand = opts[String(pick).trim()]; if (!brand) { showToast('Opción inválida', 'error'); return; }
     try {

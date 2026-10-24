@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-24
 
+### 972. BuffaloPlay fuera de las opciones de plataforma — SW v660
+**Pedido (owner):** "sacá el de Buffalo en las opciones". Ya no aparece para elegir en la app (lista de plataformas de `_injectPR` y `ENTRY_FALLBACK` de
+home.js) ni en el cambio de marca del panel (🏷️). La página `/buffaloplay` y su código siguen: quien ya la tenía elegida no queda trabado.
+
 ### 971. Casino en vivo con TODOS los proveedores en las 4 páginas — SW v659
 **Pedido (owner):** "en proveedores de casino en vivo aparece 1 solo proveedor, meté todos los que haya; miralo en todos lados; si está incompleto, completalo".
 **Causa:** la lista pública de proveedores de 1girox (`/api/games` → `providers`) sólo trae a **Evolution** entre los de vivo; Ezugi, Pragmatic Live, SA Gaming,
