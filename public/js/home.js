@@ -175,7 +175,9 @@
             if (/[?&](jg|gn|pr|bp)=1\b/.test(location.search) || document.body.classList.contains('prl-open')) return;
         } catch (_) {}
         // #672 (owner): abre Girox porque es la plataforma seleccionada; cuando haya otras con API, abre la preferida del cliente.
-        setTimeout(() => { try { const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
+        // #963 (owner: "siempre va a Girox cuando abrís"): la marca elegida en ESTE teléfono (PICA ROJA, JUGAYGANA, Ganamos, BuffaloPlay) manda
+        // aunque /api/platforms todavía no haya respondido (con Tor tarda y antes caía en Girox): se abre SU página, nunca la web de Girox.
+        setTimeout(() => { try { const lb = _localBrand(); if (_isDoor(lb)) { if (!document.body.classList.contains('prl-open')) VIP.lobby.open('inicio', lb); return; } const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
     }
     function _afterPref(pref) { _curPref = pref; if (pref === 'girox') _giroxDirect(); }
     // "Inicio" de la barra: menú fácil o completo según lo que eligió la persona.

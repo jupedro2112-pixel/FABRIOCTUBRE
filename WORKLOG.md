@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-24
 
+### 963. Al abrir la app con una marca elegida se abre SU página, no Girox — SW v651
+**Owner:** "no se ven accesos propios en la app, siempre va a Girox cuando abrís". Con el menú "Girox directo" (el de entrada, #836) `_giroxDirect`
+abría la plataforma preferida de `/api/platforms`; si todavía no había respondido (Tor) caía en `openPlatform('girox')`. Ahora primero mira
+`_localBrand()` (`vip_brand`): si es una puerta (PICA ROJA por defecto, JUGAYGANA, Ganamos, BuffaloPlay) abre esa página. Sólo con Girox elegida
+abre el casino de Girox. Owner confirmó que en picaroja.com los juegos del Inicio abren como link propio: las páginas usan ese mismo ingreso
+(`favPlay`); en Render no abre ninguno porque la API es la simulada (cargar `GIROX_API_URL`/`GIROX_API_KEY` en Render para probarlo ahí).
+
 ### 962. Deportes e historias con el LINK DIRECTO en las páginas de marca (nada de la web de Girox) — SW v650
 **Owner:** "estos juegos (favoritos) los abrís con el link externo que da la API (el agregador de Girox): replicá ese link en todos los juegos de
 todas las plataformas nuevas — PICA ROJA, Ganamos, JUGAYGANA y BuffaloPlay; lo mismo para entrar a deportes, directo al link, sin pasar por Girox;
