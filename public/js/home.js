@@ -842,8 +842,7 @@
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
         { id: 'ganamos', name: 'Ganamos', playUrl: '', connected: true, door: true, logoUrl: '/images/ganamos-net.png' }, // #917: ya se juega (página propia)
-        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana/io/logo.webp' }, // #378 · #917 · #920
-        { id: 'buffaloplay', name: 'Buffalo Play', playUrl: '', connected: true, door: true, logoUrl: '/images/buffaloplay/icon-96.png' } // #958: al lado de JUGAYGANA
+        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana/io/logo.webp' } // #378 · #917 · #920 · F972: sin BuffaloPlay
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
@@ -2285,10 +2284,9 @@
         const gn = list.find((p) => p.id === 'ganamos'); // #914: Ganamos = página /ganamosoficial con los juegos y la cuenta de Girox
         if (gn) Object.assign(gn, { connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl, name: 'Ganamos', playUrl: '', externalUrl: '' });
         else list.push({ id: 'ganamos', name: 'Ganamos', emoji: '🟣', connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl });
-        // #958 (owner: "el botón de BuffaloPlay al lado de JUGAYGANA, en el básico y el completo"): puerta a Girox, justo después de JUGAYGANA.
-        const bp = { id: 'buffaloplay', name: 'Buffalo Play', emoji: '🦬', connected: true, door: true, logoUrl: DOORS.buffaloplay.logoUrl };
+        // F972 (owner: "sacá el de Buffalo en las opciones"): BuffaloPlay ya no se ofrece para elegir (#958 la ponía al lado de JUGAYGANA). Su página
+        // (/buffaloplay) sigue andando para quien ya la tenía elegida.
         const bpAt = list.findIndex((p) => p.id === 'buffaloplay'); if (bpAt >= 0) list.splice(bpAt, 1);
-        const jgAt = list.findIndex((p) => p.id === 'jugaygana'); list.splice(jgAt >= 0 ? jgAt + 1 : list.length, 0, bp);
         const lb = _localBrand();
         if (_isDoor(lb)) { _platforms.preferredPlatform = lb; _platforms.defaultPlatform = lb; }
         setTimeout(_paintBrandLabels, 0); // #917

@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-24
 
+### 988. BuffaloPlay fuera de las opciones de plataforma (= F972) — SW v661
+No se ofrece para elegir en la app ni en el cambio de marca del panel; la página `/buffaloplay` sigue andando para quien ya la tenía.
+
 ### 987. Casino en vivo con TODOS los proveedores en las 4 páginas de marca (= F971) — SW v660
 La lista pública de proveedores de 1girox sólo trae a Evolution entre los de vivo (Ezugi, Pragmatic Live, SA Gaming, Iconic21 Live, Vivo Gaming, LiveVegas,
 TVBet y ElCasino tienen sus mesas en el catálogo pero no figuran). `public/data/girox-live.json` (9 proveedores, ~1.100 mesas; `scripts/girox/build-live.py`
