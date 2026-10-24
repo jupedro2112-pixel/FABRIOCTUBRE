@@ -1229,12 +1229,13 @@
         picaroja: { bg: 'radial-gradient(circle at 50% 35%, #3a0010 0, #0f212e 60%)', logo: '/icons/icon-192x192.png', h: 84, sp: '#e6002a', tx: '#fff', name: 'PICA ROJA' },
         ganamos: { bg: 'radial-gradient(circle at 50% 35%, #5b13a8 0, #130227 65%)', logo: '/images/ganamos/logo.webp', h: 46, sp: '#c457da', tx: '#ededed', name: 'Ganamos' },
         jugaygana: { bg: '#0d1117', logo: '/images/jugaygana/io/logo.webp', h: 40, sp: '#f2ce00', tx: '#fff', name: 'JUGAYGANA' },
-        buffaloplay: { bg: 'radial-gradient(circle at 50% 35%, #2b3445 0, #11141d 65%)', logo: '/images/buffaloplay/logo.webp', h: 44, sp: '#ff8a1f', tx: '#fff', name: 'BuffaloPlay' }, // #958
-        girox: { bg: '#0b0b10', logo: '/images/soporte-1girox.png', h: 70, sp: '#22c55e', tx: '#fff', name: 'Girox' }
+        buffaloplay: { bg: 'radial-gradient(circle at 50% 35%, #2b3445 0, #11141d 65%)', logo: '/images/buffaloplay/logo.webp', h: 44, sp: '#ff8a1f', tx: '#fff', name: 'BuffaloPlay' } // #958
     };
     function _gameLoadingScreen(win, name) {
-        let b = 'girox'; try { const lob = _el('prLobby'); b = (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) ? VIP.lobby.skin() : (_localBrand() || 'girox'); } catch (_) {}
-        const k = _LOAD_SKIN[b] || _LOAD_SKIN.girox; const o = location.origin;
+        // #968 (owner: "que la gente no vea que es de otra plataforma"): la carga NUNCA muestra Girox: sin marca elegida va la de la app (PICA ROJA;
+        // en el sitio JUGAYGANA, JUGAYGANA).
+        let b = 'picaroja'; try { const lob = _el('prLobby'); b = (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) ? VIP.lobby.skin() : (_isDoor(_localBrand()) ? _localBrand() : (window.VIP_SITE === 'jugaygana' ? 'jugaygana' : 'picaroja')); } catch (_) {}
+        const k = _LOAD_SKIN[b] || _LOAD_SKIN.picaroja; const o = location.origin;
         win.document.title = name + ' · ' + k.name;
         win.document.body.style.cssText = 'margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:' + k.bg + ';color:' + k.tx + ';font:700 15px system-ui,Arial,sans-serif';
         win.document.body.innerHTML = '<style>@keyframes s{to{transform:rotate(360deg)}}</style><img src="' + o + k.logo + '" alt="" style="max-width:220px;height:' + k.h + 'px;object-fit:contain">' +

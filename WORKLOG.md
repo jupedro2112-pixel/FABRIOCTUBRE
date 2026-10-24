@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-24
 
+### 968. La pantalla de carga de un juego nunca muestra Girox + zip de las páginas para la gemela — SW v656
+Pedido del owner: "que en cada momento que carga, si te lleva a Girox, sacar ese logo de Girox para que la gente no vea que es de otra plataforma".
+- `_gameLoadingScreen` (home.js): sin página de marca abierta ni marca elegida mostraba el logo y el nombre de Girox ("Abriendo X…" · Girox).
+  Ahora va la marca elegida, o PICA ROJA (en el sitio JUGAYGANA, JUGAYGANA). Se sacó la entrada `girox` de `_LOAD_SKIN`.
+- El juego en sí ya abre con el link del PROVEEDOR (`launch_url`, #857/#944), no con la web de Girox. Si algún proveedor muestra igual algo de
+  Girox mientras carga, es su propia página: falta la URL exacta (barra de direcciones) para ver si se puede saltear.
+- Zip para la gemela (pedido del owner, sin BuffaloPlay): `picaroja/`, `jugaygana/`, `ganamos/` (archivos propios de cada página, con su ruta
+  del repo) + `comun/cambios-comunes.patch` (código compartido, contra el árbol de la gemela G969; se aplica con `git apply --3way`; en esa versión
+  se quitaron el botón y la ruta de BuffaloPlay). Probado: aplicado sobre la gemela da el mismo árbol que el nuestro salvo BuffaloPlay.
+
 ### 967. Cada juego en su lugar: revisión de los datos de las 3 marcas + categorías vacías de JUGAYGANA — SW v655
 Pedido del owner: "seguí revisando y dejá todo más fino, con los juegos adentro donde corresponde en cada plataforma".
 - **Auditoría** de `public/data/{ganamos,jugaygana,buffaloplay}-{games,home,extra}.json` (~25.000 entradas) contra el catálogo de 1girox
