@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1003. Dominio de marca reconocido detrás de un proxy (Origin / X-Forwarded-Host / bh=1) + carpeta jugaygana-vercel apuntando a la prueba (= F989)
+
 ### 1002. PICA ROJA fijable como app unificada (PLATAFORMA arriba, Inicio = menú completo), barra de la app adentro de PICA ROJA (Slots · Inicio · Deportes), portadas premium y sin Perfil en las otras (= F988) — SW v675
 
 ### 1001. Sorteo en las páginas de marca con el formato del casino de Girox: píldora → cartel "Anotate, es gratis" → resumen, cada una con su color (= F986) — SW v674

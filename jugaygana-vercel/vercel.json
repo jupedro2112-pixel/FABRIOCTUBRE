@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "https://picaroja.com/?jg=1" },
-    { "source": "/:path*", "destination": "https://picaroja.com/:path*" }
+    { "source": "/", "destination": "https://fabrioctubre.onrender.com/?jg=1&bh=1" },
+    { "source": "/:path*", "destination": "https://fabrioctubre.onrender.com/:path*" }
   ]
 }
