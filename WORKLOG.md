@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-24
 
+### 994. "Juegos nuevos" liviano (120 últimos de Girox) + categorías de JUGAYGANA llenas (= F978) — SW v667
+Con esta rama en producción, picaroja.com pasa a tener las páginas de marca (hoy `/js/lobby.js` da 404 ahí) y el dominio propio de JUGAYGANA vía
+`jugaygana-vercel/` puede andar (jugaygana.net todavía no existe en DNS).
+
 ### 993. Ganamos y JUGAYGANA con los proveedores que faltaban + sorteo con los colores de JUGAYGANA (= F977) — SW v666
 Los tokens del sorteo en esta versión son los de pin.css de acá; la regla de JUGAYGANA va en marcas.css (se carga después).
 

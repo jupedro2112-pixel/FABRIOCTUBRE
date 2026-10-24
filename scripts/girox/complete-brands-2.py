@@ -30,7 +30,8 @@ def add_missing(path, has, only_slots, min_games=3):
     for g in CAT:
         if g['provider_name'] in has or (only_slots and not SLOT(g)): continue
         groups.setdefault(norm(nice(g['provider_name'])), (nice(g['provider_name']), []))[1].append(g)
-    present = {norm(p['n']) for p in d['providers']}; out = []
+    REN_BACK = {'Peter & Sons': 'Peterandsons', 'Bluejack': 'Betcorejacktop'}  # nombres prolijos de una corrida anterior
+    present = {norm(REN_BACK.get(p['n'], p['n'])) for p in d['providers']} | {norm(p['n']) for p in d['providers']}; out = []
     for k, (name, gs) in sorted(groups.items(), key=lambda kv: -len(kv[1][1])):
         if k in present or len(gs) < min_games or name == '155': continue  # '155' = proveedor sin nombre en Girox
         seen = set(); games = []
@@ -82,3 +83,22 @@ for f in ('public/data/ganamos-games.json', 'public/data/jugaygana-games.json'):
     d = json.load(open(f))
     for p in d['providers']: p['n'] = REN.get(p['n'], p['n'])
     json.dump(d, open(f, 'w'), ensure_ascii=False, separators=(',', ':'))
+# F978: categorías de JUGAYGANA que quedaban cortas (mismo tipo de juego) y "Juegos nuevos" = los 120 ÚLTIMOS que agregó Girox (antes: todo lo de Girox
+# que la página no tenía — casi todo eso ya entra por los proveedores; así el archivo pasa de ~700 KB a ~25 KB y el Inicio abre más rápido).
+j = json.load(open('public/data/jugaygana-games.json'))
+MORE = {'bonos': (lambda g: SLOT(g) and re.search(r'\bbuy\b|bonus buy|feature', g['name'], re.I), 120),
+        'bingo': (lambda g: re.search(r'bingo|keno|lott?o|loter|scratch|raspa', g['name'], re.I) and g['category'] not in LIVE_CATS, 60),
+        'habilidad': (lambda g: g['category'] in ('Crash', 'Instant Win') or re.search(r'crash|mines|plinko|aviat|hilo|hi-lo|dice|tower|limbo|chicken', g['name'], re.I), 120)}
+for k, (pk, n) in MORE.items(): print('jg categoría', k, '+', fill(j['cats'][k], pk, n, False))
+json.dump(j, open('public/data/jugaygana-games.json', 'w'), ensure_ascii=False, separators=(',', ':'))
+for b in ('jugaygana', 'ganamos', 'buffaloplay'):
+    f = 'public/data/%s-extra.json' % b; x = json.load(open(f)); new = []
+    seen = set()
+    for g in NEWEST:
+        if not SLOT(g): continue
+        e = g5(g); e.append(nice(g['provider_name']))
+        if norm(e[1]) in seen: continue
+        seen.add(norm(e[1])); new.append(e)
+        if len(new) >= 120: break
+    x['games'] = new; x['_nota'] = 'F978: Juegos nuevos = los 120 últimos que agregó Girox (más nuevo primero): [key, nombre, portada, gid, lk, proveedor].'
+    json.dump(x, open(f, 'w'), ensure_ascii=False, separators=(',', ':')); print(b, 'extra', len(new))
