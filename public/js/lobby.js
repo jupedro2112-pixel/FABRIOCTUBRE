@@ -174,7 +174,7 @@ VIP.lobby = (function () {
     function _hero() {
         if (SK().layout === 'ganamos') return _gnPromos(false);
         if (SK().layout === 'jugaygana' || SK().layout === 'buffaloplay') return '';
-        if (_skin === 'picaroja') return _prHero(); // #988
+        if (_skin === 'picaroja') return ''; // #995 (owner: "este carrusel sacalo"): PICA ROJA sin portadas (#988 _prHero queda sin uso)
         return '<div class="prl-hero" id="prlHero">' + BANNERS_OF().map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="' + SK().name + '" decoding="async"></button>').join('') + '</div>';
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.

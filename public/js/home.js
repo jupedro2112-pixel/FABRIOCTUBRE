@@ -314,14 +314,14 @@
     function _paintPlatStrip(b) {
         if (window.VIP_SITE || window.VIP_BRAND_LOCK) return false;
         const sel = _selPlat(); const ids = _stripIds(); if (!ids.includes(sel)) return false;
-        const others = ids.filter((i) => i !== sel); const half = Math.ceil(others.length / 2);
-        const order = others.slice(0, half).concat([sel], others.slice(half));
+        // #995 (owner): "en la selección de arriba dejá PICA ROJA (predeterminada) y poné MENÚ; al abrirlo elegís la plataforma, como la de abajo"
+        const order = [sel];
         let st = b.querySelector('.tn-pstrip');
         if (!st) { const ic = b.querySelector('.tn-ico'); if (!ic) return false; ic.insertAdjacentHTML('beforeend', '<span class="tn-pstrip"></span>'); st = b.querySelector('.tn-pstrip'); }
         st.innerHTML = order.map((id) => '<i data-pid="' + id + '"' + (id === sel ? ' class="on"' : '') + '><img src="' + PLAT_STRIP[id] + '" alt="' + _esc(_BRAND_NAMES[id] || id) + '"></i>').join('');
         b.classList.add('tn-pstrip-on'); b.dataset.plat = sel;
-        const lbl = _el('navPlatLbl'); if (lbl) lbl.textContent = (_BRAND_NAMES[sel] || 'PLATAFORMA').toUpperCase();
-        b.title = 'Tus plataformas · tocá una para elegirla';
+        const lbl = _el('navPlatLbl'); if (lbl) lbl.textContent = 'MENÚ';
+        b.title = 'Menú de plataformas · elegí dónde jugar';
         return true;
     }
     function pickPlatform(id) {
@@ -357,8 +357,7 @@
     // sin mezclar": abre DIRECTO la plataforma elegida (su página); sin ninguna elegida, el selector.
     function platTap(ev) {
         // #994: arriba están TODAS las plataformas (la elegida en el medio, más grande): tocar otra = elegirla y entrar
-        const t = ev && ev.target && ev.target.closest ? ev.target.closest('[data-pid]') : null;
-        if (t && t.dataset.pid && t.dataset.pid !== _selPlat()) { pickPlatform(t.dataset.pid); return; }
+        const b0 = _el('navPlat'); if (b0 && b0.classList.contains('tn-pstrip-on')) { platSheet(); return; } // #995: arriba = MENÚ de plataformas
         if (_selPlat() === 'picaroja' && VIP.lobby && VIP.lobby.inlineOn && VIP.lobby.inlineOn()) { VIP.lobby.open('inicio', 'picaroja'); return; } // #994: baja a la página
         if (prPinned()) { openPlatform('picaroja', { embed: true }); return; } // #988
         const p = (_platforms && _platforms.preferredPlatform) ? _platChosen() : null;
@@ -1246,12 +1245,28 @@
     // #869: las fotos de 1girox pasan por nuestro server (/api/games/img) ⇒ se ven en todos los teléfonos; si alguna falla, el logo.
     function _favImg(f) { return f.img ? (/^\/images\//.test(f.img) ? _slideUrl(f.img) : (/^https:\/\//.test(f.img) ? '/api/games/img?u=' + encodeURIComponent(f.img) : f.img)) : '/icons/icon-192x192.png'; }
     const _IMG_FALLBACK = ' onerror="this.onerror=null;this.src=\'/icons/icon-192x192.png\'"';
+    const FAV_MIN_KEY = 'vip_fav_min';
+    function _favMin() { try { return localStorage.getItem(FAV_MIN_KEY) === '1'; } catch (_) { return false; } }
+    function _favNavSync(min) {
+        try {
+            let s = _el('navFav'); const bar = _el('bottomNav');
+            if (!min || !bar || !document.body.classList.contains('menu2')) { if (s) s.remove(); return; }
+            if (!s) { const first = bar.querySelector('.tn-btn'); if (!first) return; first.insertAdjacentHTML('beforebegin', '<button type="button" class="tn-btn tn-fav" id="navFav" onclick="VIP.home.favMinimize(false)"><span class="tn-ico">⭐</span><span class="tn-lbl">Favoritos</span></button>'); }
+        } catch (_) {}
+    }
+    function favMinimize(on) {
+        try { on ? localStorage.setItem(FAV_MIN_KEY, '1') : localStorage.removeItem(FAV_MIN_KEY); } catch (_) {}
+        _favPaint();
+        if (!on) { try { const b = _el('evFavs'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {} }
+    }
     function _favPaint() {
         const box = _el('evFavs');
         if (box) {
             const list = _favs || [];
             // #842 (owner): arriba "elegí tus favoritos" + botón Agregar; de entrada vienen 10 (los elige el server) y se editan desde acá.
-            box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos<small class="fav-sub">Elegí tus favoritos · tocá ★ para sacar uno</small></span><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button></div>' +
+            // #995 (owner): "el menú favorito lo dejamos pero más chico y que se pueda minimizar (siempre expandido de entrada); minimizado, la ★ va abajo al lado de Slots"
+            const min = _favMin(); box.classList.toggle('fav-min', min); _favNavSync(min);
+            box.innerHTML = '<div class="ev-games-h fav-h"><span>⭐ Mis juegos favoritos<small class="fav-sub">Elegí tus favoritos · tocá ★ para sacar uno</small></span><span class="fav-hb"><button type="button" class="fav-add" onclick="VIP.home.favOpenPicker()">＋ Agregar</button><button type="button" class="fav-minbtn" onclick="VIP.home.favMinimize(true)" aria-label="Minimizar">–</button></span></div>' +
                 (_favs === null ? '<div class="fav-loading">Cargando tus juegos…</div>' : list.length
                     ? '<div class="fav-row">' + list.map((f) => '<div class="fav-card" role="button" onclick="VIP.home.favPlay(\'' + _esc(f.key) + '\')"><img src="' + _esc(_favImg(f)) + '" alt="' + _esc(f.name) + '" loading="lazy" decoding="async" draggable="false"' + _IMG_FALLBACK + '><b>' + _esc(f.name) + '</b><button type="button" class="fav-star on" onclick="event.stopPropagation();VIP.home.favToggle(\'' + _esc(f.key) + '\')" aria-label="Sacar de favoritos">★</button></div>').join('') + '</div>'
                     : '<button type="button" class="fav-empty" onclick="VIP.home.favOpenPicker()"><b>⭐ Agregá tus juegos favoritos para que aparezcan acá</b><small>Tocá la ☆ de cualquier juego o buscalos en Girox · entrás directo con un toque</small><span>⭐ Agregar mis juegos favoritos ›</span></button>');
@@ -3081,7 +3096,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { platSheet, pickPlatform, prPin, prPinned, supportFaq, supportFaqOpen, supportFaqClose, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { favMinimize, platSheet, pickPlatform, prPin, prPinned, supportFaq, supportFaqOpen, supportFaqClose, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,

@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-24
 
+### 995. Sin carrusel en PICA ROJA · reseñas en UNA línea (estrellas para opinar directo, "Ver ▾" las despliega) · favoritos más chicos y minimizables (⭐ abajo) · arriba "MENÚ" de plataformas — SW v681
+**Pedidos (owner):** "este carrusel sacalo" (portadas de PICA ROJA) · "las reseñas, arriba, en línea recta como minimizadas, con las estrellas para dejar una reseña directo,
+que se vea que se pueden expandir y expandidas como ahora" · "el menú de favoritos lo dejamos pero más chico y que se pueda minimizar (siempre expandido de entrada); si lo
+minimiza, la estrellita de favoritos pasa abajo, al lado de Slots, a la izquierda" · "en la selección de arriba dejá PICA ROJA (predeterminada) y poné MENÚ; al abrirlo elegís la
+plataforma, como la de abajo".
+- lobby.js `_hero()`: PICA ROJA sin portadas (`_prHero`/`PR_ART` de #988 quedan sin uso).
+- reviews.js `renderEntrySlider`: en `#entryReviews` arma `.rvl-line` (5 estrellas → `openModal(n)` con esas estrellas, "Dejá tu reseña", promedio y "Ver ▾" →
+  `VIP.reviews.toggleEntry()`) y el bloque de siempre dentro de `.rvl-full` (se ve con `.rvl-open`). El ingreso (#loginReviews) no cambia.
+- home.js favoritos: botón "–" (`favMinimize(true)`, `localStorage vip_fav_min`); minimizados se esconden y aparece `#navFav` (⭐ Favoritos) al principio de
+  `#bottomNav` (sólo menú opción 2); tocarlo los vuelve a abrir. Tarjetas más chicas.
+- home.js `_paintPlatStrip`: arriba sólo el logo de la plataforma elegida (PICA ROJA por defecto) con el texto **MENÚ**; tocarlo = `platSheet()` (el mismo
+  selector que "Plataformas" de abajo).
+
 ### 994. PICA ROJA DENTRO del menú completo (página predeterminada) + todas las plataformas arriba (la elegida en el medio, más grande) + "Plataformas" abajo + Perfil al lado del saldo — SW v680
 **Pedido (owner, captura del menú completo):** "esto quiero que sea el menú completo y abajo, sin salir de ahí, la plataforma de PICA ROJA; como sacamos Perfil y
 pusimos Deportes, poné Perfil al lado del saldo sólo en PICA ROJA; entrás y estás para jugar en PICA ROJA, página predeterminada; en el menú de abajo agregá una

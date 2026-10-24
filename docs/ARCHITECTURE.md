@@ -1528,4 +1528,6 @@ completo habilitado && no es un dominio de marca`. `inline(true)` arma `#prLobby
 `body.pr-home` muestra el Perfil al lado del saldo. `open('x','picaroja')` con la página montada sólo navega y hace scroll; abrir OTRA marca la reemplaza
 (el id es único) y `close()` la vuelve a montar. Barra de abajo (opción 2): `_prNav(true, true)` → Slots · Inicio (`homeTop`) · Deportes · Plataformas
 (`VIP.home.platSheet`). Arriba `_paintPlatStrip` (home.js) pinta todas las plataformas con la elegida en el medio; tocar otra = `pickPlatform` → `openPlatform(id)`.
+**#995:** arriba el botón de plataforma muestra sólo la elegida + "MENÚ" y abre `platSheet()`. Favoritos minimizables (`vip_fav_min`, `#navFav` en la barra de
+abajo); reseñas del Inicio en una línea (`.rvl-line`, `VIP.reviews.toggleEntry`). PICA ROJA sin carrusel de portadas.
 
