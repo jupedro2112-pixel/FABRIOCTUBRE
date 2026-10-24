@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-24
 
+### 967. Cada juego en su lugar: revisión de los datos de las 3 marcas + categorías vacías de JUGAYGANA — SW v655
+Pedido del owner: "seguí revisando y dejá todo más fino, con los juegos adentro donde corresponde en cada plataforma".
+- **Auditoría** de `public/data/{ganamos,jugaygana,buffaloplay}-{games,home,extra}.json` (~25.000 entradas) contra el catálogo de 1girox
+  (copia del 23/10): todas las claves existen, id y launcher coinciden, ninguna portada local falta y no hay juegos en un proveedor que no es
+  el suyo (en Ganamos, "Hacksaw" incluye sus estudios asociados, Amusnet = EGT y Bluejack = betcorejacktop, a propósito, #949).
+- **JUGAYGANA:** las categorías JACKPOTS, BINGO y COMPRA DE BONOS venían VACÍAS del zip y caían en una búsqueda por nombre que traía poco.
+  Ahora `cats.jackpots` (120, Hold & Win / Mega Moolah / links), `cats.bingo` (25, bingo y keno) y `cats.bonos` (56, "Buy Feature/Bonus Buy"),
+  más jugados primero, con la portada de JUGAYGANA si la tiene y si no la de Girox (`_jgG` acepta URL además del número de portada).
+- Un juego del catálogo venía con el nombre interno (`madhitjokester96_rubyplay`): ahora "Giga Match Gems 96" en las listas de Juegos nuevos.
+
 ### 966. Las 4 páginas de marca igualadas (menú ☰, sorteos y buscador) — SW v654
 Pedido del owner: "revisá todas las plataformas y conectalas con las otras, que estén lo más parecido posible". Se comparó qué tiene cada
 página (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay) y se completó lo que le faltaba a cada una, sin tocar el diseño propio de cada marca:

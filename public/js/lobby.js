@@ -281,7 +281,7 @@ VIP.lobby = (function () {
         if (!_jgGamesP) _jgGamesP = fetch('/data/jugaygana-games.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _jgGames = d; return d; });
         return _jgGamesP;
     }
-    const _jgG = (a) => ({ key: a[0], name: a[1], img: '/images/jugaygana/g/' + a[2] + '.webp', gid: a[3], lk: a[4] }); // #944: + id y launcher de 1girox
+    const _jgG = (a) => ({ key: a[0], name: a[1], img: typeof a[2] === 'number' ? '/images/jugaygana/g/' + a[2] + '.webp' : a[2], gid: a[3], lk: a[4] }); // #944: + id y launcher de 1girox · #967: portada de Girox si JUGAYGANA no tiene la suya
     function jgProvOpen(i) { _jgGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (!p) return; jgProv(false); if (p.g) jgList(p.n, p.g.map(_jgG)); else if (p.pid) all(p.pid, p.n); }); } // sin leer todavía: sus juegos de Girox
     function _jgProvListHtml() {
         if (!_jgGamesP) { _jgGamesLoad().then(() => { const l = $('jgProvList'); if (l) l.innerHTML = _jgProvListHtml(); }); return '<div class="prl-note">Cargando…</div>'; }
