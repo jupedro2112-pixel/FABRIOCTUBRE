@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 945. 🐛 "Toqué para apostar a Tucumán y me mandó a Girox" (y lo mismo con slots): el BONO ACTIVO bloqueaba el juego directo — SW v636
+**Owner (captura):** desde JUGAYGANA, un partido y los slots abrían la web de Girox (y deslogueada); los favoritos del Inicio de PICA ROJA no.
+- **Causa (leída del código de la web de 1girox, `ra()` alrededor de `games/<id>`, `player/sports/gr8/launch`, Digitain token):** si el jugador tiene
+  un BONO activo y el juego no suma para él, 1girox NO devuelve `launch_url` sino `warn_forfeit` (+ `bono_amount`, `message`); su web pregunta y
+  reintenta con `forfeit_bono=1`. Si no puede jugar devuelve `blocked` (`reason: 'max_balance'` u otro). Nuestro `/api/platform/session` lo tomaba
+  como "1girox no dio el juego" ⇒ caía en Girox. Por eso a algunos juegos (los que el bono permite, p. ej. los favoritos) los abría y a otros no.
+- **Server:** `_verdict(jg)` en el pedido del juego y de deportes ⇒ responde `forfeit: { amount, message }` / `blocked: { reason, message }` (sin
+  pedir un ingreso a Girox); con `forfeit: true` en el body manda `forfeit_bono=1` (juegos y deportes).
+- **App (`favPlay`):** cartel propio `_forfeitAsk` ("Tenés un bono activo de $X; este juego no suma: si entrás igual el bono se pierde" · Entrar
+  igual / Mejor no) y reintento con `forfeit: true`; `blocked` ⇒ aviso con el motivo. Desde las páginas de marca (body.prl-open) o el sitio
+  JUGAYGANA, si aun así no abre directo, NO se abre Girox (aviso "tocalo de nuevo"). El Inicio de PICA ROJA mantiene su respaldo.
+- Nombres confirmados en su código: "Deportes" = juego 1140 (onyx, su cartel "DIGITAIN DEPORTE") = nuestro **Digitain**; "ULTIM8" = `/sports-2` (gr8).
+- Pendiente de ver con un jugador real: si el respaldo de Girox del Inicio de PICA ROJA abre deslogueado (en la captura se veía "Iniciar sesión").
+
 ### 944. SITIO JUGAYGANA independiente + todos los juegos abren como los favoritos (sin Girox) + Caballos/TurfWin/Póker + portadas verificadas — SW v635
 **Pedido (owner):** "que cuando entren a JUGAYGANA no aparezca nada más que JUGAYGANA (independiente de Girox, pero con todos sus juegos,
 deportes, caballos…)" · "que todos los juegos ingresen como los favoritos de PICA ROJA, sin un logo de Girox, limpio al extremo" · "que realmente

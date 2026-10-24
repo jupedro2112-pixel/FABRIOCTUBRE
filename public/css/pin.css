@@ -3279,3 +3279,12 @@ html.site-jyg .tn-stories, html.site-jyg #lgStoriesRing, html.site-jyg .lg-play-
 html.site-jyg #loginScreen .lg-logo { background: #101010; border-radius: 14px; padding: 4px; }
 html.site-jyg #loginScreen .btn-primary, html.site-jyg #loginScreen .lg-login-btn { background: #f2ce00 !important; color: #101010 !important; border-color: #f2ce00 !important; }
 html.site-jyg #loginScreen .lg-brand b { color: #101010; letter-spacing: .5px; }
+
+/* #945 aviso "perdés el bono" al abrir un juego que no suma para el bono (encima de todo, también del casino y las páginas de marca) */
+.ffk-ov { position: fixed; inset: 0; z-index: 100010; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ffk-card { width: 100%; max-width: 340px; background: var(--p-bg, #fff); color: var(--p-text, #111); border-radius: 18px; padding: 20px 18px 14px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,.3); }
+.ffk-ico { font-size: 38px; line-height: 1; } .ffk-card h3 { margin: 8px 0 6px; font: 900 18px var(--p-font); }
+.ffk-card p { margin: 0 0 8px; font: 500 13.5px/1.4 var(--p-font); color: var(--p-muted, #555); } .ffk-card p b { color: var(--p-text, #111); } .ffk-s { font-size: 12px !important; }
+.ffk-go { display: block; width: 100%; border: 0; border-radius: 999px; padding: 12px; background: var(--p-red, #e60023); color: #fff; font: 800 15px var(--p-font); cursor: pointer; }
+.ffk-no { display: block; width: 100%; margin-top: 6px; border: 0; background: none; color: var(--p-muted, #666); font: 700 13px var(--p-font); padding: 8px; cursor: pointer; }
+html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: #101010; }

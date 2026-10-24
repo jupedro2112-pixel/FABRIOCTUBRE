@@ -1211,6 +1211,23 @@
     function _openingBrand() { try { const lob = _el('prLobby'); if (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) return VIP.lobby.skin(); } catch (_) {} const b = _localBrand(); return _isDoor(b) ? b : null; }
     const _BRAND_BAR = { picaroja: { name: 'PICA ROJA', logo: '/icons/icon-192x192.png' }, ganamos: { name: 'Ganamos', logo: '/images/ganamos/app-icon.png' }, jugaygana: { name: 'JUGAYGANA', logo: '/images/jugaygana/icon.svg' } };
     function brandOf(id) { return _BRAND_BAR[id] || null; }
+    // #945: cartel propio (sin Girox) "si entrás a este juego perdés tu bono": resuelve true = entrar igual (1girox lo quita), false = no entrar.
+    function _forfeitAsk(name, f) {
+        return new Promise((resolve) => {
+            const amt = Number(f && f.amount) || 0;
+            const el = document.createElement('div');
+            el.className = 'ffk-ov';
+            el.innerHTML = '<div class="ffk-card" role="dialog" aria-label="Bono activo"><div class="ffk-ico">🎁</div><h3>Tenés un bono activo' + (amt > 0 ? ' de $' + amt.toLocaleString('es-AR') : '') + '</h3>' +
+                '<p>' + _esc(name) + ' no suma para el bono: si entrás igual, <b>el bono se pierde</b>.</p>' +
+                '<p class="ffk-s">Si querés conservarlo, jugá a otro juego.</p>' +
+                '<button type="button" class="ffk-go">Entrar igual</button><button type="button" class="ffk-no">Mejor no</button></div>';
+            const done = (v) => { try { el.remove(); } catch (_) {} resolve(v); };
+            el.querySelector('.ffk-go').onclick = () => done(true);
+            el.querySelector('.ffk-no').onclick = () => done(false);
+            el.onclick = (e) => { if (e.target === el) done(false); };
+            document.body.appendChild(el);
+        });
+    }
     async function favPlay(key, nameArg, meta) { // #944: meta = { gid, lk } (id interno y launcher de 1girox: abre sin buscar el juego) // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         const name = nameArg || (f && f.name) || 'el juego';
@@ -1218,13 +1235,28 @@
         let win = null; try { win = window.open('about:blank', '_blank'); } catch (_) { win = null; }
         try { if (win && win.document) _gameLoadingScreen(win, name); } catch (_) {} // #923: pantalla de carga con el logo de la plataforma
         try { VIP.ui.showToast('🎰 Abriendo ' + name + '…', 'info'); } catch (_) {}
-        let url = null;
+        let url = null, d = {};
+        const _req = async (forfeit) => {
+            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true, gid: meta && meta.gid, lk: meta && meta.lk, forfeit: forfeit === true }) }); // #923/#944/#945
+            const j = await r.json().catch(() => ({})); j._ok = r.ok; j._status = r.status; return j;
+        };
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true, gid: meta && meta.gid, lk: meta && meta.lk }) }); // #923: deportes directo
-            const d = await r.json().catch(() => ({}));
-            if (r.ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
-            else _lastStep = (d && d.gameStep) || (r.ok ? 'sin juego directo' : 'HTTP ' + r.status); // #926: motivo de 1girox
+            d = await _req(false);
+            // #945: el jugador tiene un BONO activo y este juego no suma para él ⇒ 1girox pide confirmar (lo mismo que pregunta su web).
+            if (d && d.forfeit) {
+                const ok = await _forfeitAsk(name, d.forfeit);
+                if (!ok) { try { if (win && !win.closed) win.close(); } catch (_) {} return; }
+                d = await _req(true);
+            }
+            if (d._ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
+            else _lastStep = (d && d.gameStep) || (d._ok ? 'sin juego directo' : 'HTTP ' + d._status); // #926: motivo de 1girox
         } catch (_) { _lastStep = 'sin conexión'; }
+        // #945: 1girox no deja jugar (sin saldo / tope de saldo): se avisa su motivo, sin abrir nada más.
+        if (!url && d && d.blocked) {
+            try { if (win && !win.closed) win.close(); } catch (_) {}
+            try { VIP.ui.showToast(d.blocked.message || (d.blocked.reason === 'max_balance' ? 'Alcanzaste el tope de saldo: hacé un retiro para seguir jugando.' : 'No tenés saldo para jugar a este juego: cargá y volvé a entrar.'), 'error'); } catch (_) {}
+            return;
+        }
         if (url && win && !win.closed) { try { win.location.href = url; return; } catch (_) {} }
         if (url && !win) { try { location.href = url; return; } catch (_) {} } // sin ventanas (algunas apps instaladas): en la misma pantalla
         try { if (win && !win.closed) win.close(); } catch (_) {}
@@ -1233,7 +1265,8 @@
         try { VIP.ui._openBrand = _openingBrand(); } catch (_) {} // #927: la pantalla del casino muestra la marca desde donde se abrió
         // #944 (owner: "que en JUGAYGANA no aparezca nada más que JUGAYGANA, ni un logo de Girox"): en el sitio JUGAYGANA NO se cae en la web de
         // Girox; se avisa y se puede reintentar (el juego directo es el mismo ingreso que los favoritos de PICA ROJA).
-        if (window.VIP_SITE === 'jugaygana') { try { VIP.ui.showToast('No pudimos abrir ' + name + ' en este momento. Tocalo de nuevo en unos segundos.', 'error'); } catch (_) {} return; }
+        // #945 (owner: "toqué para apostar y me mandó a Girox"): tampoco desde las páginas de marca (JUGAYGANA, Ganamos, PICA ROJA).
+        if (window.VIP_SITE === 'jugaygana' || document.body.classList.contains('prl-open')) { try { VIP.ui.showToast('No pudimos abrir ' + name + ' en este momento. Tocalo de nuevo en unos segundos.', 'error'); } catch (_) {} return; }
         // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
         let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
         setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? ({ 'sport/gr8': '/sports', 'sport/horses': '/horses', 'sport/turf': '/horses-new', 'sport/poker': '/poker' }[key] || '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
