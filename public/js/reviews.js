@@ -198,6 +198,8 @@
         return '<span class="rv-stars">' + h + '</span>';
     }
 
+    let _entryOpen = false;
+    function toggleEntry() { _entryOpen = !_entryOpen; const b = document.getElementById('entryReviews'); if (b) b.classList.toggle('rvl-open', _entryOpen); }
     async function renderEntrySlider(boxId, opts) {
         const box = document.getElementById(boxId || 'entryReviews'); // #381: también en la pantalla de ingreso (#loginReviews)
         if (!box) return;
@@ -224,6 +226,16 @@
                 '</div>';
         }
         html += '</div></div>';
+        // F995 (owner): "las reseñas arriba en una línea, minimizadas, con las estrellas para dejar una reseña directo, que se vea que se pueden expandir y,
+        // expandidas, como ahora". Sólo en el Inicio (#entryReviews); el ingreso (#loginReviews) sigue igual.
+        if (box.id === 'entryReviews') {
+            let st = ''; for (let i = 1; i <= 5; i++) st += '<button type="button" class="rvl-s" onclick="VIP.reviews.openModal(' + i + ')" aria-label="' + i + ' estrellas">★</button>';
+            html = '<div class="rvl-line"><span class="rvl-stars">' + st + '</span><button type="button" class="rvl-txt" onclick="VIP.reviews.openModal()">Dejá tu reseña</button>' +
+                (total ? '<span class="rvl-avg">' + avg.toFixed(1) + ' ★ <small>(' + total + ')</small></span>' : '') +
+                '<button type="button" class="rvl-more" onclick="VIP.reviews.toggleEntry()" aria-label="Ver reseñas">Ver <i>▾</i></button></div>' +
+                '<div class="rvl-full">' + html + '</div>';
+            box.classList.toggle('rvl-open', _entryOpen);
+        }
         box.innerHTML = html;
         box.style.display = '';
         _startAutoSlide(box.querySelector('.rv-track'));
@@ -271,9 +283,9 @@
             openModal();
         } catch (_) {}
     }
-    function openModal() {
+    function openModal(stars) {
         closeModal();
-        _selectedStars = 5;
+        _selectedStars = (stars >= 1 && stars <= 5) ? Math.round(stars) : 5; // F995: desde la línea de estrellas viene con las elegidas
         const ov = document.createElement('div');
         ov.id = 'reviewModalOverlay';
         // #450 (owner): modal con el estilo de la app (tarjeta blanca, estrellas rojas, botón rojo) — clases .rvm-* en pin.css
@@ -350,7 +362,7 @@
         }
     }
 
-    VIP.reviews = { initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection, renderEntrySlider: renderEntrySlider, maybeOffer: maybeOffer }; // #875
+    VIP.reviews = { toggleEntry: toggleEntry, initLogin: initLogin, initApp: initApp, openModal: openModal, closeModal: closeModal, setStars: setStars, submit: submit, renderInfoSection: renderInfoSection, renderEntrySlider: renderEntrySlider, maybeOffer: maybeOffer }; // #875
     try { setTimeout(function () { maybeOffer('open'); }, 9000); } catch (_) {}
 
     document.addEventListener('DOMContentLoaded', function () {
