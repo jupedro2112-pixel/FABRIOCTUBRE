@@ -53,7 +53,7 @@ VIP.lobby = (function () {
         document.body.insertAdjacentHTML('beforeend',
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
-            '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: 'VIP.home.casinoFullMenu()', logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
+            '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
             (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
                 '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span></header>' : '') + // #920 (owner): el saldo como figura en cada página; sin Cargar ni perfil
@@ -227,7 +227,7 @@ VIP.lobby = (function () {
         if (!_jgGamesP) _jgGamesP = fetch('/data/jugaygana-games.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _jgGames = d; return d; });
         return _jgGamesP;
     }
-    const _jgG = (a) => ({ key: a[0], name: a[1], img: '/images/jugaygana/g/' + a[2] + '.webp' });
+    const _jgG = (a) => ({ key: a[0], name: a[1], img: '/images/jugaygana/g/' + a[2] + '.webp', gid: a[3], lk: a[4] }); // #944: + id y launcher de 1girox
     function jgProvOpen(i) { _jgGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (!p) return; jgProv(false); if (p.g) jgList(p.n, p.g.map(_jgG)); else if (p.pid) all(p.pid, p.n); }); } // sin leer todavía: sus juegos de Girox
     function _jgProvListHtml() {
         if (!_jgGamesP) { _jgGamesLoad().then(() => { const l = $('jgProvList'); if (l) l.innerHTML = _jgProvListHtml(); }); return '<div class="prl-note">Cargando…</div>'; }
@@ -237,7 +237,7 @@ VIP.lobby = (function () {
         return (_jgGames.providers || []).map((p, i) => '<button type="button" onclick="VIP.lobby.jgProvOpen(' + i + ')"><span class="jg-pl">' + (p.logo ? '<img src="' + esc(p.logo) + '" alt="" loading="lazy">' : '') + esc(p.n) + '</span><small>' + (p.g ? p.g.length : Number(p.cnt || 0)) + '</small></button>').join('');
     }
     function _jgCard(g) { // #918: como su tarjeta: imagen cuadrada, el nombre abajo sobre un degradé
-        return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<em><b>' + esc(g.name) + '</b></em></span></button>';
+        return '<button type="button" class="jg-card" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<em><b>' + esc(g.name) + '</b></em></span></button>';
     }
     function jgArrow(btn, dir) { const row = btn.parentNode && btn.parentNode.querySelector('.jg-row'); if (row) { try { row.scrollBy({ left: dir * row.clientWidth * 0.9, behavior: 'smooth' }); } catch (_) { row.scrollLeft += dir * row.clientWidth * 0.9; } } }
     // #918: barra de categorías (sus íconos y su orden). TORNEOS = el sorteo; el resto = catálogo de Girox (búsqueda u orden).
@@ -410,15 +410,17 @@ VIP.lobby = (function () {
     }
     function open(view, skin) {
         _skin = SKINS[skin] ? skin : 'picaroja';
-        const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); // #914: modales (Perfil, Info, Retiro…) arriba de la página
+        const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); try { document.documentElement.classList.add('jyg-ready'); } catch (_) {} // #944: saca la pantalla de carga // #914: modales (Perfil, Info, Retiro…) arriba de la página
         _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra setTimeout(() => { try { VIP.raffle.tick(); } catch (_) {} }, 0); // #919: cuenta regresiva del sorteo al toque
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
-        try { VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } catch (_) {} // #920: aviso en cada entrada
+        try { if (!sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
-    function close() {
+    // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
+    function close(force) {
+        if (window.VIP_SITE === 'jugaygana' && force !== true && _skin === 'jugaygana') { menu(false); go('inicio'); return; }
         const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer);
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) document.body.classList.remove('casino-open'); const p = $('casinoLoadPanel'); if (p && el && el.contains(p)) p.style.display = 'none'; if (VIP.home.casinoQuickClose && el && el.contains(p)) VIP.home.casinoQuickClose(); } catch (_) {}
     }
@@ -442,7 +444,8 @@ VIP.lobby = (function () {
     }
     function play(key, btn) {
         const name = (btn && btn.dataset && btn.dataset.name) || 'el juego';
-        if (VIP.home && VIP.home.gamePlay) VIP.home.gamePlay(key, name);
+        const ds = (btn && btn.dataset) || {}; // #944: id interno + launcher (si la tarjeta los tiene)
+        if (VIP.home && VIP.home.gamePlay) VIP.home.gamePlay(key, name, ds.gid ? { gid: Number(ds.gid), lk: ds.lk || '' } : null);
     }
     function sport(path) {
         // #923: deportes DIRECTO (Onyx / GR8 a pantalla completa, como un juego, sin la página de Girox); si 1girox no lo da, Girox logueado.
@@ -475,18 +478,18 @@ VIP.lobby = (function () {
             '<div class="prl-dr-card"><small>Nivel y rango</small>' +
             (lv ? '<b class="prl-dr-lvl">' + esc(lv.emoji || '') + ' ' + esc(lv.name) + '</b>' : '<b class="prl-dr-lvl">Jugador</b><span class="prl-dr-sub">Todavía sin nivel</span>') +
             (nx ? '<div class="prl-bar"><i style="width:' + pct + '%"></i></div><span class="prl-dr-sub">' + pct + '% · te faltan ' + money(v.faltaParaSubir) + ' apostados para ' + esc((nx.emoji || '') + ' ' + nx.name) + '</span>' : (lv ? '<span class="prl-dr-sub">Nivel máximo</span>' : '')) + '</div>' +
-            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') + item('slots', 'Volver a la app', 'VIP.lobby.close()') + '</div>';
+            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') + (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close()')) + '</div>';
     }
     function withdraw() { menu(false); try { VIP.withdraw.openWithdrawModal(); } catch (_) {} } // #914: el modal va arriba de la página (body.casino-open)
     function profile() { menu(false); try { VIP.home.openProfile(); } catch (_) {} }
     function top() { const m = $('prlMain'); if (m) m.scrollTo ? m.scrollTo({ top: 0, behavior: 'smooth' }) : (m.scrollTop = 0); }
     function load() { menu(false); try { VIP.home.toggleCasinoLoad(true); return; } catch (_) {} close(); try { VIP.home.setHomeMode('full'); } catch (_) {} } // #914: Carga rápida sobre la página
-    function support() { menu(false); close(); try { VIP.home.setHomeMode('mini'); } catch (_) {} }
+    function support() { menu(false); close(true); try { VIP.home.setHomeMode('mini'); } catch (_) {} } // #944: el chat de Soporte se abre aunque sea el sitio JUGAYGANA (site.js la vuelve a abrir al salir)
     // picaroja.com/paginaoficial ⇒ /?pr=1: se abre apenas la app tiene sesión.
     try {
-        const _auto = /[?&]pr=1\b/.test(location.search) ? 'picaroja' : /[?&]jg=1\b/.test(location.search) ? 'jugaygana' : /[?&]gn=1\b/.test(location.search) ? 'ganamos' : null; // #912 /jugaygana ⇒ ?jg=1 · #914 /ganamosoficial ⇒ ?gn=1
+        const _auto = /[?&]pr=1\b/.test(location.search) ? 'picaroja' : (/[?&]jg=1\b/.test(location.search) || window.VIP_SITE === 'jugaygana') ? 'jugaygana' : /[?&]gn=1\b/.test(location.search) ? 'ganamos' : null; // #944: sitio JUGAYGANA ⇒ siempre // #912 /jugaygana ⇒ ?jg=1 · #914 /ganamosoficial ⇒ ?gn=1
         if (_auto) {
-            let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60) clearInterval(t); }, 500);
+            let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
     return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, back, ql, sportsMenu, sportPick, skin: () => _skin };

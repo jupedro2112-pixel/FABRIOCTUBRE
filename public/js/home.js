@@ -1211,7 +1211,7 @@
     function _openingBrand() { try { const lob = _el('prLobby'); if (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) return VIP.lobby.skin(); } catch (_) {} const b = _localBrand(); return _isDoor(b) ? b : null; }
     const _BRAND_BAR = { picaroja: { name: 'PICA ROJA', logo: '/icons/icon-192x192.png' }, ganamos: { name: 'Ganamos', logo: '/images/ganamos/app-icon.png' }, jugaygana: { name: 'JUGAYGANA', logo: '/images/jugaygana/icon.svg' } };
     function brandOf(id) { return _BRAND_BAR[id] || null; }
-    async function favPlay(key, nameArg) { // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
+    async function favPlay(key, nameArg, meta) { // #944: meta = { gid, lk } (id interno y launcher de 1girox: abre sin buscar el juego) // #907: también la Página exclusiva PICA ROJA (cualquier juego del catálogo, con su nombre)
         const f = (_favs || []).find((x) => x.key === key) || (_favCat || []).find((x) => x.key === key);
         const name = nameArg || (f && f.name) || 'el juego';
         favClosePicker();
@@ -1220,7 +1220,7 @@
         try { VIP.ui.showToast('🎰 Abriendo ' + name + '…', 'info'); } catch (_) {}
         let url = null;
         try {
-            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true }) }); // #923: deportes directo
+            const r = await fetch(VIP.config.API_URL + '/api/platform/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ platform: 'girox', game: /^sport\//.test(key) ? '/' + key : '/play/' + key, gameName: name, direct: true, gid: meta && meta.gid, lk: meta && meta.lk }) }); // #923: deportes directo
             const d = await r.json().catch(() => ({}));
             if (r.ok && d.success && d.directGame && d.redirectUrl) url = d.redirectUrl;
             else _lastStep = (d && d.gameStep) || (r.ok ? 'sin juego directo' : 'HTTP ' + r.status); // #926: motivo de 1girox
@@ -1231,9 +1231,12 @@
         // #926 (owner: "desde las plataformas aparece Girox"): se avisa POR QUÉ no abrió directo (para corregirlo juego por juego).
         try { console.warn('[juego directo]', key, _lastStep); } catch (_) {} // #927 (owner): el motivo NO se muestra al cliente
         try { VIP.ui._openBrand = _openingBrand(); } catch (_) {} // #927: la pantalla del casino muestra la marca desde donde se abrió
+        // #944 (owner: "que en JUGAYGANA no aparezca nada más que JUGAYGANA, ni un logo de Girox"): en el sitio JUGAYGANA NO se cae en la web de
+        // Girox; se avisa y se puede reintentar (el juego directo es el mismo ingreso que los favoritos de PICA ROJA).
+        if (window.VIP_SITE === 'jugaygana') { try { VIP.ui.showToast('No pudimos abrir ' + name + ' en este momento. Tocalo de nuevo en unos segundos.', 'error'); } catch (_) {} return; }
         // Sin juego directo: Girox logueado en el recuadro (un ingreso nuevo, el último ⇒ válido) + aviso para buscarlo.
         let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 300; } } catch (_) {}
-        setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? (key === 'sport/gr8' ? '/sports' : '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
+        setTimeout(() => { try { VIP.ui._casinoGamePath = /^sport\//.test(key) ? ({ 'sport/gr8': '/sports', 'sport/horses': '/horses', 'sport/turf': '/horses-new', 'sport/poker': '/poker' }[key] || '/sports-new') : '/play/' + key; VIP.ui._casinoGameName = name; } catch (_) {} openPlatform('girox', { embed: true }); }, wait);
     }
     // Selector: catálogo de Girox con buscador (los más jugados primero) y ⭐ para marcar.
     let _favCat = [], _favQ = '', _favPage = 1, _favMore = false, _favQT = null, _favReq = 0;
@@ -2408,7 +2411,7 @@
                 c = { u, t: j.token, at: Date.now() }; try { sessionStorage.setItem('vip_install_tok2', JSON.stringify(c)); } catch (_) {}
             }
             const pref = getMenuPref(), fixed = isMenuFixed();
-            const href = '/manifest.json?a=' + encodeURIComponent(c.t) + '&u=' + encodeURIComponent(u) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '');
+            const href = '/manifest.json?a=' + encodeURIComponent(c.t) + '&u=' + encodeURIComponent(u) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '') + (window.VIP_SITE === 'jugaygana' ? '&site=jugaygana' : ''); // #944
             const l = document.querySelector('link[rel="manifest"]'); if (l && l.getAttribute('href') !== href) l.setAttribute('href', href);
         } catch (_) {}
     }

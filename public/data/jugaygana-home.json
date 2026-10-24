@@ -77,85 +77,113 @@
      "key": "7/amigo_3Muertos@AMIGO",
      "name": "3 Muertos",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3Muertos_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3Muertos_AMIGO.webp",
+     "gid": 29533,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_AmigoMonkey@AMIGO",
      "name": "Amigo Monkey",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey_AMIGO.webp",
+     "gid": 31183,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_AmigoMonkey2@AMIGO",
      "name": "Amigo Monkey 2",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey2_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey2_AMIGO.webp",
+     "gid": 29864,
+     "lk": "universal"
     },
     {
      "key": "2/rp_233",
      "name": "Frankenstein Triple Volt",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_233.webp"
+     "img": "/images/jugaygana/games/2_rp_233.webp",
+     "gid": 35181,
+     "lk": "atomic"
     },
     {
      "key": "3/BattleOfLuck",
      "name": "Battle of Luck",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_BattleOfLuck.png"
+     "img": "/images/jugaygana/games/3_BattleOfLuck.png",
+     "gid": 4612,
+     "lk": "bsw_slots"
     },
     {
      "key": "5/grace_of_cleopatra_html",
      "name": "Grace of Cleopatra",
      "provider": "EGT",
-     "img": "/images/jugaygana/games/5_grace_of_cleopatra_html.webp"
+     "img": "/images/jugaygana/games/5_grace_of_cleopatra_html.webp",
+     "gid": 10899,
+     "lk": "helix"
     },
     {
      "key": "4/bookofmoney_1spin4win",
      "name": "Book Of Money",
      "provider": "1spin4win",
-     "img": "/images/jugaygana/games/4_bookofmoney_1spin4win.webp"
+     "img": "/images/jugaygana/games/4_bookofmoney_1spin4win.webp",
+     "gid": 9632,
+     "lk": "platipus"
     },
     {
      "key": "4/bookofknights_1spin4win",
      "name": "Book of Armour",
      "provider": "1spin4win",
-     "img": "/images/jugaygana/games/4_bookofknights_1spin4win.webp"
+     "img": "/images/jugaygana/games/4_bookofknights_1spin4win.webp",
+     "gid": 9733,
+     "lk": "platipus"
     },
     {
      "key": "3/Steampunk",
      "name": "Steampunk Lock 2 Spin",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_Steampunk.png"
+     "img": "/images/jugaygana/games/3_Steampunk.png",
+     "gid": 5400,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/cashandfruitsholdandwin_1spin4win",
      "name": "Cash'n Fruits Hold And Win",
      "provider": "1spin4win",
-     "img": "/images/jugaygana/games/4_cashandfruitsholdandwin_1spin4win.png"
+     "img": "/images/jugaygana/games/4_cashandfruitsholdandwin_1spin4win.png",
+     "gid": 9740,
+     "lk": "platipus"
     },
     {
      "key": "4/magmagold_dreamplay",
      "name": "Magma Gold",
      "provider": "Dreamplay",
-     "img": "/images/jugaygana/games/4_magmagold_dreamplay.webp"
+     "img": "/images/jugaygana/games/4_magmagold_dreamplay.webp",
+     "gid": 7239,
+     "lk": "platipus"
     },
     {
      "key": "4/powerofzeus_mancala",
      "name": "Power of Zeus",
      "provider": "Mancala",
-     "img": "/images/jugaygana/games/4_powerofzeus_mancala.webp"
+     "img": "/images/jugaygana/games/4_powerofzeus_mancala.webp",
+     "gid": 9192,
+     "lk": "platipus"
     },
     {
      "key": "7/118417_ifg",
      "name": "Ice Fishing",
      "provider": "Evolution",
-     "img": "/images/jugaygana/games/7_118417_ifg.png"
+     "img": "/images/jugaygana/games/7_118417_ifg.png",
+     "gid": 34788,
+     "lk": "universal"
     },
     {
      "key": "4/bookofwild_1spin4win",
      "name": "Book Of Wild",
      "provider": "1spin4win",
-     "img": "/images/jugaygana/games/4_bookofwild_1spin4win.webp"
+     "img": "/images/jugaygana/games/4_bookofwild_1spin4win.webp",
+     "gid": 9780,
+     "lk": "platipus"
     }
    ]
   },
@@ -167,67 +195,89 @@
      "key": "4/mummyriches_dreamplay",
      "name": "Mummy Riches",
      "provider": "Dreamplay",
-     "img": "/images/jugaygana/games/4_mummyriches_dreamplay.webp"
+     "img": "/images/jugaygana/games/4_mummyriches_dreamplay.webp",
+     "gid": 7238,
+     "lk": "platipus"
     },
     {
      "key": "4/hellcoins_dreamplay",
      "name": "Hell Coins",
      "provider": "Dreamplay",
-     "img": "/images/jugaygana/games/4_hellcoins_dreamplay.webp"
+     "img": "/images/jugaygana/games/4_hellcoins_dreamplay.webp",
+     "gid": 7241,
+     "lk": "platipus"
     },
     {
      "key": "4/funngames_dreamplay",
      "name": "Fun`n Games",
      "provider": "Dreamplay",
-     "img": "/images/jugaygana/games/4_funngames_dreamplay.webp"
+     "img": "/images/jugaygana/games/4_funngames_dreamplay.webp",
+     "gid": 7252,
+     "lk": "platipus"
     },
     {
      "key": "7/amigo_VampireJoker@AMIGO",
      "name": "Vampire Joker",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_VampireJoker_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_VampireJoker_AMIGO.webp",
+     "gid": 30190,
+     "lk": "universal"
     },
     {
      "key": "2/rp_187",
      "name": "Giga Match Phantasmal",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_187.webp"
+     "img": "/images/jugaygana/games/2_rp_187.webp",
+     "gid": 35195,
+     "lk": "atomic"
     },
     {
      "key": "2/rp_233",
      "name": "Frankenstein Triple Volt",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_233.webp"
+     "img": "/images/jugaygana/games/2_rp_233.webp",
+     "gid": 35181,
+     "lk": "atomic"
     },
     {
      "key": "4/cluckinghell_bgaming",
      "name": "Clucking Hell",
      "provider": "bgaming",
-     "img": "/images/jugaygana/games/4_cluckinghell_bgaming.png"
+     "img": "/images/jugaygana/games/4_cluckinghell_bgaming.png",
+     "gid": 6300,
+     "lk": "platipus"
     },
     {
      "key": "4/forgotten_bgaming",
      "name": "Forgotten",
      "provider": "bgaming",
-     "img": "/images/jugaygana/games/4_forgotten_bgaming.webp"
+     "img": "/images/jugaygana/games/4_forgotten_bgaming.webp",
+     "gid": 6273,
+     "lk": "platipus"
     },
     {
      "key": "2/vs10bhallbnza",
      "name": "Big Bass Halloween",
      "provider": "Pragmatic Play",
-     "img": "/images/jugaygana/games/2_vs10bhallbnza.webp"
+     "img": "/images/jugaygana/games/2_vs10bhallbnza.webp",
+     "gid": 1462,
+     "lk": "atomic"
     },
     {
      "key": "4/madjackholdandwin_1spin4win",
      "name": "Mad Jack Hold And Win",
      "provider": "1spin4win",
-     "img": "/images/jugaygana/games/4_madjackholdandwin_1spin4win.webp"
+     "img": "/images/jugaygana/games/4_madjackholdandwin_1spin4win.webp",
+     "gid": 9668,
+     "lk": "platipus"
     },
     {
      "key": "4/freakmachine_mancala",
      "name": "Freak Machine",
      "provider": "Mancala",
-     "img": "/images/jugaygana/games/4_freakmachine_mancala.webp"
+     "img": "/images/jugaygana/games/4_freakmachine_mancala.webp",
+     "gid": 9173,
+     "lk": "platipus"
     }
    ],
    "bg": "/images/jugaygana/io/hw-bg.webp",
@@ -241,115 +291,153 @@
      "key": "7/amigo_OlympusRivals@AMIGO",
      "name": "Olympus Rivals",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_OlympusRivals_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_OlympusRivals_AMIGO.webp",
+     "gid": 29727,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3Muertos@AMIGO",
      "name": "3 Muertos",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3Muertos_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3Muertos_AMIGO.webp",
+     "gid": 29533,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_VipFruits@AMIGO",
      "name": "VIP Fruits",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_VipFruits_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_VipFruits_AMIGO.webp",
+     "gid": 29476,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_BuddhaGold@AMIGO",
      "name": "Buddha Gold",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_BuddhaGold_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_BuddhaGold_AMIGO.webp",
+     "gid": 29465,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_FootballHits@AMIGO",
      "name": "Football Hits",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_FootballHits_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_FootballHits_AMIGO.webp",
+     "gid": 29303,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3FortuneSouls@AMIGO",
      "name": "3 Fortune Souls",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3FortuneSouls_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3FortuneSouls_AMIGO.webp",
+     "gid": 29838,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_1000OlympusRivals@AMIGO",
      "name": "1000 Olympus Rivals",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_1000OlympusRivals_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_1000OlympusRivals_AMIGO.webp",
+     "gid": 29473,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3SpiritVolcanoes@AMIGO",
      "name": "3 Spirit Volcanoes",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3SpiritVolcanoes_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3SpiritVolcanoes_AMIGO.webp",
+     "gid": 29787,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_FortuneBags@AMIGO",
      "name": "Fortune Bags",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_FortuneBags_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_FortuneBags_AMIGO.webp",
+     "gid": 29798,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_SuperChili@AMIGO",
      "name": "Super Chili",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_SuperChili_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_SuperChili_AMIGO.webp",
+     "gid": 29859,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_CoinboyRiches@AMIGO",
      "name": "Coinboy Riches",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_CoinboyRiches_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_CoinboyRiches_AMIGO.webp",
+     "gid": 29827,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3Tombs@AMIGO",
      "name": "3 Tombs",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3Tombs_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3Tombs_AMIGO.webp",
+     "gid": 29809,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_AmigoMonkey2@AMIGO",
      "name": "Amigo Monkey 2",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey2_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_AmigoMonkey2_AMIGO.webp",
+     "gid": 29864,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_MegaMushrooms@AMIGO",
      "name": "Mega Mushrooms",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_MegaMushrooms_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_MegaMushrooms_AMIGO.webp",
+     "gid": 29300,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_GodsOfSand@AMIGO",
      "name": "God of Sands",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_GodsOfSand_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_GodsOfSand_AMIGO.webp",
+     "gid": 29547,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3EnergyCrowns@AMIGO",
      "name": "3 Energy Crowns",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3EnergyCrowns_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3EnergyCrowns_AMIGO.webp",
+     "gid": 29550,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_XmasInvaders@AMIGO",
      "name": "Xmas Invaders",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_XmasInvaders_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_XmasInvaders_AMIGO.webp",
+     "gid": 30084,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_FruitInvaders@AMIGO",
      "name": "Fruit Invaders",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_FruitInvaders_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_FruitInvaders_AMIGO.webp",
+     "gid": 30245,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_DiceInvaders@AMIGO",
      "name": "Dice Invaders",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_DiceInvaders_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_DiceInvaders_AMIGO.webp",
+     "gid": 29753,
+     "lk": "universal"
     }
    ]
   },
@@ -361,121 +449,161 @@
      "key": "4/volcanorisingse96_rubyplay",
      "name": "Volcano Rising SE 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_volcanorisingse96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_volcanorisingse96_rubyplay.webp",
+     "gid": 8248,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_32",
      "name": "Mayan Cache",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_32.webp"
+     "img": "/images/jugaygana/games/2_rp_32.webp",
+     "gid": 35286,
+     "lk": "atomic"
     },
     {
      "key": "4/volcanorising96_rubyplay",
      "name": "Volcano Rising 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_volcanorising96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_volcanorising96_rubyplay.webp",
+     "gid": 8315,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_194",
      "name": "Bufón Fortuna",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_194.webp"
+     "img": "/images/jugaygana/games/2_rp_194.webp",
+     "gid": 35142,
+     "lk": "atomic"
     },
     {
      "key": "4/voltageblitzrapid96_rubyplay",
      "name": "Voltage Blitz Rapid 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_voltageblitzrapid96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_voltageblitzrapid96_rubyplay.webp",
+     "gid": 8605,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_76",
      "name": "Native Spirit",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_76.webp"
+     "img": "/images/jugaygana/games/2_rp_76.webp",
+     "gid": 35290,
+     "lk": "atomic"
     },
     {
      "key": "4/vegasnolimitwins96_rubyplay",
      "name": "Vegas No Limit Wins 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_vegasnolimitwins96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_vegasnolimitwins96_rubyplay.webp",
+     "gid": 8321,
+     "lk": "platipus"
     },
     {
      "key": "4/egyptiansun96_rubyplay",
      "name": "Egyptian Sun 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_egyptiansun96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_egyptiansun96_rubyplay.webp",
+     "gid": 8343,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_68",
      "name": "Zeus Rush Fever Deluxe",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_68.webp"
+     "img": "/images/jugaygana/games/2_rp_68.webp",
+     "gid": 35349,
+     "lk": "atomic"
     },
     {
      "key": "4/celestialflamecoinrise96_rubyplay",
      "name": "Celestial Flame Coin Rise 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_celestialflamecoinrise96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_celestialflamecoinrise96_rubyplay.webp",
+     "gid": 8601,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_42",
      "name": "Elephant Stampede",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_42.webp"
+     "img": "/images/jugaygana/games/2_rp_42.webp",
+     "gid": 35173,
+     "lk": "atomic"
     },
     {
      "key": "11/zeusrushfever",
      "name": "Zeus Rush Fever",
      "provider": "Ruby-Play",
-     "img": "/images/jugaygana/games/11_zeusrushfever.webp"
+     "img": "/images/jugaygana/games/11_zeusrushfever.webp",
+     "gid": 44367,
+     "lk": "vortex"
     },
     {
      "key": "4/diamondexplosion7s96_rubyplay",
      "name": "Diamond Explosion 7s 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_diamondexplosion7s96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_diamondexplosion7s96_rubyplay.webp",
+     "gid": 8303,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_146",
      "name": "Diamond Explosion 7s SE",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_146.webp"
+     "img": "/images/jugaygana/games/2_rp_146.webp",
+     "gid": 35159,
+     "lk": "atomic"
     },
     {
      "key": "4/rushfever7sdeluxe96_rubyplay",
      "name": "Rush Fever 7s Deluxe 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_rushfever7sdeluxe96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_rushfever7sdeluxe96_rubyplay.webp",
+     "gid": 8301,
+     "lk": "platipus"
     },
     {
      "key": "2/rp_204",
      "name": "Giga Match Mahjong",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_204.webp"
+     "img": "/images/jugaygana/games/2_rp_204.webp",
+     "gid": 35192,
+     "lk": "atomic"
     },
     {
      "key": "4/vegasnolimitwinsse96_rubyplay",
      "name": "Vegas No Limit Wins SE 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_vegasnolimitwinsse96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_vegasnolimitwinsse96_rubyplay.webp",
+     "gid": 8235,
+     "lk": "platipus"
     },
     {
      "key": "4/tentonwaysstampede96_rubyplay",
      "name": "Ten Ton Ways Stampede 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_tentonwaysstampede96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_tentonwaysstampede96_rubyplay.webp",
+     "gid": 8221,
+     "lk": "platipus"
     },
     {
      "key": "11/shakemoneytree",
      "name": "Shake Shake Money Tree",
      "provider": "Ruby-Play",
-     "img": "/images/jugaygana/games/11_shakemoneytree.webp"
+     "img": "/images/jugaygana/games/11_shakemoneytree.webp",
+     "gid": 44364,
+     "lk": "vortex"
     },
     {
      "key": "4/tentonwaysluck96_rubyplay",
      "name": "Ten Ton Ways Luck 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_tentonwaysluck96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_tentonwaysluck96_rubyplay.webp",
+     "gid": 8244,
+     "lk": "platipus"
     }
    ],
    "icon": "/images/jugaygana/prov/3.webp"
@@ -488,109 +616,145 @@
      "key": "7/amigo_CoinboyRiches@AMIGO",
      "name": "Coinboy Riches",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_CoinboyRiches_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_CoinboyRiches_AMIGO.webp",
+     "gid": 29827,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_BlazingCrown@AMIGO",
      "name": "Blazing Crown",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_BlazingCrown_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_BlazingCrown_AMIGO.webp",
+     "gid": 32924,
+     "lk": "universal"
     },
     {
      "key": "2/rp_233",
      "name": "Frankenstein Triple Volt",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_233.webp"
+     "img": "/images/jugaygana/games/2_rp_233.webp",
+     "gid": 35181,
+     "lk": "atomic"
     },
     {
      "key": "7/amigo_MegaMushrooms@AMIGO",
      "name": "Mega Mushrooms",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_MegaMushrooms_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_MegaMushrooms_AMIGO.webp",
+     "gid": 29300,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3SpiritVolcanoes@AMIGO",
      "name": "3 Spirit Volcanoes",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3SpiritVolcanoes_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3SpiritVolcanoes_AMIGO.webp",
+     "gid": 29787,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_OlympusDestiny@AMIGO",
      "name": "Olympus Destiny",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_OlympusDestiny_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_OlympusDestiny_AMIGO.webp",
+     "gid": 29309,
+     "lk": "universal"
     },
     {
      "key": "3/DozenRoulette",
      "name": "Dozen Roulette",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_DozenRoulette.png"
+     "img": "/images/jugaygana/games/3_DozenRoulette.png",
+     "gid": 4890,
+     "lk": "bsw_slots"
     },
     {
      "key": "7/amigo_88HotPot@AMIGO",
      "name": "88 Hot Pot",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_88HotPot_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_88HotPot_AMIGO.webp",
+     "gid": 29313,
+     "lk": "universal"
     },
     {
      "key": "2/rp_42",
      "name": "Elephant Stampede",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_42.webp"
+     "img": "/images/jugaygana/games/2_rp_42.webp",
+     "gid": 35173,
+     "lk": "atomic"
     },
     {
      "key": "7/amigo_1000MoonGirls@AMIGO",
      "name": "1000 Moon Girls",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_1000MoonGirls_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_1000MoonGirls_AMIGO.webp",
+     "gid": 29312,
+     "lk": "universal"
     },
     {
      "key": "2/rp_68",
      "name": "Zeus Rush Fever Deluxe",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/2_rp_68.webp"
+     "img": "/images/jugaygana/games/2_rp_68.webp",
+     "gid": 35349,
+     "lk": "atomic"
     },
     {
      "key": "7/amigo_Cybercats2088@AMIGO",
      "name": "Cybercats 2088",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_Cybercats2088_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_Cybercats2088_AMIGO.webp",
+     "gid": 29304,
+     "lk": "universal"
     },
     {
      "key": "4/celestialflamecoinrise96_rubyplay",
      "name": "Celestial Flame Coin Rise 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_celestialflamecoinrise96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_celestialflamecoinrise96_rubyplay.webp",
+     "gid": 8601,
+     "lk": "platipus"
     },
     {
      "key": "7/amigo_3LuckyIdols@AMIGO",
      "name": "3 LuckyIdol",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3LuckyIdols_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3LuckyIdols_AMIGO.webp",
+     "gid": 29314,
+     "lk": "universal"
     },
     {
      "key": "4/tentonwaysstampede96_rubyplay",
      "name": "Ten Ton Ways Stampede 96",
      "provider": "RubyPlay",
-     "img": "/images/jugaygana/games/4_tentonwaysstampede96_rubyplay.webp"
+     "img": "/images/jugaygana/games/4_tentonwaysstampede96_rubyplay.webp",
+     "gid": 8221,
+     "lk": "platipus"
     },
     {
      "key": "7/amigo_RegalFruits1000@AMIGO",
      "name": "Regal Fruits 1000",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_RegalFruits1000_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_RegalFruits1000_AMIGO.webp",
+     "gid": 30079,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_PiggyCoins@AMIGO",
      "name": "Piggy Coins",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_PiggyCoins_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_PiggyCoins_AMIGO.webp",
+     "gid": 29860,
+     "lk": "universal"
     },
     {
      "key": "7/amigo_3FortuneSouls@AMIGO",
      "name": "3 Fortune Souls",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_3FortuneSouls_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_3FortuneSouls_AMIGO.webp",
+     "gid": 29838,
+     "lk": "universal"
     }
    ]
   },
@@ -602,115 +766,153 @@
      "key": "3/FlyToUniverse",
      "name": "Fly To Universe",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FlyToUniverse.webp"
+     "img": "/images/jugaygana/games/3_FlyToUniverse.webp",
+     "gid": 5246,
+     "lk": "bsw_slots"
     },
     {
      "key": "3/ExplosionMagic",
      "name": "Explosion Magic",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_ExplosionMagic.webp"
+     "img": "/images/jugaygana/games/3_ExplosionMagic.webp",
+     "gid": 5469,
+     "lk": "bsw_slots"
     },
     {
      "key": "3/MonsterGoShopping",
      "name": "Monster Go Shopping",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_MonsterGoShopping.webp"
+     "img": "/images/jugaygana/games/3_MonsterGoShopping.webp",
+     "gid": 4723,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/astronaut_prod2_100hp",
      "name": "Astronaut",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_astronaut_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_astronaut_prod2_100hp.webp",
+     "gid": 6455,
+     "lk": "platipus"
     },
     {
      "key": "3/FishingTycoon",
      "name": "Fishing Tycoon",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FishingTycoon.webp"
+     "img": "/images/jugaygana/games/3_FishingTycoon.webp",
+     "gid": 4828,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/chickentrain_prod2_100hp",
      "name": "Chicken Train",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_chickentrain_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_chickentrain_prod2_100hp.webp",
+     "gid": 6441,
+     "lk": "platipus"
     },
     {
      "key": "3/RocketRace",
      "name": "Rocket Race",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_RocketRace.webp"
+     "img": "/images/jugaygana/games/3_RocketRace.webp",
+     "gid": 5495,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/chickenpirate_prod2_100hp",
      "name": "Chicken Pirate",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_chickenpirate_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_chickenpirate_prod2_100hp.webp",
+     "gid": 6438,
+     "lk": "platipus"
     },
     {
      "key": "3/AquaMotoRacing",
      "name": "Aqua Moto Racing",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_AquaMotoRacing.png"
+     "img": "/images/jugaygana/games/3_AquaMotoRacing.png",
+     "gid": 5014,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/mines_prod2_100hp",
      "name": "Mines",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_mines_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_mines_prod2_100hp.webp",
+     "gid": 6448,
+     "lk": "platipus"
     },
     {
      "key": "3/FullThrottle",
      "name": "Full Throttle",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FullThrottle.webp"
+     "img": "/images/jugaygana/games/3_FullThrottle.webp",
+     "gid": 5258,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/airjet_prod2_100hp",
      "name": "Air Jet",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_airjet_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_airjet_prod2_100hp.webp",
+     "gid": 6454,
+     "lk": "platipus"
     },
     {
      "key": "3/DeluxeDice",
      "name": "Deluxe Dice",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_DeluxeDice.webp"
+     "img": "/images/jugaygana/games/3_DeluxeDice.webp",
+     "gid": 5266,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/pumpit_prod2_100hp",
      "name": "Pumpit",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_pumpit_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_pumpit_prod2_100hp.webp",
+     "gid": 6452,
+     "lk": "platipus"
     },
     {
      "key": "3/FortuneNumber",
      "name": "Fortune's Number",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FortuneNumber.png"
+     "img": "/images/jugaygana/games/3_FortuneNumber.png",
+     "gid": 5049,
+     "lk": "bsw_slots"
     },
     {
      "key": "3/DeluxeWallet",
      "name": "Deluxe Wallet",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_DeluxeWallet.webp"
+     "img": "/images/jugaygana/games/3_DeluxeWallet.webp",
+     "gid": 5470,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/chickenheart_prod2_100hp",
      "name": "Chicken Heart",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_chickenheart_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_chickenheart_prod2_100hp.webp",
+     "gid": 6439,
+     "lk": "platipus"
     },
     {
      "key": "3/FortuneCode",
      "name": "Fortune Code",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FortuneCode.webp"
+     "img": "/images/jugaygana/games/3_FortuneCode.webp",
+     "gid": 5388,
+     "lk": "bsw_slots"
     },
     {
      "key": "4/crash_prod2_100hp",
      "name": "Crash",
      "provider": "100hp",
-     "img": "/images/jugaygana/games/4_crash_prod2_100hp.webp"
+     "img": "/images/jugaygana/games/4_crash_prod2_100hp.webp",
+     "gid": 6462,
+     "lk": "platipus"
     }
    ]
   },
@@ -722,13 +924,17 @@
      "key": "7/amigo_FootballHits@AMIGO",
      "name": "Football Hits",
      "provider": "Amigo Gaming",
-     "img": "/images/jugaygana/games/7_amigo_FootballHits_AMIGO.webp"
+     "img": "/images/jugaygana/games/7_amigo_FootballHits_AMIGO.webp",
+     "gid": 29303,
+     "lk": "universal"
     },
     {
      "key": "3/FortuneCode",
      "name": "Fortune Code",
      "provider": "kagaming",
-     "img": "/images/jugaygana/games/3_FortuneCode.webp"
+     "img": "/images/jugaygana/games/3_FortuneCode.webp",
+     "gid": 5388,
+     "lk": "bsw_slots"
     }
    ]
   }

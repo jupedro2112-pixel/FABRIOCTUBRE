@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-22
 
+### 944. SITIO JUGAYGANA independiente + todos los juegos abren como los favoritos (sin Girox) + Caballos/TurfWin/Póker + portadas verificadas — SW v635
+**Pedido (owner):** "que cuando entren a JUGAYGANA no aparezca nada más que JUGAYGANA (independiente de Girox, pero con todos sus juegos,
+deportes, caballos…)" · "que todos los juegos ingresen como los favoritos de PICA ROJA, sin un logo de Girox, limpio al extremo" · "que realmente
+cada portada sea su juego".
+- **Modo sitio** (`window.VIP_SITE`, `localStorage vip_site`, clase `html.site-jyg`): se activa por `/jugaygana` (?jg=1) y queda en el teléfono
+  (?pr=1 / ?gn=1 lo apagan). Script en el `<head>` (antes de pintar): título JugaYGana, íconos `images/jugaygana/app-180/192/512.png` (nuevos, logo
+  sobre negro), theme-color, `manifest.json?site=jugaygana` y pantalla de carga negra con el logo hasta que abre la página o se muestra el login.
+  `js/site.js`: reemplaza en pantalla todo "PICA ROJA"/"Girox" por JUGAYGANA (MutationObserver, también lo que llega después) y el ícono de la app;
+  si con sesión la página quedó cerrada (salir del chat de Soporte, etc.), la vuelve a abrir. CSS: sin Historias, sin el bloque de plataformas del
+  ingreso ni la tarjeta "La plataforma que quieras" de Info; botones del ingreso amarillos.
+  `lobby.js`: se abre sola siempre que haya sesión (sin límite de espera al login); "Volver" = su inicio (close(true) para cerrar de verdad);
+  "Menú" = su menú "Mi cuenta" (sin "Volver a la app"); Soporte abre el chat y al salir vuelve a JUGAYGANA.
+  Manifest dinámico con `site=jugaygana`: nombre/íconos/colores de JUGAYGANA, `id` propio y `start_url` con `&jg=1` (app instalada aparte).
+  ⚠️ Las notificaciones push que manda el server siguen con sus textos (no pasan por la pantalla).
+- **Juegos directos:** los datos de JUGAYGANA llevan el id interno y el launcher de 1girox (`[key, nombre, img, gid, lk]`; inicio: `gid`/`lk`);
+  la tarjeta los manda (`data-gid`/`data-lk` → `gamePlay(key, name, {gid, lk})` → body de `/api/platform/session`) y el server los usa sin buscar el
+  juego por nombre (`_gameLaunchMeta` sólo si no vienen). En el sitio JUGAYGANA, si no sale directo NO se abre la web de Girox: aviso "tocalo de nuevo".
+- **Caballos / TurfWin / Póker** (lo mismo que abre la web de 1girox): `sport/horses` = juego 1002 (`universal`, agg 4), `sport/turf` = 1139 (onyx),
+  `sport/poker` = 3650 (onyx); en `sports` del lobby y en el menú de Deportes. Respaldo fuera del sitio: /horses, /horses-new, /poker.
+- **Verificación de portadas:** las 3.293 revisadas una por una (4 ayudantes con hojas portada + nombre): 0 errores. Sacados por prudencia: posibles
+  variantes (Golden Joker 243 / 27 con JACKPOT, Golden Poker con Buy Feature) y portadas que en jugaygana44 son sólo texto (Rock Vegas, Snakes
+  and Ladders Megadice, Motörhead, Cubes, Fruit Tycoon) ⇒ 3.285 juegos.
+
 ### 943. Revisión de JUGAYGANA: los juegos de Amigo Gaming NO abrían directo (ids con "@") + 15 portadas recuperadas — SW v634
 **Pedido (owner):** "revisá todo y hacelo completo".
 - 🐛 **Amigo Gaming** (aggregator 7) tiene ids como `amigo_3Muertos@AMIGO`. `_FAV_KEY_RE` (catálogo/búsqueda/launch meta), la apertura directa

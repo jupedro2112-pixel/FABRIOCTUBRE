@@ -3273,3 +3273,9 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 .prl-jyg .jg-card em { display: none; }
 .prl-jyg .jg-st-ic { width: 26px; height: 26px; border-radius: 50%; vertical-align: -6px; margin-right: 8px; }
 .prl-jyg .jg-all { background: linear-gradient(to right, #3a3200, #f2ce00); border-radius: 10px; padding: 9px 16px; font-weight: 800; letter-spacing: .3px; }
+
+/* #944 SITIO JUGAYGANA: nada de PICA ROJA / Girox (los textos los cambia js/site.js) */
+html.site-jyg .tn-stories, html.site-jyg #lgStoriesRing, html.site-jyg .lg-play-box, html.site-jyg #infoCardTwoPlats, html.site-jyg #infoCardTwoPlats + .im-more { display: none !important; }
+html.site-jyg #loginScreen .lg-logo { background: #101010; border-radius: 14px; padding: 4px; }
+html.site-jyg #loginScreen .btn-primary, html.site-jyg #loginScreen .lg-login-btn { background: #f2ce00 !important; color: #101010 !important; border-color: #f2ce00 !important; }
+html.site-jyg #loginScreen .lg-brand b { color: #101010; letter-spacing: .5px; }

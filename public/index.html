@@ -22,6 +22,17 @@
     <link rel="manifest" href="manifest.json" crossorigin="use-credentials"><!-- #826: con credenciales ⇒ el server lee la cookie vip_inst y arma el inicio de la app con la sesión -->
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png?v=358">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png?v=358">
+    <!-- #944 SITIO JUGAYGANA: se arma ANTES de pintar (título, íconos, pantalla de carga con su logo). Lo demás: js/site.js. -->
+    <script>(function(){try{var q=location.search,s='';try{s=localStorage.getItem('vip_site')||''}catch(e){}
+    if(/[?&]jg=1\b/.test(q))s='jugaygana';else if(/[?&](pr|gn)=1\b/.test(q))s='';
+    try{s?localStorage.setItem('vip_site',s):localStorage.removeItem('vip_site')}catch(e){}
+    window.VIP_SITE=s;if(s!=='jugaygana')return;var d=document.documentElement;d.classList.add('site-jyg');document.title='JugaYGana';
+    var l=document.querySelectorAll('link[rel~="icon"],link[rel="apple-touch-icon"]');for(var i=0;i<l.length;i++){l[i].href=l[i].rel==='apple-touch-icon'?'/images/jugaygana/app-180.png':'/images/jugaygana/app-192.png';l[i].removeAttribute('sizes');}
+    var mf=document.querySelector('link[rel="manifest"]');if(mf)mf.href='manifest.json?site=jugaygana';
+    var m=document.querySelectorAll('meta[name="apple-mobile-web-app-title"],meta[name="application-name"]');for(i=0;i<m.length;i++)m[i].content='JugaYGana';
+    var t=document.querySelectorAll('meta[name="theme-color"],meta[name="msapplication-TileColor"]');for(i=0;i<t.length;i++)t[i].content='#101010';}catch(e){}})();</script>
+    <style>html.site-jyg body::after{content:"";position:fixed;inset:0;z-index:2147483000;background:#101010 url(/images/jugaygana/io/logo.webp) center/62% auto no-repeat;pointer-events:all}
+    html.site-jyg.jyg-ready body::after{display:none}</style>
     
     <!-- Firebase SDK: lo carga el loader robusto de abajo (reintentos +
          fallback de CDN). No se ponen <script> estáticos acá para no bloquear
@@ -2635,7 +2646,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v634</div>
+                    <div class="pf-build" id="appBuildTag">app v635</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2659,7 +2670,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v634</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v635</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>
@@ -3066,6 +3077,7 @@
     <script src="/js/home.js"></script>
     <script src="/js/lobby.js"></script><!-- #907 Página exclusiva PICA ROJA -->
     <script src="/js/raffle.js"></script><!-- #917 Sorteo mensual -->
+    <script src="/js/site.js"></script><!-- #944 sitio JUGAYGANA independiente -->
     <script src="/js/withdraw.js"></script>
     <script src="/js/installbonus.js"></script>
     <script src="/js/notifsurvey.js"></script>

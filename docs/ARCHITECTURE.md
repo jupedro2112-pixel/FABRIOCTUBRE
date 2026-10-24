@@ -1403,6 +1403,8 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   usar `?search=` y para un proveedor `?provider_id=` con varios `sort` unidos. Inicio de JUGAYGANA = colecciones de jugaygana.io en grilla por columnas.
 - **Eventos deportivos de JUGAYGANA (#940):** `GET /api/sports/board` (`src/services/sportsBoard.js`, ESPN, cache 60 s). Digitain directo requiere que
   Digitain autorice nuestro dominio (`parent`), ver WORKLOG #940.
+- **Sitio JUGAYGANA (#944):** `VIP_SITE`/`html.site-jyg` (script del head), `js/site.js` (reemplazo de textos/íconos + reabre la página),
+  `manifest.json?site=jugaygana`. Juegos con `gid`/`lk` en los datos ⇒ apertura directa sin buscar. Deportes extra: `sport/horses|turf|poker`.
 - **Dominio propio de JUGAYGANA (#935):** `jugaygana-vercel/vercel.json` = proxy a picaroja.com (raíz → `/?jg=1`). Ojo limitadores por IP detrás del proxy.
 - **Comprobantes repetidos (#932):** `_receiptCollapseDups` deja UNA ficha pendiente por huella (dedupeKey > imageHash > monto+fecha con hora+titular);
   las copias quedan `rejected`/`duplicate` con `dupOf`. Un flujo nuevo que encole comprobantes debe llamarlo (o dejar que lo haga el tick).

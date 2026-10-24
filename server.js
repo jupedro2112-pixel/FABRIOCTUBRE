@@ -1368,6 +1368,13 @@ app.get('/manifest.json', (req, res) => {
     if (/^[A-Za-z0-9_-]{20,64}$/.test(a)) su += '&acceso=' + a;
     if (/^[A-Za-z0-9._-]{3,40}$/.test(uName)) su += '&u=' + encodeURIComponent(uName); // #826: si el acceso automático falla, el usuario ya viene escrito
     if (['full', 'basic', 'easy', 'girox'].includes(menu)) su += '&menu=' + menu + (fixed ? '&fixed=1' : '');
+    // #944: app instalada desde el sitio JUGAYGANA ⇒ nombre, colores e íconos de JUGAYGANA y abre directo en su página.
+    if (req.query.site === 'jugaygana') {
+      su += '&jg=1'; Object.assign(m, { name: 'JugaYGana', short_name: 'JugaYGana', description: 'JugaYGana: casino, deportes y caballos.', theme_color: '#101010', background_color: '#101010', id: '/?site=jugaygana',
+        icons: [{ src: '/images/jugaygana/app-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: '/images/jugaygana/app-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/images/jugaygana/app-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] });
+      delete m.shortcuts; delete m.screenshots;
+    }
     m.start_url = su;
     res.setHeader('Vary', 'Cookie');
     res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
@@ -6412,7 +6419,7 @@ async function platformSessionHandler(req, res) {
       const mm = _directOn ? /^\/play\/(\d{1,3})\/([\w.\-@]{1,80})$/.exec(game) : null; // #943: + '@' (Amigo Gaming: amigo_X@AMIGO)
       // #923 (owner: "deportes 100% independientes, sin que se vea Girox"): los sportsbooks de 1girox se piden DIRECTO igual que un juego —
       // Onyx = su juego 1140 (launcher onyx, el que abre su /sports-new) y GR8 = player/sports/gr8/launch (su /sports-2). Mismo canje de sesión.
-      const ms = _directOn ? /^\/sport\/(onyx|gr8)$/.exec(game) : null;
+      const ms = _directOn ? /^\/sport\/(onyx|gr8|horses|turf|poker)$/.exec(game) : null; // #944: + Caballos (1002), TurfWin (1139) y Póker (3650) de 1girox
       if (!mm && !ms && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
       if (mm || ms) {
         _gameStep = 'canje';
@@ -6431,7 +6438,8 @@ async function platformSessionHandler(req, res) {
           } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); } finally { clearTimeout(t); }
           if (siteToken && ms) {
             const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
-            const url = ms[1] === 'onyx' ? `${site}/games/1140?launcher_key=onyx` : `${site}/player/sports/gr8/launch`;
+            const url = ({ onyx: `${site}/games/1140?launcher_key=onyx`, gr8: `${site}/player/sports/gr8/launch`, horses: `${site}/games/1002?launcher_key=universal&aggregator_id=4`,
+              turf: `${site}/games/1139?launcher_key=onyx`, poker: `${site}/games/3650?launcher_key=onyx` })[ms[1]]; // #944: mismos juegos que abre la web de 1girox
             const c3 = new AbortController(); const t3 = setTimeout(() => c3.abort(), 10000);
             try {
               const rg = await fetch(url, { headers: { Authorization: 'Bearer ' + siteToken, Accept: 'application/json' }, signal: c3.signal });
@@ -6440,7 +6448,10 @@ async function platformSessionHandler(req, res) {
               else _gameStep = `1girox no dio deportes (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`;
             } catch (e) { _gameStep = 'pedir deportes: ' + e.message.slice(0, 60); } finally { clearTimeout(t3); }
           } else if (siteToken) {
-            const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
+            // #944: la app de JUGAYGANA manda el id interno y el launcher de 1girox (de su catálogo) ⇒ no hace falta buscarlo por nombre (más rápido y
+            // sin fallar cuando el nombre no aparece en la búsqueda).
+            const _gid = Number(req.body && req.body.gid), _lk = String((req.body && req.body.lk) || '');
+            const meta = (Number.isInteger(_gid) && _gid > 0 && /^[a-z0-9_]{1,40}$/.test(_lk)) ? { gid: _gid, lk: _lk } : await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
             if (!meta) _gameStep = 'juego no encontrado en el catálogo';
             else {
               const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
@@ -25523,7 +25534,7 @@ app.get('/api/games/lobby', authMiddleware, async (req, res) => {
     const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
     const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
       sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean), lobbies,
-      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Digitain', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Ultim8', sub: 'Apuestas deportivas · en vivo y prepartido' }] /* #935 (owner): cada casa con su nombre, no "Deportes" */ }; // #923: key = apertura directa
+      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Digitain', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Ultim8', sub: 'Apuestas deportivas · en vivo y prepartido' }, { key: 'sport/horses', path: '/horses', title: 'Caballos', sub: 'Carreras de caballos en vivo' }, { key: 'sport/turf', path: '/horses-new', title: 'TurfWin', sub: 'Hípica · carreras del día' }, { key: 'sport/poker', path: '/poker', title: 'Póker', sub: 'Mesas de póker en vivo' }] /* #944 */ /* #935 (owner): cada casa con su nombre, no "Deportes" */ }; // #923: key = apertura directa
     _lobbyCache = { at: Date.now(), data }; res.json(data);
   } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }
 });
