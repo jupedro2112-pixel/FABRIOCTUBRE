@@ -3,6 +3,10 @@
 // barras de progreso, pasa sola, tocar a la derecha/izquierda avanza/retrocede, mantener
 // apretado pausa. Las historias vencen solas (horas configurables en el panel).
 (function () {
+    // #962: ¿la persona está en una página de marca (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay) y no en Girox? ⇒ nada de la web de Girox.
+    const _DOORS = ['picaroja', 'jugaygana', 'ganamos', 'buffaloplay'];
+    function _doorBrand() { try { const b = localStorage.getItem('vip_brand'); if (_DOORS.includes(b)) return b; return localStorage.getItem('vip_pr_off') === '1' ? null : 'picaroja'; } catch (_) { return 'picaroja'; } }
+    function _noGirox() { try { return document.body.classList.contains('prl-open') || window.VIP_SITE === 'jugaygana' || !!_doorBrand(); } catch (_) { return false; } }
     'use strict';
     window.VIP = window.VIP || {};
 
@@ -117,8 +121,9 @@
             // #474 (owner): links internos "app:<sección>" → cierran la historia y abren esa parte de la app.
             const APP_LINKS = { instalar: () => { try { VIP.appTest.doInstall(); } catch (_) { VIP.appTest.showInstallHelp(); } }, /* #674 */ referidos: () => VIP.ui.openReferralModal(), cargar: () => { try { VIP.home.easyLoad(); } catch (_) { VIP.home.setHomeMode('mini'); } }, ruleta: () => VIP.roulette.open(), reembolso: () => VIP.refunds.showRefundModal(), verificar: () => VIP.home.openVerifyPhone(), soporte: () => VIP.home.setHomeMode('mini'), misiones: () => VIP.home.openMissions(),
                 // #827: historias automáticas — casino directo en Deportes / en los juegos, retirar y niveles VIP
-                deportes: () => { if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return; try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); }, // #854: mismo ingreso que favoritos
-                juegos: () => VIP.home.openPlatform('girox', { embed: true }),
+                // #962 (owner: "ninguna visual de Girox en las otras páginas"): fuera de Girox, Deportes = link directo de la casa y "juegos" = la página.
+                deportes: () => { if (_noGirox()) { try { VIP.lobby.sport('/sports-new'); return; } catch (_) {} } if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo('/sports')) return; try { VIP.ui._casinoGamePath = '/sports'; } catch (_) {} VIP.home.openPlatform('girox', { embed: true }); }, // #854: mismo ingreso que favoritos
+                juegos: () => { if (_noGirox()) { try { const b = (VIP.lobby && VIP.lobby.skin && document.body.classList.contains('prl-open')) ? VIP.lobby.skin() : _doorBrand(); VIP.lobby.open('slots', b); return; } catch (_) {} } VIP.home.openPlatform('girox', { embed: true }); },
                 retirar: () => { try { VIP.home.casinoWithdraw(); } catch (_) { VIP.withdraw.openWithdrawModal(); } },
                 vip: () => VIP.home.openVipLevels() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
@@ -145,6 +150,7 @@
                 try { if (wait && !['cargar', 'soporte'].includes(k)) VIP.home.setHomeMode('full'); } catch (_) {}
                 setTimeout(() => { try { if (fn) fn(); } catch (e) { console.warn('[stories] app link', e); } }, wait); }; }
             else if (playPath) { link.href = '#'; link.textContent = s.linkLabel || 'Jugar ahora ›'; link.style.display = ''; link.onclick = (ev) => { ev.preventDefault(); close();
+                if (_noGirox()) { try { VIP.home.gamePlay(playPath[1].replace(/^\/play\//, ''), s.linkLabel ? String(s.linkLabel).replace(/[›»]/g, '').trim() : 'el juego'); return; } catch (_) {} } // #962: juego directo
                 if (VIP.ui && VIP.ui.casinoGoTo && VIP.ui.casinoGoTo(playPath[1])) return; // #854
                 let wait = 0; try { if (VIP.ui && VIP.ui._casinoOpen) { VIP.ui.closeCasinoFrame(); wait = 350; } } catch (_) {}
                 setTimeout(() => { try { VIP.ui._casinoGamePath = playPath[1]; VIP.home.openPlatform('girox', { embed: true }); } catch (e) { console.warn('[stories] play', e); } }, wait); }; }

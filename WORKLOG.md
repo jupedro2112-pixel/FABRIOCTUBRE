@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-24
 
+### 962. Deportes e historias con el LINK DIRECTO en las páginas de marca (nada de la web de Girox) — SW v650
+**Owner:** "estos juegos (favoritos) los abrís con el link externo que da la API (el agregador de Girox): replicá ese link en todos los juegos de
+todas las plataformas nuevas — PICA ROJA, Ganamos, JUGAYGANA y BuffaloPlay; lo mismo para entrar a deportes, directo al link, sin pasar por Girox;
+ninguna visual de Girox en otra página que no sea Girox".
+- **Juegos:** ya era así: `lobby.play` → `VIP.home.gamePlay` = `favPlay` (mismo `/api/platform/session` con `direct:true` + gid/lk ⇒ `launch_url` del
+  proveedor; si 1girox no lo da, aviso y reintento, nunca la web de Girox, #946). Las tarjetas de todas las marcas pasan gid/lk.
+- **Deportes (`lobby.sport`):** ya no cae en `casinoGoTo` / Girox embebido. Cada casa sale de `SPORT_KEYS` (`/sports-new`→sport/onyx, `/sports`→
+  sport/gr8, `/horses`→sport/horses, `/horses-new`→sport/turf, `/poker`→sport/poker) aunque la lista del server no haya llegado.
+- **Historias (`stories.js`):** con una página de marca abierta o una marca puerta elegida (`_noGirox`: `vip_brand` picaroja/jugaygana/ganamos/
+  buffaloplay o sitio JUGAYGANA) "Deportes" = link directo de Digitain, "Juegos" = la página de la marca y "Jugar ahora" (`app:play:`) = juego directo.
+  Con Girox elegida sigue como antes (casino de Girox).
+- **Ojo prueba:** en Render la API de 1girox es la SIMULADA (`?sim_login=`), así que ahí ningún juego directo abre (tampoco los favoritos:
+  "sin código en el ingreso"). Se prueba en producción, donde es el mismo ingreso que los favoritos.
+
 ### 961. JUGAYGANA también con la barra de PICA ROJA arriba (en la app) — SW v649
 **Owner:** "te falta poner la barra de menú superior en JUGAYGANA". Arriba de su cabecera (logo · soporte · mensajes · usuario/Carga rápida · ☰)
 va la misma barra que en las otras marcas (Volver · Menú · JUGAYGANA · Historias · Info · Perfil). En el SITIO JUGAYGANA (`VIP_SITE`) no se muestra:

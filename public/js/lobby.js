@@ -699,13 +699,14 @@ VIP.lobby = (function () {
         if (_skin === 'buffaloplay') _bpRecent(key); // #958: "Recientes" de BuffaloPlay
         if (VIP.home && VIP.home.gamePlay) VIP.home.gamePlay(key, name, ds.gid ? { gid: Number(ds.gid), lk: ds.lk || '' } : null);
     }
+    // #962 (owner: "deportes que entre directo al link, sin pasar por Girox; ninguna visual de Girox en las otras páginas"): cada casa se abre con
+    // SU link directo (el mismo ingreso que los favoritos: /api/platform/session ⇒ URL del proveedor), aunque la lista del server no haya llegado.
+    // Si 1girox no da el link, favPlay avisa y se reintenta: nunca se cae en la web de Girox.
+    const SPORT_KEYS = { '/sports-new': ['sport/onyx', 'Digitain'], '/sports': ['sport/gr8', 'Ultim8'], '/horses': ['sport/horses', 'Caballos'], '/horses-new': ['sport/turf', 'TurfWin'], '/poker': ['sport/poker', 'Póker'] };
     function sport(path) {
-        // #923: deportes DIRECTO (Onyx / GR8 a pantalla completa, como un juego, sin la página de Girox); si 1girox no lo da, Girox logueado.
         const sp = ((_data && _data.sports) || []).find((x) => x.path === path || x.key === path);
-        if (sp && sp.key && VIP.home && VIP.home.gamePlay) { VIP.home.gamePlay(sp.key, sp.title); return; }
-        try { if (VIP.ui.casinoGoTo && VIP.ui.casinoGoTo(path)) return; } catch (_) {}
-        try { VIP.ui._casinoGamePath = path; } catch (_) {}
-        try { VIP.home.openPlatform('girox', { embed: true }); } catch (_) {}
+        const k = (sp && sp.key) ? [sp.key, sp.title] : (SPORT_KEYS[path] || (/^sport\//.test(path) ? [path, 'Deportes'] : SPORT_KEYS['/sports-new']));
+        try { VIP.home.gamePlay(k[0], k[1]); } catch (_) {}
     }
     // #909 (owner): MENÚ con el perfil: saldo, nivel y rango (VIP), y Soporte adentro (salió de la barra de abajo).
     async function menu(show) {
@@ -747,5 +748,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpNav, bpRefresh, skin: () => _skin };
+    return { sportOf: (p) => SPORT_KEYS[p] || null, open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpNav, bpRefresh, skin: () => _skin };
 })();
