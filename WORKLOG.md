@@ -8,6 +8,19 @@
 
 ## Sesión 2026-10-22
 
+### 943. Revisión de JUGAYGANA: los juegos de Amigo Gaming NO abrían directo (ids con "@") + 15 portadas recuperadas — SW v634
+**Pedido (owner):** "revisá todo y hacelo completo".
+- 🐛 **Amigo Gaming** (aggregator 7) tiene ids como `amigo_3Muertos@AMIGO`. `_FAV_KEY_RE` (catálogo/búsqueda/launch meta), la apertura directa
+  (`/^\/play\/(\d{1,3})\/(...)$/` de `/api/platform/session`), `casinoGoTo` (ui.js) y `app:play:` (stories.js) no aceptaban "@" ⇒ esos 132 juegos
+  caían en Girox en vez de abrir el juego (y en el catálogo de Girox ni aparecían). Ahora aceptan "@" (único carácter fuera de `[\w.-]` en las
+  3.291 keys de JUGAYGANA, verificado).
+- Datos verificados: 0 portadas faltantes, 0 juegos repetidos por lista, inicio con todas sus fotos.
+- **Portadas tapadas por la franja:** de 556 que habían quedado afuera, 41 tenían una copia ENTERA de la misma portada en otra página del zip; leídas
+  ⇒ 15 entran (3 Tombs, Tropicana, Bandit Megaways, Plinko 2 Halloween, French Roulette, Speed Auto Roulette, Dazzle Me Megaways, Diwali Auto
+  Roulette, Colour Game Mega Bonus, Andar Bahar, Egypts Gold, Grand Bonus Baccarat, Royal Roulette…); el resto no está en Girox. Total 3.293 juegos.
+- Lo que sigue afuera no se puede sumar sin errores: juego que Girox no tiene (o sólo tiene otra versión: Megaways, Buy Bonus, "with Júlio César"),
+  variantes que la portada no distingue (RTP, mesas sin número) y títulos tapados sin copia entera.
+
 ### 942. JUGAYGANA COMPLETA "de punta a punta": 35 proveedores (3.282 juegos) y las categorías de la barra con SUS portadas — SW v633
 **Pedido (owner):** "subí todo completo de punta a punta". Se leyeron las portadas de TODOS los proveedores de jugaygana44 que existen en Girox
 (proceso #937: ayudantes leen el título contra la lista exacta de nombres de Girox del proveedor; ante duda, afuera) y se revisaron a mano los

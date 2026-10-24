@@ -123,7 +123,7 @@
                 vip: () => VIP.home.openVipLevels() }; // #646: verificar (Perfil → teléfono) y soporte
             const appKey = /^app:(\w+)$/i.exec(s.linkUrl || '');
             // #827: "app:play:/play/<agg>/<juego>" → casino directo en ESE juego (slot de la semana).
-            const playPath = /^app:play:(\/play\/[\w.\/-]+)$/i.exec(s.linkUrl || '');
+            const playPath = /^app:play:(\/play\/[\w.\/@-]+)$/i.exec(s.linkUrl || '');
             // #742 (owner): historia con BONO → botón "Reclamar ahora +X%": reclama, cierra y va directo a Girox (carga rápida).
             if (s.bonusActive && Number(s.bonusPct) > 0) {
                 link.href = '#'; link.style.display = ''; link.classList.add('st-bonus');

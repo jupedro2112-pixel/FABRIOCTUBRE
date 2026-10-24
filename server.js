@@ -6409,7 +6409,7 @@ async function platformSessionHandler(req, res) {
       // `GIROX_DIRECT_GAME=1` lo vuelve a probar.
       // #866: la app pide el juego directo (`direct:true`) para abrirlo en PANTALLA COMPLETA (fuera del recuadro, donde el proveedor sí se ve).
       const _directOn = process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true);
-      const mm = _directOn ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
+      const mm = _directOn ? /^\/play\/(\d{1,3})\/([\w.\-@]{1,80})$/.exec(game) : null; // #943: + '@' (Amigo Gaming: amigo_X@AMIGO)
       // #923 (owner: "deportes 100% independientes, sin que se vea Girox"): los sportsbooks de 1girox se piden DIRECTO igual que un juego —
       // Onyx = su juego 1140 (launcher onyx, el que abre su /sports-new) y GR8 = player/sports/gr8/launch (su /sports-2). Mismo canje de sesión.
       const ms = _directOn ? /^\/sport\/(onyx|gr8)$/.exec(game) : null;
@@ -25427,7 +25427,7 @@ const DEFAULT_FAV_GAMES = [
   { key: '2/vs20starlightx', name: 'Starlight Princess 1000', img: '/images/games/starlight-princess-1000.jpg', provider: 'Pragmatic Play' }
 ];
 const _favListOf = (u) => (u && u.favoriteGamesCustom === true) ? (u.favoriteGames || []) : DEFAULT_FAV_GAMES.map((g) => Object.assign({}, g));
-const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
+const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-@]{1,80}$/; // #943: + '@' (los ids de Amigo Gaming son amigo_X@AMIGO; sin esto no abrían directo)
 const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
 const _gameCatalogCache = new Map();
 async function _gameCatalog(q, page, providerId, sortArg) {

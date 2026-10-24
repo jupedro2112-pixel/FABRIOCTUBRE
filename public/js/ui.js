@@ -1105,7 +1105,7 @@ VIP.ui.casinoGoTo = function(path) {
   // con el juego pedido al server). Se deja la función para no romper a quien la use.
   if (true) return false;
   try {
-    if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/]+|sports(?:-new)?)$/.test(String(path || ''))) return false;
+    if (!VIP.ui._casinoOpen || !/^\/(play\/[\w.\-\/@]+|sports(?:-new)?)$/.test(String(path || ''))) return false;
     const fr = document.getElementById('casinoFrame'); const src = fr && fr.getAttribute('src');
     if (!src || src === 'about:blank') return false;
     fr.src = new URL(src, location.href).origin + path; return true;

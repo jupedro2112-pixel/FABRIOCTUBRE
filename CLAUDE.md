@@ -317,6 +317,8 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **PARTIDOS EN HISTORIAS APAGADOS (#934, owner 2026-10-23):** `Config['storyMatchesEnabled']` (default false; tilde en Cronograma). Primero van
   historias que EXPLICAN la app; no prender los partidos sin que el owner lo pida.
 - **COMPROBANTES REPETIDOS (#932):** el mismo comprobante enviado varias veces = UNA ficha en Cargas pendientes (`_receiptCollapseDups`, `Comprobante.dupOf`).
+- **IDS DE JUEGOS CON "@" (#943):** Amigo Gaming usa ids `amigo_X@AMIGO`. Todo patrón nuevo que valide una key de juego (`agg/game_id`) tiene que
+  aceptar "@" (`_FAV_KEY_RE`, apertura directa, `casinoGoTo`, `app:play:`); si no, esos juegos caen en Girox en vez de abrirse.
 - **HISTORIAS PERSONALES (#886):** `Story.audienceUserId` = sólo la ve ese cliente (bono de bienvenida día 5/15/30, `_newbieOffersTick`,
   `Config['newbieOffers']`). Toda consulta NUEVA de historias para clientes o públicas tiene que filtrar `audienceUserId: null` (o el propio id).
 - **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca
