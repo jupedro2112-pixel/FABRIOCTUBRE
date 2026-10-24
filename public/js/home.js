@@ -73,6 +73,9 @@
     // #836 (owner): "que siempre cuando la gente entra a la app entre al menú de Girox; si lo cambian, que usen el que cambian" ⇒ '1' = la
     // persona ELIGIÓ un menú (desde el selector o los botones de cambiar menú): al volver a entrar arranca en ése, sin preguntar.
     const MENU_USER_KEY = 'vip_menu_user';
+    // #937 (owner): "cuando la gente instala la app, dejar Girox predeterminada siempre" ⇒ en la app INSTALADA se arranca en Girox directo
+    // aunque haya elegido otro menú en el navegador (durante la sesión puede cambiarlo con "Cambiar menú").
+    function _isInstalledApp() { try { return document.documentElement.classList.contains('is-app') || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; } catch (_) { return false; } }
     function _userPickedMenu() { try { return localStorage.getItem(MENU_USER_KEY) === '1' && !!localStorage.getItem(MENU_PREF_KEY); } catch (_) { return false; } }
     function isMenuFixed() { try { return localStorage.getItem(MENU_FIXED_KEY) === '1'; } catch (_) { return false; } }
     let _homeMode = 'play';
@@ -417,6 +420,7 @@
         const only = MENU_ORDER.filter(_menuOn); if (only.length === 1) { setMenuPref(only[0], { quiet: true, auto: true }); return; } // #635: un solo menú activo → directo
         const pref = getMenuPref();
         if (pref === 'easy' && _homeMode !== 'easy') setHomeMode('easy', { persist: false });
+        if (_isInstalledApp() && _menuOn('girox')) { setMenuPref('girox', { quiet: true, auto: true }); return; } // #937: app instalada ⇒ Girox directo siempre
         if (isMenuFixed() && pref) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #559: preseleccionado → entra directo · #670
         if (pref && _userPickedMenu()) { setHomeMode(_modeFor(pref)); _afterPref(pref); return; } // #836: el menú que eligió la persona
         // #733 (owner): "el menú seleccionado para todos (landing o común) cuando abran la app sea el de Girox, y después lo pueden cambiar
@@ -645,7 +649,7 @@
         try { if (localStorage.getItem('vip_nodep') === '1') document.body.classList.add('nodep'); } catch (_) {} // #731
         try { const cl = localStorage.getItem('vip_menu_layout'); if (cl) _setMenuLayout(Number(cl)); } catch (_) {} // #638: menú 1/2 del caché, sin esperar al server
         _applyMenusEnabled(); _applyMenuLayout(); // #635: menús activos (cacheados al instante, refrescados del server)
-        const m = _modeFor((_userPickedMenu() || isMenuFixed() || !_menuOn('girox')) ? getMenuPref() : 'girox'); // #512 · #836: Girox salvo elección propia
+        const m = _modeFor(((_userPickedMenu() || isMenuFixed()) && !(_isInstalledApp() && _menuOn('girox'))) || !_menuOn('girox') ? getMenuPref() : 'girox'); // #512 · #836: Girox salvo elección propia · #937: instalada ⇒ Girox siempre
         try { sessionStorage.removeItem(HOME_MODE_KEY); } catch (_) {}
         _bindEntryFrame();
         setHomeMode(m, { persist: false });
@@ -701,6 +705,20 @@
     }
     // #603: aviso "Chat cerrado" en el selector cuando Soporte cierra la charla; se borra al abrir un tema nuevo
     function supportClosedNotice() { try { VIP.ui.showToast('🔒 Chat cerrado por Soporte', 'info'); } catch (_) {} } // #613: el aviso fijado lo pinta chat.js con la fecha
+    // #907 → #910: el resumen "Cómo funciona todo" abre un recuadro encima de todo (#spFaqModal), con scroll y cerrar (✕, botón, fondo, Esc).
+    function supportFaqOpen(ev) {
+        try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch (_) {}
+        const m = _el('spFaqModal'); if (!m) return;
+        m.hidden = false;
+        try { const sc = m.querySelector('.sp-faq-scroll'); if (sc) sc.scrollTop = 0; } catch (_) {}
+        try { document.addEventListener('keydown', _spFaqEsc); } catch (_) {}
+    }
+    function supportFaqClose(ev) {
+        try { if (ev) { ev.preventDefault(); ev.stopPropagation(); } } catch (_) {}
+        const m = _el('spFaqModal'); if (m) m.hidden = true;
+        try { document.removeEventListener('keydown', _spFaqEsc); } catch (_) {}
+    }
+    function _spFaqEsc(e) { if (e && e.key === 'Escape') supportFaqClose(e); }
     function supportIntroToggle(ev) {
         try { if (ev && ev.target && ev.target.closest && ev.target.closest('button, details')) return; } catch (_) {} // #900: el resumen se abre sin plegar la presentación
         const el = _el('supportIntro'); if (!el) return;
@@ -830,6 +848,10 @@
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
+    // #949 (owner): "agregá un recuadro al final con el logo de Pica Roja y PICA ROJA como plataforma, Pronto" (sólo visual: no es una
+    // plataforma del server; tocarla dice Pronto como Ganamos/Jugaygana).
+    // fusión: acá PICA ROJA es una marca REAL (puerta, _injectPR), no "Pronto" como en la gemela (G949) ⇒ no se agrega el chip de Próximamente.
+    function _withPicaroja(list) { return list || []; }
     // ---------------- #304: AVATAR DEL PERFIL ----------------
     // (owner: "una personita tipo avatar en el nombre, que se pueda abrir y ajustar con diferentes íconos; según el
     //  nivel: nivel 1 avatar común, al avanzar el ícono del nivel que le corresponda"). La clave se guarda en el
@@ -961,7 +983,7 @@
         const one = list.length === 1 ? list[0] : null;
         const names = list.map((p) => p.name);
         const why = _el('infoCardWhyTitle');
-        if (why) why.textContent = one ? ('¿Por qué elegir ' + one.name + '?') : ('¿Por qué elegir ' + names.join(' o ') + '?');
+        if (why) why.textContent = one ? ('¿Por qué elegir ' + one.name + '?') : ('¿Por qué elegir ' + names.concat(['PICA ROJA']).join(' o ') + '?'); // #949: + PICA ROJA
         // #710 (owner): la tarjeta "La plataforma que quieras" (Girox, Ganamos y Jugaygana, todas originales) se ve SIEMPRE en Info; texto fijo en el HTML.
         // #407 (owner): título "La plataforma que quieras"; jugaygana en minúscula ACÁ (sólo en Info); lista "A, B y C".
         const _infoName = (n) => (/^jugaygana$/i.test(String(n || '')) ? 'Jugaygana' : String(n || '')); // #431: J mayúscula
@@ -2359,7 +2381,7 @@
             // Sin respuesta del server (o backend viejo): girox como siempre.
             box.innerHTML = _platBtn({ id: 'girox', name: 'Girox', emoji: '🎰', connected: true, isDefault: true }, null);
         } else {
-            box.innerHTML = list.map(p => _platBtn(p, list.length >= 2 ? pref : null)).join('');
+            box.innerHTML = _withPicaroja(list).map(p => _platBtn(p, list.length >= 2 ? pref : null)).join(''); // #949
         }
         try { renderSupportTests(); } catch (_) {}
         const sub = _el('platformsSub');
@@ -2462,7 +2484,7 @@
                 const j = await r.json(); if (!r.ok || !j.token) return;
                 c = { u, t: j.token, at: Date.now() }; try { sessionStorage.setItem('vip_install_tok2', JSON.stringify(c)); } catch (_) {}
             }
-            const pref = getMenuPref(), fixed = isMenuFixed();
+            const pref = _menuOn('girox') ? 'girox' : getMenuPref(), fixed = isMenuFixed(); // G937 (owner): la app instalada arranca SIEMPRE con el menú de Girox
             const href = '/manifest.json?a=' + encodeURIComponent(c.t) + '&u=' + encodeURIComponent(u) + (pref ? '&menu=' + pref + (fixed ? '&fixed=1' : '') : '') + (window.VIP_SITE === 'jugaygana' ? '&site=jugaygana' : ''); // #944
             const l = document.querySelector('link[rel="manifest"]'); if (l && l.getAttribute('href') !== href) l.setAttribute('href', href);
         } catch (_) {}
@@ -2693,8 +2715,12 @@
         }
         // #927 (owner): si el juego se abrió desde una página (PICA ROJA / Ganamos / JUGAYGANA), arriba va ESA marca (logo y nombre)
         try { const bb = brandOf(VIP.ui._openBrand) || brandOf('picaroja'); const box = bar.querySelector('.casino-brand'); if (box) { const im = box.querySelector('img'); const nb = box.querySelector('.cb-txt b'); if (im) im.src = bb.logo; if (nb) nb.textContent = bb.name; box.setAttribute('aria-label', bb.name + ' oficial'); } } catch (_) {}
-        // #920 (owner): el sorteo también en Girox (debajo de la barra; se minimiza igual que en las otras páginas).
-        try { let rf = _el('casinoRf'); if (!rf) { bar.insertAdjacentHTML('afterend', '<div id="casinoRf" class="casino-rf"></div>'); rf = _el('casinoRf'); } if (VIP.raffle && VIP.raffle.stripHtml) { rf.innerHTML = VIP.raffle.stripHtml('girox'); VIP.raffle.tick(); } } catch (_) {}
+        // G917/G935 (gemela): el sorteo en la barra de Girox — píldora 'Sorteo mensual' al lado de la marca y banner debajo (sorteos.js paintCasino).
+        try { const cb = bar.querySelector('.casino-brand'); if (cb && !_el('casinoBrand')) { cb.id = 'casinoBrand'; cb.insertAdjacentHTML('afterend', '<button type="button" class="casino-brand casino-srt" id="casinoSrtBtn" hidden onclick="VIP.sorteos.casinoBar(true)" aria-label="Sorteo mensual"><span class="cb-box"><span class="cb-ico" data-srt-brand-ico>🏆</span><span class="cb-txt"><b data-srt-brand-title>Sorteo mensual</b><small data-srt-brand-sub>NOVEDAD</small></span></span></button>'); }
+              if (!_el('casinoSrtBar')) bar.insertAdjacentHTML('beforeend', '<div id="casinoSrtBar" class="casino-srt-bar" hidden></div>'); } catch (_) {}
+        try { if (VIP.sorteos && VIP.sorteos.paintCasino) VIP.sorteos.paintCasino(); } catch (_) {} // G935
+        // G937 (owner): "en Girox directo, al iniciar, la Carga rápida abierta para cargar, siempre"
+        if (_curPref === 'girox') setTimeout(() => { try { toggleCasinoLoad(true); } catch (_) {} }, 450);
         // #700: el contador de historias nuevas copia el de la barra principal; sin historias cargadas el botón igual abre el visor.
         try { const src = _el('storiesBadge'), dst = _el('ctStoriesBadge'); if (src && dst) { dst.textContent = src.textContent; dst.style.display = src.style.display; } const nh = _el('navHistorias'), cs = _el('ctStories'); if (nh && cs) cs.classList.toggle('has-active', nh.classList.contains('has-active') || nh.classList.contains('has-new')); } catch (_) {}
         document.body.classList.add('casino-open'); // #700: los modales (Info, Perfil, historias…) van por encima del casino
@@ -2741,10 +2767,22 @@
     }
     // #766 (owner): "en todos los Cargá ahora de las 3 secciones, un botón PRIMERA CARGA bien llamativo, que se agrande y achique, y que
     // diga cuánto es el mínimo de carga como aviso importante" — sólo hasta que haga la primera carga (body.nodep).
+    // #958 (owner): "poné CARGÁ AQUÍ en grande; si tiene bono vigente (por publicidad o lo que sea) que diga 100% VIGENTE · APRETÁ AQUÍ, llamativo;
+    // si no, CARGÁ AQUÍ". El % sale de lo que ya pinta la app: primera carga (.fd-pct) para quien nunca cargó, o la promo activa (.promo-live).
+    function _bonusLivePct(on) {
+        try {
+            if (on) { const f = document.querySelector('.fd-pct'); const n = f && parseInt(String(f.textContent || '').replace(/\D/g, ''), 10); if (n > 0) return n; }
+            const els = Array.from(document.querySelectorAll('.promo-live')).filter((e) => !e.hidden && e.offsetParent !== null && /\d+\s*%/.test(e.textContent || ''));
+            if (els.length) { const m = String(els[0].textContent).match(/(\d+)\s*%/); if (m) return parseInt(m[1], 10); }
+        } catch (_) {}
+        return 0;
+    }
     function _paintFirstLoad(on) {
         const md = '$' + (Number(_platforms && _platforms.minDepositArs) || 2000).toLocaleString('es-AR');
-        try { const b = document.querySelector('#evCtaTop .ev-cta-b'), t = document.querySelector('#evCtaTop .ev-cta-t'); if (b && t) { if (on) { if (!b.dataset.o) { b.dataset.o = b.innerHTML; t.dataset.o = t.innerHTML; } b.textContent = '⚡ PRIMERA CARGA'; t.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (b.dataset.o) { b.innerHTML = b.dataset.o; t.innerHTML = t.dataset.o; delete b.dataset.o; delete t.dataset.o; } } } catch (_) {}
-        try { const bb = document.querySelector('#bvLoadBtn > span > b'), bt = document.querySelector('#bvLoadBtn .bv-min'); if (bb && bt) { if (on) { if (!bb.dataset.o) { bb.dataset.o = bb.innerHTML; bt.dataset.o = bt.innerHTML; } bb.textContent = 'PRIMERA CARGA'; bt.innerHTML = '⚠️ Aviso importante: carga mínima <b class="md-amt">' + md + '</b>'; } else if (bb.dataset.o) { bb.innerHTML = bb.dataset.o; bt.innerHTML = bt.dataset.o; delete bb.dataset.o; delete bt.dataset.o; } } } catch (_) {}
+        const pct = _bonusLivePct(on); const label = pct > 0 ? '🎁 ' + pct + '% VIGENTE · APRETÁ AQUÍ' : '⚡ CARGÁ AQUÍ';
+        const sub = (on ? '⚠️ Aviso importante: carga mínima ' : 'Carga mínima ') + '<b class="md-amt">' + md + '</b> · se acredita sola';
+        try { const b = document.querySelector('#evCtaTop .ev-cta-b'), t = document.querySelector('#evCtaTop .ev-cta-t'), cta = _el('evCtaTop'); if (b && t) { b.textContent = label; t.innerHTML = sub; if (cta) cta.classList.toggle('ev-cta-live', pct > 0); } } catch (_) {}
+        try { const bb = document.querySelector('#bvLoadBtn > span > b'), bt = document.querySelector('#bvLoadBtn .bv-min'), bl = _el('bvLoadBtn'); if (bb && bt) { bb.textContent = pct > 0 ? pct + '% VIGENTE · APRETÁ AQUÍ' : 'CARGÁ AQUÍ'; bt.innerHTML = 'Carga mínima <b class="md-amt">' + md + '</b>'; if (bl) bl.classList.toggle('ev-cta-live', pct > 0); } } catch (_) {} // #960: en el básico, subtítulo corto (se iba de cuadro)
         // #776 (BUG GRAVE, usuario real "al presionar Carga rápida se cuelga absolutamente todo"): acá se llamaba toggleCasinoLoad(true)
         // SIEMPRE; ese panel llama _fdNotesPaint → firstGuidePaint → _paintFirstLoad → toggleCasinoLoad… en bucle infinito por microtareas
         // (la promesa de la promo ya estaba resuelta) y la pestaña quedaba congelada. Ahora el panel abierto se repinta SÓLO si el estado
@@ -2980,7 +3018,7 @@
         }
     } catch (_) {}
 
-    VIP.home = { supportFaq, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
+    VIP.home = { supportFaq, supportFaqOpen, supportFaqClose, openTelegramInvite, paintTelegramCard, storyBonusRefresh, goGiroxDirect, casinoInstall, onWithdrawRequested, testWithdraw, onDepositCredited, luckClose, casinoQuickMini, casinoQuickClose, testDeposit, openTerms, casinoFullMenu, casinoInfo, casinoSupport, firstGuideClose, installManifestSync, casinoWithdraw, vipLevelsLess, vpHelpToggle, vpHelpOpen, vpAreaPick, paintPfPhone, paintPfNotif, openVerifyPhone, infoMore, infoFoldInit, platTap, supportClosedNotice, autoTap, toggleMenuPin, openTelegram, goHome, supportQuick, supportIntroToggle, refreshPendingDeposits, getMenuPref, setMenuPref, chooseMenu, openMenuChooser, closeMenuChooser, maybeShowMenuChooser, easyLoad, easyPlay, easyPlayPick, easyToggleMore, maybeFirstDepositPopup, fdGo, fdClose, loadStrategy, openMissions, toggleMissionsCard, basicPick, basicPlay, basicToggle, basicCopy, init, openSupport, closeSupport, toggleSupport, isSupportOpen, loadPlatforms, getHomeMode, setHomeMode, toggleHomeMode, syncWaHead: _mirrorHeadBits, renderEntryTabs, entrySwitch, entryOpen, openProfile, profileTogglePw, profileCopy, svcRefund, svcRoulette, showPlayNow, hidePlayNow, playNow, playNowTest, playNowLater, toggleEntryExpand, entryViewSite, installedTestToggle, vipStripOpen, openVipLevels, openAvatarPicker, pickAvatar, applyTesterClass: _applyTesterClass, showInstallGift, hideInstallGift, installGiftOpen, installGiftMain, installGiftLater, installGiftClaim, installGiftTest, entryShowSite, renderPlatforms, playOn, renderHowItWorks, toggleHow,
         playGame, // #782
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,

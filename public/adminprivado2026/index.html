@@ -194,6 +194,10 @@ document.addEventListener('change', function (ev) {
 <span>🎰</span>
 <span>Ruleta diaria</span>
 </a>
+<a href="#" class="nav-item" data-section="sorteos">
+<span>🏆</span>
+<span>Sorteos</span>
+</a>
 <a href="#" class="nav-item" data-section="reviews">
 <span>⭐</span>
 <span>Reseñas</span>
@@ -224,10 +228,7 @@ document.addEventListener('change', function (ev) {
 <span>SMS Masivo 🔒</span>
 </a>
 <div class="nav-group-title" style="padding:13px 16px 5px;font-size:9.5px;font-weight:900;letter-spacing:1.2px;color:#888;text-transform:uppercase;">🗂️ Administrativo</div>
-<a href="#" class="nav-item" data-section="raffle">
-<span>🏆</span>
-<span>Sorteo mensual</span>
-</a>
+<!-- fusión 2026-10-24: el "Sorteo mensual" de acá (#917) se reemplazó por Sorteos de la gemela (G915) -->
 <a href="#" class="nav-item" data-section="cierres">
 <span>🧾</span>
 <span>Cierres 🔒</span>
@@ -1416,30 +1417,23 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
             <!-- SECCIÓN DATOS: métricas de adquisición, actividad y recurrencia -->
             <!-- #459/#461 (owner): DATOS IA — análisis completo (día/semana/mes), comparativa, calculador de inversión e historial -->
             <!-- #917: SORTEO MENSUAL — ranking real (sin tapar), ganadores y entrega, premios editables -->
-            <section id="raffleSection" class="section">
-                <div class="panel-header cfg-head">
-                    <div><h2>🏆 Sorteo mensual</h2><div class="cfg-sub">100 puntos cada $100.000 apostados con plata real (proporción cargas ÷ (cargas + bonos) del mes, datos de 1girox). Participan sólo clientes de la app con carga real en el mes. Se recalcula cada 20 min; el día 1 se congelan los 3 ganadores del mes anterior. Los clientes ven el ranking con los nombres tapados.</div></div>
-                    <button class="refresh-btn" onclick="raffleLoad()" title="Actualizar">🔄</button>
-                </div>
-                <div id="raffleBody"><div class="cfg-sub">Cargando…</div></div>
-            </section>
+            <!-- fusión: sección raffleSection (#917) eliminada; ver Sorteos (G915) -->
             <section id="cierresSection" class="section dia">
                 <div class="panel-header cfg-head">
-                    <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Se cierran solos cada día con los datos del sistema y del banco (sin esperar confirmación; USDT es opcional). Si un día no da 0, tocá <b>Ver detalle</b>: te marca qué fue automático, qué se confirmó a mano y de dónde puede venir la diferencia.</div></div>
+                    <div><h2>🧾 Cierres automáticos</h2><div class="cfg-sub">Se cierran solos cada día con los datos del sistema y del banco. INGRESOS (depósitos + pagos por banco externo + fondeos) − GASTOS (retiros + comisión del banco + $ por transferencia + gastos) = RESULTADO en plata; el saldo del CBU a las 00 hs cierra el arqueo. Si un día no da 0, tocá <b>Ver detalle</b>: te marca qué fue automático, qué se confirmó a mano y de dónde puede venir la diferencia.</div></div>
                     <button class="refresh-btn" onclick="cierresLoad()" title="Actualizar">🔄</button>
                 </div>
                 <div class="dia-card"><div class="dia-card-h"><b>⚙️ Comisión del banco por defecto</b><small>% sobre los depósitos del día. Es el punto de partida: en cada cierre lo podés cambiar (% de ese día o monto exacto) porque puede variar.</small></div>
                     <div class="dia-bar dia-bar-in">
                         <label>Comisión %<input type="number" id="clPct" min="0" max="50" step="0.01" style="width:90px;"></label>
                         <button class="btn-primary btn-small" onclick="cierresSaveConfig()">Guardar</button>
+                        <label>Costo por transferencia $<input type="number" id="clFee" min="0" max="100000" step="1" style="width:90px;" title="#948: se cuenta como gasto por cada carga del día"></label>
                         <span id="clCfgInfo" class="dia-pill">…</span>
-                        <span class="dia-pill" id="clUsdtInfo">USDT: —</span>
-                        <button class="btn-secondary btn-small" onclick="cierresUsdtFetch()" title="Trae la cotización de hoy para usarla en los cierres pendientes">⟳ Cotización de hoy</button>
                         <button class="btn-secondary btn-small" onclick="cierresBankBalance()" title="Consulta el saldo del banco por API ahora y muestra el último saldo guardado de las 00:00">🏦 Saldo del banco</button>
                     </div>
                 </div>
                 <div id="cierresTotals" class="dia-kpis" style="margin-bottom:10px;"></div>
-                <div class="dia-card"><div class="dia-card-h"><b>📅 Últimos 30 días</b><small>Depósitos − retiros = VENTA (netwin) · − regalos = NETO · − comisión del banco = RESULTADO · ÷ USDT = resultado en dólares. <b>Arqueo:</b> lo que entró y salió del BANCO (automático desde los movimientos del banco; si el resumen dice otra cosa, escribilo "según banco") contra lo que dice el sistema → la <b>diferencia</b> queda en 0 si cuadra, negativa = faltante, positiva = sobrante. Además, todas las noches a las 00:00 se guarda el <b>saldo del banco</b> por API: con saldo inicial y final, el arqueo real es (saldo fin − saldo inicio) − (depósitos − retiros) + comisión; si la API no lo informa, se escribe a mano. La comisión se puede cambiar por día (% o monto).</small></div>
+                <div class="dia-card"><div class="dia-card-h"><b>📅 Últimos 30 días</b><small>INGRESOS − GASTOS = RESULTADO (plata). NETO (fichas) = depósitos − retiros − regalos, aparte. Caja: saldo 00 hs + resultado = saldo esperado al cierre vs el real. <b>Arqueo:</b> lo que entró y salió del BANCO (automático desde los movimientos del banco; si el resumen dice otra cosa, escribilo "según banco") contra lo que dice el sistema → la <b>diferencia</b> queda en 0 si cuadra, negativa = faltante, positiva = sobrante. Además, todas las noches a las 00:00 se guarda el <b>saldo del banco</b> por API: con saldo inicial y final, el arqueo real es (saldo fin − saldo inicio) − (depósitos − retiros) + comisión; si la API no lo informa, se escribe a mano. La comisión se puede cambiar por día (% o monto).</small></div>
                     <div id="cierresList" style="overflow-x:auto;"></div>
                 </div>
             </section>
@@ -2787,6 +2781,11 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 </style>
             </section>
             <!-- #871 (owner): Cronograma de HISTORIAS en su propia sección (antes adentro del de notificaciones) -->
+            <!-- #915 (owner): SORTEOS con ranking en vivo (mensual + Gran Sorteo): config, anotados, participantes, premio extra -->
+            <section id="sorteosSection" class="section">
+                <div class="panel-header"><h2>🏆 Sorteos <small style="font-size:.6em;color:#888;font-weight:700">ranking en vivo · mensual y Gran Sorteo</small></h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="sorteosRecalc()">↻ Recalcular puntos ahora</button><button class="btn btn-secondary" onclick="loadSorteos()">🔄</button></div></div>
+                <div id="srtAdmin">Cargando…</div>
+            </section>
             <section id="cronohistSection" class="section">
                 <div class="panel-header"><h2>📖 Cronograma historias <small style="font-size:.6em;color:#f59e0b;font-weight:800">· AUTOMÁTICO (NO TOCAR)</small></h2></div>
                 <!-- #886 (owner): bono de bienvenida por días (historia + push SÓLO al cliente, día 5/15/30 desde que se registró) -->
@@ -2809,7 +2808,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                 <!-- #827 (owner): HISTORIAS AUTOMÁTICAS abajo de la estrategia de notificaciones (fijas, corren solas) -->
                 <div class="card" style="margin-bottom:1rem" id="stAutoCard">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
-                        <h3 style="margin:0;font-size:1rem">📖 Historias automáticas (5 por día, corren solas)</h3>
+                        <h3 style="margin:0;font-size:1rem">📖 Historias automáticas (5 por día a las 00 hs: se apagan las de ayer y salen las de hoy; sin repetir)</h3>
                         <button class="btn btn-secondary btn-sm" onclick="loadStoriesAuto()">🔄</button>
                     </div>
                     <div style="color:#8fd3a8;font-size:.78rem;margin:.4rem 0 .6rem">A las 10:00 · 13:00 · 16:00 · 19:00 · 21:30 sale una historia (dura 24 h): lo que ofrece el servicio (cómo funciona para los nuevos, carga automática, retiros, reembolso, soporte, misiones, VIP, referidos, juegos, instalar la app), los partidos fuertes del día con botón directo a Deportes, los lunes el slot más jugado con botón directo a ese juego y los miércoles la historia con BONO de la semana (+50% por 3 h) con notificación a todos.</div>
@@ -2819,7 +2818,7 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
             <!-- #873 (owner): ALERTAS DE ESTAFA — reglas + puntaje (src/services/fraudRadar.js); bloquear usa /api/admin/users/:id/block -->
             <!-- #876 INICIO: números del día en recuadros (clave propia: Config inicioPinHash) -->
             <section id="inicioSection" class="section">
-                <div class="panel-header"><h2>🏠 INICIO</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="inDay" class="form-input" style="width:auto" onchange="loadInicio()"><button class="btn btn-secondary" onclick="document.getElementById('inDay').value='';loadInicio()">Hoy</button><button class="btn btn-secondary" onclick="loadInicio()">🔄</button><button class="btn btn-secondary" onclick="inicioChangePin()">🔑 Clave</button></div></div>
+                <div class="panel-header"><h2>🏠 INICIO</h2><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="inDay" class="form-input" style="width:auto" onchange="loadInicio()"><button class="btn btn-secondary" onclick="document.getElementById('inDay').value='';loadInicio()">Hoy</button><button class="btn btn-secondary" onclick="inicioAyer()">Ayer</button><button class="btn btn-secondary" onclick="loadInicio()">🔄</button><button class="btn btn-secondary" onclick="inicioChangePin()">🔑 Clave</button></div></div>
                 <div id="inBody">Cargando…</div>
             </section>
             <section id="fraudSection" class="section">
@@ -3067,7 +3066,9 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                     <div style="flex:0 0 320px;max-width:320px;display:flex;flex-direction:column;gap:6px;">
                         <!-- #747 (owner): Clientes pendientes + Cerrados (la columna de visitantes sin cuenta se sacó) -->
                         <div id="spList" style="overflow-y:auto;max-height:70vh;display:flex;flex-direction:column;gap:6px;"></div>
-                        <div id="gsList" style="display:none;"></div><span id="gsCount" style="display:none;"></span>
+                        <!-- #953 (owner): la gente SIN ACCESO (sin cuenta / sin iniciar sesión) al lado de los soportes de clientes -->
+                        <div style="margin-top:8px;padding:6px 8px;border-top:1px solid rgba(255,255,255,0.1);font-size:12px;font-weight:900;color:#9ab;">🌐 Sin inicio de sesión (registro desactivado) <span id="gsCount" style="font-weight:700;color:#aaa;"></span></div>
+                        <div id="gsList" style="overflow-y:auto;max-height:40vh;display:flex;flex-direction:column;gap:6px;"></div>
                     </div>
                     <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:12px;overflow:hidden;">
                         <div id="spHead" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.1);font-weight:800;color:#fff;display:flex;gap:10px;align-items:center;">Elegí una conversación</div>

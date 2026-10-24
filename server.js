@@ -68,9 +68,6 @@ const Campaign = require('./src/models/Campaign');
 const CampaignClick = require('./src/models/CampaignClick');
 const InfluencerStory = require('./src/models/InfluencerStory');
 const Story = require('./src/models/Story'); // #361: historias de la app (las publica el admin)
-const RaffleScore = require('./src/models/RaffleScore'); // #917: sorteo mensual por puntos
-const RaffleMonth = require('./src/models/RaffleMonth');
-const raffleService = require('./src/services/raffleService');
 const ChatDelay = require('./src/models/ChatDelay');
 const Comprobante = require('./src/models/Comprobante');
 const comprobanteAi = require('./src/services/comprobanteAiService');
@@ -155,6 +152,7 @@ const generalLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  store: makeRateStore('general'), // #956: compartido entre instancias (antes N×300/min)
   // Cada admin logueado tiene su PROPIO cupo, keyeado por su cookie de sesión
   // (admin_api_session). Así varios agentes detrás de la misma IP (oficina/NAT)
   // NO comparten el límite y no se 429-ean entre ellos. Los clientes de la PWA
@@ -646,7 +644,10 @@ const app = express();
 // Express sees the real client IP and HTTPS status from X-Forwarded-* headers.
 // Without this, req.ip returns the internal LB address and Socket.IO/CORS may
 // behave incorrectly when accessed through a custom domain like vipcargas.com.
-app.set('trust proxy', 1);
+// #959: ver src/utils/trustedProxy.js — se confía en Cloudflare + redes privadas (ELB/nginx) ⇒ req.ip es la IP REAL del cliente.
+// En entornos de prueba sin Cloudflare (Render) se mantiene el salto único de antes.
+if (process.env.RENDER === 'true' || process.env.TRUST_PROXY_HOPS) app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
+else app.set('trust proxy', (ip) => require('./src/utils/trustedProxy').isTrustedHop(ip));
 
 // ============================================
 // CORS ORIGIN RESOLVER (centralizado)
@@ -2084,6 +2085,40 @@ async function _hgcashRecoveryPass() {
     for (const comp of pend) await hgcashMatchFromComprobante(comp);
   } catch (e) { logger.warn(`[hgcash] recuperación: ${e.message}`); }
 }
+// #908 (owner 2026-10-24): "un usuario mandó 4 veces el mismo comprobante y aparecieron 3 fichas en Cargas pendientes". Dos comprobantes
+// PENDIENTES del mismo cliente son "el mismo envío" si comparten la imagen (imageHash), la huella de datos (dedupeKey) o el monto sin un
+// N° de operación que los distinga (los dos sin número, o el mismo). Al resolver uno (carga automática, confirmación o rechazo) los demás
+// se cierran solos como 'duplicate' sin avisarle al cliente otra vez. Si de verdad son transferencias distintas, el agente usa "Es otra
+// carga distinta" en la ficha (cada envío conserva su id y se confirma aparte).
+function _sameReceiptOr(c) {
+  const or = [];
+  if (c.imageHash) or.push({ imageHash: c.imageHash });
+  if (c.dedupeKey) or.push({ dedupeKey: c.dedupeKey });
+  if (Number(c.amount) > 0) or.push(Object.assign({ amount: c.amount }, c.operationNumber ? { $or: [{ operationNumber: null }, { operationNumber: c.operationNumber }] } : {}));
+  else or.push({ amount: null });
+  return or;
+}
+function _sameReceipt(a, b) {
+  if (!a || !b || String(a.userId) !== String(b.userId)) return false;
+  if (a.imageHash && a.imageHash === b.imageHash) return true;
+  if (a.dedupeKey && a.dedupeKey === b.dedupeKey) return true;
+  const aa = Number(a.amount) || 0, ba = Number(b.amount) || 0;
+  if (!aa && !ba) return true; // los dos sin monto legible: el mismo comprobante borroso mandado otra vez
+  if (!aa || !ba || !_amountsEqual(aa, ba)) return false;
+  return !(a.operationNumber && b.operationNumber && String(a.operationNumber).trim() !== String(b.operationNumber).trim());
+}
+async function _depositReviewCloseRepeats(c, by, how) {
+  try {
+    if (!c || !c.userId) return 0;
+    const t = new Date(c.createdAt || Date.now()).getTime();
+    const r = await Comprobante.updateMany({ userId: c.userId, id: { $ne: c.id }, reviewStatus: 'pending', autoCharged: { $ne: true }, bankMatchStatus: { $nin: ['claiming', 'awaiting_platform'] },
+      createdAt: { $gte: new Date(t - 24 * 3600 * 1000), $lte: new Date(t + 24 * 3600 * 1000) }, $or: _sameReceiptOr(c) },
+      { $set: { reviewStatus: 'rejected', reviewResolution: 'duplicate', reviewedBy: by || 'auto', reviewedAt: new Date(), reviewNote: `Repetido: el mismo comprobante ya se ${how || 'resolvió'} (${c.id})`.slice(0, 200) } });
+    const n = r.modifiedCount || r.nModified || 0;
+    if (n) { logger.info(`[deposit-review] ${n} envío(s) repetido(s) de ${c.username || c.userId} cerrados (${how})`); _emitDepositReviewUpdate(c.userId, { action: 'repeats_closed', id: c.id, count: n }); }
+    return n;
+  } catch (e) { logger.warn(`[deposit-review] cerrar repetidos: ${e.message}`); return 0; }
+}
 // Escala un comprobante pendiente: aviso al cliente + nota interna + panel.
 async function _depositReviewEscalate(c, why) {
   try {
@@ -3205,6 +3240,7 @@ async function _hgcashCreditToPlatform({ movement, comprobante, user, platformId
     await Comprobante.updateOne({ id: comprobante.id }, { $set: { bankMatchStatus: 'auto_charged', matchedMovementId: movement.movementId, autoCharged: true, reviewStatus: 'confirmed', reviewResolution: 'auto', reviewedBy: 'auto', reviewedAt: new Date() } }); // #376
     _emitDepositReviewUpdate(user.id, { action: 'confirmed', id: comprobante.id });
     charged = true; // ya acreditó: cualquier error posterior NO debe disparar reintento
+    _depositReviewCloseRepeats(comprobante, 'auto', 'acreditó solo').catch(() => {}); // #908
     // Multi-plataforma: recordar dónde cargó (fallback de la próxima pregunta / timeout).
     try { await User.updateOne({ id: user.id }, { $set: { lastPlatform: pid } }); } catch (_) {}
     try { await _resolvePlatformChoiceMessage(movement, pid); } catch (_) {}
@@ -4021,6 +4057,7 @@ const authMiddleware = async (req, res, next) => {
   
   try {
     const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+    if (decoded && (decoded.purpose || (decoded.type && decoded.type !== 'access'))) return res.status(401).json({ error: 'Token inválido' }); // #956: un token de reset/propósito no es sesión
 
     // Buscar usuario por 'id' primero, luego por '_id' como fallback.
     // Solo los campos que este middleware usa (corre en CADA request; hidratar
@@ -4117,9 +4154,21 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+// #956 (seguridad): adminMiddleware deja pasar a TODO el staff (admin, depositor, withdrawer, comunidad) y muchas rutas confiaban en un
+// chequeo interno que no siempre estaba. Acá va la lista de prefijos que SÓLO el admin general puede MUTAR (POST/PUT/PATCH/DELETE):
+// acreditar fichas, historias y notificaciones masivas, bonos y estrategias, configuración, claves, clientes (editar/borrar/login sin clave).
+// Los agentes siguen pudiendo lo suyo: cargas (deposit, deposit-reviews), pagos (payouts), soporte/chats, lecturas (GET).
+const STAFF_DENY_MUTATIONS = [
+  /^\/api\/admin\/(roulette|stories|stories-autopilot|bonus-strategy|send-notification|notification-rules|notif-batches|notif-templates|cronograma|encuesta|inactividad|community-code|promo-bonus|strategy|strategy-plans|vip-levels|fire|refund-tiers|refund-config|platforms|campaigns|publisher-admins|webhooks|cierres|config|commands|sorteos|newbie-offers|fraud|datos-ia|datos|inicio-pin|datos-pin|bank|hgcash\/(config|credentials|fanout)|girox|gastos|expenses|menus|registration|install-gift|missions|referral|referrals|users\/[^/]+\/(login-without-password|role|reset-password|block|unblock|fraud|force-logout|reset-test|change-influencer))/i,
+  /^\/api\/users\/[^/]+$/i // PUT/DELETE /api/users/:id (editar saldo / borrar cliente)
+];
 const adminMiddleware = (req, res, next) => {
   if (req.user.role !== 'admin' && req.user.role !== 'depositor' && req.user.role !== 'withdrawer' && req.user.role !== 'comunidad') {
     return res.status(403).json({ error: 'Acceso denegado. Solo administradores.' });
+  }
+  if (req.user.role !== 'admin' && req.method !== 'GET' && req.method !== 'HEAD') {
+    const p = String(req.originalUrl || req.url || '').split('?')[0];
+    if (STAFF_DENY_MUTATIONS.some((re) => re.test(p))) { logger.warn(`[authz] ${req.user.username} (${req.user.role}) intentó ${req.method} ${p}`); return res.status(403).json({ error: 'Solo el administrador general puede hacer esto.' }); }
   }
   next();
 };
@@ -5000,7 +5049,10 @@ async function _landingSignupHandler(req, res) {
     // 🪦 Antes: PIN de 6 dígitos al azar.
     // Se le MUESTRA al cliente en la landing (se devuelve en la respuesta) para
     // que pueda volver a entrar desde cualquier dispositivo, además del link.
-    const password = String(process.env.LANDING_DEFAULT_PASSWORD || 'asd123');
+    // #956 (seguridad): antes TODAS las cuentas nacían con la misma clave pública ("asd123") ⇒ probando usuarios se entraba a cuentas ajenas.
+    // Ahora cada cuenta recibe una clave aleatoria de 8 letras/números (sin caracteres confusos); se le muestra en la landing y la app la guarda
+    // en el teléfono como siempre. LANDING_DEFAULT_PASSWORD (env) sigue valiendo sólo para entornos de prueba.
+    const password = process.env.LANDING_DEFAULT_PASSWORD ? String(process.env.LANDING_DEFAULT_PASSWORD) : Array.from(crypto.randomBytes(8)).map((b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
 
     // #311 (owner): sin la Partner API conectada en este entorno no se puede crear la cuenta → se avisa con un
     // código y la landing sigue el recorrido en MODO PRUEBA (simula el paso 2, sin crear nada).
@@ -5313,6 +5365,11 @@ app.post('/api/admin/registration-mode', authMiddleware, adminMiddleware, async 
 });
 
 // Login
+// #956 (seguridad): bloqueo POR CUENTA en el login: 10 fallos en 15 min ⇒ 15 min sin poder probar (por instancia; el límite por IP sigue).
+const _loginFails = new Map();
+function _loginKey(u, p) { return String(u || p || '').trim().toLowerCase().slice(0, 64); }
+function _loginLocked(k) { const e = k && _loginFails.get(k); if (!e) return false; if (Date.now() > e.until) { _loginFails.delete(k); return false; } return e.n >= 10; }
+function _loginFail(k) { if (!k) return; const e = _loginFails.get(k) || { n: 0, until: 0 }; e.n++; e.until = Date.now() + 15 * 60000; _loginFails.set(k, e); if (_loginFails.size > 5000) _loginFails.clear(); }
 app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { username, phone, password, temporaryCode, fbc, fbp, landingUrl } = req.body;
@@ -5320,6 +5377,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     if ((!username && !phone) || (!password && !temporaryCode)) {
       return res.status(400).json({ error: 'Usuario o teléfono, y contraseña (o código temporal) requeridos' });
     }
+    const _lk = _loginKey(username, phone);
+    if (_loginLocked(_lk)) return res.status(429).json({ error: 'Demasiados intentos para esta cuenta. Esperá 15 minutos o recuperá tu clave.' });
     
     // No registrar el teléfono completo en logs (dato personal): se enmascara.
     logger.debug(`Login attempt for: ${username || (phone ? '***' + String(phone).slice(-4) : 'desconocido')}`);
@@ -5330,7 +5389,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
     if (phone && !username) {
       // Phone-based login
-      const normalizedPhone = phone.trim();
+      const normalizedPhone = String(phone || '').trim(); /* #956 */
       try {
         user = await User.findOne({ phone: normalizedPhone, phoneVerified: true });
       } catch (dbErr) {
@@ -5396,7 +5455,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         }
         if (!gxAuth.valid) {
           logger.info(`[login] credenciales inválidas contra 1girox para ${username} (no se crea la cuenta local)`);
-          return res.status(401).json({ error: 'Credenciales inválidas' });
+          { _loginFail(_lk); return res.status(401).json({ error: 'Credenciales inválidas' }); }
         }
 
         logger.debug('User found in 1girox and credentials validated, creating locally...');
@@ -5437,10 +5496,10 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
         logger.info(`User ${username} auto-created from 1girox`);
       } else {
-        return res.status(401).json({ error: 'Credenciales inválidas' });
+        { _loginFail(_lk); return res.status(401).json({ error: 'Credenciales inválidas' }); }
       }
     } else if (!user) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      { _loginFail(_lk); return res.status(401).json({ error: 'Credenciales inválidas' }); }
     }
     
     // Convertir a objeto plano para acceder a los campos correctamente
@@ -5459,7 +5518,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     }
     
     if (!userObj.isActive) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      { _loginFail(_lk); return res.status(401).json({ error: 'Credenciales inválidas' }); }
     }
 
     // Reject login for blocked users before doing any further work.
@@ -5507,6 +5566,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       const code = String(temporaryCode).trim();
       const codeOk = userObj.pendingAccessCode
         && userObj.phoneVerificationPending === true
+        && (!userObj.pendingAccessCodeAt || Date.now() - new Date(userObj.pendingAccessCodeAt).getTime() < 7 * 86400000) // #965
         && safeCompare(code, String(userObj.pendingAccessCode));
       if (!codeOk) {
         logger.debug(`Invalid temporary code for ${loginIdentifier}`);
@@ -5533,7 +5593,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     
     if (!isValidPassword) {
       logger.debug(`Wrong password for ${loginIdentifier}`);
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      { _loginFail(_lk); return res.status(401).json({ error: 'Credenciales inválidas' }); }
     }
     
     logger.info(`Login successful for ${loginIdentifier}`);
@@ -5546,10 +5606,12 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     //    y están logueando justamente con "asd123": limpiamos el flag para que no
     //    queden trabados. NO afecta los resets manuales de admin, porque ésos
     //    setean una contraseña nueva distinta de "asd123".
-    if (user.mustChangePassword === true && (isAdminRole(user.role) || isDefaultPassword)) {
+    if (user.mustChangePassword === true && isAdminRole(user.role)) {
       user.mustChangePassword = false;
-      logger.info(`[login] Auto-limpieza de mustChangePassword para ${user.username} (${isAdminRole(user.role) ? 'admin' : 'default-password'})`);
+      logger.info(`[login] Auto-limpieza de mustChangePassword para ${user.username} (admin)`);
     }
+    // #956 (seguridad): quien todavía entra con la clave pública "asd123" tiene que cambiarla (la app abre el cambio de clave al entrar).
+    if (isDefaultPassword && !isAdminRole(user.role) && user.mustChangePassword !== true) { user.mustChangePassword = true; logger.info(`[login] ${user.username} entró con la clave por defecto ⇒ cambio obligatorio`); }
 
     // Atribución last-touch: si el visitante vuelve por un anuncio nuevo, el
     // front manda fbc/fbp/landingUrl en el body. Actualizamos el User para
@@ -5565,11 +5627,11 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
     await user.save();
     
-    // Token con expiración de 30 días para persistencia de sesión
+    // Token con expiración de 30 días para persistencia de sesión (clientes). #956: el STAFF dura 8 h, igual que su cookie.
     const token = jwt.sign(
       { userId: userId, username: userObj.username, role: userObj.role, tokenVersion: userObj.tokenVersion ?? 0 },
       JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: isAdminRole(userObj.role) ? '8h' : '30d' }
     );
     
     // SINCRONIZACIÓN DIFERIDA DE LA CONTRASEÑA CON LA PLATAFORMA.
@@ -5742,7 +5804,9 @@ app.post('/api/auth/logout', async (req, res) => {
 
 // Admin logout — clears both admin httpOnly cookies.
 // No authentication required: clearing a cookie is harmless.
-app.post('/api/auth/admin-logout', (req, res) => {
+app.post('/api/auth/admin-logout', async (req, res) => {
+  // #956: además de borrar las cookies, se revoca la sesión (tokenVersion) para que un Bearer guardado deje de servir.
+  try { const sess = getAdminApiSessionCookie(req); if (sess) { const d = jwt.verify(sess, JWT_SECRET, { algorithms: ['HS256'] }); if (d && d.userId) await User.updateOne({ id: d.userId }, { $inc: { tokenVersion: 1 } }); } } catch (_) {}
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader('Set-Cookie', [
     `admin_session=; HttpOnly; SameSite=Strict; Max-Age=0; Path=/adminprivado2026${secure}`,
@@ -6151,7 +6215,7 @@ app.post('/api/auth/change-password/send-otp', authMiddleware, sensitiveLimiter,
       return res.status(400).json({ error: 'Número de teléfono requerido' });
     }
 
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({
         error: 'Número de teléfono inválido. Usá formato internacional con código de país (ej: +5491155551234)'
@@ -6237,7 +6301,7 @@ app.post('/api/auth/change-password/pending', authMiddleware, authLimiter, async
     user.password = newPassword;
     user.passwordChangedAt = new Date();
     user.mustChangePassword = false;
-    user.pendingAccessCode = pendingCode;
+    user.pendingAccessCode = pendingCode; user.pendingAccessCodeAt = new Date(); // #965: vence a los 7 días
     // El usuario entra, pero queda con verificación de teléfono pendiente:
     // no podrá retirar hasta verificar por SMS.
     user.phoneVerificationPending = true;
@@ -6776,7 +6840,7 @@ app.post('/api/auth/send-register-otp', sensitiveLimiter, smsIpLimiter, async (r
       return res.status(400).json({ error: 'Número de teléfono requerido' });
     }
 
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido. Usa formato internacional con código de país (ej: +5491155551234)' });
     }
@@ -6830,7 +6894,7 @@ app.post('/api/auth/login-otp-request', authLimiter, smsIpLimiter, async (req, r
     if (!phone || typeof phone !== 'string') {
       return res.status(400).json({ error: 'Número de teléfono requerido' });
     }
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido' });
     }
@@ -6867,7 +6931,7 @@ app.post('/api/auth/login-otp-verify', authLimiter, async (req, res) => {
     if (!phone || !code) {
       return res.status(400).json({ error: 'Teléfono y código requeridos' });
     }
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
 
     const otpResult = await verifyOTP(normalizedPhone, code, 'login');
     if (!otpResult.valid) {
@@ -6941,7 +7005,7 @@ app.post('/api/auth/request-password-reset', sensitiveLimiter, smsIpLimiter, asy
     const { phone } = req.body;
 
     if (phone && typeof phone === 'string') {
-      const normalizedPhone = phone.trim();
+      const normalizedPhone = String(phone || '').trim(); /* #956 */
       if (validateInternationalPhone(normalizedPhone)) {
         const user = await User.findOne({ phone: normalizedPhone, phoneVerified: true, role: 'user' }).lean(); // #413: nunca staff
         if (user) {
@@ -6970,7 +7034,7 @@ app.post('/api/auth/verify-reset-otp', sensitiveLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Teléfono y código requeridos' });
     }
 
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido' });
     }
@@ -7092,7 +7156,7 @@ app.post('/api/auth/verify-phone/send-otp', authMiddleware, sensitiveLimiter, sm
     if (!phone || typeof phone !== 'string') {
       return res.status(400).json({ error: 'Número de teléfono requerido' });
     }
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido. Usá formato internacional (ej: +5491155551234)' });
     }
@@ -7144,7 +7208,7 @@ app.post('/api/auth/verify-phone/confirm', authMiddleware, sensitiveLimiter, asy
     if (!phone || !otpCode) {
       return res.status(400).json({ error: 'Teléfono y código requeridos' });
     }
-    const normalizedPhone = phone.trim();
+    const normalizedPhone = String(phone || '').trim(); /* #956 */
     if (!validateInternationalPhone(normalizedPhone)) {
       return res.status(400).json({ error: 'Número de teléfono inválido' });
     }
@@ -7265,12 +7329,18 @@ function buildBulkSmsQuery(filters, onlyVerified = false) {
 // Preview: devuelve la lista de destinatarios con validación de números SIN enviar SMS
 // #743 (owner): la MISMA clave de Datos IA protege Datos, Datos 2.0, Ingresos diarios y Usuarios con app (header x-datos-pin, como #590/#665).
 // Va ANTES de esas rutas (Express evalúa en orden). Sin clave configurada no se exige.
+// #956 (seguridad): las claves de Datos / INICIO son cortas: 6 intentos fallidos ⇒ 15 min bloqueado para esa cuenta de staff.
+const _pinFails = new Map();
+function _pinCheck(req, ok) { const k = (req.user && req.user.userId) || req.ip; const e = _pinFails.get(k) || { n: 0, until: 0 }; if (Date.now() > e.until) { e.n = 0; } if (ok) { _pinFails.delete(k); return true; } e.n++; e.until = Date.now() + 15 * 60000; _pinFails.set(k, e); return false; }
+function _pinLocked(req) { const k = (req.user && req.user.userId) || req.ip; const e = _pinFails.get(k); return !!(e && e.n >= 6 && Date.now() <= e.until); }
 function _datosPinGate(req, res, next) {
   Promise.resolve().then(async () => {
     if (req.user && req.user.role === 'publisher_admin') return next(); // #745: las cuentas de publicista usan su propio lockdown
     const h = await _datosPinHash(); if (!h) return next();
     const pin = String(req.get('x-datos-pin') || '');
-    if (pin && _sha(pin) === h) return next();
+    if (pin && _pinLocked(req)) return res.status(429).json({ error: 'Demasiados intentos con la clave. Esperá 15 minutos.', code: 'PIN_LOCKED' });
+    if (pin && _sha(pin) === h) { _pinCheck(req, true); return next(); }
+    if (pin) _pinCheck(req, false);
     return res.status(423).json({ error: 'Esta sección está protegida con clave.', code: 'PIN_REQUIRED' });
   }).catch(() => res.status(500).json({ error: 'Error del servidor' }));
 }
@@ -8411,6 +8481,7 @@ app.get('/api/conversations', authMiddleware, adminMiddleware, async (req, res) 
     // último mensaje y cuenta los no leídos. Evita traer TODA la colección de
     // mensajes y usuarios a Node y el loop O(mensajes × usuarios) anterior.
     const rows = await Message.aggregate([
+      { $match: { timestamp: { $gte: new Date(Date.now() - 3 * 86400000) } } }, // #957: acota por índice (antes barría toda la colección)
       { $sort: { timestamp: -1 } },
       { $addFields: {
         convUserId: {
@@ -12142,7 +12213,19 @@ async function _minifyBundles() {
     const r = csso.minify(b.css, { restructure: false, comments: false });
     if (r && r.css && r.css.length > 1000) b.cssMin = r.css;
   } catch (e) { logger.warn('[bundle] csso no disponible o falló (' + e.message + '): CSS sin minificar'); }
-  logger.info(`[bundle] minificado: js ${Math.round(b.js.length / 1024)}→${Math.round((b.jsMin || b.js).length / 1024)} KB · css ${Math.round(b.css.length / 1024)}→${Math.round((b.cssMin || b.css).length / 1024)} KB`);
+  // #964: precomprimido UNA vez (brotli y gzip) en vez de comprimir en caliente en cada pedido no cacheado.
+  try { const zlib = require('zlib'); const js = b.jsMin || b.js, css = b.cssMin || b.css;
+    b.jsBr = zlib.brotliCompressSync(Buffer.from(js), { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } }); b.jsGz = zlib.gzipSync(js, { level: 9 });
+    b.cssBr = zlib.brotliCompressSync(Buffer.from(css), { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } }); b.cssGz = zlib.gzipSync(css, { level: 9 });
+  } catch (e) { logger.warn('[bundle] precompresión falló (' + e.message + '): se comprime en caliente'); }
+  logger.info(`[bundle] minificado: js ${Math.round(b.js.length / 1024)}→${Math.round((b.jsMin || b.js).length / 1024)} KB (br ${Math.round(((b.jsBr || '').length) / 1024)} KB) · css ${Math.round(b.css.length / 1024)}→${Math.round((b.cssMin || b.css).length / 1024)} KB (br ${Math.round(((b.cssBr || '').length) / 1024)} KB)`);
+}
+function _sendPre(req, res, raw, br, gz) {
+  res.setHeader('Vary', 'Accept-Encoding');
+  const ae = String(req.headers['accept-encoding'] || '');
+  if (br && /\bbr\b/.test(ae)) { res.setHeader('Content-Encoding', 'br'); return res.end(br); }
+  if (gz && /\bgzip\b/.test(ae)) { res.setHeader('Content-Encoding', 'gzip'); return res.end(gz); }
+  return res.send(raw);
 }
 setTimeout(() => { _minifyBundles().catch(() => {}); }, 1500);
 function _assetHeaders(req, res, type) {
@@ -12150,8 +12233,8 @@ function _assetHeaders(req, res, type) {
   if (req.query && req.query.v) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   else { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate'); res.setHeader('Pragma', 'no-cache'); }
 }
-app.get('/js/bundle.js', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('// sin bundle'); _assetHeaders(req, res, 'application/javascript; charset=utf-8'); res.send(b.jsMin || b.js); }); // #738: minificado si está
-app.get('/css/bundle.css', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('/* sin bundle */'); _assetHeaders(req, res, 'text/css; charset=utf-8'); res.send(b.cssMin || b.css); });
+app.get('/js/bundle.js', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('// sin bundle'); _assetHeaders(req, res, 'application/javascript; charset=utf-8'); _sendPre(req, res, b.jsMin || b.js, b.jsBr, b.jsGz); }); // #738: minificado · #964: precomprimido
+app.get('/css/bundle.css', (req, res) => { const b = _buildBundles(); if (!b.ok) return res.status(404).send('/* sin bundle */'); _assetHeaders(req, res, 'text/css; charset=utf-8'); _sendPre(req, res, b.cssMin || b.css, b.cssBr, b.cssGz); });
 // #738: HTML más liviano — se sacan los comentarios y las sangrías de las líneas, pero SÓLO fuera de <script>/<style>/<textarea>
 // (adentro podrían ser parte de un string). Y se precarga el bundle JS desde el <head> (va al final del body: así empieza a bajar antes).
 function _slimHtml(html) {
@@ -12846,6 +12929,14 @@ async function initializeData() {
         await Config.set('migration_reviews_avg_48_done', true, 'startup-migration');
       }
     } catch (e) { console.warn('[startup-migration] reseñas 4,8:', e.message); }
+    // #946 (owner 2026-10-24): las 5★ que estaban esperando aprobación se aprueban de una (una sola vez; las nuevas nacen aprobadas).
+    try {
+      if (!(await getConfig('mig946Approve5Stars', null))) {
+        await Config.set('mig946Approve5Stars', new Date().toISOString(), 'startup-migration');
+        const r = await Review.updateMany({ approved: false, stars: 5 }, { $set: { approved: true, approvedBy: 'auto-5-estrellas', approvedAt: new Date(), updatedAt: new Date() } });
+        console.log('✅ Reseñas (#946): ' + (r.modifiedCount || r.nModified || 0) + ' de 5★ pendientes aprobadas');
+      }
+    } catch (e) { console.warn('[startup-migration] reseñas 5★:', e.message); }
   } catch (e) { console.warn('[startup-migration] reseñas seed:', e.message); }
 
   // #281 (owner 2026-10-17, "ponele 10 %"): en producción Config['autoLoadBonusPct'] quedó en 0 y el cartel
@@ -12901,6 +12992,13 @@ async function initializeData() {
   // #872 (owner 2026-10-23): "sacá el registro desde el inicio, que sea sólo con invitación" ⇒ registrationMode 'invite' (#748): desde la app
   // sólo se registra quien trae link de referido real o de una campaña ACTIVA (las landings de pauta siguen creando cuentas). Una sola vez;
   // después se cambia en Configuración → Registro de clientes.
+  // #968 (owner): partidos del día en las historias automáticas ENCENDIDOS, y las campañas futuras del autopiloto de oct/nov se recrean con el
+  // refuerzo (el autopiloto las vuelve a programar solo a los 5 min del arranque; sólo las 'scheduled' con fecha futura, nada enviado).
+  try { if (!(await getConfig('mig968GiftBoost', null))) { await Config.set('storyAutoMatches', true, 'mig#968'); const r = await ScheduledCampaign.deleteMany({ autoKey: { $regex: '^ap-2026-(10|11)-' }, status: 'scheduled', runAt: { $gt: new Date() } }); await Config.set('mig968GiftBoost', new Date().toISOString(), 'mig#968'); console.log('✅ #968: partidos en historias ON · ' + (r.deletedCount || 0) + ' campañas futuras del autopiloto se reprograman con el refuerzo'); } } catch (e) { console.warn('[startup-migration] #968:', e.message); }
+  // #954 (owner 2026-10-24): "dejá fino el cierre a partir de hoy, ya que está el botón de pago de otro banco": los cierres valen desde hoy.
+  try { if (!(await getConfig('mig954CloseSince', null))) { const cur = String((await getConfig('closeSince', null)) || ''); if (!cur || cur < '2026-10-24') await Config.set('closeSince', '2026-10-24', 'mig#954'); await Config.set('mig954CloseSince', new Date().toISOString(), 'mig#954'); console.log('✅ #954: cierres desde 2026-10-24'); } } catch (e) { console.warn('[startup-migration] #954:', e.message); }
+  // #955 (owner): "la ruleta diaria: un tiro con cargas de $5.000" (los textos de la app leen el valor: se actualizan solos).
+  try { if (!(await getConfig('mig955RouletteMin5000', null))) { const r = (await getConfig('dailyRoulette', null)) || {}; if (r && typeof r === 'object') { r.minDepositArs = 5000; await Config.set('dailyRoulette', r, 'mig#955'); } await Config.set('mig955RouletteMin5000', new Date().toISOString(), 'mig#955'); console.log('✅ #955: ruleta diaria con $5.000 cargados en el día'); } } catch (e) { console.warn('[startup-migration] #955:', e.message); }
   try { if (!(await getConfig('mig872InviteOnly', null))) { await Config.set('registrationMode', 'invite', 'mig#872'); await Config.set('mig872InviteOnly', new Date().toISOString(), 'mig#872'); console.log('✅ #872: registro sólo con invitación'); } } catch (e) { console.warn('[startup-migration] #872:', e.message); }
   // #879 (owner): "verificar el teléfono por única vez y después retirar sin problemas": se apaga el código SMS en CADA retiro (una vez;
   // el tilde sigue en Configuración). El teléfono verificado sigue siendo obligatorio para retirar.
@@ -13219,6 +13317,13 @@ async function initializeData() {
       response: '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.'
     },
     {
+      // #916 (owner 2026-10-24): cierre AUTOMÁTICO de Soporte cuando el cliente no contesta en {min} minutos.
+      name: '/sys_support_autoclosed',
+      description: 'Soporte: mensaje que ve el cliente cuando la charla se cierra SOLA porque no contestó en {min} minutos después de nuestra respuesta (Config supportAutoCloseMinutes, 30). Vacío = cierra sin aviso.',
+      type: 'message',
+      response: '⏱️ Por no recibir respuesta en {min} minutos, cerramos la conversación de forma automática. Si necesitás algo más, elegí una opción y te atendemos.'
+    },
+    {
       // #373 (2026-10-18): SOPORTE (ex "Carga manual") — la persona que se presenta al entrar al chat.
       // #377: nombres separados por coma; rotan cada 8 h (08–16 / 16–24 / 00–08, hora AR).
       name: '/sys_support_names',
@@ -13327,7 +13432,7 @@ async function initializeData() {
       type: 'message',
       response: SUPPORT_TOPIC_REEMBOLSO_DEFAULT
     },
-    ...SUPPORT_QUICK_REPLIES.map((q) => ({ name: '/sys_sq_' + q.key, description: 'Soporte · respuesta rápida "' + q.label + '" (botón del panel; al enviarla se cierra la charla). Variables: {min}, {retiro_min}, {carga}, {rollover}.', type: 'message', response: q.text })), // #905
+    ...SUPPORT_QUICK_REPLIES.map((q) => ({ name: '/sys_sq_' + q.key, description: 'Soporte · respuesta rápida "' + q.label + '" (botón del panel; al enviarla se cierra la charla). Variables: {min}, {retiro_min}, {carga}, {rollover}' + (q.dynamic === 'sorteo' ? ', {mensual}, {gran} (una línea por sorteo con fechas y premios), {pts}, {ptsper}, {requisitos}, {extra} (SORTEO EXTRA), {pago} — de la config de Sorteos del panel' : (q.dynamic || q.key === 'rollover_libre' ? ', {saldo}, {retirable}, {bloqueado}, {bloqueado_bono}, {detalle} (una línea por objetivo: carga / bono), {falta} — números reales del cliente leídos de 1girox al enviarla' : '')) + '.', type: 'message', response: q.text })), // #905 · #912
     {
       name: '/sys_support_topic_bono',
       description: 'Soporte: respuesta automática cuando el tema es EL BONO (explica el rollover ×{rollover}: qué es, apostar no es cargar, cómo se desbloquea para retirar). Variables: {rollover}, {min}, {retiro_min}. Vacío = no se manda.',
@@ -13931,6 +14036,7 @@ async function _withdrawalRequestHandler(req, res) {
 
     // Para retirar, la cuenta debe tener el teléfono verificado por SMS.
     // El registro es sin SMS, pero el retiro siempre exige verificación.
+    if (user.isBlocked === true || user.isActive === false) return res.status(403).json({ error: 'Tu cuenta no puede retirar en este momento. Escribinos por Soporte.', code: 'ACCOUNT_BLOCKED' }); // #954
     if (user.phoneVerified !== true && !req._testBypass) { // #714: la prueba del tester no exige teléfono
       return res.status(400).json({
         error: 'Para retirar tu premio necesitás verificar tu teléfono por SMS.',
@@ -16885,15 +16991,47 @@ app.delete('/api/admin/campaigns/:code/permanent', authMiddleware, adminMiddlewa
 });
 
 // Stats detalladas de una campaña + comisión calculada.
+// #914 (owner): "en publicista, cuando voy a ver detalle, que se pueda seleccionar fecha y hora". Período [start, end) con fecha Y hora:
+// clics, registros, primeras cargas (FTD), cargas / clientes que cargaron / total cargado y retiros DENTRO del período, de los usuarios de
+// esa pauta. Sin período, el detalle sigue siendo "desde el inicio" (computeCampaignStats).
+function _campaignRangeParse(q) {
+  const p = (v) => { if (!v) return null; const d = new Date(String(v)); return isNaN(d) ? null : d; };
+  const start = p(q.from), end = p(q.to); if (!start && !end) return null;
+  const s = start || new Date(0), e = end || new Date(Date.now() + 60000);
+  return e > s ? { start: s, end: e } : null;
+}
+async function _campaignStatsRange(code, start, end) {
+  const normalizedCode = String(code).toUpperCase().trim();
+  const GIFT_SOURCES = ['install_bonus', 'welcome_gift', 'welcome_code'];
+  const [clicks, users] = await Promise.all([
+    CampaignClick.countDocuments({ campaignCode: normalizedCode, clickedAt: { $gte: start, $lt: end } }),
+    User.find({ acquisitionCampaign: normalizedCode }).select('id username createdAt').lean()
+  ]);
+  const names = users.map((u) => u.username);
+  const registrations = users.filter((u) => u.createdAt && new Date(u.createdAt) >= start && new Date(u.createdAt) < end).length;
+  const base = { clicks, registrations, ftd: 0, depositors: 0, deposits: 0, totalRevenue: 0, totalWithdrawals: 0, netRevenue: 0, crClickToRegister: clicks > 0 ? registrations / clicks : null, crRegisterToFtd: null };
+  if (!names.length) return base;
+  const realDep = { type: 'deposit', username: { $in: names }, $or: [{ 'metadata.source': { $exists: false } }, { 'metadata.source': { $nin: GIFT_SOURCES } }] };
+  const [deps, firsts, wds] = await Promise.all([
+    Transaction.aggregate([{ $match: Object.assign({ createdAt: { $gte: start, $lt: end } }, realDep) }, { $group: { _id: '$username', total: { $sum: '$amount' }, count: { $sum: 1 } } }]),
+    Transaction.aggregate([{ $match: realDep }, { $group: { _id: '$username', first: { $min: '$createdAt' } } }, { $match: { first: { $gte: start, $lt: end } } }]),
+    Transaction.aggregate([{ $match: { type: 'withdrawal', username: { $in: names }, createdAt: { $gte: start, $lt: end } } }, { $group: { _id: null, total: { $sum: '$amount' } } }])
+  ]);
+  base.ftd = firsts.length; base.depositors = deps.length; base.deposits = deps.reduce((s, x) => s + x.count, 0);
+  base.totalRevenue = Math.round(deps.reduce((s, x) => s + (x.total || 0), 0)); base.totalWithdrawals = Math.round((wds[0] && wds[0].total) || 0);
+  base.netRevenue = base.totalRevenue - base.totalWithdrawals; base.crRegisterToFtd = registrations > 0 ? base.ftd / registrations : null;
+  return base;
+}
 app.get('/api/admin/campaigns/:code/stats', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const normalizedCode = String(req.params.code).toUpperCase().trim();
     const campaign = await Campaign.findOne({ code: normalizedCode }).lean();
     if (!campaign) return res.status(404).json({ error: 'Campaña no encontrada' });
 
-    const stats = await computeCampaignStats(normalizedCode);
+    const range = _campaignRangeParse(req.query || {}); // #914: fecha y hora
+    const stats = range ? await _campaignStatsRange(normalizedCode, range.start, range.end) : await computeCampaignStats(normalizedCode);
     const commission = calcCommission(campaign, stats);
-    res.json({ campaign, stats, commission });
+    res.json({ campaign, stats, commission, period: range ? { from: range.start.toISOString(), to: range.end.toISOString() } : null });
   } catch (err) {
     logger.error(`[admin/campaigns/:code/stats] ${err.message}`);
     res.status(500).json({ error: 'Error del servidor' });
@@ -17053,7 +17191,8 @@ app.get('/api/admin/campaigns/:code/users', authMiddleware, adminMiddleware, asy
   try {
     const normalizedCode = String(req.params.code).toUpperCase().trim();
     const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
-    const users = await User.find({ acquisitionCampaign: normalizedCode })
+    const range = _campaignRangeParse(req.query || {}); // #914: sólo los registrados en el período (fecha y hora)
+    const users = await User.find(Object.assign({ acquisitionCampaign: normalizedCode }, range ? { createdAt: { $gte: range.start, $lt: range.end } } : {}))
       .select('id username email phone phoneVerified phoneVerificationPending balance createdAt acquiredAt')
       .sort({ acquiredAt: -1 })
       .limit(limit)
@@ -20177,6 +20316,8 @@ app.post('/api/admin/webhooks', authMiddleware, adminMiddleware, async (req, res
     if (!cur && list.length >= OUTBOUND_WEBHOOKS_MAX) return res.status(400).json({ error: `Máximo ${OUTBOUND_WEBHOOKS_MAX} destinos` });
     const next = _normalizeOutboundDest(b, cur);
     if (!/^https:\/\/[^\s]+$/i.test(next.url)) return res.status(400).json({ error: 'La URL tiene que empezar con https://' });
+    // #956 (seguridad): nada de hosts privados / metadata / credenciales en la URL (SSRF desde el panel): mismas reglas que el fan-out de hgcash.
+    try { const p = new URL(next.url); const host = p.hostname.toLowerCase(); if (p.username || p.password) throw new Error('La URL no puede llevar usuario ni contraseña.'); if (host === 'localhost' || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.)/.test(host) || host.startsWith('[') || !host.includes('.')) throw new Error('Tiene que ser el dominio público del sistema que recibe.'); } catch (e) { return res.status(400).json({ error: e.message || 'URL inválida' }); }
     if (!next.name) return res.status(400).json({ error: 'Poné un nombre (ej: el publicista o el sistema que recibe)' });
     if (!next.secretEnc) return res.status(400).json({ error: 'Falta el secreto: con él el receptor comprueba que el aviso es tuyo' });
     if (next.scope === 'publishers' && !next.publishers.length) return res.status(400).json({ error: 'Elegí al menos un publicista, o marcá TODOS' });
@@ -20671,7 +20812,11 @@ app.post('/api/admin/hgcash/config', authMiddleware, adminMiddleware, async (req
 // #376: CARGAS PENDIENTES — cola de revisión de comprobantes (panel → "⏳ Cargas pendientes")
 // ============================================
 app.get('/api/admin/deposit-reviews/count', authMiddleware, depositorMiddleware, async (req, res) => {
-  try { res.json({ pending: await Comprobante.countDocuments({ reviewStatus: 'pending', autoCharged: { $ne: true } }) }); }
+  try {
+    // #908: una ficha por comprobante (los reenvíos del mismo cuentan una vez)
+    const g = await Comprobante.aggregate([{ $match: { reviewStatus: 'pending', autoCharged: { $ne: true } } }, { $group: { _id: { u: '$userId', a: '$amount' } } }, { $count: 'n' }]);
+    res.json({ pending: (g[0] && g[0].n) || 0 });
+  }
   catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
 app.get('/api/admin/deposit-reviews', authMiddleware, depositorMiddleware, async (req, res) => {
@@ -20682,7 +20827,13 @@ app.get('/api/admin/deposit-reviews', authMiddleware, depositorMiddleware, async
     if (req.query.userId) q.userId = String(req.query.userId).slice(0, 80); // #898: la franja de Soporte pide sólo las del cliente abierto
     if (tab === 'pending') await _receiptCollapseDups(req.query.userId ? String(req.query.userId).slice(0, 80) : undefined); // #932
     if (tab === 'resolved') q.reviewResolution = { $ne: 'duplicate' }; // #932: las copias se ven adentro de su ficha
-    const items = await Comprobante.find(q).sort(tab === 'pending' ? { createdAt: 1 } : { reviewedAt: -1 }).limit(limit).lean();
+    const raw = await Comprobante.find(q).sort(tab === 'pending' ? { createdAt: 1 } : { reviewedAt: -1 }).limit(limit).lean();
+    // #908: en PENDIENTES, los reenvíos del mismo comprobante van DENTRO de la ficha del primero (repeats), no como fichas sueltas.
+    const items = []; const repeatsOf = new Map();
+    for (const c of raw) {
+      const main = tab === 'pending' ? items.find((m) => _sameReceipt(m, c)) : null;
+      if (main) { if (!repeatsOf.has(main.id)) repeatsOf.set(main.id, []); repeatsOf.get(main.id).push(c); } else items.push(c);
+    }
     const copiesOf = new Map();
     if (items.length) { const cps = await Comprobante.find({ dupOf: { $in: items.map((c) => c.id) } }).sort({ createdAt: 1 }).select('id dupOf createdAt messageId').lean();
       for (const x of cps) { if (!copiesOf.has(x.dupOf)) copiesOf.set(x.dupOf, []); copiesOf.get(x.dupOf).push({ id: x.id, createdAt: x.createdAt, imageUrl: x.messageId ? `/api/admin/deposit-reviews/${encodeURIComponent(x.id)}/image` : null }); } }
@@ -20701,6 +20852,9 @@ app.get('/api/admin/deposit-reviews', authMiddleware, depositorMiddleware, async
         bankMatchStatus: c.bankMatchStatus, status: c.status, aiConfidence: c.aiConfidence || 0,
         imageUrl: c.messageId ? `/api/admin/deposit-reviews/${encodeURIComponent(c.id)}/image` : null,
         copies: copiesOf.get(c.id) || [], sentCount: 1 + (copiesOf.get(c.id) || []).length, // #932: veces que mandó ese mismo comprobante
+        sentTimes: 1 + (repeatsOf.get(c.id) || []).length, // #908
+        repeats: (repeatsOf.get(c.id) || []).map((r) => ({ id: r.id, createdAt: r.createdAt, waitingMin: Math.round((now - new Date(r.createdAt).getTime()) / 60000), amount: r.amount, operationNumber: r.operationNumber, aiConfidence: r.aiConfidence || 0,
+          imageUrl: r.messageId ? `/api/admin/deposit-reviews/${encodeURIComponent(r.id)}/image` : null })),
         candidates: movs.filter((m) => _amountsEqual(m.amount, c.amount)).slice(0, 5).map((m) => ({ movementId: m.movementId, fromName: m.fromName, amount: m.amount, date: m.date || m.createdAt, matchStatus: m.matchStatus, matchedUsername: m.matchedUsername || null }))
       }))
     });
@@ -20729,6 +20883,12 @@ app.post('/api/admin/deposit-reviews/:id/confirm', authMiddleware, depositorMidd
     const id = String(req.params.id);
     const c = await Comprobante.findOne({ id }).lean();
     if (!c) return res.status(404).json({ error: 'Comprobante no encontrado' });
+    // #954 (owner: "revisá bien que no entren comprobantes duplicados"): un comprobante marcado REPETIDO al llegar (misma imagen o mismos datos que
+    // uno anterior, propio o de otro cliente) no se puede confirmar ni por API; sólo el admin general con force:true, dejando rastro.
+    if (c.status === 'duplicate' && !(req.user.role === 'admin' && req.body && req.body.force === true)) {
+      logger.warn(`[comprobante] ${req.user.username} intentó confirmar un comprobante REPETIDO ${id} (original de @${c.duplicateOfUsername || c.username})`);
+      return res.status(409).json({ error: 'Comprobante REPETIDO: ya se usó antes (' + (c.duplicateOfUsername && c.duplicateOfUsername !== c.username ? 'lo envió @' + c.duplicateOfUsername : 'el mismo cliente') + '). Cada transferencia se acredita UNA sola vez.' });
+    }
     if (c.reviewStatus !== 'pending' || c.autoCharged) return res.status(409).json({ error: 'Esa carga ya fue resuelta (' + (c.reviewResolution || c.reviewStatus || c.bankMatchStatus) + ').' });
     const amount = Number(req.body && req.body.amount) > 0 ? Number(req.body.amount) : Number(c.amount);
     if (!(amount > 0)) return res.status(400).json({ error: 'Monto inválido: el comprobante no tiene monto legible, ingresalo a mano.' });
@@ -20754,7 +20914,8 @@ app.post('/api/admin/deposit-reviews/:id/confirm', authMiddleware, depositorMidd
       return res.status(out.status && out.status !== 200 ? out.status : 400).json({ error: (out.json && out.json.error) || 'No se pudo cargar' });
     }
     await Comprobante.updateOne({ id }, { $set: { bankMatchStatus: 'manual_charged', autoCharged: true, reviewTxId: out.json.transactionId || null } });
-    await _emitAdminOnlyChatNote(c.userId, c.username, `✅ CARGA PENDIENTE confirmada por ${req.user.username}${_amtStr(amount)} (el cliente la ve como carga automática).`);
+    const reps = (req.body && req.body.keepRepeats) ? 0 : await _depositReviewCloseRepeats(c, req.user.username || 'agente', 'confirmó'); // #908
+    await _emitAdminOnlyChatNote(c.userId, c.username, `✅ CARGA PENDIENTE confirmada por ${req.user.username}${_amtStr(amount)} (el cliente la ve como carga automática).${reps ? ` ${reps} envío(s) repetido(s) del mismo comprobante cerrados.` : ''}`);
     _emitDepositReviewUpdate(c.userId, { action: 'confirmed', id });
     res.json({ success: true, deposit: out.json });
   } catch (e) { logger.error(`confirm deposit-review: ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
@@ -20770,7 +20931,8 @@ app.post('/api/admin/deposit-reviews/:id/reject', authMiddleware, depositorMiddl
     if (!c) return res.status(409).json({ error: 'Esa carga ya no está pendiente.' });
     const txt = await renderSystemCommand('/sys_deposit_rejected', DEPOSIT_REJECTED_DEFAULT, { amount: _amtStr(c.amount), motivo: (reason === 'otro' && note) ? note : motivo });
     if (txt) await _sendUserSystemMessage({ id: c.userId, username: c.username }, txt, { metadata: { kind: 'deposit_rejected', comprobanteId: id, amount: c.amount || 0, reason } });
-    await _emitAdminOnlyChatNote(c.userId, c.username, `❌ CARGA PENDIENTE rechazada por ${req.user.username}${_amtStr(c.amount)} — ${motivo}${note ? ' (' + note + ')' : ''}.`);
+    const reps = await _depositReviewCloseRepeats(c, req.user.username || 'agente', 'rechazó'); // #908
+    await _emitAdminOnlyChatNote(c.userId, c.username, `❌ CARGA PENDIENTE rechazada por ${req.user.username}${_amtStr(c.amount)} — ${motivo}${note ? ' (' + note + ')' : ''}.${reps ? ` ${reps} envío(s) repetido(s) cerrados.` : ''}`);
     _emitDepositReviewUpdate(c.userId, { action: 'rejected', id });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -20836,12 +20998,15 @@ app.post('/api/public/support/:id/message', sensitiveLimiter, async (req, res) =
     if (!token) return res.status(401).json({ error: 'Falta el token' });
     if (!content) return res.status(400).json({ error: 'Escribí un mensaje.' });
     const msg = { id: uuidv4(), from: 'guest', content, at: new Date() };
+    // #956 (seguridad): el token se valida ANTES de escribir (antes el $push iba primero y con el id se podían meter mensajes sin token).
+    const t0 = await GuestThread.findOne({ id: String(req.params.id) }).select('id token').lean();
+    if (!t0 || !safeCompare(t0.token, token)) return res.status(404).json({ error: 'Conversación no encontrada' });
     const t = await GuestThread.findOneAndUpdate(
-      { id: String(req.params.id) },
+      { id: t0.id },
       { $push: { messages: msg }, $inc: { unreadAdmin: 1 }, $set: { lastFrom: 'guest', lastAt: new Date(), status: 'open' } },
       { new: true }
     ).lean();
-    if (!t || !safeCompare(t.token, token)) return res.status(404).json({ error: 'Conversación no encontrada' });
+    if (!t) return res.status(404).json({ error: 'Conversación no encontrada' });
     try { notifyAdmins('guest_support', { threadId: t.id, name: t.name, phone: t.phone, preview: content.slice(0, 80) }); } catch (_) {}
     res.json({ success: true, message: msg });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -20984,10 +21149,15 @@ app.post('/api/admin/inicio-pin', authMiddleware, adminMiddleware, async (req, r
 app.use('/api/admin/inicio', authMiddleware, adminMiddleware, async (req, res, next) => {
   try {
     const h = await _inicioPinHash(); if (!h) return res.status(428).json({ error: 'Creá la clave de INICIO.', code: 'PIN_SETUP' });
-    const pin = String(req.get('x-inicio-pin') || ''); if (pin && _sha(pin) === h) return next();
+    const pin = String(req.get('x-inicio-pin') || '');
+    if (pin && _pinLocked(req)) return res.status(429).json({ error: 'Demasiados intentos con la clave. Esperá 15 minutos.', code: 'PIN_LOCKED' }); // #956
+    if (pin && _sha(pin) === h) { _pinCheck(req, true); return next(); }
+    if (pin) _pinCheck(req, false);
     return res.status(423).json({ error: 'INICIO está protegido con clave.', code: 'PIN_REQUIRED' });
   } catch (_) { return res.status(500).json({ error: 'Error del servidor' }); }
 });
+let _inicioDepCache = { at: 0, v: null }; // #957: distinct sobre TODAS las cargas de la historia, cada request ⇒ 10 min de cache
+async function _inicioDepositors(REAL) { if (_inicioDepCache.v && Date.now() - _inicioDepCache.at < 10 * 60000) return _inicioDepCache.v; const v = await Transaction.distinct('userId', REAL); _inicioDepCache = { at: Date.now(), v }; return v; }
 app.get('/api/admin/inicio/stats', async (req, res) => {
   try {
     const PendingPayout = require('./src/models/PendingPayout');
@@ -20997,19 +21167,28 @@ app.get('/api/admin/inicio/stats', async (req, res) => {
     const ref = new Date(Math.min(Date.now(), end.getTime())); const cut72 = new Date(ref.getTime() - 72 * 3600000); // retención = cuenta de +72 h
     const isAd = (u) => !!(u && (u.acquisitionSource === 'landing' || (u.acquisitionCampaign && u.acquisitionCampaign !== 'INGRESO')));
     const REAL = { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } };
-    const [activeNow, enteredIds, regs, depAgg, wd, totalUsers, withApp, withNotif] = await Promise.all([
+    const prevDay = _schedArtKey(new Date(start.getTime() - 43200000)); // #913: día anterior (ART) para "volvieron"
+    const [activeNow, enteredIds, regs, depAgg, wd, totalUsers, depositorIds, prevDepIds, prevEnteredIds] = await Promise.all([
       day === today ? AppSession.distinct('userId', { lastPingAt: { $gte: new Date(Date.now() - 3 * 60000) } }) : Promise.resolve(null),
       AppSession.distinct('userId', { dateKey: day }),
       User.find({ role: 'user', createdAt: { $gte: start, $lt: end } }).select('id acquisitionSource acquisitionCampaign').lean(),
       Transaction.aggregate([{ $match: Object.assign({ timestamp: { $gte: start, $lt: end } }, REAL) }, { $group: { _id: '$userId', total: { $sum: '$amount' }, n: { $sum: 1 } } }]),
       PendingPayout.aggregate([{ $match: { createdAt: { $gte: start, $lt: end } } }, { $group: { _id: '$status', n: { $sum: 1 }, total: { $sum: '$amount' } } }]),
       User.countDocuments({ role: 'user' }),
-      User.countDocuments({ role: 'user', $or: [{ fcmTokenContext: 'standalone' }, { 'fcmTokens.context': 'standalone' }] }),
-      User.countDocuments({ role: 'user', $or: [{ fcmToken: { $nin: [null, ''] } }, { 'fcmTokens.0': { $exists: true } }] })
+      _inicioDepositors(REAL), // #913: todos los que cargaron alguna vez (base de la aceptación de la app) · #957: cache 10 min
+      Transaction.distinct('userId', Object.assign({ timestamp: { $gte: new Date(start.getTime() - 86400000), $lt: start } }, REAL)), // cargaron el día anterior
+      AppSession.distinct('userId', { dateKey: prevDay }) // entraron el día anterior
+    ]);
+    // #913 (owner): "la aceptación de la app hacela con usuarios que cargaron, no que se registraron": instalaron / notificaciones
+    // se cuentan SÓLO entre los que tienen al menos una carga real.
+    const depBase = { role: 'user', id: { $in: depositorIds.filter(Boolean) } };
+    const [withApp, withNotif] = await Promise.all([
+      User.countDocuments(Object.assign({ $or: [{ fcmTokenContext: 'standalone' }, { 'fcmTokens.context': 'standalone' }] }, depBase)),
+      User.countDocuments(Object.assign({ $or: [{ fcmToken: { $nin: [null, ''] } }, { 'fcmTokens.0': { $exists: true } }] }, depBase))
     ]);
     // Quiénes entraron / cargaron: edad de la cuenta y si vinieron por publicidad.
     const depIds = depAgg.map((d) => d._id).filter(Boolean);
-    const people = await User.find({ id: { $in: [...new Set([...enteredIds, ...depIds])] } }).select('id createdAt acquisitionSource acquisitionCampaign').lean();
+    const people = await User.find({ id: { $in: [...new Set([...enteredIds, ...depIds])] } }).select('id username createdAt acquisitionSource acquisitionCampaign').lean();
     const P = new Map(people.map((u) => [u.id, u])); const old = (id) => { const u = P.get(id); return !!(u && u.createdAt && new Date(u.createdAt) < cut72); };
     const enteredRet = enteredIds.filter(old);
     // Primera carga de la vida en este día.
@@ -21019,15 +21198,26 @@ app.get('/api/admin/inicio/stats', async (req, res) => {
     const depAll = sum(depAgg), depFirst = sum(depAgg.filter((d) => firstSet.has(d._id))), depRet = sum(depAgg.filter((d) => old(d._id) && !firstSet.has(d._id))), depNew = sum(depAgg.filter((d) => !old(d._id) && !firstSet.has(d._id)));
     const wdAll = wd.reduce((a, x) => ({ n: a.n + x.n, total: a.total + (x.total || 0) }), { n: 0, total: 0 }); const wdPaid = wd.filter((x) => x._id === 'paid').reduce((a, x) => ({ n: a.n + x.n, total: a.total + (x.total || 0) }), { n: 0, total: 0 });
     const regAd = regs.filter(isAd).length;
+    // #913: cuántas veces cargó cada uno en el día (1 / 2 / más de 2) y quiénes VOLVIERON del día anterior (cargaron ayer y hoy;
+    // entraron a la app ayer y hoy).
+    const times = { once: sum(depAgg.filter((d) => d.n === 1)), twice: sum(depAgg.filter((d) => d.n === 2)), more: sum(depAgg.filter((d) => d.n > 2)) };
+    const prevDepSet = new Set(prevDepIds), prevEntSet = new Set(prevEnteredIds);
+    const backDep = depAgg.filter((d) => prevDepSet.has(d._id));
+    const cameBack = {
+      prevDay, depositedPrev: prevDepIds.length, enteredPrev: prevEnteredIds.length,
+      deposited: Object.assign(sum(backDep), { names: backDep.map((d) => (P.get(d._id) || {}).username).filter(Boolean).slice(0, 40) }),
+      entered: enteredIds.filter((id) => prevEntSet.has(id)).length
+    };
     res.set('Cache-Control', 'no-store');
     res.json({
-      day, isToday: day === today, generatedAt: new Date().toISOString(),
+      day, isToday: day === today, prevDay, generatedAt: new Date().toISOString(),
       app: { activeNow: activeNow ? activeNow.length : null, enteredToday: enteredIds.length, enteredRetention: enteredRet.length, enteredRetentionAds: enteredRet.filter((id) => isAd(P.get(id))).length, enteredNew72: enteredIds.length - enteredRet.length },
       registrations: { total: regs.length, fromAds: regAd, organic: regs.length - regAd, firstDepositSameDay: regs.filter((u) => firstSet.has(u.id)).length },
-      deposits: { all: depAll, first: depFirst, retention: depRet, new72: depNew, avg: depAll.n ? Math.round(depAll.total / depAll.n) : 0 },
+      deposits: { all: depAll, first: depFirst, retention: depRet, new72: depNew, avg: depAll.n ? Math.round(depAll.total / depAll.n) : 0, times },
+      cameBack,
       withdrawals: { requested: { n: wdAll.n, total: Math.round(wdAll.total) }, paid: { n: wdPaid.n, total: Math.round(wdPaid.total) } },
       net: Math.round(depAll.total - wdPaid.total),
-      adoption: { totalUsers, withApp, withNotif, appPct: totalUsers ? Math.round(withApp * 1000 / totalUsers) / 10 : 0, notifPct: totalUsers ? Math.round(withNotif * 1000 / totalUsers) / 10 : 0 }
+      adoption: { base: 'cargadores', totalUsers, depositors: depositorIds.length, withApp, withNotif, appPct: depositorIds.length ? Math.round(withApp * 1000 / depositorIds.length) / 10 : 0, notifPct: depositorIds.length ? Math.round(withNotif * 1000 / depositorIds.length) / 10 : 0 }
     });
   } catch (e) { logger.error('[inicio] stats: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
@@ -21043,8 +21233,10 @@ app.post('/api/activity/ping', authMiddleware, async (req, res) => {
     try {
       const d = req.body && req.body.device;
       if (d && typeof d === 'object') {
-        const dev = { os: String(d.os || '').slice(0, 10), model: String(d.model || '').slice(0, 60), w: Math.round(Number(d.w) || 0), h: Math.round(Number(d.h) || 0), dpr: Math.round((Number(d.dpr) || 0) * 100) / 100, app: d.app === true, sat: Math.round(Number(d.sat) || 0), at: now };
-        await User.updateOne({ id: userId, $or: [{ lastDevice: null }, { 'lastDevice.model': { $ne: dev.model } }, { 'lastDevice.app': { $ne: dev.app } }, { 'lastDevice.at': { $lt: new Date(now - 86400000) } }] }, { $set: { lastDevice: dev } });
+        const did = /^[A-Za-z0-9-]{8,64}$/.test(String(d.id || '')) ? String(d.id) : null; // #952: ID propio del celular
+        const dev = { os: String(d.os || '').slice(0, 10), model: String(d.model || '').slice(0, 60), w: Math.round(Number(d.w) || 0), h: Math.round(Number(d.h) || 0), dpr: Math.round((Number(d.dpr) || 0) * 100) / 100, app: d.app === true, sat: Math.round(Number(d.sat) || 0), id: did, at: now };
+        await User.updateOne({ id: userId, $or: [{ lastDevice: null }, { 'lastDevice.model': { $ne: dev.model } }, { 'lastDevice.app': { $ne: dev.app } }, { 'lastDevice.id': { $ne: did } }, { 'lastDevice.at': { $lt: new Date(now - 86400000) } }] }, { $set: { lastDevice: dev } });
+        if (did) await User.updateOne({ id: userId, deviceIds: { $ne: did } }, { $push: { deviceIds: { $each: [did], $slice: -6 } } }); // #952: últimos 6 celulares distintos
       }
     } catch (_) {}
     const last = await AppSession.findOne({ userId }).sort({ lastPingAt: -1 }).select('id lastPingAt').lean();
@@ -21255,28 +21447,47 @@ async function _closeAttachBalances(doc) {
   doc.bankBalanceStart = s0 && s0.balance != null ? s0.balance : null; doc.bankBalanceEnd = s1 && s1.balance != null ? s1.balance : null;
 }
 setTimeout(() => { _bankBalanceSnapshotTick(); setInterval(_bankBalanceSnapshotTick, 60 * 1000); }, 60 * 1000);
-async function _closeConfig() { const c = (await getConfig('closeConfig', null)) || {}; return { bankCommissionPct: Number(c.bankCommissionPct) || 0, autoUsdt: c.autoUsdt !== false }; }
+// #948 (owner): + costo por transferencia ($50 por cada carga del día, editable); USDT ya no forma parte del cierre.
+async function _closeConfig() { const c = (await getConfig('closeConfig', null)) || {}; return { bankCommissionPct: Number(c.bankCommissionPct) || 0, perDepositFee: c.perDepositFee == null ? 50 : Math.max(0, Number(c.perDepositFee) || 0), autoUsdt: false }; }
 function _closeApply(doc, cfg) {
   // comisión: monto a mano > % del día (a mano) > % por defecto sobre depósitos (#501: el % se puede cambiar en cada cierre)
   if (doc.bankCommissionSource === 'manual_pct') { doc.bankCommissionArs = Math.round(doc.depositos * (doc.bankCommissionPct || 0) / 100); }
   else if (doc.bankCommissionSource !== 'manual') { const pct = cfg.bankCommissionPct || 0; doc.bankCommissionPct = pct; doc.bankCommissionArs = Math.round(doc.depositos * pct / 100); doc.bankCommissionSource = pct ? 'default' : null; }
-  doc.resultado = Math.round((doc.neto || 0) - (doc.bankCommissionArs || 0) - (doc.gastos || 0)); // #770: − gastos del día
+  // #948 (owner): "el cierre diario por banco automático; comprobantes pagados desde otro banco = INGRESO; detalle de ingresos y de todos los
+  // gastos; saldo del CBU a las 00 hs; depósitos del banco y lo que cobró de comisión; $50 de gasto por cada transferencia de carga; USDT no va".
+  //   INGRESOS = depósitos + pagos por banco externo (las fichas salieron, la plata quedó) + fondeos
+  //   GASTOS   = retiros pagados + comisión del banco + costo por transferencia (cargas × $50) + gastos registrados
+  //   RESULTADO (plata) = ingresos − gastos · resultadoCaja = lo mismo pero sólo con los gastos que salieron de ESTE banco (para el arqueo 00 hs)
+  //   NETO (fichas) = venta − regalos sigue aparte (es la cuenta de la plataforma, no de la caja).
+  doc.feePerDeposit = cfg.perDepositFee == null ? 50 : cfg.perDepositFee;
+  doc.feeDepositsArs = Math.round((doc.cargas || 0) * (doc.feePerDeposit || 0));
+  doc.ingresosTotal = Math.round((doc.depositos || 0) + (doc.pagosExternos || 0) + (doc.fondeos || 0));
+  doc.egresosTotal = Math.round((doc.retiros || 0) + (doc.bankCommissionArs || 0) + (doc.feeDepositsArs || 0) + (doc.gastos || 0));
+  doc.resultado = Math.round(doc.ingresosTotal - doc.egresosTotal);
+  doc.resultadoCaja = Math.round(doc.resultado + ((doc.gastos || 0) - (doc.gastosBanco || 0)));
   // #501 ARQUEO: banco (manual > automático) vs sistema
   doc.bankIn = doc.bankInManual != null ? doc.bankInManual : (doc.bankInAuto || 0);
   doc.bankOut = doc.bankOutManual != null ? doc.bankOutManual : (doc.bankOutAuto || 0);
   const hasBank = doc.bankInManual != null || doc.bankOutManual != null || doc.bankInAuto > 0 || doc.bankOutAuto > 0;
-  doc.difIn = Math.round(doc.bankIn - doc.depositos); doc.difOut = Math.round(doc.bankOut - doc.retiros);
-  doc.diferencia = Math.round((doc.bankIn - doc.bankOut) - (doc.depositos - doc.retiros));
+  // #913 (owner): "si hay pagos de forma externa tomalos como un INGRESO en el cierre: en el panel van a estar las fichas y la plata también".
+  // Un retiro pagado por BANCO EXTERNO descuenta las fichas (cuenta como retiro) pero la plata NO salió de la cuenta; un FONDEO (#904)
+  // entró a la cuenta sin ser carga de nadie. Los dos son ingresos de la cuenta que el sistema no tiene como depósito: se restan de la
+  // diferencia para que el arqueo dé 0 cuando todo está registrado.
+  doc.ingresosExternos = Math.round((doc.pagosExternos || 0) + (doc.fondeos || 0));
+  doc.difIn = Math.round(doc.bankIn - (doc.fondeos || 0) - doc.depositos); doc.difOut = Math.round(doc.bankOut - (doc.retiros - (doc.pagosExternos || 0)));
+  doc.diferencia = Math.round((doc.bankIn - doc.bankOut) - (doc.depositos - doc.retiros) - doc.ingresosExternos);
   const tol = Math.max(1000, Math.round(doc.depositos * 0.001));
   // #502: si hay saldo del banco al inicio y al fin del día, el arqueo REAL es (saldo fin − saldo inicio) − (depósitos − retiros)
   const bs = doc.bankBalanceStartManual != null ? doc.bankBalanceStartManual : doc.bankBalanceStart, be = doc.bankBalanceEndManual != null ? doc.bankBalanceEndManual : doc.bankBalanceEnd;
   doc.bankBalanceSource = (doc.bankBalanceStartManual != null || doc.bankBalanceEndManual != null) ? 'manual' : (bs != null || be != null ? 'api' : null);
   doc.bankBalanceDelta = bs != null && be != null ? Math.round(be - bs) : null;
-  if (doc.bankBalanceDelta != null) doc.diferencia = Math.round(doc.bankBalanceDelta - (doc.depositos - doc.retiros) + (doc.bankCommissionArs || 0));
+  // #948: con saldos 00 hs el arqueo es directo: saldo inicio + resultado de caja = saldo esperado al cierre; diferencia = real − esperado
+  doc.bankBalanceExpectedEnd = bs != null ? Math.round(bs + doc.resultadoCaja) : null;
+  if (bs != null && be != null) doc.diferencia = Math.round(be - doc.bankBalanceExpectedEnd);
   const hasAny = hasBank || doc.bankBalanceDelta != null;
   if (!hasAny) doc.diferencia = 0; // sin datos del banco no hay faltante que reportar: queda en 0 (owner #502)
   doc.arqueo = !hasAny ? 'sin_datos' : (Math.abs(doc.diferencia) <= tol ? 'cuadra' : (doc.diferencia < 0 ? 'faltante' : 'sobrante'));
-  doc.resultadoUsd = doc.usdtRate > 0 ? Math.round((doc.resultado / doc.usdtRate) * 100) / 100 : null;
+  doc.resultadoUsd = null; // #948: USDT no es parte del cierre
   return doc;
 }
 // #744 (owner): CONCILIACIÓN DEL DÍA — "al ser automático tiene que dar 0; pero hay gente confirmando pagos o cargas y ahí quiero ver
@@ -21308,10 +21519,13 @@ async function _closeReconcile(dayKey) {
   const wds = await Transaction.find({ type: 'withdrawal', status: okSt, timestamp: { $gte: d0, $lte: d1 } }).select('amount username timestamp').lean();
   out.sistema.retiros = sum(wds); out.sistema.retirosN = wds.length;
   const pays = await PendingPayout.find({ status: 'paid', paidAt: { $gte: d0, $lte: d1 } }).select('amount username paidBy paidVia hgTransactionId paidAt').lean();
-  const payAuto = pays.filter((p) => p.hgTransactionId), payMan = pays.filter((p) => !p.hgTransactionId);
+  // #913: pagados por BANCO EXTERNO (#904, paidVia 'other_bank') aparte de los pagados a mano: son un INGRESO (la plata quedó en la cuenta).
+  const payAuto = pays.filter((p) => p.hgTransactionId), payExt = pays.filter((p) => !p.hgTransactionId && p.paidVia === 'other_bank'), payMan = pays.filter((p) => !p.hgTransactionId && p.paidVia !== 'other_bank');
   out.sistema.pagosBanco = sum(payAuto); out.sistema.pagosBancoN = payAuto.length;
   out.sistema.pagosManual = sum(payMan); out.sistema.pagosManualN = payMan.length;
+  out.sistema.pagosExternos = sum(payExt); out.sistema.pagosExternosN = payExt.length;
   out.items.pagosManual = payMan.slice(0, 50).map((p) => ({ hora: p.paidAt, usuario: p.username, monto: r0(p.amount), agente: p.paidBy || null, via: p.paidVia || null }));
+  out.items.pagosExternos = payExt.slice(0, 50).map((p) => ({ hora: p.paidAt, usuario: p.username, monto: r0(p.amount), agente: p.paidBy || null, via: 'banco externo' }));
   // ---- BANCO: movimientos del día (fecha del banco o de alta)
   const movs = await BankMovement.find({ createdAt: { $gte: new Date(d0.getTime() - 86400000), $lte: new Date(d1.getTime() + 86400000) } }).select('amount direction status matchStatus date createdAt fromName toName username').lean();
   const inDay = movs.filter((m) => { const dd = m.date || m.createdAt; return dd >= d0 && dd <= d1 && !/reject|fail|cancel|error/i.test(String(m.status || '')); });
@@ -21345,6 +21559,7 @@ async function _closeReconcile(dayKey) {
   add('in_sin_acreditar', 'Entradas del banco SIN acreditar a ningún cliente', Math.max(0, (out.banco.entradasSinAcreditar || 0) - _fondeoExpl), +1, 'Plata que entró al banco y no se cargó a nadie (sin match, pendiente o en revisión). Revisar en Cargas pendientes / Movimientos.', 'alta');
   add('in_devueltas', 'Entradas devueltas al origen (rebote por carga menor al mínimo)', out.banco.entradasDevueltas, +1, 'Entró y se devolvió: la entrada cuenta en el banco pero la salida de la devolución también. Neutro si la devolución salió el mismo día.', 'baja');
   add('in_dup', 'Entradas duplicadas o ignoradas por el sistema', out.banco.entradasDupIgn, +1, 'El banco las informó pero el sistema las descartó (duplicado o ignorado). Verificar que no sean cargas reales.', 'media');
+  add('pago_externo', 'Retiros pagados por BANCO EXTERNO (ingreso: la plata quedó en la cuenta)', out.sistema.pagosExternos, +1, 'Las fichas se descontaron en 1girox (cuenta como retiro) pero se pagó desde otra cuenta: la plata NO salió de este banco. Se toma como INGRESO del día y explica ese sobrante.', 'baja'); // #913
   add('pago_manual', 'Retiros pagados A MANO (por fuera de la API del banco)', out.sistema.pagosManual, +1, 'El sistema los cuenta como retiro pero el banco no registra la salida por API. Si se pagaron desde otra cuenta, es normal; si no, verificar.', 'alta');
   add('gastos_banco', 'Gastos pagados por la API del banco (registrados en Gastos)', out.sistema.gastosBanco, -1, 'Salieron del banco como gasto cargado en el panel: explican esa parte de las salidas; se descuentan del resultado del día.', 'baja');
   const salidasOtras = r0(out.banco.salidas - out.sistema.pagosBanco - out.banco.entradasDevueltas - out.sistema.gastosBanco);
@@ -21419,7 +21634,7 @@ async function _closeEnsure(dayKey, recalc) {
     try { doc = await DailyClose.create({ id: uuidv4(), ...t }); } catch (e) { if (e && e.code === 11000) doc = await DailyClose.findOne({ dateKey: dayKey }); else throw e; }
   } else if (doc.status !== 'finalizado' || recalc) { Object.assign(doc, t, { recalculatedAt: new Date() }); }
   await _closeAttachBalances(doc); _closeApply(doc, cfg);
-  try { doc.detalle = await _closeReconcile(dayKey); doc.markModified('detalle'); doc.gastos = Number(doc.detalle && doc.detalle.sistema && doc.detalle.sistema.gastos) || 0; _closeApply(doc, cfg); } catch (e) { logger.warn('[cierres] conciliación ' + dayKey + ': ' + e.message); } // #770: gastos → resultado
+  try { doc.detalle = await _closeReconcile(dayKey); doc.markModified('detalle'); const _ds = (doc.detalle && doc.detalle.sistema) || {}; doc.gastos = Number(_ds.gastos) || 0; doc.pagosExternos = Number(_ds.pagosExternos) || 0; doc.fondeos = Number(_ds.fondeos) || 0; doc.gastosBanco = Number(_ds.gastosBanco) || 0; _closeApply(doc, cfg); } /* #913: pagos externos + fondeos → arqueo */ catch (e) { logger.warn('[cierres] conciliación ' + dayKey + ': ' + e.message); } // #770: gastos → resultado
   await doc.save(); return doc;
 }
 // Cron: cada 20 min asegura el cierre de AYER y rellena hasta 7 días hacia atrás (idempotente por dateKey; corre en cada instancia sin duplicar).
@@ -21427,6 +21642,7 @@ async function _closeEnsure(dayKey, recalc) {
 // todo día ya terminado se FINALIZA solo (finalizedBy 'auto'; un cierre finalizado a mano no se toca). USDT es opcional.
 async function _closeSince() { try { const v = await getConfig('closeSince', null); return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null; } catch (_) { return null; } }
 async function _closeTick() {
+  if (!(await _cronClaim('close', 15 * 60000))) return; // #964: una instancia por pasada (llamadas al banco y a 1girox)
   const _since = await _closeSince(); // #762: los cierres valen desde esta fecha (limpieza de pruebas)
   try {
     for (let i = 1; i <= 3; i++) { if (_since && datosIa.dateKeyART(new Date(Date.now() - i * 86400000)) < _since) continue; const dk = datosIa.dateKeyART(new Date(Date.now() - i * 86400000)); const ex = await DailyClose.findOne({ dateKey: dk }).select('id status finalizedBy recalculatedAt').lean(); if (!ex || ex.status !== 'finalizado' || ex.finalizedBy === 'auto') { if (!ex || !ex.recalculatedAt || Date.now() - new Date(ex.recalculatedAt).getTime() > 55 * 60 * 1000) await _closeEnsure(dk, true); } }
@@ -21450,7 +21666,7 @@ app.get('/api/admin/cierres', authMiddleware, adminMiddleware, async (req, res) 
     let since = datosIa.dateKeyART(new Date(Date.now() - days * 86400000)); if (_cs && _cs > since) since = _cs;
     const items = await DailyClose.find({ dateKey: { $gte: since } }).sort({ dateKey: -1 }).lean();
     const cfg = await _closeConfig(); let usdt = null; try { usdt = (await getConfig('usdtRate', null)) || null; } catch (_) {}
-    const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0), diferencia: a.diferencia + (c.arqueo && c.arqueo !== 'sin_datos' ? (c.diferencia || 0) : 0), faltantes: a.faltantes + (c.arqueo === 'faltante' ? 1 : 0), sobrantes: a.sobrantes + (c.arqueo === 'sobrante' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0, diferencia: 0, faltantes: 0, sobrantes: 0 });
+    const tot = items.reduce((a, c) => ({ depositos: a.depositos + c.depositos, retiros: a.retiros + c.retiros, venta: a.venta + c.venta, regalos: a.regalos + c.regalos, neto: a.neto + c.neto, comision: a.comision + (c.bankCommissionArs || 0), ingresos: (a.ingresos || 0) + (c.ingresosTotal || 0), egresos: (a.egresos || 0) + (c.egresosTotal || 0), fee: (a.fee || 0) + (c.feeDepositsArs || 0), gastos: (a.gastos || 0) + (c.gastos || 0), resultado: a.resultado + (c.resultado || 0), resultadoUsd: a.resultadoUsd + (c.resultadoUsd || 0), finalizados: a.finalizados + (c.status === 'finalizado' ? 1 : 0), diferencia: a.diferencia + (c.arqueo && c.arqueo !== 'sin_datos' ? (c.diferencia || 0) : 0), faltantes: a.faltantes + (c.arqueo === 'faltante' ? 1 : 0), sobrantes: a.sobrantes + (c.arqueo === 'sobrante' ? 1 : 0) }), { depositos: 0, retiros: 0, venta: 0, regalos: 0, neto: 0, comision: 0, resultado: 0, resultadoUsd: 0, finalizados: 0, diferencia: 0, faltantes: 0, sobrantes: 0 });
     res.json({ success: true, items, totals: tot, config: cfg, usdtRate: usdt && Number(usdt.rate) || null });
   } catch (e) { logger.error('[cierres] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
@@ -21462,7 +21678,8 @@ app.post('/api/admin/cierres/config', authMiddleware, adminMiddleware, async (re
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Solo admin general' });
     const pct = Number(req.body && req.body.bankCommissionPct); if (!Number.isFinite(pct) || pct < 0 || pct > 50) return res.status(400).json({ error: 'La comisión tiene que ser un % entre 0 y 50' });
-    await Config.set('closeConfig', { bankCommissionPct: Math.round(pct * 100) / 100, autoUsdt: req.body.autoUsdt !== false, updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username);
+    const fee = req.body.perDepositFee == null || req.body.perDepositFee === '' ? (await _closeConfig()).perDepositFee : Number(req.body.perDepositFee); if (!Number.isFinite(fee) || fee < 0 || fee > 100000) return res.status(400).json({ error: 'El costo por transferencia tiene que ser un monto entre 0 y 100.000' });
+    await Config.set('closeConfig', { bankCommissionPct: Math.round(pct * 100) / 100, perDepositFee: Math.round(fee), updatedAt: new Date().toISOString(), by: req.user.username }, req.user.username); // #948
     // re-aplica el % a los cierres pendientes con comisión por defecto
     const cfg = await _closeConfig(); const pend = await DailyClose.find({ status: 'pendiente', bankCommissionSource: { $ne: 'manual' } }); for (const d of pend) { _closeApply(d, cfg); await d.save(); }
     res.json({ success: true, config: cfg });
@@ -21878,6 +22095,16 @@ app.get('/api/admin/support/agent', authMiddleware, async (req, res) => {
 const SUPPORT_QUICK_REPLIES = [
   { key: 'comprobante', label: '📎 Comprobante no válido', text: '📎 Tu comprobante no es válido o no se pudo leer. Sacá la captura de nuevo con TODOS los datos completos y bien visibles en la foto (titular, CUIT, monto, fecha y hora y N° de operación), sin recortar, y adjuntala tocando el botón de abajo: tu carga se genera sola.', btn: { target: 'receipt', label: '📎 Cargá el comprobante aquí' } },
   { key: 'rollover', label: '🎯 Rollover', text: '🎯 Rollover: es lo que tenés que APOSTAR jugando antes de retirar; no es plata que ponés ni que perdés. Carga ×{carga} · bono ×{rollover}. Ej.: cargás $5.000 ⇒ sumás $15.000 en apuestas (cada apuesta cuenta, ganes o pierdas). Si llegás y tu saldo quedó en $10.000, retirás $10.000. En "Retirar premio" ves cuánto te falta.', btn: { target: 'withdraw', label: '💸 Ver Retirar premio' } },
+  // #912 (owner 2026-10-24): "un botón de rollover para la gente que no entiende cuánto tiene que apostar para completar el rollover del
+  // bono y del saldo cargado; que el agente lo mande y detalle todo". DINÁMICA: al enviarla se lee el saldo del cliente en 1girox
+  // (wagering.requirements) y se completan {saldo} {retirable} {bloqueado} {bloqueado_bono} {detalle} {falta} con SUS números.
+  { key: 'rollover_mio', dynamic: true, label: '🔒 No cumple rollover y quiere retirar', btn: { target: 'withdraw', label: '💸 Retirar premio' },
+    text: '🔒 Todavía no podés retirar todo porque te falta completar el ROLLOVER (lo que tenés que APOSTAR antes de retirar; no es plata que ponés ni que perdés). Tus números de hoy:\n💰 Saldo: {saldo} · Podés retirar hoy: {retirable} · Bloqueado: {bloqueado}{bloqueado_bono}\n{detalle}\n👉 Te falta apostar {falta} en total para liberarlo. Cuenta cada apuesta que hacés, ganes o pierdas (no lo que cargás). Cuando llegues, retirás desde "Retirar premio".' },
+  // #944 (owner): "agregá un botón en Soporte: explicación del sorteo, y resumí el sorteo explicando". Dinámico: los números salen de Config['sorteos'].
+  { key: 'sorteo', dynamic: 'sorteo', label: '🏆 Explicación del sorteo', btn: { target: 'sorteo', label: '🏆 Ver el sorteo y anotarme' },
+    text: '🏆 Te explico los SORTEOS de PICA ROJA en corto:\n\n{mensual}\n\n{gran}\n\n🧮 Cómo sumás puntos: cada {ptsper} apostados con plata real = {pts} puntos (los bonos no suman). Se actualiza cada 20 minutos y ves tu puesto en vivo, con los demás nombres tapados.\n\n📝 Para participar tenés que anotarte en el sorteo desde la app ({requisitos}). Son dos sorteos separados: te anotás en cada uno.\n\n{extra}💵 Los premios se cobran {pago}, al titular de la cuenta con su DNI.\n\n👉 Tocá el botón de abajo para ver los premios, el ranking y anotarte. ¡Suerte! 🍀' },
+  { key: 'rollover_libre', hidden: true, label: '✅ Sin rollover pendiente (lo manda solo el botón de arriba cuando no hay nada bloqueado)',
+    text: '✅ Hoy no tenés rollover pendiente: tu saldo es {saldo} y podés retirar {retirable} desde "Retirar premio" (mínimo {retiro_min}, a un CBU a tu nombre).' },
   { key: 'carga', label: '💳 Cómo cargar', text: '💳 Para cargar: transferí (mínimo {min}) al CBU que figura en la app y mandá el comprobante entero. Se acredita sola en minutos, con tu bono.', btn: { target: 'full', label: '⚡ Ir a cargar' } },
   { key: 'minimo', label: '⚠️ Carga menor al mínimo', text: '⚠️ La carga mínima es {min}. Con menos no se acredita sola: la devolvemos a tu cuenta de origen o se completa con otra transferencia.' },
   { key: 'retiro', label: '💸 Cómo retirar', text: '💸 Para retirar: entrá a "Retirar premio" (mínimo {retiro_min}, a un CBU a tu nombre). Ahí ves cuánto podés retirar hoy y el pago sale solo a tu cuenta.', btn: { target: 'withdraw', label: '💸 Retirar premio' } },
@@ -21888,12 +22115,12 @@ const SUPPORT_QUICK_REPLIES = [
   { key: 'sms', label: '📱 No llega el SMS', text: '📱 Escribí tu número todo junto: código de área sin 0 y número sin 15 (ej.: 1155551234). Si no llega en 1 minuto, tocá "Reenviar código".' }
 ];
 // #905 (owner): "que se puedan agregar respuestas y guardar": las PROPIAS viven en Config['supportQuickCustom'] (para todo el equipo).
-const _SQ_BTNS = { withdraw: '💸 Retirar premio', full: '⚡ Ir a cargar', receipt: '📎 Cargá el comprobante aquí', refund: '📉 Ver mi reembolso' };
+const _SQ_BTNS = { withdraw: '💸 Retirar premio', full: '⚡ Ir a cargar', receipt: '📎 Cargá el comprobante aquí', refund: '📉 Ver mi reembolso', sorteo: '🏆 Ver el sorteo y anotarme' }; // #944: + sorteo
 async function _sqCustom() { try { const v = await getConfig('supportQuickCustom', null); return Array.isArray(v) ? v.filter((x) => x && x.key && x.label && x.text) : []; } catch (_) { return []; } }
 async function _sqAll() { return SUPPORT_QUICK_REPLIES.map((q) => Object.assign({ builtin: true }, q)).concat((await _sqCustom()).map((q) => Object.assign({ builtin: false }, q, q.btnTarget && _SQ_BTNS[q.btnTarget] ? { btn: { target: q.btnTarget, label: _SQ_BTNS[q.btnTarget] } } : {}))); }
 app.get('/api/admin/support/quick-replies', authMiddleware, async (req, res) => {
   if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
-  res.json({ items: (await _sqAll()).map((q) => ({ key: q.key, label: q.label, builtin: q.builtin, preview: String(q.text || '').slice(0, 160) })), buttons: _SQ_BTNS });
+  res.json({ items: (await _sqAll()).filter((q) => !q.hidden).map((q) => ({ key: q.key, label: q.label, builtin: q.builtin, dynamic: !!q.dynamic, preview: String(q.text || '').slice(0, 160) })), buttons: _SQ_BTNS });
 });
 app.post('/api/admin/support/quick-replies', authMiddleware, async (req, res) => {
   try {
@@ -21921,13 +22148,36 @@ app.delete('/api/admin/support/quick-replies/:key', authMiddleware, async (req, 
 app.post('/api/admin/support/:userId/quick', authMiddleware, async (req, res) => {
   try {
     if (!SUPPORT_ROLES.includes(req.user.role)) return res.status(403).json({ error: 'Acceso denegado' });
-    const q = (await _sqAll()).find((x) => x.key === String((req.body && req.body.key) || ''));
+    let q = (await _sqAll()).find((x) => x.key === String((req.body && req.body.key) || '') && !x.hidden);
     if (!q) return res.status(400).json({ error: 'Respuesta desconocida' });
     const u = await User.findOne({ id: String(req.params.userId) }).select('id username fcmToken fcmTokens fcmTokenContext').lean();
     if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
     const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
     const vars = { min: money(await getMinDepositArs()), retiro_min: money(await getWithdrawMinArs()), carga: String(await getDepositRolloverX().catch(() => 3)), rollover: String(await _giftRolloverX().catch(() => 5)) };
-    const text = q.builtin ? await renderSystemCommand('/sys_sq_' + q.key, q.text, vars) : String(q.text).replace(/\{(min|retiro_min|carga|rollover)\}/g, (m0, k) => vars[k]);
+    if (q.dynamic === 'sorteo') {
+      // #944: resumen de los dos sorteos con los números de la config (fechas, premios, puntos, SORTEO EXTRA, requisitos, cobro).
+      const cfg = await _sorteosCfg(); const now = new Date(); const R = sorteosRules;
+      const one = (s) => { const p = R.periodOf(s, now); const pr = (s.prizes || []).map((x) => x.pos + '° ' + x.name + (x.value ? ' (' + x.value + ')' : '')).join(' · ');
+        const cuando = p.status === 'soon' ? 'Empieza el ' + R.fmtDay(p.start) : (p.status === 'live' ? 'En curso hasta el ' + R.fmtDay(p.end) : 'Cerrado'); return s.emoji + ' ' + s.title.toUpperCase() + ': ' + cuando + '. Ganan los 3 anotados con más puntos. Premios: ' + pr + '.'; };
+      const m = cfg.mensual, g = cfg.gran; const e = m.extra; const pm = R.periodOf(m, now);
+      const req = cfg.requirements || {}; const reqs = [req.app && 'app instalada', req.notif && 'notificaciones activadas', req.telegram && 'unido a nuestro Telegram', req.deposit && 'al menos una carga'].filter(Boolean).join(', ') || 'es gratis';
+      Object.assign(vars, { mensual: m.enabled ? one(m) : '', gran: g.enabled ? one(g) : '', pts: String(m.pts), ptsper: money(m.ptsPer), requisitos: reqs, pago: R.payWindow(pm.end).texto.replace(/ de d{4}$/, '') + ' (dentro de los primeros 10 días del mes siguiente al cierre)',
+        extra: [m, g].filter((s) => s.enabled && s.extra && s.extra.enabled).map((s) => '🎁 ' + (s.extra.title || 'SORTEO EXTRA') + ' del ' + s.title + ': ' + s.extra.winners + ' premios de ' + money(s.extra.amount) + ' (' + money(s.extra.amount * s.extra.winners) + ') al azar entre ' + R.extraWho(s.extra, R.extraSpan(s.key)) + '. Con semilla publicada.').join('\n\n') + (m.extra && m.extra.enabled ? '\n\n' : '') }); // #969
+    } else if (q.dynamic) {
+      // #912: números REALES del cliente desde 1girox (lo mismo que ve en "Retirar premio"). Si la plataforma no responde, no se manda nada.
+      let bal = null; try { bal = await girox.getUserBalance(u.username); } catch (e) { bal = { success: false, error: e.message }; }
+      if (!bal || !bal.success) return res.status(503).json({ error: 'No pude leer el saldo de 1girox ahora (' + ((bal && bal.error) || 'sin respuesta') + '). Probá de nuevo en un momento.' });
+      const sum = _rolloverSummary(bal);
+      const kindName = { deposit: 'Carga', bonus: 'Bono' };
+      const lines = sum.items.map((it) => { const x = it.multiplier != null && it.multiplier > 0 ? it.multiplier : (it.kind === 'bonus' ? vars.rollover : vars.carga);
+        return `• ${kindName[it.kind] || 'Objetivo'} ×${x}: tenés que apostar ${money(it.target)} · ya apostaste ${money(it.progress)}${it.pct != null ? ' (' + Math.round(it.pct) + '%)' : ''} · te faltan ${money(it.remaining)}`; });
+      Object.assign(vars, { saldo: money(sum.balance), retirable: money(sum.available), bloqueado: money(sum.locked), bloqueado_bono: sum.bonusLocked > 0 ? ` (de bono: ${money(sum.bonusLocked)})` : '',
+        detalle: lines.length ? lines.join('\n') : '• Hoy no figura ningún objetivo de apuesta pendiente.', falta: money(sum.remainingToBet) });
+      if (!(sum.locked > 0) && !(sum.remainingToBet > 0)) q = (await _sqAll()).find((x) => x.key === 'rollover_libre') || q; // nada bloqueado ⇒ el texto "sin rollover"
+      await _emitAdminOnlyChatNote(u.id, u.username, `🎯 Rollover leído de 1girox para la respuesta: saldo ${vars.saldo}, retirable ${vars.retirable}, bloqueado ${vars.bloqueado}, falta apostar ${vars.falta}.`).catch(() => {});
+    }
+    let text = q.builtin ? await renderSystemCommand('/sys_sq_' + q.key, q.text, vars) : String(q.text).replace(/\{(min|retiro_min|carga|rollover)\}/g, (m0, k) => vars[k]);
+    if (q.dynamic === 'sorteo') text = String(text || '').replace(/\{(mensual|gran|pts|ptsper|requisitos|pago|extra)\}/g, (m0, k) => vars[k] == null ? '' : vars[k]).replace(/\n{3,}/g, '\n\n').trim(); // #944: por si el texto editado no pasó por renderSystemCommand
     if (!text) return res.status(400).json({ error: 'Esa respuesta está vacía en COMANDOS' });
     const now = new Date();
     await User.updateOne({ id: u.id }, { $set: { supportSessionSince: now } });
@@ -22130,7 +22380,7 @@ app.post('/api/auth/access-link', authLimiter, async (req, res) => {
     // #831: los links de alta por LANDING y de instalación dejan 30 min de gracia (mismo link vuelve a entrar); los del agente siguen de un solo uso.
     const _graceSet = { accessLinkGraceHash: hash, accessLinkGraceUntil: new Date(Date.now() + ACCESS_LINK_GRACE_MS) };
     let user = await User.findOneAndUpdate(
-      { accessLinkHash: hash, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true } },
+      { accessLinkHash: hash, role: 'user', isActive: { $ne: false }, isBlocked: { $ne: true }, $or: [{ accessLinkCreatedAt: null }, { accessLinkCreatedAt: { $gte: new Date(Date.now() - 48 * 3600 * 1000) } }] }, // #956: 48 h
       { $set: { accessLinkHash: null, lastLogin: new Date() } },
       { new: false } // #673: con el doc ANTERIOR se lee accessLinkPurpose (el hash ya quedó borrado atómicamente igual)
     ).select('id username role tokenVersion acquisitionSource mustChangePassword accessLinkPurpose').lean();
@@ -23634,7 +23884,7 @@ const ROULETTE_PRIZES = [
 // UNA carga real desde el lunes 00:00 (hora AR). Se combina con los otros gates.
 // #669 (owner): la ruleta se desbloquea con una carga de $20.000 (propia de la ruleta, distinta de la carga mínima general de $5.000)
 // "para no generar tantos regalos". Config['dailyRoulette'].minDepositArs; 0 = usar la carga mínima general.
-const ROULETTE_MIN_DEPOSIT_DEFAULT = 10000; // #677 (owner): $10.000 cargados EN EL DÍA (sumando cargas, ej. 2 de $5.000) = 1 giro gratis
+const ROULETTE_MIN_DEPOSIT_DEFAULT = 5000; // #955 (owner): $5.000 · // #677 (owner): $10.000 cargados EN EL DÍA (sumando cargas, ej. 2 de $5.000) = 1 giro gratis
 const DAILY_ROULETTE_DEFAULT = { enabled: true, requireAppInstalled: true, minCargas30d: 10, requireActiveWeek: false, minDepositArs: ROULETTE_MIN_DEPOSIT_DEFAULT, prizes: ROULETTE_PRIZES };
 async function _rouletteMinDepositArs(cfg) {
   const v = Number(cfg && cfg.minDepositArs);
@@ -24029,7 +24279,7 @@ async function _rouletteSimWinnersBuild(dateKey, nowMs) {
   }
   return out;
 }
-app.get('/api/roulette/recent-winners', authMiddleware, async (req, res) => {
+app.get('/api/roulette/recent-winners', authMiddleware, _memoJson(20000), async (req, res) => { // #964: cache 20 s
   try {
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 50));
     const dateKey = _rouletteDateKeyART();
@@ -24140,7 +24390,18 @@ function _generateExampleClaims(n) {
   return out;
 }
 
-app.get('/api/claims-feed', async (req, res) => {
+// #964 (velocidad): respuesta JSON cacheada en memoria por URL (feeds que todos los clientes piden cada 30-45 s).
+function _memoJson(ms) {
+  const cache = new Map();
+  return (req, res, next) => {
+    const k = String(req.originalUrl || req.url); const h = cache.get(k);
+    if (h && Date.now() - h.at < ms) { res.set('Cache-Control', 'public, max-age=' + Math.floor(ms / 1000)); return res.status(200).json(h.body); }
+    const orig = res.json.bind(res);
+    res.json = (body) => { try { if ((res.statusCode || 200) === 200) { cache.set(k, { at: Date.now(), body }); if (cache.size > 300) cache.clear(); } } catch (_) {} return orig(body); };
+    next();
+  };
+}
+app.get('/api/claims-feed', _memoJson(30000), async (req, res) => {
   try {
     const out = [];
     const [spins, refunds, bonusUsers] = await Promise.all([
@@ -25336,9 +25597,12 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
     }
     const now = new Date();
     try {
+      // #946 (owner): "las reseñas de 5 estrellas aprobalas directamente" ⇒ nacen aprobadas (salen al instante en el registro público);
+      // las de 1-4★ siguen esperando al panel (Reseñas) como siempre.
+      const auto5 = stars === 5;
       await Review.create({
         id: uuidv4(), userId, username, stars, comment, contactPhone,
-        approved: false, createdAt: now, updatedAt: now
+        approved: auto5, approvedBy: auto5 ? 'auto-5-estrellas' : null, approvedAt: auto5 ? now : null, createdAt: now, updatedAt: now
       });
     } catch (e) {
       if (e && e.code === 11000) {
@@ -25759,6 +26023,10 @@ app.post('/api/admin/stories', authMiddleware, adminMiddleware, async (req, res)
 const storyAuto = require('./src/services/storyAutopilot');
 const storyImage = require('./src/services/storyImage'); // #834 fotos de las historias automáticas
 const STORY_AUTO_BONUS = { pct: 50, hours: 3 };
+// #968 (owner 2026-10-24): "dale un bombazo más fuerte de regalos en octubre y noviembre para retener más". Hasta el 30/11 la historia con bono
+// (+50% por 3 h, con push a todos) sale DOS veces por semana (miércoles y sábado) en vez de una.
+const GIFT_BOOST_UNTIL = '2026-11-30';
+function _giftBoostOn() { return _schedArtKey(new Date()) <= GIFT_BOOST_UNTIL; }
 async function _storyAutoCtx(dayKey) {
   const dow = new Date(dayKey + 'T12:00:00Z').getUTCDay();
   let favorite = null;
@@ -25774,15 +26042,21 @@ async function _storyAutoCtx(dayKey) {
   let firstPct = 0; try { firstPct = await getFirstDepositBonusPct(); } catch (_) {}
   let rolloverX = 5; try { rolloverX = await _giftRolloverX(); } catch (_) {}
   let depositX = 3; try { depositX = await getDepositRolloverX(); } catch (_) {} // #934: {dx} en la historia del rollover
-  return { firstPct, dow, favorite, weeklyBonus: STORY_AUTO_BONUS, rolloverX, depositX };
+  return { firstPct, dow, favorite, weeklyBonus: STORY_AUTO_BONUS, bonusDays: _giftBoostOn() ? [3, 6] : [3], rolloverX, depositX }; // #968
 }
-// #934 (owner 2026-10-23): "no vamos a publicar aún los partidos de fútbol, primero publicaciones explicando la app" ⇒ los partidos salen sólo
-// con Config['storyMatchesEnabled'] = true (panel → Cronograma → Historias automáticas). Apagado = sin partidos (el resto sigue igual).
-async function _storyMatchesOn() { try { return (await getConfig('storyMatchesEnabled', false)) === true; } catch (_) { return false; } }
+// #909 (owner 2026-10-23: "no vamos a publicar aún los partidos de fútbol, quiero ir primero con publicaciones explicando la app"):
+// los PARTIDOS del día salen sólo con la llave `Config['storyAutoMatches']` encendida (panel → Historias automáticas → ⚽ Partidos).
+// Apagada (default), el plan es sólo de SERVICIO (5 por día, rotando sin repetir los de ayer).
+async function _storyAutoMatchesOn() { const v = await getConfig('storyAutoMatches', false); return v === true || v === 'true' || v === 1 || v === '1'; }
 async function _storyAutoPlan(dayKey, opts) {
-  let matches = []; if (!(opts && opts.noMatches) && await _storyMatchesOn()) { try { matches = await storyAuto.topMatches(dayKey); } catch (_) {} }
+  let matches = [];
+  if (!(opts && opts.noMatches) && await _storyAutoMatchesOn()) { try { matches = await storyAuto.topMatches(dayKey); } catch (e) { _storyDiag.lastError = 'partidos (ESPN): ' + e.message; } }
   return storyAuto.planDay(dayKey, matches, await _storyAutoCtx(dayKey));
 }
+// #909: diagnóstico del motor (última pasada, qué publicó, qué saltó y por qué, último error) ⇒ panel. Se guarda en Config para que lo
+// vea cualquier instancia (los crons corren en todas).
+const _storyDiag = { lastTickAt: null, lastError: null, lastPublished: [], skipped: [] };
+async function _storyDiagSave() { try { await Config.set('storyAutoDiag', Object.assign({}, _storyDiag, { host: require('os').hostname() }), 'historias-auto'); } catch (_) {} }
 // #834: foto de la historia = spec de storyImage con los escudos ya embebidos (un <img> con SVG no puede pedir nada afuera).
 // Render comparte la base con producción (#779): si Render publicara con foto antes del deploy de AWS, producción no tendría la ruta de la
 // foto y la historia saldría en blanco ⇒ en Render se publica sin foto y producción se la agrega (_storyAutoBackfillImages, cada 5 min).
@@ -25791,7 +26065,7 @@ const _STORY_IMAGES_ON = true; // #850: también Render (sirve sus propias fotos
 // con URL ABSOLUTA a Render (producción vieja no tiene /auto.svg pero la app muestra imágenes https). Producción usa la ruta relativa y, ya
 // con este código, pasa a servir ella las que hubiera publicado Render (_storyAutoBackfillImages).
 const _STORY_IMG_BASE = process.env.RENDER === 'true' ? String(process.env.RENDER_EXTERNAL_URL || 'https://fabrioctubre.onrender.com').replace(/\/$/, '') : '';
-const STORY_IMG_VER = '858'; // 858: cuotas en los partidos // #853: subirlo cuando cambia el dibujo ⇒ los teléfonos piden la foto nueva (la vieja queda en caché 1 día)
+const STORY_IMG_VER = '931'; // 931: estilo de la página (blanco/gris/rojo) // 858: cuotas en los partidos // #853: subirlo cuando cambia el dibujo ⇒ los teléfonos piden la foto nueva (la vieja queda en caché 1 día)
 const _storyImgUrl = (id) => `${_STORY_IMG_BASE}/api/stories/${id}/auto.svg?v=${STORY_IMG_VER}`;
 async function _storyAutoImgSpec(it) {
   if (!_STORY_IMAGES_ON || !it || !it.img) return null;
@@ -25811,15 +26085,18 @@ async function _storyAutoImgSpec(it) {
 }
 // #834 (owner): las historias automáticas que YA estaban publicadas sin foto (texto sobre color) reciben la suya: se busca en el plan del
 // día la que tiene el mismo título. Sólo las vigentes; las borradas por el admin no se tocan.
+let _storyBackfillMigDone = false; // #964: las dos migraciones de URL de abajo corren UNA vez por arranque (eran 2 updateMany con regex cada 5 min)
 async function _storyAutoBackfillImages(today, plan) {
   if (!_STORY_IMAGES_ON) return;
   try {
+    if (!_storyBackfillMigDone) { _storyBackfillMigDone = true;
     // #850: en PRODUCCIÓN, las fotos que publicó Render (URL absoluta a Render) pasan a servirse desde acá.
     // #850: en PRODUCCIÓN, las fotos que publicó Render (URL absoluta a Render) pasan a servirse desde acá.
     if (!_STORY_IMG_BASE) { try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /^https:\/\/[^/]+\/api\/stories\/[^/]+\/auto\.svg/ }, [{ $set: { mediaUrl: { $concat: ['/api/stories/', '$id', '/auto.svg?v=' + STORY_IMG_VER] } } }]); } catch (_) {} }
     // #853: además, toda historia automática con foto queda apuntando a la versión vigente del dibujo (?v=STORY_IMG_VER).
     try { await Story.updateMany({ autoKey: /^sa-/, mediaUrl: /\/api\/stories\/[^/]+\/auto\.svg/, $nor: [{ mediaUrl: new RegExp('auto\\.svg\\?v=' + STORY_IMG_VER + '$') }] },
       [{ $set: { mediaUrl: { $concat: [_STORY_IMG_BASE, '/api/stories/', '$id', '/auto.svg?v=' + STORY_IMG_VER] } } }]); } catch (_) {}
+    } // #964
     // #858: historias automáticas VIGENTES armadas con un diseño anterior ⇒ se rearma la foto desde el plan del día (mismo título), p. ej. para
     // sumar las cuotas al partido de hoy sin borrarla. Si el título ya no está en el plan, queda como estaba.
     try {
@@ -25860,25 +26137,58 @@ async function _storyResetOnce() {
     logger.info(`[historias-auto] #845 reset: ${off.modifiedCount || off.nModified || 0} manuales apagadas, ${del.deletedCount || 0} automáticas borradas ⇒ se republican con el estilo nuevo`);
   } catch (e) { logger.warn('[historias-auto] #845 reset: ' + e.message); }
 }
+// #911 (owner 2026-10-24: "las historias borralas y publicá las del día a ver"): apaga TODAS las historias vigentes (manuales y
+// automáticas; las personales #886 no se tocan), borra las automáticas de hoy y de ayer y deja que la pasada publique las 5 de hoy YA
+// (`force`: sin esperar a cada horario; la hora de publicación pasa a ser "ahora"). Corre UNA vez al deployar (marca en Config) y cuando
+// el admin toca "🔄 Borrar y publicar las de hoy" en el panel.
+async function _storyWipeForRepublish(who) {
+  const today = _schedArtKey(new Date()); const yesterday = _schedArtKey(new Date(new Date(today + 'T12:00:00-03:00').getTime() - 86400000));
+  const off = await Story.updateMany({ isActive: true, audienceUserId: null, autoKey: { $not: /^nb-/ } }, { $set: { isActive: false } });
+  const del = await Story.deleteMany({ autoKey: { $regex: '^sa-(' + today + '|' + yesterday + ')-' } });
+  const n1 = off.modifiedCount || off.nModified || 0, n2 = del.deletedCount || 0;
+  logger.info(`[historias-auto] #911 ${who}: ${n1} historias apagadas, ${n2} automáticas borradas ⇒ se publican las de hoy ahora`);
+  return { off: n1, del: n2 };
+}
+async function _storyReset911Once(key) {
+  key = key || 'mig911StoriesRepublish'; // #931: misma mecánica, otra llave ("ahora borrá y publicá de vuelta")
+  try {
+    if (await getConfig(key, null)) return false;
+    await Config.set(key, new Date().toISOString(), 'mig#911'); // primero la marca: multi-instancia, una sola corre
+    await _storyWipeForRepublish('deploy ' + key);
+    return true;
+  } catch (e) { logger.warn('[historias-auto] #911 reset: ' + e.message); return false; }
+}
+// #931: al publicar las del día nuevo se APAGAN las automáticas de días anteriores (la gente ve sólo las de hoy).
+async function _storyAutoRetirePrevious(today) {
+  try { const r = await Story.updateMany({ isActive: true, autoKey: { $regex: '^sa-' }, $nor: [{ autoKey: { $regex: '^sa-' + today + '-' } }] }, { $set: { isActive: false } }); const n = r.modifiedCount || r.nModified || 0; if (n) logger.info('[historias-auto] #931 ' + n + ' historias de días anteriores apagadas'); } catch (e) { logger.warn('[historias-auto] retirar anteriores: ' + e.message); }
+}
 let _storyAutoRunning = false;
-async function _storyAutoTick() {
+async function _storyAutoTick(opts) {
   if (process.env.STORIES_AUTOPILOT_DISABLED === '1' || _storyAutoRunning) return;
   _storyAutoRunning = true;
+  let force = !!(opts && opts.force);
   try {
     await _storyResetOnce(); // #845
+    if (await _storyReset911Once()) force = true; // #911
+    if (await _storyReset911Once('mig931StoriesRepublish')) force = true; // #931: borrar y publicar de vuelta con el estilo nuevo
     const now = new Date(); const today = _schedArtKey(now);
+    _storyDiag.lastTickAt = now.toISOString(); _storyDiag.lastError = null; _storyDiag.skipped = [];
     const plan = await _storyAutoPlan(today);
     await _storyAutoBackfillImages(today, plan);
-    for (const it of plan) {
-      const at = new Date(`${today}T${it.time}:00-03:00`);
-      if (at > now) continue;
+    // #931: cambio de día ⇒ las de ayer se apagan en la misma pasada en que salen las de hoy
+    if (plan.some((it) => force || new Date(`${today}T${it.time}:00-03:00`) <= now)) await _storyAutoRetirePrevious(today);
+    for (const it of plan) try { // #909: una historia que falle (foto, red) no frena a las demás del día
+      const early = new Date(`${today}T${it.time}:00-03:00`) > now; // #911: con force sale igual, "ahora"
+      if (early && !force) continue;
+      const at = early ? now : new Date(`${today}T${it.time}:00-03:00`);
       const autoKey = `sa-${today}-${it.slot}`;
       if (await Story.exists({ autoKey })) continue;
       // #834: el partido ya salió hoy en otro horario (antes iban antes del partido) ⇒ no se repite.
       if (it.kind === 'deporte' && await Story.exists({ autoKey: new RegExp('^sa-' + today + '-'), title: String(it.title || '').slice(0, 60) })) continue;
       const bonusPct = Number(it.bonusPct) || 0, bonusHours = Number(it.bonusHours) || 1;
       const newId = uuidv4();
-      const autoImg = await _storyAutoImgSpec(it);
+      let autoImg = null;
+      try { autoImg = await _storyAutoImgSpec(it); } catch (e) { _storyDiag.skipped.push({ slot: String(it.slot), title: it.title, why: 'foto: ' + e.message }); autoImg = null; } // sin foto antes que sin historia
       let doc;
       try {
         doc = await Story.create({
@@ -25891,8 +26201,9 @@ async function _storyAutoTick() {
         });
       } catch (e) { if (e && e.code === 11000) continue; throw e; }
       logger.info(`[historias-auto] ${today} ${it.time} ${it.kind}: ${it.title}`);
-      // Push a todos sólo si se publica a tiempo (no al recuperar un horario viejo tras un reinicio).
-      if (it.notifyAll && now - at < 30 * 60 * 1000) {
+      _storyDiag.lastPublished = [{ at: now.toISOString(), day: today, time: it.time, kind: it.kind, title: it.title }].concat(_storyDiag.lastPublished || []).slice(0, 12);
+      // Push a todos sólo si se publica a tiempo (no al recuperar un horario viejo tras un reinicio, ni adelantada por #911).
+      if (it.notifyAll && !early && now - at < 30 * 60 * 1000) {
         const pTitle = bonusPct > 0 ? `🎁 +${bonusPct}% extra en tu próxima carga` : String(it.title || '📣 Novedad en PICA ROJA');
         const pBody = bonusPct > 0 ? `Sólo por ${bonusHours} h: abrí la historia y tocá "Reclamar ahora".` : String(it.text || '').slice(0, 120);
         setTimeout(() => {
@@ -25901,102 +26212,13 @@ async function _storyAutoTick() {
             .catch((e) => logger.warn(`[historias-auto] push falló: ${e.message}`));
         }, 50);
       }
-    }
-  } catch (e) { logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; }
+    } catch (e) { _storyDiag.skipped.push({ slot: String(it.slot), title: it.title, why: e.message }); logger.warn(`[historias-auto] ${today} ${it.time} "${it.title}": ${e.message}`); }
+  } catch (e) { _storyDiag.lastError = e.message; logger.warn('[historias-auto] ' + e.message); } finally { _storyAutoRunning = false; await _storyDiagSave(); }
 }
 setTimeout(() => { _storyAutoTick().catch(() => {}); setInterval(() => { _storyAutoTick().catch(() => {}); }, 5 * 60 * 1000); }, 2 * 60 * 1000);
 
-// ===== #917 (owner 2026-10-23): SORTEO MENSUAL POR PUNTOS (src/services/raffleService.js) =====
-// 100 puntos cada $100.000 apostados con plata real (proporción cargas / (cargas + bonos) del mes, datos de 1girox). Participan sólo los
-// clientes de la app con carga real en el mes. Cierra el último día 23:59 (ART); el día 1 congela ganadores 1-2-3. Cron cada 20 min con
-// candado entre instancias; nunca corre con el casino simulado (Render comparte la base con producción).
-const _raffleDeps = () => ({ models: { User, Transaction, RaffleScore, RaffleMonth, Config, MissionClaim }, girox, logger });
-async function _raffleTick() {
-  try { const r = await raffleService.tick(_raffleDeps()); if (r && (r.close || (r.current && r.current.errors))) logger.info('[sorteo] ' + JSON.stringify(r)); }
-  catch (e) { logger.warn('[sorteo] tick: ' + e.message); }
-}
-setTimeout(() => { _raffleTick(); setInterval(_raffleTick, 20 * 60 * 1000); }, 3 * 60 * 1000);
-app.get('/api/raffle', authMiddleware, async (req, res) => {
-  try { res.set('Cache-Control', 'no-store'); res.json(await raffleService.publicStatus(_raffleDeps(), req.user.userId)); }
-  catch (e) { logger.warn('[sorteo] status: ' + e.message); res.status(503).json({ error: 'No pudimos cargar el sorteo. Probá de nuevo.' }); }
-});
-// #929 (owner): para SUMAR en el sorteo hay que ANOTARSE: app instalada con notificaciones + unirse a Telegram (donde se anuncian los ganadores).
-// La app instalada/notificaciones se verifican con el token FCM 'standalone'; Telegram no se puede verificar ⇒ se registra que tocó "Unirme".
-app.post('/api/raffle/telegram', authMiddleware, async (req, res) => {
-  try {
-    await User.updateOne({ id: req.user.userId }, { $set: { raffleTelegramAt: new Date() } });
-    const c = (await getConfig('communityConfig')) || {};
-    res.json({ success: true, url: c.inviteUrl || c.channelUrl || c.supportUrl || '' });
-  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-app.post('/api/raffle/join', authMiddleware, async (req, res) => {
-  try {
-    const u = await User.findOne({ id: req.user.userId }).select('id raffleJoinedAt raffleTelegramAt fcmTokens fcmTokenContext notifPermission').lean();
-    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
-    const reqs = raffleService.requirementsOf(u);
-    if (!reqs.ok) return res.status(400).json({ error: 'Te falta cumplir los requisitos para anotarte.', requirements: reqs });
-    if (!u.raffleJoinedAt) await User.updateOne({ id: u.id, raffleJoinedAt: null }, { $set: { raffleJoinedAt: new Date() } });
-    res.json({ success: true, joined: true });
-  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-// SOPORTE DE ENTREGA DE PREMIOS: el ganador toca "Coordinar la entrega" ⇒ mensaje al Soporte (charla abierta, se ve como queja/pedido) y
-// queda registrado en el sorteo (contactAt). Sólo los ganadores reales del último mes cerrado.
-app.post('/api/raffle/contact', authMiddleware, async (req, res) => {
-  try {
-    const last = await RaffleMonth.findOne({ status: 'closed' }).sort({ monthKey: -1 }).lean();
-    const w = last && (last.winners || []).find((x) => x.userId === req.user.userId);
-    if (!w) return res.status(403).json({ error: 'Esta opción es sólo para los ganadores del sorteo.' });
-    const u = await User.findOne({ id: req.user.userId }).select('id username').lean();
-    const txt = `🏆 ¡Gané el sorteo de ${raffleService.monthLabel(last.monthKey)}! Puesto ${w.pos} (${w.prize}). Quiero coordinar la entrega del premio.`;
-    await Message.create({ id: uuidv4(), senderId: u.id, senderUsername: u.username, senderRole: 'user', receiverId: 'admin', receiverRole: 'admin', content: txt, type: 'text', timestamp: new Date(), read: false, channel: 'support', metadata: { kind: 'prize', monthKey: last.monthKey, pos: w.pos } });
-    await ChatStatus.updateOne({ userId: u.id }, { $set: { status: 'open', username: u.username, closedAt: null } }, { upsert: true }).catch(() => {});
-    if (!w.contactAt) await RaffleMonth.updateOne({ monthKey: last.monthKey, 'winners.userId': u.id }, { $set: { 'winners.$.contactAt': new Date() } });
-    try { notifyAdmins('new_message', { message: { content: txt, senderUsername: u.username }, userId: u.id, username: u.username }); } catch (_) {}
-    res.json({ success: true });
-  } catch (e) { logger.warn('[sorteo] contacto: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
-});
-// Panel: ranking SIN tapar, meses cerrados con ganadores y entrega; editar premios; recalcular a mano.
-app.get('/api/admin/raffle', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
-    const mk = raffleService.monthKeyOf(new Date());
-    const top = await raffleService.ranking(_raffleDeps(), mk, 100);
-    const months = await RaffleMonth.find({ status: 'closed' }).sort({ monthKey: -1 }).limit(12).lean();
-    const cur = await RaffleMonth.findOne({ monthKey: mk }).lean();
-    res.json({ monthKey: mk, monthLabel: raffleService.monthLabel(mk), updatedAt: cur && cur.lastRunAt, config: await raffleService.getConfig(_raffleDeps()),
-      top: top.map((s, i) => ({ pos: i + 1, username: s.username, points: s.points, validWagered: s.validWagered, wagered: s.wagered, deposits: s.deposits, bonusGranted: s.bonusGranted })),
-      months: months.map((m) => ({ monthKey: m.monthKey, monthLabel: raffleService.monthLabel(m.monthKey), participants: m.participants, closedAt: m.closedAt, winners: m.winners })) });
-  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-app.post('/api/admin/raffle/:mk/delivered', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
-    const pos = Number(req.body && req.body.pos); const note = String((req.body && req.body.note) || '').slice(0, 300);
-    const r = await RaffleMonth.updateOne({ monthKey: String(req.params.mk), status: 'closed', 'winners.pos': pos }, { $set: { 'winners.$.deliveredAt': new Date(), 'winners.$.deliveredBy': req.user.username, 'winners.$.deliveryNote': note } });
-    if (!r.matchedCount) return res.status(404).json({ error: 'No encontrado' });
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-app.post('/api/admin/raffle/config', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
-    const b = req.body || {}; const clean = (p) => (Array.isArray(p) ? p.slice(0, 3).map((x, i) => ({ pos: i + 1, title: String((x && x.title) || '').slice(0, 60), detail: String((x && x.detail) || '').slice(0, 80) })) : undefined);
-    const cur = await raffleService.getConfig(_raffleDeps());
-    const next = { active: { title: String((b.active && b.active.title) || cur.active.title).slice(0, 60), prizes: clean(b.active && b.active.prizes) || cur.active.prizes },
-      upcoming: Object.assign({}, cur.upcoming, { title: String((b.upcoming && b.upcoming.title) || cur.upcoming.title).slice(0, 60), prizes: clean(b.upcoming && b.upcoming.prizes) || cur.upcoming.prizes },
-        // #921: período y extras del Gran Sorteo (fechas YYYY-MM-DD hora argentina)
-        (b.upcoming && /^\d{4}-\d{2}-\d{2}$/.test(String(b.upcoming.start || ''))) ? { start: b.upcoming.start } : {}, (b.upcoming && /^\d{4}-\d{2}-\d{2}$/.test(String(b.upcoming.end || ''))) ? { end: b.upcoming.end } : {},
-        (b.upcoming && Number(b.upcoming.dailyPoints) >= 0) ? { dailyPoints: Math.min(1000, Number(b.upcoming.dailyPoints)) } : {}, (b.upcoming && Number(b.upcoming.dailyMinArs) > 0) ? { dailyMinArs: Math.round(Number(b.upcoming.dailyMinArs)) } : {},
-        (b.upcoming && Number(b.upcoming.missionPct) >= 0) ? { missionPct: Math.min(100, Number(b.upcoming.missionPct)) } : {}),
-      deliveryBusinessDays: Math.max(1, Math.min(60, Number(b.deliveryBusinessDays) || cur.deliveryBusinessDays)), cashOption: b.cashOption !== false };
-    await Config.updateOne({ key: 'raffleconfig' }, { $set: { value: next } }, { upsert: true });
-    res.json({ success: true, config: next });
-  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
-});
-app.post('/api/admin/raffle/recalc', authMiddleware, adminMiddleware, async (req, res) => {
-  try { if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' }); res.json(await raffleService.tick(_raffleDeps())); }
-  catch (e) { res.status(500).json({ error: e.message }); }
-});
+// 🪦 #917 (sorteo mensual por puntos, raffleService/RaffleScore/RaffleMonth) se REEMPLAZÓ en la fusión 2026-10-24 por los sorteos de
+// la gemela (G915: src/services/sorteos.js, SorteoScore/SorteoEntry, rutas /api/sorteos). Los datos viejos quedan en la base, sin uso.
 
 // ===== #886 BONO DE BIENVENIDA POR DÍAS (owner 2026-10-23): "a los clientes nuevos, que lo vean sólo los nuevos: notificación + bono de 50%
 // con el mismo rollover, en historias, el día 5, el 15 y el 30 desde que se registró; el resto no lo ve. 'Tenés un 50% activo, 2 hs para
@@ -26024,6 +26246,7 @@ async function _newbieOffersTick() {
   try {
     const cfg = await getNewbieOffersConfig(); if (!cfg.enabled || !cfg.days.length) return;
     const now = new Date(); const hourArt = (now.getUTCHours() + 21) % 24; if (hourArt < cfg.hour || hourArt >= 23) return;
+    if (!(await _cronClaim('newbie', 8 * 60000))) return; // #964: una instancia por pasada
     const today = _schedArtKey(now); const t0 = new Date(today + 'T00:00:00-03:00').getTime();
     const rx = await _giftRolloverX().catch(() => 5), dx = await getDepositRolloverX().catch(() => 3);
     for (const n of cfg.days) {
@@ -26052,6 +26275,280 @@ async function _newbieOffersTick() {
   } catch (e) { logger.warn('[bienvenida] ' + e.message); } finally { _newbieRunning = false; }
 }
 setTimeout(() => { _newbieOffersTick().catch(() => {}); setInterval(() => { _newbieOffersTick().catch(() => {}); }, 10 * 60 * 1000); }, 4 * 60 * 1000);
+// ===== #915 (owner 2026-10-24): SORTEOS CON RANKING EN VIVO (mensual + Gran Sorteo) =====
+// "Armá un ranking viendo todo lo apostado de los jugadores de Girox del general, tapá los nombres y que cada uno, desde la app, se registre
+//  y pueda ver su nombre completo y su puesto; dos sorteos individuales con ranking en vivo cuando empieza tomando las apuestas; la gente
+//  suma puntos directo; bases y condiciones completas; en el admin, sorteo mensual con la gente anotada y la que va participando; para
+//  inscribirse tienen que cumplir los requisitos."
+// Reglas puras en src/services/sorteos.js. Config en Config['sorteos'] (panel → Sorteos). Puntajes en SorteoScore (los recalcula
+// `_sorteoTick` cada 20 min con el batch de stats de 1girox = apostado del período, hasta 100 jugadores por request, tramos ≤85 días por el
+// tope de 92). Entran TODOS los clientes con una carga real en el período; sólo los ANOTADOS (SorteoEntry) pueden ganar.
+const SorteoEntry = require('./src/models/SorteoEntry');
+const SorteoScore = require('./src/models/SorteoScore');
+const sorteosRules = require('./src/services/sorteos');
+const SORTEO_KEYS = ['mensual', 'gran'];
+const SORTEO_REAL_DEP = { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] }, description: { $not: /PRUEBA/i } };
+async function _sorteosCfg() { return sorteosRules.normalize(await getConfig('sorteos', null)); }
+let _sorteoDiag = { lastTickAt: null, lastError: null, runs: {} }; let _sorteoRunning = false;
+async function _sorteoDiagSave() { try { await Config.set('sorteoDiag', _sorteoDiag, 'system'); } catch (_) {} }
+// Requisitos para anotarse: app instalada (token FCM de la app instalada), notificaciones (algún token), Telegram (lo declara el cliente),
+// al menos una carga real (de la vida).
+function _sorteoChecksOf(user, telegramDeclared, hasDeposit) {
+  const toks = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
+  const app = user.fcmTokenContext === 'standalone' || toks.some((t) => t && t.context === 'standalone');
+  const notif = !!(user.fcmToken || toks.length);
+  return { app, notif, telegram: !!telegramDeclared, deposit: !!hasDeposit };
+}
+function _sorteoMissing(cfg, checks) { const r = cfg.requirements || {}; return ['app', 'notif', 'telegram', 'deposit'].filter((k) => r[k] && !checks[k]); }
+// Apostado + bono otorgado por jugador en [start, until] (tramos ≤85 días, lotes de 100). Falla ⇒ null (no se tocan los puntajes).
+async function _sorteoStats(usernames, start, until) {
+  const out = {}; const SPAN = 85 * sorteosRules.DAY;
+  for (let t0 = start.getTime(); t0 <= until.getTime(); t0 += SPAN) {
+    const a = new Date(t0), b = new Date(Math.min(t0 + SPAN - 1000, until.getTime()));
+    for (let i = 0; i < usernames.length; i += 100) {
+      const chunk = usernames.slice(i, i + 100);
+      const r = await girox.getPlayersStatsBatch(chunk, a, b, 'sorteo');
+      if (!r.success) throw new Error('stats batch: ' + (r.error || r.code || 'falló'));
+      for (const u of chunk) { const p = r.players[u]; if (!out[u]) out[u] = { wagered: 0, bonusGranted: 0 }; if (p) { out[u].wagered += Number(p.wagered) || 0; out[u].bonusGranted += Number(p.bonusGranted) || 0; } }
+    }
+  }
+  return out;
+}
+async function _sorteoTickOne(cfg, key, now) {
+  const s = cfg[key]; const p = sorteosRules.periodOf(s, now);
+  if (p.status === 'soon') return { skipped: 'todavía no empezó' };
+  if (p.status === 'closed' && now - p.end > 3 * sorteosRules.DAY) return { skipped: 'cerrado' };
+  const t0 = Date.now(); const until = new Date(Math.min(now.getTime(), p.end.getTime()));
+  const range = { timestamp: { $gte: p.start, $lte: until } };
+  const [deps, dayAgg, entries] = await Promise.all([
+    Transaction.aggregate([{ $match: Object.assign({}, SORTEO_REAL_DEP, range) }, { $group: { _id: '$userId', n: { $sum: 1 }, total: { $sum: '$amount' }, first: { $min: '$timestamp' }, username: { $first: '$username' } } }]),
+    key === 'gran' ? Transaction.aggregate([{ $match: Object.assign({}, SORTEO_REAL_DEP, range) }, { $group: { _id: { u: '$userId', d: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp', timezone: '-03:00' } } }, total: { $sum: '$amount' } } }, { $match: { total: { $gte: Number(s.dayDepositMin) || 0 } } }, { $group: { _id: '$_id.u', days: { $sum: 1 } } }]) : Promise.resolve([]),
+    SorteoEntry.find({ key }).select('userId').lean()
+  ]);
+  const cands = deps.filter((d) => d._id && d.username);
+  if (!cands.length) return { candidates: 0, scored: 0, ms: Date.now() - t0 };
+  const stats = await _sorteoStats(cands.map((d) => d.username), p.start, until);
+  const days = new Map(dayAgg.map((x) => [x._id, x.days])); const joined = new Set(entries.map((e) => e.userId));
+  let missions = new Map(); const weeksElapsed = Math.max(1, Math.ceil((until - p.start) / (7 * sorteosRules.DAY)));
+  if (key === 'gran') { const mw = await MissionClaim.aggregate([{ $match: { userId: { $in: cands.map((d) => d._id) }, weekKey: { $gte: sorteosRules.artDay(p.start) } } }, { $group: { _id: '$userId', w: { $addToSet: '$weekKey' } } }]); missions = new Map(mw.map((x) => [x._id, x.w.length])); }
+  const ops = cands.map((d) => {
+    const st = stats[d.username] || { wagered: 0, bonusGranted: 0 };
+    const pts = sorteosRules.computePoints(s, { wagered: st.wagered, bonusGranted: st.bonusGranted, depositTotal: d.total, depositDays: days.get(d._id) || 0, missionWeeks: missions.get(d._id) || 0, weeksElapsed });
+    const isJ = joined.has(d._id);
+    return { updateOne: { filter: { key, periodKey: p.periodKey, userId: d._id }, update: { $set: { username: d.username, points: pts.points, basePts: pts.basePts, dayPts: pts.dayPts, missionPts: pts.missionPts, realShare: pts.realShare, wagered: Math.round(st.wagered), deposits: d.n, depositTotal: Math.round(d.total), depositDays: days.get(d._id) || 0, missionWeeks: missions.get(d._id) || 0, joined: isJ, eligible: isJ && d.n >= 1, firstDepositAt: d.first, updatedAt: new Date() } }, upsert: true } };
+  });
+  for (let i = 0; i < ops.length; i += 500) await SorteoScore.bulkWrite(ops.slice(i, i + 500), { ordered: false });
+  return { candidates: cands.length, scored: ops.length, ms: Date.now() - t0, period: p.periodKey, status: p.status };
+}
+// #964: lock genérico para crons pesados en multi-instancia: una sola instancia corre la pasada; las demás saltean hasta que vence.
+async function _cronClaim(name, ttlMs) {
+  try {
+    const key = ('cronlock_' + name).toLowerCase(); const now = Date.now();
+    const r = await Config.findOneAndUpdate({ key, $or: [{ 'value.until': { $lt: now } }, { 'value.until': null }] }, { $set: { value: { until: now + ttlMs, at: new Date().toISOString() }, updatedAt: new Date() } }, { new: true });
+    if (r) return true;
+    if (!(await Config.exists({ key }))) { await Config.set(key, { until: now + ttlMs, at: new Date().toISOString() }, 'system'); return true; }
+    return false;
+  } catch (_) { return true; }
+}
+// #957: una sola instancia corre la pasada (lock de 15 min en Config); las demás saltean. Con force (panel) corre igual.
+async function _sorteoClaim() {
+  try {
+    const now = Date.now(); const until = new Date(now + 15 * 60000);
+    const r = await Config.findOneAndUpdate({ key: 'sorteoticklock', $or: [{ 'value.until': { $lt: now } }, { 'value.until': null }] }, { $set: { value: { until: now, at: new Date().toISOString() }, updatedAt: new Date() } }, { new: true });
+    if (r) { await Config.updateOne({ key: 'sorteoticklock' }, { $set: { value: { until: until.getTime(), at: new Date().toISOString() } } }); return true; }
+    if (!(await Config.exists({ key: 'sorteoticklock' }))) { await Config.set('sorteoticklock', { until: until.getTime(), at: new Date().toISOString() }, 'system'); return true; }
+    return false;
+  } catch (_) { return true; }
+}
+async function _sorteoTick(opts) {
+  if (_sorteoRunning) return;
+  // fusión 2026-10-24 (regla #917 de acá): NUNCA con el casino SIMULADO — Render comparte la base con producción y los puntajes falsos pisarían el
+  // ranking real. Tampoco con el botón "recalcular" (force).
+  try { if (girox.isSimulated && girox.isSimulated()) { _sorteoDiag.lastTickAt = new Date(); _sorteoDiag.lastError = 'casino simulado: no se calcula (base compartida con producción)'; return; } } catch (_) {}
+  if (!(opts && opts.force) && !(await _sorteoClaim())) return;
+  _sorteoRunning = true;
+  try {
+    const cfg = await _sorteosCfg(); const now = new Date(); _sorteoDiag.lastTickAt = now;
+    if (!cfg.enabled && !(opts && opts.force)) return;
+    for (const key of SORTEO_KEYS) {
+      if (!cfg[key].enabled) { _sorteoDiag.runs[key] = { at: now, skipped: 'apagado' }; continue; }
+      try { _sorteoDiag.runs[key] = Object.assign({ at: now }, await _sorteoTickOne(cfg, key, now)); _sorteoDiag.lastError = null; }
+      catch (e) { _sorteoDiag.runs[key] = { at: now, error: e.message }; _sorteoDiag.lastError = key + ': ' + e.message; logger.warn('[sorteos] ' + key + ': ' + e.message); }
+    }
+  } catch (e) { _sorteoDiag.lastError = e.message; logger.warn('[sorteos] tick: ' + e.message); }
+  finally { _sorteoRunning = false; await _sorteoDiagSave(); }
+}
+setTimeout(() => { _sorteoTick().catch(() => {}); setInterval(() => { _sorteoTick().catch(() => {}); }, 60 * 60 * 1000); }, 3 * 60 * 1000); // #957: cada hora
+const _sorteoSort = { points: -1, wagered: -1, firstDepositAt: 1 };
+async function _sorteoRankOf(key, periodKey, sc) { if (!sc) return null; const better = await SorteoScore.countDocuments({ key, periodKey, $or: [{ points: { $gt: sc.points } }, { points: sc.points, wagered: { $gt: sc.wagered } }] }); return better + 1; }
+async function _sorteoWinners(key, periodKey) { return SorteoScore.find({ key, periodKey, eligible: true, points: { $gt: 0 } }).sort(_sorteoSort).limit(3).lean(); }
+// #939: quiénes entran al SORTEO de $100.000 del mes: cargas >= minDeposits (y anotados sólo si requireJoin).
+function _sorteoExtraFilter(s, periodKey) { const f = { key: s.key || 'mensual', periodKey, deposits: { $gte: Number(s.extra.minDeposits) || 1 } }; if (s.extra.requireJoin) f.eligible = true; return f; }
+async function _sorteoTelegramUrl() { try { const c = (await getConfig('communityConfig')) || {}; return c.inviteUrl || c.channelUrl || c.url || (await getConfig('canalInformativoUrl', '')) || ''; } catch (_) { return ''; } }
+// ---- App: estado de los sorteos para el cliente (ranking tapado, mi puesto, requisitos, bases)
+app.get('/api/sorteos', authMiddleware, async (req, res) => {
+  try {
+    const cfg = await _sorteosCfg(); const now = new Date();
+    if (!cfg.enabled) return res.json({ enabled: false, sorteos: [] });
+    const user = await User.findOne({ id: req.user.userId }).select('id username fcmToken fcmTokenContext fcmTokens').lean();
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const hasDep = !!(await Transaction.findOne(Object.assign({ userId: user.id }, SORTEO_REAL_DEP)).select('_id').lean());
+    const entries = await SorteoEntry.find({ userId: user.id }).lean(); const byKey = new Map(entries.map((e) => [e.key, e]));
+    const draws = (await getConfig('sorteoDraws', null)) || {};
+    const out = [];
+    for (const key of SORTEO_KEYS) {
+      const s = cfg[key]; if (!s.enabled) continue;
+      const p = sorteosRules.periodOf(s, now); const ent = byKey.get(key) || null;
+      const checks = _sorteoChecksOf(user, ent ? ent.telegramDeclared : false, hasDep); const missing = _sorteoMissing(cfg, checks);
+      const [anotados, participantes, top, mine] = await Promise.all([
+        SorteoEntry.countDocuments({ key }),
+        SorteoScore.countDocuments({ key, periodKey: p.periodKey, points: { $gt: 0 } }),
+        SorteoScore.find({ key, periodKey: p.periodKey, points: { $gt: 0 } }).sort(_sorteoSort).limit(20).select('userId username points wagered joined').lean(),
+        SorteoScore.findOne({ key, periodKey: p.periodKey, userId: user.id }).lean()
+      ]);
+      const myRank = await _sorteoRankOf(key, p.periodKey, mine && mine.points > 0 ? mine : null);
+      const rows = top.map((r, i) => ({ rank: i + 1, name: r.userId === user.id ? r.username : sorteosRules.mask(r.username), points: r.points, me: r.userId === user.id, joined: !!r.joined }));
+      if (mine && mine.points > 0 && !rows.some((r) => r.me)) rows.push({ rank: myRank, name: mine.username, points: mine.points, me: true, joined: !!mine.joined });
+      let winners = null, drawKey = key + ':' + p.periodKey, draw = null;
+      if (p.status === 'closed' && now >= p.publishAt) { winners = (await _sorteoWinners(key, p.periodKey)).map((w, i) => ({ pos: i + 1, name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), points: w.points, me: w.userId === user.id })); }
+      if (key === 'mensual' && p.prevKey && now - p.start < 7 * sorteosRules.DAY) { const pw = await _sorteoWinners(key, p.prevKey); if (pw.length) winners = pw.map((w, i) => ({ pos: i + 1, name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), points: w.points, me: w.userId === user.id, period: p.prevKey })); drawKey = key + ':' + p.prevKey; }
+      if (draws[drawKey]) draw = { at: draws[drawKey].at, seed: draws[drawKey].seed, amount: draws[drawKey].amount, winners: (draws[drawKey].winners || []).map((w) => ({ name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), me: w.userId === user.id })) };
+      out.push({
+        key, title: s.title, emoji: s.emoji, status: p.status, periodKey: p.periodKey, start: p.start, end: p.end, publishAt: p.publishAt,
+        startsInMs: Math.max(0, p.start - now), endsInMs: Math.max(0, p.end - now), prizes: s.prizes, extra: s.extra && s.extra.enabled ? s.extra : null, // #969: en los dos
+        rules: { pts: s.pts, ptsPer: s.ptsPer, dayDepositMin: s.dayDepositMin || 0, dayDepositPts: s.dayDepositPts || 0, missionWeekPct: s.missionWeekPct || 0 },
+        counts: await (async () => { const c = { anotados, participantes, extraWinners: 0, extraElegibles: 0 }; if (s.extra && s.extra.enabled) { c.extraElegibles = await SorteoScore.countDocuments(_sorteoExtraFilter(s, p.periodKey)); c.extraWinners = sorteosRules.extraWinners(s.extra, c.extraElegibles); } return c; })(),
+        me: { joined: !!ent, joinedAt: ent ? ent.joinedAt : null, checks, missing, canJoin: !ent && !missing.length, points: mine ? mine.points : 0, rank: myRank, wagered: mine ? mine.wagered : 0, eligible: !!(mine && mine.eligible), breakdown: mine ? { basePts: mine.basePts, dayPts: mine.dayPts, missionPts: mine.missionPts, realShare: mine.realShare, deposits: mine.deposits } : null },
+        top: rows, winners, draw, terms: sorteosRules.terms(cfg, key, now)
+      });
+    }
+    res.set('Cache-Control', 'no-store');
+    res.json({ enabled: true, now: now.toISOString(), requirements: cfg.requirements, telegramUrl: await _sorteoTelegramUrl(), sorteos: out });
+  } catch (e) { logger.error('[sorteos] GET: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/sorteos/:key/join', authMiddleware, async (req, res) => {
+  try {
+    const key = String(req.params.key || ''); if (!SORTEO_KEYS.includes(key)) return res.status(404).json({ error: 'Sorteo inexistente' });
+    const cfg = await _sorteosCfg(); if (!cfg.enabled || !cfg[key].enabled) return res.status(400).json({ error: 'Este sorteo no está activo.' });
+    const user = await User.findOne({ id: req.user.userId }).select('id username fcmToken fcmTokenContext fcmTokens isBlocked').lean();
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (user.isBlocked) return res.status(403).json({ error: 'Tu cuenta no puede participar.' });
+    const hasDep = !!(await Transaction.findOne(Object.assign({ userId: user.id }, SORTEO_REAL_DEP)).select('_id').lean());
+    const telegram = !!(req.body && req.body.telegram === true);
+    const checks = _sorteoChecksOf(user, telegram, hasDep); const missing = _sorteoMissing(cfg, checks);
+    if (missing.length) { const names = { app: 'instalar la app', notif: 'activar las notificaciones', telegram: 'unirte a nuestro Telegram', deposit: 'hacer al menos una carga' }; return res.status(400).json({ error: 'Te falta: ' + missing.map((m) => names[m]).join(', ') + '.', checks, missing }); }
+    const ent = await SorteoEntry.findOneAndUpdate({ userId: user.id, key }, { $setOnInsert: { id: uuidv4(), username: user.username, joinedAt: new Date(), checks, source: 'app' }, $set: { telegramDeclared: telegram } }, { upsert: true, new: true }).lean();
+    const p = sorteosRules.periodOf(cfg[key], new Date());
+    await SorteoScore.updateMany({ key, periodKey: p.periodKey, userId: user.id }, [{ $set: { joined: true, eligible: { $gte: ['$deposits', 1] } } }]).catch(() => {});
+    logger.info(`[sorteos] ${user.username} se anotó en ${key}`);
+    res.json({ success: true, joinedAt: ent.joinedAt });
+  } catch (e) { if (e && e.code === 11000) return res.json({ success: true }); logger.error('[sorteos] join: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// ---- Panel: config + anotados + ranking (nombres completos) + diagnóstico + sorteo del premio extra
+app.get('/api/admin/sorteos', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const cfg = await _sorteosCfg(); const now = new Date(); const draws = (await getConfig('sorteoDraws', null)) || {};
+    const out = {};
+    for (const key of SORTEO_KEYS) {
+      const s = cfg[key]; const p = sorteosRules.periodOf(s, now);
+      const [entries, ranking, participantes, elig] = await Promise.all([
+        SorteoEntry.find({ key }).sort({ joinedAt: -1 }).limit(1000).lean(),
+        SorteoScore.find({ key, periodKey: p.periodKey, points: { $gt: 0 } }).sort(_sorteoSort).limit(300).lean(),
+        SorteoScore.countDocuments({ key, periodKey: p.periodKey, points: { $gt: 0 } }),
+        s.extra && s.extra.enabled ? SorteoScore.countDocuments(_sorteoExtraFilter(s, p.periodKey)) : Promise.resolve(0) // #969
+      ]);
+      // #939: SORTEO de $100.000 — participantes del mes en curso y del mes CERRADO (el día 1 se sortea el anterior), con cargas y total.
+      let extra = null;
+      if (s.extra && s.extra.enabled) { // #969: en los dos sorteos
+        const candsOf = async (pk) => (await SorteoScore.find(_sorteoExtraFilter(s, pk)).sort({ deposits: -1, depositTotal: -1 }).limit(500).select('userId username deposits depositTotal joined').lean()).map((c) => ({ userId: c.userId, username: c.username, deposits: c.deposits, depositTotal: c.depositTotal, joined: !!c.joined }));
+        const cur = await candsOf(p.periodKey); const prev = p.prevKey ? await candsOf(p.prevKey) : [];
+        extra = { rules: s.extra, who: sorteosRules.extraWho(s.extra, sorteosRules.extraSpan(key)), current: { periodKey: p.periodKey, status: p.status, count: cur.length, winners: sorteosRules.extraWinners(s.extra, cur.length), candidates: cur, draw: draws[key + ':' + p.periodKey] || null },
+          prev: p.prevKey ? { periodKey: p.prevKey, count: prev.length, winners: sorteosRules.extraWinners(s.extra, prev.length), candidates: prev, draw: draws[key + ':' + p.prevKey] || null, drawDay: p.start } : null };
+      }
+      const scByUser = new Map((await SorteoScore.find({ key, periodKey: p.periodKey, userId: { $in: entries.map((e) => e.userId) } }).select('userId points deposits depositTotal wagered eligible').lean()).map((x) => [x.userId, x]));
+      out[key] = {
+        period: { key: p.periodKey, start: p.start, end: p.end, publishAt: p.publishAt, status: p.status },
+        counts: { anotados: entries.length, participantes, anotadosConPuntos: ranking.filter((r) => r.joined).length, extraElegibles: elig, extraGanadores: sorteosRules.extraWinners(s.extra, elig) },
+        anotados: entries.map((e) => { const sc = scByUser.get(e.userId); return { id: e.id, userId: e.userId, username: e.username, joinedAt: e.joinedAt, checks: e.checks, telegram: !!e.telegramDeclared, points: sc ? sc.points : 0, deposits: sc ? sc.deposits : 0, depositTotal: sc ? sc.depositTotal : 0, wagered: sc ? sc.wagered : 0, eligible: !!(sc && sc.eligible) }; }),
+        ranking: ranking.map((r, i) => ({ rank: i + 1, userId: r.userId, username: r.username, points: r.points, basePts: r.basePts, dayPts: r.dayPts, missionPts: r.missionPts, wagered: r.wagered, realShare: r.realShare, deposits: r.deposits, depositTotal: r.depositTotal, depositDays: r.depositDays, missionWeeks: r.missionWeeks, joined: r.joined, eligible: r.eligible, updatedAt: r.updatedAt })),
+        draw: draws[key + ':' + p.periodKey] || null, prevDraw: p.prevKey ? (draws[key + ':' + p.prevKey] || null) : null, extra
+      };
+    }
+    res.json({ config: cfg, diag: _sorteoDiag, now, sorteos: out });
+  } catch (e) { logger.error('[sorteos] admin GET: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.put('/api/admin/sorteos', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const cur = await _sorteosCfg(); const b = (req.body && req.body.config) || req.body || {};
+    const merged = sorteosRules.normalize(Object.assign({}, cur, b, { requirements: Object.assign({}, cur.requirements, b.requirements || {}), mensual: Object.assign({}, cur.mensual, b.mensual || {}), gran: Object.assign({}, cur.gran, b.gran || {}) }));
+    if (b.mensual && b.mensual.extra) merged.mensual.extra = Object.assign({}, cur.mensual.extra, b.mensual.extra);
+    if (!/^\d{4}-\d{2}$/.test(String(merged.mensual.startMonth || ''))) return res.status(400).json({ error: 'Mes de inicio del mensual: AAAA-MM' });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(merged.gran.start || '')) || !/^\d{4}-\d{2}-\d{2}$/.test(String(merged.gran.end || '')) || merged.gran.end < merged.gran.start) return res.status(400).json({ error: 'Fechas del Gran Sorteo: AAAA-MM-DD, fin después del inicio' });
+    await Config.set('sorteos', merged, req.user.username);
+    logger.info(`[sorteos] config guardada por ${req.user.username}`);
+    res.json({ success: true, config: merged });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #967 (owner): "dejá en Sorteos para subir las fotos de forma manual desde el panel (adjuntar)". Foto por premio en la base (SorteoImage),
+// servida por /api/sorteos/img/:id; el premio queda con esa URL en Config['sorteos'] (se puede volver al emoji escribiéndolo en el campo).
+const SorteoImage = require('./src/models/SorteoImage');
+app.get('/api/sorteos/img/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || ''); if (!/^[A-Za-z0-9-]{8,64}$/.test(id)) return res.status(404).end();
+    const im = await SorteoImage.findOne({ id }).lean(); if (!im || !im.data) return res.status(404).end();
+    res.setHeader('Content-Type', im.mime); res.setHeader('Cache-Control', 'public, max-age=86400, immutable'); res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.end(Buffer.from(im.data.buffer ? im.data.buffer : im.data));
+  } catch (e) { res.status(500).end(); }
+});
+app.post('/api/admin/sorteos/prize-image', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const key = String((req.body && req.body.key) || ''); const pos = Number(req.body && req.body.pos);
+    if (!SORTEO_KEYS.includes(key) || !(pos >= 1 && pos <= 3)) return res.status(400).json({ error: 'Premio inválido' });
+    const m = String((req.body && req.body.dataUrl) || '').match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+    if (!m) return res.status(400).json({ error: 'Mandá una foto JPG, PNG o WEBP.' });
+    const buf = Buffer.from(m[2], 'base64'); if (!buf.length || buf.length > 600 * 1024) return res.status(400).json({ error: 'La foto tiene que pesar hasta 600 KB (achicala antes de subirla).' });
+    const id = uuidv4();
+    await SorteoImage.create({ id, key, pos, mime: m[1], data: buf, size: buf.length, uploadedBy: req.user.username });
+    const cfg = await _sorteosCfg(); const prev = String((cfg[key].prizes[pos - 1] || {}).img || '');
+    cfg[key].prizes[pos - 1] = Object.assign({}, cfg[key].prizes[pos - 1], { img: '/api/sorteos/img/' + id });
+    await Config.set('sorteos', cfg, req.user.username);
+    const pm = prev.match(/^\/api\/sorteos\/img\/([A-Za-z0-9-]+)$/); if (pm && pm[1] !== id) SorteoImage.deleteOne({ id: pm[1] }).catch(() => {}); // la anterior subida ya no se usa
+    logger.info(`[sorteos] ${req.user.username} subió la foto del premio ${key}#${pos} (${Math.round(buf.length / 1024)} KB)`);
+    res.json({ success: true, url: '/api/sorteos/img/' + id });
+  } catch (e) { logger.error('[sorteos] prize-image: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/admin/sorteos/recalc', authMiddleware, adminMiddleware, async (req, res) => {
+  try { if (_sorteoRunning) return res.status(409).json({ error: 'Ya se está recalculando: esperá un minuto.' }); await _sorteoTick({ force: true }); res.json({ success: true, diag: _sorteoDiag }); }
+  catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// SORTEO de $100.000 del mensual (#939): verificable, entre TODOS los que cargaron >= minDeposits veces en el mes (semilla publicada + shuffle
+// determinista SHA-256 sobre la lista ordenada por id). Se sortea el día 1 el mes CERRADO (periodKey del mes anterior); el mes en curso sólo con early:true.
+app.post('/api/admin/sorteos/:key/draw-extra', authMiddleware, adminMiddleware, async (req, res) => { // #969: mensual y gran
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const key = String(req.params.key || ''); if (!SORTEO_KEYS.includes(key)) return res.status(404).json({ error: 'Sorteo inexistente' });
+    const cfg = await _sorteosCfg(); const s = cfg[key]; if (!s.extra || !s.extra.enabled) return res.status(400).json({ error: 'Este sorteo no tiene SORTEO EXTRA activo.' });
+    const periodKey = String((req.body && req.body.periodKey) || sorteosRules.periodOf(s, new Date()).periodKey);
+    const draws = (await getConfig('sorteoDraws', null)) || {}; const dk = key + ':' + periodKey;
+    if (draws[dk] && !(req.body && req.body.redo === true)) return res.status(400).json({ error: 'Ese mes ya se sorteó (' + (draws[dk].winners || []).length + ' ganadores). Mandá redo:true para repetirlo.' });
+    const pNow = sorteosRules.periodOf(s, new Date());
+    if (periodKey === pNow.periodKey && pNow.status === 'live' && !(req.body && req.body.early === true)) return res.status(400).json({ error: 'El mes ' + periodKey + ' todavía no cerró. El sorteo se hace el día 1 sobre el mes cerrado (' + (pNow.prevKey || '') + '); para adelantarlo mandá early:true.' });
+    const cands = await SorteoScore.find(_sorteoExtraFilter(s, periodKey)).select('userId username deposits').lean();
+    const n = sorteosRules.extraWinners(s.extra, cands.length);
+    if (!n) return res.status(400).json({ error: 'Nadie llegó a ' + (Number(s.extra.minDeposits) || 1) + ' cargas en ' + periodKey + ' (' + cands.length + ' cumplen): no hay sorteo.' });
+    const seed = crypto.randomBytes(16).toString('hex'); let h = crypto.createHash('sha256').update(seed).digest();
+    const arr = cands.slice().sort((a, b) => a.userId < b.userId ? -1 : 1);
+    for (let i = arr.length - 1; i > 0; i--) { if (i % 8 === 7) h = crypto.createHash('sha256').update(h).digest(); const j = h.readUInt32BE((i % 8) * 4) % (i + 1); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    const winners = arr.slice(0, n).map((w) => ({ userId: w.userId, username: w.username, amount: Number(s.extra.amount) || 0 }));
+    draws[dk] = { at: new Date().toISOString(), by: req.user.username, seed, candidates: cands.length, minDeposits: Number(s.extra.minDeposits) || 1, amount: Number(s.extra.amount) || 0, winners, early: !!(req.body && req.body.early), method: 'sha256-shuffle-v1' };
+    await Config.set('sorteoDraws', draws, req.user.username);
+    logger.info(`[sorteos] SORTEO EXTRA ${key} ${periodKey}: ${winners.length} ganadores de ${cands.length} (semilla ${seed})`);
+    res.json({ success: true, draw: draws[dk] });
+  } catch (e) { logger.error('[sorteos] draw: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+
 app.get('/api/admin/newbie-offers', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const months = Math.min(12, Math.max(1, parseInt(req.query.months, 10) || 3));
@@ -26097,7 +26594,7 @@ app.post('/api/admin/stories-autopilot/config', authMiddleware, adminMiddleware,
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sin permiso.' });
     const on = !!(req.body && req.body.matchesEnabled === true);
-    await Config.set('storyMatchesEnabled', on, req.user.username || 'admin');
+    await Config.set('storyAutoMatches', on, req.user.username || 'admin'); // fusión: misma llave que la gemela (G909)
     if (!on) { // los partidos que ya hubieran salido hoy dejan de verse
       const today = _schedArtKey(new Date());
       try { await Story.updateMany({ autoKey: new RegExp('^sa-' + today + '-m'), isActive: true }, { $set: { isActive: false } }); } catch (_) {}
@@ -26121,8 +26618,34 @@ app.get('/api/admin/stories-autopilot', authMiddleware, adminMiddleware, async (
         slot: p.slot, removed: !!(d && (d.isActive === false || d.autoKind === 'borrada')), published: !!(d && d.isActive !== false && d.autoKind !== 'borrada'), views: d ? d.views || 0 : null, claims: d ? d.bonusClaims || 0 : null, uses: d ? d.bonusUses || 0 : null, bonusTotal: d ? d.bonusUsedTotal || 0 : null, depositTotal: d ? d.bonusDepositTotal || 0 : null }; }) });
     }
     const bonusStories = await Story.find({ autoKind: 'bono' }).sort({ publishedAt: -1 }).limit(8).select('title publishedAt bonusPct bonusHours views bonusClaims bonusUses bonusUsedTotal bonusDepositTotal pushStats').lean();
-    res.json({ success: true, today, days, bonusStories, matchesEnabled: await _storyMatchesOn(), sources: { matches: 'ESPN (scoreboard público)', slots: '1girox (catálogo público, más jugados)' } });
+    const matchesOn = await _storyAutoMatchesOn(); // #909
+    let diag = null; try { diag = await getConfig('storyAutoDiag', null); } catch (_) {}
+    const publishedToday = await Story.countDocuments({ autoKey: new RegExp('^sa-' + today + '-'), isActive: true, autoKind: { $ne: 'borrada' } });
+    res.json({ success: true, today, days, bonusStories, matchesOn, matchesEnabled: matchesOn, diag, publishedToday, disabled: process.env.STORIES_AUTOPILOT_DISABLED === '1', sources: { matches: 'ESPN (scoreboard público)', slots: '1girox (catálogo público, más jugados)' } });
   } catch (e) { logger.warn('[historias-auto] panel: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #911: borrar las historias vigentes y publicar las 5 de hoy ahora mismo (sólo admin).
+app.post('/api/admin/stories-autopilot/republish-today', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    for (let i = 0; i < 40 && _storyAutoRunning; i++) await new Promise((r) => setTimeout(r, 250)); // si hay una pasada en curso, esperarla
+    if (_storyAutoRunning) return res.status(503).json({ error: 'El motor está publicando en este momento. Probá en un minuto.' });
+    const w = await _storyWipeForRepublish(req.user.username || 'admin');
+    await _storyAutoTick({ force: true });
+    const today = _schedArtKey(new Date());
+    const published = await Story.countDocuments({ autoKey: new RegExp('^sa-' + today + '-'), isActive: true, autoKind: { $ne: 'borrada' } });
+    res.json({ success: true, off: w.off, del: w.del, published, skipped: _storyDiag.skipped || [], error: _storyDiag.lastError || null });
+  } catch (e) { logger.warn('[historias-auto] republicar: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #909: llave de los PARTIDOS del día en las historias automáticas (sólo admin).
+app.post('/api/admin/stories-autopilot/matches', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (!_storiesAdminOnly(req, res)) return;
+    const on = !!(req.body && (req.body.on === true || req.body.on === 'true' || req.body.on === 1));
+    await Config.set('storyAutoMatches', on, req.user.username || 'admin');
+    logger.info(`[historias-auto] partidos del día ${on ? 'ENCENDIDOS' : 'apagados'} por ${req.user.username}`);
+    res.json({ success: true, matchesOn: on });
+  } catch (e) { logger.warn('[historias-auto] partidos: ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
 
 app.patch('/api/admin/stories/:id', authMiddleware, adminMiddleware, async (req, res) => {
@@ -27600,17 +28123,25 @@ setTimeout(() => { _platformChoiceTick().catch(() => {}); }, 30 * 1000);
 setInterval(() => { _platformChoiceTick().catch(() => {}); }, 60 * 1000);
 setInterval(() => { _depositReviewTick().catch(() => {}); }, 60 * 1000); // #376: cargas pendientes (escalar / cerrar)
 
-// #401 (owner 2026-10-18): CIERRE AUTOMÁTICO del chat de SOPORTE. "Si respondemos y el cliente no responde por 6 hs,
-// cerramos el chat": se le pone User.supportSessionSince = ahora → para él el chat vuelve a empezar (presentación de
-// Soporte otra vez, sin historial); el panel sigue viendo todo y recibe una nota interna. Config['supportAutoCloseHours']
-// (default 6; 0 = apagado). Multi-instancia: el updateOne condicional (supportSessionSince < último mensaje) evita doble cierre.
-const SUPPORT_AUTOCLOSE_HOURS_DEFAULT = 6;
+// #401 (owner 2026-10-18): CIERRE AUTOMÁTICO del chat de SOPORTE. "Si respondemos y el cliente no responde, cerramos el chat": se le pone
+// User.supportSessionSince = ahora → para él el chat vuelve a empezar (presentación de Soporte otra vez, sin historial); el panel sigue
+// viendo todo y recibe una nota interna. Multi-instancia: el updateOne condicional (supportSessionSince < último mensaje) evita doble cierre.
+// #916 (owner 2026-10-24): "hacé cierre de mensaje si el usuario no contesta dentro de los 30 min: por no recibir respuestas cerramos la
+// conversación de forma automática". Plazo en MINUTOS (Config['supportAutoCloseMinutes'], default 30; antes 6 h), el cliente recibe
+// /sys_support_autoclosed ({min}) y el chat también pasa a CERRADO en el panel (ChatStatus, closedBy 'auto'). Corre cada 5 min.
+// Config['supportAutoCloseHours'] = 0 sigue apagándolo (compatibilidad).
+const SUPPORT_AUTOCLOSE_MIN_DEFAULT = 30;
+async function _supportAutoCloseMinutes() {
+  try { const h = await getConfig('supportAutoCloseHours', null); if (h != null && Number(h) === 0) return 0; } catch (_) {}
+  try { const m = Number(await getConfig('supportAutoCloseMinutes', SUPPORT_AUTOCLOSE_MIN_DEFAULT)); if (Number.isFinite(m) && m >= 0) return m; } catch (_) {}
+  return SUPPORT_AUTOCLOSE_MIN_DEFAULT;
+}
 async function _supportAutoCloseTick() {
-  let hours = SUPPORT_AUTOCLOSE_HOURS_DEFAULT;
-  try { const h = Number(await getConfig('supportAutoCloseHours', SUPPORT_AUTOCLOSE_HOURS_DEFAULT)); if (Number.isFinite(h) && h >= 0) hours = h; } catch (_) {}
-  if (!(hours > 0)) return;
+  const minutes = await _supportAutoCloseMinutes();
+  if (!(minutes > 0)) return;
+  const hours = Math.round(minutes / 6) / 10; // sólo para el log
   const since = (await getSupportChannelSince()) || new Date(0);
-  const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000);
+  const cutoff = new Date(Date.now() - minutes * 60 * 1000);
   const rows = await Message.aggregate([
     { $match: { timestamp: { $gte: since }, adminOnly: { $ne: true }, $or: [{ channel: 'support' }, { senderRole: 'user' }] } },
     { $sort: { timestamp: -1 } },
@@ -27627,16 +28158,21 @@ async function _supportAutoCloseTick() {
         { new: true, projection: { id: 1, username: 1 } }
       ).lean();
       if (!u) continue; // ya cerrado por otra instancia o no hubo actividad nueva desde el último cierre
-      // #613: el cliente ve el cierre como mensaje fijado con fecha (igual que el cierre manual #602)
-      try { await _sendUserSystemMessage(u, await renderSystemCommand('/sys_support_closed', '🔒 El agente cerró el chat. Para cualquier consulta, volvé a seleccionar una opción.', {}), { metadata: { kind: 'support_closed', channel: 'support' } }); } catch (_) {}
-      await _emitAdminOnlyChatNote(u.id, u.username, '🔒 Chat de Soporte cerrado automáticamente: ' + hours + ' h sin respuesta del cliente. Si vuelve a escribir, para él arranca de cero (acá queda todo el historial).');
+      // #613: el cliente ve el cierre como mensaje fijado con fecha (igual que el cierre manual #602). #916: texto propio del cierre automático.
+      try { const txt = await renderSystemCommand('/sys_support_autoclosed', '⏱️ Por no recibir respuesta en {min} minutos, cerramos la conversación de forma automática. Si necesitás algo más, elegí una opción y te atendemos.', { min: String(minutes) }); if (String(txt || '').trim()) await _sendUserSystemMessage(u, txt, { metadata: { kind: 'support_closed', channel: 'support' } }); } catch (_) {}
+      await _emitAdminOnlyChatNote(u.id, u.username, '⏱️ Chat de Soporte cerrado automáticamente: ' + minutes + ' min sin respuesta del cliente. Si vuelve a escribir, para él arranca de cero (acá queda todo el historial).');
       try { io.to('user_' + u.id).emit('support_session_reset', { since: now.toISOString() }); } catch (_) {}
+      // #916: también se cierra en el panel (sale de Abiertos); si el cliente vuelve a escribir, se reabre como siempre.
+      try {
+        const rc = await ChatStatus.updateOne({ userId: u.id, status: 'open' }, { $set: { status: 'closed', closedAt: now, closedBy: 'auto', assignedTo: null } });
+        if (rc && rc.modifiedCount) { try { await delayClockResolve(u.id, { responded: true, agentId: 'system', agentUsername: 'automático', via: 'auto' }); } catch (_) {} try { notifyAdmins('chat_closed', { userId: u.id, by: 'sistema', adminId: 'system' }); } catch (_) {} }
+      } catch (e) { logger.warn('[support-autoclose] ChatStatus ' + u.id + ': ' + e.message); }
     } catch (e) { logger.warn('[support-autoclose] ' + r._id + ': ' + e.message); }
   }
-  if (rows.length) logger.info('[support-autoclose] revisadas ' + rows.length + ' conversaciones (>' + hours + ' h sin respuesta del cliente)');
+  if (rows.length) logger.info('[support-autoclose] revisadas ' + rows.length + ' conversaciones (>' + minutes + ' min / ' + hours + ' h sin respuesta del cliente)');
 }
 setTimeout(() => { _supportAutoCloseTick().catch(() => {}); }, 4 * 60 * 1000);
-setInterval(() => { _supportAutoCloseTick().catch(() => {}); }, 10 * 60 * 1000);
+setInterval(() => { _supportAutoCloseTick().catch(() => {}); }, 5 * 60 * 1000); // #916: cada 5 min (plazo de 30 min)
 
 function _schedCanManage(role) { return NOTIF_BATCH_SEND_ROLES.includes(role); }
 function _schedCanView(role) { return NOTIF_BATCH_VIEW_ROLES.includes(role); }
@@ -28210,8 +28746,11 @@ const arCalendar = require('./src/utils/arCalendar');
 const AUTOPILOT_DEFAULT = { enabled: false, time: '20:00', hours: 4, cap: 8, parts: 3, gapMin: 30, appOnly: true };
 // #821 (owner 2026-10-22): "que no sea ni editable ni que se lance: que automáticamente empiece a correr la estrategia" ⇒ SIEMPRE
 // encendido y con la configuración fija de abajo (sin panel para cambiarla). Sólo se apaga con la env AUTOPILOT_DISABLED=1 (emergencia).
+// #968: refuerzo de octubre-noviembre: 4 avisos más por cliente al mes, bonos válidos 2 h más y +10 puntos en los días comunes.
+const AUTOPILOT_BOOST = { until: '2026-11', capPlus: 4, hoursPlus: 2, pctPlus: 10 };
+const _apBoost = (month) => String(month || _schedArtKey(new Date()).slice(0, 7)) <= AUTOPILOT_BOOST.until;
 async function getAutopilotConfig() {
-  const r = { enabled: process.env.AUTOPILOT_DISABLED !== '1' };
+  const r = { enabled: process.env.AUTOPILOT_DISABLED !== '1', cap: AUTOPILOT_DEFAULT.cap + (_apBoost() ? AUTOPILOT_BOOST.capPlus : 0), hours: AUTOPILOT_DEFAULT.hours + (_apBoost() ? AUTOPILOT_BOOST.hoursPlus : 0) };
   const num = (v, d, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= lo && n <= hi ? n : d; };
   return {
     enabled: r.enabled === true,
@@ -28272,7 +28811,7 @@ function _autopilotMonthItems(month, cfg) {
         (pct) => ['💎 Subí de nivel VIP: +' + pct + '%', 'Cada carga te acerca al próximo nivel VIP y sus beneficios. Hoy +' + pct + '% EXTRA en tu carga por {h} horas.'],
         (pct) => ['🤝 Jugá con tus amigos: +' + pct + '%', 'Invitá a tus amigos con tu link y ganá por lo que juegan. Hoy tenés +' + pct + '% EXTRA en tu carga por {h} horas.']
       ];
-      const tb = (pct, reason, extra) => { const t = TH[(d * 3 + mo) % TH.length](pct); return { reason, payload: bono(pct, t[0], t[1], extra || aud) }; };
+      const tb = (pct0, reason, extra) => { const pct = Math.min(100, pct0 + (_apBoost(month) ? AUTOPILOT_BOOST.pctPlus : 0)); const t = TH[(d * 3 + mo) % TH.length](pct); return { reason, payload: bono(pct, t[0], t[1], extra || aud) }; }; // #968: +10 en el refuerzo
       if (sp) it = { reason: sp.name, payload: bono(sp.pct || 20, sp.title, sp.message, aud) };
       else if (d <= 4) it = { reason: 'Inicio de mes', payload: bono(30, '🎉 Mes nuevo en Pica Roja: +30%', 'Arrancamos el mes con todo: carga automática en segundos, retiros rápidos y soporte en la app. Cargá en las próximas {h} horas y te sumamos +30% EXTRA.', aud) };
       else if (d === 5) it = tb(20, 'Día 5 (más chico)');

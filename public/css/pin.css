@@ -3507,3 +3507,308 @@ html body #basicPlats .bv-chip.plat-jugaygana b, html body #platformsButtons .pl
 html body #basicPlats .bv-chip .plat-reco, html body #basicPlats .bv-chip em, html body #platformsButtons .plat-play-btn.plat-girox .plat-reco { font-size: 6.5px !important; padding: 1px 3px !important; letter-spacing: 0 !important; max-width: 96%; overflow: hidden; white-space: nowrap; }
 .prl-bp .prl-cbar + .prl-top.bp-head { padding-top: 0; } /* #960: debajo de la barra de PICA ROJA */
 .prl-jio .prl-cbar + .jg-head { padding-top: 0 !important; } /* #961: debajo de la barra de PICA ROJA */
+
+/* ===== #915 SORTEOS con ranking en vivo (tokens --srt-*; #918: violeta como Ganamos) ===== */
+/* #918 (owner): "un color diferente, un violeta como el de Ganamos" → mismos tonos que --p-purple / --p-purple-2 */
+/* #919 (owner, captura): violeta OSCURO profundo con borde lila y texto blanco; "Ver más" en lila claro */
+:root { --srt-g: #2a0a4f; --srt-g2: #4a1283; --srt-g3: #b05cff; --srt-soft: #f4ecff; --srt-line: #d9bfff; --srt-ink: #fff; --srt-lite: #d9b3ff; --srt-sh: rgba(74, 18, 131, .38); }
+html[data-theme="dark"] { --srt-g: #220840; --srt-g2: #3c0f6c; --srt-g3: #b05cff; --srt-soft: #1b0f2e; --srt-line: #4a2a7a; --srt-lite: #d9b3ff; --srt-sh: rgba(60, 15, 108, .5); }
+/* #918 (owner): "los recuadros del sorteo dejalos separados, en dos, no juntos" → uno debajo del otro, cada uno con su recuadro */
+.srt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 12px 10px; } .srt-cards.one { grid-template-columns: 1fr; } /* #926: como el completo, dos mitades */
+#basicView .srt-cards, #easyView .srt-cards { margin-left: 0; margin-right: 0; }
+.srt-card, .srt-cross { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border: 1.5px solid var(--srt-g3); border-radius: 16px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: var(--srt-ink); font-family: var(--p-font); cursor: pointer; box-shadow: 0 4px 14px var(--srt-sh); }
+.srt-card { width: 100%; } .srt-card::after { content: '›'; margin-left: auto; font-size: 22px; font-weight: 900; opacity: .85; }
+.srt-card-img { font-size: 36px; line-height: 1; flex: 0 0 auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,.25)); }
+.srt-card-t { display: flex; flex-direction: column; min-width: 0; }
+.srt-card-t b { font-size: 15px; font-weight: 900; line-height: 1.15; }
+.srt-card-t i { font-style: normal; font-size: 13px; font-weight: 700; opacity: .95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srt-card-t small { font-size: 11.5px; font-weight: 700; opacity: .85; margin-top: 2px; }
+.srt-banner { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 2px 12px 8px; } .srt-banner.one { grid-template-columns: 1fr; } body:not(.home-play) #srtBannerPlay { display: none; } /* #922: dos, lado a lado */
+.srt-ban { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1.5px solid var(--srt-g3); border-radius: 14px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: var(--srt-ink); font-family: var(--p-font); cursor: pointer; text-align: left; box-shadow: 0 4px 14px var(--srt-sh); }
+.srt-ban { padding: 9px 10px; gap: 8px; min-width: 0; }
+.srt-ban-img { font-size: 30px; line-height: 1; flex: 0 0 auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.srt-ban-t { display: flex; flex-direction: column; flex: 1; min-width: 0; } .srt-ban-t b { font-size: 12.5px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .srt-ban-t small { font-size: 11px; font-weight: 700; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srt-ban-t em { margin-top: 2px; font-size: 11px; }
+.srt-ban em { font-style: normal; font-size: 13px; font-weight: 900; color: var(--srt-lite); }
+.srt-card::after, .srt-cross em { color: var(--srt-lite); }
+/* pantalla */
+html.srt-lock, html.srt-lock body { overflow: hidden; }
+.srt-modal { position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column; background: var(--p-bg, #fff); color: var(--p-text, #111); font-family: var(--p-font); }
+.srt-modal[hidden] { display: none; }
+.srt-head { display: flex; align-items: center; gap: 10px; padding: calc(10px + var(--sat, env(safe-area-inset-top, 0px))) 12px 10px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; flex: 0 0 auto; border-bottom: 1.5px solid var(--srt-g3); }
+.srt-head b { font-size: 16.5px; font-weight: 900; }
+.srt-back { border: 0; border-radius: 999px; padding: 7px 12px; background: rgba(255,255,255,.18); color: #fff; font: 800 13px var(--p-font); cursor: pointer; }
+.srt-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px calc(28px + env(safe-area-inset-bottom, 0px)); }
+.srt-note { padding: 24px; text-align: center; color: var(--p-muted); font-weight: 700; }
+.srt-sec { background: var(--p-card); border: 1px solid var(--p-border); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+.srt-sec h3 { margin: 0 0 8px; font-size: 16px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.srt-live { font-style: normal; font-size: 11px; font-weight: 900; color: var(--srt-g2); }
+.srt-p { margin: 6px 0; font-size: 13.5px; line-height: 1.4; } .srt-muted { color: var(--p-muted); font-size: 12.5px; }
+.srt-extra { border: 2px dashed var(--srt-g3); background: var(--srt-soft); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+.srt-extra b { display: block; font-size: 14.5px; font-weight: 900; color: var(--srt-g); } .srt-extra small { display: block; margin-top: 4px; font-size: 12.5px; line-height: 1.4; }
+.srt-cdwrap { background: var(--srt-soft); border-color: var(--srt-line); }
+.srt-cd-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; } .srt-cd-h b { font-size: 15px; font-weight: 900; } .srt-cd-h span { font-size: 11px; font-weight: 900; letter-spacing: .6px; color: var(--srt-g2); }
+.srt-cd { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.srt-cd-b { background: var(--p-card); border: 1px solid var(--srt-line); border-radius: 12px; padding: 8px 4px; text-align: center; }
+.srt-cd-b b { display: block; font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--srt-g); } .srt-cd-b small { font-size: 10px; font-weight: 800; color: var(--p-muted); letter-spacing: .5px; }
+.srt-prizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0 6px; }
+.srt-prize { text-align: center; } .srt-prize-img { position: relative; display: inline-block; font-size: 42px; line-height: 1; }
+.srt-medal { position: absolute; right: -6px; bottom: -2px; width: 18px; height: 18px; border-radius: 50%; font: 900 11px/18px var(--p-font); font-style: normal; color: #fff; background: #c9a227; } .srt-medal.m2 { background: #8a8f98; } .srt-medal.m3 { background: #b06a3b; }
+.srt-prize b { display: block; font-size: 12.5px; font-weight: 900; margin-top: 4px; line-height: 1.15; } .srt-prize small { display: block; font-size: 11px; color: var(--p-muted); font-weight: 700; }
+.srt-rules { list-style: none; margin: 8px 0 0; padding: 0; } .srt-rules li { font-size: 13.5px; padding: 4px 0; line-height: 1.35; }
+.srt-podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 6px; align-items: end; margin: 6px 0 8px; }
+.srt-pod { text-align: center; } .srt-pod-cup { display: block; font-size: 34px; line-height: 1; } .srt-pod.p1 .srt-pod-cup { font-size: 46px; }
+.srt-pod b { display: block; font-size: 12.5px; font-weight: 900; margin-top: 4px; } .srt-pod small { display: block; min-height: 30px; font-size: 11px; color: var(--p-muted); font-weight: 700; line-height: 1.25; padding: 0 2px; }
+.srt-pod-bar { margin-top: 6px; border-radius: 10px 10px 0 0; background: var(--srt-soft); border: 1px solid var(--srt-line); color: var(--srt-g); font: 900 20px var(--p-font); display: flex; align-items: center; justify-content: center; }
+.srt-pod-bar.b1 { height: 70px; background: linear-gradient(180deg, var(--srt-g2), var(--srt-g)); color: #fff; border-color: transparent; } .srt-pod-bar.b2 { height: 52px; } .srt-pod-bar.b3 { height: 40px; }
+.srt-me { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+.srt-me { border: 1.5px solid var(--srt-g3); } .srt-me span { grid-column: 1; font-size: 11px; font-weight: 800; opacity: .9; } .srt-me b { grid-column: 1; font-size: 24px; font-weight: 900; line-height: 1; } .srt-me small { grid-column: 2; grid-row: 1 / span 2; font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+.srt-me-0 { background: var(--srt-soft); color: var(--p-text); border: 1px solid var(--srt-line); } .srt-me-0 b { color: var(--srt-g); }
+.srt-me-warn { background: linear-gradient(135deg, #8a5a1f, #b07a2a); }
+.srt-table { border: 1px solid var(--p-border); border-radius: 12px; overflow: hidden; }
+.srt-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--p-border); font-size: 13.5px; } .srt-row:first-child { border-top: 0; }
+.srt-row.me { background: var(--srt-soft); font-weight: 900; } .srt-row .srt-r { flex: 0 0 34px; font-weight: 900; color: var(--p-muted); } .srt-row.me .srt-r { color: var(--srt-g); }
+.srt-row .srt-n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .3px; } .srt-row .srt-n i { font-style: normal; font-size: 10.5px; font-weight: 900; color: #fff; background: var(--srt-g2); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.srt-row .srt-pts { font-variant-numeric: tabular-nums; color: var(--srt-g); }
+.srt-join { background: var(--p-card); border: 2px solid var(--srt-g3); border-radius: 16px; padding: 12px; margin-bottom: 10px; } .srt-join.ok { border-style: dashed; }
+.srt-join > b { display: block; font-size: 15px; font-weight: 900; } .srt-join > small { display: block; font-size: 12.5px; color: var(--p-muted); margin-top: 2px; }
+.srt-req { list-style: none; margin: 10px 0; padding: 0; } .srt-req li { display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; padding: 5px 0; line-height: 1.35; } .srt-req li i { font-style: normal; flex: 0 0 auto; } .srt-req li.ok { color: var(--srt-g); font-weight: 800; }
+.srt-req label { display: inline; } .srt-req input { vertical-align: middle; margin-right: 4px; accent-color: var(--srt-g2); }
+.srt-link { border: 0; background: none; color: var(--srt-g2); font: 900 12.5px var(--p-font); padding: 0 2px; cursor: pointer; text-decoration: underline; }
+.srt-btn { width: 100%; border: 1.5px solid var(--srt-g3); border-radius: 14px; padding: 13px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; font: 900 15px var(--p-font); cursor: pointer; box-shadow: 0 6px 18px var(--srt-sh); }
+.srt-cross { width: 100%; margin-bottom: 10px; } .srt-cross em { margin-left: auto; font-style: normal; font-weight: 900; font-size: 12.5px; }
+.srt-terms-btn { width: 100%; border: 1px solid var(--srt-line); border-radius: 14px; padding: 12px; background: var(--p-card); color: var(--p-text); font: 900 14px var(--p-font); cursor: pointer; text-align: left; }
+/* bases: capa encima, ✕ arriba a la izquierda */
+.srt-terms { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; background: var(--p-bg, #fff); color: var(--p-text, #111); } .srt-terms[hidden] { display: none; }
+.srt-terms-head { display: flex; align-items: center; gap: 10px; padding: calc(10px + var(--sat, env(safe-area-inset-top, 0px))) 12px 10px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; border-bottom: 1.5px solid var(--srt-g3); }
+.srt-terms-head b { font-size: 16px; font-weight: 900; } .srt-x { width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(255,255,255,.2); color: #fff; font: 900 18px/36px var(--p-font); cursor: pointer; }
+.srt-terms-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 14px calc(30px + env(safe-area-inset-bottom, 0px)); }
+.srt-terms-body h2 { margin: 0 0 10px; font-size: 17px; font-weight: 900; }
+.srt-tc { margin: 0; padding-left: 18px; } .srt-tc li { font-size: 13.5px; line-height: 1.45; margin-bottom: 9px; } .srt-tc li b { color: var(--srt-g); }
+
+/* #917/#918: RECUADRO RECTANGULAR centrado "🏆 Sorteo mensual · NOVEDAD" en el medio de la barra del casino (reemplaza al PICA ROJA; violeta).
+   Owner #918: "adentro de Girox se ve mal: armá un recuadro rectangular ahí centrado". */
+.casino-brand.casino-srt { pointer-events: auto !important; border: 0; background: none; padding: 0 4px; cursor: pointer; font-family: var(--p-font); display: flex !important; justify-content: center !important; overflow: visible !important; }
+.casino-topbar .casino-brand.casino-srt .cb-box, .casino-brand.casino-srt .cb-box { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 7px !important; min-width: 0; max-width: 100%; padding: 4px 12px !important; border-radius: 9px !important; border: 1.5px solid var(--srt-g2) !important; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)) !important; box-shadow: 0 3px 10px var(--srt-sh); overflow: hidden; }
+.casino-topbar .casino-brand.casino-srt .cb-ico, .casino-brand.casino-srt .cb-ico { width: auto !important; height: auto !important; display: inline-flex; align-items: center; font-size: 16px; line-height: 1; flex: 0 0 auto; }
+.casino-brand.casino-srt .cb-txt { display: flex !important; flex-direction: column; align-items: flex-start; line-height: 1.05; min-width: 0; }
+.casino-topbar .casino-brand.casino-srt b, .casino-brand.casino-srt b { color: #fff !important; font-size: 11px !important; letter-spacing: .4px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.casino-topbar .casino-brand.casino-srt small, .casino-brand.casino-srt small { color: #fff !important; opacity: .9; font-size: 7.5px !important; letter-spacing: 1px !important; display: block !important; white-space: nowrap; }
+@media (max-width: 420px) { .casino-brand.casino-srt small { display: block !important; } }
+@media (max-width: 360px) { .casino-brand.casino-srt .cb-txt { display: flex !important; } .casino-brand.casino-srt .cb-box { border-radius: 9px !important; padding: 3px 8px !important; } .casino-brand.casino-srt b { font-size: 10px !important; } }
+body.casino-open .srt-modal { z-index: 100002 !important; }
+
+/* #920: PORTADA del sorteo — lo que se sortea, grande y con imágenes, arriba de todo */
+.srt-hero { background: linear-gradient(160deg, var(--srt-g), var(--srt-g2)); border: 1.5px solid var(--srt-g3); border-radius: 18px; padding: 14px 12px 12px; margin-bottom: 10px; color: #fff; box-shadow: 0 8px 24px var(--srt-sh); }
+.srt-hero-t { font-size: 13px; font-weight: 900; letter-spacing: .4px; opacity: .95; margin-bottom: 10px; }
+.srt-hero-1 { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 16px; padding: 12px; }
+.srt-hero-img { display: inline-flex; align-items: center; justify-content: center; width: 92px; height: 92px; flex: 0 0 auto; border-radius: 20px; background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.28), rgba(255,255,255,.06) 70%); font-size: 62px; line-height: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+.srt-hero-img.s { width: 60px; height: 60px; font-size: 40px; border-radius: 14px; }
+.srt-hero-1t { display: flex; flex-direction: column; min-width: 0; } .srt-hero-1t b { font-size: 22px; font-weight: 900; line-height: 1.1; } .srt-hero-1t small { font-size: 13px; font-weight: 700; opacity: .9; margin-top: 3px; }
+.srt-hero-pos { display: inline-block; font-style: normal; font-size: 10.5px; font-weight: 900; letter-spacing: .6px; text-transform: uppercase; color: var(--srt-lite); margin-bottom: 4px; }
+.srt-hero-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.srt-hero-s { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); border-radius: 14px; padding: 10px 8px; }
+.srt-hero-s b { font-size: 14px; font-weight: 900; line-height: 1.15; } .srt-hero-s small { font-size: 11.5px; font-weight: 700; opacity: .9; }
+.srt-hero-p { margin: 10px 2px 0; font-size: 12.5px; line-height: 1.35; opacity: .92; }
+@media (max-width: 360px) { .srt-hero-img { width: 76px; height: 76px; font-size: 52px; } .srt-hero-1t b { font-size: 19px; } }
+
+/* #921: franja chica del inicio + anotarse compacto */
+.srt-strip { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--srt-soft); border: 1px solid var(--srt-line); border-radius: 12px; padding: 7px 11px; margin-bottom: 8px; font-size: 12.5px; font-weight: 700; color: var(--p-text); }
+.srt-strip b { color: var(--srt-g2); font-variant-numeric: tabular-nums; } .srt-strip small { font-size: 11px; color: var(--p-muted); font-weight: 700; }
+.srt-join.compact { padding: 9px 11px; margin-bottom: 8px; border-width: 1.5px; } .srt-join.compact > b { font-size: 13.5px; } .srt-join.compact > small { font-size: 11.5px; }
+.srt-join.compact .srt-req { margin: 6px 0; } .srt-join.compact .srt-req li { font-size: 12.5px; padding: 3px 0; }
+.srt-join.ok.compact { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .srt-join.ok.compact > small { margin: 0; }
+.srt-btn.sm { padding: 10px; font-size: 13.5px; border-radius: 12px; }
+
+/* #923: premios con FOTO (emoji o imagen) — mismos contenedores, la imagen rellena recortada */
+.pic img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.srt-card-img.pic { width: 64px; height: 48px; border-radius: 10px; overflow: hidden; filter: none; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.srt-ban-img.pic { width: 54px; height: 40px; border-radius: 9px; overflow: hidden; filter: none; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.srt-hero-img.pic { width: 150px; height: 100px; border-radius: 14px; overflow: hidden; background: #000; filter: none; box-shadow: 0 6px 16px rgba(0,0,0,.4); }
+.srt-hero-1.has-pic { flex-direction: column; align-items: stretch; gap: 10px; } .srt-hero-1.has-pic .srt-hero-img.pic { width: 100%; height: 170px; } .srt-hero-1.has-pic .srt-hero-1t { align-items: center; text-align: center; }
+.srt-hero-img.s.pic { width: 100%; height: 72px; border-radius: 10px; }
+.casino-brand.casino-srt .cb-ico.pic { width: 34px !important; height: 22px !important; border-radius: 5px; overflow: hidden; }
+@media (max-width: 360px) { .srt-hero-1.has-pic .srt-hero-img.pic { height: 140px; } }
+
+/* #924 (owner, captura): "este recuadro del completo dejalo como el básico" → los 4 servicios en UNA fila en TODOS los modos (ícono en círculo,
+   título y "Ver más ›"), igual que .bv-quick del básico. Pisa el 2 × 2 de #758 y vale también en Girox directo / entrada. */
+.ev-services, body.home-play .ev-services, body.home-full .ev-services, body.home-easy .ev-services { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 6px !important; padding: 4px 10px 0 !important; max-width: none !important; }
+.ev-svc, .ev-svc.svc-refund, .ev-svc.svc-roulette, .ev-svc.svc-ref, .ev-svc.svc-missions, body.home-play .ev-svc { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: flex-start !important; text-align: center !important; gap: 3px !important; padding: 8px 4px 7px !important; min-height: 0 !important; border: 1px solid var(--p-border) !important; border-radius: 14px !important; box-shadow: 0 1px 3px rgba(0, 0, 0, .06) !important; flex: none !important; min-width: 0 !important; }
+.ev-svc > b { display: flex !important; flex-direction: column !important; align-items: center !important; gap: 4px !important; font: 800 10.5px/1.1 var(--p-font) !important; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ev-svc .li { width: 30px !important; height: 30px !important; border-radius: 50% !important; background: var(--p-red-soft) !important; color: var(--p-red) !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; }
+.ev-svc .li svg { width: 17px !important; height: 17px !important; }
+.ev-svc > small { display: none !important; }
+.ev-svc::after { content: "Ver más ›" !important; position: static !important; display: block !important; margin: 1px 0 0 !important; padding: 0 !important; font: 800 8.5px var(--p-font) !important; color: var(--p-red) !important; align-self: center !important; }
+
+/* #927 (owner): "achicá como el completo en el básico" → mismas medidas compactas del banner de Girox directo también en el básico e intermedio */
+#basicView .srt-cards, #easyView .srt-cards { margin: 2px 0 8px !important; gap: 6px !important; }
+#basicView .srt-cards .srt-ban, #easyView .srt-cards .srt-ban { padding: 8px 9px !important; gap: 7px !important; border-radius: 12px !important; }
+#basicView .srt-cards .srt-ban-img, #easyView .srt-cards .srt-ban-img { font-size: 26px !important; }
+#basicView .srt-cards .srt-ban-img.pic, #easyView .srt-cards .srt-ban-img.pic { width: 48px !important; height: 36px !important; }
+#basicView .srt-cards .srt-ban-t b, #easyView .srt-cards .srt-ban-t b { font-size: 12px !important; }
+#basicView .srt-cards .srt-ban-t small, #easyView .srt-cards .srt-ban-t small { font-size: 10.5px !important; }
+#basicView .srt-cards .srt-ban-t em, #easyView .srt-cards .srt-ban-t em { font-size: 10.5px !important; margin-top: 1px !important; }
+
+/* #928: el sorteo DESPLEGADO ahí mismo (debajo de las dos mitades), con cabecera violeta y ✕ Cerrar */
+.srt-inline { margin: 0 12px 10px; border: 1.5px solid var(--srt-g3); border-radius: 16px; background: var(--p-bg); overflow: hidden; box-shadow: 0 8px 24px var(--srt-sh); }
+#basicView .srt-inline, #easyView .srt-inline { margin-left: 0; margin-right: 0; }
+.srt-inline-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; }
+.srt-inline-head b { font-size: 15px; font-weight: 900; }
+.srt-inline-x { border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 5px 10px; background: rgba(255,255,255,.14); color: #fff; font: 900 12px var(--p-font); cursor: pointer; }
+.srt-inline-body { padding: 10px 10px 12px; }
+.srt-inline-body .srt-sec, .srt-inline-body .srt-hero, .srt-inline-body .srt-join, .srt-inline-body .srt-extra { margin-bottom: 8px; }
+.srt-inline-body .srt-tc { padding-left: 16px; } .srt-inline-body h2 { margin: 6px 0 8px; font-size: 15px; font-weight: 900; }
+.srt-back-inline { border: 1px solid var(--srt-line); border-radius: 999px; padding: 6px 12px; background: var(--srt-soft); color: var(--srt-g); font: 900 12px var(--p-font); cursor: pointer; margin-bottom: 6px; }
+.srt-ban.on { outline: 2px solid var(--srt-lite); outline-offset: 1px; }
+
+/* #929: cabecera fina del panel desplegado (sólo la ✕) y "Registrado" en una línea */
+.srt-inline-head.slim { padding: 5px 8px 5px 12px; background: var(--srt-soft); color: var(--srt-g); border-bottom: 1px solid var(--srt-line); }
+.srt-inline-head.slim .srt-inline-hint { font: 800 11px var(--p-font); color: var(--srt-g2); }
+.srt-inline-head.slim .srt-inline-x { background: var(--srt-g); border-color: var(--srt-g); padding: 4px 10px; font-size: 11.5px; }
+.srt-reg { display: flex; align-items: baseline; gap: 4px; padding: 7px 11px; margin-bottom: 8px; border-radius: 12px; background: var(--srt-soft); border: 1px solid var(--srt-line); color: var(--srt-g); font: 900 13px var(--p-font); }
+.srt-reg small { font-size: 11px; font-weight: 700; color: var(--p-muted); }
+
+/* #932 (owner, captura): Info del servicio — SÓLO los títulos plegados (el texto aparece con "Ver más"), logo chiquito sobre el título y
+   fondo claro (nada de negro) */
+#infoModal .modal-content { background: var(--p-bg) !important; color: var(--p-text) !important; }
+#infoModal .info-head-sm { display: flex !important; flex-direction: column; align-items: center; gap: 2px; }
+#infoModal .info-logo { width: 34px; height: 34px; border-radius: 9px; display: block; margin: 0 auto 2px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+#infoModal .info-head-sm h2 { color: var(--p-text) !important; }
+.info-msg.im-compact .im-sec:not(.open) { max-height: 50px !important; padding-bottom: 0 !important; }
+.info-msg.im-compact .im-sec:not(.open)::after { display: none !important; }
+.info-msg.im-compact .im-sec:not(.open) > b:first-child { white-space: nowrap; overflow: hidden; margin-bottom: 0 !important; }
+.info-msg.im-compact .im-sec > b:first-child .info-badge { flex: 0 0 auto; }
+
+/* #933: hoja resumida del sorteo DENTRO del casino (contador, premios, 2 líneas, Ver más en el menú) */
+.srt-mini { position: fixed; inset: 0; z-index: 100003; display: flex; align-items: flex-start; justify-content: center; padding: calc(64px + var(--sat, env(safe-area-inset-top, 0px))) 12px 12px; background: rgba(0, 0, 0, .45); font-family: var(--p-font); }
+.srt-mini-box { width: 100%; max-width: 400px; background: var(--p-bg, #fff); color: var(--p-text, #111); border: 1.5px solid var(--srt-g3); border-radius: 18px; padding: 10px 12px 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .4); }
+.srt-mini-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; } .srt-mini-head b { font-size: 15px; font-weight: 900; }
+.srt-mini-head .srt-x { width: 30px; height: 30px; line-height: 30px; font-size: 15px; background: var(--srt-g); }
+.srt-mini-cdl { font-size: 10.5px; font-weight: 900; letter-spacing: .6px; color: var(--srt-g2); margin: 2px 0 6px; text-align: center; }
+.srt-mini .srt-cd-b { padding: 6px 2px; } .srt-mini .srt-cd-b b { font-size: 20px; }
+.srt-mini-prizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0 8px; }
+.srt-mini-p { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; background: var(--srt-soft); border: 1px solid var(--srt-line); border-radius: 12px; padding: 8px 4px; }
+.srt-mini-img { font-size: 30px; line-height: 1; } .srt-mini-img.pic { width: 100%; height: 54px; border-radius: 8px; overflow: hidden; }
+.srt-mini-p i { font-style: normal; font-size: 9.5px; font-weight: 900; color: var(--srt-g2); letter-spacing: .5px; } .srt-mini-p b { font-size: 11px; font-weight: 900; line-height: 1.15; }
+.srt-mini-txt { margin: 4px 0 8px; font-size: 12.5px; line-height: 1.35; color: var(--p-text); }
+.srt-mini-me { font-size: 12px; font-weight: 800; color: var(--srt-g); margin-bottom: 8px; }
+
+/* #934 (owner, captura): el panel desplegado del sorteo se veía RECORTADO en el básico: .basic-view es flex-column con scroll y un hijo con
+   overflow:hidden se encoge. Nada de lo del sorteo se achica. */
+.srt-inline, .srt-cards, .srt-banner { flex: 0 0 auto !important; min-height: 0; }
+/* #934 (owner, captura): Info del servicio — SÓLO título + ícono (nada de texto) hasta tocar Ver más; recuadro más marcado ("se pierde mucho") */
+#infoMsg .im-card:not(.open) .im-sec { display: block !important; -webkit-line-clamp: unset !important; max-height: none !important; font-size: 0 !important; line-height: 0 !important; padding: 10px 6px 10px 12px !important; }
+#infoMsg .im-card:not(.open) .im-sec > b:first-child { display: flex !important; align-items: center; gap: 9px; margin: 0 !important; font: 800 13.5px/1.3 var(--p-font) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#infoMsg .im-card:not(.open) .im-sec > b:first-child > span:not(.info-badge) { overflow: hidden; text-overflow: ellipsis; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico { width: 34px !important; height: 34px !important; flex: 0 0 34px !important; border-radius: 10px !important; background: var(--p-red-soft) !important; border: 0 !important; color: var(--p-red) !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; margin: 0 !important; }
+#infoMsg .im-card .im-sec > b:first-child .im-ico svg { width: 19px !important; height: 19px !important; display: block; stroke: currentColor; }
+#infoMsg .im-card { border: 1.5px solid #cfcfd6 !important; border-radius: 14px !important; background: var(--p-card) !important; box-shadow: 0 2px 10px rgba(0, 0, 0, .08) !important; }
+html[data-theme="dark"] #infoMsg .im-card { border-color: #3d3d44 !important; }
+#infoMsg.im-grid { gap: 8px !important; }
+#infoMsg .im-card:not(.open) .im-more { font: 800 12px var(--p-font) !important; color: var(--p-red) !important; }
+
+/* #935: banner del sorteo DEBAJO de la barra del casino (abierto) · píldora en el medio (cerrado) */
+.casino-srt-bar { display: flex; align-items: center; gap: 6px; padding: 5px 8px 7px; background: var(--p-card); border-bottom: 1px solid var(--p-border); }
+.casino-srt-bar[hidden] { display: none !important; }
+.casino-srt-bar .csb-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 7px 12px; border: 1.5px solid var(--srt-g3); border-radius: 13px; background: linear-gradient(135deg, var(--srt-g), var(--srt-g2)); color: #fff; font-family: var(--p-font); cursor: pointer; text-align: left; box-shadow: 0 3px 10px var(--srt-sh); }
+.casino-srt-bar .csb-main .srt-ban-img { font-size: 26px; } .casino-srt-bar .csb-main .srt-ban-img.pic { width: 46px; height: 34px; }
+.casino-srt-bar .csb-main .srt-ban-t b { font-size: 13px; } .casino-srt-bar .csb-main .srt-ban-t small { font-size: 11px; }
+.casino-srt-bar .csb-main em { margin-left: auto; font-style: normal; font-size: 12.5px; font-weight: 900; color: var(--srt-lite); white-space: nowrap; }
+.casino-srt-bar .csb-x { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--srt-line); background: var(--srt-soft); color: var(--srt-g); font: 900 15px/28px var(--p-font); cursor: pointer; } /* #945: ✕ */
+.casino-brand[hidden], .casino-brand.casino-srt[hidden] { display: none !important; }
+
+/* #936: Bases de cada sorteo abajo del propio sorteo */
+.srt-tc-sec { background: var(--srt-soft); border-color: var(--srt-line); }
+.srt-tc-sec h3 { font-size: 14.5px; }
+.srt-tc-sec .srt-tc { padding-left: 16px; } .srt-tc-sec .srt-tc li { font-size: 12.5px; margin-bottom: 7px; }
+
+/* #938: hoja del casino más chica, con los DOS sorteos resumidos y sus premios */
+.srt-mini { padding-top: calc(56px + var(--sat, env(safe-area-inset-top, 0px))); }
+.srt-mini-box { max-width: 380px; max-height: calc(100dvh - 90px - var(--sat, env(safe-area-inset-top, 0px))); overflow-y: auto; padding: 8px 10px 10px; }
+.srt-mini-head { margin-bottom: 4px; } .srt-mini-head b { font-size: 14px; }
+.srt-mini-s { border: 1px solid var(--srt-line); border-radius: 12px; padding: 7px 8px 6px; margin-bottom: 7px; background: var(--p-card); }
+.srt-mini-sh { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; flex-wrap: wrap; } .srt-mini-sh b { font-size: 13px; font-weight: 900; } .srt-mini-sh small { font-size: 10.5px; font-weight: 800; color: var(--srt-g2); } .srt-mini-sh small b { color: var(--srt-g); }
+.srt-mini-s .srt-mini-prizes { margin: 6px 0 4px; gap: 5px; } .srt-mini-s .srt-mini-p { padding: 6px 3px; } .srt-mini-s .srt-mini-img { font-size: 26px; } .srt-mini-s .srt-mini-img.pic { height: 44px; }
+.srt-mini-s .srt-mini-p b { font-size: 10px; } .srt-mini-s .srt-mini-p small { font-size: 8.5px; color: var(--p-muted); font-weight: 700; line-height: 1.1; }
+.srt-mini-s .srt-mini-txt { margin: 2px 0 0; font-size: 11px; line-height: 1.3; color: var(--p-muted); }
+.srt-mini-foot { margin: 6px 0 0; text-align: center; font-size: 10.5px; color: var(--p-muted); font-weight: 700; }
+
+/* #940: panel desplegado sin la fila "Próximamente"; ✕ flotante; SIEMPRE con todo el contenido visible (nada de altura/overflow que lo recorte) */
+.srt-inline { position: relative; overflow: visible !important; height: auto !important; max-height: none !important; }
+.srt-inline > .srt-inline-x-float { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--srt-g); border-color: var(--srt-g); padding: 5px 10px; font-size: 11.5px; }
+.srt-inline-body { padding-top: 10px; }
+.srt-inline-body > .srt-strip:first-child { padding-right: 96px; }
+.srt-inline-body > .srt-strip:first-child, .srt-inline-body > *:last-child { border-radius: 14px; }
+
+/* #941: el sorteo en VENTANA (hoja sobre el menú): fondo oscurecido (tocar afuera cierra), cabecera fija con ✕, cuerpo con scroll, deslizable */
+.srt-modal { background: rgba(0, 0, 0, .55) !important; align-items: flex-end; justify-content: center; padding: 0; }
+.srt-win { width: 100%; max-width: 520px; max-height: calc(100dvh - 36px - var(--sat, env(safe-area-inset-top, 0px))); display: flex; flex-direction: column; position: relative; background: var(--p-bg, #fff); color: var(--p-text, #111); border-radius: 22px 22px 0 0; overflow: hidden; box-shadow: 0 -10px 40px rgba(0, 0, 0, .35); will-change: transform; }
+@media (min-width: 560px) { .srt-modal { align-items: center; padding: 16px; } .srt-win { border-radius: 22px; max-height: calc(100dvh - 64px); } }
+.srt-win .srt-head { position: sticky; top: 0; z-index: 3; padding: 10px 12px 10px 14px; border-radius: 0; justify-content: space-between; touch-action: none; }
+.srt-win .srt-head b { flex: 1; font-size: 16px; }
+.srt-win .srt-head .srt-x { background: rgba(255,255,255,.22); width: 34px; height: 34px; line-height: 34px; font-size: 16px; }
+.srt-grip { position: absolute; left: 50%; top: 4px; width: 42px; height: 4px; margin-left: -21px; border-radius: 2px; background: rgba(255,255,255,.55); }
+.srt-win .srt-body { padding: 12px 12px calc(20px + env(safe-area-inset-bottom, 0px)); overscroll-behavior: contain; }
+.srt-win .srt-terms { position: absolute; inset: 0; }
+
+/* #943: Bases minimizadas abajo de todo */
+.srt-tc-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: none; padding: 2px 0; color: var(--p-text); font: 900 14.5px var(--p-font); cursor: pointer; text-align: left; }
+.srt-tc-toggle i { font-style: normal; font-size: 12px; font-weight: 900; color: var(--srt-g2); white-space: nowrap; }
+.srt-tc-sec .srt-tc { margin-top: 8px; } .srt-tc-sec .srt-tc[hidden] { display: none; }
+
+/* #947 (owner, captura): en el menú BÁSICO los sorteos van abajo de todo (la columna es flex ⇒ order) */
+#basicView .srt-cards { order: 999; margin: 10px 0 4px !important; }
+
+/* #949 (owner): Girox con fondo VERDE OSCURO (el verde de Girox) en el básico y en el completo; PICA ROJA como 4ª plataforma (Pronto), roja */
+.bv-chip.plat-girox, .bv-chip.plat-girox.on, .bv-chip.plat-girox.soon { background: linear-gradient(160deg, #0f5132, #083d25) !important; border-color: #1f8a5a !important; color: #fff !important; box-shadow: 0 0 0 3px rgba(31, 138, 90, .18) !important; }
+.bv-chip.plat-girox b, .bv-chip.plat-girox small, .bv-chip.plat-girox.on small { color: #fff !important; }
+.bv-chip.plat-girox img { background: #fff !important; border-radius: 50%; padding: 2px; }
+.plat-play-btn.plat-girox, .plat-play-btn.plat-girox.is-pref { background: linear-gradient(160deg, #0f5132, #083d25) !important; border-color: transparent !important; color: #fff !important; }
+.plat-play-btn.plat-girox .plat-play-name, .plat-play-btn.plat-girox .plat-play-sub { color: #fff !important; }
+.plat-play-btn.plat-girox .plat-logo { background: #fff !important; border-radius: 50% !important; }
+.plat-play-btn.plat-girox .plat-check { background: #fff !important; color: #0f5132 !important; }
+.bv-chip.plat-picaroja, .bv-chip.plat-picaroja.soon { background: linear-gradient(160deg, #e60023, #9b0018) !important; border-color: #ff4d6a !important; color: #fff !important; }
+.bv-chip.plat-picaroja b, .bv-chip.plat-picaroja small { color: #fff !important; } .bv-chip.plat-picaroja img { background: #fff !important; border-radius: 9px; padding: 1px; }
+.plat-play-btn.plat-picaroja, .plat-play-btn.plat-picaroja.soon { background: linear-gradient(160deg, #e60023, #9b0018) !important; border-color: transparent !important; color: #fff !important; }
+.plat-play-btn.plat-picaroja .plat-play-name, .plat-play-btn.plat-picaroja .plat-play-sub { color: #fff !important; } .plat-play-btn.plat-picaroja .plat-logo { background: #fff !important; border-radius: 9px !important; }
+.plat-play-btn.plat-picaroja .plat-soon-badge, .bv-chip.plat-picaroja small { background: rgba(255,255,255,.22) !important; color: #fff !important; }
+/* #950 (owner, captura): "Cómo funciona todo" de Soporte: todo legible en el teléfono (antes el botón quedaba abajo de la barra inferior) */
+
+/* #958: CARGÁ AQUÍ / X% VIGENTE · APRETÁ AQUÍ (llamativo) */
+@keyframes srtLive { 0%, 100% { box-shadow: 0 0 0 0 rgba(230, 0, 35, .45); } 50% { box-shadow: 0 0 0 10px rgba(230, 0, 35, 0); } }
+.ev-cta-live { animation: srtLive 1.6s ease-in-out infinite; }
+.ev-cta.ev-cta-top.ev-cta-live { background: linear-gradient(135deg, #e60023, #b8001c) !important; }
+.ev-cta.ev-cta-top.ev-cta-live .ev-cta-b { font-size: 20px !important; letter-spacing: 1px !important; }
+/* #958: tarjetas de plataforma del completo: letra más chica para que entren Ganamos, Jugaygana y PICA ROJA */
+.plat-play-name { font-size: 9.5px !important; letter-spacing: .2px !important; }
+.plat-play-btn .plat-reco, .plat-play-btn .plat-soon-badge { font-size: 7.5px !important; padding: 1px 6px !important; letter-spacing: .5px !important; }
+.plat-play-btn .plat-logo { width: 26px !important; height: 26px !important; }
+.plat-play-sub { font-size: 8px !important; }
+/* #958: chips del básico: cuadrados más chicos, los 4 en una fila */
+.bv-plats { grid-template-columns: repeat(4, 1fr) !important; gap: 4px !important; }
+.bv-chip { padding: 5px 2px !important; gap: 2px !important; border-radius: 10px !important; min-width: 0; }
+.bv-chip img { width: 22px !important; height: 22px !important; }
+.bv-chip b { font-size: 9.5px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bv-chip small { font-size: 7.5px !important; letter-spacing: .3px !important; }
+
+/* #960 (owner, captura): en el BÁSICO el botón CARGAR se iba de cuadro con "100% VIGENTE · APRETÁ AQUÍ" */
+#bvLoadBtn > span { min-width: 0; }
+#bvLoadBtn > span > b { font-size: 15px !important; line-height: 1.1 !important; white-space: normal !important; letter-spacing: .3px !important; display: block; }
+#bvLoadBtn.ev-cta-live > span > b { font-size: 14px !important; }
+#bvLoadBtn .bv-min { white-space: normal !important; font-size: 11px !important; line-height: 1.2 !important; display: block; }
+
+/* #961 (owner, capturas): las tarjetas de plataforma del COMPLETO iguales a los chips del BÁSICO (mismo tamaño, nombre entero, PRONTO abajo) */
+#platformsButtons { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 4px !important; }
+.plat-play-wrap { min-width: 0 !important; flex: none !important; width: auto !important; }
+.plat-play-btn, .plat-play-btn.is-pref, .plat-play-btn.soon { width: 100% !important; height: 70px !important; min-height: 0 !important; padding: 5px 2px 5px !important; border-radius: 10px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 2px !important; box-sizing: border-box; }
+.plat-play-btn .plat-logo { width: 22px !important; height: 22px !important; margin: 0 !important; }
+.plat-play-name { font-size: 9.5px !important; font-weight: 800 !important; text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; max-width: 100% !important; line-height: 1.1 !important; margin: 0 !important; }
+.plat-play-sub { display: none !important; }
+.plat-play-btn .plat-reco, .plat-play-btn .plat-soon-badge { position: static !important; margin: 1px 0 0 !important; font-size: 7px !important; padding: 1px 5px !important; letter-spacing: .4px !important; line-height: 1.3 !important; }
+.plat-play-btn .plat-check { position: absolute !important; top: 3px !important; right: 3px !important; width: 13px !important; height: 13px !important; font-size: 9px !important; line-height: 13px !important; border-radius: 50% !important; }
+
+/* #962 (owner, capturas): orden del BÁSICO — sorteos debajo de la barra superior, después Nivel/Racha, después el saldo y enseguida CARGAR / RETIRAR */
+#basicView .srt-cards { order: -4 !important; margin: 2px 0 4px !important; }
+#basicView .status-row { order: -3 !important; }
+#basicView .play-bal, #basicView .fit-link { order: -2 !important; }
+#basicView .min-strip.ms-basic, #basicView #firstGuideBasic, #basicView #bvLoadBtn, #basicView #bvLoadPanel, #basicView .bv-btn.bv-wd, #basicView #bvWdPanel { order: -1 !important; }

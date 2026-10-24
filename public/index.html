@@ -632,11 +632,11 @@
             </div>
         </div>
         <!-- #414 (owner): SOPORTE PARA VISITANTES (sin cuenta): burbuja + panel con la asistente de PICA ROJA (js/guestsupport.js) -->
-        <button type="button" id="gsBubble" class="gs-bubble" onclick="VIP.guestSupport.open()" aria-label="Hablar con Soporte"><span class="gs-av"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#ffe9ec"/><path d="M9 64c2.5-13 11.5-19 23-19s20.5 6 23 19z" fill="#e60023"/><rect x="27" y="36" width="10" height="11" rx="4" fill="#e8b48f"/><ellipse cx="32" cy="28" rx="12" ry="13" fill="#f3c7a4"/><path d="M20 27c0-9 5-14 12-14s12 5 12 14c-2-4-6-6-12-6s-10 2-12 6z" fill="#3b2a24"/><circle cx="27.5" cy="29" r="1.4" fill="#2b1d18"/><circle cx="36.5" cy="29" r="1.4" fill="#2b1d18"/><path d="M28 34.5c2 1.6 6 1.6 8 0" stroke="#b5664e" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M18 30c-2 0-3 2-2 4s2 3 4 2" fill="#3b2a24"/><rect x="44" y="30" width="5" height="7" rx="2.5" fill="#e60023"/><path d="M46 30c0-8-5-13-14-13" stroke="#e60023" stroke-width="2.2" fill="none"/></svg></span><span class="gs-bubble-t"><b>Soporte</b><small>en línea · te respondemos en minutos</small></span></button>
+        <button type="button" id="gsBubble" class="gs-bubble" onclick="VIP.guestSupport.open()" aria-label="Hablar con Soporte"><span class="gs-av"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#ffe9ec"/><path d="M9 64c2.5-13 11.5-19 23-19s20.5 6 23 19z" fill="#e60023"/><rect x="27" y="36" width="10" height="11" rx="4" fill="#e8b48f"/><ellipse cx="32" cy="28" rx="12" ry="13" fill="#f3c7a4"/><path d="M20 27c0-9 5-14 12-14s12 5 12 14c-2-4-6-6-12-6s-10 2-12 6z" fill="#3b2a24"/><circle cx="27.5" cy="29" r="1.4" fill="#2b1d18"/><circle cx="36.5" cy="29" r="1.4" fill="#2b1d18"/><path d="M28 34.5c2 1.6 6 1.6 8 0" stroke="#b5664e" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M18 30c-2 0-3 2-2 4s2 3 4 2" fill="#3b2a24"/><rect x="44" y="30" width="5" height="7" rx="2.5" fill="#e60023"/><path d="M46 30c0-8-5-13-14-13" stroke="#e60023" stroke-width="2.2" fill="none"/></svg></span><span class="gs-bubble-t"><b>Soporte sin iniciar sesión</b><small>registro desactivado · te respondemos en minutos</small></span></button><!-- #953 -->
         <div id="gsPanel" class="gs-panel" role="dialog" aria-label="Soporte">
             <div class="gs-head">
                 <span class="gs-av"><svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#ffe9ec"/><path d="M9 64c2.5-13 11.5-19 23-19s20.5 6 23 19z" fill="#e60023"/><rect x="27" y="36" width="10" height="11" rx="4" fill="#e8b48f"/><ellipse cx="32" cy="28" rx="12" ry="13" fill="#f3c7a4"/><path d="M20 27c0-9 5-14 12-14s12 5 12 14c-2-4-6-6-12-6s-10 2-12 6z" fill="#3b2a24"/><circle cx="27.5" cy="29" r="1.4" fill="#2b1d18"/><circle cx="36.5" cy="29" r="1.4" fill="#2b1d18"/><path d="M28 34.5c2 1.6 6 1.6 8 0" stroke="#b5664e" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M18 30c-2 0-3 2-2 4s2 3 4 2" fill="#3b2a24"/><rect x="44" y="30" width="5" height="7" rx="2.5" fill="#e60023"/><path d="M46 30c0-8-5-13-14-13" stroke="#e60023" stroke-width="2.2" fill="none"/></svg></span>
-                <div class="gs-head-t"><b id="gsAgentName">Soporte</b><small>Asistente PICA ROJA · <i class="gs-dot"></i>en línea</small></div>
+                <div class="gs-head-t"><b id="gsAgentName">Soporte</b><small>Sin inicio de sesión (registro desactivado) · <i class="gs-dot"></i>en línea</small></div><!-- #953 -->
                 <button type="button" class="gs-x" onclick="VIP.guestSupport.close()" aria-label="Cerrar">✕</button>
             </div>
             <form id="gsForm" class="gs-form" onsubmit="VIP.guestSupport.start(event)">
@@ -1163,6 +1163,7 @@
             <!-- #641 (owner): CARGÁ AHORA grande y centrado, debajo de la barra superior y arriba del nivel VIP (sólo en el Inicio). Antes vivía en el carrusel. -->
             <!-- #689 (owner): la línea nivel VIP + fueguito va ARRIBA de CARGÁ AHORA -->
             <div class="play-bal" id="playBalTop"><span class="pb-k">🎰 Tu saldo para jugar</span><b class="js-play-bal">$0</b><button type="button" class="pb-r" onclick="VIP.ui.syncBalance && VIP.ui.syncBalance()" title="Actualizar saldo" aria-label="Actualizar saldo">↻</button></div><!-- #847 --><button type="button" class="fit-link" onclick="VIP.home.openFitPhone()">📱 Ajustar la pantalla a mi teléfono ›</button><!-- #865 -->
+            <div class="srt-banner" id="srtBannerPlay" data-srt-banner hidden></div><!-- #915: sorteo arriba del Girox directo -->
             <div class="status-row" id="statusRow" hidden>
                 <!-- #627 (owner): en el BÁSICO, el nivel VIP resumido va al lado de "Cambiar menú" (home.js _fireMiniSync lo copia de la tarjeta grande) -->
                 <button type="button" class="vip-mini" id="vipMiniBtn" onclick="VIP.home.openVipLevels()" ><span class="vm-ico">🏆</span><b id="vipMiniLvl">Nivel</b><span class="vm-bar"><i id="vipMiniBar" style="width:0%"></i></span><em id="vipMiniPct"></em></button><!-- #536: minimizado, sin texto largo -->
@@ -1191,7 +1192,6 @@
                 <span class="ig-bar-in"><span class="ig-bar-k">Pendiente</span><span class="ig-bar-t" id="igBarText">Instalá la app y cargá tu extra</span><span class="ig-bar-amt" id="igBarAmt">+$0</span></span>
             </button>
             <div id="entryView" class="entry-view">
-                <div class="rf-entries"><!-- #921: dos recuadros chicos, uno al lado del otro --><button type="button" class="rf-entry" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/iphone.svg" alt=""><span class="rf-entry-t"><b>Sorteo mensual</b><i>iPhone 18 Pro Max</i><small class="js-rf-pos">Empieza en noviembre</small></span></button><button type="button" class="rf-entry rf-entry-gran" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/auto.svg" alt=""><span class="rf-entry-t"><b>Gran Sorteo</b><i>Auto 0 km</i><small class="js-rf-gran">Empieza en noviembre</small></span></button></div>
                 <!-- #563 (owner): "dónde querés jugar" es lo más importante: va PRIMERO -->
                 <div class="ev-play-first"><b class="ev-play-k">🎰 Elegí dónde jugar</b><div class="ev-tabs" id="entryTabs"></div></div>
                 <!-- #298 (owner): aviso PREMIUM en una línea, debajo del menú y arriba de reembolso/ruleta/referidos. -->
@@ -1246,7 +1246,6 @@
                  ver la plataforma + ayuda por chat. La preferencia (fácil o completo) vive en localStorage
                  vip_menu_pref y se elige en #menuChooser la primera vez (o desde Perfil). home.js: _easyPaint. ===== -->
             <div id="easyView" class="easy-view" aria-label="Menú intermedio">
-                <div class="rf-entries"><!-- #921: dos recuadros chicos, uno al lado del otro --><button type="button" class="rf-entry" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/iphone.svg" alt=""><span class="rf-entry-t"><b>Sorteo mensual</b><i>iPhone 18 Pro Max</i><small class="js-rf-pos">Empieza en noviembre</small></span></button><button type="button" class="rf-entry rf-entry-gran" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/auto.svg" alt=""><span class="rf-entry-t"><b>Gran Sorteo</b><i>Auto 0 km</i><small class="js-rf-gran">Empieza en noviembre</small></span></button></div>
                 <!-- #448 (owner): avatar de perfil + nombre, y se expande ("ver más") con usuario, nivel, código y accesos -->
                 <div class="ez-top">
                     <button type="button" class="ez-hello ez-hello-btn" id="ezHelloBtn" onclick="VIP.home.easyToggleMore()" aria-expanded="false" title="Ver más">
@@ -1271,6 +1270,7 @@
                     <span class="ez-main-txt"><b>CARGAR AHORA</b><small>Transferís, mandás la foto y se acredita solo<b class="ms-easy"> · mínimo <span class="md-amt">$2.000</span></b></small><span class="promo-live" hidden></span></span>
                     <span class="ez-main-arrow">›</span>
                 </button>
+                <div class="srt-cards" data-srt-cards hidden></div><!-- #915: sorteos abajo de CARGAR AHORA -->
                 <!-- #504: bono de SEGUNDA carga vigente (lo pinta home.js con /api/strategy/me) -->
                 <!-- #510 (owner): orden fijo — Reembolso · Misiones / Referidos · Ruleta. "Ver la plataforma" y "Soporte" salieron del menú fácil
                      (el soporte sigue en la barra de arriba y en la de abajo con la opción 2; la plataforma, en el menú completo). -->
@@ -1301,8 +1301,8 @@
             <div id="basicView" class="basic-view" aria-label="Menú básico">
                 <!-- #627 (owner 2026-10-20): UNA sola línea arriba: 👤 nombre · saldo · 🔥 racha. El nivel VIP se fue al lado de "Cambiar menú" (#vipMiniBtn). -->
                 <div class="play-bal" id="playBalBasic"><span class="pb-k">🎰 Tu saldo para jugar</span><b class="js-play-bal">$0</b><button type="button" class="pb-r" onclick="VIP.ui.syncBalance && VIP.ui.syncBalance()" title="Actualizar saldo" aria-label="Actualizar saldo">↻</button></div><!-- #847 --><button type="button" class="fit-link" onclick="VIP.home.openFitPhone()">📱 Ajustar la pantalla a mi teléfono ›</button><!-- #865 -->
-                <div class="rf-entries"><!-- #921: dos recuadros chicos, uno al lado del otro --><button type="button" class="rf-entry" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/iphone.svg" alt=""><span class="rf-entry-t"><b>Sorteo mensual</b><i>iPhone 18 Pro Max</i><small class="js-rf-pos">Empieza en noviembre</small></span></button><button type="button" class="rf-entry rf-entry-gran" onclick="VIP.raffle.open()"><img class="rf-entry-img" src="/images/sorteo/premios/auto.svg" alt=""><span class="rf-entry-t"><b>Gran Sorteo</b><i>Auto 0 km</i><small class="js-rf-gran">Empieza en noviembre</small></span></button></div>
                 <div class="bv-top"><span class="bv-user"><i>👤</i><span id="basicHello">—</span></span><b id="basicBalance">$0</b><button type="button" class="bv-fire" id="bvFire" onclick="var b=document.getElementById('fireBtn'); if(b) b.click();" title="Fueguito: tu racha de cargas"><span class="bv-new">Novedad</span>🔥 Fueguito <b><span id="bvFireN">0</span> d</b></button></div>
+                <div class="srt-cards" data-srt-cards hidden></div><!-- #915: sorteos abajo del saldo, arriba de los servicios -->
                 <!-- #642 (owner 2026-10-20): "¿Dónde jugás?" + chips de plataforma ARRIBA de CARGAR -->
                 <!-- #755 (owner): los servicios ARRIBA de todo en el básico -->
                 <div class="bv-sec-t"><b>Todo lo que ofrecemos 100% para vos</b><small>Tocá cada uno para ver más ›</small></div><!-- #751 -->
@@ -1356,6 +1356,35 @@
                     <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('easy')"><b>☰ Menú intermedio</b><small>Reembolsos, misiones, referidos y ruleta en botones grandes.</small></button>
                     <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('full')"><b>🧭 Menú completo · detallado</b><small>Todo a la vista: plataformas, fueguito, niveles VIP, carga automática, historias.</small></button>
                     <button type="button" class="bv-sw" onclick="VIP.home.setMenuPref('girox')"><b>🎰 Menú <span class="mc-brand">Girox</span> directo</b><small>Entrás a jugar al toque en <span class="mc-brand">Girox</span>, la plataforma seleccionada; cargás y retirás desde adentro.</small></button><!-- #670/#672 -->
+                </div>
+            </div>
+            <!-- #915 (owner): SORTEOS con ranking en vivo — pantalla completa por sorteo + Bases en capa aparte (✕ arriba a la izquierda). js/sorteos.js -->
+            <!-- #941 (owner): VENTANA sobre el menú: ✕ fija arriba, tocar afuera cierra, deslizar hacia abajo cierra (js/sorteos.js _swipe) -->
+            <div id="srtModal" class="srt-modal" hidden role="dialog" aria-modal="true" aria-labelledby="srtTitle" onclick="if (event.target === this) VIP.sorteos.close()">
+                <div class="srt-win" id="srtWin">
+                    <div class="srt-head" id="srtHead"><i class="srt-grip" aria-hidden="true"></i><b id="srtTitle">🏆 Sorteo</b><button type="button" class="srt-x" onclick="VIP.sorteos.close()" aria-label="Cerrar">✕</button></div>
+                    <div class="srt-body" id="srtBody"><div class="srt-note">Cargando…</div></div>
+                    <div id="srtTerms" class="srt-terms" hidden role="dialog" aria-modal="true">
+                        <div class="srt-terms-head"><button type="button" class="srt-x" onclick="VIP.sorteos.termsClose()" aria-label="Cerrar">✕</button><b>Bases y condiciones</b></div>
+                        <div class="srt-terms-body" id="srtTermsBody"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- #910 (owner): el resumen de Soporte en un RECUADRO encima de todo, con scroll y botón cerrar -->
+            <div id="spFaqModal" class="sp-faq-modal" hidden role="dialog" aria-modal="true" aria-labelledby="spFaqTitle" onclick="if (event.target === this) VIP.home.supportFaqClose(event)">
+                <div class="sp-faq-box">
+                    <div class="sp-faq-head"><b id="spFaqTitle">📌 Cómo funciona todo</b><button type="button" class="sp-faq-x" aria-label="Cerrar" onclick="VIP.home.supportFaqClose(event)">✕</button></div>
+                    <div class="sp-faq-scroll">
+                        <ul>
+                                <li><b>💳 Carga:</b> mínimo <span class="md-amt">$2.000</span>. Transferís al CBU de la app, mandás el comprobante entero (titular, monto, fecha y N° de operación) y se acredita sola en minutos. Un comprobante repetido no se acredita.</li>
+                                <li><b>💸 Retiro:</b> mínimo <span class="wd-min">$10.000</span>, a un CBU a tu nombre. Sale solo a tu cuenta.</li>
+                                <li><b>🔒 ¿No te deja retirar todo?</b> Cada carga se juega <span class="rx-dep">×3</span> y cada bono <span class="rx-bon">×5</span> antes de retirarlos (antifraude). En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar. Se libera solo jugando: no hace falta escribir.</li>
+                                <li><b>⏳ “Retiro procesado, lo estamos verificando”:</b> ya está en camino, en breve lo ves en tu cuenta.</li>
+                                <li><b>🎁 Bonos y reembolso:</b> los bonos de carga se aplican solos; el reembolso diario se reclama desde la app.</li>
+                                <li><b>❗ ¿Nada de esto es tu caso?</b> Escribinos acá qué pasó, cuándo y con qué monto, y te respondemos.</li>
+                            </ul>
+                    </div>
+                    <button type="button" class="sp-faq-ok" onclick="VIP.home.supportFaqClose(event)">Entendido · cerrar</button>
                 </div>
             </div>
             <div id="menuChooser" class="menu-chooser" role="dialog" aria-modal="true" aria-labelledby="mcTitle">
@@ -2482,6 +2511,7 @@
         <div class="modal-content" style="max-width: 600px; position: relative;" onclick="event.stopPropagation()">
             <button onclick="hideModal('infoModal')" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; z-index: 10;">✕</button>
             <div class="modal-header info-head-sm">
+                <img src="/icons/icon-192x192.png" class="info-logo" alt="" width="34" height="34"><!-- #932: logo chiquito sobre el título -->
                 <h2>Información del servicio</h2>
             </div>
             <!-- #369: la línea de app + notificaciones (#254) se sacó de acá: vive en Perfil. -->
@@ -2509,7 +2539,7 @@
                 <p class="im-sec" id="infoCardRollover"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></i>Cargas y retiros (antifraude)</b>Para cuidar el servicio y que nadie lo use para mover plata sin jugar, <b>cada carga tiene rollover <span class="rx-dep">×3</span></b>: hay que apostar 3 veces su monto antes de retirarla (ej.: cargás $10.000 ⇒ apostás $30.000). Los bonos y regalos van <b><span class="rx-bon">×5</span></b>. <b>Cuenta lo que apostás</b>, ganes o pierdas, no lo que cargás, y lo que ganás jugando se puede retirar con la misma regla. En <b>Retirar premio</b> ves cuánto podés retirar hoy y cuánto te falta apostar para el resto: se libera solo, no hace falta escribir a Soporte.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <!-- #296: se muestra sólo si hay 2+ plataformas habilitadas (home.js _paintPlatformTexts) -->
-                <p class="im-sec" id="infoCardTwoPlats"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b> y <b>Jugaygana</b>, todas originales, con el mismo usuario. <i>(Estamos trabajando en las automatizaciones para Jugaygana y Ganamos.)</i></span><!-- #710 (owner) --></p>
+                <p class="im-sec" id="infoCardTwoPlats"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M8 12h.01M11 12h.01M14 12h.01"/><path d="M7 18l-1 3M17 18l1 3"/></svg></i>La plataforma que quieras</b><span id="infoCardTwoPlatsDesc"><b>Girox</b>, <b>Ganamos</b>, <b>Jugaygana</b> y <b>PICA ROJA</b> (nuestra plataforma propia, pronto), todas originales, con el mismo usuario. <i>(Estamos trabajando en las automatizaciones para Jugaygana, Ganamos y PICA ROJA.)</i></span><!-- #710 (owner) --></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/><path d="M5 20h14"/></svg></i>Niveles VIP</b>Todo lo que apostás suma: subís de nivel, cobrás bonos y rakeback semanal (rakeback = te devolvemos un % de lo que apostaste). Los bonos se juegan <b>×5</b> antes de retirarlos.</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
@@ -2518,7 +2548,7 @@
                     <span class="im-line">Sobre lo perdido <b>con tu plata</b> (bonos no cuentan). <b>Se cobra solo</b> desde "Cobrá tu reembolso acá" y se juega <b>×5</b> antes de retirarlo.</span>
                     <span class="refund-promo" hidden></span></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
-                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b>Con <b><span class="rl-min">$10.000</span></b> cargados en el día (vale sumar cargas, ej. 2 de $5.000) y la app instalada tenés <b>un giro gratis por día</b>: % extra o plata al instante. Los premios en plata se juegan <b>×5</b> antes de poder retirarlos. <button type="button" class="im-link" onclick="hideModal('infoModal'); if(window.VIP&&VIP.roulette&&VIP.roulette.open)VIP.roulette.open();">Girar ›</button></p>
+                <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg></i>Ruleta diaria</b>Con <b><span class="rl-min">$10.000</span></b> cargados en el día (se suman las cargas del día) y la app instalada tenés <b>un giro gratis por día</b>: % extra o plata al instante. Los premios en plata se juegan <b>×5</b> antes de poder retirarlos. <button type="button" class="im-link" onclick="hideModal('infoModal'); if(window.VIP&&VIP.roulette&&VIP.roulette.open)VIP.roulette.open();">Girar ›</button></p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
                 <p class="im-sec"><b><i class="im-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M15.5 14.2c2.6.3 4.5 2.4 4.5 4.8"/></svg></i>Referidos</b>Invitá con tu link y cobrá cada mes el <b><span class="ref-pct">5</span>%</b> de su actividad, de por vida. <b>Se retira sin apostar</b> (sin rollover).</p>
                 <button type="button" class="im-more" onclick="VIP.home.infoMore(this)">Ver más ›</button>
@@ -2646,7 +2676,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v652</div>
+                    <div class="pf-build" id="appBuildTag">app v653</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -3076,7 +3106,7 @@
     <script src="/js/autoload.js"></script>
     <script src="/js/home.js"></script>
     <script src="/js/lobby.js"></script><!-- #907 Página exclusiva PICA ROJA -->
-    <script src="/js/raffle.js"></script><!-- #917 Sorteo mensual -->
+    <script src="/js/sorteos.js"></script><!-- G915 sorteos de la gemela (reemplazan a raffle.js) -->
     <script src="/js/site.js"></script><!-- #944 sitio JUGAYGANA independiente -->
     <script src="/js/withdraw.js"></script>
     <script src="/js/installbonus.js"></script>

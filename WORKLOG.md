@@ -8,6 +8,26 @@
 
 ## Sesión 2026-10-24
 
+### 965. 🔀 FUSIÓN con la gemela (PICAROJAoficial, G907–G969) — SW v653 · admin SW v199
+**Owner:** "tengo actualizaciones de otro Claude que trabaja sobre esta misma copia pero no tiene las páginas; si lo cargamos, ¿no rompemos nada?" →
+reemplazar archivos SÍ rompía (su home.js/pin.css no tienen las páginas de marca ni #907–#964). Se aplicó su `cambios-2026-10-24.patch` con
+`git apply --3way` (base común 238c202c) en la rama `fusion-gemela`: ~30 archivos limpios, 23 choques resueltos a mano. Decisiones del owner:
+**sorteo = el de la gemela al 100%** y **la app instalada arranca siempre con el menú de Girox**.
+- Sorteos: queda `sorteos.js` (G915); se borraron `raffle.js`, `raffleService`, `RaffleScore`, `RaffleMonth`, su cron, rutas `/api/raffle*`, la sección
+  del panel y `scripts/test-raffle-join.js`. Páginas de marca: `_rfStrip()` pinta `data-srt-banner`; "Sorteo del mes"/pestaña Sorteos → `VIP.sorteos.open`.
+  **Agregado:** `_sorteoTick` NO corre con el casino simulado (la regla de nuestro #917; el de la gemela no la tenía y en Render habría escrito
+  puntajes falsos en la base real).
+- Barra del casino: nuestra `casinoBarHtml` + marca de la página (#927) + la píldora/banner del sorteo de la gemela (`casinoBrand`/`casinoSrtBtn`/
+  `casinoSrtBar`) + Carga rápida abierta en Girox directo (G937).
+- Comprobantes repetidos: se quedan los DOS (nuestro #932 cierra copias con `dupOf`; G908 agrupa los reenvíos todavía pendientes en `repeats`).
+- Historias: llave de partidos de la gemela (`storyAutoMatches`, diagnóstico, republicar); temas con variantes (ALTS) + nuestros 3 explicativos
+  (comprobante, rollover, carga rápida) con `{pct}/{rx}/{dx}`; exports para sportsBoard (#940). La ruta vieja `/stories-autopilot/config` escribe la misma llave.
+- "Cómo funciona todo" de Soporte: queda nuestra hoja (#933); su recuadro (G910) sin CSS propio.
+- PICA ROJA "Pronto" (G949): `_withPicaroja` no-op (acá es marca real).
+- Pruebas: `test-sorteos-front`, `test-sorteos-server`, `test-cashback-spec` (10/10), `test-bonus-cap` (12/12) OK; `node --check` de todo.
+- ⚠️ Al deployar corren sus migraciones one-shot (mig946 reseñas 5★, mig954 closeSince, mig955 ruleta $5.000, mig968 partidos ON + campañas del
+  autopiloto): si la gemela ya está en producción con la misma base, ya corrieron (marca en Config) y no se repiten.
+
 ### 964. Revisión de punta a punta: con una marca activa nada abre la web de Girox — SW v652
 **Owner:** "en todos da el link (en picaroja.com), revisá de punta a punta". Recorrido de todo lo que abre juego/deporte/casino:
 - **Páginas de marca (lobby.js):** todas las tarjetas (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay, vivo, lobbies, búsqueda, Nuevos) → `play` →
@@ -79,6 +99,552 @@ botón de BuffaloPlay en el menú, al lado de JUGAYGANA, en el básico y el comp
   una sola línea en el básico y el completo. Server: `/buffaloplay` → `/?bp=1`, `_BRANDS`, enum de `User.activeBrand`; panel 🏷️ opción 5 (admin-sw v190).
 - Verificado con capturas locales (Chrome sin pantalla): inicio, Slots, Nuevos desplegado, búsqueda, Casino en vivo, lista de Pragmatic Live,
   CrazZy Win!, menú ☰ y los botones del básico.
+
+## 🔀 Fusión 2026-10-24: entradas de la GEMELA (repo PICAROJAoficial, mismo origen 238c202c). Numeración propia ⇒ prefijo **G**
+> Los comentarios `#907`…`#969` del código que vino de la gemela (sorteos `sorteos.js`, seguridad, cierres, velocidad) se refieren a estas G-entradas, no a las nuestras del mismo número.
+
+### G969. 🎁 SORTEO EXTRA $1.000.000 en LOS DOS sorteos (10 × $100.000 cada uno), aclarado por separado — SW v641 · admin SW v198
+**Pedido (owner):** "el sorteo extra es en el del iPhone y en el del auto: 10 personas de $100.000, serían $1.000.000 extra en cada sorteo; aclaralo
+individualmente y ponelo en la info del detalle, todo".
+- Reglas: `extra` en `mensual` y en `gran` (10 ganadores × $100.000, mínimo 10 cargas: en el mes para el mensual, durante el sorteo para el del auto;
+  estén o no anotados). `normalize` lo mezcla para los dos; `extraWho(extra, span)` + `extraSpan(key)`.
+- Server: filtros y conteos por `s.key`; `POST /api/admin/sorteos/:key/draw-extra` (antes sólo mensual); `GET /api/sorteos` y el admin mandan el
+  `extra` de cada sorteo; el mensaje de Soporte "Explicación del sorteo" lista el extra de cada uno.
+- App: recuadro "🎁 SORTEO EXTRA $1.000.000 · <sorteo>: 10 ganadores al azar de $100.000 ($1.000.000 extra en este sorteo)" en las dos ventanas,
+  Bases de cada sorteo con su propio párrafo, y la hoja del casino lo nombra en los dos.
+- Panel → Sorteos: pestaña 🎁 y campos del extra en Mensual y en Gran Sorteo; el botón de sortear usa el sorteo de la pestaña.
+
+### G968. 🎁 Refuerzo de regalos octubre-noviembre + partidos en las historias + todo automático
+**Pedido (owner):** "no te olvides lo de las historias: quiero la automatización con los partidos y demás; las notificaciones, todo corriendo automático y
+llegándole a la gente para incentivar; dale un bombazo más fuerte de regalos este mes de octubre y noviembre así retenemos más".
+- **Partidos:** `Config['storyAutoMatches'] = true` (one-shot `mig968GiftBoost`): las historias de los partidos del día (ESPN, con cuotas) salen a
+  las 00:05 junto con las 5 de servicio.
+- **Historias con bono:** hasta el 30/11 (`GIFT_BOOST_UNTIL`) la historia "Bono de la semana +50% por 3 h" (con push a todos y botón Reclamar)
+  sale miércoles Y sábado (`ctx.bonusDays`), antes sólo miércoles. Verificado: 4 en 14 días.
+- **Autopiloto de notificaciones (#817):** sigue fijo y automático (una campaña por día, 20:00, sólo app con notificaciones). Refuerzo hasta
+  noviembre (`AUTOPILOT_BOOST`): tope 12 avisos por cliente al mes (antes 8), bonos válidos 6 h (antes 4) y +10 puntos en los días comunes
+  (viernes 60 %, sábado 40 %, domingo y promo del día 30 %); los días especiales (inicio/mitad/cierre de mes, feriados, "te extrañamos") no cambian.
+  Las campañas futuras de oct/nov ya programadas se borran una vez y el autopiloto las vuelve a crear con el refuerzo a los 5 min del arranque.
+- Las ofertas de bienvenida por días (#886: 50 % día 5/15/30), misiones, segunda carga, ruleta diaria ($5.000) y reembolso diario 10 % siguen
+  como estaban. Para extender o cortar el refuerzo: cambiar `GIFT_BOOST_UNTIL` / `AUTOPILOT_BOOST.until` (hoy 30/11).
+
+### G967. 📎 Panel → Sorteos: adjuntar la foto de cada premio desde la computadora — admin SW v197
+**Pedido (owner):** "dejá en Sorteos para subir las fotos de forma manual, externa, desde el panel, si después lo quiero hacer: adjuntar".
+- Botón "📎 Adjuntar foto" por premio (JPG/PNG/WEBP, hasta 600 KB): `POST /api/admin/sorteos/prize-image` guarda la imagen en la base
+  (`SorteoImage`, no en disco: AWS tiene varias instancias) y deja `/api/sorteos/img/<id>` como `img` del premio en `Config['sorteos']`;
+  `GET /api/sorteos/img/:id` la sirve con caché de un día. Subir otra borra la anterior. Vista previa al lado del campo; escribir un emoji en el campo
+  vuelve al dibujo. Sólo el admin general (la lista de #956 ya bloquea a los agentes).
+
+### G966. ↩️ Premios: vuelven los dibujos (las fotos de #963 no gustaron) · se borran esas fotos
+**Pedido (owner):** "las fotos están mal, poné las que estaban, estaban bien, y borramos estas". Defaults de los 6 premios otra vez con emoji (📱 🛍️ 🎰 /
+🚗 🏝️ 💵); se eliminan iphone/regalo/fichas/caribe/usd.jpg. Queda sólo la foto del 208 (CC BY) por si se quiere pegar en el panel. El soporte de
+foto por premio (`pic()`, URL en el campo del panel) sigue disponible.
+
+### G964. ⚡ Velocidad (2ª tanda): feeds cacheados, crons con una sola instancia, bundle precomprimido, migraciones una vez, banners sin uso borrados
+**Pedido (owner):** "limpiamos la rapidez de la página sin romper nada".
+- `_memoJson(ms)`: `/api/claims-feed` (30 s) y `/api/roulette/recent-winners` (20 s) responden desde memoria (cada cliente los pedía cada 30-45 s).
+- `_cronClaim(name, ttl)` (lock en Config): `_closeTick` (15 min) y `_newbieOffersTick` (8 min) corren en UNA instancia por pasada (antes cada
+  instancia repetía las llamadas al banco / 1girox / render de historias).
+- Bundle JS/CSS precomprimido con brotli y gzip una sola vez al arrancar (`_sendPre`; `compression()` no re-comprime lo que ya trae
+  Content-Encoding). Antes se comprimía en caliente en cada pedido no cacheado (817 KB de JS).
+- Las dos migraciones de URL de fotos de historias (#850/#853) corren una vez por arranque, no en cada pasada de 5 min.
+- `public/images/banners/` (10 jpg, ~3,5 MB, sin ninguna referencia) eliminada del repo.
+
+### G965. 🔐 Código temporal de acceso con vencimiento (7 días)
+`User.pendingAccessCodeAt`: el código temporal (login sin clave mientras el teléfono está sin verificar) vence a los 7 días; los códigos viejos sin
+fecha siguen valiendo hasta que verifiquen el teléfono. El bloqueo por cuenta del login (#956) frena la fuerza bruta.
+
+### G963. 📷 Fotos reales de los premios (chicas, no cargadas) en lugar de los dibujos
+**Pedido (owner):** "fotos de los premios más reales pero no tan cargadas, así en ese tamaño: auto, iPhone y el resto, más realismo, que no parezca infantil".
+- `public/images/sorteos/`: iphone.jpg (pantalla del iPhone 15 Pro Max), regalo.jpg (caja con moño, para la orden de compra), fichas.jpg (fichas de casino),
+  peugeot-208.jpg (auto), caribe.jpg (playa de Punta Cana), usd.jpg (maletín con dólares). Todas de Wikimedia Commons con licencia CC BY / CC0,
+  recortadas a 480×320 y 14-107 KB; créditos y links en CREDITS.txt (obligatorio para CC BY). Son los defaults de los 6 premios en
+  `src/services/sorteos.js`; desde el panel se puede pegar la URL de la foto del premio real cuando lo tengas.
+
+### G962. ▭ Orden del básico: sorteos debajo de la barra, Nivel/Racha, saldo, CARGAR/RETIRAR — SW v640
+**Pedido (owner, capturas):** "en el básico los sorteos abajo de la barra superior, arriba de Nivel; CARGAR/RETIRAR abajo del saldo; el resto todo ok".
+Todo con `order` en la columna flex de `#basicView` (pisa el order:999 de #947): sorteos (-4) · status-row (-3) · saldo + ajustar pantalla (-2) ·
+carga mínima, guía, CARGAR, panel, RETIRAR, panel (-1) · lo demás en su orden.
+
+### G961. 🎰 Plataformas del completo con el mismo tamaño que en el básico — SW v639
+**Pedido (owner, capturas):** "respetar el del menú básico, poner el mismo tamaño para que quede igual en el completo y entre bien el texto".
+`#platformsButtons` en grilla de 4, tarjetas de 70 px con logo 22 px, nombre 9,5 px sin mayúsculas (entra entero), PRONTO / RECOMENDADO abajo, sin
+subtítulo, tilde chico arriba a la derecha.
+
+### G959. 🌐 IP real del cliente detrás de Cloudflare (`trust proxy` por rangos) — src/utils/trustedProxy.js
+**Pedido (owner):** confirmó que todo el tráfico entra por Cloudflare ("listo, ya está"). Express confía sólo en los saltos de Cloudflare (rangos v4/v6
+publicados) y en redes privadas/locales (ELB, nginx): el primer salto ajeno es la IP real ⇒ límites por IP, `registrationIp` y radar con la IP del
+cliente, no la del nodo de Cloudflare. Quien pegue directo al balanceador no puede inventar X-Forwarded-For. En Render (sin Cloudflare) o con
+`TRUST_PROXY_HOPS` se mantiene el número de saltos de antes. Probado con 16 casos. Si Cloudflare publica rangos nuevos, se agregan ahí.
+
+### G960. ▭ Básico: el botón CARGAR no se sale del cuadro — SW v638
+**Pedido (owner, captura):** "en el básico se va de cuadro, acomodalo". Título en dos líneas (15 px, 14 px con bono vigente) y subtítulo corto
+"Carga mínima $2.000".
+
+### G956. 🛡️ Revisión de seguridad a fondo (3 auditorías en paralelo) y correcciones — admin SW v196
+**Pedido (owner):** "revisá seguridad al extremo y todo lo necesario para cuidar la página". Base ya sólida (headers CSP/HSTS/nosniff, mongo-sanitize,
+xss-clean, rate limits, HMAC del webhook hgcash, OTP con bcrypt, cookie httpOnly/Strict, sockets con tokenVersion, sin secretos en el repo).
+Lo corregido:
+- **Clave compartida (crítico):** todas las cuentas de landing / entrada rápida nacían con "asd123" y sin cambio obligatorio ⇒ probando usuarios se
+  entraba a cuentas ajenas. Ahora cada alta recibe una clave aleatoria de 8 caracteres (se muestra en la landing y la app la guarda igual que antes;
+  `LANDING_DEFAULT_PASSWORD` sólo para pruebas) y quien entre con "asd123" queda con `mustChangePassword` (la app abre el cambio de clave).
+- **Permisos del staff (alto):** `adminMiddleware` acepta a todo el staff y 62 rutas mutadoras no chequeaban el rol. Nueva lista
+  `STAFF_DENY_MUTATIONS`: depositor/withdrawer/comunidad no pueden POST/PUT/DELETE en ruleta, historias, bonos/estrategias, notificaciones,
+  config, comandos, sorteos, webhooks, cierres, credenciales, publicistas, fraude, ni editar/borrar clientes, login sin clave, reset de clave, bloquear.
+  Siguen pudiendo cargas, comprobantes, pagos, soporte, links de acceso, notas, devoluciones hgcash. Probado con 19 casos.
+- **Sesiones del staff:** token de 8 h (antes 30 d) y `admin-logout` sube `tokenVersion` (revoca). Tokens con `purpose`/`type` (reset) ya no
+  valen como sesión. `notificationRoutes.requireAdmin` y `middlewares/auth.js` comparan tokenVersion siempre.
+- **Fuerza bruta:** bloqueo por cuenta en el login (10 fallos ⇒ 15 min, además del límite por IP); claves de Datos/INICIO: 6 fallos ⇒ 15 min por
+  cuenta de staff. `generalLimiter` compartido entre instancias (Redis).
+- **Visitantes:** el mensaje del soporte sin cuenta validaba el token DESPUÉS de escribir ⇒ ahora antes. **Webhooks salientes:** la URL destino no
+  puede ser host privado / metadata ni llevar credenciales (SSRF desde el panel). Links de acceso de agente vencen a las 48 h. `phone` siempre string.
+  Dos `escapeHtml` que faltaban en el panel (usuarios, referidos).
+- Pendiente (no se tocó por riesgo): `trust proxy` detrás de Cloudflare (los límites por IP ven la IP del edge: conviene `trust proxy 2` o usar
+  `CF-Connecting-IP`), CSP con `unsafe-inline` (cientos de onclick), body JSON de 10 MB global, `pendingAccessCode` sin vencimiento.
+
+### G957. ⚡ Velocidad: índices, cache de Config, menos llamadas a 1girox, consultas acotadas
+**Pedido (owner):** "revisá la velocidad y mejorala si se puede sin romper".
+- `getConfig` con cache de 5 s por proceso (se vacía en cada `Config.set`/`setConfig`): el home de cada cliente hacía ~20 lecturas a Atlas.
+- Índices nuevos: BankMovement {matchedUserId, createdAt} y {externalId}, Transaction {createdAt}, PendingPayout {status, paidAt}, Comprobante
+  {reviewStatus, createdAt}, Message {channel, timestamp} (se crean solos al arrancar).
+- `/api/balance/live`: la app lo pedía cada 90 s (una llamada real a 1girox por cliente) ⇒ cada 5 min y sólo con la pestaña visible.
+- `/api/conversations` (panel, cada 3 min por agente) agregaba TODA la colección Message ⇒ `` últimos 3 días (índice).
+- INICIO: el `distinct` de cargadores de toda la historia se cachea 10 min. Sorteos: el motor corre cada 60 min (antes 20) y una sola instancia por
+  pasada (lock `sorteoticklock` en Config); el botón del panel lo fuerza igual.
+- Quedan para después (seguros pero más trabajo): precomprimir el bundle, cache de 30 s en claims-feed / recent-winners, lock multi-instancia en
+  `_closeTick` y `_newbieOffersTick`, purgar CSS (pin.css 341 KB), borrar banners sin uso (2,6 MB en el repo).
+
+### G958. 🎨 "CARGÁ AQUÍ" grande (o "X% VIGENTE · APRETÁ AQUÍ" si hay bono) · plataformas más chicas — SW v637
+**Pedido (owner, capturas):** "poné CARGÁ AQUÍ en grande; si tiene bono vigente que diga 100% VIGENTE APRETÁ AQUÍ llamativo, si no CARGÁ AQUÍ;
+achicá la letra de las tarjetas para que entren Ganamos, Jugaygana y PICA ROJA; en el básico el cuadrado más chico, los 4 en una fila".
+- `_paintFirstLoad`: botón grande del completo (`#evCtaTop`) y CARGAR del básico: "🎁 100% VIGENTE · APRETÁ AQUÍ" (rojo con pulso, clase
+  `ev-cta-live`) si hay % vigente (primera carga `.fd-pct` o promo `.promo-live`), si no "⚡ CARGÁ AQUÍ"; debajo la carga mínima.
+- Tarjetas de plataforma del completo: nombre 9,5 px, etiquetas 7,5 px, logo 26 px. Chips del básico: 4 columnas, 22 px de logo, letra 9,5 px.
+
+### G954. 🔒 Auditoría: comprobantes duplicados y retiros · cierres válidos desde hoy
+**Pedido (owner):** "revisá bien que no entren comprobantes duplicados y que no retiren plata gente que no puede; dejá fino el cierre a partir de hoy
+ya que está el botón de pago de otro banco".
+- **Comprobantes (revisado):** al llegar, un comprobante con la misma IMAGEN (imageHash) o los mismos DATOS (N° de operación, o monto+titular+CBU+fecha)
+  que uno anterior —propio o de otro cliente— se guarda `status:'duplicate'`, NO entra a Cargas pendientes, avisa al cliente (`/sys_receipt_duplicate`)
+  y deja nota interna; la carga automática va por movimiento del banco con `HgcashCharge.chargeKey` (no acredita dos veces); confirmar a mano reusa
+  la misma `reference` (1girox responde duplicate). **Agujero cerrado:** `POST /api/admin/deposit-reviews/:id/confirm` aceptaba por API un
+  comprobante marcado repetido ⇒ ahora 409 "Comprobante REPETIDO: ya se usó antes (lo envió @x)"; sólo admin general con `force:true` y queda en el log.
+- **Retiros (revisado):** se validan contra `wagering.available` (nunca `balance`), teléfono verificado, mínimo, un pedido a la vez, claim atómico al
+  pagar, re-chequeo del disponible al descontar fichas (`_deductChipsAtConfirm`), >$100.000 con OK humano (#566), radar de estafas (#873/#952).
+  **Agregado:** cuenta bloqueada o inactiva ⇒ 403 también en el pedido de retiro (antes sólo la frenaba el login).
+- **Cierres:** one-shot `mig954CloseSince` ⇒ `Config['closeSince'] = 2026-10-24`: los cierres (y la tabla) valen desde hoy, con pagos por banco
+  externo, fondeos, $50 por transferencia e ingresos/gastos (#948). Los días anteriores quedan fuera.
+
+### G955. 🎡 Ruleta diaria: un giro con $5.000 cargados en el día — SW v636
+**Pedido (owner):** "la ruleta diaria: que tengan un tiro con cargas de 5.000; cambiá todo eso de Info automáticamente cuando modificamos algo".
+- One-shot `mig955RouletteMin5000` ⇒ `Config['dailyRoulette'].minDepositArs = 5000` (editable en el panel → Ruleta diaria, "Carga que desbloquea");
+  `ROULETTE_MIN_DEPOSIT_DEFAULT` = 5000. Los textos de la app ya leen ese valor (`.rl-min` en Inicio, menú intermedio, básico e Info: roulette.js
+  `_paintUnlock`), así que cambiarlo en el panel actualiza todo solo; se sacó el ejemplo fijo "ej. 2 de $5.000" de la Info.
+
+### G952. 🕵️ Radar: posible duplicado por ID del CELULAR y por NÚMERO de teléfono (no por IP) — SW v635
+**Pedido (owner):** "el posible duplicado dejá de hacerlo por IP, hacelo por teléfono, y que tome algo del celular (IMEI) y ahí sí detallalo".
+- El navegador no expone el IMEI: la app genera UNA vez un ID propio del celular (`localStorage vip_device_id`, activity.js `_deviceId`) y lo manda en
+  cada ping; el server lo guarda en `User.deviceIds` (últimos 6) y en `lastDevice.id`. La IP ya no sumaba desde #877 (queda sólo como dato del caso).
+- `fraudRadar`: `device_shared` cruza por ID del celular además del token de push y detalla modelo/OS e ID (`Mismo celular (Samsung A12 · android)
+  · ID del celular …a1b2c3 que: juan, pedro`); regla nueva `phone_shared` (35 pts): mismo número (últimos 10 dígitos) que otras cuentas.
+- Registro: ya estaba SÓLO con invitación (#872, `registrationMode='invite'`): se llega por link de referido o de publicidad; no hay autoregistro
+  desde el inicio. No hubo que tocar nada.
+
+### G953. 🌐 Soporte para gente SIN ACCESO: al lado de los soportes en el panel; en la app "Soporte sin iniciar sesión (registro desactivado)" — admin SW v195
+**Pedido (owner):** "si cierran sesión ponemos el soporte afuera y lo ubicamos del lado chat agente al lado de los soportes, con usuario de gente sin
+acceso, para escuchar lo que quieran preguntar; y que el título diga sin inicio de sesión (registro desactivado)".
+- Pantalla de ingreso (sin sesión): la burbuja dice "Soporte sin iniciar sesión · registro desactivado" y el panel del chat "Sin inicio de sesión
+  (registro desactivado)". Es el soporte de visitantes de #414 (GuestThread), que ya aparecía al cerrar sesión.
+- Panel → Soporte: debajo de la lista de clientes vuelve la lista "🌐 Sin inicio de sesión (registro desactivado)" (estaba oculta desde #747); se
+  carga al abrir la sección y al responder se usa el mismo chat de la derecha (`gsSelect`).
+
+### G951. 🎁 Detalle del cierre: caja REGALADO (fichas) por tipo + guía de lectura — admin SW v194
+**Pedido (owner):** "en el detalle anotá también lo regalado; acomodalo bien como corresponde y dónde iría, para no marearse".
+- "Ver detalle" abre con una línea "Cómo leerlo" (plata vs fichas) y cuatro cajas en 2 × 2: 💰 INGRESOS · 💸 GASTOS · 🎁 REGALADO (bonos de carga,
+  reembolsos, ruleta, misiones, fueguito, nivel VIP, rakeback, referidos, extra por instalar, regalo por opinar… desde `detalle.girox.app.regalosPorTipo`,
+  total = `regalos`, y la cuenta de fichas: depósitos − retiros = venta − regalos = NETO) · 🏦 CAJA 00 hs. Debajo sigue la conciliación de siempre.
+
+### G948. 🧾 Cierre diario: INGRESOS / GASTOS detallados, pagos por banco externo como ingreso, caja del CBU a las 00 hs, $50 por transferencia, sin USDT — admin SW v193
+**Pedido (owner):** "el cierre diario por banco automático; lo de USDT no va; dieron 2 cierres mal; los comprobantes que se marcan pagados desde otro banco
+tomalos como INGRESO y en el detalle poné ingresos y el detalle de todos los gastos; el CBU a las 00 hs plasmalo en el cierre, con los depósitos
+del banco y lo que cobró el banco de comisión; y las transacciones de cargas del día: $50 de gasto por transferencia, para que cierre perfecto".
+- `_closeApply`: `ingresosTotal = depósitos + pagosExternos + fondeos`; `egresosTotal = retiros + comisión + feeDepositsArs + gastos` con
+  `feeDepositsArs = cargas × closeConfig.perDepositFee` (default 50, editable en Cierres); **RESULTADO (plata) = ingresos − gastos** (antes neto −
+  comisión − gastos); `resultadoCaja` descuenta sólo los gastos pagados por este banco; con saldo 00 hs: `bankBalanceExpectedEnd = inicio + resultadoCaja`
+  y `diferencia = real − esperado`. USDT fuera (`resultadoUsd = null`, sin cotización ni botón). NETO (fichas) sigue aparte. Campos nuevos en `DailyClose`.
+- Panel → Cierres: config con "Costo por transferencia $"; KPIs INGRESOS / GASTOS / RESULTADO; tabla con columnas INGRESOS, GASTOS (comisión ·
+  transferencias · gastos), RESULTADO (plata) y Caja 00 hs (inicio → esperado · real); detalle con tres cajas arriba: 💰 INGRESOS (depósitos, banco
+  externo, fondeos), 💸 GASTOS (retiros, comisión %, N × $50, gastos registrados + lista) y 🏦 CAJA 00 hs (inicio, + resultado, esperado, real, dif.).
+- Los cierres de los últimos 3 días se recalculan solos con la regla nueva (`_closeTick`); los más viejos, con ↻ en la fila.
+
+### G949. 🎰 PICA ROJA como 4ª plataforma (Pronto) en el básico, el completo y la Info · Girox con fondo verde oscuro — (SW v634)
+**Pedido (owner, capturas):** "en ambos lados agregá un recuadro al final con el logo y PICA ROJA como plataforma, Pronto; el fondo de Girox verde
+oscuro, mirando el verde de Girox; en la Info poné PICA ROJA también con las 3 plataformas".
+- `PICAROJA_SOON` + `_withPicaroja(list)` en home.js (sólo visual: chips del básico y tarjetas del completo; tocarla dice Pronto). Info: título
+  "¿Por qué elegir Girox o Ganamos o Jugaygana o PICA ROJA?" y la tarjeta "La plataforma que quieras" la nombra. CSS: Girox verde oscuro
+  (#0f5132→#083d25) con logo en círculo blanco; PICA ROJA roja con el logo.
+
+### G950. 📌 Soporte "Cómo funciona todo": legible en el teléfono — (SW v634)
+**Pedido (owner, captura):** "hacé que sea todo legible, en el usuario del teléfono se corta" (el botón quedaba debajo de la barra inferior).
+- `.sp-faq-modal` por encima de la barra inferior, alineado arriba y con lugar reservado abajo (72 px + safe area); caja con alto máximo que lo respeta;
+  letra 15 px / 1.5.
+
+### G947. ▭ Menú básico: los sorteos abajo de todo — SW v633
+**Pedido (owner, captura):** "en el menú básico esto ponelo abajo de todo". `#basicView .srt-cards { order: 999 }` (la vista es flex-column): quedan después
+de "¿Querés ver más?". En el intermedio y en Girox directo no cambia.
+
+### G946. ⭐ Reseñas de 5 estrellas aprobadas automáticamente
+**Pedido (owner):** "las reseñas de 5 estrellas aprobalas directamente".
+- `POST /api/reviews`: con 5★ nace `approved:true` (`approvedBy:'auto-5-estrellas'`) y sale al instante en el registro público; 1-4★ siguen pendientes
+  para el panel. One-shot `mig946Approve5Stars` al boot: aprueba las 5★ que estaban esperando. El regalo por opinar (#875) no cambia.
+
+### G945. 🎰 Casino: el banner del sorteo cierra con ✕ (en vez de –) y vuelve a la píldora del medio — SW v632
+**Pedido (owner, capturas):** "eso dejalo fijo así (píldora) y si lo abren que se abra así (banner abajo); en la punta, en vez de un menos, una X y que vuelva
+a su lugar". Sólo cambia el botón: ✕ ⇒ `casinoBar(false)` (banner oculto, píldora en el medio). El resto ya era así desde #935/#937.
+
+### G944. 💬 Soporte: botón "🏆 Explicación del sorteo" (resumen armado con la config) + botón en el chat que abre el sorteo — SW v631
+**Pedido (owner):** "agregá un botón en Soporte: explicación del sorteo, y resumí el sorteo explicando".
+- Respuesta rápida `sorteo` (`dynamic:'sorteo'`, editable como `/sys_sq_sorteo` con variables {mensual} {gran} {pts} {ptsper} {requisitos} {extra} {pago}): una
+  línea por sorteo (estado/fechas + 3 premios), cómo suman los puntos, requisitos para anotarse (dos sorteos separados), SORTEO EXTRA y cuándo se
+  cobra. Botón del mensaje "🏆 Ver el sorteo y anotarme" (target `sorteo` ⇒ chat.js abre `VIP.sorteos.open('mensual')`). Como todas las rápidas,
+  cierra la charla al enviarla.
+
+### G943. 🧷 Dos sorteos separados: inscripción con el nombre de cada uno · Bases minimizadas abajo de todo (Maximizar / Minimizar) — SW v630
+**Pedido (owner, captura):** "en el Gran Sorteo aparece el detalle de ambos en los 2, necesito que separes, son 2 sorteos separados; y las Bases dejalas abajo
+de todo minimizadas, para maximizar y leer y después minimizar de nuevo".
+- Verificado con la prueba: la ventana y las Bases del Gran Sorteo no mencionan al mensual ni al revés (ahora la prueba lo exige). Lo que se veía
+  igual en los dos era el bloque de inscripción: pasa a "📝 Anotate al Gran Sorteo / al Sorteo mensual" (aclara que vale sólo para ese sorteo),
+  botón "Anotarme al …" y "✅ Registrado en el …".
+- Bases: sección al final con botón "📜 Bases y condiciones · <sorteo> · Maximizar ▾" (`tcToggle`); abre la lista y pasa a "Minimizar ▴".
+
+### G942. 📅 Gran Sorteo (auto) desde el 1 de diciembre · los 10 × $10.000 son "SORTEO EXTRA", al azar — SW v629
+**Pedido (owner):** "el sorteo del auto, en el contador tomalo como que empieza el 1 de diciembre; los 10 sorteos al azar de 100.000 serían como extra".
+- Default `gran.start` = 2026-12-01 (fin sigue 2027-01-31; editable en el panel). El contador, la franja y las Bases lo toman solos.
+- Default `extra.title` = "SORTEO EXTRA $100.000"; app y Bases dicen "ganadores al azar" y "extra, aparte de los premios del ranking".
+
+### G941. 🪟 El sorteo abre en VENTANA: ✕ fija arriba, tocar afuera cierra, deslizar hacia abajo cierra — SW v628
+**Pedido (owner, captura):** "abrilo tipo ventana y que la cruz arriba quede fija para cerrar; apretando afuera de la ventana que se pueda salir; después
+deslizar para abajo también".
+- `#srtModal` pasa a hoja `.srt-win` sobre el menú (fondo oscurecido; click en el fondo ⇒ `close`), cabecera sticky con agarradera y ✕, cuerpo con
+  scroll propio, Bases como capa adentro. `_swipeInit`: arrastrar desde la cabecera (o desde el cuerpo si está arriba de todo) más de 90 px ⇒ cierra
+  con animación. Las mitades y "Ver más en el menú" abren siempre esta ventana; el panel desplegado (#928/#940) queda sin uso.
+
+### G939. 🎁 SORTEO $100.000: para TODOS los que cargan (mínimo 10 cargas en el mes), 10 × $10.000 fijos, sorteo transparente el día 1 desde el panel — SW v626 · admin SW v192
+**Pedido (owner):** "el sorteo de 100.000: cambiamos términos y todo detalle, que sea para todos los que cargan, requisito mínimo 10 cargas en el mes; armá
+bien todo el admin para sortear eso el día 1 de forma transparente; y poné en la app SORTEO".
+- Reglas (`extra`): `{ title:'SORTEO $100.000', per:0 (cantidad FIJA), winners:10, amount:10000, minDeposits:10, requireJoin:false }`. `extraWinners`: con per 0
+  ⇒ `winners` si hay al menos un participante; `extraWho` = frase común. Entran TODOS los clientes con ≥10 cargas reales en el mes, anotados o no, sin
+  importar el ranking (`_sorteoExtraFilter`; `requireJoin` lo restringe a anotados si se quiere). Bases reescritas (día 1 a las 12 h, semilla, SHA-256).
+- Server: `draw-extra` sortea el mes CERRADO (periodKey anterior); el mes en curso sólo con `early:true`; guarda `minDeposits`, `method`, `early`.
+  `GET /api/admin/sorteos` → `extra` { who, current, prev }: participantes (usuario, cargas, total, anotado) del mes en curso y del cerrado + su sorteo.
+  `GET /api/sorteos` → `counts.extraElegibles`.
+- Panel → pestaña "🎁 SORTEO $100.000": reglas, KPIs mes cerrado / mes en curso, botón **Sortear el mes cerrado AAAA-MM** (y repetir), botón de adelantar
+  con aviso, caja del sorteo (fecha, quién, semilla, método explicado, ganadores) y tablas de participantes. Config: nombre, ganadores, monto, mín.
+  cargas, "por cada N" (0 = fijo), sólo anotados.
+- App: recuadro "🎁 SORTEO $100.000: 10 ganadores de $10.000 · Para TODOS los que cargan: con 10 cargas o más en el mes entrás… Ya cumplen N"; hoja del
+  casino y Bases con el mismo texto. Tests actualizados (nadie llega a 10 ⇒ 400; mes en curso sin early ⇒ 400; sortea entre todos los que cargan).
+
+### G940. 📂 Panel desplegado del sorteo: sin la fila "Próximamente", ✕ flotante y todo el contenido visible — SW v627
+**Pedido (owner, captura):** "que se abra; el Próximamente de abajo no" (seguía viéndose sólo la franja de inicio).
+- Se quita la fila de arriba; la ✕ Cerrar flota sobre la franja. `.srt-inline { overflow: visible; height/max-height: auto }`: ningún contenedor
+  puede recortarlo (overflow:hidden era lo que lo dejaba encogerse dentro de la columna con scroll del básico).
+
+### G938. 🎰 Hoja del casino: AMBOS sorteos resumidos con sus premios, más chica, botón "Anotate, es gratis ›" — SW v625
+**Pedido (owner):** "ahí detallá un poco más de ambos sorteos pero resumido, sin que tape tanto; que estén los increíbles premios; el detalle en otro
+lado; y el Ver más es Anotate, es gratis".
+- `openMini`: cabecera "🏆 ¡Increíbles premios!", un bloque por sorteo (Gran Sorteo y mensual): título + estado vivo (empieza/termina en, anotado/puesto),
+  los 3 premios con imagen y valor, una línea con fechas/puntos/extra. Botón "Anotate, es gratis ›" ⇒ `goMenu` (cierra el casino y despliega en el
+  menú) y pie "El detalle completo y las Bases están en el menú". Hoja más angosta (380 px) con scroll propio. El banner de abajo de la barra también
+  dice "Anotate, es gratis ›".
+
+### G937. 🎰 Girox directo al iniciar: sorteo resumido SIN abrir (píldora) + Carga rápida ABIERTA · app instalada ⇒ Girox siempre — SW v624
+**Pedido (owner):** "el sorteo desde Girox, cuando iniciás, que aparezca resumido sin abrir, y la Carga rápida abierta para cargar, siempre así; cuando la
+gente instala la app dejar Girox predeterminada siempre".
+- Casino: `_casinoBarOpen()` default cerrado ⇒ al entrar se ve la píldora "Sorteo mensual" en el medio (el banner de abajo sólo si la tocan; #935
+recordaba abierto). Al armar la barra en Girox directo, `toggleCasinoLoad(true)` abre el panel de Carga rápida a los 450 ms, cada vez.
+- App instalada (`_isInstalledApp()`: clase `is-app` / display-mode standalone): arranca SIEMPRE en Girox directo (si ese menú está activo), aunque
+  haya elegido otro en el navegador; `installManifestSync` manda `menu=girox` en el start_url. Con "Cambiar menú" sigue pudiendo moverse en la sesión.
+
+### G936. 📜 Bases y condiciones de CADA sorteo escritas abajo del propio sorteo — SW v623
+**Pedido (owner):** "dentro del sorteo del auto que aparezca sólo la info del auto y en el del teléfono la del teléfono, separado, con sus términos y
+condiciones abajo sobre el sorteo".
+- Cada panel/pantalla ya mostraba sólo su sorteo (sin tarjeta cruzada desde #925); ahora el botón "Bases y condiciones ›" se reemplaza por la sección
+  `.srt-tc-sec` con las Bases de ESE sorteo (`terms(cfg, key)`: fechas, puntos, premios, cobro del 1 al 10, requisitos…) escritas al final.
+
+### G935. 🎰 Casino: banner del sorteo DEBAJO de la barra; al cerrarlo queda la píldora "Sorteo mensual" en el medio (donde está PICA ROJA) — SW v622
+**Pedido (owner, captura de la gemela):** "si se cierra, que quede en el medio donde está el PICA ROJA y la pica, que diga Sorteo mensual y se ponga ahí
+arriba; si lo abren, que aparezca abajo".
+- Barra del casino: vuelve `#casinoBrand` (PICA ROJA) al medio y `#casinoSrtBtn` (píldora) queda oculta mientras el banner está abierto. Debajo de
+  la fila, `#casinoSrtBar` (`.casino-srt-bar`): "🏆 Sorteo mensual · estado · Ver más ▾" (abre la hoja resumida #933) + botón "–" que lo cierra.
+  Cerrado ⇒ banner oculto, PICA ROJA oculto y la píldora en el medio; tocarla lo reabre. Estado en `localStorage vip_srt_casino_bar`.
+  `paintCasino()` se llama al armar la barra y en cada carga de datos.
+
+### G934. 🧩 Panel del sorteo sin recorte en el básico · Info sólo título + ícono con recuadro marcado · auto como dibujo — SW v621
+**Pedidos (owner, capturas):** "esto quiero que se vea desde adentro de cada uno" (el panel desplegado salía cortado), "que se vea sólo los títulos y los
+íconos de cada título; poné mejor recuadro, se pierde mucho", "el auto ponelo como versión igual que el teléfono".
+- Recorte: `.basic-view` es flex-column con scroll y el panel (overflow hidden) se encogía ⇒ `.srt-inline/.srt-cards/.srt-banner { flex: 0 0 auto }`.
+- Info: plegada = sólo la fila título + ícono (texto con `font-size:0`, el `<b>` recupera 13,5 px); ícono 34 px en caja roja suave; tarjetas con
+  borde 1,5 px más oscuro y sombra; "Ver más ›" rojo.
+- Gran Sorteo: 1° premio vuelve al 🚗 (dibujo, como el 📱). La foto del 208 queda en el repo para pegarla en el panel si se quiere.
+
+### G931. 📖 Historias automáticas: las 5 a las 00 hs (se apagan las de ayer), Soporte siempre primero, fotos con el ESTILO DE LA PÁGINA, republicar ahora — SW v620 · admin SW v191
+**Pedido (owner):** "revisá que estén funcionando las historias con el estilo que pedí; siempre quiero que vaya del lado de la atención y se publiquen
+en el cambio de día: se borran y se publican de vuelta a las 00 hs; ahora borrá y publicá de vuelta; poné un estilo más del estilo de la página, todo".
+- `SLOTS` = 00:05 · 00:06 · 00:07 · 00:08 · 00:09 (las 5 juntas al cambiar el día; duran 24 h). `_storyAutoRetirePrevious` apaga las `sa-*` de días
+  anteriores en la misma pasada en que salen las de hoy. One-shot `mig931StoriesRepublish` (misma mecánica que #911, `_storyReset911Once(key)`):
+  al deployar borra las vigentes y publica las de hoy con el estilo nuevo.
+- Plan: el slot 0 es SIEMPRE Soporte/atención (redacciones rotando por día); los otros 4 rotan con paso 5 sobre 12 temas ⇒ 12 combinaciones
+  distintas y nunca un tema repetido respecto al día anterior (probado 36 días; con paso 4 salían sólo 3 combinaciones).
+- Fotos: `style:'page'` en todos los temas ⇒ `renderPage` en storyImage.js: fondo blanco, pica + PICA ROJA, subtítulo en píldora roja suave, tarjeta
+  gris claro con la ilustración en círculo rojo (sin dorado ni negro), titular negro + línea roja, beneficios en filas blancas con marcador rojo,
+  flecha roja al botón. `STORY_IMG_VER` = 931 (los teléfonos piden la foto nueva). Las personales de #886 siguen 'premium'.
+- Panel: el título de Historias automáticas dice "5 por día a las 00 hs". Pendiente: ver en producción el 🛠 Motor tras el deploy.
+
+### G932. ℹ️ Info del servicio: sólo títulos plegados, logo chiquito sobre el título, fondo claro — (SW v620)
+**Pedido (owner, captura):** "sólo títulos; poné en el inicio un logo chiquito sobre el título; y el fondo no le pongas fondo negro".
+- `.im-sec` plegada muestra sólo la fila del título (ícono + título, sin la línea de texto ni el degradé); "Ver más ›" la abre como siempre.
+  Logo `.info-logo` (34 px) arriba de "Información del servicio". `#infoModal .modal-content` con fondo `--p-bg` (pisaba modals.css con fondo oscuro).
+
+### G933. 🎰 Girox directo: el recuadro del sorteo abre una HOJA RESUMIDA ahí adentro (contador + premios + 2 líneas + "Ver más en el menú") — (SW v620)
+**Pedido (owner, captura):** "que ese menú en Girox abra una ventana ahí adentro, no en el menú: una explicación resumida y si quiere ver más que vaya al
+menú; sólo el contador y lo que se sortea".
+- `openMini(key)` (sorteos.js): hoja `.srt-mini` sobre el casino con contador vivo (empieza en / termina en), los 3 premios con imagen, dos líneas de
+  explicación, estado del cliente (registrado / puesto) y botón "Ver más en el menú ›" ⇒ `goMenu`: cierra la hoja y el casino y despliega el sorteo
+  en el menú donde estén las dos mitades (si no hay dónde, pantalla completa). El recuadro de la barra ahora llama a `openMini`.
+
+### G930. ✅ Revisión de todo lo del día: pruebas simuladas de sorteos (server + app + panel) y de #916 · 2 fixes — SW v619 · admin SW v190
+**Pedido (owner):** "revisá que esté funcionando, que esté bien todo". Sin node_modules no se puede levantar el server ni Mongo: se probó con
+modelos/1girox/DOM simulados (`scripts/test-sorteos-server.js`, `scripts/test-sorteos-front.js`; correr con `node scripts/...`).
+- **Server (#915):** tick con 2 jugadores (puntos 900 = 1.200.000 × 0,75 / 1.000; Gran +días +misiones), `GET /api/sorteos` (puesto, máscara de
+  nombres, bases), join (400 sin Telegram, ok con Telegram, 400 sin app), admin GET, PUT (valida y mezcla), premio extra (400 sin cupo, sortea con
+  semilla, llega a la app), batch de stats caído ⇒ puntajes intactos + error en diag. **Fix:** `normalize` siempre deja 3 premios (un PUT con
+  menos premios borraba los otros).
+- **App:** tarjetas/banner (orden Gran | mensual, foto, "Registrado"), panel desplegado del mensual y del Gran, cabecera sin título, Bases adentro
+  con volver, pantalla completa, join. **Ajuste:** antes del inicio la mitad dice "Registrado ✅ · empieza en …" si ya se anotó.
+- **Panel:** carga, pestañas y sub-pestañas con datos del server simulado. **Fix:** pasar a Gran Sorteo estando en "Premio extra" rompía
+  (no tiene extra) ⇒ vuelve a Participando.
+- **#916:** mensaje con {min}=30, nota interna, socket, ChatStatus cerrado 'auto'; `supportAutoCloseHours=0` sigue apagándolo.
+- Sintaxis OK en los 12 archivos tocados. Pendiente real: deploy en AWS y probar con 1girox de verdad (stats batch) el primer tick.
+
+### G929. ✂️ Panel desplegado sin el título repetido · al registrarse el bloque se va y dice "Registrado" — SW v618
+**Pedido (owner):** "sacá de adentro del sorteo del auto el sorteo del auto; si completan el registro que se vaya y diga registrado".
+- Cabecera del panel `.srt-inline-head.slim`: sólo estado (En vivo / Próximamente) y "✕ Cerrar"; el título ya lo dice la mitad tocada.
+- `joinBlock` anotado ⇒ línea chica `.srt-reg` "✅ Registrado · desde el …". Las mitades dicen "Registrado ✅" o "Registrado · puesto #N".
+
+### G928. 📂 El sorteo se despliega AHÍ MISMO debajo de las mitades (con ✕ Cerrar), sin abrir la pantalla completa — SW v617
+**Pedido (owner):** "cuando la gente aprieta sorteo, que se pueda ver ahí adentro sin que se abra en el menú y que se pueda sacar desde ahí".
+- `open(key, ev)`: si el toque viene de `[data-srt-cards]`/`[data-srt-banner]` ⇒ `openInline`: panel `.srt-inline` insertado DEBAJO del par (cabecera
+  violeta con el título y "✕ Cerrar", mismo contenido que la pantalla: inicio, anotarse, premios, puntos, ranking, Bases). Tocar la misma mitad lo
+  pliega; la mitad abierta queda marcada (`.srt-ban.on`). Las Bases se abren también ahí adentro con "‹ Volver al sorteo". `load()` repinta el
+  panel cada 5 min (salvo que estén abiertas las Bases). La pantalla completa (`#srtModal`) queda sólo para el recuadro de adentro del casino.
+
+### G927. 📏 Sorteos compactos en el básico/intermedio, mismas medidas que en el completo — SW v616
+**Pedido (owner):** "y achicá como el completo en el básico". Reglas `#basicView .srt-cards` / `#easyView .srt-cards`: márgenes, padding, foto y letras
+del mismo tamaño que el banner de Girox directo.
+
+### G926. 🟣 Sorteos en el básico/intermedio IGUAL que en el completo: dos mitades lado a lado — SW v615
+**Pedido (owner, capturas):** "esto del menú básico dejalo como el de completo".
+- `paintCards` arma el mismo par (`.srt-ban` Gran Sorteo | Sorteo mensual, con foto, estado vivo y "Ver más ›") para `[data-srt-cards]` y
+  `[data-srt-banner]`; `.srt-cards` pasa a grilla de 2 columnas (`one` si hay un solo sorteo). Las tarjetas apiladas de #918 quedan sin uso.
+
+### G924/925. 🧱 Servicios del completo en UNA fila como el básico · sin tarjeta cruzada al pie del sorteo — SW v614
+**Pedidos (owner, capturas):** "este recuadro del completo quiero que lo dejes como el básico" y "sacá adentro del auto sorteo, en la parte inferior, el del iPhone".
+- #924: bloque final en pin.css que pisa el 2 × 2 de #758: `.ev-services` en grilla de 4 en todos los modos (completo, Girox directo, entrada), cada
+  `.ev-svc` en columna con ícono en círculo rojo suave, título y "Ver más ›" (el detalle `<small>` oculto), igual que `.bv-quick` del básico.
+- #925: la pantalla de cada sorteo ya no muestra la tarjeta del otro sorteo al final (`crossCard` queda sin usar).
+
+### G923. 🚗 Foto del Peugeot 208 como premio del Gran Sorteo (emoji o FOTO por premio) — SW v613 · admin SW v189
+**Pedido (owner):** "usá fotos de auto 208".
+- `public/images/sorteos/peugeot-208.jpg` (+ `-sq`): foto CC BY 2.0 de Wikimedia Commons (autor Charles, Port Chester NY), recortada; crédito en
+  `public/images/sorteos/CREDITS.txt`. Default del 1° premio del Gran Sorteo: "Peugeot 208 0 km" con esa foto.
+- El `img` de cualquier premio acepta emoji o imagen (ruta `/images/...` o URL https): `pic()` en sorteos.js la pinta en tarjetas, banner de Girox
+  directo, portada (1° con foto grande a lo ancho), tarjeta cruzada y el recuadro de la barra del casino. Panel: el campo del premio dice "emoji o URL de
+  la foto". Para usar la foto del auto real: subir la imagen y pegar la URL ahí.
+
+### G922. 🚗📱 Banner de Girox directo en DOS: Gran Sorteo (auto) a la izquierda y Sorteo mensual (iPhone) a la derecha — SW v612
+**Pedido (owner, captura):** "dividilo en 2 y poné de un lado el del auto y del otro, segundo, el del iPhone".
+- `[data-srt-banner]` pasa a grilla de 2 columnas (`.srt-banner`, clase `one` si hay un solo sorteo); orden fijo gran → mensual. Cada mitad: imagen
+  del premio, título, estado vivo y "Ver más ›" debajo (textos con elipsis para que entren).
+
+### G921. 📐 Pantalla del sorteo, orden final: inicio chico · anotarse compacto · premio · puntos · ranking · Bases — SW v611
+**Pedido (owner):** "el comienzo del sorteo ponelo mucho más chico arriba, el anotarse más chiquito segundo, tercero el premio, cómo sumar puntos y el
+ranking anteúltimo".
+- `strip(s)`: franja de una línea ("⏳ Empieza en 7 d 22 h · Del 1 al 30 de noviembre" / "● EN VIVO · termina en…"), con cuenta regresiva viva.
+- `joinBlock(s, true)`: versión compacta (checklist más chica, botón chico; anotado = una línea). Luego `hero` (premios), premio extra, "Cómo sumás
+  puntos" (incluye fecha de publicación), ranking, botón Bases y la tarjeta del otro sorteo al final. Se sacó el bloque grande de cuenta regresiva.
+
+### G920. 🎁 Pantalla del sorteo: PORTADA con los premios grandes y sus imágenes arriba de todo — SW v610
+**Pedido (owner, captura):** "ponele más lugar cuando entrás: lo principal, con imágenes de lo que se sortea".
+- `hero(s)` en sorteos.js: recuadro violeta "🎁 Lo que se sortea este mes" con el 1° puesto grande (imagen 92 px + nombre 22 px + valor) y el 2° y
+  3° debajo, lado a lado, con su imagen. Va PRIMERO en los dos sorteos. Se sacó el podio de medallas (repetía los premios) y la fila chica de
+  premios del Gran Sorteo; la sección "Ganadores" queda sólo con la fecha de publicación.
+
+### G919. 🟣 Sorteos: violeta OSCURO como la captura (fondo profundo #2a0a4f→#4a1283, borde lila #b05cff, texto blanco, "Ver más" lila claro) — SW v609
+**Pedido (owner, captura de la gemela):** "este color así".
+- Tokens `--srt-*` (claro y dark) + `--srt-lite`; borde lila de 1,5 px en tarjetas, banner, tarjeta cruzada, botón Anotarme, recuadro "Tu puesto", cabeceras
+  de la pantalla y de las Bases, y el recuadro de la barra de Girox (hereda el gradiente). Acentos que eran lila claro sobre fondo claro pasan a `--srt-g2`.
+
+### G918. 🟣 Sorteos en VIOLETA, tarjetas separadas, Bases con paso a paso y cobro del 1 al 10, recuadro rectangular en Girox — SW v608
+**Pedido (owner):** "los recuadros del sorteo dejalos separados, en dos, no juntos; los términos y condiciones adentro de cada uno, cómo funciona
+todo perfecto y cómo se cobra, el día y demás: dentro del mes de diciembre se paga el premio dentro de los primeros 10 días; un color
+diferente, un violeta como el de Ganamos" + "adentro de Girox se ve mal: armá un recuadro rectangular ahí centrado".
+- Tokens `--srt-*` pasan a violeta (`#6d28d9 / #8b5cf6 / #a78bfa`, los de `--p-purple`), con sombra `--srt-sh` y versión dark. Afecta tarjetas,
+  banner, pantalla, podio, botón Anotarme y el recuadro de la barra del casino.
+- Tarjetas (`.srt-cards`): una debajo de la otra, ancho completo, 10 px de separación, imagen más grande y flecha ›.
+- Bases (`sorteosRules.terms`, por sorteo): "Cómo funciona, paso a paso" (anotarse → jugar → ver puesto → cierre → publicación → cobro),
+  fechas del período, puntos, premios, premio extra, **"Cómo y cuándo se cobra"** = `payWindow(end)`: "del 1 al 10 de <mes siguiente>" (noviembre
+  ⇒ del 1 al 10 de diciembre de 2026; Gran Sorteo ⇒ del 1 al 10 de febrero de 2027), titular con DNI, CBU a su nombre, premios físicos
+  coordinados o su valor, 10 días hábiles para responder; requisitos, participantes, transparencia, empate, reglas generales (+18).
+- Barra del casino (#917): el pill pasa a RECUADRO RECTANGULAR centrado (bordes 9 px, fondo violeta, texto blanco "🏆 Sorteo mensual / NOVEDAD"),
+  siempre con el texto visible, también en pantallas de 360 px.
+
+### G917. 🎰 Girox directo: el pill del medio de la barra pasa de "PICA ROJA · OFICIAL" a "🏆 Sorteo mensual · NOVEDAD" (abre el sorteo) — SW v607
+**Pedido (owner, captura):** "acá adentro de Girox poné Sorteo mensual (NOVEDAD) con ese tamaño, sacá PICA ROJA y que se pueda expandir desde
+ahí adentro para ver la novedad".
+- `casinoTopBar` (home.js): el `<span class="casino-brand">` pasa a `<button id="casinoSrtBtn" class="casino-brand casino-srt">` con el mismo
+  `.cb-box` (mismo tamaño), ícono del premio, título del sorteo vigente y subtítulo vivo que pinta sorteos.js: "NOVEDAD · 7 D 23 H" antes de
+  empezar, "EN VIVO · NOVEDAD" o "PUESTO #N" durante, "CERRADO" después. Toca ⇒ `VIP.sorteos.open('mensual')` encima del casino
+  (`body.casino-open .srt-modal` z-index 100002 > overlay 99999). Verde (`--srt-*`). Si los sorteos están apagados el botón se oculta.
+
+### G916. ⏱️ Soporte: cierre automático a los 30 min sin respuesta del cliente, con mensaje de cierre y cerrado en el panel
+**Pedido (owner):** "hacé cierre de mensaje si el usuario no contesta dentro de los 30 min: 'por no recibir respuestas cerramos la conversación
+de forma automática', eso en Soporte".
+- `_supportAutoCloseTick` (#401) pasa de 6 h a **30 minutos** (`Config['supportAutoCloseMinutes']`, default 30; `supportAutoCloseHours = 0`
+  sigue apagándolo) y corre cada 5 min (antes 10). Cuenta desde NUESTRA última respuesta sin contestación del cliente.
+- Al cerrar: el cliente recibe `/sys_support_autoclosed` (nuevo, editable en COMANDOS, variable {min}: "⏱️ Por no recibir respuesta en 30
+  minutos, cerramos la conversación de forma automática. Si necesitás algo más, elegí una opción y te atendemos."; vacío = sin aviso), para él el
+  chat arranca de cero (`supportSessionSince`), nota interna para el panel y **el chat pasa a CERRADO en el panel** (ChatStatus 'auto', sale de
+  Abiertos; si vuelve a escribir se reabre como siempre).
+
+### G915. 🏆 SORTEOS con ranking en vivo: Sorteo mensual + Gran Sorteo, inscripción con requisitos, Bases, panel — SW v606 · admin SW v188
+**Pedido (owner, con capturas de la gemela PICA ROJA):** "armá un ranking viendo todo lo apostado de los jugadores de Girox del general, tapá los
+nombres y que cada uno desde la app se registre y pueda ver su nombre completo y su puesto; ponelo arriba del menú básico abajo del saldo y en el
+ingreso rápido de Girox arriba; colores verdes, más sencillo pero con esas imágenes; Bases y condiciones completas; los dos sorteos individuales
+con ranking en vivo cuando empieza tomando las apuestas, la gente suma puntos directo; las bases en otra pestaña que se cierre con una ✕ arriba a
+la izquierda; en el admin, sorteo mensual con la gente anotada y la que va participando; para inscribirse tienen que cumplir los requisitos".
+- **Reglas** (`src/services/sorteos.js`, puras + test a mano): 100 pts cada $100.000 apostados con plata REAL (`realShare = cargas / (cargas +
+  bono otorgado)` del período, stats de 1girox); Gran Sorteo +10 pts por día con cargas ≥ $10.000 y +10% de los puntos por semana con misiones
+  (proporcional a las semanas transcurridas). Mensual: mes calendario desde `startMonth` (2026-11), publica el 1 a las 12 h; Gran: 2026-11-01 →
+  2027-01-31. Premio extra del mensual: 10 × $10.000 por cada 100 anotados con ≥2 cargas. Nombres tapados `ju••••••22`. Config en
+  `Config['sorteos']` (defaults en el código, editable en el panel). Bases y condiciones generadas con los números de la config.
+- **Motor** (`_sorteoTick`, cada 20 min, a los 3 min del boot): por sorteo activo toma TODOS los clientes con carga real en el período (ranking "del
+  general"), pide el apostado al batch de stats (100 por request, tramos ≤85 días por el tope de 92) y upserta `SorteoScore`; si el batch falla no
+  toca puntajes. `SorteoEntry` = anotados (único por usuario y sorteo); sólo los anotados pueden ganar (`eligible` = anotado + carga del período).
+  Diagnóstico en `Config['sorteoDiag']` (panel: 🛠 Motor).
+- **App** (`js/sorteos.js`, verde `--srt-*`): tarjetas en el BÁSICO (abajo del saldo) y en el INTERMEDIO (abajo de CARGAR AHORA), banner arriba en
+  Girox directo. Pantalla por sorteo: premio extra, cuenta regresiva, ranking en vivo (top 20 + mi puesto; sólo yo veo mi nombre), podio de
+  premios, cómo suman los puntos, inscripción con checklist (app instalada, notificaciones, Telegram declarado con link, una carga real) y
+  botón Anotarme, tarjeta cruzada al otro sorteo, Bases en capa aparte con ✕ arriba a la izquierda. Ganadores del mes anterior los primeros 7
+  días; premio extra sorteado con semilla publicada.
+- **Rutas:** `GET /api/sorteos` · `POST /api/sorteos/:key/join` (400 con lo que falta) · admin `GET/PUT /api/admin/sorteos`,
+  `POST /api/admin/sorteos/recalc`, `POST /api/admin/sorteos/mensual/draw-extra` (sorteo verificable: semilla + shuffle sha256; guarda en
+  `Config['sorteoDraws']`; los premios se acreditan a mano).
+- **Panel → App → 🏆 Sorteos:** llave general + requisitos, pestañas Mensual / Gran, config plegable (fechas, puntos, premios con emoji, premio
+  extra), KPIs (anotados, participando, premio extra en juego), listas Participando (ranking con nombres completos, apostado, % plata real,
+  cargas, anotado o no) y Anotados (con qué cumplía cada uno), pestaña Premio extra con el botón de sortear.
+- Pendiente del lado del owner: las fechas/premios reales de cada mes (hoy están los de la gemela como default) y avisar en Telegram.
+
+### G914. 📣 Publicistas → Ver detalle: período con FECHA Y HORA — admin SW v187
+**Pedido (owner):** "en publicista, cuando voy a ver detalle, que se pueda seleccionar fecha… y hora".
+- Modal "📊 Ver detalle" de una pauta: barra "📅 Período (fecha y hora, Argentina)" con Desde / Hasta (`datetime-local`), botón Ver y atajos
+  Hoy · Ayer · 7 días · 30 días · Todo. Vacío = desde el inicio (como antes). Se manda ISO con `-03:00`; al abrir otra pauta se resetea.
+- `GET /api/admin/campaigns/:code/stats?from=&to=` (`_campaignRangeParse` + `_campaignStatsRange`): clics, registros, FTD (primera carga de la vida
+  DENTRO del período), clientes que cargaron, cargas, total cargado, retiros y neto del período, sólo de los usuarios de esa pauta. La comisión
+  informativa se calcula sobre lo del período. `GET …/users?from=&to=` devuelve sólo los registrados en el período (lista del modal).
+- Sin período la ruta responde exactamente como antes (`computeCampaignStats`), así el link público `/r/<token>` (#805/#835) no cambia.
+
+### G913. 🏠 INICIO: aceptación sobre CARGADORES, Ayer, veces que cargaron, volvieron del día anterior · 🏦 pagos por banco externo = INGRESO del cierre — admin SW v186
+**Pedido (owner):** "la aceptación de la app de INICIO hacela con usuarios que cargaron, no que se registraron; tema cierres: si hay pagos de
+forma externa tomalos como un ingreso en el cierre porque en el panel van a estar las fichas y la plata también, manejalo para que el próximo
+cierre dé bien" + "en INICIO poné ayer también y hoy por defecto, detallá cuántos cargaron 2 veces y más de 2, qué gente volvió del día anterior".
+- **INICIO (`GET /api/admin/inicio/stats`):** `adoption` ahora se calcula sobre los que tienen al menos una carga real (`Transaction.distinct`
+  con el mismo filtro REAL): `depositors`, `withApp`/`withNotif` y los % son "de los que cargaron"; `totalUsers` queda como referencia.
+  Nuevo `deposits.times` {once, twice, more} (clientes/cargas/$ según cuántas veces cargó cada uno en el día) y `cameBack`: `deposited`
+  (cargaron el día anterior Y volvieron a cargar, con hasta 40 nombres), `entered` (entraron a la app ayer y hoy), más los totales del día
+  anterior para el %. Panel: botón **Ayer** (Hoy sigue por defecto), grupos "🔂 Cuántas veces cargaron en el día" y "↩️ Volvieron del día
+  anterior", y "📲 Aceptación de la app (clientes que cargaron alguna vez)".
+- **Cierre:** los retiros pagados con **🏦 Pagado por banco externo** (#904, `paidVia:'other_bank'`) ya no van en "pagados a mano": son
+  `sistema.pagosExternos` (+ items) y la causa `pago_externo` (+, severidad baja, "ingreso: la plata quedó en la cuenta"). `DailyClose` guarda
+  `pagosExternos`, `fondeos` e `ingresosExternos` (= suma) y `_closeApply` los **resta de la diferencia del arqueo** (también en la variante por
+  saldo inicio/fin): con todo registrado el arqueo da 0. `dayTotals.payoutsPaid` excluye los `other_bank` (antes inflaban `bankOutAuto` y
+  tapaban la diferencia). El RESULTADO del día NO cambia (las fichas salieron igual; es un ingreso de la CUENTA, no ganancia). El lado 1girox
+  sigue contando el retiro (ahí están las fichas). Panel: tabla de cierres ("banco externo $X (ingreso)"), detalle, lista propia y el análisis
+  de Retiros de Atención.
+- Verificación a mano: dep $1.000.000, retiros $300.000 (100.000 externos), fondeo $1.650.000, banco entró $2.650.000 / salió $200.000 ⇒
+  diferencia 0 en las dos variantes; la conciliación lo explica con 'fondeo' + 'pago_externo'.
+**Para el owner:** el próximo cierre toma solos los pagos marcados "banco externo" y los fondeos registrados en Gastos con la FECHA en que entró la
+plata. Si querés que esos ingresos sumen también al RESULTADO (hoy no), decímelo.
+
+### G912. 🔒 Soporte: botón "No cumple rollover y quiere retirar" con los números REALES del cliente
+**Pedido (owner):** "un botón de rollover para la gente que no entiende cuánto tiene que apostar para completar el rollover, del bono y del
+saldo cargado; para la gente de soporte, que se le envíe eso y detalle todo" · "ponele al botón: no cumple rollover y quiere retirar".
+- Respuesta rápida DINÁMICA `rollover_mio` (`SUPPORT_QUICK_REPLIES`, `dynamic:true`): al tocarla, el server lee el saldo del cliente en
+  1girox (`girox.getUserBalance` → `_rolloverSummary`, lo mismo que ve en "Retirar premio") y arma: saldo · retirable hoy · bloqueado (y
+  cuánto es bono) · una línea por objetivo ("• Carga ×3: tenés que apostar $T · ya apostaste $P (pct%) · te faltan $R" / "• Bono ×5: …") ·
+  total que falta apostar · botón "💸 Retirar premio". Manda y cierra la charla como las demás. Si 1girox no responde ⇒ 503 y no se manda nada.
+- Si no tiene nada bloqueado sale el texto `rollover_libre` ("✅ Hoy no tenés rollover pendiente: podés retirar $X"), oculto del panel.
+- Textos editables en COMANDOS: `/sys_sq_rollover_mio` y `/sys_sq_rollover_libre` (variables `{saldo} {retirable} {bloqueado}
+  {bloqueado_bono} {detalle} {falta}` + las de siempre). Nota interna en el chat con lo leído de 1girox (auditoría).
+
+### G911. 📖 Historias: borrar las vigentes y publicar las 5 de hoy YA (al deployar + botón del panel) — admin SW v185
+**Pedido (owner):** "las historias borralas y publicá las del día a ver". Sin acceso a la base desde acá ⇒ `_storyWipeForRepublish`: apaga
+todas las historias vigentes (manuales y automáticas; las personales `nb-*`/`audienceUserId` no se tocan), borra las automáticas de hoy y
+ayer, y `_storyAutoTick({ force: true })` publica las 5 de hoy al instante (la hora de publicación pasa a "ahora"; sin push de bono si se
+adelanta). Corre UNA vez al deployar (`Config['mig911StoriesRepublish']`) y a demanda con "🔄 Borrar y publicar las de hoy" en el panel
+(`POST /api/admin/stories-autopilot/republish-today`, devuelve publicadas / apagadas / salteadas). ⚠️ Render comparte la base (#779): si
+Render deploya primero, el one-shot corre ahí (publica con foto con URL absoluta a Render; producción se las toma al deployar, #850).
+
+### G910. 💬 Soporte: "Cómo funciona todo" en un RECUADRO encima de todo (legible, con scroll y cerrar) — SW v605
+**Pedido (owner):** "el ver más y ver menos no se puede leer el texto; necesito que aparezca arriba y que se pueda leer, abrí un recuadro
+como para ver y bajar y se pueda cerrar". Reemplaza el plegable de #907: en la tarjeta queda un BOTÓN y abre `#spFaqModal` (fijo,
+z-index alto, tarjeta blanca con cabecera "📌 Cómo funciona todo" + ✕, lista a 14,5 px con scroll propio y botón "Entendido · cerrar";
+se cierra también tocando el fondo o con Esc). `VIP.home.supportFaqOpen/Close`. Los `<span class="md-amt|wd-min|rx-dep|rx-bon">` siguen
+pintándose por clase (ahora viven en el recuadro, fuera de `#supportIntro`).
+
+### G909. 📖 Historias automáticas: 5 por día SIN repetir las de ayer · llave de PARTIDOS (apagada) · diagnóstico del motor — admin SW v184
+**Pedidos (owner, por Telegram 2026-10-23 15:17 y chat 2026-10-24):** "vi que mañana tenemos un partido, pero no vamos a publicar aún los
+partidos de fútbol, quiero ir primero con publicaciones explicando la app" · "este partido ni lo publicaron, quiero que revises bien las
+historias automáticas: que publique 5 historias todos los días y que las rote, siempre eran nuevas historias".
+- **Rotación (`storyAutopilot.planDay`):** el cursor de temas avanzaba 3 por día ⇒ 2 de las 5 historias se repetían con el día anterior.
+  Ahora avanza 5 (con 12-13 temas, hoy nunca repite tema con ayer) y cada vuelta del catálogo usa OTRA redacción del tema (`ALTS`, 2
+  alternativas por tema, 13 temas ⇒ 39 textos; título y texto, la foto es la del tema). Simulado 30 días: 0 temas y 0 títulos iguales al
+  día anterior, 3 títulos distintos por tema, sin `{pct}` sin reemplazar.
+- **Partidos del día = LLAVE `Config['storyAutoMatches']`** (default APAGADA, lo que pidió el owner). Panel → Cronograma → Historias
+  automáticas: "⚽ Partidos del día: apagados · ▶ Encender" (`POST /api/admin/stories-autopilot/matches {on}`). Apagada, el plan es sólo
+  de servicio (y la vista previa del panel deja de mostrar partidos "programados" que no van a salir, que era lo que confundía).
+- **Robustez:** cada historia del día se publica en su propio try/catch (`_storyAutoTick`): si la foto de una falla (ESPN / 1girox / red)
+  sale SIN foto antes que no salir, y un error en una ya no frena a las cuatro restantes. Antes, un error en el primer ítem (el partido,
+  que arma la foto bajando escudos) abortaba la pasada entera.
+- **Diagnóstico en el panel (`Config['storyAutoDiag']`, lo escribe cada pasada):** "🛠 Motor: última pasada hace N min · publicadas hoy X ·
+  error · salteadas (y por qué)". Si dice que no hay pasada registrada tras 10 min: el servidor no tiene esta versión o
+  `STORIES_AUTOPILOT_DISABLED=1` (también se muestra).
+**Para el owner:** cuando quiera arrancar con fútbol, tocar "▶ Encender partidos" en el panel: desde el día siguiente a las 00:05.
+
+### G908. 📎 Cargas pendientes: el mismo comprobante mandado N veces = UNA ficha (los otros envíos adentro) y se cierran solos
+**Pedido (owner, Telegram):** "hoy un usuario mandó 4 veces el mismo comprobante y aparecieron 3 fichas en Cargas pendientes; que vaya por una
+ficha y al tocarla se vean las veces que lo envió, o una sola que diga que lo mandó varias veces, o una correcta y las demás repetidas".
+- Por qué pasaba: la detección de duplicados (`imageHash` / `dedupeKey`) sólo agarra la MISMA imagen o la misma lectura de la IA; con capturas
+  distintas del mismo comprobante (o lecturas distintas del N° de operación) cada envío entraba como comprobante nuevo a la cola.
+- `GET /api/admin/deposit-reviews` (pendientes): agrupa con `_sameReceipt(a, b)` = mismo cliente y (misma imagen · misma huella · mismo monto
+  sin un N° de operación que los distinga · ambos sin monto legible). La ficha es el PRIMER envío; los demás van en `repeats[]` con
+  `sentTimes`. Panel: chip "📎 Enviado N veces" + desplegable con cada envío (foto, hora, N°, monto) y botón "➕ Es otra carga distinta"
+  (confirma ESE envío aparte con `keepRepeats:true`, por si son dos transferencias iguales con el número ilegible). El contador del menú
+  cuenta fichas, no envíos. La franja de Soporte dice "📎 lo mandó N veces".
+- **Cierre automático (`_depositReviewCloseRepeats`):** al resolver la ficha —carga automática del banco (`hgcashMatchFromComprobante`),
+  Confirmar o Rechazar— los otros envíos pendientes del mismo comprobante (±24 h) pasan a `rejected` / `reviewResolution:'duplicate'` con nota
+  "Repetido: el mismo comprobante ya se acreditó solo / confirmó / rechazó (id)". Al cliente NO se le manda nada por esos (ya tuvo su respuesta);
+  nota interna en el chat dice cuántos se cerraron. Esto además tapa un riesgo real: antes, el banco acreditaba el primero y los otros 3
+  quedaban pendientes ⇒ escalaban "no entró la transferencia" y un agente podía confirmarlos a mano (doble carga).
+- Probado (lógica aislada, 7 casos): misma imagen ✓, otro usuario ✗, mismo monto con N° distintos ✗, mismo monto y uno sin N° ✓, montos
+  distintos ✗, ambos sin monto ✓, misma huella ✓.
+
+### G907. 💬 Soporte: el resumen "Cómo funciona todo" se pliega (Ver menos), con alto máximo y scroll — SW v604
+**Pedido (owner, capturas):** "no aparece la forma ahí de ver menos, no se puede cerrar; se queda así y no se puede hacer nada, se tilda ahí".
+- Causa: era un `<details>` nativo adentro de la tarjeta compacta de Soporte (en fila al lado del avatar, `sp-sent`). Al abrirse crecía sin
+  límite, empujaba el chat y la caja de texto fuera de la pantalla y no tenía ningún "cerrar" visible.
+- Ahora: título con "ver ▾ / ver menos ▴", lista con alto máximo (38vh, 32vh en pantallas bajas) y scroll propio, botón "▲ Ver menos ·
+  cerrar" al pie (`VIP.home.supportFaqClose`), y al abrir la tarjeta vuelve a columna (`#supportIntro.sp-faq-open`, `ontoggle` →
+  `supportFaqToggled`) para que el resumen tenga el ancho entero y el chat siga a la vista.
 
 ## Sesión 2026-10-22
 

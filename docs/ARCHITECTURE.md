@@ -631,6 +631,10 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   filtrar y muestra a qué publicista pertenece cada usuario. La gestión del admin
   (POST/PUT `/api/admin/publisher-admins`) acepta `campaignCodes` (lista) o el legacy
   `campaignCode`.
+- **Detalle de una pauta con período (#914):** `GET /api/admin/campaigns/:code/stats?from=&to=` y `…/users?from=&to=` aceptan
+  fecha Y hora (ISO; el panel manda hora argentina con `-03:00`). Con período: `_campaignStatsRange` (clics, registros, FTD = primera carga de
+  la vida dentro del período, cargas, retiros, neto del período); sin período: `computeCampaignStats` (desde el inicio, lo que usa el link
+  público `/r/<token>`). El modal "📊 Ver detalle" tiene Desde/Hasta + Hoy/Ayer/7 d/30 d/Todo.
 - **Landing de pauta (#224):** `GET /l/:code` (y `/landing/:code`) sirve `public/landing/index.html`
   con el código inyectado; `POST /api/landing/signup` crea el usuario en Girox Y en toda plataforma
   habilitada con API (`User.platforms`), devuelve usuario/clave/access link (sin `ir=casino`);
@@ -960,6 +964,12 @@ VIPCARGAS con su JWT, y el cliente nunca más necesita conocer su clave del casi
   "⏳ Cargas pendientes" (`/api/admin/deposit-reviews*`): Confirmar = `_agentDepositHandler` (la función de
   `POST /api/admin/deposit`, extraída para reusarla) · Rechazar = `/sys_deposit_rejected`. Duplicados → el cliente recibe
   `/sys_receipt_duplicate`. Cliente: `GET /api/deposits/pending` + socket `deposit_review_update` → franja "⏳ Carga pendiente".
+  **#908 (2026-10-24) — REENVÍOS del mismo comprobante:** la cola agrupa con `_sameReceipt(a, b)` (mismo cliente y misma imagen /
+  misma `dedupeKey` / mismo monto sin un N° de operación distinto / ambos sin monto): la ficha es el primer envío, los otros van en
+  `repeats[]` (+`sentTimes`). Al resolver la ficha (auto, Confirmar, Rechazar) `_depositReviewCloseRepeats` cierra los demás como
+  `rejected`/`reviewResolution:'duplicate'` sin avisar al cliente; "Es otra carga distinta" confirma un envío aparte (`keepRepeats:true`).
+  Un flujo nuevo que resuelva un comprobante pendiente tiene que llamar `_depositReviewCloseRepeats` (si no, los reenvíos quedan
+  pendientes, escalan y se pueden cargar dos veces a mano).
   **#377 — SOPORTE paralelo:** `Message.channel='support'` para lo que escribe el cliente y las respuestas de la columna
   "💬 Soporte" del panel (`/api/admin/support/conversations|agent`); el cliente ve sólo mensajes posteriores a
   `Config['supportChannelSince']`. La persona de turno (`getSupportAgentName`, `/sys_support_names`, 8 h por turno en
@@ -1407,6 +1417,10 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   pestaña Casino), `<marca>-extra.json` ("Juegos nuevos" = lo de Girox que la página no tiene; regenerar si cambian las listas). Portadas propias en
   `images/ganamos/{g,p,hw}` e `images/jugaygana/g`; las de Girox sólo por `/api/games/img`.
 - **#964:** `openPlatform('girox')` sin `checked`/`test` con una marca puerta activa abre la página de la marca; `playGame` = `favPlay`.
+- **Fusión gemela (2026-10-24):** sorteos = `sorteos.js` (G915; `raffleService` borrado); comprobantes repetidos = #932 (`dupOf`, copias cerradas)
+  + G908 (reenvíos pendientes agrupados en `repeats`), el panel muestra los dos; seguridad G956 (`STAFF_DENY_MUTATIONS`, sesiones staff 8 h,
+  bloqueos por intentos, SSRF en webhooks, `src/utils/trustedProxy.js`); app instalada arranca con el menú Girox (G937) y, con una marca puerta
+  activa, `openPlatform('girox')` sigue abriendo la página de la marca (#964). `_withPicaroja` es no-op acá (PICA ROJA es puerta, no "Pronto").
 - **Páginas de marca sin Girox (#962):** juegos = `gamePlay`/`favPlay` (link directo del proveedor); deportes = `lobby.sport` con `SPORT_KEYS`
   (nunca `casinoGoTo`/Girox embebido); historias con `_noGirox()` en stories.js. En Render (API simulada) el juego directo no abre: probar en producción.
 - **BuffaloPlay (#958):** 5ª puerta a la MISMA cuenta de Girox, con el formato de thornet.uno (zip Thornet.zip). `SKINS.buffaloplay`
@@ -1443,3 +1457,59 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   todos los batch salieron bien; idempotente). Con `girox.isSimulated()` no hace nada.
 - **Cliente:** `GET /api/raffle` (ranking top 20 con `mask()`, mi puesto, faltantes, bases); ganador ⇒ `POST /api/raffle/contact` deja un mensaje 🏆 en
   Soporte (canal support, `metadata.kind:'prize'`) y `winners.$.contactAt`. Entrega: panel → "Marcar entregado" (`deliveredAt/By/Note`).
+## Sorteos con ranking en vivo (#915) — `src/services/sorteos.js` + `_sorteoTick` (server.js) + `public/js/sorteos.js`
+- **Modelos:** `SorteoEntry` (anotado: userId+key único, checks al anotarse, telegramDeclared) · `SorteoScore` (key+periodKey+userId único; points =
+  basePts + dayPts + missionPts, wagered, realShare, deposits, joined, eligible). Config: `Config['sorteos']` (normalizada con defaults),
+  `Config['sorteoDraws']` (premio extra sorteado), `Config['sorteoDiag']`.
+- **Período:** mensual = mes calendario ART desde `startMonth` (`periodOf` → soon/live/closed, publishAt = día 1 siguiente 12 h); gran = `start`..`end`.
+- **Puntos:** `computePoints` — pts por cada ptsPer apostados × realShare (cargas / (cargas + bono otorgado), stats de 1girox); gran suma días con
+  cargas ≥ mínimo y % por semanas con `MissionClaim`. Ranking: points desc, wagered desc, primera carga asc.
+- **Motor:** cada 20 min; candidatos = clientes con carga real en el período (sin PRUEBA); stats por batch (≤100, tramos ≤85 días); un fallo del batch
+  deja los puntajes como estaban. Sólo anotados pueden ganar; el ranking público muestra a todos con nombre tapado (`mask`), el propio completo.
+- **Requisitos para anotarse** (`_sorteoChecksOf`): app instalada (token FCM standalone), notificaciones (token), Telegram (declarado), una carga real.
+  Toggles en `config.requirements`. Un requisito nuevo va ahí y en `_sorteoMissing` + checklist del front.
+- **Fotos de premios (#967):** `SorteoImage` (buffer en la base) + `POST /api/admin/sorteos/prize-image` (base64, ≤600 KB) y `GET /api/sorteos/img/:id`;
+  el `img` de un premio puede ser emoji, ruta `/images/...`, URL https o `/api/sorteos/img/<id>`.
+- **Front (#928/#933):** tocar una mitad DESPLIEGA el sorteo ahí mismo (`openInline`, panel `.srt-inline` con ✕, Bases adentro); el recuadro de la barra
+  del casino abre una HOJA RESUMIDA (`openMini`: contador, 3 premios, 2 líneas, "Ver más en el menú" ⇒ `goMenu` cierra el casino y despliega en el
+  menú). La pantalla completa `#srtModal` queda de respaldo.
+- **Front:** contenedores `[data-srt-cards]` (básico e intermedio) y `[data-srt-banner]` (Girox directo, sólo `body.home-play`), pantalla `#srtModal`
+  con capa `#srtTerms` (Bases, ✕ arriba a la izquierda). Verde: tokens `--srt-*` en pin.css (claro + dark).
+
+## Cierres diarios y arqueo (#500 → #913) — `DailyClose`, `_closeEnsure` / `_closeApply` / `_closeReconcile` (server.js)
+- Uno por día ART (`dateKey` único); `_closeTick` cada 20 min recalcula los últimos 3 días y finaliza solo el día anterior (#744). Números del
+  sistema salen de `datosIa.dayTotals` (Transaction); lado banco de la API de hgcash (`_bankDayFromApi`) o de los avisos, y saldos 00:00
+  (`BankBalanceSnapshot`). `resultado = neto − comisión − gastos` (#770).
+- **#948 INGRESOS / GASTOS:** `ingresosTotal = depósitos + pagosExternos + fondeos`; `egresosTotal = retiros + comisión + feeDepositsArs (cargas × perDepositFee, $50) +
+  gastos`; `resultado = ingresos − egresos` (plata); `resultadoCaja` = ídem sólo con `gastosBanco`; con saldos 00 hs: `bankBalanceExpectedEnd = inicio + resultadoCaja`,
+  `diferencia = real − esperado`. `neto` (fichas) y USDT quedan fuera del resultado (resultadoUsd = null).
+- **Arqueo por movimientos (#913):** `diferencia = (bancoEntró − bancoSalió) − (depósitos − retiros) − ingresosExternos`, donde `ingresosExternos = pagosExternos
+  (retiros pagados por BANCO EXTERNO, #904 `PendingPayout.paidVia:'other_bank'`) + fondeos (Expense kind 'fondeo')`. Son plata de la cuenta que el
+  sistema no tiene como depósito: las fichas del retiro salieron en 1girox pero la plata no salió de este banco. Variante por saldos: igual,
+  restando lo mismo. No tocan el RESULTADO. `dayTotals.payoutsPaid` excluye los `other_bank`.
+- **Conciliación (`detalle`):** sistema (auto / a mano / prueba / pagos banco / a mano / externos / gastos / fondeos) vs banco (entradas acreditadas,
+  sin acreditar, devueltas, dup) y `causas[]` con impacto firmado; `sinExplicar` = lo que queda para revisar. Lado 1girox (#888) en
+  `detalle.girox` vs `DailyClose.giroxPanel` que carga el owner.
+- **Regla para flujos nuevos:** todo lo que mueva plata por fuera de la API del banco deja rastro (`paidVia`, `adminUsername`, Expense) para que la
+  conciliación lo nombre; un pago desde otra cuenta se marca `other_bank` (botón "Pagado por banco externo") y entra solo como ingreso.
+
+## INICIO del panel (#876 → #913) — `GET /api/admin/inicio/stats?day=`
+- Clave propia `Config['inicioPinHash']` (header `x-inicio-pin`). Día por defecto hoy; botones Hoy / Ayer / fecha. Grupos: gente en la app
+  (AppSession), registros del día, cargas (1ª / retención +72 h / nuevos), **veces que cargaron** (1 / 2 / más de 2 por cliente en el día),
+  **volvieron del día anterior** (cargaron ayer y hoy, con nombres; entraron ayer y hoy), retiros y neto, **aceptación de la app sobre los que
+  cargaron alguna vez** (instalaron / notificaciones; `totalUsers` sólo de referencia). Todo por agregaciones; no bajar movimientos sueltos.
+
+## Historias automáticas (#827 → #909)
+
+`src/services/storyAutopilot.js` arma el PLAN del día (`planDay(dayKey, matches, ctx)`: determinístico para un mismo día) y `_storyAutoTick`
+(server.js, cada 5 min en cada instancia) publica lo que ya pasó de hora con `Story.autoKey = sa-<día>-<slot>` ÚNICO (multi-instancia).
+Slots `0..4` = **00:05 · 00:06 · 00:07 · 00:08 · 00:09 (#931: las 5 juntas al cambiar el día; `_storyAutoRetirePrevious` apaga las de días
+anteriores en la misma pasada; el slot 0 es SIEMPRE Soporte/atención, los otros 4 rotan)**; lunes el slot favorito, miércoles el bono semanal; `m0..m2` = partidos a las
+00:05 (**#909: sólo con `Config['storyAutoMatches']` encendida**, default apagada; panel → Cronograma → Historias automáticas).
+**Rotación (#909):** cursor `(dayN*5) % temas` ⇒ los 5 temas de hoy nunca son los de ayer; `cycle = floor(dayN*5/temas)` elige la redacción
+(`THEMES[k]` o `ALTS[k][cycle%3 − 1]`). Un tema nuevo va a `THEMES` **y** con 2 alternativas a `ALTS` (texto de servicio: nunca ruleta,
+plata ni sueldos). Foto: `storyImage` (SVG, `GET /api/stories/:id/auto.svg?v=STORY_IMG_VER`); si la foto falla la historia sale sin foto.
+**Diagnóstico:** cada pasada escribe `Config['storyAutoDiag']` (última pasada, publicadas, salteadas con motivo, error) que el panel muestra
+("🛠 Motor…"). Cada historia se publica en su propio try/catch: un error no frena a las demás. Kill switch: `STORIES_AUTOPILOT_DISABLED=1`.
+**Republicar (#911):** `_storyWipeForRepublish` + `_storyAutoTick({ force: true })` (one-shot `mig911StoriesRepublish` al deployar y
+`POST /api/admin/stories-autopilot/republish-today`): apaga las vigentes (no las personales), borra `sa-<hoy|ayer>-*` y publica las de hoy ya.

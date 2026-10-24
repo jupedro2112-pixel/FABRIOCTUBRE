@@ -5011,7 +5011,6 @@ function switchSection(section) {
     if (section === 'datos') { datosIaGate('Datos').then(function (ok) { if (ok) loadDatos(); }); } // #743 clave
     if (section === 'datosIa') { datosIaGate('Datos IA').then(function (ok) { if (ok) diaInit(); }); } // #459 · #590 clave
     if (section === 'menuLayout') { loadMenuLayout(); loadMenusEnabled(); } // #480 · #635
-    if (section === 'raffle') { raffleLoad(); } // #917
     if (section === 'cierres') { datosIaGate('Cierres').then(function (ok) { if (ok) cierresLoad(); }); } // #500 · #745 clave
     if (section === 'strategy') { stratLoad(); stratRolloverLoad(); } // #504/#509
     if (section === 'datos2') { datosIaGate('Datos 2.0').then(function (ok) { if (ok) loadDatos2(); }); } // #743 clave
@@ -5020,10 +5019,11 @@ function switchSection(section) {
     if (section === 'cronohist') { loadStoriesAuto(); loadNewbieOffers(); } // #871 · #886
     if (section === 'fraud') loadFraud(); // #873
     if (section === 'inicio') loadInicio(); // #876
+    if (section === 'sorteos') loadSorteos(); // #915
     if (section === 'referrals') loadAdminReferralSummary();
     if (section === 'stories') loadStories(); // #361
     if (section === 'depositReviews') loadDepositReviews(); // #376
-    if (section === 'support') loadSupport(); // #377
+    if (section === 'support') { loadSupport(); gsLoad(); } // #377 · #953: + gente sin acceso
     if (section === 'payReview') loadPayReview(); // #566
     if (section === 'cargasAuto') loadCargasAuto(); // #763
     if (section === 'gastos') { datosIaGate('Gastos').then(function (ok) { if (ok) loadGastos(); }); } // #770 clave
@@ -5902,17 +5902,17 @@ async function cierresLoad() {
         const r = await authFetch('/api/admin/cierres?days=30'); const j = await r.json(); if (!r.ok) { if (list) list.textContent = j.error || 'Error'; return; }
         _clItems = j.items || []; _clUsdt = j.usdtRate || null;
         const p = document.getElementById('clPct'); if (p && document.activeElement !== p) p.value = j.config.bankCommissionPct || 0;
-        const ci = document.getElementById('clCfgInfo'); if (ci) ci.textContent = j.config.bankCommissionPct ? 'Hoy: ' + j.config.bankCommissionPct + '% sobre depósitos' : 'Sin % por defecto';
-        const ui = document.getElementById('clUsdtInfo'); if (ui) ui.textContent = 'USDT (opcional): ' + (_clUsdt ? '$' + _clUsdt.toLocaleString('es-AR') : '—');
+        const fe = document.getElementById('clFee'); if (fe && document.activeElement !== fe) fe.value = j.config.perDepositFee == null ? 50 : j.config.perDepositFee; // #948
+        const ci = document.getElementById('clCfgInfo'); if (ci) ci.textContent = (j.config.bankCommissionPct ? 'Comisión ' + j.config.bankCommissionPct + '% sobre depósitos' : 'Sin % de comisión') + ' · $' + Number(j.config.perDepositFee == null ? 50 : j.config.perDepositFee).toLocaleString('es-AR') + ' por transferencia';
         const malos = _clItems.filter(function (x) { return x.arqueo === 'faltante' || x.arqueo === 'sobrante'; }).length; const bd = document.getElementById('cierresBadge'); if (bd) { bd.textContent = malos; bd.style.display = malos ? '' : 'none'; }
         const t = j.totals || {};
-        document.getElementById('cierresTotals').innerHTML = _diaKpi('Depósitos (30 d)', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('VENTA (netwin)', _clC(t.venta)) + _diaKpi('Regalos', _clM(t.regalos)) + _diaKpi('NETO', _clC(t.neto)) + _diaKpi('Días con diferencia', String(malos));
+        document.getElementById('cierresTotals').innerHTML = _diaKpi('INGRESOS (30 d)', _clM(t.ingresos)) + _diaKpi('GASTOS', _clM(t.egresos), 'transf. ' + _clM(t.fee) + ' · gastos ' + _clM(t.gastos) + ' · comisión ' + _clM(t.comision)) + _diaKpi('RESULTADO (plata)', _clC(t.resultado)) + _diaKpi('Depósitos', _clM(t.depositos)) + _diaKpi('Retiros', _clM(t.retiros)) + _diaKpi('NETO (fichas)', _clC(t.neto)) + _diaKpi('Días con diferencia', String(malos)); // #948
         if (!list) return;
         // #744 (owner): cierres día a día, automáticos. Diferencia SIEMPRE visible (0 = cuadra) y "Ver detalle" con la conciliación.
         const arq = function (c) { const d = Number(c.diferencia) || 0; const num = (d > 0 ? '+' : '') + _clM(d).replace('$-', '-$'); if (c.arqueo === 'sin_datos') return '<span class="cl-st">— sin datos del banco</span>'; return c.arqueo === 'cuadra' ? '<span class="cl-st fin">✅ Da 0</span>' : ('<span class="cl-st bad">⚠ ' + (c.arqueo === 'faltante' ? 'Faltante' : 'Sobrante') + ' <b>' + num + '</b></span>'); };
         const det = function (c) { const d = c.detalle || {}; const s = d.sistema || {}, b = d.banco || {}; return '<small>auto ' + _clM(s.depositosAuto || 0) + (s.depositosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.depositosManual) + '</b>' : '') + (s.depositosPrueba ? ' · prueba ' + _clM(s.depositosPrueba) : '') + '</small>'; };
-        const detR = function (c) { const d = c.detalle || {}; const s = d.sistema || {}; return '<small>banco ' + _clM(s.pagosBanco || 0) + (s.pagosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.pagosManual) + '</b>' : '') + '</small>'; };
-        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>Banco entró / salió</th><th>Regalos</th><th>NETO</th><th>Comisión</th><th>Gastos</th><th>RESULTADO</th><th>Diferencia</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
+        const detR = function (c) { const d = c.detalle || {}; const s = d.sistema || {}; return '<small>banco ' + _clM(s.pagosBanco || 0) + (s.pagosManual ? ' · <b class="cl-warn">a mano ' + _clM(s.pagosManual) + '</b>' : '') + (s.pagosExternos ? ' · <b style="color:var(--p-green,#16a34a)">banco externo ' + _clM(s.pagosExternos) + ' (ingreso)</b>' : '') + '</small>'; }; // #913
+        list.innerHTML = '<table class="data-table cl-table" style="width:100%;"><thead><tr><th>Día</th><th>Estado</th><th>Depósitos</th><th>Retiros</th><th>Banco entró / salió</th><th>Regalos</th><th>NETO (fichas)</th><th>INGRESOS</th><th>GASTOS</th><th>RESULTADO (plata)</th><th>Caja 00 hs</th><th>Diferencia</th><th></th></tr></thead><tbody>' + _clItems.map(function (c) {
             const fin = c.status === 'finalizado';
             return '<tr class="' + (fin ? 'fin' : 'pend') + (c.arqueo === 'faltante' || c.arqueo === 'sobrante' ? ' dif' : '') + '" id="cl-' + c.dateKey + '"><td><b>' + c.dateKey + '</b><br><small>' + c.nuevos + ' nuevos · ' + c.retenidos + ' ret.</small></td>' +
                 '<td>' + (fin ? '<span class="cl-st fin">✅ Cerrado' + (c.finalizedBy === 'auto' ? ' (auto)' : '') + '</span>' : '<span class="cl-st">⏳ Hoy / en curso</span>') + '</td>' +
@@ -5920,12 +5920,13 @@ async function cierresLoad() {
                 '<td><b>' + _clM(c.retiros) + '</b><br>' + detR(c) + '</td>' +
                 '<td><small>' + (c.bankSource === 'api' ? 'API' : 'avisos') + '</small> ' + _clM(c.bankIn) + ' / ' + _clM(c.bankOut) + '</td>' +
                 '<td>' + _clM(c.regalos) + '</td><td>' + _clC(c.neto) + '</td>' +
-                '<td>' + _clM(c.bankCommissionArs || 0) + '<br><small>' + (c.bankCommissionPct != null ? c.bankCommissionPct + '%' : '—') + '</small></td>' +
-                '<td>' + (c.gastos ? '<b class="cl-warn">' + _clM(c.gastos) + '</b>' : '—') + '</td>' + // #770
-                '<td><b>' + _clC(c.resultado) + '</b>' + (c.resultadoUsd != null ? '<br><small>' + _clU(c.resultadoUsd) + '</small>' : '') + '</td>' +
+                '<td><b>' + _clM(c.ingresosTotal) + '</b><br><small>' + (c.pagosExternos ? 'ext. ' + _clM(c.pagosExternos) + ' · ' : '') + (c.fondeos ? 'fondeo ' + _clM(c.fondeos) : '') + '</small></td>' + // #948
+                '<td><b>' + _clM(c.egresosTotal) + '</b><br><small>com. ' + _clM(c.bankCommissionArs || 0) + ' · transf. ' + _clM(c.feeDepositsArs || 0) + (c.gastos ? ' · <b class="cl-warn">gastos ' + _clM(c.gastos) + '</b>' : '') + '</small></td>' +
+                '<td><b>' + _clC(c.resultado) + '</b></td>' +
+                '<td><small>' + (c.bankBalanceStart != null || c.bankBalanceStartManual != null ? '00 hs ' + _clM(c.bankBalanceStartManual != null ? c.bankBalanceStartManual : c.bankBalanceStart) + ' → esp. ' + _clM(c.bankBalanceExpectedEnd) + (c.bankBalanceEnd != null || c.bankBalanceEndManual != null ? ' · real ' + _clM(c.bankBalanceEndManual != null ? c.bankBalanceEndManual : c.bankBalanceEnd) : ' · real —') : 'sin saldo 00 hs') + '</small></td>' +
                 '<td>' + arq(c) + '</td>' +
                 '<td style="white-space:nowrap;"><button class="btn-secondary btn-small" onclick="cierresDetalle(\'' + c.dateKey + '\')">🔍 Ver detalle</button> <button class="btn-secondary btn-small" onclick="cierresSave(\'' + c.dateKey + '\', {recalc:true})" title="Vuelve a calcular con los datos de ahora">↻</button></td></tr>' +
-                '<tr class="cl-det" id="cld-' + c.dateKey + '" style="display:none;"><td colspan="12"></td></tr>';
+                '<tr class="cl-det" id="cld-' + c.dateKey + '" style="display:none;"><td colspan="13"></td></tr>';
         }).join('') + '</tbody></table>';
     } catch (_) { if (list) list.textContent = 'Error de conexión'; }
 }
@@ -5941,11 +5942,35 @@ async function cierresDetalle(dk) {
         const signed = function (n) { return (n > 0 ? '+' : '') + money(n); };
         const sev = { alta: 'cl-sev-alta', media: 'cl-sev-media', baja: 'cl-sev-baja' };
         let html = '<div class="cl-rec">';
+        // #948: INGRESOS · GASTOS · CAJA 00 hs del día (de DailyClose) arriba de la conciliación · #951: + REGALADO, con una guía de lectura
+        html += '<div class="cl-rec-sum" style="margin-bottom:.5rem"><b>Cómo leerlo:</b> 💰 INGRESOS − 💸 GASTOS = <b>RESULTADO en plata</b> (lo que entró y salió del banco). 🎁 REGALADO son fichas (bonos, reembolsos…): no mueven la caja, bajan el NETO de fichas. 🏦 CAJA compara el saldo del CBU a las 00 hs con lo esperado.</div>';
+        { const c = _clItems.find(function (x) { return x.dateKey === dk; }) || {}; const g = s.gastos || 0;
+          const bs = c.bankBalanceStartManual != null ? c.bankBalanceStartManual : c.bankBalanceStart, be = c.bankBalanceEndManual != null ? c.bankBalanceEndManual : c.bankBalanceEnd;
+          html += '<div class="cl-rec-cols"><div class="cl-rec-box"><b>💰 INGRESOS</b>' +
+            '<div>Depósitos de clientes (banco): <b>' + money(c.depositos || 0) + '</b> · ' + (c.cargas || 0) + ' cargas</div>' +
+            '<div>Pagos por banco externo (fichas afuera, plata adentro): <b style="color:var(--p-green,#16a34a)">' + money(c.pagosExternos || 0) + '</b></div>' +
+            '<div>Fondeos de la cuenta: <b style="color:var(--p-green,#16a34a)">' + money(c.fondeos || 0) + '</b></div>' +
+            '<div style="border-top:1px solid var(--p-border);margin-top:4px;padding-top:4px"><b>Total ingresos: ' + money(c.ingresosTotal || 0) + '</b></div></div>' +
+            '<div class="cl-rec-box"><b>💸 GASTOS</b>' +
+            '<div>Retiros pagados: <b>' + money(c.retiros || 0) + '</b> · ' + (c.retirosN || 0) + '</div>' +
+            '<div>Comisión del banco (' + (c.bankCommissionPct != null ? c.bankCommissionPct + '%' : '—') + ' sobre depósitos): <b>' + money(c.bankCommissionArs || 0) + '</b></div>' +
+            '<div>Costo por transferencia (' + (c.cargas || 0) + ' × ' + money(c.feePerDeposit == null ? 50 : c.feePerDeposit) + '): <b>' + money(c.feeDepositsArs || 0) + '</b></div>' +
+            '<div>Gastos registrados: <b class="' + (g ? 'cl-warn' : '') + '">' + money(g) + '</b>' + (s.gastosBanco ? ' <small>(' + money(s.gastosBanco) + ' por API del banco)</small>' : '') + '</div>' +
+            '<div style="border-top:1px solid var(--p-border);margin-top:4px;padding-top:4px"><b>Total gastos: ' + money(c.egresosTotal || 0) + '</b> · <b>RESULTADO: ' + signed(c.resultado || 0) + '</b></div></div>' +
+            '<div class="cl-rec-box"><b>🏦 CAJA · saldo del CBU a las 00 hs</b>' +
+            '<div>Inicio del día (00 hs): <b>' + (bs != null ? money(bs) : '—') + '</b>' + (c.bankBalanceSource ? ' <small>(' + c.bankBalanceSource + ')</small>' : '') + '</div>' +
+            '<div>+ resultado de caja: <b>' + signed(c.resultadoCaja || 0) + '</b> <small>(sin los gastos pagados por fuera de este banco)</small></div>' +
+            '<div>= esperado al cierre (00 hs sig.): <b>' + (c.bankBalanceExpectedEnd != null ? money(c.bankBalanceExpectedEnd) : '—') + '</b></div>' +
+            '<div>Real al cierre: <b>' + (be != null ? money(be) : '— (todavía sin saldo)') + '</b>' + (bs != null && be != null ? ' · diferencia <b class="' + (Math.abs(c.diferencia || 0) <= 1000 ? '' : 'cl-warn') + '">' + signed(c.diferencia || 0) + '</b>' : '') + '</div></div>' +
+            // #951 (owner): lo REGALADO (fichas, no plata) desglosado por tipo, en su propia caja para no mezclarlo con la caja
+            (function () { const ga = (d.girox && d.girox.app) || {}; const por = ga.regalosPorTipo || {}; const NOM = { bonus: 'Bonos de carga', refund: 'Reembolsos', cashback: 'Reembolso acumulativo', roulette: 'Ruleta diaria', mission: 'Misiones', fire_reward: 'Fueguito', fire: 'Fueguito', vip_levelup: 'Nivel VIP', vip_level: 'Nivel VIP', rakeback: 'Rakeback', referral: 'Referidos', referral_commission: 'Referidos', install_gift: 'Extra por instalar la app', install_bonus: 'Bono por instalar', welcome_gift: 'Bienvenida', welcome_code: 'Código de bienvenida', review_gift: 'Regalo por opinar', story_bonus: 'Bono de historia' }; const keys = Object.keys(por).filter(function (k) { return por[k]; }).sort(function (x, y) { return por[y] - por[x]; });
+              return '<div class="cl-rec-box"><b>🎁 REGALADO (fichas, no sale plata del banco)</b>' + (keys.length ? keys.map(function (k) { return '<div>' + escapeHtml(NOM[k] || k) + ': <b>' + money(por[k]) + '</b></div>'; }).join('') : '<div style="color:#888">Sin regalos ese día</div>') + '<div style="border-top:1px solid var(--p-border);margin-top:4px;padding-top:4px"><b>Total regalado: ' + money(c.regalos || 0) + '</b></div><div style="color:#888;font-size:.85rem;margin-top:3px">Fichas: depósitos ' + money(c.depositos || 0) + ' − retiros ' + money(c.retiros || 0) + ' = venta ' + signed(c.venta || 0) + ' · − regalos = <b>NETO ' + signed(c.neto || 0) + '</b></div></div>'; })() + '</div>'; }
         html += '<div class="cl-rec-cols"><div class="cl-rec-box"><b>🖥️ Sistema</b>' +
             '<div>Depósitos automáticos (banco): <b>' + money(s.depositosAuto || 0) + '</b> · ' + (s.depositosAutoN || 0) + '</div>' +
             '<div>Depósitos a mano (agente): <b class="' + (s.depositosManual ? 'cl-warn' : '') + '">' + money(s.depositosManual || 0) + '</b> · ' + (s.depositosManualN || 0) + '</div>' +
             (s.depositosPrueba ? '<div>Depósitos de prueba: <b>' + money(s.depositosPrueba) + '</b> · ' + (s.depositosPruebaN || 0) + '</div>' : '') +
             '<div>Retiros: <b>' + money(s.retiros || 0) + '</b> · ' + (s.retirosN || 0) + ' (pagados por banco ' + money(s.pagosBanco || 0) + ' · a mano <b class="' + (s.pagosManual ? 'cl-warn' : '') + '">' + money(s.pagosManual || 0) + '</b>)</div>' +
+            (s.pagosExternos ? '<div>🏦 Pagados por banco externo (ingreso: la plata quedó en la cuenta): <b style="color:var(--p-green,#16a34a)">' + money(s.pagosExternos) + '</b> · ' + (s.pagosExternosN || 0) + '</div>' : '') + // #913
             (s.fondeos ? '<div>🏦 Fondeo (ingreso): <b style="color:var(--p-green,#16a34a)">' + money(s.fondeos) + '</b> · ' + (s.fondeosN || 0) + (d.fondeoNoVistoEnBanco ? ' <small class="cl-warn">(' + money(d.fondeoNoVistoEnBanco) + ' todavía no figura en el banco)</small>' : '') + '</div>' : '') + '</div>' + // #904
             '<div class="cl-rec-box"><b>🏦 Banco</b>' +
             '<div>Entró: <b>' + money(b.entradas || 0) + '</b> · ' + (b.entradasN || 0) + ' (acreditadas ' + money(b.entradasAcreditadas || 0) + ')</div>' +
@@ -5960,10 +5985,11 @@ async function cierresDetalle(dk) {
         html += lst('Cargas acreditadas a mano', it.depositosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['nota', 'Nota']]);
         html += lst('Entradas del banco sin acreditar', it.entradasSinAcreditar, [['hora', 'Hora'], ['de', 'De'], ['monto', 'Monto'], ['estado', 'Estado']]);
         html += lst('Retiros pagados a mano', it.pagosManual, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['via', 'Vía']]);
+        html += lst('Retiros pagados por banco externo (ingreso)', it.pagosExternos, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['agente', 'Agente'], ['via', 'Vía']]); // #913
         html += lst('Cargas de prueba', it.depositosPrueba, [['hora', 'Hora'], ['usuario', 'Usuario'], ['monto', 'Monto'], ['nota', 'Nota']]);
         html += lst('Gastos del día', it.gastos, [['hora', 'Hora'], ['usuario', 'Destino'], ['monto', 'Monto'], ['agente', 'Cargó'], ['nota', 'Concepto']]); // #770
         html += _cierresGiroxHtml(dk, d.girox || {}, money, signed); // #888
-        html += '<div class="cl-rec-adj"><details><summary>⚙️ Ajustes manuales del día (comisión, banco, USDT)</summary>' + _cierresAdjHtml(dk) + '</details></div></div>';
+        html += '<div class="cl-rec-adj"><details><summary>⚙️ Ajustes manuales del día (comisión, banco, saldos 00 hs)</summary>' + _cierresAdjHtml(dk) + '</details></div></div>';
         cell.innerHTML = html;
     } catch (e) { cell.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
 }
@@ -5976,7 +6002,6 @@ function _cierresAdjHtml(dk) {
         '<label>Banco salió (manual)<input type="number" class="cl-in" id="clBout-' + dk + '" value="' + (c.bankOutManual != null ? c.bankOutManual : '') + '" step="1" ' + dis + '></label>' +
         '<label>Saldo 00:00<input type="number" class="cl-in" id="clBs-' + dk + '" value="' + (c.bankBalanceStartManual != null ? c.bankBalanceStartManual : '') + '" step="1" ' + dis + '></label>' +
         '<label>Saldo 24:00<input type="number" class="cl-in" id="clBe-' + dk + '" value="' + (c.bankBalanceEndManual != null ? c.bankBalanceEndManual : '') + '" step="1" ' + dis + '></label>' +
-        '<label>USDT (opcional)<input type="number" class="cl-in" id="clUsd-' + dk + '" value="' + (c.usdtRate || '') + '" placeholder="' + (_clUsdt || '') + '" min="1" step="1" ' + dis + '></label>' +
         '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">' +
         (fin && c.finalizedBy !== 'auto' ? '<button class="btn-secondary btn-small" onclick="cierresSave(\'' + dk + '\', {reopen:true})">Reabrir</button>' : '<button class="btn-primary btn-small" onclick="cierresSave(\'' + dk + '\', {})">Guardar ajustes</button> <button class="btn-secondary btn-small" onclick="cierresSave(\'' + dk + '\', {finalize:true})">Cerrar a mano</button>') +
         '</div>';
@@ -5995,7 +6020,7 @@ async function cierresSave(dk, extra) {
     try { const r = await authFetch('/api/admin/cierres/' + dk, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast(extra && extra.finalize ? 'Cierre ' + dk + ' FINALIZADO' : (extra && extra.reopen ? 'Cierre reabierto' : 'Cierre guardado'), 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function cierresSaveConfig() {
-    try { const r = await authFetch('/api/admin/cierres/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bankCommissionPct: document.getElementById('clPct').value }) }); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Comisión por defecto guardada', 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
+    try { const r = await authFetch('/api/admin/cierres/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bankCommissionPct: document.getElementById('clPct').value, perDepositFee: (document.getElementById('clFee') || {}).value }) }); /* #948 */ const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } showToast('Comisión por defecto guardada', 'success'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); }
 }
 async function cierresUsdtFetch() { try { const r = await authFetch('/api/admin/datos-ia/usdt?fetch=1'); const j = await r.json(); if (j.rate) showToast('Cotización de hoy: $' + Number(j.rate).toLocaleString('es-AR') + ' (quedó como sugerida en los pendientes)', 'success'); else showToast('No se pudo traer la cotización', 'error'); cierresLoad(); } catch (_) { showToast('Error de conexión', 'error'); } }
 async function cierresBankBalance() { try { const r = await authFetch('/api/admin/cierres/bank-balance'); const j = await r.json(); if (!r.ok) { showToast(j.error || 'No se pudo', 'error'); return; } const n = j.now || {}; const last = (j.snapshots || [])[0]; const mv = j.movements || {}; alert((n.ok && n.balance != null ? 'Saldo del banco AHORA: $' + Number(n.balance).toLocaleString('es-AR') : 'La API del banco no informó saldo' + (n.error ? ': ' + n.error : '')) + '\n\nMovimientos de AYER por API: ' + (mv.ok ? mv.count + ' movimientos (' + mv.endpoint + ') · entró $' + Number(mv.inbound).toLocaleString('es-AR') + ' · salió $' + Number(mv.outbound).toLocaleString('es-AR') : 'no disponible' + (mv.error ? ' — ' + mv.error : '')) + (n.raw ? '\n\nCampos que devuelve la cuenta: ' + Object.keys(n.raw).join(', ') : '') + (last ? '\n\nÚltimo saldo de las 00:00 (' + last.dateKey + '): ' + (last.balance != null ? '$' + Number(last.balance).toLocaleString('es-AR') : 'sin saldo' + (last.error ? ' · ' + last.error : '')) : '\n\nTodavía no hay saldos de las 00:00 guardados.')); } catch (_) { showToast('Error de conexión', 'error'); } }
@@ -9530,7 +9555,7 @@ async function loadAdminUserReferrals(userId) {
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);">
                     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center;">
                         <div style="color:#888;font-size:10px;margin-bottom:4px;">USUARIO</div>
-                        <div style="color:#fff;font-weight:bold;">${u.username}</div>
+                        <div style="color:#fff;font-weight:bold;">${escapeHtml(u.username)}</div>
                     </div>
                     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center;">
                         <div style="color:#888;font-size:10px;margin-bottom:4px;">CÓDIGO</div>
@@ -9676,7 +9701,7 @@ async function loadAdminReferralRelationships() {
                 <tbody>
                 ${rels.map(r => `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                     <td style="padding:5px 4px;">
-                        <span style="color:#d4af37;font-weight:bold;">${r.referrer?.username || '—'}</span>
+                        <span style="color:#d4af37;font-weight:bold;">${escapeHtml(r.referrer?.username || '—')}</span>
                         ${r.referrer?.id ? `<button onclick="loadAdminUserReferrals('${r.referrer.id}')" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;color:#d4af37;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:10px;margin-left:4px;">Detalle</button>` : ''}
                     </td>
                     <td style="padding:5px 4px;color:#d4af37;letter-spacing:1px;font-size:12px;">${r.codeUsed || '—'}</td>
@@ -11180,20 +11205,49 @@ async function reactivateCampaign(code) {
 
 let _campaignStatsCurrentCode = null;
 
+// #914 (owner): "en publicista, cuando voy a ver detalle, que se pueda seleccionar fecha y hora". Período con fecha y hora (hora argentina);
+// vacío = desde el inicio. Se manda como ISO con -03:00 y el server filtra clics, registros, cargas y retiros del período.
+let _campaignStatsRange = { from: '', to: '' };
+function _csIso(v) { return v ? new Date(v + ':00-03:00').toISOString() : ''; }
+function _csLocal(d) { const x = new Date(d.getTime() - 3 * 3600000); return x.toISOString().slice(0, 16); } // Date → 'YYYY-MM-DDTHH:mm' en ART
+function campaignStatsApply() { const f = (document.getElementById('csFrom') || {}).value || '', t = (document.getElementById('csTo') || {}).value || ''; if (f && t && t <= f) { showToast('"Hasta" tiene que ser después de "Desde"', 'error'); return; } _campaignStatsRange = { from: f, to: t }; viewCampaignStats(_campaignStatsCurrentCode); }
+function campaignStatsQuick(k) {
+    const now = new Date(); const art = new Date(now.getTime() - 3 * 3600000); const day0 = new Date(Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate()) + 3 * 3600000); // 00:00 ART de hoy
+    let from = '', to = '';
+    if (k === 'hoy') from = _csLocal(day0);
+    else if (k === 'ayer') { from = _csLocal(new Date(day0.getTime() - 86400000)); to = _csLocal(day0); }
+    else if (k === '7d') from = _csLocal(new Date(day0.getTime() - 6 * 86400000));
+    else if (k === '30d') from = _csLocal(new Date(day0.getTime() - 29 * 86400000));
+    _campaignStatsRange = { from, to }; viewCampaignStats(_campaignStatsCurrentCode);
+}
+function _campaignStatsBar() {
+    const r = _campaignStatsRange; const on = !!(r.from || r.to);
+    const b = (k, t) => '<button class="btn-secondary btn-small" onclick="campaignStatsQuick(\'' + k + '\')">' + t + '</button>';
+    return '<div style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;">' +
+        '<div style="font-size:11px;color:#aaa;margin-bottom:6px;">📅 Período (fecha y hora, Argentina) · vacío = desde el inicio</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<label style="font-size:12px;color:#ccc;">Desde <input type="datetime-local" id="csFrom" class="form-input" style="width:auto" value="' + escapeHtml(r.from) + '"></label>' +
+        '<label style="font-size:12px;color:#ccc;">Hasta <input type="datetime-local" id="csTo" class="form-input" style="width:auto" value="' + escapeHtml(r.to) + '"></label>' +
+        '<button class="btn-primary btn-small" onclick="campaignStatsApply()">Ver</button>' + b('hoy', 'Hoy') + b('ayer', 'Ayer') + b('7d', '7 días') + b('30d', '30 días') + b('todo', 'Todo') + '</div>' +
+        (on ? '<div style="font-size:12px;color:#d4af37;margin-top:6px;">Mostrando: ' + (r.from ? 'desde ' + escapeHtml(r.from.replace('T', ' ')) : 'desde el inicio') + (r.to ? ' hasta ' + escapeHtml(r.to.replace('T', ' ')) : ' hasta ahora') + '</div>' : '') + '</div>';
+}
 async function viewCampaignStats(code) {
+    if (_campaignStatsCurrentCode !== code) _campaignStatsRange = { from: '', to: '' }; // otra pauta ⇒ desde el inicio
     _campaignStatsCurrentCode = code;
     document.getElementById('campaignStatsTitle').textContent = code;
     document.getElementById('campaignStatsSubtitle').textContent = '';
-    document.getElementById('campaignStatsContent').innerHTML = 'Cargando…';
+    document.getElementById('campaignStatsContent').innerHTML = _campaignStatsBar() + 'Cargando…';
     showModal('campaignStatsModal');
     document.getElementById('campaignStatsModal').style.display = 'flex';
 
     try {
-        const response = await fetch(`${API_URL}/api/admin/campaigns/${encodeURIComponent(code)}/stats`, {
+        const qs = (_campaignStatsRange.from || _campaignStatsRange.to) ? '?from=' + encodeURIComponent(_csIso(_campaignStatsRange.from)) + '&to=' + encodeURIComponent(_csIso(_campaignStatsRange.to)) : '';
+        const response = await fetch(`${API_URL}/api/admin/campaigns/${encodeURIComponent(code)}/stats${qs}`, {
             headers: { 'Authorization': `Bearer ${currentToken}` }
         });
         if (!response.ok) throw new Error('Failed to load stats');
-        const { campaign, stats, commission } = await response.json();
+        const { campaign, stats, commission, period } = await response.json();
+        const perLbl = period ? 'en el período' : 'desde el inicio';
 
         document.getElementById('campaignStatsTitle').textContent = `${campaign.publisher} — ${campaign.name}`;
         document.getElementById('campaignStatsSubtitle').textContent = `Código: ${campaign.code} · ${campaign.isActive ? '🟢 Activa' : '🔴 Inactiva'}`;
@@ -11206,7 +11260,7 @@ async function viewCampaignStats(code) {
                 ? `${formatARS(campaign.commissionValue)} × ${stats.ftd} FTD = ${formatARS(commission)}`
                 : `${campaign.commissionValue}% × ${formatARS(stats.netRevenue)} = ${formatARS(commission)}`);
 
-        document.getElementById('campaignStatsContent').innerHTML = `
+        document.getElementById('campaignStatsContent').innerHTML = _campaignStatsBar() + `
             <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:12px;margin-bottom:12px;">
                 <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Link para el publicista</div>
                 <code style="display:block;background:#0d0d1a;padding:8px;border-radius:6px;color:#00ff88;font-size:12px;word-break:break-all;">${escapeHtml(buildCampaignLink(campaign.code))}</code>
@@ -11220,7 +11274,7 @@ async function viewCampaignStats(code) {
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
                 <div style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;">
-                    <div style="font-size:11px;color:#aaa;">Clics</div>
+                    <div style="font-size:11px;color:#aaa;">Clics (${perLbl})</div>
                     <div style="font-size:24px;color:#d4af37;font-weight:bold;">${stats.clicks}</div>
                 </div>
                 <div style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;">
@@ -11229,9 +11283,9 @@ async function viewCampaignStats(code) {
                     <div style="font-size:10px;color:#888;">CR: ${crClickReg}</div>
                 </div>
                 <div style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;">
-                    <div style="font-size:11px;color:#aaa;">FTD</div>
+                    <div style="font-size:11px;color:#aaa;">FTD (primeras cargas)</div>
                     <div style="font-size:24px;color:#00ff88;font-weight:bold;">${stats.ftd}</div>
-                    <div style="font-size:10px;color:#888;">CR: ${crRegFtd}</div>
+                    <div style="font-size:10px;color:#888;">CR: ${crRegFtd}${period ? ' · ' + (stats.depositors || 0) + ' cargaron · ' + (stats.deposits || 0) + ' cargas' : ''}</div>
                 </div>
                 <div style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;">
                     <div style="font-size:11px;color:#aaa;">Revenue (depósitos)</div>
@@ -11256,8 +11310,8 @@ async function viewCampaignStats(code) {
             </div>
         `;
 
-        // Cargar la lista de usuarios registrados por esta pauta (best-effort).
-        loadCampaignUsers(code);
+        // Cargar la lista de usuarios registrados por esta pauta (best-effort). #914: con período, sólo los registrados en él.
+        loadCampaignUsers(code, qs);
     } catch (err) {
         document.getElementById('campaignStatsContent').innerHTML = `<span style="color:#ff6666;">Error: ${escapeHtml(err.message)}</span>`;
     }
@@ -11267,11 +11321,11 @@ async function viewCampaignStats(code) {
 // que se registraron por una campaña. Es best-effort: si falla, no rompe el
 // resto del modal. Verifica _campaignStatsCurrentCode para no pisar el
 // contenido si el admin abrió otra campaña mientras cargaba.
-async function loadCampaignUsers(code) {
+async function loadCampaignUsers(code, qs) {
     const container = document.getElementById('campaignStatsUsers');
     if (!container) return;
     try {
-        const response = await fetch(`${API_URL}/api/admin/campaigns/${encodeURIComponent(code)}/users?limit=500`, {
+        const response = await fetch(`${API_URL}/api/admin/campaigns/${encodeURIComponent(code)}/users?limit=500${qs ? '&' + qs.slice(1) : ''}`, {
             headers: { 'Authorization': `Bearer ${currentToken}` }
         });
         if (!response.ok) throw new Error('No se pudo cargar la lista de usuarios');
@@ -11282,7 +11336,7 @@ async function loadCampaignUsers(code) {
         if (!cont) return;
 
         if (!users || users.length === 0) {
-            cont.innerHTML = `<div style="font-size:12px;color:#888;border-top:1px solid rgba(212,175,55,0.2);padding-top:10px;">Todavía no hay usuarios registrados por esta pauta.</div>`;
+            cont.innerHTML = `<div style="font-size:12px;color:#888;border-top:1px solid rgba(212,175,55,0.2);padding-top:10px;">${qs ? 'Nadie se registró por esta pauta en el período elegido.' : 'Todavía no hay usuarios registrados por esta pauta.'}</div>`;
             return;
         }
 
@@ -11306,7 +11360,7 @@ async function loadCampaignUsers(code) {
         cont.innerHTML = `
             <div style="border-top:1px solid rgba(212,175,55,0.2);padding-top:12px;">
                 <div style="font-size:13px;color:#d4af37;font-weight:bold;margin-bottom:8px;">
-                    👥 Usuarios registrados por esta pauta (${users.length})
+                    👥 Usuarios registrados por esta pauta${qs ? ' en el período' : ''} (${users.length})
                 </div>
                 <div style="max-height:260px;overflow-y:auto;background:rgba(0,0,0,0.4);border-radius:8px;">
                     <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -11350,7 +11404,7 @@ window.reactivateCampaign = reactivateCampaign;
 window.copyCampaignLink = copyCampaignLink;
 window.submitCampaignForm = submitCampaignForm;
 window.closeCampaignFormModal = closeCampaignFormModal;
-window.viewCampaignStats = viewCampaignStats;
+window.viewCampaignStats = viewCampaignStats; window.campaignStatsApply = campaignStatsApply; window.campaignStatsQuick = campaignStatsQuick; // #914
 window.closeCampaignStatsModal = closeCampaignStatsModal;
 window.editCampaignFromStats = editCampaignFromStats;
 
@@ -16123,9 +16177,21 @@ async function loadStoriesAuto() {
         const num = (n) => Number(n || 0).toLocaleString('es-AR');
         const KIND = { servicio: ['🧭', '#6366f1'], deporte: ['⚽', '#16a34a'], slot: ['🎰', '#db2777'], bono: ['🎁', '#dc2626'] };
         const dayLbl = (k) => new Date(k + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-        let h = '<label style="display:flex;gap:8px;align-items:center;margin:.2rem 0 .5rem;padding:6px 9px;border:1px solid var(--p-border,rgba(255,255,255,.15));border-radius:8px;cursor:pointer">' + // #934
-            '<input type="checkbox" ' + (j.matchesEnabled ? 'checked' : '') + ' onchange="storiesAutoMatches(this.checked)"> <span>⚽ <b>Publicar partidos de fútbol</b> (00:05, los destacados del día). ' +
-            (j.matchesEnabled ? '<span style="color:#22c55e">Prendido</span>' : '<span style="color:#f59e0b">Apagado: sólo historias que explican la app</span>') + '</span></label>';
+        let h = '';
+        // #909: llave de los partidos + diagnóstico del motor (última pasada, publicadas hoy, salteadas y por qué)
+        h += '<div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:.4rem .5rem;border:1px solid var(--p-border,rgba(255,255,255,.1));border-radius:10px;margin-bottom:.5rem">' +
+            '<span>⚽ Partidos del día: <b style="color:' + (j.matchesOn ? '#22c55e' : '#f87171') + '">' + (j.matchesOn ? 'ENCENDIDOS (salen a las 00:05)' : 'apagados') + '</b></span>' +
+            '<button type="button" class="btn btn-secondary btn-sm" onclick="storiesAutoMatches(' + (j.matchesOn ? 'false' : 'true') + ')">' + (j.matchesOn ? '⏸ Apagar partidos' : '▶ Encender partidos') + '</button>' +
+            '<span style="color:#888;font-size:.74rem">Apagados, salen sólo las 5 historias de servicio (explican la app). Nunca se repiten con las del día anterior.</span>' +
+            '<button type="button" class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="storiesAutoRepublish()" title="Apaga las historias vigentes y publica las 5 de hoy ahora mismo">🔄 Borrar y publicar las de hoy</button></div>';
+        const dg = j.diag || null;
+        if (j.disabled) h += '<div style="color:#f87171;font-size:.78rem;margin-bottom:.4rem">⛔ El motor está APAGADO por STORIES_AUTOPILOT_DISABLED=1 en el servidor.</div>';
+        if (dg && dg.lastTickAt) {
+            const mins = Math.round((Date.now() - new Date(dg.lastTickAt).getTime()) / 60000);
+            h += '<div style="font-size:.76rem;color:' + (mins > 20 ? '#f87171' : '#8fd3a8') + ';margin-bottom:.4rem">🛠 Motor: última pasada hace ' + mins + ' min · publicadas hoy: <b>' + num(j.publishedToday) + '</b>' +
+                (dg.lastError ? ' · <span style="color:#f87171">error: ' + escHtml(dg.lastError) + '</span>' : '') +
+                ((dg.skipped || []).length ? ' · <span style="color:#fbbf24">salteadas: ' + dg.skipped.map((x) => escHtml((x.title || x.slot) + ' (' + x.why + ')')).join(' · ') + '</span>' : '') + '</div>';
+        } else h += '<div style="font-size:.76rem;color:#f87171;margin-bottom:.4rem">🛠 Motor: todavía no registró ninguna pasada (si esto sigue tras 10 min, el servidor no tiene esta versión o el motor está apagado).</div>';
         (j.days || []).forEach((d, di) => {
             h += '<details' + (di <= 1 ? ' open' : '') + ' style="border-bottom:1px solid var(--p-border,rgba(255,255,255,.08));padding:.3rem 0"><summary style="cursor:pointer"><b style="text-transform:capitalize">' + (di === 0 ? 'Hoy · ' : (di === 1 ? 'Mañana · ' : '')) + escHtml(dayLbl(d.day)) + '</b> · ' +
                 d.items.map((it) => (KIND[it.kind] || ['•'])[0]).join(' ') + (d.matchesKnown ? '' : ' <span style="color:#888;font-size:.74rem">(los partidos se definen ese día)</span>') + '</summary>' +
@@ -16158,17 +16224,26 @@ async function storiesAutoRemove(day, slot) {
         showToast('Historia borrada', 'success'); loadStoriesAuto();
     } catch (e) { showToast('Error de conexión', 'error'); }
 }
-// #934: prender / apagar los partidos en las historias automáticas
+// #909: llave de los partidos del día
 async function storiesAutoMatches(on) {
+    if (!confirm(on ? '¿Encender los partidos del día? Cada día a las 00:05 sale una historia por partido destacado (ESPN), además de las 5 de servicio.' : '¿Apagar los partidos? Quedan sólo las 5 historias de servicio por día.')) return;
     try {
-        const r = await authFetch('/api/admin/stories-autopilot/config', { method: 'POST', body: JSON.stringify({ matchesEnabled: !!on }) }); const j = await r.json();
-        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo guardar', 'error'); }
-        else showToast(on ? '⚽ Partidos prendidos' : 'Partidos apagados: sólo historias de la app', 'success');
+        const r = await authFetch('/api/admin/stories-autopilot/matches', { method: 'POST', body: JSON.stringify({ on: !!on }) }); const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo cambiar', 'error'); return; }
+        showToast(on ? 'Partidos encendidos' : 'Partidos apagados', 'success'); loadStoriesAuto();
     } catch (e) { showToast('Error de conexión', 'error'); }
-    loadStoriesAuto();
 }
-window.storiesAutoMatches = storiesAutoMatches;
-window.loadStoriesAuto = loadStoriesAuto; window.storiesAutoRemove = storiesAutoRemove;
+// #911: borrar las vigentes y publicar las 5 de hoy ya (sin esperar a cada horario)
+async function storiesAutoRepublish() {
+    if (!confirm('¿Borrar las historias que están publicadas y publicar las 5 de hoy AHORA?\n\nLas manuales vigentes se apagan; las automáticas de hoy y ayer se borran y se republican con el plan de hoy (sin esperar a cada horario). Las personales de bienvenida no se tocan.')) return;
+    try {
+        const r = await authFetch('/api/admin/stories-autopilot/republish-today', { method: 'POST', body: '{}' }); const j = await r.json();
+        if (!r.ok || !j.success) { showToast(j.error || 'No se pudo', 'error'); return; }
+        showToast('✅ ' + j.published + ' historias publicadas · ' + j.off + ' apagadas' + ((j.skipped || []).length ? ' · ' + j.skipped.length + ' salteadas' : '') + (j.error ? ' · error: ' + j.error : ''), j.published ? 'success' : 'error');
+        loadStoriesAuto();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.loadStoriesAuto = loadStoriesAuto; window.storiesAutoRemove = storiesAutoRemove; window.storiesAutoMatches = storiesAutoMatches; window.storiesAutoRepublish = storiesAutoRepublish;
 // ═══ #817: AUTOPILOTO de retención — config + plan del año (este mes → diciembre del año que viene) ═══
 let _apData = null;
 async function loadCronAutopilot() {
@@ -16644,7 +16719,7 @@ async function atencionAnalisis(kind, offset) {
         } else {
             const tot = (s.pagosBancoN || 0) + (s.pagosManualN || 0); const pctAuto = tot ? Math.round((s.pagosBancoN || 0) * 100 / tot) : 100;
             const ver = !tot ? '<span class="at-ver">Sin retiros pagados ese día</span>' : (s.pagosManualN ? '<span class="at-ver bad">⚠ ' + s.pagosManualN + ' retiro(s) pagado(s) a mano · el banco pagó solo el ' + pctAuto + '%</span>' : '<span class="at-ver ok">✅ Todos pagados por el banco: ' + tot + ' retiro(s)</span>');
-            box.innerHTML = tabs + '<div class="at-kpis">' + _diaKpi('Retiros pedidos', m(s.retiros) + ' · ' + (s.retirosN || 0)) + _diaKpi('Pagados por el banco (API)', m(s.pagosBanco) + ' · ' + (s.pagosBancoN || 0)) + _diaKpi('Pagados a mano', m(s.pagosManual) + ' · ' + (s.pagosManualN || 0)) + _diaKpi('Banco: salidas', m(b.salidas) + ' · ' + (b.salidasN || 0)) + '</div>' + ver + lst('Ver los retiros pagados a mano', j.items && j.items.pagosManual, 'via');
+            box.innerHTML = tabs + '<div class="at-kpis">' + _diaKpi('Retiros pedidos', m(s.retiros) + ' · ' + (s.retirosN || 0)) + _diaKpi('Pagados por el banco (API)', m(s.pagosBanco) + ' · ' + (s.pagosBancoN || 0)) + _diaKpi('Pagados a mano', m(s.pagosManual) + ' · ' + (s.pagosManualN || 0)) + (s.pagosExternosN ? _diaKpi('Por banco externo (ingreso)', m(s.pagosExternos) + ' · ' + s.pagosExternosN) : '') + _diaKpi('Banco: salidas', m(b.salidas) + ' · ' + (b.salidasN || 0)) + '</div>' + ver + lst('Ver los retiros pagados a mano', j.items && j.items.pagosManual, 'via') + lst('Ver los pagados por banco externo', j.items && j.items.pagosExternos, 'via'); // #913
         }
     } catch (_) { box.innerHTML = '<div style="color:#ff8080;">Error de conexión</div>'; }
 }
@@ -16693,17 +16768,30 @@ function _drvCard(c, plats) {
             '<button type="button" class="btn-small btn-danger" onclick="drvReject(\'' + escapeHtml(c.id) + '\', this)">❌ Rechazar</button>' +
           '</div>'
         : (c.reviewNote ? '<div style="font-size:11px;color:#aaa;margin-top:6px;">Nota: ' + escapeHtml(c.reviewNote) + '</div>' : '');
+    // #908 (owner): el mismo comprobante mandado varias veces = UNA ficha; los otros envíos adentro, con "Es otra carga distinta" por si no lo son.
+    const reps = c.repeats || [];
+    const repChip = reps.length ? '<span style="background:#7c3aed;color:#fff;border-radius:9px;padding:2px 9px;font-size:10.5px;">📎 Enviado ' + (reps.length + 1) + ' veces</span>' : '';
+    const repHtml = reps.length
+        ? '<details style="margin-top:6px;"><summary style="cursor:pointer;color:#c4b5fd;font-size:11.5px;font-weight:700;">📎 El cliente mandó este comprobante ' + (reps.length + 1) + ' veces · ver los otros ' + reps.length + ' envío(s)</summary>' +
+            reps.map(function (r) { return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:#bbb;margin-top:5px;">' +
+                (r.imageUrl ? '<a href="' + escapeHtml(r.imageUrl) + '" target="_blank" rel="noopener" title="Ver este envío"><img src="' + escapeHtml(r.imageUrl) + '" alt="" style="width:34px;height:42px;object-fit:cover;border-radius:5px;border:1px solid rgba(255,255,255,0.2);background:#000;"></a>' : '') +
+                '<span>' + _drvAgo(r.createdAt) + (Number(r.amount) > 0 ? ' · $' + Number(r.amount).toLocaleString('es-AR') : ' · sin monto legible') + (r.operationNumber ? ' · N° ' + escapeHtml(r.operationNumber) : '') + '</span>' +
+                (pend ? '<button type="button" class="btn-secondary btn-small" onclick="drvConfirmRepeat(\'' + escapeHtml(r.id) + '\',' + (Number(r.amount) > 0 ? Math.round(Number(r.amount)) : 0) + ')" title="Si NO es el mismo comprobante sino otra transferencia, cargala aparte">➕ Es otra carga distinta</button>' : '') +
+                '</div>'; }).join('') +
+            '<div style="font-size:11px;color:#888;margin-top:5px;">Al confirmar o rechazar esta ficha, los otros envíos se marcan solos como repetidos (al cliente no se le avisa de nuevo). Si de verdad son transferencias distintas, usá "Es otra carga distinta" en ese envío.</div></details>'
+        : '';
     return '<div class="drv-card" data-id="' + escapeHtml(c.id) + '" style="display:flex;gap:12px;background:rgba(255,255,255,0.04);border:1px solid ' + (pend && c.escalatedAt ? 'rgba(255,170,0,0.55)' : 'rgba(255,255,255,0.12)') + ';border-radius:12px;padding:12px;margin-bottom:10px;">' +
         '<div style="flex:0 0 96px;">' + (c.imageUrl ? '<a href="' + escapeHtml(c.imageUrl) + '" target="_blank" rel="noopener" title="Ver comprobante grande"><img src="' + escapeHtml(c.imageUrl) + '" alt="comprobante" style="width:96px;height:120px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#000;"></a>' : '<div style="width:96px;height:120px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#666;font-size:11px;">sin imagen</div>') + '</div>' +
         '<div style="flex:1;min-width:0;">' +
             '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
                 '<b style="color:#fff;font-size:15px;cursor:pointer;" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')" title="Abrir el chat">@' + escapeHtml(c.username || c.userId || '?') + '</b>' +
-                '<b style="color:#26e07f;font-size:16px;">' + escapeHtml(amt) + '</b>' + chip +
+                '<b style="color:#26e07f;font-size:16px;">' + escapeHtml(amt) + '</b>' + chip + repChip +
                 '<span style="color:#888;font-size:11px;margin-left:auto;">' + _drvAgo(c.createdAt) + (pend ? ' · esperando ' + (c.waitingMin || 0) + ' min' : '') + '</span>' +
             '</div>' +
             '<div style="font-size:11.5px;color:#bbb;margin-top:4px;">' + [c.bank ? '🏛 ' + escapeHtml(c.bank) : '', c.originHolder ? '👤 ' + escapeHtml(c.originHolder) : '', c.operationNumber ? 'N° ' + escapeHtml(c.operationNumber) : '', c.paymentDate ? '📅 ' + escapeHtml(c.paymentDate) : ''].filter(Boolean).join(' · ') + '</div>' +
             _drvCopiesHtml(c) +
             '<div style="margin-top:6px;">' + cands + '</div>' +
+            repHtml +
             actions +
             '<div style="margin-top:6px;"><button type="button" class="btn-secondary btn-small" onclick="drvOpenChat(\'' + escapeHtml(c.userId || '') + '\',\'' + escapeHtml(c.username || '') + '\')">💬 Abrir chat</button></div>' +
         '</div></div>';
@@ -16735,6 +16823,19 @@ async function drvConfirm(id, btn) {
         loadDepositReviews();
     } catch (e) { showToast('Error de conexión', 'error'); btn.disabled = false; }
 }
+// #908: un envío agrupado que en realidad es OTRA transferencia: se carga aparte, sin cerrar los demás envíos.
+async function drvConfirmRepeat(id, amount) {
+    let amt = Number(amount) || 0;
+    if (!(amt > 0)) { const v = prompt('Monto de esta carga ($):', ''); amt = Number(String(v || '').replace(/[^\d]/g, '')) || 0; if (!(amt > 0)) return; }
+    if (!confirm('¿Cargar $' + amt.toLocaleString('es-AR') + ' por este envío como una carga DISTINTA?\n\nSólo si es otra transferencia (otro N° de operación). Si es el mismo comprobante repetido, no: confirmá la ficha principal y este se cierra solo.')) return;
+    try {
+        const r = await authFetch('/api/admin/deposit-reviews/' + encodeURIComponent(id) + '/confirm', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: amt, keepRepeats: true }) });
+        const j = await r.json();
+        if (!r.ok) { showToast(j.error || 'No se pudo cargar', 'error'); return; }
+        showToast('✅ Carga acreditada', 'success'); loadDepositReviews();
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.drvConfirmRepeat = drvConfirmRepeat;
 async function drvReject(id, btn) {
     const card = btn.closest('.drv-card');
     const reason = card.querySelector('.drv-reason').value; const note = card.querySelector('.drv-note').value.trim();
@@ -17455,9 +17556,12 @@ async function inicioChangePin() {
 function _inicioEmpty(day) {
     const z = { users: 0, n: 0, total: 0 }; const today = new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10);
     return { day: day || today, isToday: !day || day === today, generatedAt: new Date().toISOString(), app: { activeNow: 0, enteredToday: 0, enteredRetention: 0, enteredRetentionAds: 0, enteredNew72: 0 },
-        registrations: { total: 0, fromAds: 0, organic: 0, firstDepositSameDay: 0 }, deposits: { all: z, first: z, retention: z, new72: z, avg: 0 },
-        withdrawals: { requested: { n: 0, total: 0 }, paid: { n: 0, total: 0 } }, net: 0, adoption: { totalUsers: 0, withApp: 0, withNotif: 0, appPct: 0, notifPct: 0 } };
+        registrations: { total: 0, fromAds: 0, organic: 0, firstDepositSameDay: 0 }, deposits: { all: z, first: z, retention: z, new72: z, avg: 0, times: { once: z, twice: z, more: z } },
+        cameBack: { prevDay: '', depositedPrev: 0, enteredPrev: 0, deposited: { users: 0, n: 0, total: 0, names: [] }, entered: 0 },
+        withdrawals: { requested: { n: 0, total: 0 }, paid: { n: 0, total: 0 } }, net: 0, adoption: { base: 'cargadores', totalUsers: 0, depositors: 0, withApp: 0, withNotif: 0, appPct: 0, notifPct: 0 } };
 }
+// #913 (owner): "en INICIO poné ayer también y hoy por defecto".
+function inicioAyer() { const el = document.getElementById('inDay'); if (el) el.value = new Date(Date.now() - 3 * 3600000 - 86400000).toISOString().slice(0, 10); loadInicio(); }
 async function loadInicio() {
     const box = document.getElementById('inBody'); if (!box) return;
     clearTimeout(_inTimer);
@@ -17479,7 +17583,9 @@ function _renderInicio(box, d, notice) {
         const box1 = (ico, label, val, sub, col) => '<div class="in-box" style="border-top:3px solid ' + (col || '#6366f1') + '"><div class="in-l">' + ico + ' ' + label + '</div><div class="in-v">' + val + '</div>' + (sub ? '<div class="in-s">' + sub + '</div>' : '') + '</div>';
         const grp = (t, inner) => '<h3 class="in-h">' + t + '</h3><div class="in-grid">' + inner + '</div>';
         const lbl = new Date(d.day + 'T12:00:00Z').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-        box.innerHTML = (notice || '') + '<div style="color:#a5b4fc;font-size:.85rem;margin-bottom:.4rem;text-transform:capitalize">' + (d.isToday ? 'Hoy · ' : '') + lbl + ' · actualizado ' + new Date(d.generatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
+        const isYest = !d.isToday && d.day === new Date(Date.now() - 3 * 3600000 - 86400000).toISOString().slice(0, 10); // #913
+        const tm = d.deposits.times || {}, cb = d.cameBack || {}; const z0 = { users: 0, n: 0, total: 0 };
+        box.innerHTML = (notice || '') + '<div style="color:#a5b4fc;font-size:.85rem;margin-bottom:.4rem;text-transform:capitalize">' + (d.isToday ? 'Hoy · ' : (isYest ? 'Ayer · ' : '')) + lbl + ' · actualizado ' + new Date(d.generatedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + '</div>' +
             grp('📱 Gente en la app',
                 box1('🟢', 'Activos ahora', d.isToday ? n(d.app.activeNow || 0) : '—', d.isToday ? 'con la app abierta en los últimos 3 min' : 'sólo para hoy', '#22c55e') +
                 box1('👥', 'Entraron en el día', n(d.app.enteredToday), 'personas distintas', '#6366f1') +
@@ -17495,16 +17601,115 @@ function _renderInicio(box, d, notice) {
                 box1('🥇', 'Primeras cargas', m(d.deposits.first.total), n(d.deposits.first.users) + ' clientes cargaron por primera vez', '#f59e0b') +
                 box1('🔁', 'Retención (+72 h)', m(d.deposits.retention.total), n(d.deposits.retention.n) + ' cargas · ' + n(d.deposits.retention.users) + ' clientes', '#0ea5e9') +
                 box1('🆕', 'Nuevos (−72 h, no 1ª)', m(d.deposits.new72.total), n(d.deposits.new72.n) + ' cargas · ' + n(d.deposits.new72.users) + ' clientes', '#a855f7')) +
+            grp('🔂 Cuántas veces cargaron en el día', // #913
+                box1('1️⃣', 'Cargaron 1 vez', n((tm.once || z0).users), m((tm.once || z0).total), '#6366f1') +
+                box1('2️⃣', 'Cargaron 2 veces', n((tm.twice || z0).users), m((tm.twice || z0).total) + ' · ' + n((tm.twice || z0).n) + ' cargas', '#0ea5e9') +
+                box1('🔥', 'Cargaron más de 2 veces', n((tm.more || z0).users), m((tm.more || z0).total) + ' · ' + n((tm.more || z0).n) + ' cargas', '#f59e0b')) +
+            grp('↩️ Volvieron del día anterior' + (cb.prevDay ? ' (' + cb.prevDay.slice(8, 10) + '/' + cb.prevDay.slice(5, 7) + ')' : ''), // #913
+                box1('💵', 'Cargaron ayer y volvieron a cargar', n((cb.deposited || z0).users), m((cb.deposited || z0).total) + ' · de ' + n(cb.depositedPrev) + ' que cargaron el día anterior' + (((cb.deposited || {}).names || []).length ? '<br><span style="font-weight:400">' + escHtml(((cb.deposited || {}).names || []).join(', ')) + '</span>' : ''), '#16a34a') +
+                box1('📱', 'Entraron ayer y volvieron a entrar', n(cb.entered), 'de ' + n(cb.enteredPrev) + ' que entraron el día anterior' + (cb.enteredPrev ? ' · ' + Math.round(cb.entered * 100 / cb.enteredPrev) + '%' : ''), '#0ea5e9')) +
             grp('🏧 Retiros y neto',
                 box1('📤', 'Retiros pedidos', m(d.withdrawals.requested.total), n(d.withdrawals.requested.n) + ' pedidos', '#ef4444') +
                 box1('✅', 'Retiros pagados', m(d.withdrawals.paid.total), n(d.withdrawals.paid.n) + ' pagos', '#ef4444') +
                 box1('📊', 'Neto (cargas − pagados)', m(d.net), 'no incluye bonos', d.net >= 0 ? '#16a34a' : '#ef4444')) +
-            grp('📲 Aceptación de la app (todos los clientes)',
-                box1('👤', 'Registrados', n(d.adoption.totalUsers), 'clientes en total', '#6366f1') +
-                box1('📲', 'Instalaron la app', n(d.adoption.withApp), d.adoption.appPct + '% del total', '#0ea5e9') +
-                box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% del total', '#f59e0b'));
+            grp('📲 Aceptación de la app (clientes que cargaron alguna vez)', // #913: base = cargadores, no registrados
+                box1('💳', 'Cargaron alguna vez', n(d.adoption.depositors), 'de ' + n(d.adoption.totalUsers) + ' registrados', '#6366f1') +
+                box1('📲', 'Instalaron la app', n(d.adoption.withApp), d.adoption.appPct + '% de los que cargaron', '#0ea5e9') +
+                box1('🔔', 'Con notificaciones', n(d.adoption.withNotif), d.adoption.notifPct + '% de los que cargaron', '#f59e0b'));
     }
 }
+
+
+// ===== #915 SORTEOS con ranking en vivo (panel) =====
+let _srtData = null, _srtTab = 'mensual', _srtSub = 'ranking';
+async function loadSorteos() {
+    const box = document.getElementById('srtAdmin'); if (!box) return;
+    try {
+        const r = await authFetch('/api/admin/sorteos'); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error');
+        _srtData = j; _srtRender();
+    } catch (e) { box.innerHTML = '<div style="color:#ff8080;">' + escapeHtml(e.message) + '</div>'; }
+}
+function srtTab(k) { _srtTab = k; _srtRender(); } function srtSub(k) { _srtSub = k; _srtRender(); }
+function _srtRender() {
+    const box = document.getElementById('srtAdmin'); if (!box || !_srtData) return;
+    const c = _srtData.config, d = _srtData.sorteos || {}, diag = _srtData.diag || {}; const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const n = (x) => Number(x || 0).toLocaleString('es-AR');
+    const f = (dt) => dt ? new Date(dt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+    const st = { soon: '⏳ Todavía no empezó', live: '🟢 EN CURSO', closed: '🔴 Cerrado' };
+    const run = (k) => { const x = diag.runs && diag.runs[k]; if (!x) return 'sin corrida'; if (x.error) return '❌ ' + escapeHtml(x.error); if (x.skipped) return '— ' + escapeHtml(x.skipped); return n(x.candidates) + ' jugadores con carga · ' + n(x.scored) + ' puntuados · ' + Math.round((x.ms || 0) / 1000) + ' s'; };
+    const head = '<div class="card" style="margin-bottom:1rem"><div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:center"><label><input type="checkbox" id="srtOn" ' + (c.enabled ? 'checked' : '') + ' onchange="sorteosSave({enabled:this.checked})"> <b>Sorteos visibles en la app</b></label>' +
+        '<span style="color:#888;font-size:.85rem">🛠 Motor: último cálculo ' + f(diag.lastTickAt) + (diag.lastError ? ' · <b style="color:#ff8080">' + escapeHtml(diag.lastError) + '</b>' : ' · sin errores') + '</span></div>' +
+        '<div style="margin-top:.5rem;font-size:.85rem;color:#888">Requisitos para anotarse: ' + ['app', 'notif', 'telegram', 'deposit'].map((k) => '<label style="margin-right:.8rem"><input type="checkbox" ' + (c.requirements[k] ? 'checked' : '') + ' onchange="sorteosSave({requirements:{' + k + ':this.checked}})"> ' + ({ app: 'app instalada', notif: 'notificaciones', telegram: 'Telegram (lo declara el cliente)', deposit: 'una carga real' })[k] + '</label>').join('') + '</div></div>';
+    const tabs = '<div class="at-tabs" style="margin-bottom:.6rem">' + ['mensual', 'gran'].map((k) => '<button class="' + (_srtTab === k ? 'on' : '') + '" onclick="srtTab(\'' + k + '\')">' + escapeHtml(c[k].emoji + ' ' + c[k].title) + '</button>').join('') + '</div>';
+    const k = _srtTab, s = c[k], x = d[k] || { period: {}, counts: {}, anotados: [], ranking: [] };
+    // #967: + "📎 Adjuntar foto" (sube el archivo a la base y deja la URL en el campo); el campo acepta emoji o URL
+    const prz = (i) => { const img = String(s.prizes[i].img || ''); const isPic = /^(\/|https?:\/\/)/.test(img);
+        return '<div style="display:grid;grid-template-columns:44px 1.2fr 1fr 1fr auto;gap:.4rem;margin-bottom:.3rem;align-items:center"><span style="width:44px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--p-border,#333);border-radius:8px;overflow:hidden;font-size:22px;background:#fff">' + (isPic ? '<img src="' + escapeHtml(img) + '" alt="" style="width:100%;height:100%;object-fit:cover">' : escapeHtml(img || '🎁')) + '</span><input class="form-input" id="srtP' + i + 'img" value="' + escapeHtml(img) + '" title="Emoji o foto: ruta /images/... o URL https://" placeholder="emoji o URL de la foto"><input class="form-input" id="srtP' + i + 'name" value="' + escapeHtml(s.prizes[i].name) + '" placeholder="' + (i + 1) + '° premio"><input class="form-input" id="srtP' + i + 'value" value="' + escapeHtml(s.prizes[i].value || '') + '" placeholder="valor / detalle"><label class="btn btn-secondary btn-small" style="white-space:nowrap;cursor:pointer" title="Subir una foto desde tu computadora (JPG/PNG/WEBP, hasta 600 KB)">📎 Adjuntar foto<input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="sorteosPrizeUpload(\'' + k + '\',' + (i + 1) + ',this)"></label></div>'; };
+    const cfg = '<details class="card" style="margin-bottom:1rem"><summary style="cursor:pointer;font-weight:800">⚙️ Configuración del ' + escapeHtml(s.title) + ' <small style="color:#888;font-weight:600">· ' + (st[x.period.status] || '') + ' · período ' + escapeHtml(x.period.key || '') + '</small></summary><div style="margin-top:.7rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.6rem">' +
+        '<label>Activo <input type="checkbox" id="srtEn" ' + (s.enabled ? 'checked' : '') + '></label>' +
+        '<label>Título <input class="form-input" id="srtTitle" value="' + escapeHtml(s.title) + '"></label><label>Emoji <input class="form-input" id="srtEmoji" value="' + escapeHtml(s.emoji) + '"></label>' +
+        (k === 'mensual' ? '<label>Mes de inicio (AAAA-MM) <input class="form-input" id="srtStartMonth" value="' + escapeHtml(s.startMonth) + '"></label>' : '<label>Desde (AAAA-MM-DD) <input class="form-input" id="srtStart" value="' + escapeHtml(s.start) + '"></label><label>Hasta <input class="form-input" id="srtEnd" value="' + escapeHtml(s.end) + '"></label>') +
+        '<label>Puntos <input class="form-input" type="number" id="srtPts" value="' + s.pts + '"></label><label>cada $ apostados <input class="form-input" type="number" id="srtPtsPer" value="' + s.ptsPer + '"></label><label>Hora de publicación <input class="form-input" type="number" id="srtPubH" value="' + (s.publishHour || 12) + '"></label>' +
+        (k === 'gran' ? '<label>+pts por día con cargas <input class="form-input" type="number" id="srtDayPts" value="' + s.dayDepositPts + '"></label><label>mínimo del día $ <input class="form-input" type="number" id="srtDayMin" value="' + s.dayDepositMin + '"></label><label>+% por semana con misiones <input class="form-input" type="number" id="srtMisPct" value="' + s.missionWeekPct + '"></label>' : '') +
+        '</div><div style="margin-top:.6rem"><b>Premios</b>' + prz(0) + prz(1) + prz(2) + '</div>' +
+        ('<div style="margin-top:.6rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.5rem"><label>SORTEO activo <input type="checkbox" id="srtExOn" ' + (s.extra.enabled ? 'checked' : '') + '></label><label>Nombre <input class="form-input" id="srtExTitle" value="' + escapeHtml(s.extra.title || '') + '"></label><label>ganadores <input class="form-input" type="number" id="srtExW" value="' + s.extra.winners + '"></label><label>monto $ c/u <input class="form-input" type="number" id="srtExAmt" value="' + s.extra.amount + '"></label><label>mín. cargas en el mes <input class="form-input" type="number" id="srtExMin" value="' + s.extra.minDeposits + '"></label><label>por cada N que cumplen (0 = cantidad fija) <input class="form-input" type="number" id="srtExPer" value="' + s.extra.per + '"></label><label>Sólo anotados <input type="checkbox" id="srtExJoin" ' + (s.extra.requireJoin ? 'checked' : '') + '></label></div>') +
+        '<div style="margin-top:.7rem"><button class="btn btn-primary" onclick="sorteosSaveForm(\'' + k + '\')">💾 Guardar</button></div></details>';
+    const cnt = x.counts || {};
+    const kpis = '<div class="at-kpis">' + _diaKpi('Estado', st[x.period.status] || '—') + _diaKpi('Anotados', n(cnt.anotados)) + _diaKpi('Participando (con puntos)', n(cnt.participantes)) + _diaKpi('Anotados con puntos', n(cnt.anotadosConPuntos)) + _diaKpi('SORTEO EXTRA', n(cnt.extraGanadores) + ' premios · ' + n(cnt.extraElegibles) + ' cumplen') + _diaKpi('Del ' + f(x.period.start).slice(0, 5) + ' al ' + f(x.period.end).slice(0, 5), 'ganadores ' + f(x.period.publishAt)) + '</div><div style="color:#888;font-size:.8rem;margin:.3rem 0 .8rem">🛠 ' + run(k) + '</div>';
+    const subs = '<div class="at-tabs" style="margin-bottom:.6rem"><button class="' + (_srtSub === 'ranking' ? 'on' : '') + '" onclick="srtSub(\'ranking\')">📊 Participando (' + n(x.ranking.length) + ')</button><button class="' + (_srtSub === 'anotados' ? 'on' : '') + '" onclick="srtSub(\'anotados\')">📝 Anotados (' + n(x.anotados.length) + ')</button>' + ('<button class="' + (_srtSub === 'extra' ? 'on' : '') + '" onclick="srtSub(\'extra\')">🎁 ' + escapeHtml((s.extra && s.extra.title) || 'SORTEO') + '</button>') + '</div>';
+    let body = '';
+    if (_srtSub === 'ranking') {
+        body = x.ranking.length ? '<table class="data-table"><thead><tr><th>#</th><th>Usuario</th><th>Puntos</th>' + (k === 'gran' ? '<th>base / días / misiones</th>' : '') + '<th>Apostado</th><th>Plata real</th><th>Cargas</th><th>Anotado</th></tr></thead><tbody>' + x.ranking.map((r) => '<tr' + (r.joined ? '' : ' style="opacity:.6"') + '><td><b>' + r.rank + '</b></td><td>' + escapeHtml(r.username) + '</td><td><b>' + n(r.points) + '</b></td>' + (k === 'gran' ? '<td><small>' + n(r.basePts) + ' / +' + n(r.dayPts) + ' / +' + n(r.missionPts) + '</small></td>' : '') + '<td>' + m(r.wagered) + '</td><td><small>' + Math.round((r.realShare || 0) * 100) + '%</small></td><td>' + n(r.deposits) + ' · ' + m(r.depositTotal) + '</td><td>' + (r.joined ? '✅' : '<span style="color:#f59e0b">no (no puede ganar)</span>') + '</td></tr>').join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center">Todavía nadie sumó puntos en este período' + (x.period.status === 'soon' ? ' (empieza el ' + f(x.period.start) + ')' : '') + '.</div>';
+    } else if (_srtSub === 'anotados') {
+        body = x.anotados.length ? '<table class="data-table"><thead><tr><th>Usuario</th><th>Se anotó</th><th>App</th><th>Notif</th><th>Telegram</th><th>Carga</th><th>Puntos (período)</th><th>Cargas (período)</th></tr></thead><tbody>' + x.anotados.map((a) => { const ck = a.checks || {}; const t = (v) => v ? '✅' : '❌'; return '<tr><td>' + escapeHtml(a.username) + '</td><td>' + f(a.joinedAt) + '</td><td>' + t(ck.app) + '</td><td>' + t(ck.notif) + '</td><td>' + t(a.telegram) + '</td><td>' + t(ck.deposit) + '</td><td><b>' + n(a.points) + '</b></td><td>' + n(a.deposits) + ' · ' + m(a.depositTotal) + (a.eligible ? '' : ' <small style="color:#f59e0b">sin carga del período</small>') + '</td></tr>'; }).join('') + '</tbody></table>' : '<div style="color:#888;padding:14px;text-align:center">Todavía nadie se anotó.</div>';
+    } else {
+        // #939: SORTEO de $100.000 — transparente: participantes (todos los que cargaron >= N veces), mes cerrado vs en curso, semilla y método.
+        const e = s.extra, ex = x.extra || {}; const cur = ex.current || { candidates: [], count: 0, winners: 0 }, prev = ex.prev;
+        const drawBox = (d, pk) => !d ? '' : '<div class="card" style="margin-top:.6rem;border-color:var(--p-green,#16a34a)"><b>✅ ' + escapeHtml(pk) + ' sorteado</b> el ' + f(d.at) + ' por ' + escapeHtml(d.by) + ' entre <b>' + n(d.candidates) + '</b> participantes (mín. ' + n(d.minDeposits || e.minDeposits) + ' cargas)' + (d.early ? ' · <span style="color:#f59e0b">adelantado</span>' : '') + '<br><small>Semilla <code>' + escapeHtml(d.seed) + '</code> · método ' + escapeHtml(d.method || 'sha256-shuffle-v1') + ': la lista de participantes se ordena por id y se mezcla con SHA-256 de la semilla; los primeros ' + n((d.winners || []).length) + ' ganan. Con la misma lista y semilla, cualquiera obtiene el mismo resultado.</small>' +
+            '<table class="data-table" style="margin-top:.4rem"><thead><tr><th>#</th><th>Ganador</th><th>Premio</th></tr></thead><tbody>' + (d.winners || []).map((w, i) => '<tr><td>' + (i + 1) + '</td><td>' + escapeHtml(w.username) + '</td><td>' + m(w.amount) + '</td></tr>').join('') + '</tbody></table><p style="color:#888;font-size:.85rem;margin:.4rem 0 0">Los premios se acreditan a mano (regalo con rollover global) y se anuncian en Telegram. En la app salen con el nombre tapado.</p></div>';
+        const tbl = (list, title) => '<details ' + (list.length && list.length <= 60 ? 'open' : '') + ' style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:800">' + title + ' (' + n(list.length) + ')</summary>' + (list.length ? '<table class="data-table"><thead><tr><th>Usuario</th><th>Cargas</th><th>Total cargado</th><th>Anotado</th></tr></thead><tbody>' + list.map((c) => '<tr><td>' + escapeHtml(c.username) + '</td><td><b>' + n(c.deposits) + '</b></td><td>' + m(c.depositTotal) + '</td><td>' + (c.joined ? '✅' : '—') + '</td></tr>').join('') + '</tbody></table>' : '<div style="color:#888;padding:10px">Nadie llegó todavía a ' + n(e.minDeposits) + ' cargas.</div>') + '</details>';
+        body = '<div class="card"><h3 style="margin:0 0 .4rem">🎁 ' + escapeHtml(e.title || 'SORTEO') + ' · ' + n(e.winners) + ' ganadores de ' + m(e.amount) + (e.per > 0 ? ' por cada ' + n(e.per) + ' que cumplen' : '') + '</h3>' +
+            '<p style="margin:0 0 .5rem">Participan <b>' + escapeHtml(ex.who || '') + '</b>. Cada cliente entra una sola vez. Se sortea el <b>día 1</b> sobre el mes CERRADO, desde acá, con semilla publicada (los clientes la ven en la app).</p>' +
+            '<div class="at-kpis">' + (prev ? _diaKpi('Mes cerrado ' + escapeHtml(prev.periodKey), n(prev.count) + ' cumplen · ' + n(prev.winners) + ' premios', prev.draw ? '✅ sorteado' : '⏳ pendiente de sortear') : '') + _diaKpi('Mes en curso ' + escapeHtml(cur.periodKey || ''), n(cur.count) + ' cumplen · ' + n(cur.winners) + ' premios', st[cur.status] || '') + '</div>' +
+            '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0">' + (prev && !prev.draw && prev.count ? '<button class="btn btn-primary" onclick="sorteosDraw(\'' + escapeHtml(prev.periodKey) + '\', false, false)">🎲 Sortear el mes cerrado ' + escapeHtml(prev.periodKey) + '</button>' : '') + (prev && prev.draw ? '<button class="btn btn-secondary" onclick="sorteosDraw(\'' + escapeHtml(prev.periodKey) + '\', true, false)">↺ Repetir ' + escapeHtml(prev.periodKey) + ' (pisa el anterior)</button>' : '') +
+            (cur.count ? '<button class="btn btn-secondary" onclick="sorteosDraw(\'' + escapeHtml(cur.periodKey) + '\', ' + (cur.draw ? 'true' : 'false') + ', true)" title="Normalmente se sortea el día 1; esto lo adelanta">⚠️ Sortear el mes en curso (adelantado)</button>' : '') + '</div>' +
+            (prev ? drawBox(prev.draw, prev.periodKey) : '') + drawBox(cur.draw, cur.periodKey) +
+            (prev ? tbl(prev.candidates || [], '👥 Participantes del mes cerrado ' + escapeHtml(prev.periodKey)) : '') + tbl(cur.candidates || [], '👥 Participantes del mes en curso ' + escapeHtml(cur.periodKey || '')) + '</div>';
+    }
+    box.innerHTML = head + tabs + cfg + kpis + subs + body;
+}
+async function sorteosSave(patch) {
+    try { const r = await authFetch('/api/admin/sorteos', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ config: patch }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('💾 Guardado', 'success'); loadSorteos(); }
+    catch (e) { showToast(e.message, 'error'); }
+}
+function sorteosSaveForm(k) {
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value : undefined; }; const nn = (id) => Number(v(id)); const ck = (id) => !!(document.getElementById(id) || {}).checked;
+    const s = { enabled: ck('srtEn'), title: v('srtTitle'), emoji: v('srtEmoji'), pts: nn('srtPts'), ptsPer: nn('srtPtsPer'), publishHour: nn('srtPubH'), prizes: [0, 1, 2].map((i) => ({ pos: i + 1, img: v('srtP' + i + 'img'), name: v('srtP' + i + 'name'), value: v('srtP' + i + 'value') })) };
+    s.extra = { enabled: ck('srtExOn'), title: v('srtExTitle'), per: nn('srtExPer'), winners: nn('srtExW'), amount: nn('srtExAmt'), minDeposits: nn('srtExMin'), requireJoin: ck('srtExJoin') }; if (k === 'mensual') { s.startMonth = v('srtStartMonth'); }
+    else { s.start = v('srtStart'); s.end = v('srtEnd'); s.dayDepositPts = nn('srtDayPts'); s.dayDepositMin = nn('srtDayMin'); s.missionWeekPct = nn('srtMisPct'); }
+    const patch = {}; patch[k] = s; sorteosSave(patch);
+}
+// #967: adjuntar foto de un premio desde el panel (se guarda en la base y se sirve por /api/sorteos/img/:id)
+function sorteosPrizeUpload(k, pos, input) {
+    const f = input && input.files && input.files[0]; if (!f) return;
+    if (f.size > 600 * 1024) { showToast('La foto pesa ' + Math.round(f.size / 1024) + ' KB: achicala a menos de 600 KB', 'error'); input.value = ''; return; }
+    const rd = new FileReader();
+    rd.onload = async function () {
+        try { const r = await authFetch('/api/admin/sorteos/prize-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: k, pos: pos, dataUrl: rd.result }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('📎 Foto del premio ' + pos + ' subida', 'success'); loadSorteos(); }
+        catch (e) { showToast(e.message, 'error'); }
+    };
+    rd.readAsDataURL(f);
+}
+async function sorteosRecalc() {
+    showToast('↻ Recalculando con los stats de 1girox…', 'info');
+    try { const r = await authFetch('/api/admin/sorteos/recalc', { method: 'POST' }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('✅ Puntos recalculados', 'success'); loadSorteos(); }
+    catch (e) { showToast(e.message, 'error'); }
+}
+async function sorteosDraw(periodKey, redo, early) {
+    if (!confirm((redo ? '¿Repetir el sorteo de ' + periodKey + '? Se pisa el resultado anterior.' : '¿Sortear ' + periodKey + ' ahora?') + (early ? '\n\nOJO: el mes todavía no cerró; lo normal es sortear el día 1.' : '') + '\n\nSe publica la semilla y los ganadores salen en la app con el nombre tapado.')) return;
+    try { const r = await authFetch('/api/admin/sorteos/' + _srtTab + '/draw-extra', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ periodKey, redo: !!redo, early: !!early }) }); const j = await r.json(); if (!r.ok) throw new Error(j.error || 'error'); showToast('🎲 ' + (j.draw.winners || []).length + ' ganadores sorteados · semilla ' + j.draw.seed.slice(0, 8) + '…', 'success'); _srtSub = 'extra'; loadSorteos(); }
+    catch (e) { showToast(e.message, 'error'); }
+}
+window.loadSorteos = loadSorteos; window.srtTab = srtTab; window.srtSub = srtSub; window.sorteosSave = sorteosSave; window.sorteosSaveForm = sorteosSaveForm; window.sorteosRecalc = sorteosRecalc; window.sorteosDraw = sorteosDraw; window.sorteosPrizeUpload = sorteosPrizeUpload; // #967
 
 // ===== #886 bono para clientes nuevos (día 5/15/30) =====
 async function loadNewbieOffers() {
@@ -17635,7 +17840,7 @@ async function spLoadPending(userId) {
             const why = c.escalateReason || (!(Number(c.amount) > 0) ? 'no se pudo leer el monto del comprobante' : (stuck ? 'la transferencia no se encontró en el banco en ' + esc + ' min' : 'esperando que entre la transferencia al banco'));
             return '<div class="sp-pend-row" data-id="' + escapeHtml(c.id) + '">'
                 + (c.imageUrl ? '<button type="button" class="btn-secondary btn-small" onclick="spPendImg(\'' + escapeHtml(c.id) + '\')">🖼️ Ver foto</button>' : '')
-                + '<span class="sp-pend-why"><b>' + (Number(c.amount) > 0 ? m(c.amount) : 'sin monto') + '</b> · ' + escapeHtml(why) + ' · hace ' + c.waitingMin + ' min' + (c.originHolder ? ' · ' + escapeHtml(c.originHolder) : '') + '</span>'
+                + '<span class="sp-pend-why"><b>' + (Number(c.amount) > 0 ? m(c.amount) : 'sin monto') + '</b> · ' + escapeHtml(why) + ' · hace ' + c.waitingMin + ' min' + (c.originHolder ? ' · ' + escapeHtml(c.originHolder) : '') + (Number(c.sentTimes) > 1 ? ' · 📎 lo mandó ' + c.sentTimes + ' veces' : '') + '</span>'
                 + (stuck ? '<input type="number" class="sp-pend-amt" min="1" step="1" value="' + (Number(c.amount) > 0 ? Math.round(c.amount) : '') + '" placeholder="Monto" aria-label="Monto a cargar">'
                     + '<button type="button" class="btn-primary btn-small" onclick="spPendConfirm(\'' + escapeHtml(c.id) + '\', this)">✅ Confirmar carga</button>'
                     : '<span class="sp-pend-wait">entra sola cuando llega al banco</span>')
@@ -17718,42 +17923,3 @@ async function spQuickDel(key) {
 window.spQuickNew = spQuickNew; window.spQuickSave = spQuickSave; window.spQuickDel = spQuickDel;
 
 
-// ===== #917 SORTEO MENSUAL (panel): ranking real, ganadores y entrega, premios =====
-async function raffleLoad() {
-    const box = document.getElementById('raffleBody'); if (!box) return;
-    try {
-        const r = await authFetch('/api/admin/raffle'); const d = await r.json();
-        if (!r.ok) { box.innerHTML = '<div class="cfg-sub">' + escapeHtml(d.error || 'Error') + '</div>'; return; }
-        const m = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR'); const f = (x) => x ? new Date(x).toLocaleString('es-AR') : '—';
-        const pz = (k, i) => { const p = ((d.config[k] || {}).prizes || [])[i] || {}; return '<div style="display:flex;gap:6px;margin:4px 0"><b style="width:28px">' + (i + 1) + '°</b><input class="rf-in" data-k="' + k + '" data-i="' + i + '" data-f="title" value="' + escapeHtml(p.title || '') + '" style="flex:1"><input class="rf-in" data-k="' + k + '" data-i="' + i + '" data-f="detail" value="' + escapeHtml(p.detail || '') + '" style="flex:1.4"></div>'; };
-        box.innerHTML =
-            '<div class="dia-card"><div class="dia-card-h"><b>📊 ' + escapeHtml(d.monthLabel) + ' · en curso</b><small>Actualizado: ' + f(d.updatedAt) + ' · <button class="btn btn-secondary btn-sm" onclick="raffleRecalc()">Recalcular ahora</button></small></div>' +
-            (d.top.length ? '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>#</th><th>Usuario</th><th>Puntos</th><th>Apostado válido</th><th>Apostado</th><th>Cargas</th><th>Bonos</th></tr></thead><tbody>' +
-                d.top.map((t) => '<tr><td>' + t.pos + '</td><td>' + escapeHtml(t.username) + '</td><td><b>' + t.points.toLocaleString('es-AR') + '</b></td><td>' + m(t.validWagered) + '</td><td>' + m(t.wagered) + '</td><td>' + m(t.deposits) + '</td><td>' + m(t.bonusGranted) + '</td></tr>').join('') + '</tbody></table></div>' : '<div class="cfg-sub">Todavía nadie suma puntos este mes.</div>') + '</div>' +
-            '<div class="dia-card"><div class="dia-card-h"><b>🏅 Ganadores y entrega</b><small>El ganador escribe con "Coordinar la entrega" (le llega a Soporte con 🏆).</small></div>' +
-            (d.months.length ? d.months.map((mo) => '<div style="margin:8px 0"><b>' + escapeHtml(mo.monthLabel) + '</b> · ' + mo.participants + ' participantes · cerrado ' + f(mo.closedAt) + '<table class="data-table"><tbody>' +
-                (mo.winners || []).map((w) => '<tr><td>' + w.pos + '°</td><td>' + escapeHtml(w.username) + '</td><td>' + escapeHtml(w.prize) + '</td><td>' + w.points.toLocaleString('es-AR') + ' pts</td><td>' + (w.contactAt ? '📩 escribió ' + f(w.contactAt) : 'sin contacto') + '</td><td>' +
-                    (w.deliveredAt ? '✅ ' + f(w.deliveredAt) + ' · ' + escapeHtml(w.deliveredBy || '') + (w.deliveryNote ? ' · ' + escapeHtml(w.deliveryNote) : '') : '<button class="btn btn-primary btn-sm" onclick="raffleDelivered(\'' + mo.monthKey + '\',' + w.pos + ')">Marcar entregado</button>') + '</td></tr>').join('') + '</tbody></table>' + (mo.extra && Array.isArray(mo.extra.winners) ? '<div class="cfg-sub" style="margin-top:4px">🎁 Premio extra: ' + mo.extra.eligible + ' clientes con 2+ cargas ⇒ ' + mo.extra.winners.length + ' ganadores de $' + Number(mo.extra.perWinner || 0).toLocaleString('es-AR') + ': <b>' + mo.extra.winners.map((w) => escapeHtml(w.username)).join(', ') + '</b></div>' : '') + '</div>').join('') : '<div class="cfg-sub">Todavía no cerró ningún mes.</div>') + '</div>' +
-            '<div class="dia-card"><div class="dia-card-h"><b>🎁 Premios</b><small>Lo que ven los clientes. Todos se pueden cobrar en efectivo.</small></div>' +
-            '<div><b>Sorteo mensual</b> <input class="rf-in" data-k="active" data-f="ttl" value="' + escapeHtml(d.config.active.title) + '">' + [0, 1, 2].map((i) => pz('active', i)).join('') + '</div>' +
-            '<div style="margin-top:10px"><b>Próximamente</b> <input class="rf-in" data-k="upcoming" data-f="ttl" value="' + escapeHtml(d.config.upcoming.title) + '">' + [0, 1, 2].map((i) => pz('upcoming', i)).join('') + '</div>' +
-            '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">Gran Sorteo del <input type="date" id="rfGStart" value="' + escapeHtml(d.config.upcoming.start || '') + '"> al <input type="date" id="rfGEnd" value="' + escapeHtml(d.config.upcoming.end || '') + '"> · +<input type="number" id="rfGDay" style="width:60px" value="' + Number(d.config.upcoming.dailyPoints || 10) + '"> pts por día con carga ≥ $<input type="number" id="rfGMin" style="width:90px" value="' + Number(d.config.upcoming.dailyMinArs || 10000) + '"> · +<input type="number" id="rfGPct" style="width:60px" value="' + Number(d.config.upcoming.missionPct || 10) + '">% semana con misiones</div>' +
-            '<div style="margin-top:10px">Días hábiles para entregar: <input id="rfDays" type="number" min="1" max="60" value="' + Number(d.config.deliveryBusinessDays || 10) + '" style="width:70px"></div>' +
-            '<button class="btn btn-primary" style="margin-top:10px" onclick="raffleSaveConfig()">Guardar premios</button></div>';
-    } catch (e) { box.innerHTML = '<div class="cfg-sub">Error de conexión</div>'; }
-}
-async function raffleRecalc() {
-    try { const r = await authFetch('/api/admin/raffle/recalc', { method: 'POST' }); const d = await r.json(); showToast(r.ok ? (d.skipped ? 'No se calculó: ' + d.skipped : 'Recalculado: ' + ((d.current && d.current.participants) || 0) + ' participantes') : (d.error || 'Error'), r.ok ? 'success' : 'error'); raffleLoad(); } catch (e) { showToast('Error de conexión', 'error'); }
-}
-async function raffleDelivered(mk, pos) {
-    const note = prompt('Nota de la entrega (cómo y a quién se entregó, opcional):', ''); if (note === null) return;
-    try { const r = await authFetch('/api/admin/raffle/' + encodeURIComponent(mk) + '/delivered', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pos, note }) }); const d = await r.json(); showToast(r.ok ? '✅ Marcado como entregado' : (d.error || 'Error'), r.ok ? 'success' : 'error'); raffleLoad(); } catch (e) { showToast('Error de conexión', 'error'); }
-}
-async function raffleSaveConfig() {
-    const cfg = { active: { prizes: [{}, {}, {}] }, upcoming: { prizes: [{}, {}, {}] }, deliveryBusinessDays: Number((document.getElementById('rfDays') || {}).value) || 10 };
-    const gv = (id) => (document.getElementById(id) || {}).value; // #921
-    Object.assign(cfg.upcoming, { start: gv('rfGStart'), end: gv('rfGEnd'), dailyPoints: Number(gv('rfGDay')), dailyMinArs: Number(gv('rfGMin')), missionPct: Number(gv('rfGPct')) });
-    document.querySelectorAll('#raffleBody .rf-in').forEach((el) => { const k = el.dataset.k; if (el.dataset.f === 'ttl') cfg[k].title = el.value; else cfg[k].prizes[Number(el.dataset.i)][el.dataset.f] = el.value; });
-    try { const r = await authFetch('/api/admin/raffle/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cfg) }); const d = await r.json(); showToast(r.ok ? '✅ Premios guardados' : (d.error || 'Error'), r.ok ? 'success' : 'error'); } catch (e) { showToast('Error de conexión', 'error'); }
-}
-window.raffleLoad = raffleLoad; window.raffleRecalc = raffleRecalc; window.raffleDelivered = raffleDelivered; window.raffleSaveConfig = raffleSaveConfig;

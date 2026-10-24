@@ -78,6 +78,10 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 
 ## Cosas que NO hay que romper (gotchas)
 
+- **SEGURIDAD (#956, 2026-10-24):** `adminMiddleware` deja pasar a todo el staff, pero `STAFF_DENY_MUTATIONS` (server.js) rechaza a depositor/withdrawer/
+  comunidad las mutaciones de sólo-admin (fichas, historias, bonos, config, clientes); una ruta admin NUEVA que mute algo sensible va a esa lista o
+  chequea `req.user.role === 'admin'`. Las cuentas de landing nacen con clave ALEATORIA (ya no "asd123"); entrar con "asd123" fuerza el cambio.
+  Staff: sesión de 8 h y logout revoca (tokenVersion). Login con bloqueo por cuenta (10 fallos / 15 min) y claves de Datos/INICIO con 6 intentos.
 - **EL REPO ES PÚBLICO en GitHub (#413).** Nunca escribir claves, hashes, tokens ni API keys en código ni en docs (ni en el
   WORKLOG al citar pedidos del owner: reemplazar por "[clave]"). Credenciales siempre por env/SSM o por el panel (cifradas).
   La clave del admin `iginte1000` se rotó el 2026-10-18 y vive sólo en manos del owner.
@@ -201,7 +205,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   99990 (debajo del casino 99999) y usan `casinoBarHtml` + `toggleCasinoLoad` (la Carga rápida de siempre).
 - **HOME 2.0 de la PWA (#220, 2026-10-16) + chat principal (#266, 2026-10-17):** hay CUATRO modos
   (`VIP.home.setHomeMode`, `sessionStorage vip_home_mode`). **easy (#366, MENÚ FÁCIL):** `#easyView` con saldo,
-  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra SIEMPRE a Girox directo salvo que la persona haya elegido otro menú (`localStorage vip_menu_user='1'` +
+  CARGAR AHORA, reembolso / ruleta / referidos / ver la plataforma, ayuda por chat; desde #836 se entra SIEMPRE a Girox directo salvo que la persona haya elegido otro menú (#937: en la app INSTALADA, Girox siempre, elija lo que elija; el manifest manda `menu=girox`) (`localStorage vip_menu_user='1'` +
   `vip_menu_pref` = 'easy'|'full'|'basic'|'girox'; ya no se pregunta al arrancar ni a los 10 min; #670: 'girox' = "Girox directo", modo play + casino embebido abierto al toque con Carga rápida y Retirar adentro; menús activos por panel `Config['menusEnabled']`, #635) y "Inicio" (`goHome`) lo respeta. **play (entrada, #267):** `#entryView` con
   tabs Girox/Ganamos y la web pública de la plataforma embebida + botones Carga manual (→ mini) /
   Carga automática (→ full). **mini (= SOPORTE desde #373; antes "Carga manual"):** se entra al CHAT
@@ -262,6 +266,9 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#762:** `Config['closeSince']` (YYYY-MM-DD) = desde qué día valen los cierres (lo fija "Limpiar datos de prueba"); `_closeTick` y
   `GET /api/admin/cierres` ignoran días anteriores. Las cargas/retiros de PRUEBA se reconocen por "PRUEBA" en la descripción / titular
   "PRUEBA TEST": un flujo de prueba nuevo tiene que mantener esa marca para que la limpieza y Cargas automáticas los excluyan.
+  **#913/#948 CIERRE:** INGRESOS = depósitos + retiros pagados por BANCO EXTERNO (`paidVia:'other_bank'`) + fondeos · GASTOS = retiros + comisión del banco +
+  $ por transferencia (`closeConfig.perDepositFee`, 50 × cargas) + gastos · RESULTADO (plata) = ingresos − gastos; NETO (fichas) aparte; caja: saldo 00 hs +
+  resultadoCaja = esperado vs real. USDT ya no es parte del cierre. INICIO mide la aceptación de la app sobre los que CARGARON alguna vez.
   **#500/#744 CIERRES AUTOMÁTICOS:** `DailyClose` (uno por día ART, cron `_closeTick` cada 20 min, idempotente por `dateKey`). Desde #744 se
   FINALIZAN SOLOS (día anterior a hoy, `finalizedBy:'auto'`; los últimos 3 días se recalculan en cada pasada; USDT opcional) y
   `_closeReconcile` guarda en `detalle` la conciliación sistema vs banco con las posibles causas de la diferencia. Un flujo nuevo que
@@ -297,9 +304,13 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   **#401:** además cada cliente tiene `User.supportSessionSince`: el cron `_supportAutoCloseTick` (10 min) lo pone a "ahora" cuando
   respondimos y el cliente no contestó en `Config['supportAutoCloseHours']` (6 h) ⇒ para él el chat arranca de cero (vuelve la
   presentación); el panel ve todo igual. Un filtro nuevo de mensajes del cliente debe respetar ese campo.
-- **SORTEO MENSUAL (#917):** `src/services/raffleService.js` + `RaffleScore`/`RaffleMonth` + cron `_raffleTick`. Puntos = apostado × cargas ÷ (cargas +
-  bonos) del mes / 1.000 (los bonos NO suman). Nunca correr el cálculo con el casino simulado (Render comparte la base). Cambiar la regla ⇒ también
-  las bases que muestra `public/js/raffle.js` (se prometen públicamente).
+- **SORTEOS = los de la GEMELA (fusión 2026-10-24, owner):** `src/services/sorteos.js` + `SorteoScore`/`SorteoEntry`/`SorteoImage` + cron `_sorteoTick`
+  (Sorteo mensual + Gran Sorteo + sorteo extra; front `public/js/sorteos.js`, contenedores `[data-srt-cards]`/`[data-srt-banner]`, modal `#srtModal`;
+  panel → Sorteos). Nuestro #917 (`raffleService`/`raffle.js`) se BORRÓ. El cron NO corre con el casino simulado (Render comparte la base). En las
+  páginas de marca el sorteo va con `_rfStrip()` de lobby.js (= `data-srt-banner`).
+- **FUSIÓN CON LA GEMELA (2026-10-24):** el repo PICAROJAoficial salió de nuestro commit 238c202c y siguió aparte; sus entradas del WORKLOG llevan
+  prefijo **G** (G907…G969) y los comentarios `#9xx` del código que vino de ahí se refieren a esas. Una próxima tanda de la gemela se trae con
+  `git apply --3way <patch>` en una rama, nunca reemplazando archivos (pisaría las páginas de marca).
 - **CLAVE DE INICIO (#876):** el tablero INICIO del panel usa `Config['inicioPinHash']` (aparte de la de Datos; header `x-inicio-pin`). Se crea
   y cambia desde el panel; nunca escribirla en código ni docs.
 - **CLAVE DE DATOS (#590/#743):** `Config['datosIaPinHash']` protege Datos IA, Datos, Datos 2.0, Ingresos diarios, Usuarios con app (header
@@ -311,18 +322,26 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
   (`AGENT_SECTIONS` en admin.js). (La clave temporal del panel de #889 se revirtió en #892.)
 - **ALERTAS DE ESTAFA (#873):** `src/services/fraudRadar.js` (reglas + puntaje + caso). Una señal nueva de estafa va como regla ahí (con
   evidencia); nunca bloquear automático: el panel bloquea con `/api/admin/users/:id/block`. Probar con MongoDB en memoria (WORKLOG #873).
-- **HISTORIAS AUTOMÁTICAS (#827):** `src/services/storyAutopilot.js` (contenido) + `_storyAutoTick` (publica 5/día, `Story.autoKey` único).
+- **HISTORIAS AUTOMÁTICAS (#827 → #931):** `src/services/storyAutopilot.js` (contenido) + `_storyAutoTick` (publica 5/día JUNTAS a las 00:05-00:09 y apaga
+  las del día anterior; la primera es SIEMPRE Soporte/atención; `Story.autoKey` único; fotos estilo de la página `style:'page'`).
   Partidos de ESPN (1girox no expone eventos; su Deportes es Digitain sin deep link). Textos de SERVICIO, nunca "ruleta" ni plata/sueldos.
   **#834:** con FOTO (`src/services/storyImage.js`, SVG con el estilo de las manuales, `GET /api/stories/:id/auto.svg`); partidos a las 00:05
   (slots `m0..m2`). En Render no se arman fotos (comparte la base: producción se las agrega).
-- **PARTIDOS EN HISTORIAS APAGADOS (#934, owner 2026-10-23):** `Config['storyMatchesEnabled']` (default false; tilde en Cronograma). Primero van
-  historias que EXPLICAN la app; no prender los partidos sin que el owner lo pida.
+- **PARTIDOS EN HISTORIAS (G909/G968):** llave `Config['storyAutoMatches']` (panel → Historias automáticas; la gemela la ENCENDIÓ por pedido del owner
+  el 24/10, migración `mig968GiftBoost`). La vieja `storyMatchesEnabled` (#934) ya no se lee.
 - **COMPROBANTES REPETIDOS (#932):** el mismo comprobante enviado varias veces = UNA ficha en Cargas pendientes (`_receiptCollapseDups`, `Comprobante.dupOf`).
 - **SITIO JUGAYGANA (#944):** `window.VIP_SITE === 'jugaygana'` (head de index.html + `js/site.js`): todo texto "PICA ROJA"/"Girox" visible se
   reemplaza, la página de JUGAYGANA no se cierra y un juego que no abre directo NO cae en la web de Girox. Una pantalla/flujo nuevo que se use desde
   JUGAYGANA tiene que abrirse ENCIMA de la página (modal) o pasar por `VIP.lobby.close(true)`; los logos nuevos van con su versión JUGAYGANA.
 - **IDS DE JUEGOS CON "@" (#943):** Amigo Gaming usa ids `amigo_X@AMIGO`. Todo patrón nuevo que valide una key de juego (`agg/game_id`) tiene que
   aceptar "@" (`_FAV_KEY_RE`, apertura directa, `casinoGoTo`, `app:play:`); si no, esos juegos caen en Girox en vez de abrirse.
+- **HISTORIAS: PARTIDOS con LLAVE (#909, 2026-10-24):** los partidos del día salen sólo con `Config['storyAutoMatches']` (panel → Historias
+  automáticas → ⚽; #968: ENCENDIDA por pedido del owner el 2026-10-24). Rotación de temas: cursor ×5 por día +
+  redacciones alternativas `ALTS` (un tema nuevo va a `THEMES` y a `ALTS`). Cada historia se publica aislada; diagnóstico `Config['storyAutoDiag']`.
+- **COMPROBANTES REPETIDOS (#908):** la cola de Cargas pendientes agrupa reenvíos (`_sameReceipt`) y al resolver una ficha
+  `_depositReviewCloseRepeats` cierra los demás como `duplicate`. Un flujo nuevo que confirme/rechace un comprobante pendiente tiene que llamarla.
+- **SORTEOS (#915):** `src/services/sorteos.js` (reglas) + `_sorteoTick` (20 min, stats batch de 1girox) + `SorteoEntry`/`SorteoScore`. Ranking
+  público con nombres tapados; sólo ANOTADOS ganan; requisitos en `Config['sorteos'].requirements`. Premios del extra se acreditan a mano. Panel → App → Sorteos.
 - **HISTORIAS PERSONALES (#886):** `Story.audienceUserId` = sólo la ve ese cliente (bono de bienvenida día 5/15/30, `_newbieOffersTick`,
   `Config['newbieOffers']`). Toda consulta NUEVA de historias para clientes o públicas tiene que filtrar `audienceUserId: null` (o el propio id).
 - **HISTORIAS CON BONO (#742, 2026-10-21):** una historia puede llevar `bonusPct` por `bonusHours` (+ push a todos). El cliente que toca

@@ -175,8 +175,9 @@ VIP.lobby = (function () {
     // XPG, Destacadas, Del Joker, Clásicas, Pragmatic Live). Lo que en su página es exclusivo de su sistema (juegos propios, torneos,
     // sorteos) acá queda como "PRÓXIMAMENTE" hasta tener su API.
     // #917 (owner): arriba de cada página, los DOS sorteos (el mensual activo y el Gran Sorteo "próximamente"), con el estilo de la marca.
-    function _rfStrip() { // #919: recuadro chico con cuenta regresiva y 3 trofeos (VIP.raffle.stripHtml), con los colores de la marca
-        try { return VIP.raffle.stripHtml(_skin); } catch (_) { return ''; }
+    function _rfStrip() { // fusión: los sorteos de la gemela (G915, sorteos.js) — dos mitades Gran Sorteo | Sorteo mensual; las pinta VIP.sorteos.load()
+        setTimeout(() => { try { VIP.sorteos.load(); } catch (_) {} }, 0);
+        return '<div class="srt-banner prl-srt" data-srt-banner hidden></div>';
     }
     const GN_PROMOS = [['promo-betrace.webp', 'Torneo de Betrace'], ['promo-endorphina.webp', 'Los tesoros de Endorphina'], ['promo-ruby.webp', 'Rubyplay'], ['promo-winspinity.webp', 'El camino de la fortuna']];
     function _gnPromos(big) {
@@ -295,7 +296,7 @@ VIP.lobby = (function () {
     function jgCat(key) {
         const it = ((_jgHomeData && _jgHomeData.catnav) || []).find((x) => x.key === key); if (!it) return;
         if (it.home) { go('inicio'); return; }
-        if (it.raffle) { try { VIP.raffle.open('jugaygana'); } catch (_) {} return; }
+        if (it.raffle) { try { VIP.sorteos.open('mensual'); } catch (_) {} return; }
         _jgGamesLoad().then((d) => { // #937: la lista copiada de jugaygana44 si existe; si no, el catálogo de Girox como antes
             const L = d && d.cats && d.cats[key];
             if (L && L.length) { jgList(it.label, L.map(_jgG), key); return; }
@@ -458,7 +459,7 @@ VIP.lobby = (function () {
             '<div class="bp-fc"><h4>PRODUCTOS</h4>' + _bpSportsBtn('Deportes') + l('Slots', "VIP.lobby.go('slots')") + l('Casino Vivo', "VIP.lobby.go('vivo')") +
                 (horses ? l('Caballos', "VIP.lobby.sport('" + esc(horses.path) + "')") : '') + l('CrazZy Win!', "VIP.lobby.go('crazy')") + '</div>' +
             '<div class="bp-fc"><h4>NOSOTROS</h4>' + l('Terminos y Condiciones', 'VIP.home.casinoInfo()') + l('Politica de Privacidad', 'VIP.home.casinoInfo()') + l('Juego Responsable', 'VIP.home.casinoInfo()') + '</div>' +
-            '<div class="bp-fc"><h4>PROMOCIONES</h4>' + l('Sorteo del mes', "VIP.raffle.open('buffaloplay')") + l('Juegos nuevos', "VIP.lobby.bpOpenTab('new')") + '</div>' +
+            '<div class="bp-fc"><h4>PROMOCIONES</h4>' + l('Sorteo del mes', "VIP.sorteos.open('mensual')") + l('Juegos nuevos', "VIP.lobby.bpOpenTab('new')") + '</div>' +
             '<div class="bp-resp"><span class="bp-18">18+</span> Jugá responsablemente. Si necesitás ayuda escribinos por <button type="button" onclick="VIP.lobby.support()">Soporte</button>.</div></footer>';
     }
     function _bpHomeHtml() {
@@ -580,7 +581,7 @@ VIP.lobby = (function () {
         const m = $('prlMain'); if (!m) return; _secN = 0;
         if (SK().layout === 'buffaloplay') { _bpRender(m); return; } // #958
         document.querySelectorAll('.prl-nav [data-v], .gnm__main [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === _view || (_view === 'all' && b.dataset.v === 'slots')));
-        if (_view === 'sorteos') { _view = 'inicio'; try { VIP.raffle.open(_skin); } catch (_) {} } // #917: la pestaña Sorteos abre el sorteo mensual
+        if (_view === 'sorteos') { _view = 'inicio'; try { VIP.sorteos.open('mensual'); } catch (_) {} } // #917: la pestaña Sorteos abre el sorteo mensual
         if (!_data) { m.innerHTML = (SK().layout === 'ganamos' ? _gnPromos(false) : _hero()) + '<div class="prl-note">Cargando los juegos…</div>'; return; }
         if (SK().layout === 'ganamos' && _view === 'inicio') { _gcN = 0; m.innerHTML = _gnHome(); _gnFillRows(); return; }
         if (SK().layout === 'jugaygana' && _view === 'inicio') {
@@ -662,7 +663,7 @@ VIP.lobby = (function () {
     function open(view, skin) {
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); try { document.documentElement.classList.add('jyg-ready'); } catch (_) {} // #944: saca la pantalla de carga // #914: modales (Perfil, Info, Retiro…) arriba de la página
-        _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra setTimeout(() => { try { VIP.raffle.tick(); } catch (_) {} }, 0); // #919: cuenta regresiva del sorteo al toque
+        _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra // #919: cuenta regresiva del sorteo al toque
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
