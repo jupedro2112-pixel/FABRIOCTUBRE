@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 996. Dominios de marca SIN registro ni inicio de sesión: sólo se entra con el pase desde PICA ROJA (= F980) — SW v669
+
 ### 995. Dominio propio por marca con pase LOGUEADO desde la app (= F979) — SW v668 · admin SW
 Panel → Configuración → 🌐 Dominios de las marcas (`Config['brandDomains']`; vacío = la página se abre dentro de la app, como hoy). Con dominio: la app pasa
 al cliente ya logueado (`POST /api/auth/brand-link`, token de un solo uso en `installLinks`) y el dominio entra solo en CORS. Usuarios, saldo y API son

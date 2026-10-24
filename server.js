@@ -1167,6 +1167,17 @@ async function landingPageHandler(req, res, next) {
     return next();
   }
 }
+// F980 (owner: "en la página no quiero registro ni acceso: que sólo se pueda usar desde PICA ROJA, la gente que tenga acceso"): en un DOMINIO DE MARCA
+// (Config['brandDomains']) no hay alta ni inicio de sesión — se entra ÚNICAMENTE con el pase de un solo uso que genera la app (`/api/auth/access-link`).
+// Las landings y el registro de ese dominio mandan al inicio (que, sin sesión, muestra "entrá desde PICA ROJA").
+function _isBrandHost(req) { try { return _brandDomainOrigins.size > 0 && _brandDomainOrigins.has('https://' + parseRequestHost(req)); } catch (_) { return false; } }
+const _BRAND_HOST_DENY = /^\/api\/(auth\/(login|login-otp-request|login-otp-verify|platform-login|quick-entry|register|register-quick|send-register-otp|request-password-reset|verify-reset-otp|complete-password-reset)|landing\/signup)\/?$/;
+app.use((req, res, next) => {
+  if (!_isBrandHost(req)) return next();
+  if (req.method === 'POST' && _BRAND_HOST_DENY.test(req.path)) return res.status(403).json({ error: 'Entrá desde la app de PICA ROJA.', code: 'BRAND_APP_ONLY' });
+  if (req.method === 'GET' && /^\/(l|landing|ingreso|registro)(\/|$)/.test(req.path)) return res.redirect(302, '/');
+  return next();
+});
 app.get('/l/:code', landingPageHandler);
 app.get('/landing/:code', landingPageHandler);
 app.get('/landing', landingPageHandler);
@@ -1363,7 +1374,7 @@ app.get('/manifest.json', (req, res) => {
     if (!_manifestBase) _manifestBase = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'public', 'manifest.json'), 'utf8'));
     const m = Object.assign({}, _manifestBase);
     let a = String(req.query.a || ''), uName = String(req.query.u || '');
-    const menu = String(req.query.menu || ''), fixed = req.query.fixed === '1', picked = req.query.picked === '1'; // #980
+    const menu = String(req.query.menu || ''), fixed = req.query.fixed === '1', picked = req.query.picked === '1'; // F980
     // #826: si Safari pidió el manifest sin ?a (no tomó el cambio del <link>), el token sale de la cookie vip_inst (Path=/manifest.json).
     if (!a) {
       const ck = (String(req.headers.cookie || '').split(';').map((x) => x.trim()).find((x) => x.startsWith('vip_inst=')) || '').slice(9);
@@ -12324,8 +12335,10 @@ app.get('/', async (req, res) => {
   // de campaña desde la cookie para que el flujo de registro sin SMS sea
   // determinístico aunque la URL ya sea / (limpiada) o esto sea una recarga.
   const campaignCode = await resolveCampaignFromCookie(req);
-  const rendered = renderIndexHtml({ campaignCode: campaignCode || '' });
+  let rendered = renderIndexHtml({ campaignCode: campaignCode || '' });
   if (!rendered) return res.status(500).send('Error loading page');
+  // F980: dominio de marca ⇒ la app sabe que acá no hay login ni registro (sólo el pase desde PICA ROJA) y a dónde mandar a quien llegue sin sesión.
+  if (_isBrandHost(req)) rendered = rendered.replace(/<head>/i, () => '<head><script>window.VIP_BRAND_LOCK=1;window.VIP_MAIN_URL=' + JSON.stringify(getPublicBaseUrl()) + ';</script>');
   res.setHeader('Content-Type', 'text/html');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');

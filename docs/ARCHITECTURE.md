@@ -1573,4 +1573,5 @@ ranking (`_sorteoWinners(key, pk, excludeUserId)`). Requisito teléfono = 10 dí
 - **Dominio propio por marca (F979/#995):** `Config['brandDomains']` (panel → Configuración → Dominios de las marcas; vacío = adentro de la app). `lobby.js`
   `_toDomain` → `POST /api/auth/brand-link` (token de un solo uso en `User.installLinks`) → `https://<dominio>/?<jg|gn|pr>=1&acceso=…`; los dominios
   cargados entran solos en CORS (`_brandDomainOrigins`). Misma cuenta de 1girox siempre.
-
+- **F980/#996:** en un dominio de marca NO hay login ni registro (`_isBrandHost`/`_BRAND_HOST_DENY` en server.js, `VIP_BRAND_LOCK` + cartel "Entrá desde la app de
+  PICA ROJA" en `ui.showLoginScreen`). Única puerta: el pase de la app.
