@@ -307,7 +307,7 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 - **SORTEOS = los de la GEMELA (fusión 2026-10-24, owner):** `src/services/sorteos.js` + `SorteoScore`/`SorteoEntry`/`SorteoImage` + cron `_sorteoTick`
   (Sorteo mensual + Gran Sorteo + sorteo extra; front `public/js/sorteos.js`, contenedores `[data-srt-cards]`/`[data-srt-banner]`, modal `#srtModal`;
   panel → Sorteos). Nuestro #917 (`raffleService`/`raffle.js`) se BORRÓ. El cron NO corre con el casino simulado (Render comparte la base). En las
-  páginas de marca el sorteo va con `_rfStrip()` de lobby.js (= `data-srt-banner`).
+  páginas de marca el sorteo va con `_rfStrip()` de lobby.js (= `data-srt-bbar`, #986: píldora → cartel → resumen, como el casino de Girox).
 - **FUSIÓN CON LA GEMELA (2026-10-24):** el repo PICAROJAoficial salió de nuestro commit 238c202c y siguió aparte; sus entradas del WORKLOG llevan
   prefijo **G** (G907…G969) y los comentarios `#9xx` del código que vino de ahí se refieren a esas. Una próxima tanda de la gemela se trae con
   `git apply --3way <patch>` en una rama, nunca reemplazando archivos (pisaría las páginas de marca).

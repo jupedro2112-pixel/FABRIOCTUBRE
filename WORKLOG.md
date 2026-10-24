@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-24
 
+### 986. Sorteo en las páginas de marca con el MISMO formato que el casino de Girox, cada una con su color — SW v674
+**Pedido (owner, 3 capturas del casino):** "el sorteo, cuando lo expandís en Ganamos no se ve adentro; tuve que salir para ver el menú chico como resumen.
+Replicalo en Ganamos, JUGAYGANA, PICA ROJA y Girox, cada uno con su color pero mismo formato". `_rfStrip()` ya no pinta las dos mitades (que abrían la
+ventana grande) sino `[data-srt-bbar]`, que sorteos.js (`paintCasino`) arma igual que la barra del casino: **píldora** (🏆 título · NOVEDAD/EN VIVO, cerrado)
+→ **cartel** "🏆 Sorteo… · Empieza en… · Anotate, es gratis ›" con ✕ (abierto; `VIP.sorteos.brandBar`, `localStorage vip_srt_brand_bar`, al entrar resumido)
+→ tocándolo, el **resumen** "¡Increíbles premios!" (`openMini`, el mismo de Girox). Colores: tokens `--srt-*` por marca (PICA ROJA rojo, Ganamos violeta
+propio, JUGAYGANA negro/amarillo #977, Girox el violeta de siempre). `_barMain`/`_srtSub` son compartidos con la barra del casino.
+
 ### 985. Portadas de LOBBY distintas por marca + inicio de Ganamos en el orden de ganamos.net — SW v673
 **Pedido (owner):** "las fotos de los lobbys de Ganamos y JUGAYGANA, que no se repitan entre plataformas; esas (las primeras) ponelas en Ganamos, buscá otras
 para JUGAYGANA y para PICA ROJA (puede ser de Stake)" + "ordená los títulos del inicio de Ganamos igual que ganamos.net".

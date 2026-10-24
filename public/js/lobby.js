@@ -194,7 +194,7 @@ VIP.lobby = (function () {
     // #917 (owner): arriba de cada página, los DOS sorteos (el mensual activo y el Gran Sorteo "próximamente"), con el estilo de la marca.
     function _rfStrip() { // fusión: los sorteos de la gemela (G915, sorteos.js) — dos mitades Gran Sorteo | Sorteo mensual; las pinta VIP.sorteos.load()
         setTimeout(() => { try { VIP.sorteos.load(); } catch (_) {} }, 0);
-        return '<div class="srt-banner prl-srt" data-srt-banner hidden></div>';
+        return '<div class="srt-bbar" data-srt-bbar hidden></div>'; // #986: el mismo formato que el casino de Girox (píldora → cartel → resumen)
     }
     const GN_PROMOS = [['promo-betrace.webp', 'Torneo de Betrace'], ['promo-endorphina.webp', 'Los tesoros de Endorphina'], ['promo-ruby.webp', 'Rubyplay'], ['promo-winspinity.webp', 'El camino de la fortuna']];
     function _gnPromos(big) {
