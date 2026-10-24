@@ -3919,3 +3919,9 @@ body.prl-appnav #prlSportPop.prl-sportpop { z-index: 99996; }
 .prl-pb .pb-new .pb-n1 { left: 21%; top: 4%; z-index: 2; }
 .prl-pb .pb-new .pb-n2 { right: 0; top: 14%; transform: rotate(9deg); }
 .prl-pb.pb-sport { background: radial-gradient(120% 140% at 88% 50%, rgba(200,16,46,.28) 0%, rgba(200,16,46,0) 55%), linear-gradient(135deg, #0b100d 0%, #15090b 100%) !important; }
+/* #990: adentro de PICA ROJA la cabecera es la del menú completo (encima de la página) y no la barra Volver · Menú · PICA ROJA · … */
+body.prl-apphead .header.header-toolbar.tb-circles.topnav:not(.bottom-nav) { position: fixed !important; top: 0; left: 0; right: 0; z-index: 99995 !important; background: var(--p-surface, #fff) !important; }
+body.prl-apphead #prLobby .prl-cbar { display: none !important; }
+body.prl-apphead #prLobby { padding-top: var(--prl-apphead, 64px); box-sizing: border-box; }
+/* #990 (owner): "PLATAFORMA bajalo un poco porque se encima" ⇒ el logo baja y no toca el borde de arriba */
+.header .tn-plat .tn-ico { margin-top: 6px; }

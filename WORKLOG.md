@@ -8,6 +8,13 @@
 
 ## Sesión 2026-10-24
 
+### 990. Adentro de PICA ROJA, la cabecera del MENÚ COMPLETO (Telegram · Info · PLATAFORMA · Soporte · Historias) + PLATAFORMA más abajo — SW v677
+**Pedido (owner, 2 capturas):** "este menú (Volver · Menú · PICA ROJA · Historias · Info · Perfil), adentro sólo de PICA ROJA, cambialo por lo superior del menú
+completo; PLATAFORMA bajalo un poco porque se encima". `_prNav` (lobby.js): con PICA ROJA abierta la cabecera de la app pasa por encima de la página
+(`body.prl-apphead`, `--prl-apphead` = su alto) y se esconde la barra de la página; Soporte → `VIP.lobby.support()` (cierra la página y abre el chat) e Inicio →
+cierra la página + Inicio (también con el menú de una sola barra). Si la cabecera de la app no está a la vista, queda la barra de la página (con Volver).
+El logo de PLATAFORMA baja 6 px (`.header .tn-plat .tn-ico`).
+
 ### 989. Zip para probar JUGAYGANA en un dominio de Vercel + detección del dominio de marca detrás de un proxy
 **Pedido (owner):** "dame el zip para subir el dominio de JUGAYGANA a un link de Vercel, para reenviar, con la explicación adentro". `jugaygana-vercel/`
 apunta ahora al servidor de PRUEBA (`fabrioctubre.onrender.com`; picaroja.com todavía no tiene las páginas de marca) y su README explica: subir a Vercel

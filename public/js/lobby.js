@@ -771,16 +771,24 @@ VIP.lobby = (function () {
     // encima de la página y sus botones cambian; al cerrar vuelven a ser los de siempre. Sin #bottomNav queda la barra propia de la página.
     const _NAV_SWAP = { navMenu: { lbl: 'Slots', ico: 'slots', on: "VIP.lobby.go('slots')" }, navPerfil: { lbl: 'Deportes', ico: 'sport', on: 'VIP.lobby.sportsMenu(event)' } };
     let _navSaved = null;
+    // #990 (owner): "adentro de PICA ROJA usá lo superior del menú completo" ⇒ la cabecera de la app (Telegram · Info · PLATAFORMA · Soporte · Historias)
+    // también pasa por encima de la página (en lugar de la barra Volver · Menú · PICA ROJA · …); Soporte cierra la página y abre el chat.
     function _prNav(on) {
-        if (on && !_navSaved && $('bottomNav')) {
+        if (on && !_navSaved) {
             _navSaved = {};
+            const ini = $('navInicio'); if (ini) { _navSaved.navInicio = { on: ini.getAttribute('onclick') }; ini.setAttribute('onclick', 'VIP.lobby.close(true);VIP.home.goHome()'); }
+            const man = $('navManual'); if (man) { _navSaved.navManual = { on: man.getAttribute('onclick') }; man.setAttribute('onclick', 'VIP.lobby.support()'); }
+            // si la cabecera de la app no está a la vista (otro modo de menú), queda la barra de la página (con Volver)
+            try { const hd = document.querySelector('.header.header-toolbar.tb-circles.topnav:not(.bottom-nav)'); const lb = $('prLobby'); if (hd && lb && hd.offsetHeight > 0) { lb.style.setProperty('--prl-apphead', hd.offsetHeight + 'px'); document.body.classList.add('prl-apphead'); } } catch (_) {}
+        }
+        if (on && _navSaved && !_navSaved._bottom && $('bottomNav')) {
+            _navSaved._bottom = 1;
             Object.keys(_NAV_SWAP).forEach((id) => { const b = $(id); if (!b) return; const x = _NAV_SWAP[id]; _navSaved[id] = { html: b.innerHTML, on: b.getAttribute('onclick') };
                 b.innerHTML = '<span class="tn-ico">' + ico(x.ico) + '</span><span class="tn-lbl">' + x.lbl + '</span>'; b.setAttribute('onclick', x.on); });
-            const ini = $('navInicio'); if (ini) { _navSaved.navInicio = { on: ini.getAttribute('onclick') }; ini.setAttribute('onclick', 'VIP.lobby.close(true);VIP.home.goHome()'); }
             document.body.classList.add('prl-appnav');
         } else if (!on && _navSaved) {
-            Object.keys(_navSaved).forEach((id) => { const b = $(id); if (!b) return; if (_navSaved[id].html != null) b.innerHTML = _navSaved[id].html; b.setAttribute('onclick', _navSaved[id].on); });
-            _navSaved = null; document.body.classList.remove('prl-appnav');
+            Object.keys(_navSaved).forEach((id) => { if (id === '_bottom') return; const b = $(id); if (!b) return; if (_navSaved[id].html != null) b.innerHTML = _navSaved[id].html; b.setAttribute('onclick', _navSaved[id].on); });
+            _navSaved = null; document.body.classList.remove('prl-appnav', 'prl-apphead');
         }
     }
     function close(force) {
