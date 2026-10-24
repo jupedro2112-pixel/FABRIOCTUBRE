@@ -3325,3 +3325,11 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 /* #953 (owner): en Ganamos el nombre NO va encima de la portada; sólo se ve si la foto no carga (queda detrás de la imagen) */
 .gn-g i { z-index: 0; }
 .gn-g img { z-index: 1; }
+/* #954 (owner): ningún texto ENCIMA de las portadas. La tarjeta de JUGAYGANA (también la usan "Mostrar todo" y "Juegos nuevos" de Ganamos)
+   lleva el nombre debajo de la foto: en Ganamos como su tarjeta (.gn-gname); en JUGAYGANA, como su original, sin nombre. */
+.jg-card em { position: static; display: block; padding: 0; margin-top: 5px; background: none; border-radius: 0; pointer-events: none; }
+.jg-card em b { color: #fff; font-size: 12px; font-weight: 500; text-shadow: none; text-align: left; }
+.prl-jyg .jg-card em { display: none; }
+.prl-gn .jg-grid { row-gap: 12px; }
+.jg-card i { position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; padding: 6px; text-align: center;
+  color: #ddd; font: 700 11px/1.25 Roboto, Arial, sans-serif; font-style: normal; } /* sólo si la portada no carga (queda detrás de la foto) */

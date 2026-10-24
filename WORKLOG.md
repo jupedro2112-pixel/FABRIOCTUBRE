@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 954. JUGAYGANA (y las listas de Ganamos): ningún texto ENCIMA de las portadas — SW v643
+**Owner:** "hacé lo mismo en JUGAYGANA y afinemos todo". La tarjeta `_jgCard` (JUGAYGANA, y también "Mostrar todo" / "Juegos nuevos" de
+Ganamos) tenía el nombre sobre un degradé encima de la foto. Ahora el nombre va DEBAJO de la portada (`<em>` fuera del recuadro): en Ganamos
+con el formato de su tarjeta, en JUGAYGANA oculto como su original. Si una portada no carga, el nombre aparece en el recuadro (`<i>`, detrás
+de la imagen). Mismo criterio que #953: el texto de respaldo nunca tapa una foto.
+
 ### 953. Ganamos: sin el nombre del juego ENCIMA de la portada — SW v642
 **Owner:** "en Ganamos sacá el texto de las fotos, están tapando las fotos". La tarjeta `.gn-g` tiene el nombre en `<i>` (respaldo por si la
 portada no carga) y quedaba dibujado arriba de la imagen. Ahora la imagen va por encima (`z-index`): el nombre sólo se ve si la foto falla;
