@@ -3826,3 +3826,5 @@ html[data-theme="dark"] #infoMsg .im-card { border-color: #3d3d44 !important; }
 /* fusión 2026-10-24: la gemela fija el básico en 4 columnas (G958/G961); acá son 5 plataformas (PICA ROJA · Girox · Ganamos · JUGAYGANA ·
    BuffaloPlay, #958) ⇒ una fila de 5 que se reparten el ancho. */
 .bv-plats { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; }
+/* #981: en los dominios de marca no se puede cerrar sesión (queda siempre iniciada) */
+html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !important; }

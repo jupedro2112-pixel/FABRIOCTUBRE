@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-24
 
+### 981. Dominios de marca: sin "Cerrar sesión" y sesión que se renueva sola — SW v669
+**Pedido (owner):** "que no se pueda cerrar sesión en cada página, así queda siempre iniciado". En un dominio de marca (`VIP_BRAND_LOCK`): se oculta
+`#pfLogoutBtn` (`html.brand-lock`, pin.css), `VIP.auth.handleLogout` no hace nada, y al abrir la app se pide `POST /api/auth/renew` (una vez por día) ⇒
+nuevo token de 30 días: mientras entre al menos una vez por mes, nunca se le cierra. Una sesión revocada desde el panel (tokenVersion) no se renueva.
+En picaroja.com el botón de cerrar sesión del Perfil sigue igual.
+
 ### 980. Dominios de marca SIN registro ni inicio de sesión: sólo se entra desde PICA ROJA — SW v668
 **Pedido (owner):** "cuando cargue el dominio, ¿va a estar lo del botón? En la página no quiero registro ni acceso: que sólo se pueda usar desde PICA ROJA, la
 gente que tenga acceso. Sin fricción". El "botón" es tocar la marca en la app (#979: pasa logueado). Ahora, en un host que figure en `Config['brandDomains']`:

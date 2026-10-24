@@ -10031,6 +10031,17 @@ app.put('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req,
     logger.info(`[brand-domains] ${req.user.username}: ${JSON.stringify(now)}`); res.json({ success: true, domains: now });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
+// #981 (owner: "que no se pueda cerrar sesión en cada página, que quede siempre iniciado"): en un dominio de marca la app renueva su sesión (30 días
+// desde la última visita). Sólo clientes y con el mismo tokenVersion (una sesión revocada desde el panel no se renueva: authMiddleware la rechaza antes).
+app.post('/api/auth/renew', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
+    const u = await User.findOne({ id: req.user.userId }).select('id username role tokenVersion isBlocked isActive').lean();
+    if (!u || u.isBlocked || u.isActive === false) return res.status(403).json({ error: 'Cuenta no disponible' });
+    const token = jwt.sign({ userId: u.id, username: u.username, role: u.role, tokenVersion: u.tokenVersion ?? 0 }, JWT_SECRET, { expiresIn: '30d' });
+    res.set('Cache-Control', 'no-store'); res.json({ success: true, token });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/auth/brand-link', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
