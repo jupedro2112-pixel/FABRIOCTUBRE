@@ -3024,6 +3024,7 @@
         pwRecoGo, pwRecoLater, // #806
         renderCasinoTabs, switchPlatform, openChangePassword, setPreferred, toggleBubble, dismissBubble, restoreBubble, choosePlatform, paintInstallButtons, openPlatformTab, openPlatform, toggleCasinoLoad, dismissCasinoQuick, restoreCasinoQuick, toggleAccess, openInApp, renderSupportTests, toggleInfoReviews, toggleInfoVip, toggleInfoRoulette, renderVipDetail, toggleRefHow, toggleVipCard, renderVipCard, renderVipClaim, pickVipClaimPlat, claimLevelBonus, loadReferralClaimable, claimReferral,
         brandOf, // #927
+        brandActive: () => _brand, // #969: marca activa según el server (null = todavía no se sabe)
         casinoBarHtml, // #914
         gamePlay: favPlay, // #907
         notifCtaGo: notifCtaGo, notifCtaClose: notifCtaClose, // #892

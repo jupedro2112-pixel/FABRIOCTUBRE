@@ -663,6 +663,10 @@ VIP.lobby = (function () {
         b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
     }
     function open(view, skin) {
+        // #969 (owner: "si eligió una, sólo puede entrar en esa hasta tener saldo 0"): si el server dice que la marca activa es OTRA, se pasa por
+        // openPlatform (chequea el saldo y, si está bloqueada, muestra el cartel). En el sitio JUGAYGANA no hay otra página: se abre igual.
+        try { const act = VIP.home.brandActive && VIP.home.brandActive(); const want = SKINS[skin] ? skin : 'picaroja';
+            if (act && act !== want && window.VIP_SITE !== 'jugaygana') { VIP.home.openPlatform(want); return; } } catch (_) {}
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); try { document.documentElement.classList.add('jyg-ready'); } catch (_) {} // #944: saca la pantalla de carga // #914: modales (Perfil, Info, Retiro…) arriba de la página
         _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra // #919: cuenta regresiva del sorteo al toque

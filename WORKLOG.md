@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 969. Una plataforma a la vez, de verdad: bloqueo en TODAS las entradas + el panel muestra la plataforma del cliente — SW v657 · admin SW v200
+Pedido del owner: "todas con la misma de 1girox; se le carga a la que eligió; si eligió una, sólo puede entrar en esa hasta tener saldo 0, las otras
+quedan bloqueadas; todo se calcula igual: es 1 usuario de PICA ROJA que puede usar varias plataformas". Es el modelo de #908 (`User.activeBrand`,
+`POST /api/me/brand` rechaza el cambio con saldo ≥ `BRAND_LOCK_ARS` = $100). Lo que faltaba:
+- `VIP.lobby.open` abría la página pedida SIN chequear (historias, arranque con la marca guardada en el teléfono, site.js). Ahora, si la marca
+  activa del server (`VIP.home.brandActive()`) es otra, pasa por `openPlatform` ⇒ `_brandGuard` (cartel de bloqueo si tiene saldo).
+  En el sitio JUGAYGANA no aplica (no hay otra página).
+- Panel → chat: al lado del usuario, "🎰 <plataforma activa>" (la carga del agente va a esa: es la misma cuenta). Se cambia con el botón de
+  marca del cliente (#913).
+- Sin cambios en cargas/retiros/reembolsos/cierres: todo se calcula igual sobre la única cuenta de 1girox.
+
 ### 968. La pantalla de carga de un juego nunca muestra Girox + zip de las páginas para la gemela — SW v656
 Pedido del owner: "que en cada momento que carga, si te lleva a Girox, sacar ese logo de Girox para que la gente no vea que es de otra plataforma".
 - `_gameLoadingScreen` (home.js): sin página de marca abierta ni marca elegida mostraba el logo y el nombre de Girox ("Abriendo X…" · Girox).

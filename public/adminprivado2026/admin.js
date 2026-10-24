@@ -2834,11 +2834,15 @@ async function loadUserInfo(userId) {
               '" style="font-size:12px;font-weight:800;color:' + (user.vipLevelInfo.color || '#ffd700') + ';">' +
               user.vipLevelInfo.emoji + ' ' + escapeHtml(user.vipLevelInfo.name) + '</span>'
             : '';
+        // #969 (owner: "un solo admin para cargar cada plataforma"): en qué plataforma está jugando el cliente (la carga va a esa; es la misma
+        // cuenta de 1girox). Se cambia con el botón de marca del cliente (#913).
+        const _BRN = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' };
+        const brandTag = ' <span class="chat-brand" title="Plataforma activa del cliente" style="font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--p-surface-2,#eef);border:1px solid var(--p-border,#ccd);">🎰 ' + escapeHtml(_BRN[user.activeBrand] || 'PICA ROJA') + '</span>';
         if (user.acquisitionPublisher) {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag +
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag +
                 ' <span class="chat-publisher">(📣 ' + escapeHtml(user.acquisitionPublisher) + ')</span>';
         } else {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag;
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag;
         }
 
         // Mostrar estado de la app de notificaciones
