@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 992. "Exclusivo de Ganamos" con 24 juegos, todos con portada de ganamos.net (= F976) — SW v665
+
 ### 991. Halloween de Ganamos lleno: 48 juegos de toda la plataforma y grilla que ocupa el recuadro (= F975) — SW v664
 
 ### 990. "Exclusivo de Ganamos" con 10 juegos de Pragmatic y portadas de ganamos.net (= F974, prueba de diseño) — SW v663
