@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-22
 
+### 952. Ganamos y JUGAYGANA: saldo + "Carga rápida" ARRIBA (debajo del menú superior), finos y con su formato; sin burbuja — SW v641
+**Owner:** "la carga rápida y el monto del usuario lo ponemos en la parte superior abajo del menú superior con el formato de Ganamos, bien
+fino, y sacá la burbuja; lo mismo en JUGAYGANA". `lobby.js _shell`: la cabecera de las páginas con logo (`sk.wordmark`) lleva logo · saldo ·
+botón `.prl-hql` (llama `VIP.lobby.ql()` = el mismo panel de Carga rápida) y la burbuja flotante `#prlQl` ya no se crea ahí (PICA ROJA la
+mantiene). Estilos al final de `pin.css` (#952): Ganamos violeta, JUGAYGANA amarillo, 30 px de alto; en pantallas <360 px sólo el ícono.
+
 ### 951. GANAMOS completo y en el ORDEN de sus fotos: 37 proveedores, 2.372 juegos (antes 1.525) — SW v640
 **Owner:** "tomá bien el orden de juegos, detectá todo… subí todo como Ganamos, revisá la página y las fotos". El recorte de #949 buscaba las
 portadas por contenido y perdía filas enteras (portadas sin cargar = ícono de pica, filas tapadas por la barra de abajo o el botón CARGAS):

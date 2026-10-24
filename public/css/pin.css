@@ -3308,3 +3308,17 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 /* #949 Ganamos: bloques de proveedor en Casino (2 filas de 3) y listas con sus tarjetas */
 .gn-grid6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px; }
 .gn-grid6 .gn-g span { aspect-ratio: 1 / 1; }
+
+/* #952 (owner): saldo + Carga rápida ARRIBA, debajo del menú superior, finos y con el formato de cada página (sin la burbuja flotante) */
+.prl-gn .prl-top-logo, .prl-jio .prl-top-logo { gap: 6px; }
+.prl-hql { display: inline-flex; align-items: center; gap: 5px; border: 0; cursor: pointer; white-space: nowrap; flex: 0 0 auto;
+  border-radius: 6px; padding: 0 10px; height: 30px; font: 700 12px Roboto, Arial, sans-serif; letter-spacing: .1px; }
+.prl-hql .prl-ic { width: 15px; height: 15px; }
+.prl-gn .prl-hbal b { padding: 0 10px; height: 30px; display: inline-flex; align-items: center; border-radius: 6px; font-size: 13px;
+  background: rgba(139,0,201,.18); border: 1px solid #8b00c9; }
+.prl-gn .prl-hql { background: linear-gradient(180deg, #a51cf0, #7a00b8); color: #fff; box-shadow: 0 2px 8px rgba(139,0,201,.35); }
+.prl-jio .prl-hbal b { padding: 0 10px; height: 30px; display: inline-flex; align-items: center; border-radius: 6px; font-size: 13px; }
+.prl-jio .prl-hql { background: #f2ce00; color: #111; }
+@media (max-width: 360px) { .prl-hql span { display: none; } .prl-hql { padding: 0 8px; } }
+.prl-gn .prl-top-logo .prl-brandbtn, .prl-jio .prl-top-logo .prl-brandbtn { min-width: 0; flex: 0 1 auto; }
+.prl-gn .prl-top-logo .prl-wordmark, .prl-jio .prl-top-logo .prl-wordmark { max-width: 38vw; object-fit: contain; }

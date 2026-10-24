@@ -29,7 +29,8 @@ VIP.lobby = (function () {
         tag: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
         search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
         menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
-        up: '<path d="M6 5h12M12 20V9M7 13l5-5 5 5"/>'
+        up: '<path d="M6 5h12M12 20V9M7 13l5-5 5 5"/>',
+        wallet: '<path d="M4 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1V7z"/><path d="M4 7l11-3v3"/><path d="M15 13.5h2.5"/>'
     };
     const ico = (k) => '<svg class="prl-ic" viewBox="0 0 24 24" aria-hidden="true">' + (IC[k] || '') + '</svg>';
     // #912: la misma página con otro estilo por marca (todas son puertas a la MISMA cuenta de Girox).
@@ -56,12 +57,14 @@ VIP.lobby = (function () {
             '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
             (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
-                '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span></header>' : '') + // #920 (owner): el saldo como figura en cada página; sin Cargar ni perfil
+                '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span>' +
+                // #952 (owner): la Carga rápida ARRIBA, al lado del saldo, fina y con el formato de la página (sin burbuja flotante)
+                '<button type="button" class="prl-hql" onclick="VIP.lobby.ql()">' + ico('wallet') + '<span>Carga rápida</span></button></header>' : '') + // #920 (owner): el saldo como figura en cada página
             (sk.wordmark ? '' : '<div class="prl-pr-bal" id="prlPrBal"></div>') + // #920: PICA ROJA = la misma tira de saldo del Inicio de la app
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
-            '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>' +
+            (sk.wordmark ? '' : '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>') + // #952: JUGAYGANA/Ganamos la tienen arriba
             (sk.layout === 'jugaygana' ? '' : sk.layout === 'ganamos'
                 ? (() => { // #922 (owner): la barra de abajo REAL de ganamos.net (su fondo con el hueco de la mascota, sus íconos, su orden y su brillo)
                     const it = (v, k, t, on) => '<button type="button" class="gnm__menu-item" data-v="' + v + '" onclick="' + on + '"><img class="gnm__menu-active" src="/images/ganamos/menu-active.webp" alt=""><div class="gnm__menu-icon-container"><span class="gnm__menu-icon">' + (k ? GN_IC[k] : '') + '</span></div><span class="gnm__menu-text">' + t + '</span></button>';
@@ -469,7 +472,7 @@ VIP.lobby = (function () {
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
-        try { if (!sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
+        try { if ($('prlQl') && !sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
     function close(force) {
