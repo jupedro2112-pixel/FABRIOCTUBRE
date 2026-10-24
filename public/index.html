@@ -686,7 +686,7 @@
                 <span class="tn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></span><span class="tn-lbl">Cambiar<br>menú</span>
             </button>
             <!-- #620 (owner): PLATAFORMA — abre la plataforma elegida para jugar con el saldo que ya tiene (sin cargar). Con Girox elegida muestra su logo. -->
-            <button type="button" class="tn-btn tn-plat" id="navPlat" onclick="VIP.home.platTap(event)" title="Elegí dónde jugar con tu saldo">
+            <button type="button" class="tn-btn tn-plat" id="navPlat" onclick="VIP.home.platTap()" title="Elegí dónde jugar con tu saldo">
                 <span class="tn-ico"><img id="navPlatLogo" src="" alt="" hidden><span id="navPlatIco" aria-hidden="true">🎰</span></span><span class="tn-lbl" id="navPlatLbl">JUGÁ AQUÍ</span>
             </button>
             <button type="button" class="tn-btn" id="navManual" onclick="VIP.home.setHomeMode('mini')" title="Soporte: hablá con una persona, responde en minutos">
@@ -1423,8 +1423,6 @@
             <div class="balance-strip">
                 <span class="bs-user" title="Tu usuario"><i>👤</i><b id="bsUserName">—</b></span><!-- #636 -->
                 <span class="bs-balance"><span class="dash-balance-label"><svg class="hc-ico" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Tu saldo</span><span class="dash-balance-amount" id="userBalance">$0</span></span>
-                <!-- #994 (owner): con PICA ROJA en el Inicio, el Perfil va al lado del saldo (abajo su lugar es Deportes). Sólo se ve con body.pr-home -->
-                <button type="button" class="bs-perfil" onclick="VIP.home.openProfile()" title="Tu perfil"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c.8-4 4-6 8-6s7.2 2 8 6"/></svg><span>Perfil</span></button>
                 <!-- #262: Instalar app al lado del saldo, con IMPORTANTE en rojo -->
                 <button type="button" class="bs-install" id="homeInstallAppBtn" onclick="VIP.ui.installApp()" title="Instalar la app en tu teléfono">
                     <span class="bs-install-t"><b><i class="li"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/></svg></i>Instalar app</b><small>Acceso directo y avisos</small></span><span class="bs-imp">Importante</span>
@@ -1593,7 +1591,6 @@
                  (rouletteRecentWinnersCard + rouletteWinnersList/Empty/Live):
                  ELIMINADO 2026-08-05 (owner: confundía en el inicio). La lista
                  de ganadores DENTRO del modal de la ruleta sigue existiendo. -->
-            <div id="prInline"></div><!-- #994: la página de PICA ROJA dentro del menú completo (lobby.js inline) -->
             </div><!-- /#homePanel -->
 
             <!-- Barra para subir/bajar el panel del home y agrandar el chat. -->
@@ -2679,7 +2676,7 @@
                     <div class="pf-userlvl" id="pfUserLvl">Jugador</div>
                     <div class="pf-userhint">Tocá el avatar para elegir tu ícono · los de nivel se desbloquean al subir</div>
                     <!-- #309: versión visible de la app (mismo número que CACHE_VERSION del SW; se bumpea junto) -->
-                    <div class="pf-build" id="appBuildTag">app v681</div>
+                    <div class="pf-build" id="appBuildTag">app v682</div>
                 </div>
             </div>
             <div class="pf-actions pf-actions-top">
@@ -2703,7 +2700,7 @@
                 <div class="pf-row"><span class="pf-k">Contraseña</span><b class="pf-v" id="pfPass">••••••••</b><span class="pf-btns"><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('pass')">Copiar</button><button type="button" class="pf-copy" id="pfEye" onclick="VIP.home.profileTogglePw()">Ocultar</button></span></div>
                 <div class="pf-row pf-row-link"><span class="pf-k">Página de la app</span><b class="pf-v pf-link" id="pfLink">—</b><button type="button" class="pf-copy" onclick="VIP.home.profileCopy('link')">Copiar</button></div>
                 <div class="pf-hint" id="pfHint"></div>
-                <div class="pf-build pf-build-min" id="pfBuildMini">app v681</div> <!-- #790: espejo de #appBuildTag -->
+                <div class="pf-build pf-build-min" id="pfBuildMini">app v682</div> <!-- #790: espejo de #appBuildTag -->
                 <button type="button" class="pf-capture" id="pfCaptureBtn" onclick="VIP.autoload.saveCapture()">📸 Capturar mis datos</button>
                 <div id="pfCapturePreview" style="display:none;margin-top:8px;"></div>
             </div>

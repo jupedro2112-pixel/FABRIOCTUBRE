@@ -8,56 +8,13 @@
 
 ## Sesión 2026-10-24
 
-### 995. Sin carrusel en PICA ROJA · reseñas en UNA línea (estrellas para opinar directo, "Ver ▾" las despliega) · favoritos más chicos y minimizables (⭐ abajo) · arriba "MENÚ" de plataformas — SW v681
-**Pedidos (owner):** "este carrusel sacalo" (portadas de PICA ROJA) · "las reseñas, arriba, en línea recta como minimizadas, con las estrellas para dejar una reseña directo,
-que se vea que se pueden expandir y expandidas como ahora" · "el menú de favoritos lo dejamos pero más chico y que se pueda minimizar (siempre expandido de entrada); si lo
-minimiza, la estrellita de favoritos pasa abajo, al lado de Slots, a la izquierda" · "en la selección de arriba dejá PICA ROJA (predeterminada) y poné MENÚ; al abrirlo elegís la
-plataforma, como la de abajo".
-- lobby.js `_hero()`: PICA ROJA sin portadas (`_prHero`/`PR_ART` de #988 quedan sin uso).
-- reviews.js `renderEntrySlider`: en `#entryReviews` arma `.rvl-line` (5 estrellas → `openModal(n)` con esas estrellas, "Dejá tu reseña", promedio y "Ver ▾" →
-  `VIP.reviews.toggleEntry()`) y el bloque de siempre dentro de `.rvl-full` (se ve con `.rvl-open`). El ingreso (#loginReviews) no cambia.
-- home.js favoritos: botón "–" (`favMinimize(true)`, `localStorage vip_fav_min`); minimizados se esconden y aparece `#navFav` (⭐ Favoritos) al principio de
-  `#bottomNav` (sólo menú opción 2); tocarlo los vuelve a abrir. Tarjetas más chicas.
-- home.js `_paintPlatStrip`: arriba sólo el logo de la plataforma elegida (PICA ROJA por defecto) con el texto **MENÚ**; tocarlo = `platSheet()` (el mismo
-  selector que "Plataformas" de abajo).
-
-### 994. PICA ROJA DENTRO del menú completo (página predeterminada) + todas las plataformas arriba (la elegida en el medio, más grande) + "Plataformas" abajo + Perfil al lado del saldo — SW v680
-**Pedido (owner, captura del menú completo):** "esto quiero que sea el menú completo y abajo, sin salir de ahí, la plataforma de PICA ROJA; como sacamos Perfil y
-pusimos Deportes, poné Perfil al lado del saldo sólo en PICA ROJA; entrás y estás para jugar en PICA ROJA, página predeterminada; en el menú de abajo agregá una
-sección para elegir la plataforma; arriba el botón con todas las plataformas, PICA ROJA en el medio más grande porque es la principal; si eligen Ganamos, Ganamos
-pasa a estar más grande y seleccionada".
-- **Página dentro del Inicio** (lobby.js `inline(on)`, `_inlMounted`, `_inlWant`; home.js `_prInlineSync`): con PICA ROJA como marca del teléfono y el menú
-  COMPLETO, `#prLobby` se monta dentro de `#prInline` (al final de `#homePanel`, el que scrollea) con `.prl-inline` (sin capa, sin su barra de arriba/abajo, sin su
-  tira de saldo ni la burbuja). `open('…','picaroja')` con la página montada = `go()` + bajar hasta ella. `#prLobby` es ÚNICO: otra marca abierta encima reemplaza
-  el nodo y al cerrarla `close()` lo vuelve a montar. Al abrir la app (pref `girox` = directo) con PICA ROJA se entra al menú completo (`_giroxDirect`).
-- **Barra de abajo** (sólo con la opción 2, `body.menu2`): Slots · Inicio (sube al principio, `VIP.lobby.homeTop`) · Deportes · **Plataformas** (`#navPlats` →
-  `VIP.home.platSheet()`, tarjetas con la elegida marcada). Arriba quedan la cabecera y el Soporte de siempre.
-- **Arriba** (`_paintPlatStrip`): el botón de plataforma muestra PICA ROJA, JUGAYGANA, Ganamos y Girox con la ELEGIDA en el medio, más grande y con el color de
-  su marca; tocar otra = `pickPlatform` (chequeo de saldo #908 + elegir + entrar); tocar la elegida = entrar. No aparece en los dominios de marca.
-- **Perfil al lado del saldo** (`.bs-perfil`, visible sólo con `body.pr-home`).
-- Probado con la app completa en un navegador automático (APIs simuladas): opción 2 = arriba Telegram · Info · plataformas · Soporte · Historias y abajo
-  Slots · Inicio · Deportes · Plataformas; opción 1 = sin cambios abajo y las plataformas más chicas arriba.
-
-### 993. Burbuja de Carga rápida REDONDA y en 2 renglones (CARGA / RÁPIDA) en todas las páginas de marca — SW v679
-**Pedido (owner):** "la burbuja de Carga rápida de todas las plataformas más redonda, que diga CARGA y RÁPIDA abajo, no en línea recta, así ocupa menos".
-`.prl-ql` = círculo de 66 px (logo arriba, texto en 2 renglones). Se sigue pudiendo arrastrar.
-
-### 992. Proveedores de PICA ROJA estilo Stake: tarjeta ROJA, logo sin color en un círculo blanco y nombre en blanco
-**Pedido (owner):** "el formato de Stake de los proveedores, sin color y sobrio estilo PICA ROJA, pero con el fondo en rojo y blanco el proveedor, que no se
-pierda la marca". Sólo CSS (`#prLobby[data-skin="picaroja"] .prl-pv*`). 1girox sólo da el ÍCONO de cada proveedor (no su logo con nombre): va tal cual
-(forma de la marca) en gris dentro de un círculo blanco; blanquearlo con filtro dejaba una mancha en los logos que traen fondo propio.
-
-### 991. PICA ROJA: abajo SIEMPRE Slots · Inicio · Deportes (también sin la barra de abajo de la app) — SW v678
-**Pedido (owner):** "que al entrar a la plataforma parezca que seguís en el menú completo, pero que abajo cambie a Slots, Inicio y Deportes; después de las
-fotos, el orden como está ahora". Con el menú opción 2 ya lo hacía `#bottomNav` (#988); con la opción 1 la barra de la página (`.prl-nav`) esconde En vivo y
-Lobby (`body.prl-app3`) e Inicio cierra la página y va al menú completo. El orden de la página después de las portadas no se tocó.
-
-### 990. Adentro de PICA ROJA, la cabecera del MENÚ COMPLETO (Telegram · Info · PLATAFORMA · Soporte · Historias) + PLATAFORMA más abajo — SW v677
-**Pedido (owner, 2 capturas):** "este menú (Volver · Menú · PICA ROJA · Historias · Info · Perfil), adentro sólo de PICA ROJA, cambialo por lo superior del menú
-completo; PLATAFORMA bajalo un poco porque se encima". `_prNav` (lobby.js): con PICA ROJA abierta la cabecera de la app pasa por encima de la página
-(`body.prl-apphead`, `--prl-apphead` = su alto) y se esconde la barra de la página; Soporte → `VIP.lobby.support()` (cierra la página y abre el chat) e Inicio →
-cierra la página + Inicio (también con el menú de una sola barra). Si la cabecera de la app no está a la vista, queda la barra de la página (con Volver).
-El logo de PLATAFORMA baja 6 px (`.header .tn-plat .tn-ico`).
+### 996. VUELTA ATRÁS al estado de #989 (se deshicieron #990 a #995) — SW v682
+**Pedido (owner, 2026-10-24 ~23:00):** "la rompiste toda la página, para mal: retrocedé 1 h, como estaba, de punta a punta, y retomamos". Se restauraron TODOS los
+archivos (código, CSS, docs) a como estaban en el commit de #989 (7164b122) y sólo se subió la versión (v682) para que los teléfonos tomen la vuelta atrás.
+Quedan deshechos: #990 (cabecera del menú completo dentro de PICA ROJA, PLATAFORMA más abajo), #991 (Slots · Inicio · Deportes en la opción 1), #992 (proveedores
+estilo Stake), #993 (burbuja de Carga rápida redonda), #994 (PICA ROJA dentro del menú completo, plataformas arriba, sección Plataformas, Perfil al lado del saldo) y
+#995 (sin carrusel, reseñas en una línea, favoritos minimizables, MENÚ arriba). Siguen en el historial de git (commits 8e6c1126…43ab6c6d) por si se quiere rescatar algo.
+Vigente: hasta #989 inclusive (#988 = PICA ROJA fijable + barra de la app + portadas premium + sin Perfil en las otras).
 
 ### 989. Zip para probar JUGAYGANA en un dominio de Vercel + detección del dominio de marca detrás de un proxy
 **Pedido (owner):** "dame el zip para subir el dominio de JUGAYGANA a un link de Vercel, para reenviar, con la explicación adentro". `jugaygana-vercel/`
