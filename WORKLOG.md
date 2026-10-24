@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 990. "Exclusivo de Ganamos" con 10 juegos de Pragmatic y portadas de ganamos.net (= F974, prueba de diseño) — SW v663
+
 ### 989. Ganamos y JUGAYGANA completas (= F973) — SW v662
 Cada proveedor de las dos páginas suma los juegos de ese mismo proveedor que Girox tiene y le faltaban (`scripts/girox/complete-brands.py`); filas del
 Inicio casi vacías (Halloween, Pragmatic Live, Casino) llevadas a 24. Detalle en F973 (WORKLOG de FABRIOCTUBRE).
