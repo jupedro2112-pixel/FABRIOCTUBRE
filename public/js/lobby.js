@@ -56,7 +56,8 @@ VIP.lobby = (function () {
         document.body.insertAdjacentHTML('beforeend',
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
-            (sk.layout === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
+            // #961 (owner): la barra de PICA ROJA también arriba de JUGAYGANA en la app (en el sitio JUGAYGANA no: no hay app detrás).
+            (sk.layout === 'jugaygana' && window.VIP_SITE === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
             // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
             // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
             (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +

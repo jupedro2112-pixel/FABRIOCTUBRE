@@ -1413,7 +1413,7 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
   todo el resto de Girox, del más nuevo al más viejo; el buscador busca en los dos archivos, sin API) y `buffaloplay-home.json` (carrusel, Pragmatic
   Live, Red Rake, mesas en vivo y `live[].lobby` = el lobby de Girox que abre cada tarjeta de Casino en vivo, #959). Favoritos / Recientes = `localStorage vip_bp_favs` / `vip_bp_rec` (del teléfono, NO
   los favoritos de la cuenta). Entrada: `/buffaloplay` → `/?bp=1`. Marca: `_BRANDS`, `User.activeBrand`, DOORS/BRANDS de home.js (en la lista de
-  Arriba lleva la barra de PICA ROJA (`prl-cbar`, como todas) y debajo la de thornet (`bp-head`); ☰ = `bpNav` con sus íconos (#960).
+  Arriba lleva la barra de PICA ROJA (`prl-cbar`, como todas; JUGAYGANA también desde #961, salvo en el sitio JUGAYGANA) y debajo la de thornet (`bp-head`); ☰ = `bpNav` con sus íconos (#960).
   plataformas va justo después de JUGAYGANA, con el nombre "Buffalo Play" para que corte en dos líneas), botón 🏷️ del panel (opción 5).
 - **Juego directo con bono activo (#945):** 1girox responde `warn_forfeit` (pedir confirmación y reintentar con `forfeit_bono=1`) o `blocked`
   en vez de `launch_url`; `/api/platform/session` lo devuelve como `forfeit`/`blocked` y `favPlay` pregunta/avisa. Nunca tomarlo como "no hay juego".

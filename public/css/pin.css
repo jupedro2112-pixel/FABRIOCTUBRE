@@ -3506,3 +3506,4 @@ html body #basicPlats .bv-chip[class*="plat-"] b, html body #platformsButtons .p
 html body #basicPlats .bv-chip.plat-jugaygana b, html body #platformsButtons .plat-play-btn.plat-jugaygana .plat-play-name { font-size: 7.6px !important; letter-spacing: -.2px !important; }
 html body #basicPlats .bv-chip .plat-reco, html body #basicPlats .bv-chip em, html body #platformsButtons .plat-play-btn.plat-girox .plat-reco { font-size: 6.5px !important; padding: 1px 3px !important; letter-spacing: 0 !important; max-width: 96%; overflow: hidden; white-space: nowrap; }
 .prl-bp .prl-cbar + .prl-top.bp-head { padding-top: 0; } /* #960: debajo de la barra de PICA ROJA */
+.prl-jio .prl-cbar + .jg-head { padding-top: 0 !important; } /* #961: debajo de la barra de PICA ROJA */

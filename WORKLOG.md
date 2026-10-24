@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 961. JUGAYGANA también con la barra de PICA ROJA arriba (en la app) — SW v649
+**Owner:** "te falta poner la barra de menú superior en JUGAYGANA". Arriba de su cabecera (logo · soporte · mensajes · usuario/Carga rápida · ☰)
+va la misma barra que en las otras marcas (Volver · Menú · JUGAYGANA · Historias · Info · Perfil). En el SITIO JUGAYGANA (`VIP_SITE`) no se muestra:
+ahí no hay app detrás (#944). Revierte lo de #956 "la barra de la app no va en JUGAYGANA".
+
 ### 960. BuffaloPlay: barra de PICA ROJA arriba (como en todas) y el menú ☰ como el de thornet en el celu — SW v648
 **Owner** (foto del menú de thornet abierto): "borramos el que está y dejamos arriba la parte superior de menú de PICA ROJA como en todos, es importante".
 Arriba va la misma barra que en Ganamos/PICA ROJA (`casinoBarHtml`: Volver · Menú · marca · Historias · Info · Perfil) y debajo la de thornet sin el
