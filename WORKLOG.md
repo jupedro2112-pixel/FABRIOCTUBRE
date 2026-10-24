@@ -8,6 +8,20 @@
 
 ## Sesión 2026-10-22
 
+### 951. GANAMOS completo y en el ORDEN de sus fotos: 37 proveedores, 2.372 juegos (antes 1.525) — SW v640
+**Owner:** "tomá bien el orden de juegos, detectá todo… subí todo como Ganamos, revisá la página y las fotos". El recorte de #949 buscaba las
+portadas por contenido y perdía filas enteras (portadas sin cargar = ícono de pica, filas tapadas por la barra de abajo o el botón CARGAS):
+Pragmatic daba 340 y en las fotos hay 675 lugares. Ahora el recorte usa una GRILLA FIJA por captura (fila cada ~137,6 px, ajustada con las
+portadas bien detectadas) y anota qué celdas tapa algo fijo de la página; de las capturas que se pisan se queda con la celda limpia.
+- Nombre de cada portada por OCR → cruce con Girox por proveedor (exacto / prefijo si está cortado con "…" / parecido ≥0,88 con controles de
+  números y variantes). Las ~730 portadas con el nombre tapado se leyeron mirando la portada contra la lista de ese proveedor (sólo si era
+  inequívoco): +226. Después, verificación de todo lo dudoso (668 portada↔nombre): 7 mal asignadas, sacadas.
+- 1spin4win: su única captura no se recortó sola; se cargaron a mano los 6 con nombre visible (variantes helix, las que usa Ganamos).
+- Portadas: propia recortada de la foto (1.703); si estaba tapada o era el ícono de pica, la de JUGAYGANA (283) o la de Girox (357).
+- `ganamos-extra.json` (Juegos nuevos) recalculado: 5.888 (lo que pasó a sus proveedores sale de ahí).
+- Lo que no figura en Girox (exclusivos "Ganamos …", Endorphina, Belatra, Platipus, Smartsoft, etc.) sigue oculto (decisión del owner).
+- Sólo datos e imágenes (`public/data/ganamos-*.json`, `public/images/ganamos/p/`); el código de lobby.js no cambió. Probado en Render, no en picaroja.com.
+
 ### 950. Usuarios de PRUEBA sin el bloqueo de marca por saldo (para probar todas las plataformas)
 **Owner:** "habilitá todas las plataformas para probarlas, ninguna me deja (usuario alex69608531)". Era el bloqueo de #908 (con ≥ $100 de saldo
 no se cambia de marca). `POST /api/me/brand`: los usernames de `Config['brandLockFree']` (por defecto `alex69608531`, `pruebanardo`) cambian
