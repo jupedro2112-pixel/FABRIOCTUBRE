@@ -54,9 +54,16 @@ VIP.lobby = (function () {
         document.body.insertAdjacentHTML('beforeend',
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
-            '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>' +
+            (sk.layout === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
+            // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
+            // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
+            (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
+                '<div class="jg-hr"><button type="button" class="jg-hi" onclick="VIP.lobby.support()" aria-label="Soporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/></svg></button>' +
+                '<button type="button" class="jg-hi" onclick="VIP.stories.open()" aria-label="Mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></button>' +
+                '<button type="button" class="jg-user" onclick="VIP.lobby.ql()"><b class="js-prl-user">' + esc(_uname()) + '</b><small>CARGA RÁPIDA</small></button>' +
+                '<button type="button" class="jg-burger" onclick="VIP.lobby.menu(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div></header>' : '') +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
-            (sk.wordmark ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
+            (sk.wordmark && sk.layout !== 'jugaygana' ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
                 '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span>' +
                 // #952 (owner): la Carga rápida ARRIBA, al lado del saldo, fina y con el formato de la página (sin burbuja flotante)
                 '<button type="button" class="prl-hql" onclick="VIP.lobby.ql()">' + ico('wallet') + '<span>Carga rápida</span></button></header>' : '') + // #920 (owner): el saldo como figura en cada página
@@ -82,7 +89,9 @@ VIP.lobby = (function () {
         return $('prLobby');
     }
     function _balText() { try { const src = $('userBalance'); return src && src.textContent ? src.textContent.replace(/^\s*Saldo:?\s*/i, '') : '—'; } catch (_) { return '—'; } }
+    function _uname() { try { return String((VIP.state && VIP.state.currentUser && VIP.state.currentUser.username) || '').toUpperCase(); } catch (_) { return ''; } }
     function _paintBal() {
+        try { const u = _uname(); document.querySelectorAll('.js-prl-user').forEach((e) => { if (u && e.textContent !== u) e.textContent = u; }); } catch (_) {}
         try { const t = _balText(); document.querySelectorAll('.js-prl-bal').forEach((e) => { e.textContent = t; }); } catch (_) {}
         try { // #920: PICA ROJA copia la tira de saldo del Inicio de la app (mismo diseño), sin el botón de instalar
             const box = $('prlPrBal'); const src = document.querySelector('#homeFull .balance-strip');
@@ -304,7 +313,7 @@ VIP.lobby = (function () {
                 '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
             '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' + '<div id="jgExtra">' + _jgExtraHtml() + '</div>' + // #948: Juegos nuevos (lo de Girox que no está)
-            '<section class="jg-sec">' + t('Eventos deportivos') + '<div id="jgBoard">' + _jgBoardHtml() + '</div><div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
+            '<section class="jg-sec">' + t('Eventos deportivos') + '<div id="jgBoard">' + _jgBoardHtml() + '</div></section>' + // #956: las casas de deportes (Digitain, Ultim8, Caballos…) están en el menú ☰, como en su página
             // #941: sin "Casino lobby" (su inicio no lo tiene)
             cols +
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
@@ -534,7 +543,10 @@ VIP.lobby = (function () {
             '<div class="prl-dr-card"><small>Nivel y rango</small>' +
             (lv ? '<b class="prl-dr-lvl">' + esc(lv.emoji || '') + ' ' + esc(lv.name) + '</b>' : '<b class="prl-dr-lvl">Jugador</b><span class="prl-dr-sub">Todavía sin nivel</span>') +
             (nx ? '<div class="prl-bar"><i style="width:' + pct + '%"></i></div><span class="prl-dr-sub">' + pct + '% · te faltan ' + money(v.faltaParaSubir) + ' apostados para ' + esc((nx.emoji || '') + ' ' + nx.name) + '</span>' : (lv ? '<span class="prl-dr-sub">Nivel máximo</span>' : '')) + '</div>' +
-            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') + (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close()')) + '</div>';
+            (SK().layout === 'jugaygana' ? '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + ((_data && _data.sports) || []).map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' : '') + // #956
+            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
+            (SK().layout === 'jugaygana' ? item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') : '') +
+            (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close(true)')) + '</div>';
     }
     function withdraw() { menu(false); try { VIP.withdraw.openWithdrawModal(); } catch (_) {} } // #914: el modal va arriba de la página (body.casino-open)
     function profile() { menu(false); try { VIP.home.openProfile(); } catch (_) {} }

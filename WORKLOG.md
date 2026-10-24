@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-22
 
+### 956. JUGAYGANA con SU cabecera (como jugaygana44, sin saldo) y las casas de deportes en el menú ☰ — SW v645
+**Owner:** (captura de las tarjetas Digitain/Ultim8/Caballos/TurfWin/Póker) "esto sacalo; armalo como se ve en el zip (ads.zip), ahí está el
+menú de la parte superior y todo; sacá el saldo para que no moleste pero armalo igual en JUGAYGANA". `lobby.js _shell` (skin jugaygana):
+- Sin la barra de la app (Volver/Menú/Historias/Info/Perfil) ni la cabecera logo·saldo de #952: va `header.jg-head` como su página: logo ·
+  🎧 Soporte · ✉ (Historias) · usuario con "CARGA RÁPIDA" debajo (donde el original pone el saldo; abre el mismo panel) · ☰.
+- El ☰ (`menu(true)`, `_paintMenu`) suma en JUGAYGANA: "Deportes" (Digitain, Ultim8, Caballos, TurfWin, Póker, de `_data.sports`),
+  Historias, Información y, fuera del sitio JUGAYGANA, "Volver a la app" (`close(true)`). El saldo queda sólo dentro del ☰.
+- Inicio: "Eventos deportivos" mantiene los partidos (Top en vivo / Los más jugados) y ya no lleva las tarjetas de las casas.
+Ganamos no cambia (sigue con la barra de la app + logo · saldo · Carga rápida).
+
 ### 955. Barra de arriba de Ganamos/JUGAYGANA bien encuadrada + lobbies sin texto asomando — SW v644
 **Owner:** (captura) "este recuadralo bien, está descentrado abajo y arriba". La cabecera logo · saldo · Carga rápida no tenía alto propio
 (el padding vertical estaba en 0) y los botones quedaban pegados arriba y abajo: ahora mide 52 px con todo centrado y saldo/botón de 32 px.

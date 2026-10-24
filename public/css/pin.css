@@ -3341,3 +3341,18 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 .prl-gn .prl-wordmark { display: block; }
 /* las portadas con partes transparentes (lobbies) no dejan ver el nombre de respaldo que está detrás */
 .gn-g img { background: #1f073a; } .jg-card img { background: #1a1a2e; }
+/* #956 (owner): JUGAYGANA con SU cabecera (jugaygana44): logo · soporte · mensajes · usuario (+ Carga rápida) · ☰; sin saldo ni barra de la app */
+.prl-jio .jg-head { height: auto; min-height: 56px; box-sizing: border-box; justify-content: space-between; gap: 6px; background: #121212;
+  padding: var(--sat, env(safe-area-inset-top, 0px)) 6px 0 10px !important; border-bottom: 0; box-shadow: none; }
+.jg-head .prl-brandbtn { min-width: 0; flex: 0 1 auto; border: 0; background: none; padding: 0; cursor: pointer; }
+.jg-head .prl-wordmark { height: 24px; max-width: 34vw; object-fit: contain; }
+.jg-hr { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; height: 56px; }
+.jg-hi { width: 38px; height: 38px; border: 0; background: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.jg-hi svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.jg-user { border: 0; background: none; color: #fff; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
+  padding: 0 4px; cursor: pointer; max-width: 32vw; font-family: Roboto, Arial, sans-serif; text-align: left; }
+.jg-user b { font-size: 12.5px; font-weight: 700; letter-spacing: .2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jg-user b:empty { display: none; }
+.jg-user small { font-size: 10.5px; font-weight: 800; color: #f2ce00; letter-spacing: .3px; white-space: nowrap; }
+.jg-head .jg-burger { width: 40px; height: 40px; }
+.prl-dr-cap { display: block; padding: 10px 14px 4px; font-size: 11px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; opacity: .6; }
