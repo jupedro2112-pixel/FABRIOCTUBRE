@@ -109,7 +109,7 @@ VIP.lobby = (function () {
         } catch (_) {}
     }
     function _card(g) {
-        return '<button type="button" class="prl-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '" title="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' +
+        return '<button type="button" class="prl-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' title="' + esc(g.name) + '" aria-label="' + esc(g.name) + '">' +
             '<span class="prl-gi">' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + (g.isNew ? '<em class="prl-new">NUEVO</em>' : '') + '<i>' + esc(g.name) + '</i></span></button>';
     }
     function _title(icon, title, onclick) {
@@ -117,10 +117,10 @@ VIP.lobby = (function () {
     }
     // #909: secciones como Stake: de a 4 por fila (#911); "Ver más" despliega de a 8 (el orden de los juegos es el de Girox: más jugados primero).
     let _secN = 0;
-    function _row(icon, title, games, providerId) {
+    function _row(icon, title, games, providerId, onTitle) {
         if (!games || !games.length) return '';
         const id = 'prlS' + (++_secN);
-        return '<section class="prl-sec">' + _title(icon, title, providerId ? 'VIP.lobby.all(' + Number(providerId) + ', \'' + jsq(title) + '\')' : null) +
+        return '<section class="prl-sec">' + _title(icon, title, onTitle || (providerId ? 'VIP.lobby.all(' + Number(providerId) + ', \'' + jsq(title) + '\')' : null)) +
             '<div class="prl-grid prl-g3" id="' + id + '" data-show="8">' + games.map((g, i) => _card(g).replace('class="prl-g"', 'class="prl-g' + (i >= 8 ? ' prl-hid' : '') + '"')).join('') + '</div>' +
             (games.length > 8 ? '<div class="prl-more"><button type="button" onclick="VIP.lobby.more(\'' + id + '\', this)">Ver más</button></div>' : '') + '</section>';
     }
@@ -137,7 +137,7 @@ VIP.lobby = (function () {
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
     function _provTile(p) {
         // #910: los logos de Girox son casi todos íconos (sin el nombre): ícono chico en gris + NOMBRE en texto, para que se entienda.
-        return '<button type="button" class="prl-pv" onclick="VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')" aria-label="' + esc(p.name) + '">' +
+        return '<button type="button" class="prl-pv" onclick="' + (p.on || 'VIP.lobby.all(' + Number(p.id) + ', \'' + jsq(p.name) + '\')') + '" aria-label="' + esc(p.name) + '">' +
             '<span class="prl-pvb">' + (p.logo ? '<img loading="lazy" src="/api/games/img?u=' + encodeURIComponent(p.logo) + '" alt="" onerror="this.remove()">' : '') + '<b>' + esc(p.name) + '</b></span>' +
             '<small><i class="prl-dot"></i>' + Number(p.count || 0).toLocaleString('es-AR') + ' juegos</small></button>';
     }
@@ -391,6 +391,19 @@ VIP.lobby = (function () {
         return '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">Juegos nuevos</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.extraAll(\'jugaygana\')">TODOS</button></div>' +
             '<div class="jg-rows"><div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹</button><div class="jg-row jg-row-g" style="--jr:2">' + g.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div></div></section>';
     }
+    // #971 (owner: "en proveedores de casino en vivo aparece 1 solo, meté todos los que haya, en todos lados"): la lista pública de proveedores
+    // de 1girox sólo trae a Evolution; las mesas de Ezugi, Pragmatic Live, SA Gaming, Iconic21, Vivo Gaming, LiveVegas, TVBet y ElCasino están en
+    // el catálogo pero sin proveedor listado. Van en /data/girox-live.json (scripts/girox/build-live.py), igual en las 4 páginas.
+    let _live = null, _liveP = null;
+    function _liveLoad() {
+        if (!_liveP) _liveP = fetch('/data/girox-live.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+            .then((d) => { _live = ((d && d.providers) || []).map((p) => ({ name: String(p.name), games: (p.games || []).map((a) => ({ key: a[0], name: a[1], img: a[2], gid: a[3], lk: a[4] })) })); return _live; });
+        return _liveP;
+    }
+    function _liveOr(fn) { if (_live) return true; _liveLoad().then(() => { if (_view === 'vivo' || _view === 'inicio') _render(); }); fn && fn(); return false; }
+    function liveProv(i) { _liveLoad().then((L) => { const p = (L || [])[i]; if (p) jgList(p.name + ' · en vivo', p.games); }); }
+    function _liveTiles() { return (_live || []).map((p, i) => ({ id: 0, name: p.name, count: p.games.length, live: true, on: 'VIP.lobby.liveProv(' + i + ')' })); }
+    function _liveSecs(icon) { return (_live || []).map((p, i) => _row(icon || 'live', p.name, p.games.slice(0, 24), null, 'VIP.lobby.liveProv(' + i + ')')).join(''); }
     function extraAll(brand) { _extraLoad(brand).then((L) => jgList('Juegos nuevos', L || [])); }
     let _jgList = null;
     function jgList(title, games, cat) { _jgList = { title: String(title || ''), games: games || [], cat: cat || '' }; _allProv = null; _allCat = null; _view = 'jglist'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
@@ -543,7 +556,10 @@ VIP.lobby = (function () {
     function _bpLiveHtml() {
         const L = (_bpHome && _bpHome.live) || [];
         // #959 (owner: "sacá los juegos de adentro, que entren a esos juegos"): cada tarjeta (foto de BuffaloPlay) abre DIRECTO el lobby de Girox.
-        return '<div class="bp-lv">' + L.map((l) => { const g = _bpA(l.lobby || []); return '<button type="button"' + (g.key ? _bpPlayAttrs(g) : '') + '><img src="' + esc(l.img) + '" alt="' + esc(l.n) + '" loading="lazy"></button>'; }).join('') + '</div>';
+        _liveOr();
+        return '<div class="bp-lv">' + L.map((l) => { const g = _bpA(l.lobby || []); return '<button type="button"' + (g.key ? _bpPlayAttrs(g) : '') + '><img src="' + esc(l.img) + '" alt="' + esc(l.n) + '" loading="lazy"></button>'; }).join('') + '</div>' +
+            (_live || []).map((p, i) => '<div class="bp-lt bp-lt-live"><h2>' + esc(p.name) + '</h2><button type="button" class="bp-lt-all" onclick="VIP.lobby.liveProv(' + i + ')">Ver todos (' + p.games.length + ')</button></div>' + // #971
+                '<div class="bp-grid">' + p.games.slice(0, 12).map(_bpCard).join('') + '</div>').join('');
     }
     function _bpGridHtml(title, games, banner) {
         _bpCur = null;
@@ -597,8 +613,9 @@ VIP.lobby = (function () {
             return;
         }
         if (_view === 'vivo') {
-            m.innerHTML = _backBar() + _title('live', 'Casino en vivo', null) + ((_data.live || []).map((s) => _row('live', s.title, s.games, s.providerId)).join('') || '<div class="prl-note">No hay mesas en vivo para mostrar ahora.</div>') +
-                _providers((_data.providers || []).filter((p) => p.live));
+            if (!_liveOr()) { m.innerHTML = _backBar() + _title('live', 'Casino en vivo', null) + '<div class="prl-note">Cargando…</div>'; return; }
+            m.innerHTML = _backBar() + _title('live', 'Casino en vivo', null) + _providers(_liveTiles(), true) + // #971: todos los proveedores en vivo
+                (_liveSecs() || (_data.live || []).map((s) => _row('live', s.title, s.games, s.providerId)).join('') || '<div class="prl-note">No hay mesas en vivo para mostrar ahora.</div>');
             return;
         }
         if (_view === 'slots' && SK().layout === 'ganamos') { m.innerHTML = _gnCasinoHtml(); return; } // #949
@@ -613,7 +630,9 @@ VIP.lobby = (function () {
                 (_allProv ? '' : _search()) + '<div class="prl-grid" id="prlAll"></div><div class="prl-note" id="prlAllMore">Cargando…</div>';
             _allPage = 0; _allMore = true; _moreAll(); if (_q && !_allProv) search(_q); return;
         }
-        m.innerHTML = _rfStrip() + _hero() + _providers(_data.providers, true) + _row('grid', 'Casino lobby', _lobbies()) + _search() + // #925: Proveedores arriba, sin "Ver más (60)"
+        _liveOr();
+        const _pvAll = (_data.providers || []).concat(_liveTiles().filter((t) => !(_data.providers || []).some((p) => String(p.name).toLowerCase() === t.name.toLowerCase()))); // #971
+        m.innerHTML = _rfStrip() + _hero() + _providers(_pvAll, true) + _row('grid', 'Casino lobby', _lobbies()) + _search() + // #925: Proveedores arriba, sin "Ver más (60)"
             _row('fire', 'Populares', _data.popular) + _row('star', 'Nuevos', _data.nuevos) +
             (_data.live && _data.live[0] ? _row('live', 'En vivo · ' + _data.live[0].title, _data.live[0].games, _data.live[0].providerId) : '') +
             (_data.sections || []).map((s) => _row('slots', s.title, s.games, s.providerId)).join('') +
@@ -756,5 +775,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
-    return { sportOf: (p) => SPORT_KEYS[p] || null, open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpNav, bpRefresh, skin: () => _skin };
+    return { liveProv, sportOf: (p) => SPORT_KEYS[p] || null, open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpNav, bpRefresh, skin: () => _skin };
 })();

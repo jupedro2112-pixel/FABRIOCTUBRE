@@ -3476,6 +3476,9 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 .bp-lt { display: flex; align-items: center; gap: 6px; padding: 10px 8px; background: #23262b; border-bottom: 1px solid #4c5359; position: sticky; top: 0; z-index: 3; }
 .bp-lt button { border: 0; background: #1f2226; color: #fff; width: 34px; height: 32px; border-radius: 4px; font: 400 24px/1 Arial, sans-serif; cursor: pointer; }
 .bp-lt h2 { margin: 0; font: 600 16px Montserrat, Arial, sans-serif; color: #fff; }
+/* #971: proveedores en vivo debajo de las tarjetas de lobby (título + "Ver todos", sin pegarse arriba) */
+.bp-lt.bp-lt-live { position: static; justify-content: space-between; margin-top: 10px; }
+.bp-lt.bp-lt-live .bp-lt-all { width: auto; height: auto; padding: 7px 12px; font: 600 12px Montserrat, Arial, sans-serif; background: #ffcc00; color: #111; }
 /* Menú ☰ (#960: como el de thornet abierto en el celu: ~53 % del ancho, íconos de color, la sección actual en gris, banner abajo) */
 .bp-navwrap { position: absolute; inset: 0; z-index: 6; background: rgba(0,0,0,.35); display: flex; }
 .bp-navwrap[hidden] { display: none; }
