@@ -82,7 +82,7 @@ VIP.lobby = (function () {
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
-            (sk.wordmark ? '' : '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>') + // #952: JUGAYGANA/Ganamos la tienen arriba
+            (sk.wordmark ? '' : '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA<br>RÁPIDA</span></button>') + // #952 · #993: redonda, en 2 renglones: JUGAYGANA/Ganamos la tienen arriba
             (sk.layout === 'jugaygana' ? '' : sk.layout === 'buffaloplay' ? '<div class="bp-navwrap" id="bpNav" hidden onclick="if(event.target===this)VIP.lobby.bpNav(false)"><aside class="bp-nav" role="dialog" aria-label="Menú"></aside></div>' : sk.layout === 'ganamos'
                 ? (() => { // #922 (owner): la barra de abajo REAL de ganamos.net (su fondo con el hueco de la mascota, sus íconos, su orden y su brillo)
                     const it = (v, k, t, on) => '<button type="button" class="gnm__menu-item" data-v="' + v + '" onclick="' + on + '"><img class="gnm__menu-active" src="/images/ganamos/menu-active.webp" alt=""><div class="gnm__menu-icon-container"><span class="gnm__menu-icon">' + (k ? GN_IC[k] : '') + '</span></div><span class="gnm__menu-text">' + t + '</span></button>';

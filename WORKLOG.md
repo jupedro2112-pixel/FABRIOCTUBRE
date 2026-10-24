@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-24
 
+### 993. Burbuja de Carga rápida REDONDA y en 2 renglones (CARGA / RÁPIDA) en todas las páginas de marca — SW v679
+**Pedido (owner):** "la burbuja de Carga rápida de todas las plataformas más redonda, que diga CARGA y RÁPIDA abajo, no en línea recta, así ocupa menos".
+`.prl-ql` = círculo de 66 px (logo arriba, texto en 2 renglones). Se sigue pudiendo arrastrar.
+
+### 992. Proveedores de PICA ROJA estilo Stake: tarjeta ROJA, logo sin color en un círculo blanco y nombre en blanco
+**Pedido (owner):** "el formato de Stake de los proveedores, sin color y sobrio estilo PICA ROJA, pero con el fondo en rojo y blanco el proveedor, que no se
+pierda la marca". Sólo CSS (`#prLobby[data-skin="picaroja"] .prl-pv*`). 1girox sólo da el ÍCONO de cada proveedor (no su logo con nombre): va tal cual
+(forma de la marca) en gris dentro de un círculo blanco; blanquearlo con filtro dejaba una mancha en los logos que traen fondo propio.
+
 ### 991. PICA ROJA: abajo SIEMPRE Slots · Inicio · Deportes (también sin la barra de abajo de la app) — SW v678
 **Pedido (owner):** "que al entrar a la plataforma parezca que seguís en el menú completo, pero que abajo cambie a Slots, Inicio y Deportes; después de las
 fotos, el orden como está ahora". Con el menú opción 2 ya lo hacía `#bottomNav` (#988); con la opción 1 la barra de la página (`.prl-nav`) esconde En vivo y
