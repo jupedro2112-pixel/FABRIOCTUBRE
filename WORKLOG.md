@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-24
 
+### 983. JUGAYGANA: el menú ☰ es el OFICIAL (Inicio · Casino · Casino en vivo · Eventos deportivos) — SW v671
+**Pedido (owner, capturas):** "todo este menú lo cambiamos por este, es el oficial; sacá lo de abajo de todo de Tareas diarias". En JUGAYGANA `_paintMenu`
+arma SÓLO esos 4 ítems (mayúscula, ícono, filas alternadas #1b1b1b/#2a2a2a) en una lista que baja debajo de la cabecera (`.prl-drawer-jg`); sin saldo, nivel,
+deportes sueltos, perfil ni historias. Cargar/Retirar siguen en el botón CARGA RÁPIDA. Las otras marcas mantienen su menú.
+
 ### 982. JUGAYGANA: cabecera y menú como jugaygana44, sin Soporte, CARGA RÁPIDA en lugar de INGRESAR y abierta al entrar — SW v670
 **Pedido (owner, captura del menú de jugaygana44):** "sacamos el soporte, el INGRESAR lo cambiamos por CARGA RÁPIDA; que al entrar aparezca la Carga rápida
 abierta y cuando la cerrás quede ahí arriba; Tareas diarias lo sacamos". Cabecera: logo · mensajes (historias) · botón con borde **CARGA RÁPIDA** (`.jg-qlbtn`,

@@ -754,7 +754,8 @@ VIP.lobby = (function () {
     async function menu(show) {
         const dr = $('prlDrawer'); if (!dr) return;
         if (show === false || (show == null && !dr.hidden)) { dr.hidden = true; return; }
-        dr.hidden = false; _paintBal(); _paintMenu();
+        dr.hidden = false; dr.classList.toggle('prl-drawer-jg', SK().layout === 'jugaygana'); _paintBal(); _paintMenu();
+        if (SK().layout === 'jugaygana') return; // #983: el menú oficial de JUGAYGANA no muestra saldo ni nivel
         if (!(VIP.state && VIP.state.vipStatus)) {
             try { const r = await fetch(VIP.config.API_URL + '/api/vip/status', { headers: auth() }); if (r.ok) { VIP.state.vipStatus = await r.json(); _paintMenu(); } } catch (_) {}
         }
@@ -766,6 +767,13 @@ VIP.lobby = (function () {
         const pct = Math.max(0, Math.min(100, Math.round(Number(v.progressPct) || 0)));
         const money = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-AR');
         const item = (k, t, fn) => '<button type="button" class="prl-mi" onclick="' + fn + '">' + ico(k) + '<span>' + t + '</span><b class="prl-chev">›</b></button>';
+        // #983 (owner, captura del menú oficial de jugaygana44): en JUGAYGANA el ☰ es SÓLO Inicio · Casino · Casino en vivo · Eventos deportivos (sin Tareas diarias).
+        if (SK().layout === 'jugaygana') {
+            const jgi = (k, t, fn) => '<button type="button" class="jg-mi" onclick="VIP.lobby.menu(false);' + fn + '">' + ico(k) + '<span>' + t + '</span></button>';
+            b.innerHTML = '<nav class="jg-menu">' + jgi('home', 'INICIO', "VIP.lobby.go('inicio')") + jgi('slots', 'CASINO', "VIP.lobby.go('slots')") +
+                jgi('live', 'CASINO EN VIVO', "VIP.lobby.go('vivo')") + jgi('sport', 'EVENTOS DEPORTIVOS', "VIP.lobby.sport('" + esc((_sportsList()[0] || {}).path || '/sports-new') + "')") + '</nav>';
+            return;
+        }
         b.innerHTML =
             '<div class="prl-dr-head"><img src="' + SK().home + '" alt="" class="prl-logo"><div><b>' + esc(u.username || 'Mi cuenta') + '</b><small>' + SK().name + (SK().sub ? ' · ' + SK().sub : '') + '</small></div><button type="button" class="prl-x" onclick="VIP.lobby.menu(false)" aria-label="Cerrar">✕</button></div>' +
             '<div class="prl-dr-card"><small>Saldo</small><b class="prl-dr-bal">' + esc(_balText()) + '</b>' +
@@ -775,9 +783,7 @@ VIP.lobby = (function () {
             (nx ? '<div class="prl-bar"><i style="width:' + pct + '%"></i></div><span class="prl-dr-sub">' + pct + '% · te faltan ' + money(v.faltaParaSubir) + ' apostados para ' + esc((nx.emoji || '') + ' ' + nx.name) + '</span>' : (lv ? '<span class="prl-dr-sub">Nivel máximo</span>' : '')) + '</div>' +
             // #966 (owner: "todas las plataformas lo más parecido posible"): el MISMO menú en las 4 páginas (antes Deportes/Historias/Info sólo en JUGAYGANA).
             '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + _sportsList().map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' + // #956
-            (SK().layout === 'jugaygana' ? '<div class="prl-dr-list">' + item('home', 'Inicio', "VIP.lobby.menu(false);VIP.lobby.go('inicio')") + item('slots', 'Casino', "VIP.lobby.menu(false);VIP.lobby.go('slots')") + // #982
-                item('live', 'Casino en vivo', "VIP.lobby.menu(false);VIP.lobby.go('vivo')") + item('sport', 'Eventos deportivos', "VIP.lobby.menu(false);VIP.lobby.sport('/sports-new')") + '</div>' : '') +
-            '<div class="prl-dr-list">' + (SK().layout === 'jugaygana' ? '' : item('chat', 'Soporte', 'VIP.lobby.support()')) + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
+            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
             item('fire', 'Sorteos', "VIP.lobby.menu(false);VIP.sorteos.open('mensual')") + item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') +
             (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close(true)')) + '</div>';
     }

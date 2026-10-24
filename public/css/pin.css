@@ -3831,3 +3831,11 @@ html[data-theme="dark"] #infoMsg .im-card { border-color: #3d3d44 !important; }
 .bv-plats { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; }
 /* #981: en los dominios de marca no se puede cerrar sesión (queda siempre iniciada) */
 html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !important; }
+/* #983: menú ☰ de JUGAYGANA como el oficial de jugaygana44: lista oscura que baja debajo de la cabecera, ítems en mayúscula con ícono */
+.prl-drawer.prl-drawer-jg { background: transparent; align-items: flex-start; justify-content: flex-start; }
+.prl-drawer-jg .prl-dr { width: 100%; max-width: none; height: auto; max-height: none; margin-top: calc(var(--sat, env(safe-area-inset-top, 0px)) + 56px); padding: 0; background: #1b1b1b; border-radius: 0; box-shadow: 0 10px 24px rgba(0,0,0,.55); overflow: visible; }
+.jg-menu { display: flex; flex-direction: column; }
+.jg-mi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 16px; border: 0; background: #1b1b1b; color: #fff; text-align: left; cursor: pointer; font: 500 14.5px Roboto, Arial, sans-serif; letter-spacing: .3px; }
+.jg-mi:nth-child(even) { background: #2a2a2a; }
+.jg-mi:active { background: #3a3a3a; }
+.jg-mi svg { width: 22px; height: 22px; flex: 0 0 22px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
