@@ -1513,3 +1513,10 @@ plata ni sueldos). Foto: `storyImage` (SVG, `GET /api/stories/:id/auto.svg?v=STO
 ("🛠 Motor…"). Cada historia se publica en su propio try/catch: un error no frena a las demás. Kill switch: `STORIES_AUTOPILOT_DISABLED=1`.
 **Republicar (#911):** `_storyWipeForRepublish` + `_storyAutoTick({ force: true })` (one-shot `mig911StoriesRepublish` al deployar y
 `POST /api/admin/stories-autopilot/republish-today`): apaga las vigentes (no las personales), borra `sa-<hoy|ayer>-*` y publica las de hoy ya.
+
+## Dominio propio por marca (#979)
+`Config['brandDomains']` = { picaroja, jugaygana, ganamos } (hosts, vacío = la página se abre dentro de la app). Panel → Configuración → Dominios de las
+marcas. `lobby.js` `_toDomain`: si la marca tiene dominio y estamos en otro, `POST /api/auth/brand-link` → token de un solo uso en `User.installLinks` →
+`https://<dominio>/?<jg|gn|pr>=1&acceso=…` (lo canjea `tryAccessLink` en auth.js). Los dominios cargados se suman solos a CORS (`_brandDomainOrigins`).
+La sesión vive en el localStorage de cada dominio: un cliente que entra directo al dominio sin el link inicia sesión una vez.
+

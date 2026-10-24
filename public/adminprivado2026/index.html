@@ -1091,6 +1091,24 @@ Responder 2xx. Con 5xx / timeout se reintenta; con 4xx no.</pre>
                             </div>
                             <div id="refundTiersMsg" style="font-size:12px;margin-top:8px;color:#aaa;"></div>
                         </div>
+                        <!-- #979: DOMINIO PROPIO de cada página de marca. Vacío = se abre adentro de la app (como siempre). -->
+                        <div class="panel-subheader" style="margin-top: 24px;" id="brandDomainsHeader">
+                            <h3>🌐 Dominios de las marcas</h3>
+                        </div>
+                        <div class="cbu-form" id="brandDomainsForm">
+                            <p style="color:#aaa;font-size:12px;line-height:1.5;margin:0 0 10px;">
+                                Dejalo <b>vacío</b> mientras no tengas el dominio: la página se abre adentro de la app como ahora. Cuando lo cargues (ej.
+                                <code>jugaygana.net</code>, sin https://), al abrir esa marca desde la app el cliente pasa a ese dominio <b>ya logueado</b> (link
+                                de un solo uso), con la misma cuenta y saldo. Antes de cargarlo, el dominio tiene que apuntar a ESTE servidor (igual que picaroja.com).
+                            </p>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                <div class="form-group" style="flex:1;min-width:180px;"><label>♦️ PICA ROJA</label><input type="text" id="bdPicaroja" placeholder="(vacío = adentro de la app)" maxlength="120"></div>
+                                <div class="form-group" style="flex:1;min-width:180px;"><label>🟡 JUGAYGANA</label><input type="text" id="bdJugaygana" placeholder="(vacío = adentro de la app)" maxlength="120"></div>
+                                <div class="form-group" style="flex:1;min-width:180px;"><label>🟣 Ganamos</label><input type="text" id="bdGanamos" placeholder="(vacío = adentro de la app)" maxlength="120"></div>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="bdSaveBtn" onclick="saveBrandDomains()">Guardar dominios</button>
+                            <div id="bdMsg" style="font-size:12px;margin-top:8px;color:#aaa;"></div>
+                        </div>
                         <!-- MULTI-PLATAFORMA (2026-10-16): qué plataformas se le ofrecen al cliente al cargar.
                              Ven todos los roles del panel; guarda SOLO el admin general. -->
                         <div class="panel-subheader" style="margin-top: 24px;" id="platformsHeader">

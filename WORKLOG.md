@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-24
 
+### 979. Dominio propio por marca (PICA ROJA / JUGAYGANA / Ganamos) con pase LOGUEADO desde la app — SW v667 · admin SW
+**Pedido (owner):** "si abro el dominio adentro de la app, ¿queda logueado? configuralo para que sea así; todavía no tengo los dominios".
+- Panel → Configuración → **🌐 Dominios de las marcas** (`Config['brandDomains']`, sólo el admin general guarda; `GET/PUT /api/admin/brand-domains`,
+  público `GET /api/brand-domains`). **Vacío (hoy) = nada cambia**: la página se abre adentro de la app.
+- Con un dominio cargado: al abrir esa marca desde OTRO dominio, `lobby.open` → `_toDomain` pide `POST /api/auth/brand-link` (token de un solo uso en
+  `User.installLinks`, el mismo de la app instalada en iPhone, 7 días) y navega a `https://<dominio>/?jg|gn|pr=1&acceso=<token>&u=<usuario>`; `tryAccessLink`
+  (auth.js) lo canjea ⇒ entra logueado con la misma cuenta y saldo. Si algo falla, se abre acá como siempre.
+- CORS: los dominios cargados entran solos como orígenes permitidos (`_brandDomainOrigins` en `corsOriginFn`, también Socket.IO): el navegador manda
+  `Origin` en los POST aunque sea el mismo sitio y, sin esto, el dominio nuevo no podría ni iniciar sesión (no hace falta tocar `ALLOWED_ORIGINS`).
+- **Para usarlo:** el dominio tiene que apuntar a ESTE servidor (como picaroja.com: Cloudflare/AWS), no por el proxy de Vercel (`jugaygana-vercel/`, que
+  mezcla las IP de los clientes y puede chocar con Cloudflare). Y producción tiene que tener las páginas de marca (fusión, rama `fusion-gemela-985`).
+
 ### 978. JUGAYGANA: categorías que faltaban llenas + "Juegos nuevos" liviano (Inicio más rápido) — SW v666
 **Pedido (owner):** "revisá jugaygana.net, completá los juegos donde falte y metele optimización".
 - **jugaygana.net NO existe** (DNS NXDOMAIN, 2026-10-24): no hay nada publicado en ese dominio. Si se compra, apuntarlo a Vercel con `jugaygana-vercel/`.

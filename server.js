@@ -672,11 +672,15 @@ function resolveAllowedOrigins() {
 // Se permite SIEMPRE (además de ALLOWED_ORIGINS) para que un cambio de SSM no la deje sin registro.
 // #553: la landing NO entra al CORS con credenciales: /api/landing/info y /api/landing/signup se abren a cualquier origen SIN
 // credenciales (bloque de abajo), igual que siempre fue el signup. Así un compromiso del proyecto de Vercel no gana un canal con cookies.
+// #979: dominios propios de las páginas de marca (Config['brandDomains'], panel → Configuración → Dominios de las marcas). Cada uno apunta a ESTE
+// servidor; el navegador manda Origin en los POST aunque sea el mismo sitio ⇒ sin esto el dominio nuevo no podría ni iniciar sesión.
+let _brandDomainOrigins = new Set();
 function corsOriginFn(origin, callback) {
   const allowed = resolveAllowedOrigins();
   // Requests sin cabecera Origin (same-origin, curl, mobile) siempre se permiten.
   if (!origin) return callback(null, true);
   if (allowed.includes(origin)) return callback(null, true);
+  if (_brandDomainOrigins.has(origin)) return callback(null, true); // #979
   logger.warn(`CORS bloqueado para origen: ${origin}`);
   return callback(new Error('No autorizado por CORS'));
 }
@@ -9980,6 +9984,54 @@ function _vipLevelsPublic() {
 // plataforma activa no se puede pasar a la otra (siempre se puede retirar). Cargas, retiros, bonos y cierres no cambian.
 const BRAND_LOCK_ARS = 100;
 const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' }; // #912: JUGAYGANA = otra puerta a la misma cuenta de Girox
+// #979 (owner: "abrir el dominio de cada página adentro de la app y que quede logueado; todavía no tengo los dominios"): cada marca puede tener
+// su dominio propio. Vacío (hoy) ⇒ todo sigue igual (la página se abre adentro de la app). Cargado ⇒ al abrir esa marca desde otro dominio la app pide
+// un link de acceso de un solo uso (mismo mecanismo que la app instalada en iPhone: `installLinks`, 7 días) y pasa al dominio YA logueada.
+const BRAND_DOMAIN_KEYS = ['picaroja', 'jugaygana', 'ganamos'];
+const BRAND_SITE_FLAG = { picaroja: 'pr', jugaygana: 'jg', ganamos: 'gn' };
+const _HOST_RE = /^(?=.{3,120}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;
+function _cleanBrandDomains(v) {
+  const out = {};
+  for (const k of BRAND_DOMAIN_KEYS) {
+    const h = String((v && v[k]) || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    out[k] = _HOST_RE.test(h) ? h : '';
+  }
+  return out;
+}
+async function _brandDomains() {
+  const d = _cleanBrandDomains(await getConfig('brandDomains', {}));
+  _brandDomainOrigins = new Set(Object.values(d).filter(Boolean).map((h) => 'https://' + h));
+  return d;
+}
+setTimeout(() => { _brandDomains().catch(() => {}); }, 15000); setInterval(() => { _brandDomains().catch(() => {}); }, 5 * 60 * 1000);
+app.get('/api/brand-domains', async (req, res) => {
+  try { res.set('Cache-Control', 'public, max-age=300'); res.json({ domains: await _brandDomains() }); } catch (e) { res.json({ domains: {} }); }
+});
+app.get('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req, res) => {
+  try { res.json({ domains: await _brandDomains(), canEdit: req.user.role === 'admin' }); } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.put('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
+    const raw = (req.body && req.body.domains) || {}; const d = _cleanBrandDomains(raw);
+    const bad = BRAND_DOMAIN_KEYS.filter((k) => String(raw[k] || '').trim() && !d[k]);
+    if (bad.length) return res.status(400).json({ error: 'Dominio inválido: ' + bad.join(', ') + ' (ej. jugaygana.net, sin https:// ni barras)' });
+    await Config.set('brandDomains', d, req.user.username); const now = await _brandDomains();
+    logger.info(`[brand-domains] ${req.user.username}: ${JSON.stringify(now)}`); res.json({ success: true, domains: now });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+app.post('/api/auth/brand-link', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
+    const brand = String((req.body && req.body.brand) || ''); const d = await _brandDomains(); const host = d[brand];
+    if (!host) return res.status(404).json({ error: 'Esa plataforma no tiene dominio propio' });
+    const token = crypto.randomBytes(24).toString('base64url'); const hash = crypto.createHash('sha256').update(token).digest('hex');
+    const u = await User.findOneAndUpdate({ id: req.user.userId }, { $push: { installLinks: { $each: [{ hash, createdAt: new Date() }], $slice: -5 } } }, { new: true }).select('username').lean();
+    if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.set('Cache-Control', 'no-store');
+    res.json({ success: true, url: 'https://' + host + '/?' + BRAND_SITE_FLAG[brand] + '=1&acceso=' + token + '&u=' + encodeURIComponent(u.username) });
+  } catch (e) { logger.warn(`[brand-link] ${e.message}`); res.status(500).json({ error: 'Error del servidor' }); }
+});
 function _brandAt(u, when) { const h = (u && u.brandHistory) || []; let b = 'picaroja'; for (const x of h) { if (new Date(x.since) <= new Date(when)) b = x.brand; } return b; }
 app.get('/api/me/brand', authMiddleware, async (req, res) => {
   try { const u = await User.findOne({ id: req.user.userId }).select('activeBrand').lean(); res.set('Cache-Control', 'no-store'); res.json({ brand: (u && u.activeBrand) || 'picaroja', names: _BRANDS }); }

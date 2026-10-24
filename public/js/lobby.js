@@ -681,7 +681,21 @@ VIP.lobby = (function () {
         const end = () => { if (r0 && dr) { try { localStorage.setItem('vip_prl_ql_pos', JSON.stringify({ left: parseInt(b.style.left, 10), top: parseInt(b.style.top, 10) })); } catch (_) {} _qlDragged = true; setTimeout(() => { _qlDragged = false; }, 400); } r0 = null; dr = false; };
         b.addEventListener('pointerup', end); b.addEventListener('pointercancel', end);
     }
+    // #979: dominio propio de cada marca (panel → Configuración → Dominios de las marcas). Vacío ⇒ la página se abre acá adentro como siempre.
+    // Cargado y estamos en OTRO dominio ⇒ se pide un link de acceso de un solo uso y se pasa a ese dominio ya logueado (misma cuenta y saldo).
+    let _domains = null, _domainGo = false;
+    try { fetch('/api/brand-domains').then((r) => (r.ok ? r.json() : null)).then((d) => { _domains = (d && d.domains) || {}; }).catch(() => {}); } catch (_) {}
+    function _toDomain(brand, view) {
+        const host = _domains && _domains[brand]; if (!host || _domainGo || location.hostname === host) return false;
+        if (!(VIP.state && VIP.state.currentToken)) return false;
+        _domainGo = true; try { VIP.ui.showToast('Abriendo ' + (SKINS[brand] ? SKINS[brand].name : '') + '…', 'info'); } catch (_) {}
+        fetch(VIP.config.API_URL + '/api/auth/brand-link', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + VIP.state.currentToken }, body: JSON.stringify({ brand }) })
+            .then((r) => r.json().then((j) => ({ ok: r.ok, j }))).then(({ ok, j }) => { if (ok && j && /^https:\/\//.test(j.url || '')) { location.href = j.url; return; } throw new Error('sin link'); })
+            .catch(() => { _domains[brand] = ''; _domainGo = false; open(view, brand); }); // si falla, se abre acá como siempre
+        return true;
+    }
     function open(view, skin) {
+        try { if (_toDomain(SKINS[skin] ? skin : 'picaroja', view)) return; } catch (_) {} // #979
         // #969 (owner: "si eligió una, sólo puede entrar en esa hasta tener saldo 0"): si el server dice que la marca activa es OTRA, se pasa por
         // openPlatform (chequea el saldo y, si está bloqueada, muestra el cartel). En el sitio JUGAYGANA no hay otra página: se abre igual.
         try { const act = VIP.home.brandActive && VIP.home.brandActive(); const want = SKINS[skin] ? skin : 'picaroja';
