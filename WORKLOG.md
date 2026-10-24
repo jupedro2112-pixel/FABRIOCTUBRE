@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-24
 
+### 971. Casino en vivo con TODOS los proveedores en las 4 páginas — SW v659
+**Pedido (owner):** "en proveedores de casino en vivo aparece 1 solo proveedor, meté todos los que haya; miralo en todos lados; si está incompleto, completalo".
+**Causa:** la lista pública de proveedores de 1girox (`/api/games` → `providers`) sólo trae a **Evolution** entre los de vivo; Ezugi, Pragmatic Live, SA Gaming,
+Iconic21 Live, Vivo Gaming, LiveVegas, TVBet y ElCasino tienen sus mesas en el catálogo pero NO figuran en esa lista (y el catálogo sólo filtra por `provider_id`).
+La Partner API no da el catálogo de juegos. **Arreglo:** `public/data/girox-live.json` (9 proveedores, ~1.100 mesas, lobbies primero y después las más jugadas)
+armado con `scripts/girox/build-live.py` desde el catálogo completo (bajado el 2026-10-23; para refrescarlo, volver a correr el script con un catálogo nuevo).
+`lobby.js`: "En vivo" de PICA ROJA / JUGAYGANA / Ganamos = fila de proveedores en vivo + una sección por proveedor (el título abre todas sus mesas);
+BuffaloPlay = sus tarjetas de lobby + los mismos proveedores debajo; el Inicio de PICA ROJA suma los proveedores en vivo a "Proveedores". Las tarjetas llevan
+id + launcher del juego (`data-gid`/`data-lk`) ⇒ abren directo sin buscarlo por nombre.
+
 ### 970. Sin "Pronto" en ninguna plataforma + zip SÓLO de las páginas para la gemela — SW v658
 Pedido del owner: "quiero solamente el zip de las páginas, que lo configure otro Claude que no las tiene, sin tocar sus otras modificaciones
 (está más actualizado); que aparezcan las 4 plataformas en cada sector donde falten y sacar el Pronto".
