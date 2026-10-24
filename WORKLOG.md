@@ -8,6 +8,11 @@
 
 ## Sesión 2026-10-22
 
+### 955. Barra de arriba de Ganamos/JUGAYGANA bien encuadrada + lobbies sin texto asomando — SW v644
+**Owner:** (captura) "este recuadralo bien, está descentrado abajo y arriba". La cabecera logo · saldo · Carga rápida no tenía alto propio
+(el padding vertical estaba en 0) y los botones quedaban pegados arriba y abajo: ahora mide 52 px con todo centrado y saldo/botón de 32 px.
+Además las portadas de "Casino lobby" son PNG con partes transparentes y dejaban ver el nombre de respaldo de atrás: la imagen lleva fondo.
+
 ### 954. JUGAYGANA (y las listas de Ganamos): ningún texto ENCIMA de las portadas — SW v643
 **Owner:** "hacé lo mismo en JUGAYGANA y afinemos todo". La tarjeta `_jgCard` (JUGAYGANA, y también "Mostrar todo" / "Juegos nuevos" de
 Ganamos) tenía el nombre sobre un degradé encima de la foto. Ahora el nombre va DEBAJO de la portada (`<em>` fuera del recuadro): en Ganamos

@@ -3333,3 +3333,11 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 .prl-gn .jg-grid { row-gap: 12px; }
 .jg-card i { position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; padding: 6px; text-align: center;
   color: #ddd; font: 700 11px/1.25 Roboto, Arial, sans-serif; font-style: normal; } /* sólo si la portada no carga (queda detrás de la foto) */
+/* #955 (owner): la barra de arriba (logo · saldo · Carga rápida) bien encuadrada: alto fijo y todo centrado, con aire arriba y abajo */
+.prl-gn .prl-top-logo, .prl-jio .prl-top-logo { height: 52px; min-height: 52px; padding-top: 0 !important; padding-bottom: 0 !important; align-items: center; box-sizing: border-box; }
+.prl-gn .prl-top-logo > *, .prl-jio .prl-top-logo > * { align-self: center; }
+.prl-gn .prl-hbal b, .prl-jio .prl-hbal b, .prl-hql { height: 32px; box-sizing: border-box; line-height: 1; }
+.prl-hbal { margin-left: auto; }
+.prl-gn .prl-wordmark { display: block; }
+/* las portadas con partes transparentes (lobbies) no dejan ver el nombre de respaldo que está detrás */
+.gn-g img { background: #1f073a; } .jg-card img { background: #1a1a2e; }
