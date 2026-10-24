@@ -8,6 +8,9 @@
 
 ## Sesión 2026-10-24
 
+### 993. Ganamos y JUGAYGANA con los proveedores que faltaban + sorteo con los colores de JUGAYGANA (= F977) — SW v666
+Los tokens del sorteo en esta versión son los de pin.css de acá; la regla de JUGAYGANA va en marcas.css (se carga después).
+
 ### 992. "Exclusivo de Ganamos" con 24 juegos, todos con portada de ganamos.net (= F976) — SW v665
 
 ### 991. Halloween de Ganamos lleno: 48 juegos de toda la plataforma y grilla que ocupa el recuadro (= F975) — SW v664

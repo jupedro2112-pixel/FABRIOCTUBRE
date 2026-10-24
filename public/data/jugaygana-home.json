@@ -184,6 +184,86 @@
      "img": "/images/jugaygana/games/4_bookofwild_1spin4win.webp",
      "gid": 9780,
      "lk": "platipus"
+    },
+    {
+     "key": "2/vs5joker",
+     "name": "Joker's Jewels",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2002?v=1792523997",
+     "gid": 2002,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jokerdice",
+     "name": "Joker's Jewel Dice",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/26?v=1789837260",
+     "gid": 26,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs5jokjewhs",
+     "name": "Joker's Jewels Hold & Spin",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1999?v=1789837964",
+     "gid": 1999,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vs5jokerjc",
+     "name": "Joker's Jewels Cash",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1997?v=1789852615",
+     "gid": 1997,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jkrrevenge",
+     "name": "Joker’s Revenge",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/641?v=1789837797",
+     "gid": 641,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs5jjwild",
+     "name": "Joker's Jewels Wild",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2001?v=1792523918",
+     "gid": 2001,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vswayslions",
+     "name": "5 Lions Megaways",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/170?v=1789851671",
+     "gid": 170,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "4/volcanorising96_rubyplay",
+     "name": "Volcano Rising 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8315?v=1785656315",
+     "gid": 8315,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/vs25goldparty",
+     "name": "Gold Party",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1878?v=1790040192",
+     "gid": 1878,
+     "lk": "atomic"
+    },
+    {
+     "key": "7/1002",
+     "name": "Horses Race",
+     "provider": "UniversalRace",
+     "img": "https://assets-usoft.universalsoft.net/us_img_games/1002.png",
+     "gid": 29164,
+     "lk": "universal"
     }
    ]
   },
@@ -734,6 +814,46 @@
      "img": "/images/jugaygana/games/7_amigo_DiceInvaders_AMIGO.webp",
      "gid": 29753,
      "lk": "universal"
+    },
+    {
+     "key": "2/vs5joker",
+     "name": "Joker's Jewels",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2002?v=1792523997",
+     "gid": 2002,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jokerdice",
+     "name": "Joker's Jewel Dice",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/26?v=1789837260",
+     "gid": 26,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs5jokjewhs",
+     "name": "Joker's Jewels Hold & Spin",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1999?v=1789837964",
+     "gid": 1999,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vs5jokerjc",
+     "name": "Joker's Jewels Cash",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1997?v=1789852615",
+     "gid": 1997,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jkrrevenge",
+     "name": "Joker’s Revenge",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/641?v=1789837797",
+     "gid": 641,
+     "lk": "gitslotpark_pragmatic"
     }
    ]
   },
@@ -900,6 +1020,38 @@
      "img": "/images/jugaygana/games/4_tentonwaysluck96_rubyplay.webp",
      "gid": 8244,
      "lk": "platipus"
+    },
+    {
+     "key": "4/3bigbarrelsbuffalo96_rubyplay",
+     "name": "3 Big Barrels Buffalo 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8609?v=1790059220",
+     "gid": 8609,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/elephantstampede96_rubyplay",
+     "name": "Elephant Stampede 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8331?v=1785656415",
+     "gid": 8331,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/madhitdiamonds96_rubyplay",
+     "name": "Mad Hit Diamonds 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8237?v=1785656271",
+     "gid": 8237,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/zeusrushfeverdeluxe96_rubyplay",
+     "name": "Zeus Rush Fever Deluxe 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8306?v=1785657406",
+     "gid": 8306,
+     "lk": "platipus"
     }
    ],
    "icon": "/images/jugaygana/prov/3.webp"
@@ -1051,6 +1203,54 @@
      "img": "/images/jugaygana/games/7_amigo_3FortuneSouls_AMIGO.webp",
      "gid": 29838,
      "lk": "universal"
+    },
+    {
+     "key": "11/zeusrushfever",
+     "name": "Zeus Rush Fever",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/zeusrushfever.jpg",
+     "gid": 44367,
+     "lk": "vortex"
+    },
+    {
+     "key": "11/shakeleprechaun",
+     "name": "Shake Shake Leprechaun",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/shakeleprechaun.jpg",
+     "gid": 44363,
+     "lk": "vortex"
+    },
+    {
+     "key": "11/silverandgold",
+     "name": "Silver & Gold",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/silverandgold.jpg",
+     "gid": 44366,
+     "lk": "vortex"
+    },
+    {
+     "key": "11/shakemoneytree",
+     "name": "Shake Shake Money Tree",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/shakemoneytree.jpg",
+     "gid": 44364,
+     "lk": "vortex"
+    },
+    {
+     "key": "11/shakechristmas",
+     "name": "Shake Shake Christmas",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/shakechristmas.jpg",
+     "gid": 44362,
+     "lk": "vortex"
+    },
+    {
+     "key": "11/rushfever7s",
+     "name": "Rush fever 7s",
+     "provider": "Ruby-Play",
+     "img": "https://img-girox.red777.win/ruby-play/rushfever7s.jpg",
+     "gid": 44360,
+     "lk": "vortex"
     }
    ]
   },
@@ -1209,6 +1409,46 @@
      "img": "/images/jugaygana/games/4_crash_prod2_100hp.webp",
      "gid": 6462,
      "lk": "platipus"
+    },
+    {
+     "key": "5/plinko_stake",
+     "name": "Plinko",
+     "provider": "Stake",
+     "img": "https://admin.1girox.com/game-img/11475?v=1785296430",
+     "gid": 11475,
+     "lk": "helix"
+    },
+    {
+     "key": "4/balloondoggo_turbogames",
+     "name": "Balloon Doggo",
+     "provider": "TurboGames",
+     "img": "https://img-girox.red777.win/turbogames/balloondoggo-turbogames.webp",
+     "gid": 9494,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/eliteaviatorclub_kingmidas",
+     "name": "Elite Aviator Club",
+     "provider": "KingMidas",
+     "img": "https://admin.1girox.com/game-img/8007?v=1789853278",
+     "gid": 8007,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/aviator_77gaming",
+     "name": "AVIATOR",
+     "provider": "77gaming",
+     "img": "https://admin.1girox.com/game-img/10009?v=1789853231",
+     "gid": 10009,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/mines-rush",
+     "name": "Mines Rush",
+     "provider": "Uppercut Gaming",
+     "img": "https://img-girox.red777.win/uppercut-gaming/mines-rush.webp",
+     "gid": 2149,
+     "lk": "atomic"
     }
    ]
   },

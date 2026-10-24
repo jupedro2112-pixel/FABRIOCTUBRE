@@ -661,3 +661,7 @@ html body #basicPlats .bv-chip .plat-reco, html body #basicPlats .bv-chip em, ht
 /* fusión 2026-10-24: la gemela fija el básico en 4 columnas (G958/G961); acá son 5 plataformas (PICA ROJA · Girox · Ganamos · JUGAYGANA ·
    BuffaloPlay, #958) ⇒ una fila de 5 que se reparten el ancho. */
 .bv-plats { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)) !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; }
+/* F977 (owner: "el sorteo que ofrecemos en JUGAYGANA amoldá los colores a la plataforma"): con la página de JUGAYGANA abierta (o el sitio JUGAYGANA) el sorteo
+   — banner, barra del casino y ventana — usa su negro y amarillo en vez del violeta de PICA ROJA. */
+:root:has(#prLobby.prl-jyg:not([hidden])), html.jyg-ready:has(#prLobby.prl-jyg) { --srt-g: #121212; --srt-g2: #262626; --srt-g3: #f2ce00; --srt-soft: #fff8d6; --srt-line: #ecd46a; --srt-ink: #fff; --srt-lite: #f2ce00; --srt-sh: rgba(242, 206, 0, .22); } /* soft claro: el texto del sorteo usa --srt-g encima */
+:root:has(#prLobby.prl-jyg:not([hidden])) .srt-ban em, :root:has(#prLobby.prl-jyg:not([hidden])) .srt-ban-t b { color: #f2ce00; }
