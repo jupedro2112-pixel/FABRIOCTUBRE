@@ -2834,11 +2834,15 @@ async function loadUserInfo(userId) {
               '" style="font-size:12px;font-weight:800;color:' + (user.vipLevelInfo.color || '#ffd700') + ';">' +
               user.vipLevelInfo.emoji + ' ' + escapeHtml(user.vipLevelInfo.name) + '</span>'
             : '';
+        // #969 (owner: "un solo admin para cargar cada plataforma"): en qué plataforma está jugando el cliente (la carga va a esa; es la misma
+        // cuenta de 1girox). Se cambia con el botón de marca del cliente (#913).
+        const _BRN = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' };
+        const brandTag = ' <span class="chat-brand" title="Plataforma activa del cliente" style="font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--p-surface-2,#eef);border:1px solid var(--p-border,#ccd);">🎰 ' + escapeHtml(_BRN[user.activeBrand] || 'PICA ROJA') + '</span>';
         if (user.acquisitionPublisher) {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag +
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag +
                 ' <span class="chat-publisher">(📣 ' + escapeHtml(user.acquisitionPublisher) + ')</span>';
         } else {
-            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag;
+            elements.chatUsername.innerHTML = escapeHtml(user.username) + vipTag + brandTag;
         }
 
         // Mostrar estado de la app de notificaciones
@@ -4372,6 +4376,10 @@ function renderUsers(users) {
             ? `<button class="action-btn-small" title="Cambiar contraseña" onclick='openUserPasswordModal(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)}, ${JSON.stringify(user.role)})'><span class="icon icon-key"></span></button>`
             : '';
 
+        // #913: cambiar la MARCA activa del cliente (PICA ROJA / Girox / JUGAYGANA) sin tocar su saldo (es la misma cuenta de Girox).
+        const brandBtn = adminRole === 'admin' && !isAdminUser
+            ? `<button class="action-btn-small" title="Cambiar marca (PICA ROJA / Girox / JUGAYGANA / Ganamos)" onclick='adminSetBrand(${JSON.stringify(user.id)}, ${JSON.stringify(user.username)})'>🏷️</button>`
+            : '';
         let blockBtn = '';
         if (canBlock) {
             if (user.isBlocked) {
@@ -4440,7 +4448,7 @@ function renderUsers(users) {
                     <span class="icon icon-comment"></span>
                 </button>
                 ${pwdBtn}
-                ${blockBtn}
+                ${blockBtn}${brandBtn}
                 ${accessLinkBtn}
             </td>
         </tr>
@@ -4864,6 +4872,20 @@ window.toggleFraudDetail = toggleFraudDetail;
 window.blockFromFraud = blockFromFraud;
 window.handleBlockUser = handleBlockUser;
 window.handleUnblockUser = handleUnblockUser;
+// #913: marca activa del cliente (el bloqueo por saldo es para el cliente; el admin la cambia igual, sin mover fichas).
+async function adminSetBrand(userId, username) {
+    const opts = { '1': 'picaroja', '2': 'girox', '3': 'jugaygana', '4': 'ganamos', '5': 'buffaloplay' }; // #958
+    const pick = prompt('Marca activa de ' + username + ' (el saldo NO cambia: es la misma cuenta de Girox)\n\n1 = PICA ROJA\n2 = Girox\n3 = JUGAYGANA\n4 = Ganamos\n5 = BuffaloPlay\n\nEscribí el número:');
+    if (pick == null) return;
+    const brand = opts[String(pick).trim()]; if (!brand) { showToast('Opción inválida', 'error'); return; }
+    try {
+        const r = await authFetch('/api/admin/users/' + encodeURIComponent(userId) + '/brand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) { showToast(d.error || 'No se pudo cambiar la marca', 'error'); return; }
+        showToast('✅ ' + username + ' ahora está en ' + d.brandName + ' (que cierre y abra la app)', 'success');
+    } catch (e) { showToast('Error de conexión', 'error'); }
+}
+window.adminSetBrand = adminSetBrand;
 window.handleToggleVerifyPhone = handleToggleVerifyPhone;
 window.handleToggleLoginNoPwd = handleToggleLoginNoPwd;
 

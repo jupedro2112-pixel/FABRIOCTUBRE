@@ -1560,3 +1560,14 @@ insertando `SorteoTicket` (único por key+periodKey+n). Después corre `_sorteoD
 **Trampas:** tickets nunca bajan (si cambia realShare, se conserva lo emitido); el commit congela `total` — tickets emitidos después no entran a ESE
 sorteo; cambiar `tickets.per`/`dayCap` a mitad de período sólo afecta lo que se emite de ahí en adelante. El ganador del 1° premio se excluye del
 ranking (`_sorteoWinners(key, pk, excludeUserId)`). Requisito teléfono = 10 dígitos cargados (no exige verificación: eso va al cobrar).
+
+## Páginas de marca (fusión #986, de FABRIOCTUBRE F907–F970)
+- Front: `public/js/lobby.js` (`VIP.lobby`, pieles `SKINS`: picaroja · jugaygana · ganamos · buffaloplay; z-index 99990, debajo del casino). Datos fijos en
+  `public/data/<marca>-{home,games,extra}.json` (juegos de cada marca cruzados con el catálogo de 1girox: `[key, nombre, portada, gid, launcher]`); PICA ROJA arma
+  sus secciones en vivo con `GET /api/games/lobby` (catálogo público de 1girox, cache 10 min). Estilos: `public/css/marcas.css` (después de pin.css).
+- Abrir un juego: `VIP.home.gamePlay` (= `favPlay`) → `POST /api/platform/session` con `direct:true` (+`gid`/`lk`) → `launch_url` del proveedor en otra pestaña con
+  pantalla de carga de la marca. Deportes igual (`/sport/onyx|gr8|horses|turf|poker`). Si 1girox pide perder el bono (`forfeit`) la app pregunta; si bloquea, avisa.
+  Nunca se cae en la web de Girox desde una página.
+- Marca activa: `User.activeBrand`/`brandHistory`; `home.js` `_brandGuard` + `VIP.lobby.open` (si la marca del server es otra pasa por el chequeo de saldo).
+- Sitio JUGAYGANA independiente: `window.VIP_SITE='jugaygana'` (head de index.html + `js/site.js`), manifest `?site=jugaygana`.
+

@@ -78,6 +78,26 @@ Landing de pauta en Vercel: grupospicaroja.com (carpeta `landing/`). Git user: j
 
 ## Cosas que NO hay que romper (gotchas)
 
+- **PÁGINAS DE MARCA (fusión #986 con FABRIOCTUBRE):** PICA ROJA, JUGAYGANA, Ganamos y BuffaloPlay son PUERTAS de la app a la MISMA cuenta de 1girox
+  (`public/js/lobby.js`, estilos en `public/css/marcas.css`). Una plataforma a la vez por cliente (`User.activeBrand`, cambio bloqueado con saldo ≥ $100,
+  `POST /api/me/brand`); la carga del agente va a la cuenta de siempre (el panel muestra la marca en el chat). Los comentarios `#907`…`#970` del código de
+  las páginas son las entradas **F** del WORKLOG (anexo al final), no las de este repo con el mismo número. No registrar estas marcas en `src/platforms/` sin
+  revisar `_injectPR`/`DOORS` (home.js): ya aparecen conectadas desde la app.
+- **PÁGINA EXCLUSIVA PICA ROJA (F907):** `public/js/lobby.js` + `GET /api/games/lobby` (catálogo público de 1girox) + `/paginaoficial`. La
+  plataforma 'picaroja' existe SÓLO en la app (`_injectPR`): al server SIEMPRE se le manda 'girox' (no agregarla al registro de plataformas
+  del server sin revisar cargas/retiros/cierres).
+  **F908:** `User.activeBrand` (picaroja|girox) = plataforma activa de la app; con saldo ≥ $100 no se cambia (`/api/me/brand`). Es la misma
+  cuenta de 1girox: nunca mostrar un saldo distinto del real ni trabar un retiro por esto.
+  **F912:** JUGAYGANA también es una PUERTA a Girox en la app (`DOORS` en home.js, página `/jugaygana`). Si se conecta la API REAL de
+  JUGAYGANA, sacarla de `DOORS` primero.
+  **F914:** Ganamos también es puerta a Girox (`/ganamosoficial`, diseño leído de ganandoargentina.com).
+  **F958:** BuffaloPlay = 5ª puerta (`/buffaloplay`, formato de thornet.uno; `buffaloplay-*.json`; va al lado de JUGAYGANA en los menús). Las páginas de marca van en z-index
+  99990 (debajo del casino 99999) y usan `casinoBarHtml` + `toggleCasinoLoad` (la Carga rápida de siempre).
+- **SITIO JUGAYGANA (F944):** `window.VIP_SITE === 'jugaygana'` (head de index.html + `js/site.js`): todo texto "PICA ROJA"/"Girox" visible se
+  reemplaza, la página de JUGAYGANA no se cierra y un juego que no abre directo NO cae en la web de Girox. Una pantalla/flujo nuevo que se use desde
+  JUGAYGANA tiene que abrirse ENCIMA de la página (modal) o pasar por `VIP.lobby.close(true)`; los logos nuevos van con su versión JUGAYGANA.
+- **IDS DE JUEGOS CON "@" (F943):** Amigo Gaming usa ids `amigo_X@AMIGO`. Todo patrón nuevo que valide una key de juego (`agg/game_id`) tiene que
+  aceptar "@" (`_FAV_KEY_RE`, apertura directa, `casinoGoTo`, `app:play:`); si no, esos juegos caen en Girox en vez de abrirse.
 - **SEGURIDAD (#956, 2026-10-24):** `adminMiddleware` deja pasar a todo el staff, pero `STAFF_DENY_MUTATIONS` (server.js) rechaza a depositor/withdrawer/
   comunidad las mutaciones de sólo-admin (fichas, historias, bonos, config, clientes); una ruta admin NUEVA que mute algo sensible va a esa lista o
   chequea `req.user.role === 'admin'`. Las cuentas de landing nacen con clave ALEATORIA (ya no "asd123"); entrar con "asd123" fuerza el cambio.

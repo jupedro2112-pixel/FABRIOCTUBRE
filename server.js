@@ -1260,6 +1260,11 @@ app.get('/linkreferido', (req, res) => {
   const ref = String(req.query.ref || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase();
   res.redirect(302, '/?ref=' + encodeURIComponent(ref));
 });
+// #907: picaroja.com/paginaoficial = la app con la Página exclusiva PICA ROJA abierta (antes del vanity /:code, así una campaña no la tapa).
+app.get(['/paginaoficial', '/paginaoficial/'], (req, res) => res.redirect(302, '/?pr=1'));
+app.get(['/jugaygana', '/jugaygana/'], (req, res) => res.redirect(302, '/?jg=1'));
+app.get(['/ganamosoficial', '/ganamosoficial/'], (req, res) => res.redirect(302, '/?gn=1'));
+app.get(['/buffaloplay', '/buffaloplay/'], (req, res) => res.redirect(302, '/?bp=1')); // #958: página BuffaloPlay (formato de Thornet, juegos y cuenta de Girox) // #914: página Ganamos (juegos y cuenta de Girox) // #912: página JUGAYGANA (juegos y cuenta de Girox)
 app.get('/:code', async (req, res, next) => {
   const candidate = req.params.code || '';
   // Sólo procesar si parece un código/slug válido: 3-40 chars, letras/números/_/-
@@ -1365,6 +1370,13 @@ app.get('/manifest.json', (req, res) => {
     if (/^[A-Za-z0-9_-]{20,64}$/.test(a)) su += '&acceso=' + a;
     if (/^[A-Za-z0-9._-]{3,40}$/.test(uName)) su += '&u=' + encodeURIComponent(uName); // #826: si el acceso automático falla, el usuario ya viene escrito
     if (['full', 'basic', 'easy', 'girox'].includes(menu)) su += '&menu=' + menu + (fixed ? '&fixed=1' : '') + (picked ? '&picked=1' : '');
+    // #944: app instalada desde el sitio JUGAYGANA ⇒ nombre, colores e íconos de JUGAYGANA y abre directo en su página.
+    if (req.query.site === 'jugaygana') {
+      su += '&jg=1'; Object.assign(m, { name: 'JugaYGana', short_name: 'JugaYGana', description: 'JugaYGana: casino, deportes y caballos.', theme_color: '#101010', background_color: '#101010', id: '/?site=jugaygana',
+        icons: [{ src: '/images/jugaygana/app-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' }, { src: '/images/jugaygana/app-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/images/jugaygana/app-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }] });
+      delete m.shortcuts; delete m.screenshots;
+    }
     m.start_url = su;
     res.setHeader('Vary', 'Cookie');
     res.setHeader('Content-Type', 'application/manifest+json; charset=utf-8');
@@ -6459,7 +6471,15 @@ async function platformSessionHandler(req, res) {
     // historias) el /auth/sso de 1girox va con `?token=` (lo acepta su página: guarda la sesión al instante) en vez del código de un solo
     // uso, que necesita dos consultas más antes de quedar logueado. Con el código, navegar al juego a los pocos segundos podía cortar el
     // login a mitad (el juego abría deslogueado en celulares lentos). Mismo origen y `embed` que el redirect_url que dio la API.
-    let _redir = session.redirectUrl, _gameReady = false, _directGame = false, _gameStep = 'sin juego'; // #859: qué paso falló (se muestra en la app)
+    let _redir = session.redirectUrl, _gameReady = false, _directGame = false, _gameStep = 'sin juego';
+    // #945: 1girox no da el enlace si el jugador tiene un BONO activo y el juego no suma para él (`warn_forfeit`: su web pregunta y reintenta con
+    // `forfeit_bono=1`) o si no puede jugar (`blocked`: sin saldo / tope de saldo). Antes esto se tomaba como "no dio el juego" ⇒ caía en Girox.
+    let _forfeit = null, _blocked = null;
+    const _forfeitOk = !!(req.body && req.body.forfeit === true);
+    const _verdict = (jg) => { const d = jg && jg.data && (jg.data.warn_forfeit || jg.data.blocked) ? jg.data : jg; if (!d) return false;
+      if (d.warn_forfeit) { _forfeit = { amount: Number(d.bono_amount) || 0, message: String(d.message || '').slice(0, 240) }; _gameStep = 'pide perder el bono'; return true; }
+      if (d.blocked) { _blocked = { reason: String(d.reason || '').slice(0, 30), message: String(d.message || '').slice(0, 240) }; _gameStep = 'bloqueado: ' + _blocked.reason; return true; }
+      return false; }; // #859: qué paso falló (se muestra en la app)
     // #861 (owner: "hace 1 h con lo mismo: que use el ingreso de autologin del menú de Girox"). BUG de #855/#857: el canje consumía el código de
     // ESTE ingreso y, si no salía el juego directo, se le pasaba al recuadro ese MISMO código ya usado ⇒ 1girox lo rechazaba y dejaba el
     // navegador DESLOGUEADO (manual 2.7). Ahora el intento del juego directo usa un ingreso APARTE; el recuadro, si no hay juego directo, abre
@@ -6470,9 +6490,13 @@ async function platformSessionHandler(req, res) {
       // ⇒ el juego directo queda APAGADO: el favorito abre Girox LOGUEADO (un solo ingreso, como el registro) + aviso "buscá X con la lupa".
       // `GIROX_DIRECT_GAME=1` lo vuelve a probar.
       // #866: la app pide el juego directo (`direct:true`) para abrirlo en PANTALLA COMPLETA (fuera del recuadro, donde el proveedor sí se ve).
-      const mm = (process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true)) ? /^\/play\/(\d{1,3})\/([\w.\-]{1,80})$/.exec(game) : null;
-      if (!mm && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
-      if (mm) {
+      const _directOn = process.env.GIROX_DIRECT_GAME === '1' || (req.body && req.body.direct === true);
+      const mm = _directOn ? /^\/play\/(\d{1,3})\/([\w.\-@]{1,80})$/.exec(game) : null; // #943: + '@' (Amigo Gaming: amigo_X@AMIGO)
+      // #923 (owner: "deportes 100% independientes, sin que se vea Girox"): los sportsbooks de 1girox se piden DIRECTO igual que un juego —
+      // Onyx = su juego 1140 (launcher onyx, el que abre su /sports-new) y GR8 = player/sports/gr8/launch (su /sports-2). Mismo canje de sesión.
+      const ms = _directOn ? /^\/sport\/(onyx|gr8|horses|turf|poker)$/.exec(game) : null; // #944: + Caballos (1002), TurfWin (1139) y Póker (3650) de 1girox
+      if (!mm && !ms && /^\/play\//.test(game)) _gameStep = 'abrí el juego desde Girox';
+      if (mm || ms) {
         _gameStep = 'canje';
         // #862: el ORDEN importa — cada /session nuevo ANULA el anterior (manual 2.7). Se canjea el ingreso que ya se pidió (para pedir el juego)
         // y, si no sale directo, se pide UNO NUEVO al final para el recuadro: el último ingreso es siempre el que abre Girox (como el botón).
@@ -6487,23 +6511,39 @@ async function platformSessionHandler(req, res) {
             siteToken = (jx && (jx.token || (jx.data && jx.data.token))) || null;
             _gameStep = rx.ok && siteToken ? 'canje ok' : `canje rechazado (HTTP ${rx.status}${jx && jx.error ? ': ' + String(jx.error.code || jx.error.message || '').slice(0, 40) : ''})`;
           } catch (e) { _gameStep = 'canje: ' + e.message.slice(0, 60); } finally { clearTimeout(t); }
-          if (siteToken) {
-            const meta = await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
+          if (siteToken && ms) {
+            const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
+            const url = ({ onyx: `${site}/games/1140?launcher_key=onyx`, gr8: `${site}/player/sports/gr8/launch`, horses: `${site}/games/1002?launcher_key=universal&aggregator_id=4`,
+              turf: `${site}/games/1139?launcher_key=onyx`, poker: `${site}/games/3650?launcher_key=onyx` })[ms[1]] + (_forfeitOk ? (ms[1] === 'gr8' ? '?' : '&') + 'forfeit_bono=1' : ''); // #944 · #945
+            const c3 = new AbortController(); const t3 = setTimeout(() => c3.abort(), 10000);
+            try {
+              const rg = await fetch(url, { headers: { Authorization: 'Bearer ' + siteToken, Accept: 'application/json' }, signal: c3.signal });
+              const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
+              if (_verdict(jg)) { /* #945: la app pregunta / avisa */ }
+              else if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'deportes directo'; }
+              else _gameStep = `1girox no dio deportes (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`;
+            } catch (e) { _gameStep = 'pedir deportes: ' + e.message.slice(0, 60); } finally { clearTimeout(t3); }
+          } else if (siteToken) {
+            // #944: la app de JUGAYGANA manda el id interno y el launcher de 1girox (de su catálogo) ⇒ no hace falta buscarlo por nombre (más rápido y
+            // sin fallar cuando el nombre no aparece en la búsqueda).
+            const _gid = Number(req.body && req.body.gid), _lk = String((req.body && req.body.lk) || '');
+            const meta = (Number.isInteger(_gid) && _gid > 0 && /^[a-z0-9_]{1,40}$/.test(_lk)) ? { gid: _gid, lk: _lk } : await _gameLaunchMeta(mm[1], mm[2], String((req.body && req.body.gameName) || ''));
             if (!meta) _gameStep = 'juego no encontrado en el catálogo';
             else {
               const site = String(process.env.GIROX_SITE_API_URL || 'https://admin.1girox.com/api').replace(/\/$/, '');
-              const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] });
+              const q = new URLSearchParams({ id: String(meta.gid), launcher_key: meta.lk, aggregator_id: mm[1] }); if (_forfeitOk) q.set('forfeit_bono', '1'); // #945
               const c2 = new AbortController(); const t2 = setTimeout(() => c2.abort(), 10000);
               try {
                 const rg = await fetch(`${site}/games/${encodeURIComponent(mm[2])}?${q}`, { headers: { Authorization: 'Bearer ' + siteToken, Accept: 'application/json' }, signal: c2.signal });
                 const jg = await rg.json().catch(() => null); const lu = jg && (jg.launch_url || jg.url || (jg.data && (jg.data.launch_url || jg.data.url)));
-                if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'directo'; }
+                if (_verdict(jg)) { /* #945 */ }
+                else if (rg.ok && lu && /^https:\/\//.test(lu)) { _redir = lu; _directGame = true; _gameStep = 'directo'; }
                 else _gameStep = `1girox no dio el juego (HTTP ${rg.status}${jg && (jg.message || jg.code) ? ': ' + String(jg.message || jg.code).slice(0, 60) : ''})`;
               } catch (e) { _gameStep = 'pedir el juego: ' + e.message.slice(0, 60); } finally { clearTimeout(t2); }
             }
           }
         }
-        if (!_directGame) {
+        if (!_directGame && !_forfeit && !_blocked) { // #945: si 1girox pide confirmar el bono o bloquea, no hace falta un ingreso a Girox
           // El código de `session` ya se canjeó (o se intentó) ⇒ ingreso NUEVO para el recuadro = exactamente el del botón de Girox.
           const fresh = await girox.createSession(user.username);
           _redir = fresh && fresh.success && fresh.redirectUrl ? fresh.redirectUrl : session.redirectUrl;
@@ -6516,6 +6556,7 @@ async function platformSessionHandler(req, res) {
       redirectUrl: _redir,
       gameReady: _gameReady, // #855: la sesión de la web ya viene canjeada ⇒ el salto al juego puede ser corto
       directGame: _directGame, // #857: redirectUrl ES el juego (launch_url del proveedor): no hay que saltar a nada
+      forfeit: _forfeit, blocked: _blocked, // #945: bono que se perdería / motivo de bloqueo (la app pregunta o avisa; no se abre Girox)
       gameStep: _gameStep, // #859: diagnóstico visible
       platformUrl: girox.getPlayUrl()
     });
@@ -9936,6 +9977,58 @@ function _vipLevelsPublic() {
 }
 
 // #304: avatar del perfil (la PWA guarda la clave del ícono; los de nivel se validan en la app por vipLevel).
+// ===== #908 (owner): "si eligen Girox, saldo Girox y la otra anulada hasta gastar el saldo; lo mismo con PICA ROJA; en el perfil, las cargas
+// de esa plataforma". Las dos son la MISMA cuenta de 1girox: el saldo que se muestra es siempre el real. Con saldo ≥ BRAND_LOCK_ARS en la
+// plataforma activa no se puede pasar a la otra (siempre se puede retirar). Cargas, retiros, bonos y cierres no cambian.
+const BRAND_LOCK_ARS = 100;
+const _BRANDS = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' }; // #912: JUGAYGANA = otra puerta a la misma cuenta de Girox
+function _brandAt(u, when) { const h = (u && u.brandHistory) || []; let b = 'picaroja'; for (const x of h) { if (new Date(x.since) <= new Date(when)) b = x.brand; } return b; }
+app.get('/api/me/brand', authMiddleware, async (req, res) => {
+  try { const u = await User.findOne({ id: req.user.userId }).select('activeBrand').lean(); res.set('Cache-Control', 'no-store'); res.json({ brand: (u && u.activeBrand) || 'picaroja', names: _BRANDS }); }
+  catch (e) { res.json({ brand: 'picaroja', names: _BRANDS }); }
+});
+app.post('/api/me/brand', authMiddleware, async (req, res) => {
+  try {
+    const want = req.body && _BRANDS[req.body.brand] ? req.body.brand : null; if (!want) return res.status(400).json({ error: 'Plataforma inválida' });
+    const u = await User.findOne({ id: req.user.userId }).select('id username activeBrand brandHistory').lean(); if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+    const cur = u.activeBrand || 'picaroja';
+    if (cur === want) return res.json({ success: true, brand: want });
+    // #950 (owner: "habilitá todas las plataformas para probarlas"): usuarios de PRUEBA sin el bloqueo por saldo (Config['brandLockFree'],
+    // lista de usernames; los de abajo vienen cargados por defecto). Es la misma cuenta de 1girox: cambiar de marca no mueve fichas.
+    let _free = ['alex69608531', 'pruebanardo']; try { const c = await getConfig('brandLockFree', null); if (Array.isArray(c)) _free = c; } catch (_) {}
+    if (_free.map((x) => String(x).toLowerCase()).includes(String(u.username).toLowerCase())) {
+      await User.updateOne({ id: u.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+      return res.json({ success: true, brand: want, tester: true });
+    }
+    const b = await girox.getUserBalance(u.username).catch(() => null);
+    if (!b || !b.success) return res.status(503).json({ error: 'No pudimos ver tu saldo ahora. Probá de nuevo en un momento.' });
+    const bal = Math.round(Number(b.balance) || 0);
+    if (bal >= BRAND_LOCK_ARS) return res.status(409).json({ locked: true, brand: cur, want, balance: bal, error: `No podés cambiar de plataforma: tenés $${bal.toLocaleString('es-AR')} en ${_BRANDS[cur]}. Para pasar a ${_BRANDS[want]}, primero jugá ese saldo o retiralo; con tu saldo en $0 podés cambiar.` });
+    await User.updateOne({ id: u.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+    res.json({ success: true, brand: want });
+  } catch (e) { logger.error('[brand] ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
+});
+// #913: el ADMIN cambia la marca activa de un cliente sin el bloqueo por saldo (no mueve fichas: es la misma cuenta). Queda en el historial.
+app.post('/api/admin/users/:id/brand', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el admin general' });
+    const want = req.body && _BRANDS[req.body.brand] ? req.body.brand : null; if (!want) return res.status(400).json({ error: 'Marca inválida' });
+    const r = await User.updateOne({ id: req.params.id }, { $set: { activeBrand: want }, $push: { brandHistory: { $each: [{ brand: want, since: new Date() }], $slice: -50 } } });
+    if (!r.matchedCount) return res.status(404).json({ error: 'Usuario no encontrado' });
+    logger.info(`[brand] ${req.user.username} pasó a ${req.params.id} a ${want}`);
+    res.json({ success: true, brand: want, brandName: _BRANDS[want] });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// Mis cargas (perfil): las cargas reales del cliente, sólo las de la plataforma activa (según en cuál estaba al momento de cada carga).
+app.get('/api/me/deposits', authMiddleware, async (req, res) => {
+  try {
+    const u = await User.findOne({ id: req.user.userId }).select('activeBrand brandHistory').lean();
+    const brand = (u && u.activeBrand) || 'picaroja';
+    const txs = await Transaction.find({ userId: req.user.userId, type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] } }).sort({ timestamp: -1 }).limit(60).select('amount bonus timestamp').lean();
+    const items = txs.map((t) => ({ amount: Math.round(t.amount || 0), bonus: Math.round(t.bonus || 0), at: t.timestamp, brand: _brandAt(u, t.timestamp) })).filter((t) => t.brand === brand).slice(0, 20);
+    res.set('Cache-Control', 'no-store'); res.json({ brand, brandName: _BRANDS[brand], items });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.get('/api/me/avatar', authMiddleware, async (req, res) => {
   try { const u = await User.findOne({ id: req.user.userId }).select('avatar').lean(); res.json({ avatar: (u && u.avatar) || null }); }
   catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
@@ -25758,13 +25851,15 @@ const DEFAULT_FAV_GAMES = [
   { key: '2/vs20starlightx', name: 'Starlight Princess 1000', img: '/images/games/starlight-princess-1000.jpg', provider: 'Pragmatic Play' }
 ];
 const _favListOf = (u) => (u && u.favoriteGamesCustom === true) ? (u.favoriteGames || []) : DEFAULT_FAV_GAMES.map((g) => Object.assign({}, g));
-const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-]{1,80}$/;
+const _FAV_KEY_RE = /^\d{1,3}\/[\w.\-@]{1,80}$/; // #943: + '@' (los ids de Amigo Gaming son amigo_X@AMIGO; sin esto no abrían directo)
 const _FAV_IMG_RE = /^(https:\/\/(admin\.1girox\.com|img-girox\.red777\.win)\/[\w.\-\/?=&%]{1,300}|\/images\/games\/[\w.\-]{1,80}\.(jpg|png|webp))$/;
 const _gameCatalogCache = new Map();
-async function _gameCatalog(q, page) {
-  const k = q + '|' + page; const hit = _gameCatalogCache.get(k);
+async function _gameCatalog(q, page, providerId, sortArg) {
+  const pid = Number(providerId) > 0 ? Math.round(Number(providerId)) : null; // #907: filtro por proveedor (lo acepta el catálogo de 1girox)
+  const sort = sortArg === 'newest' ? 'newest' : 'popular'; // #918: NUEVO de JUGAYGANA = los últimos agregados en 1girox
+  const k = q + '|' + page + '|' + (pid || '') + '|' + sort; const hit = _gameCatalogCache.get(k);
   if (hit && Date.now() - hit.at < 10 * 60 * 1000) return hit.data;
-  const url = 'https://admin.1girox.com/api/games?sort=popular&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '');
+  const url = 'https://admin.1girox.com/api/games?sort=' + sort + '&page=' + page + (q ? '&search=' + encodeURIComponent(q) : '') + (pid ? '&provider_id=' + pid : '');
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
   try {
     const r = await fetch(url, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
@@ -25773,9 +25868,11 @@ async function _gameCatalog(q, page) {
     const games = ((j && j.games) || []).filter((g) => g && g.aggregator_id != null && g.game_id).map((g) => ({
       key: String(g.aggregator_id) + '/' + String(g.game_id), name: String(g.name || '').replace(/[™®]/g, '').trim().slice(0, 60),
       img: String(g.image_url || g.thumbnail || ''), provider: String(g.provider_name || g.provider || '').slice(0, 40), category: String(g.category || '').slice(0, 30),
-      gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40) // #857: lo que usa la web de 1girox para abrir el juego
+      gid: g.id != null ? Number(g.id) : null, lk: String(g.launcher_key || '').slice(0, 40), // #857: lo que usa la web de 1girox para abrir el juego
+      isNew: !!g.is_new, isJackpot: !!g.is_jackpot
     })).filter((g) => _FAV_KEY_RE.test(g.key) && g.name).map((g) => (_FAV_IMG_RE.test(g.img) ? g : Object.assign(g, { img: '' })));
-    const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore };
+    const providers = Array.isArray(j.providers) ? j.providers.filter((p) => p && p.id).map((p) => ({ id: Number(p.id), name: String(p.alias || p.name || '').slice(0, 40), slug: String(p.slug || '').slice(0, 40), count: Number(p.games_count) || 0, logo: /^\/img\/providers\/[\w.\-]{1,60}$/.test(String(p.logo || '')) ? 'https://1girox.com' + p.logo : '' })) : [];
+    const data = { games, total: Number(j.total) || games.length, hasMore: !!j.hasMore, providers };
     _gameCatalogCache.set(k, { at: Date.now(), data }); if (_gameCatalogCache.size > 300) _gameCatalogCache.delete(_gameCatalogCache.keys().next().value);
     return data;
   } catch (_) { return null; } finally { clearTimeout(t); }
@@ -25797,7 +25894,7 @@ async function _gameLaunchMeta(agg, gameId, nameHint) {
 }
 // #869 (owner: "en el buscador las fotos de los juegos aparecen falladas"): las fotos del catálogo de 1girox se sirven POR ACÁ (mismo sitio que
 // la app ⇒ ningún teléfono/navegador las bloquea por venir de otro dominio). Sólo los hosts de fotos de 1girox; cache 1 día (Cloudflare la guarda).
-const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/)/;
+const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/|1girox\.com\/img\/providers\/[\w.\-]+$|assets-usoft\.universalsoft\.net\/|platipusgaming\.cloud\/|cdn\.gmbl\.org\.uk\/|images\.bswbet\.org\/)/; // #909: + logos de proveedores · #948: + los otros servidores de portadas del catálogo de 1girox
 app.get('/api/games/img', async (req, res) => {
   try {
     const u = String(req.query.u || '');
@@ -25805,9 +25902,17 @@ app.get('/api/games/img', async (req, res) => {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
     try {
       const r = await fetch(u, { signal: ctrl.signal, redirect: 'error', headers: { Accept: 'image/avif,image/webp,image/*' } }); // sin redirecciones (no seguir a otro host)
-      const type = String(r.headers.get('content-type') || '').split(';')[0];
-      if (!r.ok || !/^image\/(png|jpe?g|webp|gif|avif)$/i.test(type)) return res.status(404).end();
+      let type = String(r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+      if (!r.ok) return res.status(404).end();
       const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 1024 * 1024) return res.status(413).end();
+      // #957: img-girox.red777.win manda las portadas como application/octet-stream: el tipo se reconoce por el contenido (sólo imágenes).
+      if (!/^image\/(png|jpe?g|webp|gif|avif)$/.test(type)) {
+        const h = buf.subarray(0, 12);
+        type = (h[0] === 0xff && h[1] === 0xd8 && h[2] === 0xff) ? 'image/jpeg' : (h.toString('hex', 0, 4) === '89504e47') ? 'image/png'
+          : (h.toString('latin1', 0, 4) === 'RIFF' && h.toString('latin1', 8, 12) === 'WEBP') ? 'image/webp' : (h.toString('latin1', 0, 4) === 'GIF8') ? 'image/gif'
+          : (h.toString('latin1', 4, 12) === 'ftypavif') ? 'image/avif' : '';
+        if (!type) return res.status(404).end();
+      }
       res.set('Content-Type', type); res.set('Cache-Control', 'public, max-age=86400, immutable'); res.set('X-Content-Type-Options', 'nosniff');
       res.send(buf);
     } finally { clearTimeout(t); }
@@ -25815,11 +25920,44 @@ app.get('/api/games/img', async (req, res) => {
 });
 app.get('/api/games/catalog', authMiddleware, async (req, res) => {
   try {
-    const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(50, parseInt(req.query.page, 10) || 1));
-    const d = await _gameCatalog(q, page);
+    const q = String(req.query.q || '').trim().slice(0, 40); const page = Math.max(1, Math.min(400, parseInt(req.query.page, 10) || 1)); // #907: hasta el final del catálogo
+    const d = await _gameCatalog(q, page, req.query.provider, req.query.sort);
     if (!d) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
     res.set('Cache-Control', 'private, max-age=300'); res.json(d);
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
+// ===== #907 (owner): PÁGINA EXCLUSIVA PICA ROJA (picaroja.com/paginaoficial) — lobby propio con TODOS los juegos de Girox (misma cuenta y
+// saldo: es otra puerta a Girox, no otra plataforma). Secciones armadas desde el catálogo público de 1girox (sin la Partner API: no gasta el
+// cupo de 60/min); guardadas 10 min. Abrir un juego = el mismo ingreso logueado de los favoritos (/api/platform/session con direct).
+let _lobbyCache = { at: 0, data: null };
+const _LIVE_SLUG = /evolution|live|ezugi|vivo|playtech-live|xpg|vivogaming|tvbet/i;
+// #940 (owner): "Top en vivo" y "Los más jugados" de la sección Eventos deportivos de JUGAYGANA (datos públicos de ESPN, cache 60 s).
+const sportsBoard = require('./src/services/sportsBoard');
+app.get('/api/sports/board', async (req, res) => {
+  try { res.set('Cache-Control', 'public, max-age=60'); res.json(await sportsBoard.board()); }
+  catch (e) { res.status(503).json({ live: [], top: [] }); }
+});
+app.get('/api/games/lobby', authMiddleware, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'private, max-age=300');
+    if (_lobbyCache.data && Date.now() - _lobbyCache.at < 10 * 60 * 1000) return res.json(_lobbyCache.data);
+    const [p1, p2] = await Promise.all([_gameCatalog('', 1), _gameCatalog('', 2)]);
+    if (!p1) return res.status(503).json({ error: 'No pudimos traer los juegos de Girox. Probá de nuevo en un momento.' });
+    const bySlug = new Map();
+    for (const p of (p1.providers || [])) { const cur = bySlug.get(p.slug); if (!cur || p.count > cur.count) bySlug.set(p.slug, p); }
+    const provs = [...bySlug.values()].sort((a, b) => b.count - a.count);
+    const live = provs.filter((p) => _LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 6);
+    const top = provs.filter((p) => !_LIVE_SLUG.test(p.slug + ' ' + p.name)).slice(0, 8);
+    const fetchProv = async (p) => { const d = await _gameCatalog('', 1, p.id); return d && d.games.length ? { title: p.name, providerId: p.id, games: d.games.slice(0, 24) } : null; };
+    const [topSecs, liveSecs, lob1, lob2] = await Promise.all([Promise.all(top.map(fetchProv)), Promise.all(live.map(fetchProv)), _gameCatalog('lobby', 1), _gameCatalog('lobby', 2)]);
+    // #920 (owner): "Casino lobby" = los lobbies que tiene Girox (Live Casino Lobby, Blackjack Lobby, Evolution, Ezugi, VivoGaming…).
+    const lobbies = [...((lob1 && lob1.games) || []), ...((lob2 && lob2.games) || [])].filter((g, i, a) => /lobby/i.test(g.name) && a.findIndex((x) => x.key === g.key) === i).slice(0, 24);
+    const popular = [...(p1.games || []), ...((p2 && p2.games) || [])];
+    const data = { total: p1.total, popular: popular.slice(0, 36), nuevos: popular.filter((g) => g.isNew).slice(0, 24), providers: provs.slice(0, 60).map((p) => ({ id: p.id, name: p.name, count: p.count, logo: p.logo || '', live: _LIVE_SLUG.test(p.slug + ' ' + p.name) })),
+      sections: topSecs.filter(Boolean), live: liveSecs.filter(Boolean), lobbies,
+      sports: [{ key: 'sport/onyx', path: '/sports-new', title: 'Digitain', sub: 'Fútbol, básquet, tenis y más · en vivo y prepartido' }, { key: 'sport/gr8', path: '/sports', title: 'Ultim8', sub: 'Apuestas deportivas · en vivo y prepartido' }, { key: 'sport/horses', path: '/horses', title: 'Caballos', sub: 'Carreras de caballos en vivo' }, { key: 'sport/turf', path: '/horses-new', title: 'TurfWin', sub: 'Hípica · carreras del día' }, { key: 'sport/poker', path: '/poker', title: 'Póker', sub: 'Mesas de póker en vivo' }] /* #944 */ /* #935 (owner): cada casa con su nombre, no "Deportes" */ }; // #923: key = apertura directa
+    _lobbyCache = { at: Date.now(), data }; res.json(data);
+  } catch (e) { logger.warn('[lobby] ' + e.message); res.status(503).json({ error: 'No pudimos traer los juegos. Probá de nuevo.' }); }
 });
 app.get('/api/games/favorites', authMiddleware, async (req, res) => {
   try {
