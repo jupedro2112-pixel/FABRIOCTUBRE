@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1000. Portadas de lobby distintas por marca (Ganamos: CDN SoftSwiss; JUGAYGANA/PICA ROJA: propias) + Ganamos en el orden de ganamos.net (= F985) — SW v673
+
 ### 999. Saldo en la cabecera de JUGAYGANA y Ganamos abre con la Carga rápida desplegada (= F984) — SW v672
 
 ### 998. JUGAYGANA con el menú ☰ oficial: Inicio · Casino · Casino en vivo · Eventos deportivos, sin Tareas diarias (= F983) — SW v671
