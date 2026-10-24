@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-24
 
+### 973. Ganamos y JUGAYGANA COMPLETAS: cada proveedor con todos sus juegos de Girox — SW v661
+**Pedido (owner):** "completá más lo que hay en Ganamos y JUGAYGANA, donde falte poné juegos, respetando el proveedor".
+`scripts/girox/complete-brands.py` (catálogo completo de 1girox del 2026-10-23): a cada proveedor de la página le suma los juegos de ESE MISMO proveedor
+en Girox que no tenía (más jugados primero, portada de Girox; lo que ya estaba queda igual, con su orden y portadas propias). Ganamos +1.700 juegos
+(Hacksaw con sus estudios, Bluejack = betcorejacktop/jacktop, Greentube = Greentube + novomatic; "Amusnet Clásico" y "Aristocrat Gaming" sin tocar porque
+repetirían Amusnet/Aristocrat). JUGAYGANA +2.000 (Evolution 43→678, Amatic 19→233, Greentube 11→120, Vivo Gaming 3→25, Pragmatic Live 46→152…).
+Filas del Inicio que estaban con 2 juegos, llevadas a 24: Halloween y Pragmatic Live (Ganamos), Halloween y Casino (JUGAYGANA). Las listas largas se
+muestran de a 120 con "Ver más" (ya existía, #948).
+
 ### 972. BuffaloPlay fuera de las opciones de plataforma — SW v660
 **Pedido (owner):** "sacá el de Buffalo en las opciones". Ya no aparece para elegir en la app (lista de plataformas de `_injectPR` y `ENTRY_FALLBACK` de
 home.js) ni en el cambio de marca del panel (🏷️). La página `/buffaloplay` y su código siguen: quien ya la tenía elegida no queda trabado.

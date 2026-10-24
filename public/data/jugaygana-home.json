@@ -278,6 +278,110 @@
      "img": "/images/jugaygana/games/4_freakmachine_mancala.webp",
      "gid": 9173,
      "lk": "platipus"
+    },
+    {
+     "key": "4/felizdadelosmuertos96_rubyplay",
+     "name": "Feliz Día de los Muertos 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8319?v=1785658642",
+     "gid": 8319,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/gigamatchsugarskull96_rubyplay",
+     "name": "Giga Match Sugar Skull 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8259?v=1785656750",
+     "gid": 8259,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/immortalwaysspooktacular96_rubyplay",
+     "name": "Immortal Ways Spooktacular 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8260?v=1785656774",
+     "gid": 8260,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/vs10bhallbnza3",
+     "name": "Big Bass Halloween 3",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs10bhallbnza3.webp",
+     "gid": 1464,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs50grghsts",
+     "name": "Great Ghosts",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs50grghsts.webp",
+     "gid": 629,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs10bhallbnza2",
+     "name": "Big Bass Halloween 2",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs10bhallbnza2.webp",
+     "gid": 1463,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vswaysmjwl2",
+     "name": "Mummy’s Jewels 100",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vswaysmjwl2.webp",
+     "gid": 614,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "5/milliondracula_rr",
+     "name": "Million Dracula",
+     "provider": "Red Rake",
+     "img": "https://img-girox.red777.win/red-rake/milliondracula-rr.webp",
+     "gid": 11363,
+     "lk": "helix"
+    },
+    {
+     "key": "4/drfrankenstein96_rubyplay",
+     "name": "Dr. Frankenstein 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8337?v=1785658266",
+     "gid": 8337,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/flaming-mummy",
+     "name": "Flaming Mummy",
+     "provider": "Colorful Play",
+     "img": "https://img-girox.red777.win/colorful-play/flaming-mummy.webp",
+     "gid": 1774,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs20muertos",
+     "name": "Muertos Multiplier Megaways",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs20muertos.webp",
+     "gid": 272,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs20dhousehm",
+     "name": "Haunted Crypt",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs20dhousehm.webp",
+     "gid": 1913,
+     "lk": "atomic"
+    },
+    {
+     "key": "3/ScaryClown",
+     "name": "Scary Clown",
+     "provider": "kagaming",
+     "img": "https://img-girox.red777.win/kagaming/scaryclown.webp",
+     "gid": 5273,
+     "lk": "bsw_slots"
     }
    ],
    "bg": "/images/jugaygana/io/hw-bg.webp",
@@ -935,6 +1039,182 @@
      "img": "/images/jugaygana/games/3_FortuneCode.webp",
      "gid": 5388,
      "lk": "bsw_slots"
+    },
+    {
+     "key": "2/vs5joker",
+     "name": "Joker's Jewels",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2002?v=1792523997",
+     "gid": 2002,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jokerdice",
+     "name": "Joker's Jewel Dice",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/26?v=1789837260",
+     "gid": 26,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs5jokjewhs",
+     "name": "Joker's Jewels Hold & Spin",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1999?v=1789837964",
+     "gid": 1999,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vs5jokerjc",
+     "name": "Joker's Jewels Cash",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1997?v=1789852615",
+     "gid": 1997,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vs5jkrrevenge",
+     "name": "Joker’s Revenge",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/641?v=1789837797",
+     "gid": 641,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "2/vs5jjwild",
+     "name": "Joker's Jewels Wild",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2001?v=1792523918",
+     "gid": 2001,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/vswayslions",
+     "name": "5 Lions Megaways",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/170?v=1789851671",
+     "gid": 170,
+     "lk": "gitslotpark_pragmatic"
+    },
+    {
+     "key": "4/volcanorising96_rubyplay",
+     "name": "Volcano Rising 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8315?v=1785656315",
+     "gid": 8315,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/vs25goldparty",
+     "name": "Gold Party",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1878?v=1790040192",
+     "gid": 1878,
+     "lk": "atomic"
+    },
+    {
+     "key": "7/1002",
+     "name": "Horses Race",
+     "provider": "UniversalRace",
+     "img": "https://assets-usoft.universalsoft.net/us_img_games/1002.png",
+     "gid": 29164,
+     "lk": "universal"
+    },
+    {
+     "key": "4/voltageblitzrapid96_rubyplay",
+     "name": "Voltage Blitz Rapid 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8605?v=1785656859",
+     "gid": 8605,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/vs10jokerhot",
+     "name": "Joker's Jewels Hot",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs10jokerhot.webp",
+     "gid": 2000,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vs25goldpartya",
+     "name": "Gold Party 2 - After Hours",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vs25goldpartya.webp",
+     "gid": 1877,
+     "lk": "atomic"
+    },
+    {
+     "key": "4/rushfever7sdeluxe96_rubyplay",
+     "name": "Rush Fever 7s Deluxe 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8301?v=1785656369",
+     "gid": 8301,
+     "lk": "platipus"
+    },
+    {
+     "key": "2/vs20olympx",
+     "name": "Gates of Olympus 1000",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/1837?v=1790073553",
+     "gid": 1837,
+     "lk": "atomic"
+    },
+    {
+     "key": "4/3bigbarrelsbuffalo96_rubyplay",
+     "name": "3 Big Barrels Buffalo 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8609?v=1790059220",
+     "gid": 8609,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/celestialflamecoinrise96_rubyplay",
+     "name": "Celestial Flame Coin Rise 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8601?v=1785656443",
+     "gid": 8601,
+     "lk": "platipus"
+    },
+    {
+     "key": "4/elephantstampede96_rubyplay",
+     "name": "Elephant Stampede 96",
+     "provider": "RubyPlay",
+     "img": "https://admin.1girox.com/game-img/8331?v=1785656415",
+     "gid": 8331,
+     "lk": "platipus"
+    },
+    {
+     "key": "1/LadyJoker",
+     "name": "Lady Joker",
+     "provider": "Amatic",
+     "img": "https://admin.1girox.com/game-img/834?v=1789841730",
+     "gid": 834,
+     "lk": "gitslotpark_amatic"
+    },
+    {
+     "key": "2/vs20sugarrushx",
+     "name": "Sugar Rush 1000",
+     "provider": "Pragmatic Play",
+     "img": "https://admin.1girox.com/game-img/2439?v=1790059371",
+     "gid": 2439,
+     "lk": "atomic"
+    },
+    {
+     "key": "2/vswayssevenc",
+     "name": "7 Clovers of Fortune",
+     "provider": "Pragmatic Play",
+     "img": "https://img-girox.red777.win/pragmatic/vswayssevenc.webp",
+     "gid": 1373,
+     "lk": "atomic"
+    },
+    {
+     "key": "1/AllwaysJoker",
+     "name": "Allways Joker",
+     "provider": "Amatic",
+     "img": "https://admin.1girox.com/game-img/895?v=1789841942",
+     "gid": 895,
+     "lk": "gitslotpark_amatic"
     }
    ]
   }
