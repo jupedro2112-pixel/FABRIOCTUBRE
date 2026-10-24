@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 987. SORTEOS v2 de la gemela (el zip "SORTEOS-auto-iphone") IDÉNTICOS en main y en las páginas de marca — SW v675 · admin SW v203
+**Pedido (owner, zip de PICAROJAoficial):** "ahí está bien configurado, está todo en Girox; replicá lo mismo en las otras 3, el formato y la forma de ver; copialo
+exacto". `main` tenía la versión vieja de los sorteos (G915) y la base de producción ya corre la v2 (G981), por eso la ventana se veía distinta / vacía.
+Se trajo desde la rama de la fusión (que ya la tenía, = zip): bloque del servidor `// ===== #915` … `draw-extra` (tickets, `_sorteoIssueTickets`, sorteo
+verificable `_sorteoDrawCommit/Reveal/Auto`, `GET /api/admin/sorteos/:key/tickets`, `POST …/draw/:step`, `GET /api/admin/inicio/sorteos-stats`),
+`src/services/sorteos.js`, modelos `SorteoScore` + nuevos `SorteoTicket`/`SorteoCounter`, `public/js/sorteos.js` (con la píldora → cartel → resumen de #986),
+estilos G980 (ventana = hoja que sube) + G981 (v2) en pin.css, bloque del panel (App → Sorteos con pestañas 🎟️ Tickets y 🎲 Sorteo) y las 3 pruebas
+(`scripts/test-sorteos-*.js`, pasan). Verificado con capturas (navegador sin pantalla, datos de la muestra del zip) en Ganamos, JUGAYGANA y PICA ROJA: resumen
+"¡Increíbles premios!" y ventana con el mismo orden que el zip, cada una con su color. NO se trajo el tablero "Sorteos: ¿sirven?" de Principal (usa la clave de
+INICIO y secciones del panel de la gemela que main no tiene); su ruta sí está. Comentarios del código traído: G980/G981 = entradas de la gemela.
+
 ### 986. Sorteo en las páginas de marca con el MISMO formato que el casino de Girox, cada una con su color — SW v674
 **Pedido (owner, 3 capturas del casino):** "el sorteo, cuando lo expandís en Ganamos no se ve adentro; tuve que salir para ver el menú chico como resumen.
 Replicalo en Ganamos, JUGAYGANA, PICA ROJA y Girox, cada uno con su color pero mismo formato". `_rfStrip()` ya no pinta las dos mitades (que abrían la
