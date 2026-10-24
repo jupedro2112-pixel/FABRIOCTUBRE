@@ -8,15 +8,7 @@
 
 ## Sesión 2026-10-24
 
-### 1008. Sin carrusel en PICA ROJA · reseñas en una línea · favoritos más chicos y minimizables (⭐ abajo) · arriba MENÚ de plataformas (= F995) — SW v680
-
-### 1007. PICA ROJA DENTRO del menú completo (página predeterminada), todas las plataformas arriba con la elegida en el medio, "Plataformas" en la barra de abajo y Perfil al lado del saldo (= F994) — SW v679
-
-### 1006. Proveedores de PICA ROJA estilo Stake (rojo, logo sin color en blanco) + burbuja de Carga rápida redonda en 2 renglones (= F992/F993) — SW v678
-
-### 1005. PICA ROJA: abajo Slots · Inicio · Deportes también en el menú opción 1 (= F991) — SW v677
-
-### 1004. Adentro de PICA ROJA la cabecera del menú completo + PLATAFORMA más abajo (= F990) — SW v676
+### 1009. VUELTA ATRÁS al estado de #1003 (= #996 de main: se deshacen #1004–#1008 / F990–F995 por pedido del owner) — SW v681
 
 ### 1003. Dominio de marca reconocido detrás de un proxy (Origin / X-Forwarded-Host / bh=1) + carpeta jugaygana-vercel apuntando a la prueba (= F989)
 
