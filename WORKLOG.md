@@ -8,6 +8,18 @@
 
 ## Sesión 2026-10-24
 
+### 977. Ganamos y JUGAYGANA todavía más completas (proveedores que faltaban + filas/categorías llenas) + sorteo con los colores de JUGAYGANA — SW v665
+**Pedido (owner):** "seguí completando Ganamos y JUGAYGANA con todos los juegos que puedas" y "el sorteo en JUGAYGANA amoldá los colores a la plataforma".
+- `scripts/girox/complete-brands-2.py` (después de `complete-brands.py`): (1) cada proveedor de Girox que la página NO tenía se agrega al final con todos sus
+  juegos — Ganamos +25 proveedores de tragamonedas (KA Gaming, Hotdog Gaming, SpinOro, Elk Studio, 77 Gaming, BarbaraBang, KingMidas, Dynabit, Mancala,
+  AvatarUX…; su casino en vivo sale de girox-live.json) y JUGAYGANA +53 (Amusnet, Mascot, Novomatic, Elk, Booongo, Wazdan, EGT, Quickspin, SA Gaming…);
+  el proveedor "155" de Girox (sin nombre) queda afuera. Total: Ganamos 61 proveedores / ~6.850 juegos; JUGAYGANA 87 / ~7.900. (2) Filas del Inicio de
+  Ganamos a 24 (Rubyplay, Amusnet, Pragmatic Slots, Amigo con su MISMO proveedor; Destacadas = más jugadas; Del Joker = jokers/bufones; Clásicas = 7, frutas,
+  hot, diamantes…). Colecciones de JUGAYGANA a 24 (populares, seleccionados, RubyPlay, Nuevo = los últimos agregados en Girox, Crash) y categorías:
+  destacados 5→24, nuevo 20→60, megaways 33→80, ruletas 55→120, mesa 83→120.
+- Sorteo: con la página de JUGAYGANA abierta, `:root:has(#prLobby.prl-jyg:not([hidden]))` cambia los tokens `--srt-*` (pin.css) a su negro y amarillo
+  (#121212 / #f2ce00, fondos suaves amarillo claro): banner de las dos mitades, barra del casino y ventana del sorteo. En las otras páginas sigue el violeta.
+
 ### 976. "Exclusivo de Ganamos" con 24 juegos, todos con portada de ganamos.net — SW v664
 **Pedido (owner):** "si hay más portadas de Ganamos poné más juegos con la foto de Ganamos de portada". Se usaron TODAS las portadas "GANAMOS" legibles de
 las capturas (14 más: `excl/11..24.webp`; quedaron afuera 3 que eran sólo el ícono de pica sin cargar o estaban tapadas por la barra) con juegos de Pragmatic
