@@ -155,7 +155,7 @@ VIP.lobby = (function () {
     function sportsMenu(ev) {
         try { if (ev) { ev.stopPropagation(); ev.preventDefault(); } } catch (_) {}
         const old = $('prlSportPop'); if (old) { old.remove(); return; }
-        const sp = ((_data && _data.sports) || [{ path: '/sports-new', title: 'Digitain' }, { path: '/sports', title: 'Ultim8' }]);
+        const sp = _sportsList();
         const gn = SK().layout === 'ganamos';
         const html = '<div id="prlSportPop" class="' + (gn ? 'gnm__more prl-sportpop-gn' : 'prl-sportpop') + '" role="menu"><div class="' + (gn ? 'gnm__more-list' : 'prl-sportpop-l') + '">' +
             sp.map((x, i) => '<button type="button" class="' + (gn ? 'gnm__more-item' : 'prl-sportpop-i') + '" role="menuitem" onclick="event.stopPropagation();VIP.lobby.sportPick(\'' + esc(x.path) + '\')">' + (gn ? '<span class="gnm__more-icon">' + GN_IC[i ? 'sp2' : 'sp1'] + '</span><span class="gnm__more-text">' + esc(x.title) + '</span>' : ico('sport') + '<span>' + esc(x.title) + '</span>') + '</button>').join('') + '</div></div>';
@@ -165,6 +165,8 @@ VIP.lobby = (function () {
         else { const m = $('prLobby'); if (m) m.insertAdjacentHTML('beforeend', html.replace('class="', 'class="prl-sportpop-center ')); }
         setTimeout(() => { document.addEventListener('click', function off(e) { const p = $('prlSportPop'); if (p && !p.contains(e.target)) p.remove(); document.removeEventListener('click', off, true); }, true); }, 0);
     }
+    // #966: las casas de deportes aunque la lista del server todavía no haya llegado (cada una abre con su link directo, #962)
+    function _sportsList() { const l = (_data && _data.sports) || []; return l.length ? l : [{ path: '/sports-new', title: 'Digitain' }, { path: '/sports', title: 'Ultim8' }]; }
     function sportPick(path) { const p = $('prlSportPop'); if (p) p.remove(); sport(path); }
     function back() { if (SK().layout === 'buffaloplay' && _view === 'jglist') { go('vivo'); return; } if (_view === 'all' && (_allProv || _allCat) && !_allCat) { go('slots'); return; } go('inicio'); }
     function _search() {
@@ -245,7 +247,7 @@ VIP.lobby = (function () {
     // #949 (owner: "Ganamos idéntica"): la pestaña Casino como su página: un bloque por proveedor (2 filas de 3) con "Mostrar todo".
     function _gnCasinoHtml() {
         if (!_gnGames) { _gnGamesLoad().then(() => { if (_skin === 'ganamos' && _view === 'slots') _render(); }); return _backBar() + '<div class="prl-note">Cargando…</div>'; }
-        return _backBar() + '<div id="gnExtraC">' + _gnExtraHtml('gnExtraC') + '</div>' + ((_gnGames && _gnGames.providers) || []).map((p, i) =>
+        return _backBar() + _search() + '<div id="gnExtraC">' + _gnExtraHtml('gnExtraC') + '</div>' + ((_gnGames && _gnGames.providers) || []).map((p, i) =>
             '<section class="gn-sec"><div class="gn-sh"><span>' + esc(p.n) + '</span><button type="button" onclick="VIP.lobby.gnProv(' + i + ')">Mostrar todo ›</button></div><div class="gn-grid6">' + p.g.slice(0, 6).map((a) => _gnCard(_gnG(a))).join('') + '</div></section>').join('');
     }
     // #947: "Especial de Halloween" como en ganandoargentina.com (fondo, título, marco con sus juegos, el perro y JUGÁ YA = la lista de esa fila).
@@ -466,7 +468,7 @@ VIP.lobby = (function () {
         const d = _bpHome || {}; const sl = d.slides || [];
         const big = (a, cls) => { const g = _bpA(a); _bpIdx[g.key] = g; return '<button type="button" class="' + cls + '"' + _bpPlayAttrs(g) + '><img src="' + esc(img(g.img)) + '" alt="" loading="lazy" decoding="async"></button>'; };
         const rr = d.redrake || [];
-        return '<section class="bp-slider"><div class="bp-slides" id="bpSlides" onscroll="VIP.lobby.bpSlideScroll(this)">' + sl.map((s) => '<div class="bp-slide"><img src="' + esc(s) + '" alt="" decoding="async"></div>').join('') + '</div>' +
+        return _rfStrip() + '<section class="bp-slider"><div class="bp-slides" id="bpSlides" onscroll="VIP.lobby.bpSlideScroll(this)">' + sl.map((s) => '<div class="bp-slide"><img src="' + esc(s) + '" alt="" decoding="async"></div>').join('') + '</div>' +
                 (sl.length > 1 ? '<button type="button" class="bp-sa bp-sa-l" onclick="VIP.lobby.bpSlideGo(-1)" aria-label="Anterior">‹</button><button type="button" class="bp-sa bp-sa-r" onclick="VIP.lobby.bpSlideGo(1)" aria-label="Siguiente">›</button>' +
                 '<div class="bp-dots" id="bpDots">' + sl.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div>' : '') + '</section>' +
             ((d.liveSel || []).length ? '<h2 class="bp-t bp-t0">Nuestra seleccion Pragmatic Live Casino</h2><div class="bp-lsel">' + d.liveSel.map((a) => big(a, 'bp-lc')).join('') + '</div>' : '') +
@@ -732,9 +734,10 @@ VIP.lobby = (function () {
             '<div class="prl-dr-card"><small>Nivel y rango</small>' +
             (lv ? '<b class="prl-dr-lvl">' + esc(lv.emoji || '') + ' ' + esc(lv.name) + '</b>' : '<b class="prl-dr-lvl">Jugador</b><span class="prl-dr-sub">Todavía sin nivel</span>') +
             (nx ? '<div class="prl-bar"><i style="width:' + pct + '%"></i></div><span class="prl-dr-sub">' + pct + '% · te faltan ' + money(v.faltaParaSubir) + ' apostados para ' + esc((nx.emoji || '') + ' ' + nx.name) + '</span>' : (lv ? '<span class="prl-dr-sub">Nivel máximo</span>' : '')) + '</div>' +
-            (SK().layout === 'jugaygana' ? '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + ((_data && _data.sports) || []).map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' : '') + // #956
+            // #966 (owner: "todas las plataformas lo más parecido posible"): el MISMO menú en las 4 páginas (antes Deportes/Historias/Info sólo en JUGAYGANA).
+            '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + _sportsList().map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' + // #956
             '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
-            (SK().layout === 'jugaygana' ? item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') : '') +
+            item('fire', 'Sorteos', "VIP.lobby.menu(false);VIP.sorteos.open('mensual')") + item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') +
             (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close(true)')) + '</div>';
     }
     function withdraw() { menu(false); try { VIP.withdraw.openWithdrawModal(); } catch (_) {} } // #914: el modal va arriba de la página (body.casino-open)

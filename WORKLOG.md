@@ -8,6 +8,16 @@
 
 ## Sesión 2026-10-24
 
+### 966. Las 4 páginas de marca igualadas (menú ☰, sorteos y buscador) — SW v654
+Pedido del owner: "revisá todas las plataformas y conectalas con las otras, que estén lo más parecido posible". Se comparó qué tiene cada
+página (PICA ROJA, Ganamos, JUGAYGANA, BuffaloPlay) y se completó lo que le faltaba a cada una, sin tocar el diseño propio de cada marca:
+- **Menú ☰ (cuenta) igual en las 4** (`_paintMenu`, lobby.js): saldo + Cargar/Retirar, nivel, casas de **Deportes** (cada una con su link
+  directo, #962), Soporte, Mi perfil, **Sorteos**, **Historias**, **Información** y Volver a la app. Antes Deportes/Historias/Info estaban sólo en JUGAYGANA.
+- `_sportsList()`: si la lista del server no llegó, igual muestra Digitain y Ultim8 (menú ☰ y la ventanita de Deportes).
+- **BuffaloPlay** ahora tiene los sorteos arriba del inicio (`_rfStrip()`), como las otras tres.
+- **Ganamos** tiene buscador en Casino (`_search()`), como las otras tres.
+No se pudo revisar con capturas: lalodj tiene que cambiar la clave (G956).
+
 ### 965. 🔀 FUSIÓN con la gemela (PICAROJAoficial, G907–G969) — SW v653 · admin SW v199
 **Owner:** "tengo actualizaciones de otro Claude que trabaja sobre esta misma copia pero no tiene las páginas; si lo cargamos, ¿no rompemos nada?" →
 reemplazar archivos SÍ rompía (su home.js/pin.css no tienen las páginas de marca ni #907–#964). Se aplicó su `cambios-2026-10-24.patch` con
