@@ -8,6 +8,10 @@
 
 ## Sesión 2026-10-24
 
+### 989. Ganamos y JUGAYGANA completas (= F973) — SW v662
+Cada proveedor de las dos páginas suma los juegos de ese mismo proveedor que Girox tiene y le faltaban (`scripts/girox/complete-brands.py`); filas del
+Inicio casi vacías (Halloween, Pragmatic Live, Casino) llevadas a 24. Detalle en F973 (WORKLOG de FABRIOCTUBRE).
+
 ### 988. BuffaloPlay fuera de las opciones de plataforma (= F972) — SW v661
 No se ofrece para elegir en la app ni en el cambio de marca del panel; la página `/buffaloplay` sigue andando para quien ya la tenía.
 
