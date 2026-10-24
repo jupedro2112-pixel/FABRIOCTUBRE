@@ -8,6 +8,12 @@
 
 ## Sesión 2026-10-24
 
+### 976. "Exclusivo de Ganamos" con 24 juegos, todos con portada de ganamos.net — SW v664
+**Pedido (owner):** "si hay más portadas de Ganamos poné más juegos con la foto de Ganamos de portada". Se usaron TODAS las portadas "GANAMOS" legibles de
+las capturas (14 más: `excl/11..24.webp`; quedaron afuera 3 que eran sólo el ícono de pica sin cargar o estaban tapadas por la barra) con juegos de Pragmatic
+del mismo estilo: Ancient Egypt, Fire Portals, Blitz Super Wheel, Diamond Strike, The Champions, Big Bass Football Bonanza, Gold Party, Gates of Olympus 1000,
+Joker's Jewels Wild, Chilli Heat Megaways, Starlight Princess 1000, Buffalo King Untamed Megaways, Cash Box y Hot to Burn. 24 = lo que muestra la fila.
+
 ### 975. "Especial de Halloween" de Ganamos LLENO (48 juegos de todo Girox, grilla que llena el recuadro) — SW v663
 **Pedido (owner, captura):** el recuadro de Halloween mostraba 2 juegos y mucho vacío: "completá toda la portada con juegos viejos de Halloween, buscá en
 toda la plataforma". `complete-brands.py` busca en TODO el catálogo de Girox juegos de temática Halloween (calabazas, zombis, vampiros, brujas, momias,
