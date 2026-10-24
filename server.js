@@ -1170,7 +1170,18 @@ async function landingPageHandler(req, res, next) {
 // #980 (owner: "en la página no quiero registro ni acceso: que sólo se pueda usar desde PICA ROJA, la gente que tenga acceso"): en un DOMINIO DE MARCA
 // (Config['brandDomains']) no hay alta ni inicio de sesión — se entra ÚNICAMENTE con el pase de un solo uso que genera la app (`/api/auth/access-link`).
 // Las landings y el registro de ese dominio mandan al inicio (que, sin sesión, muestra "entrá desde PICA ROJA").
-function _isBrandHost(req) { try { return _brandDomainOrigins.size > 0 && _brandDomainOrigins.has('https://' + parseRequestHost(req)); } catch (_) { return false; } }
+// #989: detrás de un proxy (Vercel reescribe hacia este servidor) el Host es el del servidor: el dominio de la marca llega en el Origin (POST del
+// navegador), en X-Forwarded-Host o en la marca `bh=1` que agrega la ruta de Vercel. Todos sólo RESTRINGEN (sin login ni registro): falsificarlos no da nada.
+function _isBrandHost(req) {
+  try {
+    if (!_brandDomainOrigins.size) return false;
+    if (_brandDomainOrigins.has('https://' + parseRequestHost(req))) return true;
+    const o = String(req.headers.origin || ''); if (o && _brandDomainOrigins.has(o)) return true;
+    const xf = String(req.headers['x-forwarded-host'] || '').split(',').map((h) => h.trim().split(':')[0].toLowerCase()).filter(Boolean);
+    if (xf.some((h) => _brandDomainOrigins.has('https://' + h))) return true;
+    return req.method === 'GET' && req.query && req.query.bh === '1';
+  } catch (_) { return false; }
+}
 const _BRAND_HOST_DENY = /^\/api\/(auth\/(login|login-otp-request|login-otp-verify|platform-login|quick-entry|register|register-quick|send-register-otp|request-password-reset|verify-reset-otp|complete-password-reset)|landing\/signup)\/?$/;
 app.use((req, res, next) => {
   if (!_isBrandHost(req)) return next();

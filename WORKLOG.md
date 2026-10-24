@@ -8,6 +8,14 @@
 
 ## Sesión 2026-10-24
 
+### 989. Zip para probar JUGAYGANA en un dominio de Vercel + detección del dominio de marca detrás de un proxy
+**Pedido (owner):** "dame el zip para subir el dominio de JUGAYGANA a un link de Vercel, para reenviar, con la explicación adentro". `jugaygana-vercel/`
+apunta ahora al servidor de PRUEBA (`fabrioctubre.onrender.com`; picaroja.com todavía no tiene las páginas de marca) y su README explica: subir a Vercel
+(GitHub o CLI), cargar el dominio en Configuración → Dominios de las marcas, probar (pase desde la app / cartel sin sesión), dominio propio y pasaje a producción.
+- server.js `_isBrandHost`: detrás de Vercel el Host es el del servidor ⇒ también reconoce el dominio de marca por el `Origin` (POST del navegador), por
+  `X-Forwarded-Host` y por `bh=1` que agrega la ruta `/` de Vercel. Todo eso sólo RESTRINGE (sin login/registro), así que falsificarlo no da nada.
+- Ojo: por Vercel todos los clientes llegan con la IP de Vercel (límites por IP compartidos). Para producción, dominio DIRECTO al servidor.
+
 ### 988. PICA ROJA como app unificada (se FIJA la plataforma), barra de la app adentro de PICA ROJA, portadas premium y sin Perfil en las otras — SW v676
 **Pedidos (owner):** "si eligen PICA ROJA, que se pueda fijar la plataforma y quede como una app unificada con juegos integrados: arriba JUGÁ AQUÍ pasa a decir
 PLATAFORMA y abre la página; Inicio va al menú completo" · "para el resto, sin perfil adentro, sólo el saldo y la carga rápida en burbuja (cerrada, arriba); en
