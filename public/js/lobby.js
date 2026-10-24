@@ -64,7 +64,7 @@ VIP.lobby = (function () {
                 '<div class="jg-hr">' + // F982 (owner, captura de jugaygana44): sin el botón de Soporte; su "INGRESAR" es nuestro CARGA RÁPIDA
 
                 '<button type="button" class="jg-hi" onclick="VIP.stories.open()" aria-label="Mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></button>' +
-                '<button type="button" class="jg-qlbtn" onclick="VIP.lobby.ql()">CARGA RÁPIDA</button>' +
+                '<span class="jg-bal" aria-label="Saldo"><b class="js-prl-bal">—</b></span><button type="button" class="jg-qlbtn" onclick="VIP.lobby.ql()">CARGA RÁPIDA</button>' + // F984: el saldo al lado
                 '<button type="button" class="jg-burger" onclick="VIP.lobby.menu(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div></header>' : '') +
             // #958: BuffaloPlay como thornet: ☰ · actualizar saldo · saldo (= Carga rápida) · chat (Soporte) · usuario (cuenta).
             // #960 (owner: "arriba la barra de PICA ROJA como en todos"): esta va debajo de esa barra, sin el logo.
@@ -77,7 +77,7 @@ VIP.lobby = (function () {
             (sk.wordmark && sk.layout !== 'jugaygana' && sk.layout !== 'buffaloplay' ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
                 '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span>' +
                 // #952 (owner): la Carga rápida ARRIBA, al lado del saldo, fina y con el formato de la página (sin burbuja flotante)
-                '<button type="button" class="prl-hql" onclick="VIP.lobby.ql()">' + ico('wallet') + '<span>Carga rápida</span></button></header>' : '') + // #920 (owner): el saldo como figura en cada página
+                '<button type="button" class="prl-hql" onclick="VIP.lobby.ql()">' + ico('wallet') + '<span>CARGA RÁPIDA</span></button></header>' : '') + // #920 (owner): el saldo como figura en cada página
             (sk.wordmark ? '' : '<div class="prl-pr-bal" id="prlPrBal"></div>') + // #920: PICA ROJA = la misma tira de saldo del Inicio de la app
             '<main class="prl-main" id="prlMain"></main>' +
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
@@ -708,7 +708,12 @@ VIP.lobby = (function () {
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
+<<<<<<< ours
         if (_skin === 'jugaygana') setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === 'jugaygana') VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); // F982
+=======
+        // F982/F984: JUGAYGANA y Ganamos abren con la Carga rápida desplegada; cerrada, queda el botón CARGA RÁPIDA de arriba
+        if (_skin === 'jugaygana' || _skin === 'ganamos') { const sk0 = _skin; setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === sk0) VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); }
+>>>>>>> theirs
         try { if ($('prlQl') && !sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.

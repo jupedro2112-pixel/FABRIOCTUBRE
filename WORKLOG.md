@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 999. Saldo en la cabecera de JUGAYGANA y Ganamos abre con la Carga rápida desplegada (= F984) — SW v672
+
 ### 998. JUGAYGANA con el menú ☰ oficial: Inicio · Casino · Casino en vivo · Eventos deportivos, sin Tareas diarias (= F983) — SW v671
 
 ### 997. Dominios de marca sin "Cerrar sesión" y con sesión que se renueva sola (= F981) + JUGAYGANA con cabecera/menú como jugaygana44 (= F982) — SW v670

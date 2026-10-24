@@ -679,3 +679,6 @@ html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !import
 .jg-mi:nth-child(even) { background: #2a2a2a; }
 .jg-mi:active { background: #3a3a3a; }
 .jg-mi svg { width: 22px; height: 22px; flex: 0 0 22px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* F984: saldo al lado de CARGA RÁPIDA en la cabecera de JUGAYGANA */
+.jg-bal { color: #f2ce00; font: 700 13px Roboto, Arial, sans-serif; white-space: nowrap; margin-right: 6px; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
