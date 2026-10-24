@@ -168,6 +168,12 @@
     // adjuntar + Retirar). Se usa al elegir el menú, al entrar con ese menú fijo y al tocar Inicio.
     function _giroxDirect() {
         try { if (VIP.ui && VIP.ui._casinoOpen) return; } catch (_) {}
+        // #957: en el sitio JUGAYGANA o entrando por el link de una página de marca (/jugaygana, /ganamosoficial, /paginaoficial) NUNCA se abre
+        // la web de Girox encima: se queda (o se abre) esa página.
+        try {
+            if (window.VIP_SITE === 'jugaygana') { setTimeout(() => { try { if (!document.body.classList.contains('prl-open')) VIP.lobby.open('inicio', 'jugaygana'); } catch (_) {} }, 350); return; }
+            if (/[?&](jg|gn|pr)=1\b/.test(location.search) || document.body.classList.contains('prl-open')) return;
+        } catch (_) {}
         // #672 (owner): abre Girox porque es la plataforma seleccionada; cuando haya otras con API, abre la preferida del cliente.
         setTimeout(() => { try { const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
     }

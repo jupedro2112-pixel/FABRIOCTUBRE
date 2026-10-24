@@ -25507,9 +25507,17 @@ app.get('/api/games/img', async (req, res) => {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 10000);
     try {
       const r = await fetch(u, { signal: ctrl.signal, redirect: 'error', headers: { Accept: 'image/avif,image/webp,image/*' } }); // sin redirecciones (no seguir a otro host)
-      const type = String(r.headers.get('content-type') || '').split(';')[0];
-      if (!r.ok || !/^image\/(png|jpe?g|webp|gif|avif)$/i.test(type)) return res.status(404).end();
+      let type = String(r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+      if (!r.ok) return res.status(404).end();
       const buf = Buffer.from(await r.arrayBuffer()); if (buf.length > 1024 * 1024) return res.status(413).end();
+      // #957: img-girox.red777.win manda las portadas como application/octet-stream: el tipo se reconoce por el contenido (sólo imágenes).
+      if (!/^image\/(png|jpe?g|webp|gif|avif)$/.test(type)) {
+        const h = buf.subarray(0, 12);
+        type = (h[0] === 0xff && h[1] === 0xd8 && h[2] === 0xff) ? 'image/jpeg' : (h.toString('hex', 0, 4) === '89504e47') ? 'image/png'
+          : (h.toString('latin1', 0, 4) === 'RIFF' && h.toString('latin1', 8, 12) === 'WEBP') ? 'image/webp' : (h.toString('latin1', 0, 4) === 'GIF8') ? 'image/gif'
+          : (h.toString('latin1', 4, 12) === 'ftypavif') ? 'image/avif' : '';
+        if (!type) return res.status(404).end();
+      }
       res.set('Content-Type', type); res.set('Cache-Control', 'public, max-age=86400, immutable'); res.set('X-Content-Type-Options', 'nosniff');
       res.send(buf);
     } finally { clearTimeout(t); }

@@ -292,6 +292,15 @@ VIP.lobby = (function () {
             _allProv = null; _allCat = { label: it.label, q: it.q || '', sort: it.sort || '', key }; _view = 'all'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0;
         });
     }
+    // #957 (owner: "como en las fotos"): el pie de su página: logo, derechos y los accesos por Secciones / Juegos / Deportes (todo abre acá).
+    function _jgFooter() {
+        const l = (t, on) => '<button type="button" onclick="' + on + '">' + esc(t) + '</button>';
+        const sp = ((_data && _data.sports) || []).map((x) => l(x.title, "VIP.lobby.sport('" + esc(x.path) + "')")).join('');
+        return '<footer class="jg-foot"><img src="' + SK().logo + '" alt="JUGAYGANA" class="jg-foot-logo" loading="lazy"><p>' + new Date().getFullYear() + ' Todos los derechos reservados.</p>' +
+            '<div class="jg-foot-cols"><div><b>Secciones</b>' + l('Casino', "VIP.lobby.go('slots')") + l('Casino en Vivo', "VIP.lobby.go('vivo')") + l('Torneos', "VIP.lobby.jgCat('torneos')") + '</div>' +
+            '<div><b>Juegos</b>' + l('Tragamonedas', "VIP.lobby.go('slots')") + l('Ruletas', "VIP.lobby.jgCat('ruletas')") + l('Jackpots', "VIP.lobby.jgCat('jackpots')") + l('Juegos de mesa', "VIP.lobby.jgCat('mesa')") + '</div>' +
+            (sp ? '<div><b>Deportes</b>' + sp + '</div>' : '') + '</div></footer>';
+    }
     function _jgCatnav(active) {
         const items = (_jgHomeData && _jgHomeData.catnav) || []; if (!items.length) return '';
         return '<nav class="jg-catnav" aria-label="Categorías"><div class="jg-catnav-s">' + items.map((it) => '<button type="button" class="jg-catnav-i' + (it.key === active ? ' on' : '') + '" onclick="VIP.lobby.jgCat(\'' + it.key + '\')"><span class="jg-catnav-ic"><svg viewBox="0 0 24 24" width="24" height="24" fill="none">' + it.svg + '</svg></span><span class="jg-catnav-l">' + esc(it.label) + '</span></button>').join('') + '</div><div class="jg-catnav-t"><i></i></div></nav>';
@@ -318,7 +327,7 @@ VIP.lobby = (function () {
             cols +
             ((d.live || []).length ? '<section class="jg-sec">' + t('Casino en Vivo') + '<div class="jg-live">' + d.live.map((l) => '<button type="button" onclick="VIP.lobby.go(\'vivo\')" aria-label="' + esc(l.label) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.label) + '" loading="lazy"></button>').join('') + '</div></section>' : '') +
             ((d.covers || []).length ? '<div class="jg-covers">' + d.covers.map((c) => '<button type="button" class="jg-cover" onclick="VIP.lobby.go(\'' + esc(c.view) + '\')"><img src="' + esc(c.img) + '" alt="" loading="lazy"><span>' + esc(c.label) + '</span></button>').join('') + '</div>' : '') +
-            '</div>' +
+            '</div>' + _jgFooter() +
             '<div class="jg-provsheet" id="jgProv" hidden onclick="if(event.target===this)VIP.lobby.jgProv(false)"><div class="jg-provmodal"><div class="jg-provtop"><button type="button" onclick="VIP.lobby.jgProv(false)">CERRAR</button></div><div class="jg-provlist" id="jgProvList">' +
             _jgProvListHtml() + '</div></div></div>'; // #937: sus proveedores, en su orden y con su logo
     }

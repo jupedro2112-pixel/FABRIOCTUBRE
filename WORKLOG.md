@@ -8,6 +8,21 @@
 
 ## Sesión 2026-10-22
 
+### 957. Revisión de JUGAYGANA y Ganamos con CAPTURAS REALES (Chrome sin pantalla) contra las fotos de los zip — SW v646
+**Owner:** "¿le metiste de lleno? Mirando las fotos, seguí ajustando que hay cosas que no viste". Se armó un Chrome headless en el scratchpad
+(puppeteer-core + Chromium de npm `@sparticuz/chromium`; Google bloquea la descarga directa por Tor) que entra a Render con el usuario de prueba
+y sirve js/css/datos/imágenes de la PC (API real) para ver cada ajuste antes de subirlo. Lo que apareció y se arregló:
+- **La web de Girox se abría ENCIMA** al entrar por /jugaygana (o /ganamosoficial, /paginaoficial) con un usuario con menú "Girox directo"
+  (verificación de edad de 1GIROX). `home.js _giroxDirect`: en el sitio JUGAYGANA abre JUGAYGANA y con `?jg|gn|pr=1` o una página de marca
+  abierta no hace nada.
+- **Portadas de "Juegos nuevos" vacías (~3.700):** img-girox.red777.win responde `application/octet-stream` y `/api/games/img` lo rechazaba.
+  Ahora el tipo se reconoce por los primeros bytes (jpeg/png/webp/gif/avif; cualquier otra cosa sigue siendo 404).
+- **JUGAYGANA como jugaygana44:** la búsqueda + Proveedores quedan fijas arriba junto con las categorías; carteles CASINO / CASINO EN VIVO /
+  EVENTOS DEPORTIVOS completos (sin "…"); pie con logo, derechos y accesos Secciones / Juegos / Deportes (`_jgFooter`, todo abre adentro).
+- **Ganamos:** los destacados de arriba (en su inicio: Dog Chaos · Gana Volcano · Buffalo Power Megaways) con sus portadas recortadas de la foto
+  (`images/ganamos/tile-*.webp`); Buffalo Power Megaways = 5/buffalo_megaways_ps_html de Girox. Dog Chaos no está en Girox (oculto). Si son
+  menos de 3 quedan centrados. "Exclusivo de Ganamos" suma Buffalo Power Megaways.
+
 ### 956. JUGAYGANA con SU cabecera (como jugaygana44, sin saldo) y las casas de deportes en el menú ☰ — SW v645
 **Owner:** (captura de las tarjetas Digitain/Ultim8/Caballos/TurfWin/Póker) "esto sacalo; armalo como se ve en el zip (ads.zip), ahí está el
 menú de la parte superior y todo; sacá el saldo para que no moleste pero armalo igual en JUGAYGANA". `lobby.js _shell` (skin jugaygana):
