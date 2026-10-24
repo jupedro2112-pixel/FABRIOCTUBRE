@@ -82,7 +82,20 @@ VIP.ui = (function () {
 
     // ---- Screen switching ----
 
+    // #980: en un dominio de marca no hay login ni registro: sin sesión se muestra "entrá desde PICA ROJA" (el pase de la app es la única puerta).
+    function _brandLockScreen() {
+        try { document.documentElement.classList.remove('access-pending'); document.documentElement.classList.add('jyg-ready'); } catch (_) {}
+        try { const ls = document.getElementById('loginScreen'); if (ls) ls.classList.add('hidden'); const cs = document.getElementById('chatScreen'); if (cs) cs.classList.add('hidden'); } catch (_) {}
+        if (document.getElementById('brandLock')) return;
+        const main = String(window.VIP_MAIN_URL || '/'); const safe = /^https:\/\/[\w.-]+\/?$/.test(main) ? main : '/';
+        document.body.insertAdjacentHTML('beforeend', '<div id="brandLock" style="position:fixed;inset:0;z-index:2147483600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#111;color:#fff;text-align:center;font:600 16px/1.45 system-ui,sans-serif">' +
+            '<img src="/icons/icon-192x192.png" alt="" width="84" height="84" style="border-radius:20px">' +
+            '<div style="font-size:20px;font-weight:800">Entrá desde la app de PICA ROJA</div>' +
+            '<div style="max-width:340px;opacity:.85;font-weight:500">Esta página se abre sólo desde tu cuenta de PICA ROJA. Abrí la app y tocá la plataforma: entrás directo, sin claves.</div>' +
+            '<a href="' + safe + '" style="display:inline-block;padding:14px 22px;border-radius:14px;background:#e11d2a;color:#fff;text-decoration:none;font-weight:800">Ir a PICA ROJA</a></div>');
+    }
     function showLoginScreen() {
+        if (window.VIP_BRAND_LOCK) { _brandLockScreen(); return; } // #980
         try { document.documentElement.classList.remove('has-session'); document.documentElement.classList.remove('access-pending'); } catch (_) {} // #581 // #342: el token no sirvió → ahora sí el login
         document.getElementById('loginScreen').classList.remove('hidden');
         // #283: sin sesión no hay carga gratis pendiente que mostrar.

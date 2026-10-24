@@ -30,10 +30,10 @@
     function scan(root) {
         if (!root) return;
         if (root.nodeType === 3) { fixText(root); return; }
-        if (root.nodeType !== 1 || SKIP[root.tagName]) return;
+        if (root.nodeType !== 1 || SKIP[root.tagName] || root.id === 'brandLock') return; // #980: el cartel "entrá desde PICA ROJA" no se traduce
         fixEl(root);
         const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-            acceptNode: (n) => (n.nodeType === 1 && SKIP[n.tagName] ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+            acceptNode: (n) => (n.nodeType === 1 && (SKIP[n.tagName] || n.id === 'brandLock') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
         });
         let n; while ((n = w.nextNode())) { if (n.nodeType === 3) fixText(n); else fixEl(n); }
     }

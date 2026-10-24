@@ -8,6 +8,15 @@
 
 ## Sesión 2026-10-24
 
+### 980. Dominios de marca SIN registro ni inicio de sesión: sólo se entra desde PICA ROJA — SW v668
+**Pedido (owner):** "cuando cargue el dominio, ¿va a estar lo del botón? En la página no quiero registro ni acceso: que sólo se pueda usar desde PICA ROJA, la
+gente que tenga acceso. Sin fricción". El "botón" es tocar la marca en la app (#979: pasa logueado). Ahora, en un host que figure en `Config['brandDomains']`:
+- server.js (middleware antes de las landings): `POST` de login / login con OTP / platform-login / quick-entry / registro / OTP de registro / recuperar clave /
+  `landing/signup` ⇒ 403 `BRAND_APP_ONLY`; `GET /l/*`, `/landing`, `/ingreso`, `/registro` ⇒ redirige a `/`. `/api/auth/access-link` (el pase) sigue abierto.
+- `GET /` en ese host inyecta `window.VIP_BRAND_LOCK=1` + `VIP_MAIN_URL` (`getPublicBaseUrl()`); `ui.showLoginScreen` muestra en su lugar el cartel
+  "Entrá desde la app de PICA ROJA" con el botón a picaroja (site.js no lo traduce a JUGAYGANA). Cerrar sesión ahí ⇒ el mismo cartel.
+- En picaroja.com (dominio principal) nada cambia: login y registro como siempre. Usuarios y API: siempre la misma cuenta de 1girox.
+
 ### 979. Dominio propio por marca (PICA ROJA / JUGAYGANA / Ganamos) con pase LOGUEADO desde la app — SW v667 · admin SW
 **Pedido (owner):** "si abro el dominio adentro de la app, ¿queda logueado? configuralo para que sea así; todavía no tengo los dominios".
 - Panel → Configuración → **🌐 Dominios de las marcas** (`Config['brandDomains']`, sólo el admin general guarda; `GET/PUT /api/admin/brand-domains`,

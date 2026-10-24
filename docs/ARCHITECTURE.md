@@ -1519,4 +1519,5 @@ plata ni sueldos). Foto: `storyImage` (SVG, `GET /api/stories/:id/auto.svg?v=STO
 marcas. `lobby.js` `_toDomain`: si la marca tiene dominio y estamos en otro, `POST /api/auth/brand-link` → token de un solo uso en `User.installLinks` →
 `https://<dominio>/?<jg|gn|pr>=1&acceso=…` (lo canjea `tryAccessLink` en auth.js). Los dominios cargados se suman solos a CORS (`_brandDomainOrigins`).
 La sesión vive en el localStorage de cada dominio: un cliente que entra directo al dominio sin el link inicia sesión una vez.
-
+- **#980:** en un dominio de marca NO hay login ni registro (middleware `_isBrandHost` + `_BRAND_HOST_DENY` en server.js; `GET /` inyecta `VIP_BRAND_LOCK` y
+  `ui.showLoginScreen` muestra "Entrá desde la app de PICA ROJA"). Única puerta: el pase de la app (`/api/auth/access-link`).
