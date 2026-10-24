@@ -465,6 +465,7 @@ VIP.auth = (function () {
 
             if (response.ok) {
                 const data = await response.json();
+                try { _brandRenew(); } catch (_) {} // F981
 
                 if (!data.user || !data.user.username) {
                     const userResponse = await fetch(`${VIP.config.API_URL}/api/users/me`, {
@@ -741,7 +742,15 @@ VIP.auth = (function () {
         return false;
     }
 
+    // F981: en un dominio de marca (VIP_BRAND_LOCK) la sesión no se cierra y se renueva sola una vez por día (30 días desde la última visita).
+    function _brandRenew() {
+        if (!window.VIP_BRAND_LOCK || !VIP.state.currentToken) return;
+        try { if (Date.now() - Number(localStorage.getItem('vip_renew_at') || 0) < 86400000) return; } catch (_) {}
+        fetch(VIP.config.API_URL + '/api/auth/renew', { method: 'POST', headers: { Authorization: 'Bearer ' + VIP.state.currentToken } })
+            .then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.token) { VIP.state.currentToken = j.token; localStorage.setItem('userToken', j.token); localStorage.setItem('vip_renew_at', String(Date.now())); } }).catch(() => {});
+    }
     function handleLogout() {
+        if (window.VIP_BRAND_LOCK) return; // F981: sin cierre de sesión en los dominios de marca
         // Avisar al backend para limpiar el token FCM de este dispositivo, así
         // las notificaciones del próximo user no se entregan a la sesión cerrada.
         // Best-effort: no bloqueamos el logout si la llamada falla (offline, etc.).

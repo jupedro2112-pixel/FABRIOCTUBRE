@@ -665,3 +665,8 @@ html body #basicPlats .bv-chip .plat-reco, html body #basicPlats .bv-chip em, ht
    — banner, barra del casino y ventana — usa su negro y amarillo en vez del violeta de PICA ROJA. */
 :root:has(#prLobby.prl-jyg:not([hidden])), html.jyg-ready:has(#prLobby.prl-jyg) { --srt-g: #121212; --srt-g2: #262626; --srt-g3: #f2ce00; --srt-soft: #fff8d6; --srt-line: #ecd46a; --srt-ink: #fff; --srt-lite: #f2ce00; --srt-sh: rgba(242, 206, 0, .22); } /* soft claro: el texto del sorteo usa --srt-g encima */
 :root:has(#prLobby.prl-jyg:not([hidden])) .srt-ban em, :root:has(#prLobby.prl-jyg:not([hidden])) .srt-ban-t b { color: #f2ce00; }
+/* F981: en los dominios de marca no se puede cerrar sesión (queda siempre iniciada) */
+html.brand-lock #pfLogoutBtn, html.brand-lock .pf-logout { display: none !important; }
+/* F982: CARGA RÁPIDA en el lugar del INGRESAR de jugaygana44 (recuadro con borde) */
+.jg-qlbtn { border: 1px solid #fff; border-radius: 4px; background: transparent; color: #fff; padding: 9px 12px; font: 700 11.5px Roboto, Arial, sans-serif; letter-spacing: .4px; white-space: nowrap; cursor: pointer; margin-right: 4px; }
+.jg-qlbtn:active { background: #f2ce00; border-color: #f2ce00; color: #111; }

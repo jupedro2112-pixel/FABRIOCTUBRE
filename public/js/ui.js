@@ -82,7 +82,12 @@ VIP.ui = (function () {
 
     // ---- Screen switching ----
 
+<<<<<<< ours
     // F980: en un dominio de marca no hay login ni registro: sin sesión se muestra "entrá desde PICA ROJA" (el pase de la app es la única puerta).
+=======
+    // #980: en un dominio de marca no hay login ni registro: sin sesión se muestra "entrá desde PICA ROJA" (el pase de la app es la única puerta).
+    try { if (window.VIP_BRAND_LOCK) document.documentElement.classList.add('brand-lock'); } catch (_) {} // F981: sin "Cerrar sesión" (pin.css)
+>>>>>>> theirs
     function _brandLockScreen() {
         try { document.documentElement.classList.remove('access-pending'); document.documentElement.classList.add('jyg-ready'); } catch (_) {}
         try { const ls = document.getElementById('loginScreen'); if (ls) ls.classList.add('hidden'); const cs = document.getElementById('chatScreen'); if (cs) cs.classList.add('hidden'); } catch (_) {}

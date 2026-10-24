@@ -10033,6 +10033,17 @@ app.put('/api/admin/brand-domains', authMiddleware, adminMiddleware, async (req,
     logger.info(`[brand-domains] ${req.user.username}: ${JSON.stringify(now)}`); res.json({ success: true, domains: now });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
+// F981 (owner: "que no se pueda cerrar sesión en cada página, que quede siempre iniciado"): en un dominio de marca la app renueva su sesión (30 días
+// desde la última visita). Sólo clientes y con el mismo tokenVersion (una sesión revocada desde el panel no se renueva: authMiddleware la rechaza antes).
+app.post('/api/auth/renew', authMiddleware, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
+    const u = await User.findOne({ id: req.user.userId }).select('id username role tokenVersion isBlocked isActive').lean();
+    if (!u || u.isBlocked || u.isActive === false) return res.status(403).json({ error: 'Cuenta no disponible' });
+    const token = jwt.sign({ userId: u.id, username: u.username, role: u.role, tokenVersion: u.tokenVersion ?? 0 }, JWT_SECRET, { expiresIn: '30d' });
+    res.set('Cache-Control', 'no-store'); res.json({ success: true, token });
+  } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
+});
 app.post('/api/auth/brand-link', authMiddleware, async (req, res) => {
   try {
     if (!req.user || req.user.role !== 'user') return res.status(403).json({ error: 'Solo cuentas de clientes' });
@@ -13061,7 +13072,7 @@ async function initializeData() {
   // después se cambia en Configuración → Registro de clientes.
   // #968 (owner): partidos del día en las historias automáticas ENCENDIDOS, y las campañas futuras del autopiloto de oct/nov se recrean con el
   // refuerzo (el autopiloto las vuelve a programar solo a los 5 min del arranque; sólo las 'scheduled' con fecha futura, nada enviado).
-  // #981: la explicación del sorteo guardada con el texto viejo pasa al nuevo (tickets + puntos con techo).
+  // F981: la explicación del sorteo guardada con el texto viejo pasa al nuevo (tickets + puntos con techo).
   try { if (!(await getConfig('mig981SorteosV2', null))) { const r = await Command.updateOne({ name: '/sys_sq_sorteo', response: /cada \{ptsper\} apostados con plata real = \{pts\} puntos/ }, [{ $set: { response: { $replaceOne: { input: '$response', find: "🧮 Cómo sumás puntos: cada {ptsper} apostados con plata real = {pts} puntos (los bonos no suman). Se actualiza cada 20 minutos y ves tu puesto en vivo, con los demás nombres tapados.", replacement: "🧮 Puntos (ranking, 2° y 3° premio): {puntos}. Los bonos no suman.\\n\\n🎟️ Tickets (1° premio): {tickets}. Cada ticket es un número a tu nombre que ves en \"Mis tickets\"; al cierre publicamos la huella del sorteo y el día del sorteo la semilla: cualquiera puede verificar el ganador.\\n\\nTodo se actualiza cada 20 minutos y ves tu puesto, tus puntos y tus tickets en vivo, con los demás nombres tapados." } } } }]).catch(() => null); await Config.set('mig981SorteosV2', new Date().toISOString(), 'startup-migration'); logger.info('[mig981] explicación del sorteo: ' + ((r && r.modifiedCount) || 0) + ' actualizada(s)'); } } catch (e) { logger.warn('[mig981] ' + e.message); }
   // F979 (owner): bonos a las 19 h ⇒ las campañas futuras del autopiloto (programadas a las 20:00) se borran y el tick las rearma a las 19:00.
   try { if (!(await getConfig('mig979Hora19', null))) { const r = await _autopilotClearFuture(); await Config.set('mig979Hora19', new Date().toISOString(), 'startup-migration'); logger.info('[mig979] autopiloto a las 19 h: ' + r + ' campañas futuras rearmadas'); } } catch (e) { logger.warn('[mig979] ' + e.message); }
@@ -21274,7 +21285,7 @@ app.post('/api/admin/datos-ia/usdt', authMiddleware, adminMiddleware, async (req
 // (instalaron, notificaciones, total registrados), todo en recuadros y con clave". CLAVE propia en Config['inicioPinHash'] (sha256; NUNCA en
 // el código: el repo es público). Sin clave creada ⇒ 428 y el panel pide crearla. Header `x-inicio-pin`.
 let _inicioPinCache = { at: 0, hash: undefined };
-// #982 (owner): "pongamos la misma clave a todo" ⇒ si no se creó una clave propia de INICIO, Principal (INICIO, Centro de avisos, Revisión semanal,
+// F982 (owner): "pongamos la misma clave a todo" ⇒ si no se creó una clave propia de INICIO, Principal (INICIO, Centro de avisos, Revisión semanal,
 // Sorteos) usa la CLAVE DE DATOS (Config['datosIaPinHash']). Una sola clave para todo lo que la pide; si algún día quieren separarlas, 🔑 en INICIO.
 async function _inicioPinHash() { if (_inicioPinCache.hash !== undefined && Date.now() - _inicioPinCache.at < 60000) return _inicioPinCache.hash; let h = null; try { h = (await getConfig('inicioPinHash', null)) || (await getConfig('datosIaPinHash', null)); } catch (_) {} _inicioPinCache = { at: Date.now(), hash: h || null }; return _inicioPinCache.hash; }
 app.get('/api/admin/inicio-pin', authMiddleware, adminMiddleware, async (req, res) => { res.json({ enabled: !!(await _inicioPinHash()), canEdit: req.user.role === 'admin' }); });
@@ -22335,10 +22346,10 @@ app.post('/api/admin/support/:userId/quick', authMiddleware, async (req, res) =>
       // #944: resumen de los dos sorteos con los números de la config (fechas, premios, puntos, SORTEO EXTRA, requisitos, cobro).
       const cfg = await _sorteosCfg(); const now = new Date(); const R = sorteosRules;
       const one = (s) => { const p = R.periodOf(s, now); const pr = (s.prizes || []).map((x) => x.pos + '° ' + x.name + (x.value ? ' (' + x.value + ')' : '')).join(' · ');
-        const cuando = p.status === 'soon' ? 'Empieza el ' + R.fmtDay(p.start) : (p.status === 'live' ? 'En curso hasta el ' + R.fmtDay(p.end) : 'Cerrado'); return s.emoji + ' ' + s.title.toUpperCase() + ': ' + cuando + '. El 1° premio se SORTEA entre los tickets de los anotados (más tickets, más chances; todos tienen alguna); el 2° y el 3° son para los dos anotados con más puntos. Premios: ' + pr + '.'; }; // #981
+        const cuando = p.status === 'soon' ? 'Empieza el ' + R.fmtDay(p.start) : (p.status === 'live' ? 'En curso hasta el ' + R.fmtDay(p.end) : 'Cerrado'); return s.emoji + ' ' + s.title.toUpperCase() + ': ' + cuando + '. El 1° premio se SORTEA entre los tickets de los anotados (más tickets, más chances; todos tienen alguna); el 2° y el 3° son para los dos anotados con más puntos. Premios: ' + pr + '.'; }; // F981
       const m = cfg.mensual, g = cfg.gran; const e = m.extra; const pm = R.periodOf(m, now);
       const req = cfg.requirements || {}; const reqs = [req.app && 'app instalada', req.notif && 'notificaciones activadas', req.telegram && 'unido a nuestro Telegram', req.phone && 'número de celular cargado en el Perfil', req.deposit && 'al menos una carga'].filter(Boolean).join(', ') || 'es gratis';
-      const rt = R.rulesText(m); // #981
+      const rt = R.rulesText(m); // F981
       Object.assign(vars, { puntos: rt.pts, tickets: rt.tickets, mensual: m.enabled ? one(m) : '', gran: g.enabled ? one(g) : '', pts: String(m.pts), ptsper: money(m.ptsPer), requisitos: reqs, pago: R.payWindow(pm.end).texto.replace(/ de d{4}$/, '') + ' (dentro de los primeros 10 días del mes siguiente al cierre)',
         extra: [m, g].filter((s) => s.enabled && s.extra && s.extra.enabled).map((s) => '🎁 ' + (s.extra.title || 'SORTEO EXTRA') + ' del ' + s.title + ': ' + s.extra.winners + ' premios de ' + money(s.extra.amount) + ' (' + money(s.extra.amount * s.extra.winners) + ') al azar entre ' + R.extraWho(s.extra, R.extraSpan(s.key)) + '. Con semilla publicada.').join('\n\n') + (m.extra && m.extra.enabled ? '\n\n' : '') }); // #969
     } else if (q.dynamic) {
@@ -26757,8 +26768,8 @@ app.post('/api/admin/inicio/weekly-review/run', authMiddleware, adminMiddleware,
 // tope de 92). Entran TODOS los clientes con una carga real en el período; sólo los ANOTADOS (SorteoEntry) pueden ganar.
 const SorteoEntry = require('./src/models/SorteoEntry');
 const SorteoScore = require('./src/models/SorteoScore');
-const SorteoTicket = require('./src/models/SorteoTicket');   // #981
-const SorteoCounter = require('./src/models/SorteoCounter'); // #981
+const SorteoTicket = require('./src/models/SorteoTicket');   // F981
+const SorteoCounter = require('./src/models/SorteoCounter'); // F981
 const sorteosRules = require('./src/services/sorteos');
 const SORTEO_KEYS = ['mensual', 'gran'];
 const SORTEO_REAL_DEP = { type: 'deposit', status: { $nin: ['failed', 'cancelled'] }, 'metadata.source': { $nin: ['install_bonus', 'welcome_gift', 'welcome_code', 'payout_refund'] }, description: { $not: /PRUEBA/i } };
@@ -26771,7 +26782,7 @@ function _sorteoChecksOf(user, telegramDeclared, hasDeposit) {
   const toks = Array.isArray(user.fcmTokens) ? user.fcmTokens : [];
   const app = user.fcmTokenContext === 'standalone' || toks.some((t) => t && t.context === 'standalone');
   const notif = !!(user.fcmToken || toks.length);
-  const phone = /^\d{10}$/.test(String(user.phone || '').replace(/\D/g, '').slice(-10)); // #981: número de celular cargado (no hace falta verificado)
+  const phone = /^\d{10}$/.test(String(user.phone || '').replace(/\D/g, '').slice(-10)); // F981: número de celular cargado (no hace falta verificado)
   return { app, notif, telegram: !!telegramDeclared, phone, deposit: !!hasDeposit };
 }
 function _sorteoMissing(cfg, checks) { const r = cfg.requirements || {}; return ['app', 'notif', 'telegram', 'phone', 'deposit'].filter((k) => r[k] && !checks[k]); }
@@ -26789,7 +26800,7 @@ async function _sorteoStats(usernames, start, until) {
   }
   return out;
 }
-// #981: emisión de TICKETS (números correlativos por sorteo y período): reserva un bloque en el contador y los inserta. Nunca se quitan.
+// F981: emisión de TICKETS (números correlativos por sorteo y período): reserva un bloque en el contador y los inserta. Nunca se quitan.
 async function _sorteoIssueTickets(key, periodKey, userId, username, reasons, now) {
   const want = reasons.length; if (!want) return null;
   const c = await SorteoCounter.findOneAndUpdate({ key, periodKey }, { $inc: { next: want } }, { upsert: true, new: true }).lean();
@@ -26933,7 +26944,7 @@ async function _sorteoTick(opts) {
 setTimeout(() => { _sorteoTick().catch(() => {}); setInterval(() => { _sorteoTick().catch(() => {}); }, 60 * 60 * 1000); }, 3 * 60 * 1000); // #957: cada hora
 const _sorteoSort = { points: -1, wagered: -1, firstDepositAt: 1 };
 async function _sorteoRankOf(key, periodKey, sc) { if (!sc) return null; const better = await SorteoScore.countDocuments({ key, periodKey, $or: [{ points: { $gt: sc.points } }, { points: sc.points, wagered: { $gt: sc.wagered } }] }); return better + 1; }
-async function _sorteoWinners(key, periodKey, excludeUserId) { const f = { key, periodKey, eligible: true, points: { $gt: 0 } }; if (excludeUserId) f.userId = { $ne: excludeUserId }; return SorteoScore.find(f).sort(_sorteoSort).limit(2).lean(); } // #981: 2 por ranking (el 1° va por tickets)
+async function _sorteoWinners(key, periodKey, excludeUserId) { const f = { key, periodKey, eligible: true, points: { $gt: 0 } }; if (excludeUserId) f.userId = { $ne: excludeUserId }; return SorteoScore.find(f).sort(_sorteoSort).limit(2).lean(); } // F981: 2 por ranking (el 1° va por tickets)
 // #939: quiénes entran al SORTEO de $100.000 del mes: cargas >= minDeposits (y anotados sólo si requireJoin).
 function _sorteoExtraFilter(s, periodKey) { const f = { key: s.key || 'mensual', periodKey, deposits: { $gte: Number(s.extra.minDeposits) || 1 } }; if (s.extra.requireJoin) f.eligible = true; return f; }
 async function _sorteoTelegramUrl() { try { const c = (await getConfig('communityConfig')) || {}; return c.inviteUrl || c.channelUrl || c.url || (await getConfig('canalInformativoUrl', '')) || ''; } catch (_) { return ''; } }
@@ -26960,7 +26971,7 @@ app.get('/api/sorteos', authMiddleware, async (req, res) => {
       ]);
       const myRank = await _sorteoRankOf(key, p.periodKey, mine && mine.points > 0 ? mine : null);
       const rows = top.map((r, i) => ({ rank: i + 1, name: r.userId === user.id ? r.username : sorteosRules.mask(r.username), points: r.points, me: r.userId === user.id, joined: !!r.joined }));
-      // #981: si estoy fuera del top, mis vecinos (2 arriba y 2 abajo) para que se entienda dónde estoy
+      // F981: si estoy fuera del top, mis vecinos (2 arriba y 2 abajo) para que se entienda dónde estoy
       let near = [];
       if (mine && mine.points > 0 && !rows.some((r) => r.me)) {
         const around = await SorteoScore.find({ key, periodKey: p.periodKey, points: { $gt: 0 } }).sort(_sorteoSort).skip(Math.max(0, myRank - 3)).limit(5).select('userId username points joined').lean();
@@ -26972,15 +26983,15 @@ app.get('/api/sorteos', authMiddleware, async (req, res) => {
       const mids = sorteosRules.midDrawDates(s, p, now).map((md) => Object.assign({}, md, { draw: _sorteoDrawPublic(draws[_drawKey(key, p.periodKey, 'mid', md.date)], user.id) }));
       const mainDraw = _sorteoDrawPublic(draws[_drawKey(key, p.periodKey, 'main')], user.id);
       let winners = null, drawKey = key + ':' + p.periodKey, draw = null;
-      if (p.status === 'closed' && now >= p.publishAt) { const mainW = draws[_drawKey(key, p.periodKey, 'main')]; const exclude = mainW && mainW.winner ? mainW.winner.userId : null; winners = (await _sorteoWinners(key, p.periodKey, exclude)).map((w, i) => ({ pos: i + 2, name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), points: w.points, me: w.userId === user.id })); } // #981: 2° y 3° por ranking
+      if (p.status === 'closed' && now >= p.publishAt) { const mainW = draws[_drawKey(key, p.periodKey, 'main')]; const exclude = mainW && mainW.winner ? mainW.winner.userId : null; winners = (await _sorteoWinners(key, p.periodKey, exclude)).map((w, i) => ({ pos: i + 2, name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), points: w.points, me: w.userId === user.id })); } // F981: 2° y 3° por ranking
       if (key === 'mensual' && p.prevKey && now - p.start < 7 * sorteosRules.DAY) { const pm = draws[_drawKey(key, p.prevKey, 'main')]; const pw = await _sorteoWinners(key, p.prevKey, pm && pm.winner ? pm.winner.userId : null); if (pw.length) winners = pw.map((w, i) => ({ pos: i + 2, name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), points: w.points, me: w.userId === user.id, period: p.prevKey })); drawKey = key + ':' + p.prevKey; }
       if (draws[drawKey]) draw = { at: draws[drawKey].at, seed: draws[drawKey].seed, amount: draws[drawKey].amount, winners: (draws[drawKey].winners || []).map((w) => ({ name: w.userId === user.id ? w.username : sorteosRules.mask(w.username), me: w.userId === user.id })) };
       out.push({
         key, title: s.title, emoji: s.emoji, status: p.status, periodKey: p.periodKey, start: p.start, end: p.end, publishAt: p.publishAt,
         startsInMs: Math.max(0, p.start - now), endsInMs: Math.max(0, p.end - now), prizes: s.prizes, extra: s.extra && s.extra.enabled ? s.extra : null, // #969: en los dos
-        rules: { pts: s.pts, ptsPer: s.ptsPer, dayCapArs: s.dayCapArs || 0, dayDepositMin: s.dayDepositMin || 0, dayDepositPts: s.dayDepositPts || 0, weekActiveDays: s.weekActiveDays || 0, weekPts: s.weekPts || 0, missionWeekPct: s.missionWeekPct || 0, tickets: s.tickets, milestones: s.milestones, text: sorteosRules.rulesText(s) }, // #981
-        tickets: { total: tTotal, mine: tMine, list: tList.map((t) => ({ n: t.n, reason: t.reason, at: t.at })), chance: tTotal ? tMine / tTotal : 0 }, // #981
-        draws: { main: mainDraw, mid: mids }, near, // #981
+        rules: { pts: s.pts, ptsPer: s.ptsPer, dayCapArs: s.dayCapArs || 0, dayDepositMin: s.dayDepositMin || 0, dayDepositPts: s.dayDepositPts || 0, weekActiveDays: s.weekActiveDays || 0, weekPts: s.weekPts || 0, missionWeekPct: s.missionWeekPct || 0, tickets: s.tickets, milestones: s.milestones, text: sorteosRules.rulesText(s) }, // F981
+        tickets: { total: tTotal, mine: tMine, list: tList.map((t) => ({ n: t.n, reason: t.reason, at: t.at })), chance: tTotal ? tMine / tTotal : 0 }, // F981
+        draws: { main: mainDraw, mid: mids }, near, // F981
         counts: await (async () => { const c = { anotados, participantes, extraWinners: 0, extraElegibles: 0 }; if (s.extra && s.extra.enabled) { c.extraElegibles = await SorteoScore.countDocuments(_sorteoExtraFilter(s, p.periodKey)); c.extraWinners = sorteosRules.extraWinners(s.extra, c.extraElegibles); } return c; })(),
         me: { joined: !!ent, joinedAt: ent ? ent.joinedAt : null, checks, missing, canJoin: !ent && !missing.length, points: mine ? mine.points : 0, rank: myRank, wagered: mine ? mine.wagered : 0, eligible: !!(mine && mine.eligible), gapTo3, deposits: mine ? mine.deposits : 0, depositDays: mine ? mine.depositDays || 0 : 0, activeWeeks: mine ? mine.activeWeeks || 0 : 0, streakWeeks: mine ? mine.streakWeeks || 0 : 0, ticketsPlay: mine ? mine.ticketsPlay || 0 : 0, ticketsDays: mine ? mine.ticketsDays || 0 : 0, ticketsMilestones: mine ? mine.ticketsMilestones || 0 : 0, weekPts: mine ? mine.weekPts || 0 : 0, breakdown: mine ? { basePts: mine.basePts, dayPts: mine.dayPts, missionPts: mine.missionPts, realShare: mine.realShare, deposits: mine.deposits } : null },
         top: rows, winners, draw, terms: sorteosRules.terms(cfg, key, now)
@@ -27030,12 +27041,12 @@ app.get('/api/admin/sorteos', authMiddleware, adminMiddleware, async (req, res) 
           prev: p.prevKey ? { periodKey: p.prevKey, count: prev.length, winners: sorteosRules.extraWinners(s.extra, prev.length), candidates: prev, draw: draws[key + ':' + p.prevKey] || null, drawDay: p.start } : null };
       }
       const scByUser = new Map((await SorteoScore.find({ key, periodKey: p.periodKey, userId: { $in: entries.map((e) => e.userId) } }).select('userId points deposits depositTotal wagered eligible').lean()).map((x) => [x.userId, x]));
-      const [tTotal, tByReason, tLast, t7] = await Promise.all([SorteoTicket.countDocuments({ key, periodKey: p.periodKey }), SorteoTicket.aggregate([{ $match: { key, periodKey: p.periodKey } }, { $group: { _id: '$reason', n: { $sum: 1 } } }]), SorteoTicket.find({ key, periodKey: p.periodKey }).sort({ n: -1 }).limit(60).select('n username reason at').lean(), SorteoTicket.countDocuments({ key, periodKey: p.periodKey, at: { $gte: new Date(now.getTime() - 7 * sorteosRules.DAY) } })]); // #981
+      const [tTotal, tByReason, tLast, t7] = await Promise.all([SorteoTicket.countDocuments({ key, periodKey: p.periodKey }), SorteoTicket.aggregate([{ $match: { key, periodKey: p.periodKey } }, { $group: { _id: '$reason', n: { $sum: 1 } } }]), SorteoTicket.find({ key, periodKey: p.periodKey }).sort({ n: -1 }).limit(60).select('n username reason at').lean(), SorteoTicket.countDocuments({ key, periodKey: p.periodKey, at: { $gte: new Date(now.getTime() - 7 * sorteosRules.DAY) } })]); // F981
       const mids = sorteosRules.midDrawDates(s, p, now).map((md) => Object.assign({}, md, { draw: draws[_drawKey(key, p.periodKey, 'mid', md.date)] || null }));
       out[key] = {
         period: { key: p.periodKey, start: p.start, end: p.end, publishAt: p.publishAt, status: p.status },
-        tickets: { total: tTotal, last7: t7, byReason: Object.fromEntries(tByReason.map((r) => [r._id, r.n])), last: tLast }, // #981
-        mainDraw: draws[_drawKey(key, p.periodKey, 'main')] || null, prevMainDraw: p.prevKey ? (draws[_drawKey(key, p.prevKey, 'main')] || null) : null, midDraws: mids, // #981
+        tickets: { total: tTotal, last7: t7, byReason: Object.fromEntries(tByReason.map((r) => [r._id, r.n])), last: tLast }, // F981
+        mainDraw: draws[_drawKey(key, p.periodKey, 'main')] || null, prevMainDraw: p.prevKey ? (draws[_drawKey(key, p.prevKey, 'main')] || null) : null, midDraws: mids, // F981
         counts: { anotados: entries.length, participantes, anotadosConPuntos: ranking.filter((r) => r.joined).length, extraElegibles: elig, extraGanadores: sorteosRules.extraWinners(s.extra, elig) },
         anotados: entries.map((e) => { const sc = scByUser.get(e.userId); return { id: e.id, userId: e.userId, username: e.username, joinedAt: e.joinedAt, checks: e.checks, telegram: !!e.telegramDeclared, points: sc ? sc.points : 0, deposits: sc ? sc.deposits : 0, depositTotal: sc ? sc.depositTotal : 0, wagered: sc ? sc.wagered : 0, eligible: !!(sc && sc.eligible) }; }),
         ranking: ranking.map((r, i) => ({ rank: i + 1, userId: r.userId, username: r.username, points: r.points, basePts: r.basePts, dayPts: r.dayPts, weekPts: r.weekPts || 0, missionPts: r.missionPts, tickets: r.tickets || 0, activeWeeks: r.activeWeeks || 0, wagered: r.wagered, wageredCounted: r.wageredCounted || 0, realShare: r.realShare, deposits: r.deposits, depositTotal: r.depositTotal, depositDays: r.depositDays, missionWeeks: r.missionWeeks, joined: r.joined, eligible: r.eligible, updatedAt: r.updatedAt })),
@@ -27093,7 +27104,7 @@ app.post('/api/admin/sorteos/recalc', authMiddleware, adminMiddleware, async (re
 });
 // SORTEO de $100.000 del mensual (#939): verificable, entre TODOS los que cargaron >= minDeposits veces en el mes (semilla publicada + shuffle
 // determinista SHA-256 sobre la lista ordenada por id). Se sortea el día 1 el mes CERRADO (periodKey del mes anterior); el mes en curso sólo con early:true.
-// #981: tickets de un cliente (buscador del panel)
+// F981: tickets de un cliente (buscador del panel)
 app.get('/api/admin/sorteos/:key/tickets', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const key = String(req.params.key || ''); if (!SORTEO_KEYS.includes(key)) return res.status(404).json({ error: 'Sorteo inexistente' });
@@ -27103,7 +27114,7 @@ app.get('/api/admin/sorteos/:key/tickets', authMiddleware, adminMiddleware, asyn
     res.json({ success: true, periodKey, total: await SorteoTicket.countDocuments({ key, periodKey }), list });
   } catch (e) { res.status(500).json({ error: 'Error del servidor' }); }
 });
-// #981: sorteo del 1° premio / quincenal: 1) publicar la huella (commit) · 2) revelar la semilla y sacar el ganador (reveal)
+// F981: sorteo del 1° premio / quincenal: 1) publicar la huella (commit) · 2) revelar la semilla y sacar el ganador (reveal)
 app.post('/api/admin/sorteos/:key/draw/:step', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Sólo el administrador general.' });
@@ -27116,7 +27127,7 @@ app.post('/api/admin/sorteos/:key/draw/:step', authMiddleware, adminMiddleware, 
     res.json({ success: true, draw: d });
   } catch (e) { logger.error('[sorteos] draw/' + req.params.step + ': ' + e.message); res.status(500).json({ error: 'Error del servidor' }); }
 });
-// #981: estadística mínima para PRINCIPAL → "¿están sirviendo los sorteos?" (bajo la clave de INICIO)
+// F981: estadística mínima para PRINCIPAL → "¿están sirviendo los sorteos?" (bajo la clave de INICIO)
 app.get('/api/admin/inicio/sorteos-stats', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const cfg = await _sorteosCfg(); const now = new Date(); const D = sorteosRules.DAY; const draws = (await getConfig('sorteoDraws', null)) || {}; const out = [];

@@ -61,9 +61,10 @@ VIP.lobby = (function () {
             // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
             // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
             (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
-                '<div class="jg-hr"><button type="button" class="jg-hi" onclick="VIP.lobby.support()" aria-label="Soporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/></svg></button>' +
+                '<div class="jg-hr">' + // F982 (owner, captura de jugaygana44): sin el botón de Soporte; su "INGRESAR" es nuestro CARGA RÁPIDA
+
                 '<button type="button" class="jg-hi" onclick="VIP.stories.open()" aria-label="Mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></button>' +
-                '<button type="button" class="jg-user" onclick="VIP.lobby.ql()"><b class="js-prl-user">' + esc(_uname()) + '</b><small>CARGA RÁPIDA</small></button>' +
+                '<button type="button" class="jg-qlbtn" onclick="VIP.lobby.ql()">CARGA RÁPIDA</button>' +
                 '<button type="button" class="jg-burger" onclick="VIP.lobby.menu(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div></header>' : '') +
             // #958: BuffaloPlay como thornet: ☰ · actualizar saldo · saldo (= Carga rápida) · chat (Soporte) · usuario (cuenta).
             // #960 (owner: "arriba la barra de PICA ROJA como en todos"): esta va debajo de esa barra, sin el logo.
@@ -707,6 +708,7 @@ VIP.lobby = (function () {
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
+        if (_skin === 'jugaygana') setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === 'jugaygana') VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); // F982
         try { if ($('prlQl') && !sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
@@ -773,7 +775,9 @@ VIP.lobby = (function () {
             (nx ? '<div class="prl-bar"><i style="width:' + pct + '%"></i></div><span class="prl-dr-sub">' + pct + '% · te faltan ' + money(v.faltaParaSubir) + ' apostados para ' + esc((nx.emoji || '') + ' ' + nx.name) + '</span>' : (lv ? '<span class="prl-dr-sub">Nivel máximo</span>' : '')) + '</div>' +
             // #966 (owner: "todas las plataformas lo más parecido posible"): el MISMO menú en las 4 páginas (antes Deportes/Historias/Info sólo en JUGAYGANA).
             '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + _sportsList().map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' + // #956
-            '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
+            (SK().layout === 'jugaygana' ? '<div class="prl-dr-list">' + item('home', 'Inicio', "VIP.lobby.menu(false);VIP.lobby.go('inicio')") + item('slots', 'Casino', "VIP.lobby.menu(false);VIP.lobby.go('slots')") + // F982
+                item('live', 'Casino en vivo', "VIP.lobby.menu(false);VIP.lobby.go('vivo')") + item('sport', 'Eventos deportivos', "VIP.lobby.menu(false);VIP.lobby.sport('/sports-new')") + '</div>' : '') +
+            '<div class="prl-dr-list">' + (SK().layout === 'jugaygana' ? '' : item('chat', 'Soporte', 'VIP.lobby.support()')) + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
             item('fire', 'Sorteos', "VIP.lobby.menu(false);VIP.sorteos.open('mensual')") + item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') +
             (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close(true)')) + '</div>';
     }
