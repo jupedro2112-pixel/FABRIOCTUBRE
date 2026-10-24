@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 1006. Proveedores de PICA ROJA estilo Stake (rojo, logo sin color en blanco) + burbuja de Carga rápida redonda en 2 renglones (= F992/F993) — SW v678
+
 ### 1005. PICA ROJA: abajo Slots · Inicio · Deportes también en el menú opción 1 (= F991) — SW v677
 
 ### 1004. Adentro de PICA ROJA la cabecera del menú completo + PLATAFORMA más abajo (= F990) — SW v676

@@ -738,3 +738,16 @@ body.prl-apphead #prLobby { padding-top: var(--prl-apphead, 64px); box-sizing: b
 
 /* F991: menú opción 1 adentro de PICA ROJA: la barra de la página queda en Slots · Inicio · Deportes, como la de la app */
 body.prl-app3 #prLobby .prl-nav [data-v="vivo"], body.prl-app3 #prLobby .prl-nav [data-v="lobbies"] { display: none !important; }
+
+/* F992 (owner): proveedores de PICA ROJA "como Stake, sobrios, sin tanto color": tarjeta ROJA con el logo del proveedor sin color sobre BLANCO (misma forma, así no se
+   pierde la marca) y su nombre debajo en blanco. Sólo PICA ROJA. */
+#prLobby[data-skin="picaroja"] .prl-pv { flex-basis: 132px; }
+#prLobby[data-skin="picaroja"] .prl-pvb { flex-direction: column; gap: 6px; height: 78px; padding: 10px 10px 8px; border-radius: 10px;
+  background: linear-gradient(160deg, #d0122f 0%, #a50d24 100%); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 10px rgba(165,13,36,.18); }
+#prLobby[data-skin="picaroja"] .prl-pvb img { width: 30px; height: 30px; padding: 3px; box-sizing: content-box; border-radius: 50%; background: #fff; filter: grayscale(1) contrast(1.15); opacity: 1; } /* logo tal cual (forma de la marca) sin color, en un círculo blanco: blanqueado con filtro, los logos con fondo propio quedaban como una mancha */
+#prLobby[data-skin="picaroja"] .prl-pvb b { font: 800 12.5px/1.1 var(--p-font); letter-spacing: .6px; text-transform: uppercase; text-align: center; color: #fff; -webkit-line-clamp: 2; }
+#prLobby[data-skin="picaroja"] .prl-pv:active .prl-pvb { background: linear-gradient(160deg, #b30f28 0%, #8a0a1e 100%); }
+/* F993 (owner): "la burbuja de Carga rápida de todas las plataformas más REDONDA, con CARGA y RÁPIDA uno abajo del otro, así ocupa menos" */
+.prl-ql { flex-direction: column; justify-content: center; gap: 2px; width: 66px; height: 66px; padding: 0 !important; border-radius: 50% !important; text-align: center; }
+.prl-ql img { width: 24px; height: 24px; }
+.prl-ql span { font-size: 8.5px; line-height: 1.05; letter-spacing: .3px; }
