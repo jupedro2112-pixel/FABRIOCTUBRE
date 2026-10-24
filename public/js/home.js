@@ -172,7 +172,7 @@
         // la web de Girox encima: se queda (o se abre) esa página.
         try {
             if (window.VIP_SITE === 'jugaygana') { setTimeout(() => { try { if (!document.body.classList.contains('prl-open')) VIP.lobby.open('inicio', 'jugaygana'); } catch (_) {} }, 350); return; }
-            if (/[?&](jg|gn|pr)=1\b/.test(location.search) || document.body.classList.contains('prl-open')) return;
+            if (/[?&](jg|gn|pr|bp)=1\b/.test(location.search) || document.body.classList.contains('prl-open')) return;
         } catch (_) {}
         // #672 (owner): abre Girox porque es la plataforma seleccionada; cuando haya otras con API, abre la preferida del cliente.
         setTimeout(() => { try { const list = (_platforms && _platforms.platforms) || []; const pref = _platforms && _platforms.preferredPlatform; const pp = list.find((x) => x.id === pref && x.connected); openPlatform(pp ? pp.id : 'girox', { embed: true }); } catch (_) {} }, 350);
@@ -284,7 +284,7 @@
         const b = _el('navPlat'); if (!b) return;
         const p = _platChosen();
         const img = _el('navPlatLogo'), ico = _el('navPlatIco'), lbl = _el('navPlatLbl');
-        const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : ''))));
+        const logo = p && (p.logoUrl || (p.id === 'girox' ? '/images/soporte-1girox.png' : (p.id === 'ganamos' ? '/images/ganamos.png' : (p.id === 'jugaygana' ? '/images/jugaygana.png' : (p.id === 'buffaloplay' ? '/images/buffaloplay/icon-96.png' : '')))));
         if (img && logo) { img.src = logo; img.hidden = false; if (ico) ico.hidden = true; } else { if (img) img.hidden = true; if (ico) ico.hidden = false; }
         if (lbl) lbl.textContent = 'JUGÁ AQUÍ'; // #623 (owner): dice JUGÁ AQUÍ; el logo muestra la elegida
         b.title = p ? ('Jugá en ' + p.name) : 'Elegí dónde jugar con tu saldo';
@@ -823,7 +823,8 @@
     const ENTRY_FALLBACK = [
         { id: 'girox', name: 'Girox', playUrl: 'https://1girox.com', connected: true, logoUrl: '/images/soporte-1girox.png' },
         { id: 'ganamos', name: 'Ganamos', playUrl: '', connected: true, door: true, logoUrl: '/images/ganamos-net.png' }, // #917: ya se juega (página propia)
-        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana/io/logo.webp' } // #378 · #917 · #920
+        { id: 'jugaygana', name: 'JUGAYGANA', playUrl: '', connected: true, door: true, logoUrl: '/images/jugaygana/io/logo.webp' }, // #378 · #917 · #920
+        { id: 'buffaloplay', name: 'Buffalo Play', playUrl: '', connected: true, door: true, logoUrl: '/images/buffaloplay/icon-96.png' } // #958: al lado de JUGAYGANA
     ];
     let _entryPlat = null, _entryUrl = '', _entryTimer = null, _entryBound = false;
     function _entryList() { const l = (_platforms && _platforms.platforms) || []; return l.length ? l : ENTRY_FALLBACK; }
@@ -1202,6 +1203,7 @@
         picaroja: { bg: 'radial-gradient(circle at 50% 35%, #3a0010 0, #0f212e 60%)', logo: '/icons/icon-192x192.png', h: 84, sp: '#e6002a', tx: '#fff', name: 'PICA ROJA' },
         ganamos: { bg: 'radial-gradient(circle at 50% 35%, #5b13a8 0, #130227 65%)', logo: '/images/ganamos/logo.webp', h: 46, sp: '#c457da', tx: '#ededed', name: 'Ganamos' },
         jugaygana: { bg: '#0d1117', logo: '/images/jugaygana/io/logo.webp', h: 40, sp: '#f2ce00', tx: '#fff', name: 'JUGAYGANA' },
+        buffaloplay: { bg: 'radial-gradient(circle at 50% 35%, #2b3445 0, #11141d 65%)', logo: '/images/buffaloplay/logo.webp', h: 44, sp: '#ff8a1f', tx: '#fff', name: 'BuffaloPlay' }, // #958
         girox: { bg: '#0b0b10', logo: '/images/soporte-1girox.png', h: 70, sp: '#22c55e', tx: '#fff', name: 'Girox' }
     };
     function _gameLoadingScreen(win, name) {
@@ -1215,7 +1217,7 @@
     let _lastStep = '';
     // #927: marca desde donde se abre un juego (página abierta, o la elegida); Girox = la de siempre.
     function _openingBrand() { try { const lob = _el('prLobby'); if (lob && !lob.hidden && VIP.lobby && VIP.lobby.skin) return VIP.lobby.skin(); } catch (_) {} const b = _localBrand(); return _isDoor(b) ? b : null; }
-    const _BRAND_BAR = { picaroja: { name: 'PICA ROJA', logo: '/icons/icon-192x192.png' }, ganamos: { name: 'Ganamos', logo: '/images/ganamos/app-icon.png' }, jugaygana: { name: 'JUGAYGANA', logo: '/images/jugaygana/icon.svg' } };
+    const _BRAND_BAR = { picaroja: { name: 'PICA ROJA', logo: '/icons/icon-192x192.png' }, ganamos: { name: 'Ganamos', logo: '/images/ganamos/app-icon.png' }, jugaygana: { name: 'JUGAYGANA', logo: '/images/jugaygana/icon.svg' }, buffaloplay: { name: 'BuffaloPlay', logo: '/images/buffaloplay/icon-192.png' } };
     function brandOf(id) { return _BRAND_BAR[id] || null; }
     // #945: cartel propio (sin Girox) "si entrás a este juego perdés tu bono": resuelve true = entrar igual (1girox lo quita), false = no entrar.
     function _forfeitAsk(name, f) {
@@ -1534,7 +1536,7 @@
     function _platName(pid) {
         const list = (_platforms && _platforms.platforms) || [];
         const p = list.find((x) => x.id === pid);
-        return p ? p.name : (pid === 'ganamos' ? 'Ganamos' : (pid === 'jugaygana' ? 'JUGAYGANA' : 'Girox'));
+        return p ? p.name : (pid === 'ganamos' ? 'Ganamos' : (pid === 'jugaygana' ? 'JUGAYGANA' : (pid === 'buffaloplay' ? 'BuffaloPlay' : 'Girox')));
     }
     function showPlayNow(opts) {
         const o = opts || {};
@@ -2202,8 +2204,8 @@
     const PR_OFF_KEY = 'vip_pr_off';
     // #912: JUGAYGANA también es una PUERTA de la app a la misma cuenta de Girox (página propia /jugaygana). DOORS = puertas; BRANDS = las que
     // tienen saldo "propio" a ojos del cliente (bloqueo #908). localStorage vip_brand = la marca activa en este teléfono.
-    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana/io/logo.webp' }, ganamos: { name: 'Ganamos', emoji: '🟣', logoUrl: '/images/ganamos-net.png' } }; // #914: Ganamos (owner: marca propia) también
-    const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1, ganamos: 1 };
+    const DOORS = { picaroja: { name: 'PICA ROJA', emoji: '♦️', logoUrl: '/icons/icon-96x96.png' }, jugaygana: { name: 'JUGAYGANA', emoji: '🟡', logoUrl: '/images/jugaygana/io/logo.webp' }, ganamos: { name: 'Ganamos', emoji: '🟣', logoUrl: '/images/ganamos-net.png' }, buffaloplay: { name: 'BuffaloPlay', emoji: '🦬', logoUrl: '/images/buffaloplay/icon-96.png' } }; // #958: BuffaloPlay (formato thornet) // #914: Ganamos (owner: marca propia) también
+    const BRANDS = { picaroja: 1, girox: 1, jugaygana: 1, ganamos: 1, buffaloplay: 1 };
     const _isDoor = (id) => !!DOORS[id];
     function _localBrand() { try { const b = localStorage.getItem('vip_brand'); if (BRANDS[b]) return b; return localStorage.getItem(PR_OFF_KEY) === '1' ? 'girox' : 'picaroja'; } catch (_) { return 'picaroja'; } }
     function _setLocalBrand(b) { try { localStorage.setItem('vip_brand', b); if (b === 'girox') localStorage.setItem(PR_OFF_KEY, '1'); else localStorage.removeItem(PR_OFF_KEY); } catch (_) {} }
@@ -2232,7 +2234,7 @@
         try { document.querySelectorAll('.mc-brand').forEach((e) => { e.textContent = n; }); document.querySelectorAll('.mc-brand-up').forEach((e) => { e.textContent = n.toUpperCase(); }); } catch (_) {}
     }
     // #923 (owner): "avisar bien en claro que no pueden cambiar de plataforma si tienen saldo en otra: que jueguen o retiren para poder cambiar".
-    const _BRAND_NAMES = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos' };
+    const _BRAND_NAMES = { picaroja: 'PICA ROJA', girox: 'Girox', jugaygana: 'JUGAYGANA', ganamos: 'Ganamos', buffaloplay: 'BuffaloPlay' };
     function _brandLockModal(d, want) {
         const cur = _BRAND_NAMES[(d && d.brand) || _brand || 'picaroja'] || 'tu plataforma'; const nx = _BRAND_NAMES[want] || 'la otra plataforma';
         const bal = d && d.balance != null ? '$' + Math.round(Number(d.balance) || 0).toLocaleString('es-AR') : 'saldo';
@@ -2257,6 +2259,10 @@
         const gn = list.find((p) => p.id === 'ganamos'); // #914: Ganamos = página /ganamosoficial con los juegos y la cuenta de Girox
         if (gn) Object.assign(gn, { connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl, name: 'Ganamos', playUrl: '', externalUrl: '' });
         else list.push({ id: 'ganamos', name: 'Ganamos', emoji: '🟣', connected: true, door: true, logoUrl: DOORS.ganamos.logoUrl });
+        // #958 (owner: "el botón de BuffaloPlay al lado de JUGAYGANA, en el básico y el completo"): puerta a Girox, justo después de JUGAYGANA.
+        const bp = { id: 'buffaloplay', name: 'Buffalo Play', emoji: '🦬', connected: true, door: true, logoUrl: DOORS.buffaloplay.logoUrl };
+        const bpAt = list.findIndex((p) => p.id === 'buffaloplay'); if (bpAt >= 0) list.splice(bpAt, 1);
+        const jgAt = list.findIndex((p) => p.id === 'jugaygana'); list.splice(jgAt >= 0 ? jgAt + 1 : list.length, 0, bp);
         const lb = _localBrand();
         if (_isDoor(lb)) { _platforms.preferredPlatform = lb; _platforms.defaultPlatform = lb; }
         setTimeout(_paintBrandLabels, 0); // #917

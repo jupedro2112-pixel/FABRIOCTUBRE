@@ -143,7 +143,7 @@ const userSchema = new mongoose.Schema({
   // #929 (owner): el sorteo suma SÓLO desde que el cliente se anota (requisitos: app instalada con notificaciones + tocar "Unirme a Telegram").
   raffleJoinedAt: { type: Date, default: null },
   raffleTelegramAt: { type: Date, default: null },
-  activeBrand: { type: String, enum: ['picaroja', 'girox', 'jugaygana', 'ganamos', null], default: null },
+  activeBrand: { type: String, enum: ['picaroja', 'girox', 'jugaygana', 'ganamos', 'buffaloplay', null], default: null },
   brandHistory: { type: [{ brand: String, since: Date, _id: false }], default: [] },
   mustChangePassword: {
     type: Boolean,

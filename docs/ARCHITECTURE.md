@@ -1406,6 +1406,14 @@ DailyRouletteSpin / Message. Panel → "🧠 Datos IA" (pestañas Análisis · C
 - **Ganamos / JUGAYGANA, datos (#947–#951; #951 = recorte por grilla fija, 2.372 juegos en el orden de sus fotos):** `ganamos-home.json` (filas del inicio + `hw` Halloween), `ganamos-games.json` (proveedores de la
   pestaña Casino), `<marca>-extra.json` ("Juegos nuevos" = lo de Girox que la página no tiene; regenerar si cambian las listas). Portadas propias en
   `images/ganamos/{g,p,hw}` e `images/jugaygana/g`; las de Girox sólo por `/api/games/img`.
+- **BuffaloPlay (#958):** 5ª puerta a la MISMA cuenta de Girox, con el formato de thornet.uno (zip Thornet.zip). `SKINS.buffaloplay`
+  (`layout:'buffaloplay'`) en lobby.js: `_render` la manda entera a `_bpRender` (vistas `inicio` · `slots` · `vivo` · `crazy` · `jglist`). Datos:
+  `buffaloplay-games.json` (proveedores en el orden de sus pestañas, sólo los juegos que Girox tiene, `[key, nombre, portada, gid, lk]`; portadas
+  recortadas de sus capturas en `images/buffaloplay/g/`, las que se veían cortadas usan la de Girox), `buffaloplay-extra.json` (pestaña "Nuevos" =
+  todo el resto de Girox, del más nuevo al más viejo; el buscador busca en los dos archivos, sin API) y `buffaloplay-home.json` (carrusel, Pragmatic
+  Live, Red Rake, mesas en vivo y las listas de Casino en vivo). Favoritos / Recientes = `localStorage vip_bp_favs` / `vip_bp_rec` (del teléfono, NO
+  los favoritos de la cuenta). Entrada: `/buffaloplay` → `/?bp=1`. Marca: `_BRANDS`, `User.activeBrand`, DOORS/BRANDS de home.js (en la lista de
+  plataformas va justo después de JUGAYGANA, con el nombre "Buffalo Play" para que corte en dos líneas), botón 🏷️ del panel (opción 5).
 - **Juego directo con bono activo (#945):** 1girox responde `warn_forfeit` (pedir confirmación y reintentar con `forfeit_bono=1`) o `blocked`
   en vez de `launch_url`; `/api/platform/session` lo devuelve como `forfeit`/`blocked` y `favPlay` pregunta/avisa. Nunca tomarlo como "no hay juego".
 - **Sitio JUGAYGANA (#944):** `VIP_SITE`/`html.site-jyg` (script del head), `js/site.js` (reemplazo de textos/íconos + reabre la página),

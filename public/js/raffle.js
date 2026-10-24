@@ -160,8 +160,8 @@ VIP.raffle = (function () {
         } catch (_) { const m = $('rfMain'); if (m) m.innerHTML = '<div class="rf-note">Sin conexión. Probá de nuevo.</div>'; }
     }
     function open(brand) {
-        _brand = ['picaroja', 'jugaygana', 'ganamos'].includes(brand) ? brand : ((VIP.lobby && VIP.lobby.skin && VIP.lobby.skin()) || 'picaroja');
-        if (!['picaroja', 'jugaygana', 'ganamos'].includes(_brand)) _brand = 'picaroja';
+        _brand = ['picaroja', 'jugaygana', 'ganamos', 'buffaloplay'].includes(brand) ? brand : ((VIP.lobby && VIP.lobby.skin && VIP.lobby.skin()) || 'picaroja');
+        if (!['picaroja', 'jugaygana', 'ganamos', 'buffaloplay'].includes(_brand)) _brand = 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('rf-open'); _render(); _load();
         _countdown();
     }

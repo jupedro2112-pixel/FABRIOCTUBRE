@@ -4,7 +4,31 @@
 > commit por commit está en `git log --oneline`. Esto captura decisiones, umbrales de
 > negocio y pendientes que NO se ven leyendo el código.
 >
-> **Última actualización: 2026-10-23**
+> **Última actualización: 2026-10-24**
+
+## Sesión 2026-10-24
+
+### 958. Página BuffaloPlay con el formato de Thornet (juegos y cuenta de Girox) + botón en los menús — SW v647
+**Owner:** "armame esta (Thornet.zip) con la misma idea, llamala buffaloplay con su logo, usá Girox para todas las APIs pero con este formato de
+página, 100 % idéntica, hasta las fotos de los slots; sólo los juegos que tiene este proveedor; lo nuevo en una sección Nuevos con el buscador; y el
+botón de BuffaloPlay en el menú, al lado de JUGAYGANA, en el básico y el completo, que al elegirla cambie el menú, misma lógica que el resto".
+- **Página (`lobby.js`, skin `buffaloplay`):** cabecera de thornet (☰ secciones · logo · actualizar saldo · saldo = Carga rápida · chat = Soporte ·
+  usuario = cuenta). Inicio: carrusel (su banner "Diversión garantizada" + 3 propios), "Nuestra seleccion Pragmatic Live Casino" (Gates of Olympus
+  Roulette y Blackjack Lobby con sus portadas), Deportivas (abre las casas de deportes), "Recomendados de RedRake" (los 15 de Girox), "Mesas en vivo
+  seleccionadas" (Pragmatic Live más jugadas), redes (abre Historias: no hay cuentas de BuffaloPlay) y su pie (Productos / Nosotros / Promociones;
+  sus torneos "Copa Red Rake"/"Spin or Trick" no van: son de ellos → Sorteo del mes y Juegos nuevos). Slots: Favoritos · Recientes · buscador ·
+  pestañas de proveedores con la flecha que las despliega, grilla de 3 con corazón. Casino en vivo: Pragmatic Play / Ezugi / Vivo Gaming.
+  CrazZy Win!: banner propio (el suyo era la promo "Copa Red Rake 10.000€") + Red Rake.
+- **Juegos:** de sus 17 proveedores, Girox tiene 9 (RedRake, Pragmatic, Ruby Play, Mancala, NetEnt, BetSoft, Ka Gaming, Rival, Evoplay); Spinomenal,
+  DiceLab, RedTiger, Platipus, TomHorn, GameArt, Ortiz y Salsa no aparecen. Las portadas se recortaron por grilla fija (fila cada 107 px; las filas
+  partidas entre dos capturas se arman con las dos partes) y 8 agentes las identificaron contra el catálogo de Girox de cada proveedor (sólo título
+  inequívoco; variantes 88/90/94 sin número visible se saltearon) ⇒ **1.522 juegos**, 1.358 con su portada recortada y 164 con la de Girox (fila cortada
+  en las capturas). Revisión: las portadas con menos parecido a la de Girox eran el juego correcto con otro arte. "Nuevos" = 6.723 juegos de Girox.
+- **Logo:** `images/buffaloplay/` (`logo.svg/webp`, `icon.svg`, `icon-96/192.png`) — búfalo naranja sobre azul noche, hecho para esta marca.
+- **Menús:** BuffaloPlay entra en DOORS/BRANDS (bloqueo por saldo igual que el resto) y en la lista justo después de JUGAYGANA; las 5 plataformas en
+  una sola línea en el básico y el completo. Server: `/buffaloplay` → `/?bp=1`, `_BRANDS`, enum de `User.activeBrand`; panel 🏷️ opción 5 (admin-sw v190).
+- Verificado con capturas locales (Chrome sin pantalla): inicio, Slots, Nuevos desplegado, búsqueda, Casino en vivo, lista de Pragmatic Live,
+  CrazZy Win!, menú ☰ y los botones del básico.
 
 ## Sesión 2026-10-22
 

@@ -39,7 +39,9 @@ VIP.lobby = (function () {
         // #916 (owner: marca propia, jugaygana.io): diseño, banners y orden de colecciones de su inicio, con los juegos y la cuenta de Girox.
         jugaygana: { name: 'JUGAYGANA', sub: '', logo: '/images/jugaygana/io/logo.webp', home: '/images/jugaygana/icon.svg', bar: '/images/jugaygana/icon.svg', cls: 'prl-jyg prl-jio', dir: '/images/jugaygana/', wordmark: true, layout: 'jugaygana' },
         // #914 (owner: marca propia, ganandoargentina.com): diseño y orden de su página, con los juegos y la cuenta de Girox.
-        ganamos: { name: 'Ganamos', sub: '', logo: '/images/ganamos/logo.webp', home: '/images/ganamos/ganamosDogIcon.webp', bar: '/images/ganamos/app-icon.png', cls: 'prl-gn', dir: '/images/ganamos/', wordmark: true, layout: 'ganamos' }
+        ganamos: { name: 'Ganamos', sub: '', logo: '/images/ganamos/logo.webp', home: '/images/ganamos/ganamosDogIcon.webp', bar: '/images/ganamos/app-icon.png', cls: 'prl-gn', dir: '/images/ganamos/', wordmark: true, layout: 'ganamos' },
+        // #958 (owner: marca propia con el formato de thornet.uno): su diseño y su orden, con los juegos y la cuenta de Girox.
+        buffaloplay: { name: 'BuffaloPlay', sub: '', logo: '/images/buffaloplay/logo.webp', home: '/images/buffaloplay/icon.svg', bar: '/images/buffaloplay/icon-192.png', cls: 'prl-bp', dir: '/images/buffaloplay/', wordmark: true, layout: 'buffaloplay' }
     };
     // #922: íconos ORIGINALES de la barra de ganamos.net (deporte, polymarket, casino, en vivo, digitain, gr8).
     const GN_IC = {"sport": "<svg width=\"20\" height=\"21\" viewBox=\"0 0 20 21\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M15.1335 1.7002H4.86686C2.845 1.7002 1.2002 3.345 1.2002 5.36686C1.2002 7.20055 2.55461 8.71968 4.31471 8.98734C4.73813 10.681 5.89686 12.082 7.43353 12.8341V15.1161C6.35985 15.5524 5.60019 16.6052 5.60019 17.8335V18.5669C5.60019 18.9717 5.92873 19.3002 6.33353 19.3002H13.6669C14.0717 19.3002 14.4002 18.9717 14.4002 18.5669V17.8335C14.4002 16.6052 13.6405 15.5524 12.5669 15.1161V12.8341C14.1035 12.082 15.2623 10.681 15.6857 8.98734C17.4458 8.71968 18.8002 7.20055 18.8002 5.36686C18.8002 3.345 17.1554 1.7002 15.1335 1.7002ZM2.66686 5.36686C2.66686 4.41099 3.28024 3.59798 4.13353 3.29523V7.43849C3.28024 7.13574 2.66686 6.32274 2.66686 5.36686ZM7.06686 17.8335C7.06686 17.0246 7.72464 16.3669 8.53353 16.3669H11.4669C12.2757 16.3669 12.9335 17.0246 12.9335 17.8335H7.06686ZM11.1002 14.9002H8.90019V13.3265C9.25701 13.3947 9.62404 13.4335 10.0002 13.4335C10.3764 13.4335 10.7434 13.3947 11.1002 13.3265V14.9002ZM10.0002 11.9669C7.57389 11.9669 5.60019 9.99316 5.60019 7.56686V3.16686H14.4002V7.56686C14.4002 9.99316 12.4265 11.9669 10.0002 11.9669ZM15.8669 7.43849V3.29523C16.7201 3.59798 17.3335 4.41099 17.3335 5.36686C17.3335 6.32274 16.7201 7.13574 15.8669 7.43849Z\" fill=\"white\"></path></svg>", "poly": "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M17.7708 19.5271L2.20312 15.2028V4.82435L17.7708 0.5V19.5271ZM3.93286 13.473V6.55409L15.1762 10.0136L3.93286 13.473ZM16.041 2.22974V9.14869L4.79773 5.68922L16.041 2.22974ZM16.041 17.7974V10.8784L4.79773 14.3379L16.041 17.7974Z\" fill=\"white\"></path></svg>", "casino": "<svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><g clip-path=\"url(#f6104ef7-a34c-4740-b294-140705fef964__clip0_10917_22561)\"><path d=\"M19.668 10.4419L19.668 10.4418L17.661 1.38124L17.661 1.38113C17.5814 1.02401 17.3635 0.713019 17.055 0.516387C16.7464 0.319756 16.3725 0.253542 16.0152 0.332272L16.0151 0.332296L6.95461 2.3393C6.77766 2.37849 6.61017 2.45215 6.46169 2.55608C6.31321 2.66001 6.18665 2.79217 6.08925 2.94501C5.99185 3.09786 5.92551 3.26839 5.89402 3.44687C5.86252 3.62535 5.8665 3.80828 5.90571 3.98522C5.90571 3.98523 5.90571 3.98523 5.90571 3.98523L6.71962 7.65967H1.68042H1.6803C1.31445 7.66008 0.963706 7.8056 0.705011 8.06429C0.446317 8.32299 0.300802 8.67373 0.300391 9.03958V9.0397L0.300391 18.3199L0.300391 18.32C0.300802 18.6858 0.446317 19.0366 0.705011 19.2953C0.963706 19.554 1.31445 19.6995 1.6803 19.6999H1.68042H10.9606H10.9607C11.3266 19.6995 11.6773 19.554 11.936 19.2953C12.1947 19.0366 12.3402 18.6858 12.3406 18.32V18.3199V13.4783L18.619 12.0877L18.6192 12.0876C18.9763 12.0081 19.2873 11.7902 19.4839 11.4816C19.6805 11.1731 19.7467 10.7992 19.668 10.4419ZM7.91266 13.0456L7.91267 13.0457C7.98062 13.3519 8.15078 13.6259 8.39516 13.8225C8.63953 14.0192 8.94356 14.1268 9.25724 14.1277L9.25759 14.1277C9.35883 14.1276 9.45975 14.1165 9.55858 14.0946L10.8609 13.8061L10.8614 18.2199H1.78042V9.1397H7.04749L7.91266 13.0456ZM18.2022 10.6641L9.33605 12.6279L7.37234 3.76264L16.2377 1.79881L18.2022 10.6641Z\" fill=\"white\" stroke=\"white\" stroke-width=\"0.2\"></path><path d=\"M2.96094 10.3196H4.56097V11.9196H2.96094V10.3196ZM2.96094 15.4397H4.56097V17.0397H2.96094V15.4397ZM8.08104 15.4397H9.68107V17.0397H8.08104V15.4397ZM5.52099 12.8797H7.12102V14.4797H5.52099V12.8797ZM8.77929 4.66217L10.3415 4.31641L10.6872 5.87864L9.12506 6.2244L8.77929 4.66217ZM14.8863 8.55117L16.4485 8.20516L16.7945 9.76735L15.2323 10.1134L14.8863 8.55117ZM11.8333 6.60517L13.3954 6.25916L13.7414 7.82131L12.1793 8.16732L11.8333 6.60517Z\" fill=\"white\"></path></g><defs><clipPath id=\"f6104ef7-a34c-4740-b294-140705fef964__clip0_10917_22561\"><rect width=\"20\" height=\"20\" fill=\"white\"></rect></clipPath></defs></svg>", "live": "<svg width=\"20\" height=\"21\" viewBox=\"0 0 20 21\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M13.6786 11.0255L13.1531 10.5L12.1021 11.551L13.1531 12.6021L14.2041 11.551L13.6786 11.0255ZM13.6786 11.0255L13.1531 11.6807M6.84685 9.00143L6.38403 8.00713C6.34256 7.91803 6.28845 7.83284 6.2066 7.77844C5.91796 7.58662 5.52481 7.61796 5.27031 7.87245C4.98007 8.16268 4.98007 8.63324 5.27031 8.92348L6.84685 10.5L8.42339 8.92348C8.71363 8.63324 8.71363 8.16268 8.42339 7.87245C8.1689 7.61796 7.77575 7.58662 7.48711 7.77844C7.40526 7.83284 7.35115 7.91803 7.30968 8.00713L6.84685 9.00143ZM6.84685 9.00143L5.62766 8.81838M6.84685 9.00143L7.98197 8.48205M8.07733 16.8062C8.51018 18.0308 9.67813 18.9082 11.051 18.9082H15.2551C16.9965 18.9082 18.4082 17.4965 18.4082 15.7551V7.34692C18.4082 5.60553 16.9965 4.19385 15.2551 4.19385H12.1021M3.60977 16.8062H10.0841C11.1986 16.8062 12.1021 15.9027 12.1021 14.7882V4.10977C12.1021 2.99527 11.1986 2.0918 10.0841 2.0918H3.60977C2.49528 2.0918 1.5918 2.99527 1.5918 4.10977V14.7882C1.5918 15.9027 2.49527 16.8062 3.60977 16.8062Z\" stroke=\"white\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg>", "sp1": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"22\" viewBox=\"0 0 22 22\" fill=\"none\"><path d=\"M6.16577 1.83203V5.23372C6.16577 8.3607 8.20593 11.0191 10.9998 11.9955C13.7936 11.0191 15.8337 8.3607 15.8337 5.23372V1.83203H6.16577Z\" fill=\"#9583A0\"></path><path d=\"M5.93434 8.84374C4.19174 7.39559 3.07208 5.26889 2.92402 2.90625H5.09147V1.83203H1.83301V2.36914C1.83301 3.46184 2.01727 4.53326 2.38072 5.55362C2.73199 6.53979 3.24227 7.45664 3.8974 8.2787C4.86699 9.49536 6.1272 10.4555 7.54022 11.0723C6.88402 10.4231 6.34104 9.66913 5.93434 8.84374Z\" fill=\"#9583A0\"></path><path d=\"M16.9078 1.83203V2.90625H19.0752C18.9272 5.26889 17.8075 7.39559 16.0649 8.84374C15.6582 9.66917 15.1152 10.4231 14.459 11.0723C15.872 10.4555 17.1322 9.49536 18.1018 8.2787C18.757 7.45664 19.2673 6.53979 19.6185 5.55362C19.982 4.53326 20.1662 3.46184 20.1662 2.36914V1.83203H16.9078Z\" fill=\"#9583A0\"></path><path d=\"M15.1175 19.0903V14.7934H12.0739V12.7188C11.8402 12.8257 11.6002 12.9227 11.3541 13.0088L10.9997 13.1326L10.6453 13.0088C10.3991 12.9227 10.1592 12.8257 9.92545 12.7188V14.7934H6.88184V19.0903H5.80762V20.1645H16.1917V19.0903H15.1175ZM12.611 17.658H9.38834V16.5838H12.611V17.658Z\" fill=\"#9583A0\"></path></svg>", "sp2": "<svg width=\"22\" height=\"22\" viewBox=\"0 0 22 22\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M4.8754 6.33944C5.36773 6.9044 6.37859 8.04134 6.48342 8.06943C6.58825 8.09752 8.96082 6.86064 10.134 6.23868L8.3471 9.76258L11.5773 12.3837L7.56179 12.4313C7.43305 12.9118 7.13798 14.2489 6.98762 15.7535C6.56452 15.1485 5.66744 13.7355 5.46393 12.9225C5.2581 12.1003 5.10275 12.1192 4.7327 12.164C4.6454 12.1746 4.54615 12.1866 4.43147 12.1894C3.95083 12.2011 3.30652 12.0635 3.04444 11.9933C3.31593 11.5043 3.96561 10.4424 4.39245 10.1074C4.81657 9.77448 4.74283 9.06414 4.69387 8.59253C4.68124 8.47084 4.67025 8.36504 4.6699 8.28572C4.66959 8.21704 4.66525 8.12623 4.6602 8.02068L4.66019 8.02056C4.6368 7.53183 4.59828 6.72715 4.8754 6.33944Z\" fill=\"#9583A0\"></path><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M20.1435 7.9862C19.3983 5.72427 17.8389 3.83509 15.8133 2.66326C15.2953 2.36363 14.7466 2.11076 14.1731 1.91056C13.5635 1.69778 12.9262 1.54459 12.2682 1.45791C11.8528 1.40318 11.4295 1.375 11 1.375C8.544 1.375 6.30096 2.29605 4.60083 3.81021C3.07406 5.16998 1.9819 7.0107 1.56327 9.09702C1.43969 9.7129 1.375 10.3493 1.375 11C1.375 11.2128 1.38192 11.4241 1.39556 11.6336C1.45814 12.5953 1.66212 13.5193 1.98718 14.3846C2.85317 16.6896 4.57651 18.5727 6.76882 19.6473C7.46632 19.9892 8.21142 20.2493 8.9914 20.4149C9.64001 20.5527 10.3121 20.625 11 20.625C11.7632 20.625 12.5068 20.536 13.2205 20.3674C16.4854 19.5961 19.1053 17.1651 20.1435 14.0138C20.4562 13.0646 20.625 12.0511 20.625 11C20.625 10.0844 20.4969 9.19724 20.2571 8.35616C20.2216 8.2318 20.1838 8.10846 20.1435 7.9862ZM12.1512 2.34596C12.7479 2.42457 13.3255 2.56343 13.8779 2.75624C14.3977 2.93768 14.895 3.16688 15.3647 3.4386C17.2029 4.50195 18.6173 6.21634 19.2927 8.26647C19.3292 8.37727 19.3636 8.48905 19.3957 8.60175C19.4681 8.85574 19.5293 9.11445 19.5787 9.37733C19.6216 9.83544 19.6311 10.8363 19.3298 11.2307C18.9421 11.4545 18.0453 11.8837 17.5595 11.8097C17.2773 11.0127 16.5649 9.19392 15.9733 8.29488C16.0529 7.47355 15.725 5.44754 15.6624 5.26221C15.682 5.23237 15.7822 5.18195 16.0251 5.21895C16.3287 5.26519 17.0909 5.43432 17.58 5.7058C17.9104 5.99498 18.6712 6.79266 19.0701 7.67001C18.9247 7.31897 18.7547 6.97338 18.5596 6.63542C18.0514 6.0428 17.58 5.7058 17.58 5.7058C17.3007 5.3501 16.3821 4.43683 14.9412 3.6294C14.705 3.41502 14.1351 2.93175 13.7454 2.71369C13.6033 2.7219 13.2478 2.76837 12.9628 2.88862C12.3195 2.76562 10.6656 2.57416 9.19653 2.79236L8.21601 2.72479C7.67661 2.90688 7.14716 3.14471 6.63521 3.44028C6.46776 3.53696 6.30473 3.63835 6.14618 3.74418C6.06936 3.79546 5.99359 3.84778 5.91889 3.90111C7.35012 2.87487 9.10451 2.27073 11 2.27073C11.3902 2.27073 11.7745 2.29633 12.1512 2.34596ZM4.25527 5.45805C3.36362 6.54195 2.72816 7.84455 2.44149 9.27324C2.32949 9.83142 2.27073 10.4088 2.27073 11C2.27073 11.1934 2.27701 11.3852 2.28939 11.5755C2.28996 11.5842 2.29054 11.5929 2.29113 11.6016C2.37265 11.7231 2.63366 11.9668 3.04444 11.9933C2.89404 12.2463 2.61336 12.94 2.69383 13.6911C2.66066 13.5891 2.62948 13.4867 2.60026 13.3841C2.66615 13.6166 2.74143 13.8453 2.82568 14.0695C3.23851 15.1684 3.86655 16.1619 4.65846 16.9988C5.29275 17.4487 6.64746 18.2872 7.06347 18.0912C6.93171 17.4472 6.73206 16.0782 6.98762 15.7535C7.52849 16.5304 8.71154 18.1255 9.11681 18.2902C9.62341 18.4962 12.2741 17.9073 12.8077 17.4885C12.6762 17.8044 12.1177 18.5957 10.9355 19.234C11.1009 19.3925 11.6993 19.6769 12.7714 19.5494C12.8529 19.5326 12.9339 19.5147 13.0145 19.4957C14.6655 19.1057 16.1353 18.2469 17.2758 17.0675L17.414 16.5459L17.5127 16.8127C18.3017 15.9292 18.9136 14.8843 19.2927 13.7335C19.576 12.8737 19.7293 11.9548 19.7293 11.0001L19.3298 11.2307C18.9585 12.4198 18.2116 13.5747 17.8846 14.0035C18.0001 15.3546 17.619 16.2614 17.414 16.5459C17.0317 16.1906 16.4791 15.8857 16.2505 15.7777C14.1917 17.2765 13.0974 17.5427 12.8077 17.4885C13.6038 16.7187 14.3244 15.1913 14.5852 14.5239C13.7451 13.9898 12.2299 12.8745 11.5773 12.3837C12.7906 12.3108 15.2504 12.146 15.3833 12.0693C15.4089 12.0545 15.4297 12.0451 15.4473 12.0372C15.4645 12.0294 15.4787 12.023 15.4913 12.0143C15.5492 11.9741 15.5732 11.8848 15.7075 11.3837C15.8619 10.8071 15.9491 9.08424 15.9733 8.29488C14.5057 6.04074 14.015 5.38257 13.6634 5.25326C13.2739 5.10998 11.0665 5.90336 10.134 6.23868C10.6058 5.39801 11.1065 4.83136 11.4447 4.44871C11.7327 4.12282 11.9027 3.93038 11.8366 3.81575C11.3583 3.29436 9.87727 2.91624 9.19653 2.79236C8.43977 2.78621 6.84765 3.42434 6.14618 3.74418C5.29101 4.56521 4.94267 5.81645 4.8754 6.33944C4.73347 6.22126 4.41113 5.87981 4.25527 5.45805ZM10.0924 19.6827C8.90011 19.5571 7.74099 19.1874 6.69351 18.5948C6.84717 18.6821 7.00375 18.7649 7.16305 18.843C7.79534 19.1529 8.4706 19.3886 9.1775 19.5387C9.47706 19.6024 9.78231 19.6506 10.0924 19.6827Z\" fill=\"#9583A0\"></path></svg>"};
@@ -54,7 +56,7 @@ VIP.lobby = (function () {
         document.body.insertAdjacentHTML('beforeend',
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
-            (sk.layout === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
+            (sk.layout === 'jugaygana' || sk.layout === 'buffaloplay' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
             // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
             // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
             (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
@@ -62,8 +64,15 @@ VIP.lobby = (function () {
                 '<button type="button" class="jg-hi" onclick="VIP.stories.open()" aria-label="Mensajes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></button>' +
                 '<button type="button" class="jg-user" onclick="VIP.lobby.ql()"><b class="js-prl-user">' + esc(_uname()) + '</b><small>CARGA RÁPIDA</small></button>' +
                 '<button type="button" class="jg-burger" onclick="VIP.lobby.menu(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button></div></header>' : '') +
+            // #958: BuffaloPlay como thornet: ☰ · (logo) · actualizar saldo · saldo (= Carga rápida) · chat (Soporte) · usuario (cuenta).
+            (sk.layout === 'buffaloplay' ? '<header class="prl-top bp-head"><button type="button" class="bp-hb" onclick="VIP.lobby.bpNav(true)" aria-label="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6h17M3.5 12h17M3.5 18h17"/></svg></button>' +
+                '<button type="button" class="prl-brandbtn bp-logo" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
+                '<div class="bp-hr"><button type="button" class="bp-ref" onclick="VIP.lobby.bpRefresh(this)" aria-label="Actualizar saldo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 9A8 8 0 0 0 5 7.5M4.5 15A8 8 0 0 0 19 16.5"/><path d="M5 3v4.5h4.5M19 21v-4.5h-4.5"/></svg></button>' +
+                '<button type="button" class="bp-bal" onclick="VIP.lobby.ql()" aria-label="Saldo · Carga rápida"><b class="js-prl-bal">—</b><small>CARGA RÁPIDA</small></button>' +
+                '<button type="button" class="bp-hi" onclick="VIP.lobby.support()" aria-label="Soporte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5c-5 0-8.5 3.1-8.5 7 0 1.9.9 3.6 2.4 4.9L5 20l4.1-2c.9.3 1.9.4 2.9.4 5 0 8.5-3.1 8.5-6.9s-3.5-7-8.5-7z"/><circle cx="8.3" cy="11.5" r="1.1" class="f"/><circle cx="12" cy="11.5" r="1.1" class="f"/><circle cx="15.7" cy="11.5" r="1.1" class="f"/></svg></button>' +
+                '<button type="button" class="bp-hi" onclick="VIP.lobby.menu(true)" aria-label="Mi cuenta"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20.5c.8-4 4-6 8-6s7.2 2 8 6"/></svg></button></div></header>' : '') +
             // #917 (owner): sin la fila de saldo / Cargar (se carga con la Carga rápida); JUGAYGANA y Ganamos mantienen su barra con el logo.
-            (sk.wordmark && sk.layout !== 'jugaygana' ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
+            (sk.wordmark && sk.layout !== 'jugaygana' && sk.layout !== 'buffaloplay' ? '<header class="prl-top prl-top-logo"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
                 '<span class="prl-hbal" aria-label="Saldo"><b class="js-prl-bal">—</b></span>' +
                 // #952 (owner): la Carga rápida ARRIBA, al lado del saldo, fina y con el formato de la página (sin burbuja flotante)
                 '<button type="button" class="prl-hql" onclick="VIP.lobby.ql()">' + ico('wallet') + '<span>Carga rápida</span></button></header>' : '') + // #920 (owner): el saldo como figura en cada página
@@ -72,7 +81,7 @@ VIP.lobby = (function () {
             '<button type="button" class="prl-top-btn" id="prlUp" hidden onclick="VIP.lobby.top()" aria-label="Volver arriba">' + ico('up') + '</button>' +
             // #914: Carga rápida (mismo panel, CBU, comprobante y retiro que adentro del casino) con el logo de la marca.
             (sk.wordmark ? '' : '<button type="button" class="prl-ql" id="prlQl" onclick="VIP.lobby.ql()" title="Carga rápida · arrastrame si te tapa algo"><img src="' + sk.bar + '" alt=""><span>CARGA RÁPIDA</span></button>') + // #952: JUGAYGANA/Ganamos la tienen arriba
-            (sk.layout === 'jugaygana' ? '' : sk.layout === 'ganamos'
+            (sk.layout === 'jugaygana' ? '' : sk.layout === 'buffaloplay' ? '<div class="bp-navwrap" id="bpNav" hidden onclick="if(event.target===this)VIP.lobby.bpNav(false)"><aside class="bp-nav" role="dialog" aria-label="Menú"></aside></div>' : sk.layout === 'ganamos'
                 ? (() => { // #922 (owner): la barra de abajo REAL de ganamos.net (su fondo con el hueco de la mascota, sus íconos, su orden y su brillo)
                     const it = (v, k, t, on) => '<button type="button" class="gnm__menu-item" data-v="' + v + '" onclick="' + on + '"><img class="gnm__menu-active" src="/images/ganamos/menu-active.webp" alt=""><div class="gnm__menu-icon-container"><span class="gnm__menu-icon">' + (k ? GN_IC[k] : '') + '</span></div><span class="gnm__menu-text">' + t + '</span></button>';
                     return '<div class="gnm prl-gnm">' +
@@ -121,7 +130,7 @@ VIP.lobby = (function () {
     }
     function _hero() {
         if (SK().layout === 'ganamos') return _gnPromos(false);
-        if (SK().layout === 'jugaygana') return '';
+        if (SK().layout === 'jugaygana' || SK().layout === 'buffaloplay') return '';
         return '<div class="prl-hero" id="prlHero">' + BANNERS_OF().map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="' + SK().name + '" decoding="async"></button>').join('') + '</div>';
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
@@ -156,7 +165,7 @@ VIP.lobby = (function () {
         setTimeout(() => { document.addEventListener('click', function off(e) { const p = $('prlSportPop'); if (p && !p.contains(e.target)) p.remove(); document.removeEventListener('click', off, true); }, true); }, 0);
     }
     function sportPick(path) { const p = $('prlSportPop'); if (p) p.remove(); sport(path); }
-    function back() { if (_view === 'all' && (_allProv || _allCat) && !_allCat) { go('slots'); return; } go('inicio'); }
+    function back() { if (SK().layout === 'buffaloplay' && _view === 'jglist') { go('vivo'); return; } if (_view === 'all' && (_allProv || _allCat) && !_allCat) { go('slots'); return; } go('inicio'); }
     function _search() {
         return '<label class="prl-search">' + ico('search') + '<input type="search" id="prlQ" placeholder="Buscar juegos" autocomplete="off" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label><div id="prlRes"></div>';
     }
@@ -387,7 +396,7 @@ VIP.lobby = (function () {
     function listMore() {
         const L = _jgList; const box = $('jgListGrid'); if (!L || !box) return;
         const next = L.games.slice(L._n, L._n + 120); L._n += next.length;
-        box.insertAdjacentHTML('beforeend', next.map(SK().layout === 'jugaygana' ? _jgCard : SK().layout === 'ganamos' ? _gnCard : _card).join(''));
+        box.insertAdjacentHTML('beforeend', next.map(SK().layout === 'jugaygana' ? _jgCard : SK().layout === 'ganamos' ? _gnCard : SK().layout === 'buffaloplay' ? _bpCard : _card).join(''));
         const b = $('jgListMore'); if (b) { if (L._n >= L.games.length) b.parentNode.remove(); else b.textContent = 'Ver más (' + (L.games.length - L._n) + ')'; }
     }
     function jgColl(i) { const c = ((_jgHomeData && _jgHomeData.collections) || [])[i]; if (c) jgList(c.title, c.games); }
@@ -401,8 +410,172 @@ VIP.lobby = (function () {
             (L.games.length ? '<div class="prl-grid jg-grid" id="jgListGrid">' + L.games.slice(0, 120).map(_jgCard).join('') + '</div>' + _listMoreBtn(L) : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
     }
     function jgProv(show) { const s2 = $('jgProv'); if (s2) s2.hidden = !show; }
+    // ===== #958 BuffaloPlay (owner: "con el formato de Thornet, 100 % idéntica, con el logo de BuffaloPlay y los juegos de Girox"): página propia
+    // de la misma cuenta. Inicio como thornet: carrusel · "Nuestra seleccion Pragmatic Live Casino" · Deportivas · "Recomendados de RedRake" ·
+    // "Mesas en vivo seleccionadas" · redes · pie (Productos / Nosotros / Promociones). Slots: Favoritos · Recientes · buscador · pestañas de
+    // proveedores en su orden (sólo los juegos que Girox tiene, con SUS portadas) + "Nuevos" (lo de Girox que su página no tiene). Casino en vivo:
+    // Pragmatic Play / Ezugi / Vivo Gaming. Datos: /data/buffaloplay-home.json, -games.json y -extra.json. Favoritos y recientes = en el teléfono.
+    let _bpHome = null, _bpHomeP = null, _bpGames = null, _bpGamesP = null, _bpTab = 0, _bpQ = '', _bpQTimer = null, _bpSlide = 0, _bpTimer = null, _bpTabsOpen = false, _bpCur = null;
+    const _bpIdx = {};
+    const _bpA = (a) => ({ key: a[0], name: a[1], img: a[2], gid: a[3], lk: a[4] });
+    function _bpLoad() {
+        if (!_bpHomeP) _bpHomeP = fetch('/data/buffaloplay-home.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _bpHome = d || {}; return _bpHome; });
+        if (!_bpGamesP) _bpGamesP = fetch('/data/buffaloplay-games.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _bpGames = d || { providers: [] }; return _bpGames; });
+        return Promise.all([_bpHomeP, _bpGamesP, _extraLoad('buffaloplay')]);
+    }
+    const _bpLS = (k) => { try { const v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (_) { return []; } };
+    const _bpSave = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+    const _bpG2A = (g) => [g.key, g.name, g.img || '', g.gid || 0, g.lk || ''];
+    const _bpPlayAttrs = (g) => ' onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '"';
+    const BP_HEART = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.6-4.7-9.6-9.3C1 7.9 3.1 4.4 6.6 4.4c2.2 0 3.7 1.2 4.4 2.5.7-1.3 2.2-2.5 4.4-2.5 3.5 0 5.6 3.5 4.2 6.8-2 4.6-9.6 9.3-9.6 9.3z"/></svg>';
+    function _bpCard(g) { // como su tarjeta: la portada entera, sin texto encima, y el corazón arriba a la derecha
+        _bpIdx[g.key] = g; const on = _bpLS('vip_bp_favs').some((f) => f[0] === g.key);
+        return '<div class="bp-g"><button type="button" class="bp-gp"' + _bpPlayAttrs(g) + '><i>' + esc(g.name) + '</i>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '</button>' +
+            '<button type="button" class="bp-fav' + (on ? ' on' : '') + '" data-k="' + esc(g.key) + '" onclick="VIP.lobby.bpFav(\'' + esc(g.key) + '\')" aria-label="Favorito">' + BP_HEART + '</button></div>';
+    }
+    function bpFav(key) {
+        const g = _bpIdx[key]; if (!g) return;
+        let f = _bpLS('vip_bp_favs'); const on = f.some((x) => x[0] === key);
+        f = on ? f.filter((x) => x[0] !== key) : [_bpG2A(g)].concat(f).slice(0, 200); _bpSave('vip_bp_favs', f);
+        document.querySelectorAll('.bp-fav[data-k="' + key.replace(/["\\]/g, '') + '"]').forEach((b) => b.classList.toggle('on', !on));
+        if (_bpTab === 'fav' && !_bpQ) _bpFill();
+    }
+    function _bpRecent(key) {
+        const g = _bpIdx[key]; if (!g) return;
+        _bpSave('vip_bp_rec', [_bpG2A(g)].concat(_bpLS('vip_bp_rec').filter((x) => x[0] !== key)).slice(0, 40));
+    }
+    // ---- Inicio
+    function _bpSportsBtn(t) { return '<button type="button" onclick="VIP.lobby.sportsMenu(event)">' + t + '</button>'; }
+    function _bpFooter() {
+        const l = (t, on) => '<button type="button" onclick="' + on + '">' + esc(t) + '</button>';
+        const horses = ((_data && _data.sports) || []).find((x) => /horse|caballo/i.test((x.key || '') + ' ' + (x.path || '') + ' ' + (x.title || '')));
+        return '<div class="bp-social" role="button" onclick="VIP.stories.open()"><b>Seguinos en nuestras redes sociales!</b><div class="bp-soc">' +
+            ['<path d="M14 8h3V4h-3c-2.8 0-4 1.8-4 4.3V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.6-.6z"/>', '<rect x="4" y="4" width="16" height="16" rx="4.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="7" r="1.2"/>',
+             '<path d="M5 9h3v11H5zM6.5 4a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zM10 9h3v1.6c.5-1 1.8-1.9 3.6-1.9 3 0 3.4 2 3.4 4.6V20h-3v-5.8c0-1.4 0-3-1.9-3s-2.1 1.4-2.1 2.9V20h-3z"/>', '<path d="M21 6.5c-.7.3-1.4.5-2.1.6.8-.5 1.3-1.2 1.6-2-.7.4-1.5.7-2.3.9a3.6 3.6 0 0 0-6.2 3.3C8.9 9.1 6.2 7.7 4.5 5.5c-1 1.7-.5 3.8 1.1 4.8-.6 0-1.1-.2-1.6-.4 0 1.7 1.2 3.2 2.9 3.6-.5.1-1.1.2-1.6.1.5 1.4 1.8 2.5 3.4 2.5A7.3 7.3 0 0 1 3.5 17.6 10.3 10.3 0 0 0 9.1 19c6.7 0 10.5-5.6 10.3-10.7.7-.5 1.3-1.1 1.6-1.8z"/>']
+                .map((p) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>').join('') + '</div></div>' +
+            '<footer class="bp-foot"><p class="bp-copy">© BuffaloPlay</p>' +
+            '<div class="bp-fc"><h4>PRODUCTOS</h4>' + _bpSportsBtn('Deportes') + l('Slots', "VIP.lobby.go('slots')") + l('Casino Vivo', "VIP.lobby.go('vivo')") +
+                (horses ? l('Caballos', "VIP.lobby.sport('" + esc(horses.path) + "')") : '') + l('CrazZy Win!', "VIP.lobby.go('crazy')") + '</div>' +
+            '<div class="bp-fc"><h4>NOSOTROS</h4>' + l('Terminos y Condiciones', 'VIP.home.casinoInfo()') + l('Politica de Privacidad', 'VIP.home.casinoInfo()') + l('Juego Responsable', 'VIP.home.casinoInfo()') + '</div>' +
+            '<div class="bp-fc"><h4>PROMOCIONES</h4>' + l('Sorteo del mes', "VIP.raffle.open('buffaloplay')") + l('Juegos nuevos', "VIP.lobby.bpOpenTab('new')") + '</div>' +
+            '<div class="bp-resp"><span class="bp-18">18+</span> Jugá responsablemente. Si necesitás ayuda escribinos por <button type="button" onclick="VIP.lobby.support()">Soporte</button>.</div></footer>';
+    }
+    function _bpHomeHtml() {
+        const d = _bpHome || {}; const sl = d.slides || [];
+        const big = (a, cls) => { const g = _bpA(a); _bpIdx[g.key] = g; return '<button type="button" class="' + cls + '"' + _bpPlayAttrs(g) + '><img src="' + esc(img(g.img)) + '" alt="" loading="lazy" decoding="async"></button>'; };
+        const rr = d.redrake || [];
+        return '<section class="bp-slider"><div class="bp-slides" id="bpSlides" onscroll="VIP.lobby.bpSlideScroll(this)">' + sl.map((s) => '<div class="bp-slide"><img src="' + esc(s) + '" alt="" decoding="async"></div>').join('') + '</div>' +
+                (sl.length > 1 ? '<button type="button" class="bp-sa bp-sa-l" onclick="VIP.lobby.bpSlideGo(-1)" aria-label="Anterior">‹</button><button type="button" class="bp-sa bp-sa-r" onclick="VIP.lobby.bpSlideGo(1)" aria-label="Siguiente">›</button>' +
+                '<div class="bp-dots" id="bpDots">' + sl.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div>' : '') + '</section>' +
+            ((d.liveSel || []).length ? '<h2 class="bp-t bp-t0">Nuestra seleccion Pragmatic Live Casino</h2><div class="bp-lsel">' + d.liveSel.map((a) => big(a, 'bp-lc')).join('') + '</div>' : '') +
+            '<h2 class="bp-t">Deportivas</h2><button type="button" class="bp-sport" onclick="VIP.lobby.sportsMenu(event)" aria-label="Deportes"><img src="' + SK().dir + 'deportivas.webp" alt="Las mejores ligas están aquí" loading="lazy"></button>' +
+            (rr.length ? '<h2 class="bp-red">Recomendados de RedRake</h2><div class="bp-rr"><div class="bp-rrs" id="bpRr" onscroll="VIP.lobby.bpRrScroll(this)">' + rr.map((a) => big(a, 'bp-rc')).join('') + '</div>' +
+                '<div class="bp-rrd" id="bpRrd">' + rr.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></div>' : '') +
+            ((d.tables || []).length ? '<h2 class="bp-t">Mesas en vivo seleccionadas</h2><div class="bp-tables">' + d.tables.map((a) => big(a, 'bp-tc')).join('') + '</div>' : '') +
+            _bpFooter();
+    }
+    function bpSlideScroll(el) { const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); _bpSlide = i; const d = $('bpDots'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i)); }
+    function bpSlideGo(dir) { const el = $('bpSlides'); if (!el) return; const n = el.children.length; _bpSlide = (_bpSlide + dir + n) % n; try { el.scrollTo({ left: _bpSlide * el.clientWidth, behavior: 'smooth' }); } catch (_) { el.scrollLeft = _bpSlide * el.clientWidth; } }
+    function _bpAuto() { clearInterval(_bpTimer); _bpTimer = setInterval(() => { const el = $('bpSlides'); if (!el || !el.isConnected) { clearInterval(_bpTimer); return; } bpSlideGo(1); }, 5000); }
+    function bpRrScroll(el) {
+        const c = el.children[0]; if (!c) return; const w = c.getBoundingClientRect().width + 14;
+        const i = Math.round(el.scrollLeft / Math.max(1, w)); const d = $('bpRrd'); if (d) [...d.children].forEach((b, k) => b.classList.toggle('on', k === i));
+    }
+    // ---- Slots
+    function _bpTabsList() { return [['new', 'Nuevos']].concat(((_bpGames && _bpGames.providers) || []).map((p, i) => [String(i), p.n])); }
+    function _bpSlotsHtml() {
+        const tb = (t) => '<button type="button" class="bp-tab' + (String(_bpTab) === t[0] && !_bpQ ? ' on' : '') + '" data-t="' + t[0] + '" onclick="VIP.lobby.bpTabGo(\'' + t[0] + '\')">' + esc(t[1]) + (t[0] === 'new' ? ' <em>' + ((_xtra.buffaloplay || []).length) + '</em>' : '') + '</button>';
+        return '<div class="bp-bar"><div class="bp-sr">' +
+                '<button type="button" class="bp-fr' + (_bpTab === 'fav' && !_bpQ ? ' on' : '') + '" data-t="fav" onclick="VIP.lobby.bpTabGo(\'fav\')">' + BP_HEART + '<span>Favoritos</span></button>' +
+                '<button type="button" class="bp-fr' + (_bpTab === 'rec' && !_bpQ ? ' on' : '') + '" data-t="rec" onclick="VIP.lobby.bpTabGo(\'rec\')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Recientes</span></button>' +
+                '<input type="search" class="bp-q" id="bpQ" value="' + esc(_bpQ) + '" placeholder="Buscar juego" autocomplete="off" oninput="VIP.lobby.bpSearch(this.value)" aria-label="Buscar juego">' +
+                '<button type="button" class="bp-qb" onclick="VIP.lobby.bpSearch(document.getElementById(\'bpQ\').value, true)" aria-label="Buscar">' + ico('search') + '</button></div>' +
+            '<div class="bp-tabs' + (_bpTabsOpen ? ' open' : '') + '" id="bpTabsBox"><div class="bp-tabs-s" id="bpTabs">' + _bpTabsList().map(tb).join('') + '</div>' +
+                '<button type="button" class="bp-tabx" onclick="VIP.lobby.bpTabs()" aria-label="Ver todos los proveedores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>' +
+            '<div class="bp-grid" id="bpGrid"></div><div class="bp-empty" id="bpEmpty" hidden></div><div class="prl-more" id="bpMore" hidden><button type="button" onclick="VIP.lobby.bpMore()">Ver más</button></div>';
+    }
+    const _bpNorm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+    function _bpListNow() {
+        if (_bpQ.length >= 2) {
+            const q = _bpNorm(_bpQ); const seen = {}; const out = [];
+            const add = (g) => { if (!seen[g.key] && _bpNorm(g.name).indexOf(q) >= 0) { seen[g.key] = 1; out.push(g); } };
+            ((_bpGames && _bpGames.providers) || []).forEach((p) => p.g.forEach((a) => add(_bpA(a)))); (_xtra.buffaloplay || []).forEach(add);
+            return { games: out, empty: 'No encontramos "' + _bpQ + '".' };
+        }
+        if (_bpTab === 'fav') return { games: _bpLS('vip_bp_favs').map(_bpA), empty: 'Tocá el ♥ de un juego para tenerlo acá.' };
+        if (_bpTab === 'rec') return { games: _bpLS('vip_bp_rec').map(_bpA), empty: 'Los juegos que abras van a aparecer acá.' };
+        if (_bpTab === 'new') return { games: _xtra.buffaloplay || [], empty: 'Pronto vas a ver los juegos nuevos acá.' };
+        const p = ((_bpGames && _bpGames.providers) || [])[Number(_bpTab)] || ((_bpGames && _bpGames.providers) || [])[0];
+        return { games: p ? p.g.map(_bpA) : [], empty: 'Pronto vas a ver los juegos acá.' };
+    }
+    function _bpFill() {
+        const box = $('bpGrid'); if (!box) return;
+        const L = _bpListNow(); _bpCur = { games: L.games, n: 0 }; box.innerHTML = '';
+        const e = $('bpEmpty'); if (e) { e.hidden = !!L.games.length; e.textContent = L.games.length ? '' : L.empty; }
+        bpMore();
+    }
+    function bpMore() {
+        const box = $('bpGrid'); const L = _bpCur; if (!box || !L) return;
+        const next = L.games.slice(L.n, L.n + 90); L.n += next.length; box.insertAdjacentHTML('beforeend', next.map(_bpCard).join(''));
+        const b = $('bpMore'); if (b) b.hidden = L.n >= L.games.length;
+    }
+    function _bpPaintTabs() {
+        document.querySelectorAll('.bp-tab, .bp-fr').forEach((b) => b.classList.toggle('on', !_bpQ && b.dataset.t === String(_bpTab)));
+        const on = document.querySelector('.bp-tab.on'); const s = $('bpTabs');
+        if (on && s && !_bpTabsOpen) { try { s.scrollTo({ left: on.offsetLeft - (s.clientWidth - on.offsetWidth) / 2, behavior: 'smooth' }); } catch (_) {} }
+    }
+    function bpTabGo(t) {
+        _bpTab = (t === 'fav' || t === 'rec' || t === 'new') ? t : Number(t); _bpQ = ''; _bpTabsOpen = false;
+        const q = $('bpQ'); if (q) q.value = ''; const tb = $('bpTabsBox'); if (tb) tb.classList.remove('open');
+        _bpPaintTabs(); _bpFill(); const m = $('prlMain'); if (m) m.scrollTop = 0;
+    }
+    function bpOpenTab(t) { bpNav(false); _bpTab = (t === 'fav' || t === 'rec' || t === 'new') ? t : Number(t) || 0; _bpQ = ''; go('slots'); }
+    function bpTabs() { _bpTabsOpen = !_bpTabsOpen; const tb = $('bpTabsBox'); if (tb) tb.classList.toggle('open', _bpTabsOpen); }
+    function bpSearch(v, now) {
+        clearTimeout(_bpQTimer);
+        _bpQTimer = setTimeout(() => { _bpQ = String(v || '').trim(); if (_bpQ.length === 1) return; _bpPaintTabs(); _bpFill(); }, now ? 0 : 250);
+    }
+    // ---- Casino en vivo y CrazZy Win!
+    function _bpLiveHtml() {
+        const L = (_bpHome && _bpHome.live) || [];
+        return '<div class="bp-lv">' + L.map((l, i) => '<button type="button" onclick="VIP.lobby.bpLiveOpen(' + i + ')" aria-label="' + esc(l.n) + '"><img src="' + esc(l.img) + '" alt="' + esc(l.n) + '" loading="lazy"></button>').join('') + '</div>';
+    }
+    function bpLiveOpen(i) { const l = ((_bpHome && _bpHome.live) || [])[i]; if (l) jgList(l.n, l.g.map(_bpA)); }
+    function _bpGridHtml(title, games, banner) {
+        _bpCur = null;
+        return '<div class="bp-lt"><button type="button" onclick="VIP.lobby.back()" aria-label="Volver">‹</button><h2>' + esc(title) + '</h2></div>' + (banner || '') +
+            (games.length ? '<div class="bp-grid" id="jgListGrid">' + games.slice(0, 120).map(_bpCard).join('') + '</div>' : '<div class="bp-empty">Pronto vas a ver los juegos acá.</div>');
+    }
+    function _bpRender(m) {
+        clearInterval(_bpTimer);
+        if (!_bpHome || !_bpGames || !_xtra.buffaloplay) { m.innerHTML = '<div class="prl-note">Cargando…</div>'; _bpLoad().then(() => { if (_skin === 'buffaloplay') _render(); }); return; }
+        if (_view === 'slots' || _view === 'all') { m.innerHTML = _bpSlotsHtml(); _bpFill(); setTimeout(_bpPaintTabs, 0); return; }
+        if (_view === 'vivo') { m.innerHTML = _bpLiveHtml(); return; }
+        if (_view === 'crazy') { m.innerHTML = '<img class="bp-cwb" src="' + SK().dir + 'crazywin.webp" alt="CrazZy Win!">' + '<div class="bp-grid bp-grid-cw">' + (_bpHome.crazy || []).map((a) => _bpCard(_bpA(a))).join('') + '</div>'; return; }
+        if (_view === 'jglist') { const L = _jgList || { title: '', games: [] }; m.innerHTML = _bpGridHtml(L.title, L.games); if (L.games.length > 120) { L._n = 120; m.insertAdjacentHTML('beforeend', _listMoreBtn(L)); } return; }
+        _view = 'inicio'; m.innerHTML = _bpHomeHtml(); _bpSlide = 0; _bpAuto();
+    }
+    // Menú ☰ de la izquierda (secciones, como su página); el ícono de usuario abre la cuenta (saldo, cargar/retirar, nivel, perfil).
+    function bpNav(show) {
+        const n = $('bpNav'); if (!n) return;
+        if (show) {
+            const it = (t, on) => '<button type="button" onclick="VIP.lobby.bpNav(false);' + on + '">' + esc(t) + '</button>';
+            const sp = ((_data && _data.sports) || []).map((x) => it(x.title, "VIP.lobby.sport('" + esc(x.path) + "')")).join('');
+            n.querySelector('.bp-nav').innerHTML = '<div class="bp-nav-h"><img src="' + SK().logo + '" alt="BuffaloPlay"><button type="button" onclick="VIP.lobby.bpNav(false)" aria-label="Cerrar">✕</button></div>' +
+                it('Inicio', "VIP.lobby.go('inicio')") + it('Slots', "VIP.lobby.bpOpenTab(0)") + it('Juegos nuevos', "VIP.lobby.bpOpenTab('new')") + it('Casino Vivo', "VIP.lobby.go('vivo')") + it('CrazZy Win!', "VIP.lobby.go('crazy')") +
+                (sp ? '<small>Deportes</small>' + sp : '') + '<small>Mi cuenta</small>' + it('Carga rápida', 'VIP.lobby.ql()') + it('Retirar', 'VIP.lobby.withdraw()') + it('Sorteo del mes', "VIP.raffle.open('buffaloplay')") +
+                it('Soporte', 'VIP.lobby.support()') + (window.VIP_SITE === 'jugaygana' ? '' : it('Volver a la app', 'VIP.lobby.close(true)'));
+        }
+        n.hidden = !show;
+    }
+    function bpRefresh(btn) {
+        try { btn.classList.add('spin'); setTimeout(() => btn.classList.remove('spin'), 900); } catch (_) {}
+        try { if (VIP.ui && VIP.ui.syncBalance) Promise.resolve(VIP.ui.syncBalance()).then(_paintBal, _paintBal); } catch (_) {}
+        setTimeout(_paintBal, 1200);
+    }
     function _render() {
         const m = $('prlMain'); if (!m) return; _secN = 0;
+        if (SK().layout === 'buffaloplay') { _bpRender(m); return; } // #958
         document.querySelectorAll('.prl-nav [data-v], .gnm__main [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === _view || (_view === 'all' && b.dataset.v === 'slots')));
         if (_view === 'sorteos') { _view = 'inicio'; try { VIP.raffle.open(_skin); } catch (_) {} } // #917: la pestaña Sorteos abre el sorteo mensual
         if (!_data) { m.innerHTML = (SK().layout === 'ganamos' ? _gnPromos(false) : _hero()) + '<div class="prl-note">Cargando los juegos…</div>'; return; }
@@ -456,6 +629,7 @@ VIP.lobby = (function () {
     function _onScroll() {
         const m = $('prlMain'); if (!m) return;
         const up = $('prlUp'); if (up) up.hidden = m.scrollTop < 700;
+        if (SK().layout === 'buffaloplay') { if (_view === 'slots' && _bpCur && m.scrollTop + m.clientHeight > m.scrollHeight - 700) bpMore(); return; } // #958
         if (_view !== 'all' && _view !== 'slots') return;
         if (m.scrollTop + m.clientHeight > m.scrollHeight - 600) _moreAll();
     }
@@ -495,7 +669,7 @@ VIP.lobby = (function () {
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
     function close(force) {
         if (window.VIP_SITE === 'jugaygana' && force !== true && _skin === 'jugaygana') { menu(false); go('inicio'); return; }
-        const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer);
+        const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer); clearInterval(_bpTimer);
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) document.body.classList.remove('casino-open'); const p = $('casinoLoadPanel'); if (p && el && el.contains(p)) p.style.display = 'none'; if (VIP.home.casinoQuickClose && el && el.contains(p)) VIP.home.casinoQuickClose(); } catch (_) {}
     }
     function go(view) { if (view === 'deportes') { sportsMenu(null); return; } if (view === 'slots') _allProv = null; if (view !== 'all') _allCat = null; _view = view; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
@@ -519,6 +693,7 @@ VIP.lobby = (function () {
     function play(key, btn) {
         const name = (btn && btn.dataset && btn.dataset.name) || 'el juego';
         const ds = (btn && btn.dataset) || {}; // #944: id interno + launcher (si la tarjeta los tiene)
+        if (_skin === 'buffaloplay') _bpRecent(key); // #958: "Recientes" de BuffaloPlay
         if (VIP.home && VIP.home.gamePlay) VIP.home.gamePlay(key, name, ds.gid ? { gid: Number(ds.gid), lk: ds.lk || '' } : null);
     }
     function sport(path) {
@@ -564,10 +739,10 @@ VIP.lobby = (function () {
     function support() { menu(false); close(true); try { VIP.home.setHomeMode('mini'); } catch (_) {} } // #944: el chat de Soporte se abre aunque sea el sitio JUGAYGANA (site.js la vuelve a abrir al salir)
     // picaroja.com/paginaoficial ⇒ /?pr=1: se abre apenas la app tiene sesión.
     try {
-        const _auto = /[?&]pr=1\b/.test(location.search) ? 'picaroja' : (/[?&]jg=1\b/.test(location.search) || window.VIP_SITE === 'jugaygana') ? 'jugaygana' : /[?&]gn=1\b/.test(location.search) ? 'ganamos' : null; // #944: sitio JUGAYGANA ⇒ siempre // #912 /jugaygana ⇒ ?jg=1 · #914 /ganamosoficial ⇒ ?gn=1
+        const _auto = /[?&]pr=1\b/.test(location.search) ? 'picaroja' : (/[?&]jg=1\b/.test(location.search) || window.VIP_SITE === 'jugaygana') ? 'jugaygana' : /[?&]gn=1\b/.test(location.search) ? 'ganamos' : /[?&]bp=1\b/.test(location.search) ? 'buffaloplay' : null; // #944: sitio JUGAYGANA ⇒ siempre // #912 /jugaygana ⇒ ?jg=1 · #914 /ganamosoficial ⇒ ?gn=1
         if (_auto) {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, bpFav, bpSlideScroll, bpSlideGo, bpRrScroll, bpTabGo, bpOpenTab, bpTabs, bpSearch, bpMore, bpLiveOpen, bpNav, bpRefresh, skin: () => _skin };
 })();
