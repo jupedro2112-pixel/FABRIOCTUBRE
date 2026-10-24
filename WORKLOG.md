@@ -8,6 +8,29 @@
 
 ## Sesión 2026-10-22
 
+### 949. GANAMOS: la pestaña Casino con SUS proveedores (zip Ganando_Argentina.zip): 36 proveedores, 1.525 juegos con sus portadas — SW v639
+**Pedido (owner):** Ganamos idéntica con las fotos del zip (54 proveedores + secciones); "fijate bien y conectá, que hay muchos que sí tiene".
+- Capturas de 384 px de alto variable (tramos superpuestos, sin huecos). La grilla (3 × 111 px, paso 138) se detecta por las franjas oscuras;
+  **el nombre está ESCRITO debajo de cada portada** ⇒ OCR (tesseract) en vez de leer el arte. 3.052 portadas, 3.008 con nombre.
+- Cruce con Girox por proveedor: exacto, prefijo único (nombres cortados "…"), parecido ≥ 0,88 con margen; los "Ganamos …" exclusivos no se cambian.
+  Controles: los NÚMEROS del nombre tienen que coincidir (un número cortado = comienzo del real: "Sweet Bonanza 25…" = 2500) y se sacaron a mano
+  21 parecidos que eran otro juego/variante (Plinko Pop 2, Rooster Run 2, 3 Frozen Crowns, 40 Shining Crown, Bonanza Billion Xtreme, Buy…).
+- "Conectá bien": en Ganamos **Hacksaw incluye sus estudios asociados** (BullShark, BackSeat, Trusty, NowNow, Kitsune…: en Girox con su propio
+  nombre de proveedor) y **Bluejack = `betcorejacktop`** en Girox ⇒ +62 (Hacksaw 31→74, Bluejack 0→16). Las demás coincidencias de nombre con
+  otro proveedor son OTROS juegos (Plinko, Mines, Geisha…): no se conectan. En JUGAYGANA, Hacksaw: sólo "Dark Summoning" (tapado por la franja).
+- Portadas: recortes propios (`images/ganamos/p/`); 6 sin cargar en la captura y 54 tapadas por la barra de abajo de su página (detectadas por OCR
+  de "Inicio/Casino En Vivo…") ⇒ la de JUGAYGANA del mismo juego o la de Girox por `/api/games/img`. Datos `public/data/ganamos-games.json`.
+- Front: pestaña Casino de Ganamos = un bloque por proveedor (2 filas de 3, `gn-grid6`) con "Mostrar todo ›" (`gnProv`); tarjeta `_gnCard`
+  (portada + nombre debajo, `gid`/`lk`); las listas de Ganamos usan su tarjeta.
+
+### 948. "JUEGOS NUEVOS" arriba en JUGAYGANA y Ganamos: todo lo de Girox que esa página no tiene — SW v639
+**Pedido (owner):** "en JUGAYGANA un listado arriba de juegos nuevos con todos los juegos que no tiene, de Girox; lo mismo en Ganamos".
+- `public/data/jugaygana-extra.json` (4.949) y `ganamos-extra.json` (6.702): `[key, nombre, portada, gid, lk, proveedor]`, del más nuevo al más
+  viejo (`created_at` del catálogo), sin los que ya están en la página. Hay que regenerarlos si cambian las listas de la página.
+- JUGAYGANA: sección "Juegos nuevos" (2 filas, TODOS) después de la barra de categorías; Ganamos: carrusel arriba del inicio y de Casino.
+  TODOS / Mostrar todo ⇒ `extraAll(brand)` → lista que se dibuja de a 120 con "Ver más (N)" (`listMore`) para no trabar el teléfono.
+- `/api/games/img` acepta los otros servidores de portadas del catálogo (universalsoft, platipusgaming, cdn.gmbl, bswbet).
+
 ### 947. GANAMOS: inicio idéntico a ganandoargentina.com con SUS portadas, juegos directos y "Especial de Halloween" — SW v638
 **Pedido (owner):** Ganamos "idéntica de punta a punta" (ganandoargentina.com + zip de capturas `Ganando_Argentina.zip`), sin conectar con Girox, con
 sus portadas (las de JUGAYGANA donde haga falta). (`ganamosargentina.com` no existe; el owner confirmó ganandoargentina.com.)

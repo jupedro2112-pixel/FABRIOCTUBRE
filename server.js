@@ -25492,7 +25492,7 @@ async function _gameLaunchMeta(agg, gameId, nameHint) {
 }
 // #869 (owner: "en el buscador las fotos de los juegos aparecen falladas"): las fotos del catálogo de 1girox se sirven POR ACÁ (mismo sitio que
 // la app ⇒ ningún teléfono/navegador las bloquea por venir de otro dominio). Sólo los hosts de fotos de 1girox; cache 1 día (Cloudflare la guarda).
-const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/|1girox\.com\/img\/providers\/[\w.\-]+$)/; // #909: + logos de proveedores
+const _GAME_IMG_HOST = /^https:\/\/(admin\.1girox\.com\/game-img\/|img-girox\.red777\.win\/|1girox\.com\/img\/providers\/[\w.\-]+$|assets-usoft\.universalsoft\.net\/|platipusgaming\.cloud\/|cdn\.gmbl\.org\.uk\/|images\.bswbet\.org\/)/; // #909: + logos de proveedores · #948: + los otros servidores de portadas del catálogo de 1girox
 app.get('/api/games/img', async (req, res) => {
   try {
     const u = String(req.query.u || '');

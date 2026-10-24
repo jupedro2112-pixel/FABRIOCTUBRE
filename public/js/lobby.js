@@ -201,7 +201,29 @@ VIP.lobby = (function () {
     function _gnRowsHtml() {
         if (!_gnHomeData) return '';
         // #938 (owner: "Ver todo va a otra sección"): muestra los juegos de ESA fila (antes: todo el catálogo o todo el proveedor).
-        return (_gnHomeData.rows || []).map((r, ri) => (r.hw ? _gnHalloween(r, ri) : _gcar(r.title, r.games, 'VIP.lobby.gnRow(' + ri + ')'))).join('');
+        return '<div id="gnExtraH">' + _gnExtraHtml('gnExtraH') + '</div>' + (_gnHomeData.rows || []).map((r, ri) => (r.hw ? _gnHalloween(r, ri) : _gcar(r.title, r.games, 'VIP.lobby.gnRow(' + ri + ')'))).join(''); // #948
+    }
+    // #949: tarjeta de Ganamos (portada + nombre debajo) y datos de sus proveedores (/data/ganamos-games.json: [key, nombre, portada, gid, lk]).
+    function _gnCard(g) {
+        return '<button type="button" class="gn-g" onclick="VIP.lobby.play(\'' + esc(g.key) + '\', this)" data-name="' + esc(g.name) + '"' + (g.gid ? ' data-gid="' + Number(g.gid) + '" data-lk="' + esc(g.lk || '') + '"' : '') + ' aria-label="' + esc(g.name) + '"><span>' + (g.img ? '<img loading="lazy" decoding="async" src="' + esc(img(g.img)) + '" alt="" onerror="this.remove()">' : '') + '<i>' + esc(g.name) + '</i></span><b class="gn-gname">' + esc(g.name) + '</b></button>';
+    }
+    const _gnG = (a) => ({ key: a[0], name: a[1], img: a[2], gid: a[3], lk: a[4] });
+    let _gnGames = null, _gnGamesP = null;
+    function _gnGamesLoad() {
+        if (!_gnGamesP) _gnGamesP = fetch('/data/ganamos-games.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((d) => { _gnGames = d; return d; });
+        return _gnGamesP;
+    }
+    function gnProv(i) { _gnGamesLoad().then((d) => { const p = d && d.providers && d.providers[i]; if (p) jgList(p.n, p.g.map(_gnG)); }); }
+    // #948: "Juegos nuevos" (lo de Girox que Ganamos no tiene) — en el inicio y arriba de Casino.
+    function _gnExtraHtml(boxId) {
+        if (!_xtra.ganamos) { _extraLoad('ganamos').then(() => { const b = $(boxId); if (b && b.isConnected) b.innerHTML = _gnExtraHtml(boxId); }); return ''; }
+        return _gcar('Juegos nuevos', _xtra.ganamos.slice(0, 24), 'VIP.lobby.extraAll(\'ganamos\')');
+    }
+    // #949 (owner: "Ganamos idéntica"): la pestaña Casino como su página: un bloque por proveedor (2 filas de 3) con "Mostrar todo".
+    function _gnCasinoHtml() {
+        if (!_gnGames) { _gnGamesLoad().then(() => { if (_skin === 'ganamos' && _view === 'slots') _render(); }); return _backBar() + '<div class="prl-note">Cargando…</div>'; }
+        return _backBar() + '<div id="gnExtraC">' + _gnExtraHtml('gnExtraC') + '</div>' + ((_gnGames && _gnGames.providers) || []).map((p, i) =>
+            '<section class="gn-sec"><div class="gn-sh"><span>' + esc(p.n) + '</span><button type="button" onclick="VIP.lobby.gnProv(' + i + ')">Mostrar todo ›</button></div><div class="gn-grid6">' + p.g.slice(0, 6).map((a) => _gnCard(_gnG(a))).join('') + '</div></section>').join('');
     }
     // #947: "Especial de Halloween" como en ganandoargentina.com (fondo, título, marco con sus juegos, el perro y JUGÁ YA = la lista de esa fila).
     function _gnHalloween(r, ri) {
@@ -278,7 +300,7 @@ VIP.lobby = (function () {
         return _rfStrip() + (slides.length ? '<section class="jg-slider"><div class="jg-slides" id="jgSlides" onscroll="VIP.lobby.jgSlideScroll(this)">' + slides.map((b) => '<div class="jg-slide"><img src="' + esc(b.img) + '" alt="" decoding="async" style="object-fit:' + (b.fit === 'contain' ? 'contain' : 'cover') + '"></div>').join('') + '</div>' +
                 '<div class="jg-dots" id="jgDots">' + slides.map((_, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('') + '</div></section>' : '') +
             '<div class="jg-wrap"><div class="jg-searchrow"><label class="jg-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="2"/></svg><input type="search" placeholder="Buscar juegos" value="' + esc(_q) + '" oninput="VIP.lobby.search(this.value)"></label>' +
-            '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' +
+            '<button type="button" class="jg-provbtn" onclick="VIP.lobby.jgProv(true)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/></svg>Proveedores</button></div>' + _jgCatnav('inicio') + '<div id="prlRes"></div>' + '<div id="jgExtra">' + _jgExtraHtml() + '</div>' + // #948: Juegos nuevos (lo de Girox que no está)
             '<section class="jg-sec">' + t('Eventos deportivos') + '<div id="jgBoard">' + _jgBoardHtml() + '</div><div class="jg-sports">' + ((_data && _data.sports) || []).map((sp) => '<button type="button" onclick="VIP.lobby.sport(\'' + esc(sp.path) + '\')"><b>' + esc(sp.title) + '</b><small>' + esc(sp.sub) + '</small></button>').join('') + '</div></section>' +
             // #941: sin "Casino lobby" (su inicio no lo tiene)
             cols +
@@ -321,18 +343,41 @@ VIP.lobby = (function () {
     }
     // #936 (owner: "en Mostrar Todo mostrá los juegos de cada sección, no de todos"): vista de UNA lista de juegos (sección del inicio, y desde
     // #937 cada proveedor y cada categoría de la barra copiados de jugaygana44), con la barra de categorías arriba.
+    // #948 (owner: "arriba un listado de JUEGOS NUEVOS con todos los juegos de Girox que JUGAYGANA no tiene"; lo mismo en Ganamos): lista
+    // /data/<marca>-extra.json ([key, nombre, portada, gid, lk, proveedor], del más nuevo al más viejo). Las portadas pasan por /api/games/img.
+    const _xtra = {}, _xtraP = {};
+    function _extraLoad(brand) {
+        if (!_xtraP[brand]) _xtraP[brand] = fetch('/data/' + brand + '-extra.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+            .then((d) => { _xtra[brand] = ((d && d.games) || []).map((a) => ({ key: a[0], name: a[1], img: a[2], gid: a[3], lk: a[4] })); return _xtra[brand]; });
+        return _xtraP[brand];
+    }
+    function _jgExtraHtml() {
+        if (!_xtra.jugaygana) { _extraLoad('jugaygana').then(() => { const b = $('jgExtra'); if (b && b.isConnected) b.innerHTML = _jgExtraHtml(); }); return ''; }
+        const g = _xtra.jugaygana.slice(0, 30); if (!g.length) return '';
+        return '<section class="jg-sec"><div class="jg-sec-h"><div><h2 class="jg-st">Juegos nuevos</h2><span class="jg-line"></span></div><button type="button" class="jg-all" onclick="VIP.lobby.extraAll(\'jugaygana\')">TODOS</button></div>' +
+            '<div class="jg-rows"><div class="jg-rowwrap"><button type="button" class="jg-arr jg-arr-l" onclick="VIP.lobby.jgArrow(this,-1)" aria-label="Anteriores">‹</button><div class="jg-row jg-row-g" style="--jr:2">' + g.map(_jgCard).join('') + '</div><button type="button" class="jg-arr jg-arr-r" onclick="VIP.lobby.jgArrow(this,1)" aria-label="Siguientes">››</button></div></div></section>';
+    }
+    function extraAll(brand) { _extraLoad(brand).then((L) => jgList('Juegos nuevos', L || [])); }
     let _jgList = null;
     function jgList(title, games, cat) { _jgList = { title: String(title || ''), games: games || [], cat: cat || '' }; _allProv = null; _allCat = null; _view = 'jglist'; _render(); const m = $('prlMain'); if (m) m.scrollTop = 0; }
     function gnRow(i) { const r = ((_gnHomeData && _gnHomeData.rows) || [])[i]; if (r) jgList(r.title, r.games); } // #938
+    // #948: las listas largas (miles de juegos) se muestran de a 120 para no trabar el teléfono.
+    function _listMoreBtn(L) { L._n = 120; return L.games.length > 120 ? '<div class="prl-more"><button type="button" id="jgListMore" onclick="VIP.lobby.listMore()">Ver más (' + (L.games.length - 120) + ')</button></div>' : ''; }
+    function listMore() {
+        const L = _jgList; const box = $('jgListGrid'); if (!L || !box) return;
+        const next = L.games.slice(L._n, L._n + 120); L._n += next.length;
+        box.insertAdjacentHTML('beforeend', next.map(SK().layout === 'jugaygana' ? _jgCard : SK().layout === 'ganamos' ? _gnCard : _card).join(''));
+        const b = $('jgListMore'); if (b) { if (L._n >= L.games.length) b.parentNode.remove(); else b.textContent = 'Ver más (' + (L.games.length - L._n) + ')'; }
+    }
     function jgColl(i) { const c = ((_jgHomeData && _jgHomeData.collections) || [])[i]; if (c) jgList(c.title, c.games); }
     function _jgListHtml() {
         const L = _jgList || { title: '', games: [] };
         if (SK().layout !== 'jugaygana') { // #938: Ganamos / PICA ROJA — la misma lista con sus tarjetas
             return _backBar() + '<div class="prl-sh"><span class="prl-st">' + ico('slots') + '<h3>' + esc(L.title) + '</h3></span></div>' +
-                (L.games.length ? '<div class="prl-grid">' + L.games.map(_card).join('') + '</div>' : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
+                (L.games.length ? '<div class="' + (SK().layout === 'ganamos' ? 'gn-grid6' : 'prl-grid') + '" id="jgListGrid">' + L.games.slice(0, 120).map(SK().layout === 'ganamos' ? _gnCard : _card).join('') + '</div>' + _listMoreBtn(L) : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
         }
         return _backBar() + '<div class="jg-wrap">' + _jgCatnav(L.cat) + '<div class="jg-sec-h jg-cat-h"><div><h2 class="jg-st">' + esc(L.title) + '</h2><span class="jg-line"></span></div></div></div>' +
-            (L.games.length ? '<div class="prl-grid jg-grid">' + L.games.map(_jgCard).join('') + '</div>' : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
+            (L.games.length ? '<div class="prl-grid jg-grid" id="jgListGrid">' + L.games.slice(0, 120).map(_jgCard).join('') + '</div>' + _listMoreBtn(L) : '<div class="prl-note">Pronto vas a ver los juegos acá.</div>');
     }
     function jgProv(show) { const s2 = $('jgProv'); if (s2) s2.hidden = !show; }
     function _render() {
@@ -356,6 +401,7 @@ VIP.lobby = (function () {
                 _providers((_data.providers || []).filter((p) => p.live));
             return;
         }
+        if (_view === 'slots' && SK().layout === 'ganamos') { m.innerHTML = _gnCasinoHtml(); return; } // #949
         if (_view === 'slots' || _view === 'all') {
             if (_view === 'slots' || _allProv) _allCat = null;
             if (_allCat && SK().layout === 'jugaygana') { // #918: categoría de la barra de JUGAYGANA (su barra sigue arriba)
@@ -499,5 +545,5 @@ VIP.lobby = (function () {
             let n = 0; const t = setInterval(() => { n++; if (VIP.state && VIP.state.currentToken && VIP.config) { clearInterval(t); try { VIP.home.openPlatform(_auto); } catch (_) { open('inicio', _auto); } try { history.replaceState(null, '', location.pathname); } catch (_) {} } else if (n > 60 && window.VIP_SITE !== 'jugaygana') clearInterval(t); }, 500); // #944: en el sitio JUGAYGANA espera el login el tiempo que haga falta
         }
     } catch (_) {}
-    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, back, ql, sportsMenu, sportPick, skin: () => _skin };
+    return { open, close, go, all, provToggle, more, menu, withdraw, profile, top, search, play, sport, load, support, gcarScroll, jgSlideScroll, jgProv, jgCat, jgArrow, jgColl, jgList, jgProvOpen, gnRow, extraAll, listMore, gnProv, back, ql, sportsMenu, sportPick, skin: () => _skin };
 })();

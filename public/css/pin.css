@@ -3304,3 +3304,7 @@ html.site-jyg .ffk-go, .prl-jyg ~ .ffk-ov .ffk-go { background: #f2ce00; color: 
 .gn-hw-btn { position: absolute; left: 10%; right: 10%; bottom: 5%; z-index: 4; border: 0; padding: 0; background: none; cursor: pointer; }
 .gn-hw-btn img { width: 100%; display: block; }
 .gn-hw-dog { position: absolute; left: -2%; bottom: 0; width: 34%; z-index: 4; pointer-events: none; }
+
+/* #949 Ganamos: bloques de proveedor en Casino (2 filas de 3) y listas con sus tarjetas */
+.gn-grid6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 16px; }
+.gn-grid6 .gn-g span { aspect-ratio: 1 / 1; }
