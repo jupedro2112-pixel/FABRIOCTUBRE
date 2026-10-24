@@ -8,6 +8,17 @@
 
 ## Sesión 2026-10-24
 
+### 985. Portadas de LOBBY distintas por marca + inicio de Ganamos en el orden de ganamos.net — SW v673
+**Pedido (owner):** "las fotos de los lobbys de Ganamos y JUGAYGANA, que no se repitan entre plataformas; esas (las primeras) ponelas en Ganamos, buscá otras
+para JUGAYGANA y para PICA ROJA (puede ser de Stake)" + "ordená los títulos del inicio de Ganamos igual que ganamos.net".
+- **Ganamos:** portadas oficiales de lobby de la CDN pública de SoftSwiss (`cdn.softswiss.net/i/s3/…`, sin marca de ningún casino) para 7 lobbys (Evolution Top
+  Games / Game Shows / Roulette / Blackjack / Poker; Pragmatic Live Blackjack / Baccarat) en `public/images/ganamos/lobby/`.
+- **JUGAYGANA y PICA ROJA:** portadas PROPIAS de 9 lobbys (`scripts/girox/lobby-covers.py`): de fondo una mesa real del MISMO proveedor (distinta por marca) +
+  banda "<TIPO> LOBBY" con los colores de la marca (negro/amarillo · rojo/blanco), en `public/images/<marca>/lobby/<key>.webp`.
+- Stake, ganamos.net y las webs oficiales de Evolution/Pragmatic/Ezugi bloquean esta conexión (Cloudflare / IP); Ezugi (2) y Vivo (1) siguen con la foto de
+  Girox porque no hay otra pública. `LOBBY_IMG` + `_lobbyImg`/`_wl` en lobby.js las aplican por key en todas las tarjetas (`_card`, `_gcar`, `_gnCard`, `_jgCard`).
+- **Orden de Ganamos** (capturas de su inicio): sus títulos ya iban en su orden; "Juegos nuevos" y "Casino lobby" (que allá no existen) pasan al FINAL.
+
 ### 984. JUGAYGANA con el saldo en la cabecera; Ganamos abre con la Carga rápida desplegada — SW v672
 **Pedido (owner):** "en JUGAYGANA, al costado de la parte superior ponemos el saldo; en Ganamos lo mismo pero, al no tener menú, lo dejamos así y agregamos la
 burbuja abierta abajo; si la cerramos que quede arriba como está y que diga CARGA RÁPIDA". JUGAYGANA: `.jg-bal` (saldo en amarillo, `js-prl-bal`) al lado del
