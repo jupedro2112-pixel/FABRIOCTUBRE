@@ -708,12 +708,8 @@ VIP.lobby = (function () {
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
-<<<<<<< ours
-        if (_skin === 'jugaygana') setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === 'jugaygana') VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); // F982
-=======
         // F982/F984: JUGAYGANA y Ganamos abren con la Carga rápida desplegada; cerrada, queda el botón CARGA RÁPIDA de arriba
         if (_skin === 'jugaygana' || _skin === 'ganamos') { const sk0 = _skin; setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === sk0) VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); }
->>>>>>> theirs
         try { if ($('prlQl') && !sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
