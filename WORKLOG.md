@@ -8,6 +8,8 @@
 
 ## Sesión 2026-10-24
 
+### 998. JUGAYGANA con el menú ☰ oficial: Inicio · Casino · Casino en vivo · Eventos deportivos, sin Tareas diarias (= F983) — SW v671
+
 ### 997. Dominios de marca sin "Cerrar sesión" y con sesión que se renueva sola (= F981) + JUGAYGANA con cabecera/menú como jugaygana44 (= F982) — SW v670
 `POST /api/auth/renew` (nuevo token de 30 días, una vez por día, sólo en dominios de marca); `#pfLogoutBtn` oculto ahí. JUGAYGANA: sin Soporte, botón
 CARGA RÁPIDA en lugar del INGRESAR de jugaygana44 y abierta al entrar; menú ☰ con Inicio · Casino · Casino en vivo · Eventos deportivos.
