@@ -57,7 +57,7 @@ VIP.lobby = (function () {
             '<div id="prLobby" class="prl ' + sk.cls + '" data-skin="' + _skin + '" hidden role="dialog" aria-label="' + sk.name + '">' +
             // #914 (owner): arriba la MISMA barra que al entrar a Girox (Volver · Menú · marca · Historias · Info · Perfil).
             // #961 (owner): la barra de PICA ROJA también arriba de JUGAYGANA en la app (en el sitio JUGAYGANA no: no hay app detrás).
-            (sk.layout === 'jugaygana' && window.VIP_SITE === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
+            (sk.layout === 'jugaygana' && window.VIP_SITE === 'jugaygana' ? '' : '<div class="casino-topbar prl-cbar">' + ((VIP.home && VIP.home.casinoBarHtml) ? VIP.home.casinoBarHtml({ noProfile: _skin !== 'picaroja', back: 'VIP.lobby.close()', menu: (window.VIP_SITE === 'jugaygana' ? 'VIP.lobby.menu(true)' : 'VIP.home.casinoFullMenu()'), logo: sk.bar, name: sk.name, idSuffix: 1 }) : '<div class="casino-topbar-row"><button type="button" class="casino-back" onclick="VIP.lobby.close()">‹ Volver</button></div>') + '</div>') +
             // #956 (owner: "armalo como jugaygana44, con su menú de arriba, sin el saldo"): logo · soporte · mensajes (historias) · usuario con
             // Carga rápida · ☰ (cuenta, cargar/retirar, deportes, perfil, info y volver). La barra de la app no va en JUGAYGANA.
             (sk.layout === 'jugaygana' ? '<header class="prl-top jg-head"><button type="button" class="prl-brandbtn" onclick="VIP.lobby.go(\'inicio\')" aria-label="Inicio"><img src="' + sk.logo + '" alt="' + sk.name + '" class="prl-wordmark"></button>' +
@@ -144,9 +144,37 @@ VIP.lobby = (function () {
         const hid = box.querySelectorAll('.prl-hid'); for (let i = 0; i < Math.min(8, hid.length); i++) hid[i].classList.remove('prl-hid');
         if (box.querySelectorAll('.prl-hid').length === 0 && btn) btn.closest('.prl-more').remove();
     }
+    // #988 (owner: "estas fotos hacelas más premium, más estilo PICA ROJA, que venda un poco PICA ROJA pero sin nada llamativo ni texto de más; botones que
+    // funcionen a la perfección: casino en vivo, slots, novedades de la semana"): portadas armadas en la página (texto nítido, sin imágenes pesadas).
+    // Novedades muestra las fotos reales de los 3 juegos más nuevos (/data/picaroja-extra.json = los 120 últimos de Girox).
+    const PR_ART = {
+        live: '<svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92" fill="none" stroke="#d4af6a" stroke-opacity=".55" stroke-width="2"/><circle cx="100" cy="100" r="82" fill="#140a0c"/>' +
+            Array.from({ length: 18 }, (_, i) => { const a0 = (i * 20) * Math.PI / 180, a1 = ((i + 1) * 20) * Math.PI / 180; const p = (a, r) => (100 + r * Math.cos(a)).toFixed(1) + ' ' + (100 + r * Math.sin(a)).toFixed(1);
+                return '<path d="M' + p(a0, 80) + ' A80 80 0 0 1 ' + p(a1, 80) + ' L' + p(a1, 52) + ' A52 52 0 0 0 ' + p(a0, 52) + 'Z" fill="' + (i % 2 ? '#1b1d22' : '#c8102e') + '"/>'; }).join('') +
+            '<circle cx="100" cy="100" r="50" fill="#0e1014" stroke="#d4af6a" stroke-opacity=".5"/><circle cx="100" cy="100" r="14" fill="#d4af6a" fill-opacity=".85"/><circle cx="148" cy="62" r="6" fill="#f4f1ea"/></svg>',
+        slots: '<svg viewBox="0 0 200 200" aria-hidden="true"><rect x="18" y="46" width="164" height="108" rx="16" fill="#140a0c" stroke="#d4af6a" stroke-opacity=".5" stroke-width="2"/>' +
+            [0, 1, 2].map((i) => '<rect x="' + (30 + i * 50) + '" y="58" width="42" height="84" rx="8" fill="#f4f1ea"/>').join('') +
+            '<text x="51" y="113" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="34" fill="#c8102e">7</text><text x="101" y="113" text-anchor="middle" font-size="30" fill="#1b1d22">♠</text><text x="151" y="113" text-anchor="middle" font-size="30" fill="#c8102e">♦</text>' +
+            '<rect x="18" y="96" width="164" height="2" fill="#c8102e" fill-opacity=".7"/></svg>',
+        sport: '<svg viewBox="0 0 200 200" aria-hidden="true"><rect x="20" y="40" width="160" height="120" rx="10" fill="#0f1a14" stroke="#d4af6a" stroke-opacity=".45" stroke-width="2"/><line x1="100" y1="40" x2="100" y2="160" stroke="#f4f1ea" stroke-opacity=".35"/><circle cx="100" cy="100" r="22" fill="none" stroke="#f4f1ea" stroke-opacity=".35"/><rect x="20" y="75" width="26" height="50" fill="none" stroke="#f4f1ea" stroke-opacity=".35"/><rect x="154" y="75" width="26" height="50" fill="none" stroke="#f4f1ea" stroke-opacity=".35"/><circle cx="132" cy="88" r="11" fill="#f4f1ea"/><path d="M132 80l5 4-2 6h-6l-2-6z" fill="#1b1d22"/></svg>'
+    };
+    function _prHero() {
+        const sl = (cls, on, kick, title, sub, art) => '<button type="button" class="prl-slide prl-pb ' + cls + '" onclick="' + on + '"><span class="pb-txt"><small><img src="/icons/icon-96x96.png" alt="">' + kick + '</small><b>' + title + '</b><em>' + sub + '</em><i class="pb-cta">Entrar <span>›</span></i></span><span class="pb-art">' + art + '</span></button>';
+        setTimeout(_prHeroNew, 0);
+        return '<div class="prl-hero prl-hero-pr" id="prlHero">' +
+            sl('pb-live', "VIP.lobby.go('vivo')", 'PICA ROJA · EN VIVO', 'Casino en vivo', 'Mesas reales con crupieres, a toda hora', PR_ART.live) +
+            sl('pb-slots', "VIP.lobby.go('slots')", 'PICA ROJA · SLOTS', 'Slots', 'Los mejores proveedores, en un solo lugar', PR_ART.slots) +
+            sl('pb-new', "VIP.lobby.extraAll('picaroja')", 'PICA ROJA · NUEVOS', 'Novedades de la semana', 'Los juegos que acaban de llegar', '<span class="pb-new" id="prlHeroNew"></span>') +
+            sl('pb-sport', 'VIP.lobby.sportsMenu(event)', 'PICA ROJA · DEPORTES', 'Deportes', 'Apostá en vivo a todos los partidos', PR_ART.sport) + '</div>';
+    }
+    function _prHeroNew() {
+        _extraLoad('picaroja').then((L) => { const box = $('prlHeroNew'); if (!box || !L || !L.length) return;
+            box.innerHTML = L.slice(0, 3).map((g, i) => '<img class="pb-n' + i + '" src="' + esc(img(g.img)) + '" alt="" loading="lazy" onerror="this.remove()">').join(''); });
+    }
     function _hero() {
         if (SK().layout === 'ganamos') return _gnPromos(false);
         if (SK().layout === 'jugaygana' || SK().layout === 'buffaloplay') return '';
+        if (_skin === 'picaroja') return _prHero(); // #988
         return '<div class="prl-hero" id="prlHero">' + BANNERS_OF().map((b) => '<button type="button" class="prl-slide" onclick="VIP.lobby.go(\'' + b[1] + '\')"><img src="' + b[0] + '" alt="' + SK().name + '" decoding="async"></button>').join('') + '</div>';
     }
     // #909: proveedores como Stake (logo sin color, en recuadro) — se despliegan con "Ver más" y llevan a sus juegos.
@@ -176,7 +204,7 @@ VIP.lobby = (function () {
             sp.map((x, i) => '<button type="button" class="' + (gn ? 'gnm__more-item' : 'prl-sportpop-i') + '" role="menuitem" onclick="event.stopPropagation();VIP.lobby.sportPick(\'' + esc(x.path) + '\')">' + (gn ? '<span class="gnm__more-icon">' + GN_IC[i ? 'sp2' : 'sp1'] + '</span><span class="gnm__more-text">' + esc(x.title) + '</span>' : ico('sport') + '<span>' + esc(x.title) + '</span>') + '</button>').join('') + '</div></div>';
         const btn = ev && ev.currentTarget && ev.currentTarget.closest ? ev.currentTarget : null;
         const host = (btn && (btn.closest('.gnm__menu-item') || btn.closest('button'))) || null;
-        if (host && (host.closest('.gnm__main') || host.closest('.prl-nav'))) { host.style.position = 'relative'; host.insertAdjacentHTML('beforeend', html); }
+        if (host && (host.closest('.gnm__main') || host.closest('.prl-nav') || host.closest('#bottomNav'))) { host.style.position = 'relative'; host.insertAdjacentHTML('beforeend', html); } // #988: también desde la barra de la app
         else { const m = $('prLobby'); if (m) m.insertAdjacentHTML('beforeend', html.replace('class="', 'class="prl-sportpop-center ')); }
         setTimeout(() => { document.addEventListener('click', function off(e) { const p = $('prlSportPop'); if (p && !p.contains(e.target)) p.remove(); document.removeEventListener('click', off, true); }, true); }, 0);
     }
@@ -192,6 +220,11 @@ VIP.lobby = (function () {
     // XPG, Destacadas, Del Joker, Clásicas, Pragmatic Live). Lo que en su página es exclusivo de su sistema (juegos propios, torneos,
     // sorteos) acá queda como "PRÓXIMAMENTE" hasta tener su API.
     // #917 (owner): arriba de cada página, los DOS sorteos (el mensual activo y el Gran Sorteo "próximamente"), con el estilo de la marca.
+    // #988: "Fijar PICA ROJA como mi app" (arriba queda PLATAFORMA = esta página; Inicio = menú completo). Sólo en la app, con PICA ROJA elegida.
+    function _prPinChip() {
+        try { if (_skin !== 'picaroja' || window.VIP_SITE || !VIP.home.prPinned || VIP.home.prPinned()) return ''; } catch (_) { return ''; }
+        return '<button type="button" class="prl-pin" onclick="VIP.home.prPin(true)">📌 <b>Fijar PICA ROJA como mi app</b><small>arriba queda PLATAFORMA con tus juegos · Inicio = menú completo</small></button>';
+    }
     function _rfStrip() { // fusión: los sorteos de la gemela (G915, sorteos.js) — dos mitades Gran Sorteo | Sorteo mensual; las pinta VIP.sorteos.load()
         setTimeout(() => { try { VIP.sorteos.load(); } catch (_) {} }, 0);
         return '<div class="srt-bbar" data-srt-bbar hidden></div>'; // #986: el mismo formato que el casino de Girox (píldora → cartel → resumen)
@@ -652,7 +685,7 @@ VIP.lobby = (function () {
         }
         _liveOr();
         const _pvAll = (_data.providers || []).concat(_liveTiles().filter((t) => !(_data.providers || []).some((p) => String(p.name).toLowerCase() === t.name.toLowerCase()))); // #971
-        m.innerHTML = _rfStrip() + _hero() + _providers(_pvAll, true) + _row('grid', 'Casino lobby', _lobbies()) + _search() + // #925: Proveedores arriba, sin "Ver más (60)"
+        m.innerHTML = _prPinChip() + _rfStrip() + _hero() + _providers(_pvAll, true) + _row('grid', 'Casino lobby', _lobbies()) + _search() + // #925: Proveedores arriba, sin "Ver más (60)"
             _row('fire', 'Populares', _data.popular) + _row('star', 'Nuevos', _data.nuevos) +
             (_data.live && _data.live[0] ? _row('live', 'En vivo · ' + _data.live[0].title, _data.live[0].games, _data.live[0].providerId) : '') +
             (_data.sections || []).map((s) => _row('slots', s.title, s.games, s.providerId)).join('') +
@@ -722,18 +755,37 @@ VIP.lobby = (function () {
             if (act && act !== want && window.VIP_SITE !== 'jugaygana') { VIP.home.openPlatform(want); return; } } catch (_) {}
         _skin = SKINS[skin] ? skin : 'picaroja';
         const el = _shell(); el.hidden = false; document.body.classList.add('prl-open', 'casino-open'); try { document.documentElement.classList.add('jyg-ready'); } catch (_) {} // #944: saca la pantalla de carga // #914: modales (Perfil, Info, Retiro…) arriba de la página
+        try { _prNav(_skin === 'picaroja'); } catch (_) {} // #988
         _view = view || 'inicio'; _render(); _paintBal(); try { VIP.stories.paint(); } catch (_) {} // #931: aro y contador de historias en la barra // #919: cuenta regresiva del sorteo al toque
         clearInterval(_balTimer); _balTimer = setInterval(_paintBal, 5000);
         const m = $('prlMain'); if (m && !m._prlScroll) { m._prlScroll = true; m.addEventListener('scroll', _onScroll, { passive: true }); }
         if (!_data) _load();
         try { _dragQl(); } catch (_) {}
         // #982/#984: JUGAYGANA y Ganamos abren con la Carga rápida desplegada; cerrada, queda el botón CARGA RÁPIDA de arriba
-        if (_skin === 'jugaygana' || _skin === 'ganamos') { const sk0 = _skin; setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === sk0) VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); }
+        if (_skin === 'jugaygana' || _skin === 'ganamos' || _skin === 'picaroja') { const sk0 = _skin; setTimeout(() => { try { const lb = $('prLobby'); if (lb && !lb.hidden && _skin === sk0) VIP.home.toggleCasinoLoad(true); } catch (_) {} }, 700); } // #988: PICA ROJA también con la Carga rápida abierta
         try { if ($('prlQl') && !sessionStorage.getItem('vip_ql_tip')) { sessionStorage.setItem('vip_ql_tip', '1'); VIP.ui.showToast('💡 La burbuja de Carga rápida se puede mover: mantenela apretada y arrastrala si te tapa algo.', 'info'); } } catch (_) {} // #920 (#944: una vez por sesión)
     }
     // #944: en el sitio JUGAYGANA la página NO se cierra (no hay otra app detrás): "Volver" lleva a su inicio. close(true) la cierra igual.
+    // #988 (owner: "el menú inferior de PICA ROJA va a ser el de la app en sí; sacá el que hiciste; a la izquierda Slots, Inicio que vaya a Inicio y en vez de
+    // Perfil, Deportes con los 2 proveedores"): con la página de PICA ROJA abierta, la barra de abajo de la APP (#bottomNav, menú opción 2) pasa por
+    // encima de la página y sus botones cambian; al cerrar vuelven a ser los de siempre. Sin #bottomNav queda la barra propia de la página.
+    const _NAV_SWAP = { navMenu: { lbl: 'Slots', ico: 'slots', on: "VIP.lobby.go('slots')" }, navPerfil: { lbl: 'Deportes', ico: 'sport', on: 'VIP.lobby.sportsMenu(event)' } };
+    let _navSaved = null;
+    function _prNav(on) {
+        if (on && !_navSaved && $('bottomNav')) {
+            _navSaved = {};
+            Object.keys(_NAV_SWAP).forEach((id) => { const b = $(id); if (!b) return; const x = _NAV_SWAP[id]; _navSaved[id] = { html: b.innerHTML, on: b.getAttribute('onclick') };
+                b.innerHTML = '<span class="tn-ico">' + ico(x.ico) + '</span><span class="tn-lbl">' + x.lbl + '</span>'; b.setAttribute('onclick', x.on); });
+            const ini = $('navInicio'); if (ini) { _navSaved.navInicio = { on: ini.getAttribute('onclick') }; ini.setAttribute('onclick', 'VIP.lobby.close(true);VIP.home.goHome()'); }
+            document.body.classList.add('prl-appnav');
+        } else if (!on && _navSaved) {
+            Object.keys(_navSaved).forEach((id) => { const b = $(id); if (!b) return; if (_navSaved[id].html != null) b.innerHTML = _navSaved[id].html; b.setAttribute('onclick', _navSaved[id].on); });
+            _navSaved = null; document.body.classList.remove('prl-appnav');
+        }
+    }
     function close(force) {
         if (window.VIP_SITE === 'jugaygana' && force !== true && _skin === 'jugaygana') { menu(false); go('inicio'); return; }
+        try { _prNav(false); } catch (_) {} // #988
         const el = $('prLobby'); if (el) el.hidden = true; document.body.classList.remove('prl-open'); clearInterval(_balTimer); clearInterval(_jgTimer); clearInterval(_bpTimer);
         try { if (!(VIP.ui && VIP.ui._casinoOpen)) document.body.classList.remove('casino-open'); const p = $('casinoLoadPanel'); if (p && el && el.contains(p)) p.style.display = 'none'; if (VIP.home.casinoQuickClose && el && el.contains(p)) VIP.home.casinoQuickClose(); } catch (_) {}
     }
@@ -804,6 +856,7 @@ VIP.lobby = (function () {
             // #966 (owner: "todas las plataformas lo más parecido posible"): el MISMO menú en las 4 páginas (antes Deportes/Historias/Info sólo en JUGAYGANA).
             '<div class="prl-dr-list"><small class="prl-dr-cap">Deportes</small>' + _sportsList().map((sp) => item('sport', esc(sp.title), "VIP.lobby.menu(false);VIP.lobby.sport('" + esc(sp.path) + "')")).join('') + '</div>' + // #956
             '<div class="prl-dr-list">' + item('chat', 'Soporte', 'VIP.lobby.support()') + item('home', 'Mi perfil', 'VIP.lobby.profile()') +
+            (_skin === 'picaroja' && VIP.home && VIP.home.prPinned ? item('star', VIP.home.prPinned() ? 'Desfijar PICA ROJA' : 'Fijar PICA ROJA como mi app', 'VIP.lobby.menu(false);VIP.home.prPin(' + (VIP.home.prPinned() ? 'false' : 'true') + ')') : '') + // #988
             item('fire', 'Sorteos', "VIP.lobby.menu(false);VIP.sorteos.open('mensual')") + item('star', 'Historias', 'VIP.lobby.menu(false);VIP.stories.open()') + item('grid', 'Información', 'VIP.lobby.menu(false);VIP.home.casinoInfo()') +
             (window.VIP_SITE === 'jugaygana' ? '' : item('slots', 'Volver a la app', 'VIP.lobby.close(true)')) + '</div>';
     }

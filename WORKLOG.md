@@ -8,6 +8,23 @@
 
 ## Sesión 2026-10-24
 
+### 988. PICA ROJA como app unificada (se FIJA la plataforma), barra de la app adentro de PICA ROJA, portadas premium y sin Perfil en las otras — SW v676
+**Pedidos (owner):** "si eligen PICA ROJA, que se pueda fijar la plataforma y quede como una app unificada con juegos integrados: arriba JUGÁ AQUÍ pasa a decir
+PLATAFORMA y abre la página; Inicio va al menú completo" · "para el resto, sin perfil adentro, sólo el saldo y la carga rápida en burbuja (cerrada, arriba); en
+PICA ROJA también la carga rápida" · "el menú inferior de PICA ROJA es el de la app: sacá el que hiciste; a la izquierda Slots, Inicio a Inicio y en vez de Perfil,
+Deportes con los 2 proveedores" · "las fotos de arriba más premium, estilo PICA ROJA, sin nada llamativo ni texto de más, con botones que funcionen".
+- **Fijar PICA ROJA** (home.js `prPinned`/`prPin`, `localStorage vip_pr_pin`, sólo con PICA ROJA como marca del teléfono): botón "📌 Fijar PICA ROJA como mi
+  app" arriba de su página y en su menú (☰ → Fijar / Desfijar). Fijada: el botón de arriba dice **PLATAFORMA** con el logo de PICA ROJA y abre la página;
+  `goHome` cierra la página y va al menú **completo**; al abrir la app entra a la página (pref `girox` = directo, que con PICA ROJA abre su página).
+- **Barra de abajo = la de la app** (`_prNav` en lobby.js): con PICA ROJA abierta, `#bottomNav` (menú opción 2) pasa por encima (`body.prl-appnav`) y cambia:
+  Cambiar menú → **Slots**, Inicio → cierra la página + Inicio, Perfil → **Deportes** (popup con los 2 proveedores, `sportsMenu`). Al cerrar vuelve a la normal.
+  La barra propia de la página (`.prl-nav`) se esconde. Sin `#bottomNav` (menú opción 1) queda la propia.
+- **Sin Perfil** en la barra de arriba (`casinoBarHtml({ noProfile })`) en Ganamos, JUGAYGANA, BuffaloPlay y el casino de Girox; PICA ROJA lo mantiene.
+- **Carga rápida abierta al entrar** también en PICA ROJA (como Ganamos y JUGAYGANA); cerrada, queda su burbuja.
+- **Portadas premium** (`_prHero`, `PR_ART`): 4 portadas armadas en HTML/SVG (grafito con brillo rojo, logo, rótulo dorado, título corto, "Entrar ›"):
+  Casino en vivo → vivo · Slots → slots · Novedades de la semana → `extraAll('picaroja')` (fotos reales de los 3 juegos más nuevos,
+  `/data/picaroja-extra.json` = los 120 últimos de Girox) · Deportes → popup de los 2 proveedores. Reemplazan a b1/b2/b3.svg en PICA ROJA.
+
 ### 987. SORTEOS v2 de la gemela (el zip "SORTEOS-auto-iphone") IDÉNTICOS en main y en las páginas de marca — SW v675 · admin SW v203
 **Pedido (owner, zip de PICAROJAoficial):** "ahí está bien configurado, está todo en Girox; replicá lo mismo en las otras 3, el formato y la forma de ver; copialo
 exacto". `main` tenía la versión vieja de los sorteos (G915) y la base de producción ya corre la v2 (G981), por eso la ventana se veía distinta / vacía.
