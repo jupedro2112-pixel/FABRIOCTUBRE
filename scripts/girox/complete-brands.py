@@ -8,7 +8,7 @@ KEY = re.compile(r'^\d{1,3}/[\w.\-@]{1,80}$')
 norm = lambda s: re.sub(r'[^a-z0-9]', '', re.sub(r'[™®]', '', str(s).lower()))
 def g5(g): return ['%s/%s' % (g['aggregator_id'], g['game_id']), re.sub(r'[™®]', '', str(g['name'])).strip()[:60], g.get('thumbnail') or g.get('image_url') or '', g.get('id'), str(g.get('launcher_key') or '')[:40]]
 CAT = sorted([g for g in cat if g.get('aggregator_id') is not None and g.get('game_id') and g.get('name') and KEY.match('%s/%s' % (g['aggregator_id'], g['game_id']))], key=lambda g: -(g.get('play_count') or 0))
-HW = re.compile(r'hallow|zombi|vampir|witch|pumpkin|spook|haunt|mumm|franken|dracula|muerto|ghost|skull|creep|grave|cursed|scary|horror|undead|reaper', re.I)
+HW = re.compile(r'hallow|zombi|vampir|witch|pumpkin|spook|haunt|mumm|franken|dracula|muerto|ghost|skull|creep|\bgrave|cursed|scary|horror|undead|reaper|\bmonster|\bdevil|\bdemon|\bhell\b|\bbats?\b|boo!', re.I)  # F975: + monstruos, diablos, murciélagos
 HACKSAW = ['Hacksaw Gaming', 'BullShark Games', 'BackSeat Gaming', 'Trusty Gaming', 'NowNow Gaming', 'Kitsune Games', 'Paperclip Gaming', 'Sidequest Studios', 'Shift Gaming', '1 Ace Studios', 'Pocket Play', 'Rabbit Gaming', 'RainFall Gaming', 'Uppercut Gaming', 'Zeroedge Studios', 'Valkyrie', 'JinX Gaming', 'AceRoll', 'Pineapple Play', 'Giga', 'Slotrix']
 GN = {'Rubyplay': ['RubyPlay', 'Ruby-Play'], 'Amusnet': ['Amusnet'], 'Amigo Gaming': ['Amigo Gaming'], 'Mascot': ['mascotgaming'], 'NetEnt': ['NetEnt'], 'Pragmatic Play': ['Pragmatic Play'],
       'EGT Digital': ['EGT'], 'Inout': ['InOut'], 'Booongo': ['Booongo', 'booongo'], 'Microgaming': ['Microgaming'], 'Aristocrat': ['Aristocrat'], 'Wazdan': ['Wazdan'], 'EvoPlay': ['EvoPlay'],
@@ -47,11 +47,11 @@ for name, rep in (('GANAMOS', fill_providers('public/data/ganamos-games.json', G
     print(name + ':', ', '.join('%s %d+%d' % r for r in rep if r[2]))
 h = json.load(open('public/data/ganamos-home.json'))
 for r in h['rows']:
-    if r['title'] == 'Especial de Halloween': print('gn halloween +', fill_row(r['games'], lambda g: SLOTS(g) and HW.search(g['name']), 24))
+    if r['title'] == 'Especial de Halloween': print('gn halloween +', fill_row(r['games'], lambda g: SLOTS(g) and HW.search(g['name']), 48))  # F975: todo el recuadro
     if r['title'] == 'Pragmatic Live': print('gn pragmatic live +', fill_row(r['games'], lambda g: g['provider_name'] == 'pragmatic-live-casino', 24))
 json.dump(h, open('public/data/ganamos-home.json', 'w'), ensure_ascii=False, separators=(',', ':'))
 jh = json.load(open('public/data/jugaygana-home.json'))
 for c in jh['collections']:
-    if c['title'] == 'Juegos De Halloween': print('jg halloween +', fill_row(c['games'], lambda g: SLOTS(g) and HW.search(g['name']), 24))
+    if c['title'] == 'Juegos De Halloween': print('jg halloween +', fill_row(c['games'], lambda g: SLOTS(g) and HW.search(g['name']), 48))
     if c['title'] == 'Casino': print('jg casino +', fill_row(c['games'], SLOTS, 24))
 open('public/data/jugaygana-home.json', 'w').write(json.dumps(jh, ensure_ascii=False, indent=1) + '\n')
